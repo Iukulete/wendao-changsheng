@@ -1,0 +1,29 @@
+# Build outputs
+release/
+*.exe
+*.dll
+*.o
+*.obj
+
+# Local AI model/runtime bundles
+ai_engine/models/
+ai_engine/runtime/
+
+# Runtime-generated AI files
+ai_prompt.txt
+ai_prompt_runtime.txt
+ai_event.txt
+ai_event_raw.txt
+ai_backend.txt
+ai_model.log
+ai_llama.log
+ai_ollama.log
+
+# Saves and local state
+save.txt
+
+# OS/editor noise
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
