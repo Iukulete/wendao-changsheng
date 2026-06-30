@@ -3099,6 +3099,14 @@ PlayerContext BuildPlayerContext() {
         ctx.familyState += L"；本世势力:" + g_factionTie.name + L"(" + g_factionTie.role + L")";
     }
     ctx.socialState = GetSocialDigest();
+    for (const auto& thread : g_socialThreads) {
+        ctx.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
+    }
+    for (auto npc : g_dynamicWorld.GetAliveNPCs()) {
+        if (npc->playerRelation != 0) {
+            ctx.relationships[npc->name + L"（活跃修士）"] = npc->playerRelation;
+        }
+    }
     ctx.killCount = g_player.battlesWon;
     ctx.helpCount = max(0, g_player.karma / 10);
     ctx.betrayalCount = max(0, -g_player.karma / 10);

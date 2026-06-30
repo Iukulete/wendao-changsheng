@@ -578,6 +578,7 @@ public:
         ss << L"- 描述45到90个中文字符，要贴合境界、因果、年龄、家世、人情风波、最近记忆和当前世界。\n";
         ss << L"- 可以写长辈认可、同辈嫉妒、被人巴结、遭人欺压、暗中试探、隐藏修为，但不要写成旁白总结。\n";
         ss << L"- 如果上下文出现“本世人脉”，优先复用其中的人名、态度和恩怨，让 NPC 像持续存在的人，不要每次都换成陌生路人。\n";
+        ss << L"- 如果上下文出现“关系数值”，正数代表亲近、认可或押注，负数代表嫉妒、轻慢、敌意或旧怨；事件要沿着这个关系继续发酵。\n";
         ss << L"- 如果上下文出现“本世势力”或“势力牵连”，优先复用该组织、身份、态度和旧债，不要凭空换一个无关宗门。\n";
         ss << L"- 当前世界不一定是纯古典修仙，也可能已演化到灵机蒸汽、星穹道网、末法裂变或废土返道时代，必须尊重上下文时代风貌。\n";
         ss << L"- 如果上下文出现“纪元转折因由”，要把它当成当前时代形成的前因，而不是可忽略的背景介绍。\n";
@@ -614,6 +615,15 @@ public:
         }
         if (!player.socialState.empty()) {
             ss << L"人情风波: " << player.socialState << L"\n";
+        }
+        if (!player.relationships.empty()) {
+            ss << L"关系数值:\n";
+            int shown = 0;
+            for (const auto& pair : player.relationships) {
+                ss << L"- " << pair.first << L": "
+                   << (pair.second >= 0 ? L"+" : L"") << pair.second << L"\n";
+                if (++shown >= 8) break;
+            }
         }
         if (!player.legacyState.empty()) {
             ss << L"轮回传承:\n" << player.legacyState << L"\n";
