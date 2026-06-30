@@ -4,6 +4,7 @@ set -euo pipefail
 WORK_DIR="${WORK_DIR:-$HOME/wendao_lora}"
 MODEL_ID="${MODEL_ID:-google/gemma-4-E4B-it-qat-q4_0-unquantized}"
 CONTAINER_OUT_DIR="${CONTAINER_OUT_DIR:-/workspace/out/wendao_gemma4_lora}"
+CONTAINER_VENV="${CONTAINER_VENV:-/workspace/.venv}"
 TRAIN_COUNT="${TRAIN_COUNT:-900}"
 EVAL_COUNT="${EVAL_COUNT:-90}"
 EPOCHS="${EPOCHS:-1}"
@@ -48,12 +49,15 @@ docker run --rm \
     DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-venv git ca-certificates
     mkdir -p /root/.cache/pip
     chown -R root:root /root/.cache/pip || true
-    python3 -m pip install --upgrade pip
-    python3 -m pip install --index-url https://download.pytorch.org/whl/cu124 torch
-    python3 -m pip install 'transformers>=4.56.0' accelerate peft bitsandbytes safetensors sentencepiece protobuf hf_transfer 'huggingface_hub[hf_xet]'
+    if [ ! -x '$CONTAINER_VENV/bin/python' ]; then
+      python3 -m venv '$CONTAINER_VENV'
+    fi
+    '$CONTAINER_VENV/bin/python' -m pip install --upgrade pip
+    '$CONTAINER_VENV/bin/python' -m pip install --index-url https://download.pytorch.org/whl/cu124 torch
+    '$CONTAINER_VENV/bin/python' -m pip install 'transformers>=4.56.0' accelerate peft bitsandbytes safetensors sentencepiece protobuf hf_transfer 'huggingface_hub[hf_xet]'
     export LD_LIBRARY_PATH=/host-libs:/usr/local/cuda/lib64:\${LD_LIBRARY_PATH:-}
-    python3 /workspace/scripts/build_wendao_lora_dataset.py --out-dir /workspace/data --train-count '$TRAIN_COUNT' --eval-count '$EVAL_COUNT'
-    python3 /workspace/scripts/train_gemma4_lora.py \
+    '$CONTAINER_VENV/bin/python' /workspace/scripts/build_wendao_lora_dataset.py --out-dir /workspace/data --train-count '$TRAIN_COUNT' --eval-count '$EVAL_COUNT'
+    '$CONTAINER_VENV/bin/python' /workspace/scripts/train_gemma4_lora.py \
       --model-id '$MODEL_ID' \
       --train-file /workspace/data/train.jsonl \
       --eval-file /workspace/data/eval.jsonl \
@@ -65,5 +69,5 @@ docker run --rm \
       --lora-alpha '$LORA_ALPHA' \
       --load-in-4bit \
       --skip-kbit-prepare
-    python3 /llama.cpp/convert_lora_to_gguf.py '$CONTAINER_OUT_DIR' --outfile '$CONTAINER_OUT_DIR/wendao_gemma4_lora.gguf' || true
+    '$CONTAINER_VENV/bin/python' /llama.cpp/convert_lora_to_gguf.py '$CONTAINER_OUT_DIR' --outfile '$CONTAINER_OUT_DIR/wendao_gemma4_lora.gguf' || true
   "
