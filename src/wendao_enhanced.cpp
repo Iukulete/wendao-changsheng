@@ -2206,6 +2206,80 @@ wstring BuildSocialThreadDigest(int limit = 4) {
     return ss.str();
 }
 
+bool TextContainsAny(const wstring& text, const vector<wstring>& keys) {
+    for (const auto& key : keys) {
+        if (!key.empty() && text.find(key) != wstring::npos) return true;
+    }
+    return false;
+}
+
+int ClampRelation(int value) {
+    return max(-100, min(100, value));
+}
+
+int NarrativeRelationDelta(const wstring& text) {
+    int delta = 0;
+    if (TextContainsAny(text, {L"认可", L"亲近", L"信任", L"体面", L"护持", L"查到", L"稳住", L"主动权"})) delta += 8;
+    if (TextContainsAny(text, {L"善意", L"礼重", L"拉拢", L"给机会", L"新线索", L"重新衡量"})) delta += 5;
+    if (TextContainsAny(text, {L"修为+", L"灵石+", L"寿命+", L"因果+", L"掌道+", L"灵宝共鸣+"})) delta += 3;
+
+    if (TextContainsAny(text, {L"怀疑", L"记恨", L"翻脸", L"轻慢", L"羞怒", L"看穿", L"反咬"})) delta -= 8;
+    if (TextContainsAny(text, {L"误判", L"旧债", L"反噬", L"恶名", L"压不住", L"设局"})) delta -= 4;
+    if (TextContainsAny(text, {L"气血-", L"因果-", L"寿命-"})) delta -= 3;
+
+    return max(-18, min(18, delta));
+}
+
+void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice, const wstring& outcome) {
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    int baseDelta = NarrativeRelationDelta(text);
+    if (baseDelta == 0) return;
+
+    bool touchesFaction = HasFactionTie() && TextContainsAny(text, {
+        g_factionTie.name, L"势力", L"旧债", L"名册", L"宗门", L"仙朝", L"工坊", L"道网",
+        L"残宗", L"合约", L"册封", L"家世"
+    });
+    bool touchesSocial = TextContainsAny(text, {
+        L"本世人脉", L"父亲", L"母亲", L"养育者", L"长辈", L"同辈", L"欺压者",
+        L"竞争者", L"旁人", L"联系人", L"人情", L"旧名"
+    });
+
+    if (touchesFaction) {
+        int oldFavor = g_factionTie.favor;
+        g_factionTie.favor = ClampRelation(g_factionTie.favor + baseDelta);
+        if (g_factionTie.favor != oldFavor) {
+            AddMemory(L"势力回响",
+                g_factionTie.name + L"对你的牵连值由" +
+                (oldFavor >= 0 ? L"+" : L"") + to_wstring(oldFavor) + L"变为" +
+                (g_factionTie.favor >= 0 ? L"+" : L"") + to_wstring(g_factionTie.favor) +
+                L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+        }
+    }
+
+    int changed = 0;
+    for (auto& thread : g_socialThreads) {
+        bool directHit = text.find(thread.name) != wstring::npos ||
+                         text.find(thread.role) != wstring::npos ||
+                         text.find(thread.attitude) != wstring::npos;
+        if (!directHit && !touchesSocial) continue;
+        if (!directHit && changed > 0) continue;
+
+        int oldRelation = thread.relation;
+        int localDelta = directHit ? baseDelta : baseDelta / 2;
+        if (localDelta == 0) localDelta = baseDelta > 0 ? 1 : -1;
+        thread.relation = ClampRelation(thread.relation + localDelta);
+        if (thread.relation != oldRelation) {
+            g_dynamicWorld.PlayerInteractWithNPC(thread.name, localDelta);
+            AddMemory(L"人情回响",
+                thread.name + L"（" + thread.role + L"）对你的关系由" +
+                GetRelationLabel(oldRelation) + L"变为" + GetRelationLabel(thread.relation) +
+                L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+            changed++;
+        }
+        if (changed >= 2) break;
+    }
+}
+
 void GenerateSocialThreads() {
     g_socialThreads.clear();
 
@@ -3759,6 +3833,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     ApplyOutcomeEffects(g_messageText);
+    ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
     DiscoverItemsFromText(g_currentEvent->title);
     DiscoverItemsFromText(g_currentEvent->description);
     DiscoverItemsFromText(g_messageText);
