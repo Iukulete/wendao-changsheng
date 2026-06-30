@@ -1764,6 +1764,43 @@ int GetEraAiEventChance() {
     return max(18, min(55, chance + echoWeight));
 }
 
+int GetLifespanPressureLevel() {
+    if (g_player.realm >= DAO_ANCESTOR) return 0;
+    int remaining = g_player.lifespan - g_player.age;
+    if (remaining <= 10) return 3;
+    if (remaining <= 30) return 2;
+    if (g_player.realm >= IMMORTAL_EMPEROR && remaining <= 120) return 2;
+    if (remaining <= 80) return 1;
+    if (g_player.realm >= TRUE_IMMORTAL && remaining <= 180) return 1;
+    return 0;
+}
+
+wstring BuildLifespanPressureText() {
+    if (g_player.realm >= HEAVENLY_DAO) {
+        return L"已抵达道祖-天道境，寿元不再构成边界；真正的尺度是万道是否归一。";
+    }
+    if (g_player.realm >= DAO_ANCESTOR) {
+        return L"已证道祖，与所掌大道共生，不再被寿元追赶；强弱取决于大道与掌道深度。";
+    }
+
+    int remaining = max(0, g_player.lifespan - g_player.age);
+    wstringstream ss;
+    ss << L"仍有寿数限制，剩余寿元约" << remaining << L"年。";
+    int pressure = GetLifespanPressureLevel();
+    if (pressure >= 3) {
+        ss << L"寿元危急，若不能延寿、破境或证道，很快就会坐化。";
+    } else if (pressure >= 2) {
+        ss << L"寿元压力已经很重，机缘、闭关与人情取舍都会被时间逼迫。";
+    } else if (pressure >= 1) {
+        ss << L"寿元开始成为隐性压力，不能只把境界当作数字推进。";
+    } else if (g_player.realm >= IMMORTAL_EMPEROR) {
+        ss << L"即使已是仙帝，仍未与大道共生，终有寿尽之日。";
+    } else {
+        ss << L"暂未被寿元逼到绝路，但每次闭关都在消耗此世时间。";
+    }
+    return ss.str();
+}
+
 wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
@@ -3433,6 +3470,7 @@ PlayerContext BuildPlayerContext() {
         }
     }
     world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
+    world << L"- 寿元压力: " << BuildLifespanPressureText() << L"\n";
     world << L"- 道祖-天道境进度: " << GetHeavenlyDaoProgressScore() << L" / 360\n";
     world << L"- 鸿蒙参悟: " << CountHongmengInsightKinds() << L" / 9\n";
     world << L"- 世界时间: 第" << g_dynamicWorld.GetWorldTime() << L"年\n";
@@ -4856,6 +4894,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             AddMemory(L"天地异象", L"借灵气暴动修炼，修为+" + to_wstring(gain));
                         }
                         AddMemory(L"时代修行", L"在" + g_worldEraName + L"打坐一年，修为变化+" + to_wstring(gain));
+                        int lifespanPressure = GetLifespanPressureLevel();
+                        if (lifespanPressure >= 2 || (lifespanPressure == 1 && g_player.age % 10 == 0)) {
+                            AddMemory(L"寿元压力", BuildLifespanPressureText());
+                        }
                         ShowNotice(L"打坐修炼", msg);
                     }
                     InvalidateRect(hWnd, NULL, FALSE);

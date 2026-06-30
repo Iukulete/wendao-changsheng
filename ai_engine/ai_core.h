@@ -289,6 +289,12 @@ private:
             FirstHistoryContaining(player, {L"本世线索推进"}) != L"") {
             add(L"story");
         }
+        if (player.worldState.find(L"寿元压力") != wstring::npos &&
+            (player.worldState.find(L"寿元危急") != wstring::npos ||
+             player.worldState.find(L"寿元压力已经很重") != wstring::npos ||
+             player.worldState.find(L"仙帝") != wstring::npos)) {
+            add(L"lifespan");
+        }
         if (player.daoState.find(L"大道特性") != wstring::npos ||
             player.daoState.find(L"掌道") != wstring::npos) {
             add(L"dao");
@@ -372,6 +378,9 @@ public:
         if (focus == L"story") {
             return L"【因果】本世线头";
         }
+        if (focus == L"lifespan") {
+            return player.realm >= 18 ? L"【危机】仙寿将尽" : L"【危机】寿元迫近";
+        }
         if (focus == L"social") {
             return L"【奇遇】人情暗流";
         }
@@ -452,6 +461,13 @@ public:
         if (focus == L"story" && !hook.empty()) {
             wstringstream ss;
             ss << L"上一件事没有真正结束：" << hook << L"。如今同一条线索换了面目再度靠近，像是在逼你给今生一个明确态度。";
+            return ss.str();
+        }
+        if (focus == L"lifespan") {
+            wstring lifespan = FirstLineContaining(player.worldState, {L"寿元压力"});
+            wstringstream ss;
+            ss << L"闭关醒来后，你第一次清楚听见寿元在神魂里作响：" << lifespan
+               << L"有人拿延寿机缘试探你，也有人等你急着破境露出破绽。";
             return ss.str();
         }
         if (focus == L"social" && !social.empty()) {
@@ -558,6 +574,12 @@ public:
             choices.push_back(L"暂压不表");
             return choices;
         }
+        if (focus == L"lifespan") {
+            choices.push_back(L"寻寿药");
+            choices.push_back(L"闭死关");
+            choices.push_back(player.realm >= 18 ? L"叩道门" : L"缓一缓");
+            return choices;
+        }
         if (focus == L"remnant") {
             choices.push_back(L"细查遗痕");
             choices.push_back(L"借势破局");
@@ -633,6 +655,7 @@ public:
         ss << L"- 真正能跨过轮回的是记忆、因果、道痕，以及被大道反复祭炼过的通天灵宝残印。\n";
         ss << L"- 如果上下文出现“大道特性”，事件中的优势与代价要贴合具体大道，不要把道祖强弱写成单纯境界碾压。\n";
         ss << L"- 仙帝仍有寿数限制；只有道祖能与所掌大道共生。道祖强弱取决于掌握的大道与掌道深度，不要写成单纯等级碾压。\n";
+        ss << L"- 如果上下文出现“寿元压力”，事件要承认时间正在逼迫玩家；仙帝也会寿尽，只有道祖与大道共生后才不再被寿元追赶。\n";
         ss << L"- 九大鸿蒙至宝是创世级恒在之物，不是装备奖励；道祖无法毁灭，只有掌尽诸道的道祖-天道境具备理论毁灭力，但毁灭没有必要。\n";
         ss << L"- 九大鸿蒙至宝各有固定权柄：如果上下文给出某件至宝及其大道，必须按该权柄写，不要把九件混成同一种万能法宝。\n";
         ss << L"- 如果写到鸿蒙至宝，只能写投影、线索、参悟、拒绝或遥远因果，不要写玩家直接获得或摧毁它们。\n";
@@ -766,6 +789,9 @@ public:
             L"本世线头", L"本世主线", L"本世持续线索", L"上一件事", L"同一条线索",
             L"追索线头", L"借题布局", L"暂压不表"
         });
+        bool touchesLifespan = containsAny(eventText, {
+            L"寿元", L"仙寿", L"坐化", L"延寿", L"寿药", L"闭死关", L"叩道门"
+        });
         bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
                              (eventText.find(L"修士") != wstring::npos ||
                               eventText.find(L"长辈") != wstring::npos ||
@@ -794,6 +820,8 @@ public:
                 ss << L"这一步让旁人重新衡量你，本世人脉里的善意与嫉意都被牵动。";
             } else if (touchesStory) {
                 ss << L"你没有把线索当成偶然，而是让它并入本世主线，后续人和事都会沿着这条脉络靠近。";
+            } else if (touchesLifespan) {
+                ss << L"你没有假装时间还很宽裕，而是用这次机缘替此世多争出一段路。";
             } else if (touchesDao) {
                 ss << L"心底的道痕一闪即逝，" << consequence;
             } else {
@@ -805,6 +833,7 @@ public:
             if (touchesFaction) ss << L"，因果+6";
             if (touchesUnfinished) ss << L"，因果+10";
             if (touchesStory) ss << L"，因果+6";
+            if (touchesLifespan) ss << L"，寿命+18";
             if (touchesTreasure) ss << L"，灵宝共鸣+5";
             if (touchesDao) ss << L"，掌道+3";
             if (touchesArtifact && action.find(L"转手") != wstring::npos) ss << L"，灵石+15";
@@ -824,6 +853,8 @@ public:
                 ss << L"却误判了旁人的立场，本世人脉中有人因此记下了这笔账。";
             } else if (touchesStory) {
                 ss << L"却让线索暂时沉入暗处，相关人等没有离开，只是换了更隐蔽的方式观察你。";
+            } else if (touchesLifespan) {
+                ss << L"却被寿元压力逼乱心神，越急着破局，越觉得此世时间正在变窄。";
             } else if (!player.legacyState.empty() && player.legacyState.find(L"前世") != wstring::npos) {
                 ss << L"前世经验没能完全适配今生，" << consequence;
             } else {
@@ -835,6 +866,7 @@ public:
             if (touchesFaction) ss << L"，因果-6";
             if (touchesUnfinished) ss << L"，因果-10";
             if (touchesStory) ss << L"，因果-6";
+            if (touchesLifespan) ss << L"，寿命-8";
         }
 
         return ss.str();
