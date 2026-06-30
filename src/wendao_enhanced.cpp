@@ -925,6 +925,7 @@ PlayerContext BuildPlayerContext();
 wstring BuildCompanionJadeVisibleText();
 wstring BuildCompanionJadeHiddenContext();
 void ApplyCompanionJadeToBirth();
+int CountHongmengInsightKinds();
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -1347,6 +1348,26 @@ vector<wstring> SelectReincarnationMemoryFragments(int limit = 8) {
 
     reverse(fragments.begin(), fragments.end());
     return fragments;
+}
+
+int GetCompanionJadeMemoryLimit() {
+    int limit = 8;
+    if (g_generation >= 2) limit += 1;
+    if (g_player.realm >= GOLDEN_CORE) limit += 1;
+    if (g_player.realm >= MAHAYANA) limit += 1;
+    if (g_player.realm >= TRUE_IMMORTAL) limit += 1;
+    if (g_player.totalEvents >= 12) limit += 1;
+    if (g_player.totalEvents >= 30) limit += 1;
+    if (CountHongmengInsightKinds() >= 2) limit += 1;
+    return min(14, limit);
+}
+
+wstring BuildCompanionJadeDeathAnchorText(const wstring& causeOfDeath) {
+    wstringstream ss;
+    ss << L"生死将尽时，黑白伴生玉佩在神魂里微微发温，把这一世最重的几段记忆压成梦痕。";
+    ss << L"你仍不知道它真正来历，只知道自己没有完全空白地坠入轮回。";
+    ss << L"本次死因：" << causeOfDeath << L"。";
+    return ss.str();
 }
 
 void SaveMemory(wofstream& file) {
@@ -4393,6 +4414,7 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
     if (!g_lifeArtifacts.empty()) {
         add(L"失散的当世器物：" + CompactMemoryFragment(BuildLifeArtifactDigest(2)));
     }
+    add(L"黑白伴生玉佩仍未解明：它总在生死与梦醒之间发温，像在替你保住不该跨世的记忆。");
     if (!g_eraRemnants.empty()) {
         add(L"旧世残响仍在：" + g_eraRemnants[0]);
     }
@@ -4401,6 +4423,7 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
 
 void FinishCurrentLife(const wstring& causeOfDeath) {
     AddMemory(L"一世落幕", causeOfDeath);
+    AddMemory(L"伴生玉佩收魂", BuildCompanionJadeDeathAnchorText(causeOfDeath));
     if (!g_lifeArtifacts.empty()) {
         int traceGain = GetLifeArtifactTraceResonanceGain();
         wstring traceText = BuildLifeArtifactTraceText();
@@ -4435,7 +4458,7 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
     life.totalEvents = g_player.totalEvents;
     life.battlesWon = g_player.battlesWon;
     life.npcsMet = g_player.npcsMet;
-    life.memoryFragments = SelectReincarnationMemoryFragments();
+    life.memoryFragments = SelectReincarnationMemoryFragments(GetCompanionJadeMemoryLimit());
     life.unfinishedKarmas = BuildUnfinishedKarmas(causeOfDeath);
 
     g_legacySystem.EndCurrentLife(life);
@@ -4501,6 +4524,11 @@ void StartNextLife() {
     AddMemory(L"前世余烬", g_reincarnationEcho);
     if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
+    if (!rememberedFragments.empty()) {
+        AddMemory(L"玉意梦回",
+            L"黑白伴生玉佩在梦里微温，托起" + to_wstring(rememberedFragments.size()) +
+            L"段前世碎片；你仍不知道它真正来历，只能把这些当作似曾相识。");
+    }
     for (const auto& fragment : rememberedFragments) {
         AddMemory(L"前世忆起", fragment);
     }

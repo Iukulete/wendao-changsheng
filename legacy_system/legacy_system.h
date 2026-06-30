@@ -182,7 +182,7 @@ public:
                 inheritedLegacies.push_back(LegacyItem(
                     LEGACY_MEMORY,
                     L"前世亲历旧忆",
-                    L"上一世的具体经历并未完全散去，某些选择、死亡和传承会在这一世重新浮现。",
+                    L"上一世的具体经历被黑白玉意托住，某些选择、死亡和传承会在这一世重新浮现。",
                     max(18, (int)last.memoryFragments.size() * 10 + last.realmReached * 3)
                 ));
             }
