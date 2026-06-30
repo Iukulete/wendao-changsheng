@@ -98,6 +98,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 ├── ai_engine/
 │   ├── ai_core.h
 │   ├── generate_event.ps1
+│   ├── setup_portable_ai.ps1
 │   ├── models/
 │   └── runtime/llama.cpp/
 ├── world_system/
@@ -136,14 +137,26 @@ ai_llama.log
 ai_ollama.log
 ```
 
-项目已内置便携 AI 后端：
+项目支持便携 AI 后端：
 
 ```text
 ai_engine/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
 ai_engine/runtime/llama.cpp/
 ```
 
-触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 GGUF 模型，不要求玩家安装 Ollama。
+触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 GGUF 模型，不要求玩家安装 Ollama。开源仓库不会提交 `models/` 和 `runtime/` 这类大文件；拉仓库后可运行：
+
+```bat
+准备本地AI.bat
+```
+
+或：
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.ps1
+```
+
+已有模型和运行时时，脚本只校验 SHA256 并跳过下载。
 
 当前模型桥行为：
 
@@ -193,12 +206,14 @@ ollama create wendao-xiuxian -f ai_engine/Modelfile.wendao
 release/wendao_enhanced.exe
 release/background.png
 ai_engine/generate_event.ps1
+ai_engine/setup_portable_ai.ps1
 ai_engine/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
 ai_engine/runtime/llama.cpp/
+准备本地AI.bat
 启动游戏.bat
 ```
 
-便携 AI 文件约 500MB；如果删掉 `ai_engine/models` 或 `ai_engine/runtime`，游戏仍能运行，只是 AI 动态事件会回退到模板或 Ollama。
+便携 AI 文件约 500MB；如果删掉 `ai_engine/models` 或 `ai_engine/runtime`，游戏仍能运行，只是 AI 动态事件会回退到 Ollama 或上下文模板。重新运行 `准备本地AI.bat` 可以补齐便携后端。
 
 ## 小说语料边界
 
