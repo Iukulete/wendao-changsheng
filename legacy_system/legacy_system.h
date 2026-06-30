@@ -45,6 +45,7 @@ struct PastLife {
 
     // 留下的传承
     vector<LegacyItem> legacies;
+    vector<wstring> memoryFragments;
 
     PastLife() : generation(1), realmReached(0), ageAtDeath(0),
                  karma(0), totalEvents(0), battlesWon(0), npcsMet(0) {}
@@ -147,6 +148,15 @@ public:
                 ));
             }
 
+            if (!last.memoryFragments.empty()) {
+                inheritedLegacies.push_back(LegacyItem(
+                    LEGACY_MEMORY,
+                    L"前世亲历旧忆",
+                    L"上一世的具体经历并未完全散去，某些选择、死亡和传承会在这一世重新浮现。",
+                    max(18, (int)last.memoryFragments.size() * 10 + last.realmReached * 3)
+                ));
+            }
+
             if (last.karma > 100) {
                 inheritedLegacies.push_back(LegacyItem(
                     LEGACY_REPUTATION,
@@ -246,6 +256,15 @@ public:
                 L"丰富阅历",
                 L"前世的见闻",
                 life.totalEvents / 2
+            ));
+        }
+
+        if (!life.memoryFragments.empty()) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_MEMORY,
+                L"亲历记忆",
+                L"上一世真正经历过的几段道途碎片，转世后会以梦境、直觉或似曾相识的方式浮现。",
+                min(120, 20 + (int)life.memoryFragments.size() * 12 + life.totalEvents / 5)
             ));
         }
 
@@ -402,6 +421,50 @@ public:
         return ss.str();
     }
 
+    vector<wstring> GetLatestMemoryFragments(int limit = 6) const {
+        vector<wstring> result;
+        if (pastLives.empty() || limit <= 0) return result;
+        const auto& fragments = pastLives.back().memoryFragments;
+        int start = max(0, (int)fragments.size() - limit);
+        for (int i = start; i < (int)fragments.size(); ++i) {
+            result.push_back(fragments[i]);
+        }
+        return result;
+    }
+
+    wstring GetMemoryFragmentsText(int limit = 8) const {
+        wstringstream ss;
+        ss << L"【前世记忆碎片】\n\n";
+        if (pastLives.empty()) {
+            ss << L"尚无前世可忆。";
+            return ss.str();
+        }
+
+        const auto& fragments = pastLives.back().memoryFragments;
+        if (fragments.empty()) {
+            ss << L"上一世没有留下足够清晰的记忆碎片。";
+            return ss.str();
+        }
+
+        int start = max(0, (int)fragments.size() - limit);
+        for (int i = start; i < (int)fragments.size(); ++i) {
+            ss << L"- " << fragments[i] << L"\n";
+        }
+        return ss.str();
+    }
+
+    wstring GetMemoryContextText(int limit = 6) const {
+        auto fragments = GetLatestMemoryFragments(limit);
+        if (fragments.empty()) return L"";
+
+        wstringstream ss;
+        ss << L"可被今生想起的前世记忆碎片:\n";
+        for (const auto& fragment : fragments) {
+            ss << L"- " << fragment << L"\n";
+        }
+        return ss.str();
+    }
+
     // 获取历史记录文本
     wstring GetHistoryText() {
         wstringstream ss;
@@ -419,6 +482,7 @@ public:
                 ss << L"  享年: " << life.ageAtDeath << L"岁\n";
                 ss << L"  死因: " << life.causeOfDeath << L"\n";
                 ss << L"  留下传承: " << life.legacies.size() << L"个\n";
+                ss << L"  记忆碎片: " << life.memoryFragments.size() << L"段\n";
             }
         }
 
@@ -444,7 +508,8 @@ public:
             }
         }
 
-        ss << L"\n" << GetRelicStatusText();
+        ss << L"\n" << GetMemoryFragmentsText(6);
+        ss << L"\n\n" << GetRelicStatusText();
 
         return ss.str();
     }
@@ -454,7 +519,7 @@ public:
     vector<LegacyItem>& GetInheritedLegacies() { return inheritedLegacies; }
 
     void Save(wofstream& file) {
-        file << L"LEGACY_V2\n";
+        file << L"LEGACY_V3\n";
         file << currentGeneration << L"\n";
         file << inheritedLegacies.size() << L"\n";
         for (auto& legacy : inheritedLegacies) {
@@ -478,6 +543,11 @@ public:
                 file << (int)legacy.type << L"\n" << legacy.name << L"\n"
                      << legacy.description << L"\n" << legacy.power << L"\n";
             }
+
+            file << life.memoryFragments.size() << L"\n";
+            for (auto& fragment : life.memoryFragments) {
+                file << fragment << L"\n";
+            }
         }
     }
 
@@ -486,7 +556,8 @@ public:
         getline(file, marker);
         if (marker.empty()) getline(file, marker);
         bool isV2 = (marker == L"LEGACY_V2");
-        if (marker != L"LEGACY_V1" && !isV2) return false;
+        bool isV3 = (marker == L"LEGACY_V3");
+        if (marker != L"LEGACY_V1" && !isV2 && !isV3) return false;
 
         file >> currentGeneration;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -514,7 +585,7 @@ public:
         getline(file, relic.aspect);
         file >> relic.daoLinked;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
-        if (isV2) {
+        if (isV2 || isV3) {
             getline(file, relic.daoName);
             file >> relic.daoDepth;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -550,6 +621,17 @@ public:
                 file >> power;
                 file.ignore(numeric_limits<streamsize>::max(), L'\n');
                 life.legacies.push_back(LegacyItem(static_cast<LegacyType>(type), name, description, power));
+            }
+
+            if (isV3) {
+                size_t fragmentCount = 0;
+                file >> fragmentCount;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n');
+                for (size_t j = 0; j < fragmentCount; ++j) {
+                    wstring fragment;
+                    getline(file, fragment);
+                    life.memoryFragments.push_back(fragment);
+                }
             }
             pastLives.push_back(life);
         }

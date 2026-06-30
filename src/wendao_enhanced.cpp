@@ -972,16 +972,68 @@ wstring GetMemoryText(int limit = 12) {
     return ss.str();
 }
 
+bool IsKeyReincarnationMemory(const wstring& memory) {
+    static const vector<wstring> keys = {
+        L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
+        L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
+        L"境界突破", L"本地模型", L"人情风波", L"此世出身"
+    };
+    for (const auto& key : keys) {
+        if (memory.find(key) != wstring::npos) return true;
+    }
+    return false;
+}
+
+wstring CompactMemoryFragment(const wstring& memory) {
+    wstring out;
+    bool lastSpace = false;
+    for (wchar_t ch : memory) {
+        if (ch == L'\r' || ch == L'\n' || ch == L'\t') {
+            if (!lastSpace) {
+                out.push_back(L' ');
+                lastSpace = true;
+            }
+        } else {
+            out.push_back(ch);
+            lastSpace = (ch == L' ');
+        }
+    }
+    return out;
+}
+
+vector<wstring> SelectReincarnationMemoryFragments(int limit = 8) {
+    vector<wstring> fragments;
+    auto addUnique = [&](const wstring& memory) {
+        if ((int)fragments.size() >= limit) return;
+        wstring compact = CompactMemoryFragment(memory);
+        if (find(fragments.begin(), fragments.end(), compact) == fragments.end()) {
+            fragments.push_back(compact);
+        }
+    };
+
+    for (int i = (int)g_memoryLog.size() - 1; i >= 0 && (int)fragments.size() < limit; --i) {
+        if (IsKeyReincarnationMemory(g_memoryLog[i])) {
+            addUnique(g_memoryLog[i]);
+        }
+    }
+    for (int i = (int)g_memoryLog.size() - 1; i >= 0 && (int)fragments.size() < limit; --i) {
+        addUnique(g_memoryLog[i]);
+    }
+
+    reverse(fragments.begin(), fragments.end());
+    return fragments;
+}
+
 void SaveMemory(wofstream& file) {
-    file << L"MEMORY_V1\n";
+    file << L"MEMORY_V2\n";
     file << g_generation << L"\n";
     file << g_memoryLog.size() << L"\n";
     for (auto& item : g_memoryLog) {
-        file << item << L"\n";
+        file << EscapeSaveField(item) << L"\n";
     }
     file << g_discoveredItems.size() << L"\n";
     for (auto& item : g_discoveredItems) {
-        file << item << L"\n";
+        file << EscapeSaveField(item) << L"\n";
     }
 }
 
@@ -1014,7 +1066,8 @@ bool LoadMemory(wifstream& file) {
     wstring marker;
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
-    if (marker != L"MEMORY_V1") return false;
+    bool isV2 = (marker == L"MEMORY_V2");
+    if (marker != L"MEMORY_V1" && !isV2) return false;
 
     file >> g_generation;
     file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -1027,6 +1080,7 @@ bool LoadMemory(wifstream& file) {
     for (size_t i = 0; i < count; i++) {
         wstring item;
         getline(file, item);
+        if (isV2) item = UnescapeSaveField(item);
         g_memoryLog.push_back(item);
     }
     file >> count;
@@ -1035,6 +1089,7 @@ bool LoadMemory(wifstream& file) {
     for (size_t i = 0; i < count; i++) {
         wstring item;
         getline(file, item);
+        if (isV2) item = UnescapeSaveField(item);
         g_discoveredItems.push_back(item);
     }
     return true;
@@ -1807,6 +1862,12 @@ PlayerContext BuildPlayerContext() {
     for (int i = memoryStart; i < (int)g_memoryLog.size(); i++) {
         ctx.history.push_back(g_memoryLog[i]);
     }
+    auto inheritedMemoryFragments = g_legacySystem.GetLatestMemoryFragments(4);
+    for (const auto& fragment : inheritedMemoryFragments) {
+        if (find(ctx.history.begin(), ctx.history.end(), fragment) == ctx.history.end()) {
+            ctx.history.push_back(L"前世碎片：" + fragment);
+        }
+    }
 
     wstringstream legacy;
     auto& inherited = g_legacySystem.GetInheritedLegacies();
@@ -1830,6 +1891,10 @@ PlayerContext BuildPlayerContext() {
     }
     if (!g_reincarnationEcho.empty()) {
         legacy << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+    }
+    wstring memoryContext = g_legacySystem.GetMemoryContextText(6);
+    if (!memoryContext.empty()) {
+        legacy << memoryContext;
     }
     legacy << L"时代变迁: " << g_eraTransitionNote << L"\n";
     legacy << g_legacySystem.GetDaoContextText() << L"\n";
@@ -2048,6 +2113,7 @@ void SaveGame() {
     SaveWorldEra(file);
     SaveGeneratedWorld(file);
     g_dynamicWorld.Save(file);
+    g_contextMgr.SetContext(BuildPlayerContext());
     g_contextMgr.Save(file);
     SaveMemory(file);
     SaveSocialRumors(file);
@@ -2092,6 +2158,7 @@ bool LoadGame() {
     LoadSocialRumors(file);
     g_legacySystem.Load(file);
     g_achievementSystem.Load(file);
+    g_contextMgr.SetContext(BuildPlayerContext());
     g_lastAiBackend = L"已读档";
     g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
     RefreshAiStatus();
@@ -2195,6 +2262,8 @@ void ApplyOutcomeEffects(const wstring& outcome) {
 }
 
 void FinishCurrentLife(const wstring& causeOfDeath) {
+    AddMemory(L"一世落幕", causeOfDeath);
+
     PastLife life;
     life.name = g_player.name;
     life.realmReached = g_player.realm;
@@ -2204,11 +2273,11 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
     life.totalEvents = g_player.totalEvents;
     life.battlesWon = g_player.battlesWon;
     life.npcsMet = g_player.npcsMet;
+    life.memoryFragments = SelectReincarnationMemoryFragments();
 
     g_legacySystem.EndCurrentLife(life);
     auto& recorded = g_legacySystem.GetPastLives().back();
     g_achievementSystem.CheckAchievements(recorded, g_generation);
-    AddMemory(L"一世落幕", causeOfDeath);
 }
 
 void StartNextLife() {
@@ -2250,6 +2319,10 @@ void StartNextLife() {
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
     AddMemory(L"前世余烬", g_reincarnationEcho);
+    auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
+    for (const auto& fragment : rememberedFragments) {
+        AddMemory(L"前世忆起", fragment);
+    }
     if (relicBonus > 0 || treasureBonus > 0) {
         AddMemory(L"通天灵宝", g_legacySystem.GetDaoContextText());
     }

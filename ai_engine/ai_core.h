@@ -62,6 +62,38 @@ inline wstring ReadUtf8FileToWide(const string& path) {
     return CleanModelText(Utf8ToWide(bytes));
 }
 
+inline wstring EscapeSaveField(const wstring& text) {
+    wstring out;
+    for (wchar_t ch : text) {
+        if (ch == L'\\') out += L"\\\\";
+        else if (ch == L'\n') out += L"\\n";
+        else if (ch == L'\r') {}
+        else out.push_back(ch);
+    }
+    return out;
+}
+
+inline wstring UnescapeSaveField(const wstring& text) {
+    wstring out;
+    for (size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == L'\\' && i + 1 < text.size()) {
+            wchar_t next = text[i + 1];
+            if (next == L'n') {
+                out.push_back(L'\n');
+                ++i;
+            } else if (next == L'\\') {
+                out.push_back(L'\\');
+                ++i;
+            } else {
+                out.push_back(text[i]);
+            }
+        } else {
+            out.push_back(text[i]);
+        }
+    }
+    return out;
+}
+
 // ==================== 玩家上下文 ====================
 struct PlayerContext {
     wstring name;
@@ -445,19 +477,26 @@ public:
     void SetContext(const PlayerContext& ctx) { context = ctx; }
 
     void Save(wofstream& file) {
-        file << L"AI_CONTEXT_V1\n";
+        file << L"AI_CONTEXT_V2\n";
         file << context.name << L"\n";
         file << context.realm << L" " << context.karma << L" " << context.age << L" "
              << context.killCount << L" " << context.helpCount << L" " << context.betrayalCount << L"\n";
+        file << EscapeSaveField(context.realmName) << L"\n";
+        file << EscapeSaveField(context.rootState) << L"\n";
+        file << EscapeSaveField(context.worldState) << L"\n";
+        file << EscapeSaveField(context.familyState) << L"\n";
+        file << EscapeSaveField(context.socialState) << L"\n";
+        file << EscapeSaveField(context.legacyState) << L"\n";
+        file << EscapeSaveField(context.daoState) << L"\n";
 
         file << context.personality.size() << L"\n";
         for (auto& item : context.personality) {
-            file << item << L"\n";
+            file << EscapeSaveField(item) << L"\n";
         }
 
         file << context.history.size() << L"\n";
         for (auto& item : context.history) {
-            file << item << L"\n";
+            file << EscapeSaveField(item) << L"\n";
         }
 
         file << context.relationships.size() << L"\n";
@@ -470,12 +509,38 @@ public:
         wstring marker;
         getline(file, marker);
         if (marker.empty()) getline(file, marker);
-        if (marker != L"AI_CONTEXT_V1") return false;
+        bool isV2 = (marker == L"AI_CONTEXT_V2");
+        if (marker != L"AI_CONTEXT_V1" && !isV2) return false;
 
         getline(file, context.name);
         file >> context.realm >> context.karma >> context.age
              >> context.killCount >> context.helpCount >> context.betrayalCount;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
+
+        if (isV2) {
+            getline(file, context.realmName);
+            getline(file, context.rootState);
+            getline(file, context.worldState);
+            getline(file, context.familyState);
+            getline(file, context.socialState);
+            getline(file, context.legacyState);
+            getline(file, context.daoState);
+            context.realmName = UnescapeSaveField(context.realmName);
+            context.rootState = UnescapeSaveField(context.rootState);
+            context.worldState = UnescapeSaveField(context.worldState);
+            context.familyState = UnescapeSaveField(context.familyState);
+            context.socialState = UnescapeSaveField(context.socialState);
+            context.legacyState = UnescapeSaveField(context.legacyState);
+            context.daoState = UnescapeSaveField(context.daoState);
+        } else {
+            context.realmName.clear();
+            context.rootState.clear();
+            context.worldState.clear();
+            context.familyState.clear();
+            context.socialState.clear();
+            context.legacyState.clear();
+            context.daoState.clear();
+        }
 
         size_t count = 0;
         file >> count;
@@ -484,6 +549,7 @@ public:
         for (size_t i = 0; i < count; i++) {
             wstring item;
             getline(file, item);
+            if (isV2) item = UnescapeSaveField(item);
             context.personality.push_back(item);
         }
 
@@ -493,6 +559,7 @@ public:
         for (size_t i = 0; i < count; i++) {
             wstring item;
             getline(file, item);
+            if (isV2) item = UnescapeSaveField(item);
             context.history.push_back(item);
         }
 
