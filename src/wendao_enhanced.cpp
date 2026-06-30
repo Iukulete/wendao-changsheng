@@ -1438,6 +1438,80 @@ wstring BuildHongmengContextText() {
     return ss.str();
 }
 
+bool DaoNameContains(const LegacyRelic& relic, const wstring& key) {
+    return relic.daoLinked && relic.daoName.find(key) != wstring::npos;
+}
+
+int GetDaoPowerScale() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    if (!relic.daoLinked) return 0;
+    if (relic.daoName == L"万道归一") return 30;
+    return max(2, min(24, relic.daoDepth / 18 + relic.awakenings * 2));
+}
+
+int GetDaoMeditationModifierPercent() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    int scale = GetDaoPowerScale();
+    if (scale <= 0) return 0;
+    int bonus = 0;
+    if (DaoNameContains(relic, L"长生大道")) bonus += scale;
+    if (DaoNameContains(relic, L"护生大道")) bonus += scale / 2;
+    if (DaoNameContains(relic, L"本我大道")) bonus += scale / 2;
+    if (DaoNameContains(relic, L"万道归一")) bonus += scale;
+    return min(30, bonus);
+}
+
+int GetDaoAdventureSuccessModifier() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    int scale = GetDaoPowerScale();
+    if (scale <= 0) return 0;
+    int bonus = 0;
+    if (DaoNameContains(relic, L"杀伐大道")) bonus += scale;
+    if (DaoNameContains(relic, L"血煞大道")) bonus += scale;
+    if (DaoNameContains(relic, L"因果大道")) bonus += scale;
+    if (DaoNameContains(relic, L"众生大道")) bonus += scale / 2;
+    if (DaoNameContains(relic, L"万道归一")) bonus += scale;
+    return min(28, bonus);
+}
+
+int GetDaoBreakthroughModifier() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    int scale = GetDaoPowerScale();
+    if (scale <= 0) return 0;
+    int bonus = 0;
+    if (DaoNameContains(relic, L"长生大道")) bonus += scale / 2;
+    if (DaoNameContains(relic, L"因果大道")) bonus += scale / 2;
+    if (DaoNameContains(relic, L"本我大道")) bonus += scale / 3;
+    if (DaoNameContains(relic, L"护生大道") && g_player.karma >= 0) bonus += scale / 3;
+    if (DaoNameContains(relic, L"血煞大道") && g_player.karma < 0) bonus += scale / 3;
+    if (DaoNameContains(relic, L"万道归一")) bonus += scale;
+    return min(18, bonus);
+}
+
+wstring BuildDaoPassiveText() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    wstringstream ss;
+    ss << L"【大道特性】\n";
+    if (!relic.daoLinked) {
+        ss << L"尚未证成道祖，未形成可反哺今生的稳定大道。\n";
+        return ss.str();
+    }
+
+    ss << L"掌道: " << relic.daoName << L"\n";
+    ss << L"掌道深度: " << relic.daoDepth << L"\n";
+    ss << L"修炼加成: +" << GetDaoMeditationModifierPercent() << L"%\n";
+    ss << L"历练抉择: +" << GetDaoAdventureSuccessModifier() << L"\n";
+    ss << L"破境助力: +" << GetDaoBreakthroughModifier() << L"\n";
+    if (DaoNameContains(relic, L"杀伐大道")) ss << L"- 杀伐大道让死局更容易出现破绽，历练抉择更稳。\n";
+    if (DaoNameContains(relic, L"护生大道")) ss << L"- 护生大道会把善缘沉淀成护道之力。\n";
+    if (DaoNameContains(relic, L"血煞大道")) ss << L"- 血煞大道能压住凶局，但恶因也更容易被记住。\n";
+    if (DaoNameContains(relic, L"因果大道")) ss << L"- 因果大道擅长从旧事里找出今生破局点。\n";
+    if (DaoNameContains(relic, L"长生大道")) ss << L"- 长生大道让苦修与破境更不容易被寿元追赶。\n";
+    if (DaoNameContains(relic, L"众生大道")) ss << L"- 众生大道会放大人脉、名声与未竟因果的回响。\n";
+    if (DaoNameContains(relic, L"万道归一")) ss << L"- 万道归一已经不偏于一条大道，所有道途都会让路。\n";
+    return ss.str();
+}
+
 int GetHeavenlyDaoProgressScore() {
     const LegacyRelic& relic = g_legacySystem.GetRelic();
     int score = 0;
@@ -1473,6 +1547,7 @@ wstring GetHeavenlyDaoRequirementText() {
     } else {
         ss << L"你已具备叩问天道境的资格。若成功，九大鸿蒙至宝也只剩理论上的可毁之物。\n";
     }
+    ss << L"\n" << BuildDaoPassiveText();
     ss << L"\n" << BuildHongmengTreasureSummary(2);
     return ss.str();
 }
@@ -2404,9 +2479,11 @@ PlayerContext BuildPlayerContext() {
         legacy << BuildEraRemnantsText(4);
     }
     legacy << g_legacySystem.GetDaoContextText() << L"\n";
+    legacy << BuildDaoPassiveText() << L"\n";
     legacy << BuildHongmengContextText() << L"\n";
     ctx.legacyState = legacy.str();
     ctx.daoState = g_legacySystem.GetDaoContextText() + L"\n" +
+                   BuildDaoPassiveText() + L"\n" +
                    GetHeavenlyDaoRequirementText() + L"\n" +
                    BuildHongmengContextText();
 
@@ -2963,7 +3040,8 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     if (isAIEvent) {
         // AI事件：使用AI生成结果
         PlayerContext& ctx = g_contextMgr.GetContext();
-        int successRate = 60 + g_player.karma / 5 - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
+        int successRate = 60 + g_player.karma / 5 + GetDaoAdventureSuccessModifier()
+            - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
         successRate = max(20, min(90, successRate));
         bool success = (Random(1, 100) <= successRate);
         g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success,
@@ -3554,7 +3632,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 if (wParam == '1') {
                     int multiplier = g_dynamicWorld.GetCultivationMultiplier();
                     int eraMeditation = GetEraMeditationModifierPercent();
-                    int gain = g_player.Meditate(multiplier, eraMeditation);
+                    int daoMeditation = GetDaoMeditationModifierPercent();
+                    int totalMeditation = max(10, eraMeditation + daoMeditation);
+                    int gain = g_player.Meditate(multiplier, totalMeditation);
                     g_dynamicWorld.Update(); // 世界也在演化
                     if (g_player.IsDead()) {
                         g_gameState = STATE_GAMEOVER;
@@ -3568,6 +3648,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             msg += L"\n" + g_worldEraName + L"灵气格外顺遂，闭关效率有所提升。";
                         } else if (eraMeditation < 100) {
                             msg += L"\n" + g_worldEraName + L"天地法则晦涩，苦修收益被时代压低了。";
+                        }
+                        if (daoMeditation > 0) {
+                            msg += L"\n" + g_legacySystem.GetRelic().daoName +
+                                   L"反哺今生，修炼效率+" + to_wstring(daoMeditation) + L"%。";
                         }
                         if (multiplier > 1) {
                             msg += L"\n天地异象加持，修炼收益翻倍。";
@@ -3679,7 +3763,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             (L"是否突破至 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L"？").c_str(),
                             L"突破境界", MB_YESNO | MB_ICONQUESTION);
                         if (result == IDYES) {
-                            bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier());
+                            int daoBreakthrough = GetDaoBreakthroughModifier();
+                            bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier() + daoBreakthrough);
                             if (success) {
                                 AddMemory(L"境界突破", L"踏入 " + GetRealmName(g_player.realm));
                                 AddMemory(L"时代法则", L"在" + g_worldEraName + L"中破境成功，说明此世大道仍愿意为你开门。");
@@ -3712,6 +3797,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                     } else if (GetEraBreakthroughModifier() < 0) {
                                         successMsg += L"\n即便如此，你仍顶着此世晦涩法则强行破境。";
                                     }
+                                    if (daoBreakthrough > 0) {
+                                        successMsg += L"\n" + g_legacySystem.GetRelic().daoName +
+                                            L"为此番破境托住一线，破境助力+" + to_wstring(daoBreakthrough) + L"。";
+                                    }
                                     ShowNotice(L"突破成功", successMsg);
                                 }
                             } else {
@@ -3719,6 +3808,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 wstring failMsg = L"遭到反噬，气血与修为受损。";
                                 if (GetEraBreakthroughModifier() < 0) {
                                     failMsg += L"\n" + g_worldEraName + L"的天地法则本就晦涩，这次破境尤其艰难。";
+                                }
+                                if (daoBreakthrough > 0) {
+                                    failMsg += L"\n" + g_legacySystem.GetRelic().daoName +
+                                        L"已替你削去部分反噬，但仍未能破关。";
                                 }
                                 ShowNotice(L"突破失败", failMsg);
                             }
@@ -3823,7 +3916,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         int outcome = 0;
                         int outcomeCount = (int)g_currentEvent->choices[choice].outcomes.size();
                         if (outcomeCount > 1) {
-                            int failChance = 45 + g_dynamicWorld.GetAdventureRiskBonus() + GetEraAdventureRiskModifier() - g_player.karma / 10;
+                            int failChance = 45 + g_dynamicWorld.GetAdventureRiskBonus() +
+                                GetEraAdventureRiskModifier() - GetDaoAdventureSuccessModifier() -
+                                g_player.karma / 10;
                             failChance = max(10, min(85, failChance));
                             if (Random(1, 100) <= failChance) {
                                 outcome = Random(1, outcomeCount - 1);
