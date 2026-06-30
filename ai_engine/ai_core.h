@@ -165,7 +165,7 @@ private:
         static const vector<wstring> labels = {
             L"本世势力牵连", L"本世势力", L"本世器物", L"旧世残响", L"前世未竟因果",
             L"本世主线", L"本世持续线索", L"轮回余烬", L"重大事件", L"纪元转折因由",
-            L"纪元转折", L"时代变迁"
+            L"纪元转折", L"时代变迁", L"鸿蒙天象", L"天象影响", L"鸿蒙参悟"
         };
         for (const auto& label : labels) {
             size_t labelPos = text.find(label);
@@ -285,6 +285,11 @@ private:
             player.worldState.find(L"纪元转折因由") != wstring::npos) {
             add(L"remnant");
         }
+        if (player.worldState.find(L"鸿蒙天象") != wstring::npos ||
+            player.worldState.find(L"天象影响") != wstring::npos ||
+            player.daoState.find(L"当前当世鸿蒙天象") != wstring::npos) {
+            add(L"hongmeng");
+        }
         if (player.worldState.find(L"本世持续线索") != wstring::npos ||
             FirstHistoryContaining(player, {L"本世线索推进"}) != L"") {
             add(L"story");
@@ -375,6 +380,9 @@ public:
         if (focus == L"remnant") {
             return L"【传承】旧世残响";
         }
+        if (focus == L"hongmeng") {
+            return L"【传承】鸿蒙天象";
+        }
         if (focus == L"story") {
             return L"【因果】本世线头";
         }
@@ -419,6 +427,10 @@ public:
             hook = FirstLineContaining(player.worldState, {L"本世主线"});
         }
         wstring remnant = FirstLineContaining(player.worldState + L"\n" + player.legacyState, {L"旧世残响", L"旧世", L"断代"});
+        wstring hongmengOmen = FirstLineContaining(player.worldState + L"\n" + player.daoState + L"\n" + player.legacyState,
+            {L"鸿蒙天象", L"当前当世鸿蒙天象"});
+        wstring hongmengInfluence = FirstLineContaining(player.worldState + L"\n" + player.daoState,
+            {L"天象影响", L"本世天象偏向"});
         wstring unfinished = FirstLineContaining(player.legacyState + L"\n" + player.worldState, {L"前世未竟因果", L"前世未竟", L"未竟"});
         if (unfinished.empty()) {
             unfinished = FirstHistoryContaining(player, {L"前世未竟", L"未竟因果"});
@@ -456,6 +468,16 @@ public:
         if (focus == L"remnant" && !remnant.empty()) {
             wstringstream ss;
             ss << L"你在途中撞见一处被今世重新利用的旧世痕迹：" << remnant << L"。它不像普通秘境，更像上一纪元留下的账本。";
+            return ss.str();
+        }
+        if (focus == L"hongmeng" && !hongmengOmen.empty()) {
+            wstringstream ss;
+            ss << L"夜色中，" << hongmengOmen << L"的投影压过识海。";
+            if (!hongmengInfluence.empty()) {
+                ss << hongmengInfluence;
+            } else {
+                ss << L"各方只敢追逐余光，却有人想借你的前世记忆辨认真伪。";
+            }
             return ss.str();
         }
         if (focus == L"story" && !hook.empty()) {
@@ -586,6 +608,12 @@ public:
             choices.push_back(L"立刻退走");
             return choices;
         }
+        if (focus == L"hongmeng") {
+            choices.push_back(L"参悟投影");
+            choices.push_back(L"追查显化");
+            choices.push_back(L"避开禁忌");
+            return choices;
+        }
         if (focus == L"social") {
             choices.push_back(L"借势交谈");
             choices.push_back(L"冷眼旁观");
@@ -658,6 +686,7 @@ public:
         ss << L"- 如果上下文出现“寿元压力”，事件要承认时间正在逼迫玩家；仙帝也会寿尽，只有道祖与大道共生后才不再被寿元追赶。\n";
         ss << L"- 九大鸿蒙至宝是创世级恒在之物，不是装备奖励；道祖无法毁灭，只有掌尽诸道的道祖-天道境具备理论毁灭力，但毁灭没有必要。\n";
         ss << L"- 九大鸿蒙至宝各有固定权柄：如果上下文给出某件至宝及其大道，必须按该权柄写，不要把九件混成同一种万能法宝。\n";
+        ss << L"- 如果上下文出现“鸿蒙天象”或“天象影响”，优先按本世对应至宝、所映大道和当世影响写事件，不要泛化成普通法宝。\n";
         ss << L"- 如果写到鸿蒙至宝，只能写投影、线索、参悟、拒绝或遥远因果，不要写玩家直接获得或摧毁它们。\n";
         ss << L"- 如果上下文出现“鸿蒙参悟”，可以让对应至宝的投影记忆影响判断、道心或因果，但仍不能写成本体入手。\n";
         ss << L"- 道祖-天道境的意义是掌尽诸道、映射凌驾万道的力量，不是鼓励毁灭鸿蒙至宝。\n";
@@ -769,6 +798,11 @@ public:
                                eventText.find(L"灵宝") != wstring::npos ||
                                eventText.find(L"道痕") != wstring::npos ||
                                eventText.find(L"器纹") != wstring::npos;
+        bool touchesHongmeng = containsAny(eventText, {
+            L"鸿蒙", L"创世级", L"天象", L"至宝", L"投影", L"显化",
+            L"鸿蒙道印", L"造化青莲", L"混沌天钟", L"太初源炉", L"归墟玄图",
+            L"无量天书", L"开界神斧", L"轮回古镜", L"万道母鼎"
+        });
         bool touchesDao = containsAny(eventText, {
             L"大道", L"道祖", L"证道", L"掌道", L"天道", L"道音", L"道痕"
         });
@@ -814,6 +848,8 @@ public:
                 ss << L"让今生器物完成了该做的事，也记住本体终会失散，只有器痕可能入梦。";
             } else if (touchesRemnant) {
                 ss << L"没有把眼前线索当成普通机缘，而是看出旧世制度被今世重新改写的痕迹。";
+            } else if (touchesHongmeng) {
+                ss << L"没有妄求创世级本体，只借至宝投影校准道心，记住了这一缕鸿蒙参悟。";
             } else if (touchesTreasure) {
                 ss << L"识海里的通天灵宝残印轻轻一震，像是承认你抓住了这一缕因果。";
             } else if (touchesSocial) {
@@ -834,6 +870,7 @@ public:
             if (touchesUnfinished) ss << L"，因果+10";
             if (touchesStory) ss << L"，因果+6";
             if (touchesLifespan) ss << L"，寿命+18";
+            if (touchesHongmeng) ss << L"，掌道+6，灵宝共鸣+4，因果+6";
             if (touchesTreasure) ss << L"，灵宝共鸣+5";
             if (touchesDao) ss << L"，掌道+3";
             if (touchesArtifact && action.find(L"转手") != wstring::npos) ss << L"，灵石+15";
@@ -847,6 +884,8 @@ public:
                 ss << L"但今生器物承受不住这次取舍，裂痕留在本体上，也留在你心里。";
             } else if (touchesRemnant) {
                 ss << L"却低估了旧世残响在当代秩序里的反噬，断代旧债顺势缠上心神。";
+            } else if (touchesHongmeng) {
+                ss << L"却把鸿蒙投影误认成可夺法宝，触犯禁忌后被至宝余光拒绝。";
             } else if (touchesTreasure) {
                 ss << L"但今生根基还不足以承受那道器纹，通天灵宝残印很快沉寂下去。";
             } else if (touchesSocial) {
@@ -867,6 +906,7 @@ public:
             if (touchesUnfinished) ss << L"，因果-10";
             if (touchesStory) ss << L"，因果-6";
             if (touchesLifespan) ss << L"，寿命-8";
+            if (touchesHongmeng) ss << L"，因果-12";
         }
 
         return ss.str();
