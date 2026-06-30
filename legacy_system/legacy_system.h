@@ -162,6 +162,7 @@ public:
     // 开始新的一世
     void StartNewLife() {
         currentGeneration++;
+        inheritedLegacies.clear();
 
         // 根据前世成就决定继承什么
         if (!pastLives.empty()) {
