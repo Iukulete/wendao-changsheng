@@ -142,6 +142,131 @@ private:
 
     EventTemplate templates;
 
+    bool ContainsAny(const wstring& text, const vector<wstring>& keys) const {
+        for (const auto& key : keys) {
+            if (text.find(key) != wstring::npos) return true;
+        }
+        return false;
+    }
+
+    wstring TrimContext(const wstring& text) const {
+        size_t start = text.find_first_not_of(L" \t\r\n");
+        if (start == wstring::npos) return L"";
+        size_t end = text.find_last_not_of(L" \t\r\n");
+        return text.substr(start, end - start + 1);
+    }
+
+    wstring StripContextPrefix(const wstring& line) const {
+        wstring text = TrimContext(line);
+        while (!text.empty() && (text[0] == L'-' || text[0] == L'*')) {
+            text = TrimContext(text.substr(1));
+        }
+
+        static const vector<wstring> labels = {
+            L"本世势力牵连", L"本世势力", L"本世器物", L"旧世残响", L"前世未竟因果",
+            L"本世主线", L"本世持续线索", L"轮回余烬", L"重大事件", L"时代变迁"
+        };
+        for (const auto& label : labels) {
+            size_t labelPos = text.find(label);
+            if (labelPos == wstring::npos) continue;
+            size_t colon = text.find(L":", labelPos + label.size());
+            size_t cnColon = text.find(L"：", labelPos + label.size());
+            if (colon == wstring::npos || (cnColon != wstring::npos && cnColon < colon)) {
+                colon = cnColon;
+            }
+            if (colon != wstring::npos) {
+                return TrimContext(text.substr(colon + 1));
+            }
+        }
+        return text;
+    }
+
+    wstring ShortContext(const wstring& text, size_t limit = 44) const {
+        wstring clean;
+        bool lastSpace = false;
+        for (wchar_t ch : text) {
+            if (ch == L'\r' || ch == L'\n' || ch == L'\t') {
+                if (!lastSpace) {
+                    clean.push_back(L' ');
+                    lastSpace = true;
+                }
+            } else {
+                clean.push_back(ch);
+                lastSpace = (ch == L' ');
+            }
+        }
+        clean = TrimContext(clean);
+        if (clean.size() > limit) {
+            clean = clean.substr(0, limit) + L"…";
+        }
+        return clean;
+    }
+
+    wstring FirstLineContaining(const wstring& text, const vector<wstring>& keys) const {
+        wstringstream ss(text);
+        wstring line;
+        while (getline(ss, line)) {
+            if (ContainsAny(line, keys)) {
+                return ShortContext(StripContextPrefix(line));
+            }
+        }
+        return L"";
+    }
+
+    wstring FirstHistoryContaining(const PlayerContext& player, const vector<wstring>& keys) const {
+        for (int i = (int)player.history.size() - 1; i >= 0; --i) {
+            if (ContainsAny(player.history[i], keys)) {
+                return ShortContext(StripContextPrefix(player.history[i]));
+            }
+        }
+        return L"";
+    }
+
+    wstring FirstBulletAfter(const wstring& text, const wstring& header) const {
+        size_t pos = text.find(header);
+        if (pos == wstring::npos) return L"";
+        wstringstream ss(text.substr(pos));
+        wstring line;
+        bool afterHeader = false;
+        while (getline(ss, line)) {
+            if (!afterHeader) {
+                afterHeader = true;
+                continue;
+            }
+            wstring stripped = StripContextPrefix(line);
+            if (!stripped.empty() && stripped != header) {
+                return ShortContext(stripped);
+            }
+        }
+        return L"";
+    }
+
+    wstring PickFallbackFocus(PlayerContext& player) const {
+        if (player.worldState.find(L"本世势力牵连") != wstring::npos ||
+            player.familyState.find(L"本世势力") != wstring::npos) {
+            return L"faction";
+        }
+        if (player.worldState.find(L"本世器物") != wstring::npos) {
+            return L"artifact";
+        }
+        if (player.legacyState.find(L"前世未竟因果") != wstring::npos ||
+            player.worldState.find(L"前世未竟因果") != wstring::npos) {
+            return L"unfinished";
+        }
+        if (player.worldState.find(L"旧世残响") != wstring::npos ||
+            player.legacyState.find(L"旧世残响") != wstring::npos) {
+            return L"remnant";
+        }
+        if (player.socialState.find(L"本世人脉") != wstring::npos) {
+            return L"social";
+        }
+        if (player.daoState.find(L"大道特性") != wstring::npos ||
+            player.daoState.find(L"掌道") != wstring::npos) {
+            return L"dao";
+        }
+        return L"generic";
+    }
+
 public:
     AIGenerator() : gen(rd()) {
         InitTemplates();
@@ -185,6 +310,26 @@ public:
 
     // 根据玩家上下文生成动态事件
     wstring GenerateEventTitle(PlayerContext& player) {
+        wstring focus = PickFallbackFocus(player);
+        if (focus == L"faction") {
+            return player.karma < -40 ? L"【危机】势力旧债" : L"【因果】势力来书";
+        }
+        if (focus == L"artifact") {
+            return L"【奇遇】当世器鸣";
+        }
+        if (focus == L"unfinished") {
+            return L"【因果】前世未竟";
+        }
+        if (focus == L"remnant") {
+            return L"【传承】旧世残响";
+        }
+        if (focus == L"social") {
+            return L"【奇遇】人情暗流";
+        }
+        if (focus == L"dao") {
+            return L"【传承】道痕回声";
+        }
+
         uniform_int_distribution<> dis(0, templates.locations.size() - 1);
         wstring location = templates.locations[dis(gen)];
 
@@ -202,6 +347,58 @@ public:
     }
 
     wstring GenerateEventDescription(PlayerContext& player) {
+        wstring focus = PickFallbackFocus(player);
+        wstring faction = FirstLineContaining(player.worldState, {L"本世势力牵连", L"本世势力"});
+        if (faction.empty()) {
+            faction = FirstLineContaining(player.familyState, {L"本世势力"});
+        }
+        wstring artifact = FirstBulletAfter(player.worldState, L"本世器物");
+        if (artifact.empty()) {
+            artifact = FirstLineContaining(player.worldState, {L"（当世兵刃", L"（当世法宝", L"本世器物"});
+        }
+        wstring hook = FirstBulletAfter(player.worldState, L"本世持续线索");
+        if (hook.empty()) {
+            hook = FirstLineContaining(player.worldState, {L"本世主线"});
+        }
+        wstring remnant = FirstLineContaining(player.worldState + L"\n" + player.legacyState, {L"旧世残响", L"旧世", L"断代"});
+        wstring unfinished = FirstLineContaining(player.legacyState + L"\n" + player.worldState, {L"前世未竟因果", L"前世未竟", L"未竟"});
+        if (unfinished.empty()) {
+            unfinished = FirstHistoryContaining(player, {L"前世未竟", L"未竟因果"});
+        }
+        wstring social = FirstLineContaining(player.socialState, {L"势力牵连", L"父亲", L"母亲", L"同代", L"欺压者", L"竞争者", L"长辈", L"联系人"});
+
+        if (focus == L"faction" && !faction.empty()) {
+            wstringstream ss;
+            ss << L"你外出时，" << faction << L"的旧债忽然被人当众提起；旁观者有人羡慕，也有人等你出错。";
+            if (!hook.empty()) ss << L"此事又牵到" << hook;
+            return ss.str();
+        }
+        if (focus == L"artifact" && !artifact.empty()) {
+            wstringstream ss;
+            ss << L"你随身的" << artifact << L"忽然生出细微裂响，像在提醒你它只是今生器物，却可引出一段器痕因果。";
+            return ss.str();
+        }
+        if (focus == L"unfinished" && !unfinished.empty()) {
+            wstringstream ss;
+            ss << L"一段前世未了的旧事重新浮上心头：" << unfinished << L"。今生有人借此设局，逼你表态。";
+            return ss.str();
+        }
+        if (focus == L"remnant" && !remnant.empty()) {
+            wstringstream ss;
+            ss << L"你在途中撞见一处被今世重新利用的旧世痕迹：" << remnant << L"。它不像普通秘境，更像上一纪元留下的账本。";
+            return ss.str();
+        }
+        if (focus == L"social" && !social.empty()) {
+            wstringstream ss;
+            ss << L"近日" << social << L"开始频繁试探你，话里有认可也有轻慢，像是在等你露出前世不该有的破绽。";
+            return ss.str();
+        }
+        if (focus == L"dao") {
+            wstringstream ss;
+            ss << L"你行至灵气回旋处，心底大道旧痕微微发热；这不是境界压人，而是所掌之道在提醒你取舍。";
+            return ss.str();
+        }
+
         uniform_int_distribution<> charDis(0, templates.characters.size() - 1);
         uniform_int_distribution<> itemDis(0, templates.items.size() - 1);
         uniform_int_distribution<> actionDis(0, templates.actions.size() - 1);
@@ -263,6 +460,44 @@ public:
 
     vector<wstring> GenerateChoices(PlayerContext& player) {
         vector<wstring> choices;
+        wstring focus = PickFallbackFocus(player);
+
+        if (focus == L"faction") {
+            choices.push_back(L"应约赴会");
+            choices.push_back(L"暗查旧债");
+            choices.push_back(player.karma < -40 ? L"借势反压" : L"暂避锋芒");
+            return choices;
+        }
+        if (focus == L"artifact") {
+            choices.push_back(L"祭出器物");
+            choices.push_back(L"封存器痕");
+            choices.push_back(L"转手换缘");
+            return choices;
+        }
+        if (focus == L"unfinished") {
+            choices.push_back(L"追问旧因");
+            choices.push_back(L"稳住今生");
+            choices.push_back(L"斩断牵连");
+            return choices;
+        }
+        if (focus == L"remnant") {
+            choices.push_back(L"细查遗痕");
+            choices.push_back(L"借势破局");
+            choices.push_back(L"立刻退走");
+            return choices;
+        }
+        if (focus == L"social") {
+            choices.push_back(L"借势交谈");
+            choices.push_back(L"冷眼旁观");
+            choices.push_back(player.karma >= 0 ? L"给足体面" : L"反将一军");
+            return choices;
+        }
+        if (focus == L"dao") {
+            choices.push_back(L"顺道而行");
+            choices.push_back(L"反观本心");
+            choices.push_back(L"强压道痕");
+            return choices;
+        }
 
         // 基础选择
         choices.push_back(L"主动交谈");
@@ -423,6 +658,19 @@ public:
         bool touchesDao = containsAny(eventText, {
             L"大道", L"道祖", L"证道", L"掌道", L"天道", L"道音", L"道痕"
         });
+        bool touchesFaction = containsAny(eventText, {
+            L"本世势力", L"势力", L"旧债", L"名册", L"工坊", L"道网",
+            L"仙朝", L"残宗", L"宗门", L"赴会", L"查债"
+        });
+        bool touchesArtifact = containsAny(eventText, {
+            L"本世器物", L"当世兵刃", L"当世法宝", L"祭出器物",
+            L"封存器痕", L"转手换缘", L"今生器物"
+        }) || (player.worldState.find(L"本世器物") != wstring::npos &&
+              containsAny(eventText, {L"器物", L"兵刃", L"法宝", L"器痕"}));
+        bool touchesUnfinished = containsAny(eventText, {
+            L"前世未竟", L"未竟因果", L"追问旧因", L"旧因", L"稳住今生"
+        }) || (!player.legacyState.empty() && player.legacyState.find(L"前世未竟因果") != wstring::npos &&
+              containsAny(eventText, {L"前世", L"旧事", L"旧因", L"因果"}));
         bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
                              (eventText.find(L"修士") != wstring::npos ||
                               eventText.find(L"长辈") != wstring::npos ||
@@ -437,7 +685,13 @@ public:
         wstringstream ss;
         if (success) {
             ss << L"你选择「" << action << L"」，";
-            if (touchesRemnant) {
+            if (touchesUnfinished) {
+                ss << L"没有把前世旧债当成梦兆，而是替今生争回了主动权。";
+            } else if (touchesFaction) {
+                ss << L"顺势摸清了对方真正想要的筹码，本世势力对你的评价因此改写。";
+            } else if (touchesArtifact) {
+                ss << L"让今生器物完成了该做的事，也记住本体终会失散，只有器痕可能入梦。";
+            } else if (touchesRemnant) {
                 ss << L"没有把眼前线索当成普通机缘，而是看出旧世制度被今世重新改写的痕迹。";
             } else if (touchesTreasure) {
                 ss << L"识海里的通天灵宝残印轻轻一震，像是承认你抓住了这一缕因果。";
@@ -451,11 +705,20 @@ public:
             ss << L"\n修为+";
             ss << (50 + player.realm * 10);
             if (touchesRemnant) ss << L"，因果+8";
+            if (touchesFaction) ss << L"，因果+6";
+            if (touchesUnfinished) ss << L"，因果+10";
             if (touchesTreasure) ss << L"，灵宝共鸣+5";
             if (touchesDao) ss << L"，掌道+3";
+            if (touchesArtifact && action.find(L"转手") != wstring::npos) ss << L"，灵石+15";
         } else {
             ss << L"你选择「" << action << L"」，";
-            if (touchesRemnant) {
+            if (touchesUnfinished) {
+                ss << L"却被前世未竟因果牵着走，今生立场反而被旁人看穿。";
+            } else if (touchesFaction) {
+                ss << L"却误判了势力旧债的分量，对方没有翻脸，只是把你的名字记得更重。";
+            } else if (touchesArtifact) {
+                ss << L"但今生器物承受不住这次取舍，裂痕留在本体上，也留在你心里。";
+            } else if (touchesRemnant) {
                 ss << L"却低估了旧世残响在当代秩序里的反噬，断代旧债顺势缠上心神。";
             } else if (touchesTreasure) {
                 ss << L"但今生根基还不足以承受那道器纹，通天灵宝残印很快沉寂下去。";
@@ -469,6 +732,8 @@ public:
             ss << L"\n气血-";
             ss << (30 + player.realm * 5);
             if (touchesRemnant || touchesSocial) ss << L"，因果-8";
+            if (touchesFaction) ss << L"，因果-6";
+            if (touchesUnfinished) ss << L"，因果-10";
         }
 
         return ss.str();
