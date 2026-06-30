@@ -2448,17 +2448,21 @@ wstring GetHeavenlyDaoRequirementText() {
 bool ShouldTriggerLegacyEchoEvent() {
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(5);
     auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(6);
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
     int unfinishedPressure = (int)unfinishedKarmas.size() * 30;
     int jadeMemoryPressure = (int)memoryFragments.size() * 16;
     int totalEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) +
+                    g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE) +
                     g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) +
                     g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) +
                     abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION)) +
                     g_legacySystem.GetRelicResonanceBonus() * 2 +
-                    unfinishedPressure + jadeMemoryPressure;
+                    unfinishedPressure + jadeMemoryPressure +
+                    (int)inherited.size() * 10;
     if (totalEcho <= 0) return false;
 
-    int chance = 12 + totalEcho / 18 + (int)unfinishedKarmas.size() * 6 + (int)memoryFragments.size() * 2;
+    int chance = 12 + totalEcho / 18 + (int)unfinishedKarmas.size() * 6 +
+                 (int)memoryFragments.size() * 2 + (int)inherited.size() * 2;
     if (g_worldEraName == L"废土返道纪") chance += 8;
     if (g_worldEraName == L"星穹道网纪") chance += 4;
     chance = max(10, min(58, chance));
@@ -2587,18 +2591,133 @@ Event BuildCompanionJadeMemoryEvent(const vector<wstring>& memoryFragments) {
     return evt;
 }
 
+Event BuildInheritedLegacyEchoEvent(const LegacyItem& legacy) {
+    Event evt;
+    int power = abs(legacy.power);
+    int minorGain = min(95, 45 + power / 3);
+    int majorGain = min(180, 70 + power / 2);
+    int riskLoss = min(55, 18 + power / 5);
+    wstring legacyDesc = CompactMemoryFragment(legacy.description);
+    wstring eraText = BuildUnfinishedKarmaEraPressureText();
+
+    if (legacy.type == LEGACY_TECHNIQUE) {
+        evt.title = L"【传承】" + legacy.name;
+        evt.description = L"你外出历练时，识海忽然自动运转" + legacy.name +
+            L"的残缺脉络。" + legacyDesc + eraText + L"这不是装备，而是前世亲手留下的行功影子。";
+        evt.choices = {
+            {L"温习旧法", {
+                L"你顺着前世行功脉络重走一遍，今生经脉少走许多弯路。\n修为+" + to_wstring(majorGain),
+                L"旧法太贴近前世肉身，今生经脉一时承受不住。\n气血-" + to_wstring(riskLoss)
+            }, 8},
+            {L"逆推缺口", {
+                L"你没有照搬旧法，而是反推出最适合今生的一处缺口。\n修为+" + to_wstring(minorGain) + L"，因果+6",
+                L"推演半途被旧习带偏，反而多绕一段弯路。\n修为-20"
+            }, 5},
+            {L"暂封旧法", {
+                L"你承认传承存在，却不让它替今生作主，道心更稳。\n寿命+4，修为+" + to_wstring(minorGain / 2),
+                L"封得太死，前世行功手感短暂沉寂。"
+            }, 2}
+        };
+        return evt;
+    }
+
+    if (legacy.type == LEGACY_TREASURE) {
+        evt.title = L"【传承】" + legacy.name;
+        evt.description = L"胸口旧玉微温，远处忽有器鸣回应" + legacy.name +
+            L"。" + legacyDesc + L"普通法宝不能跨世，留下来的只是通天灵宝可辨认的器痕。";
+        evt.choices = {
+            {L"回应器鸣", {
+                L"你没有妄想取回前世法宝本体，只让器痕与通天灵宝残印短暂相认。\n修为+" + to_wstring(minorGain) + L"，灵宝共鸣+8",
+                L"器鸣太急，像把前世执念一并拖了回来。\n气血-" + to_wstring(riskLoss)
+            }, 8},
+            {L"封存器痕", {
+                L"你把这道器痕记入今生，不急着索要回报。\n灵宝共鸣+5，因果+5",
+                L"器痕沉入识海，短期内再无回应。"
+            }, 5},
+            {L"强夺残响", {
+                L"你只夺得一缕残响，立刻明白凡兵与普通法宝终会失散。\n修为+" + to_wstring(minorGain),
+                L"你把残响误认成本体，险些被旧日器意反噬。\n气血-" + to_wstring(riskLoss + 8) + L"，因果-8"
+            }, -6}
+        };
+        return evt;
+    }
+
+    if (legacy.type == LEGACY_KNOWLEDGE) {
+        evt.title = L"【因果】" + legacy.name;
+        evt.description = L"一场小冲突尚未爆发，你的手已经先一步找到了破局角度。" +
+            legacyDesc + L"这种本能来自前世，但今生局势未必完全相同。";
+        evt.choices = {
+            {L"顺势出手", {
+                L"你借前世经验抢先落子，把凶险压成一次漂亮反击。\n修为+" + to_wstring(majorGain),
+                L"旧经验和今生局势错位，你反被对方抓住空门。\n气血-" + to_wstring(riskLoss)
+            }, 5},
+            {L"拆招复盘", {
+                L"你没有急着动手，而是把旧经验拆成今生能用的判断。\n修为+" + to_wstring(minorGain) + L"，因果+4",
+                L"复盘太久，错过了先机。"
+            }, 4},
+            {L"改写旧招", {
+                L"你把前世招式改成今生的新习惯，终于不像被旧身影牵着走。\n修为+" + to_wstring(minorGain) + L"，寿命+2",
+                L"改写太急，旧习与新身互相拉扯。\n气血-18"
+            }, 3}
+        };
+        return evt;
+    }
+
+    if (legacy.type == LEGACY_REPUTATION) {
+        bool goodName = legacy.power >= 0;
+        evt.title = goodName ? L"【因果】善名递帖" : L"【危机】恶名追身";
+        evt.description = L"有人借" + legacy.name + L"认出你身上一丝不属于今生的名声。" +
+            legacyDesc + eraText + L"名声不是数值，它会变成旁人的态度。";
+        evt.choices = {
+            {goodName ? L"承接善名" : L"当众澄清", {
+                goodName
+                    ? L"你没有辜负这份旧名，旁人愿意先给你一次机会。\n修为+" + to_wstring(minorGain) + L"，因果+12"
+                    : L"你没有让恶名替今生定罪，反而逼对方拿出证据。\n修为+" + to_wstring(minorGain) + L"，因果+8",
+                goodName
+                    ? L"善名带来过高期待，旁人开始用前世标准要求你。\n因果-6"
+                    : L"澄清太急，反让仇家确认你与旧名有关。\n气血-" + to_wstring(riskLoss) + L"，因果-10"
+            }, goodName ? 10 : 4},
+            {L"借名行事", {
+                L"你短暂借用旧名换来资源，却记得这份便利迟早要还。\n灵石+18，修为+" + to_wstring(minorGain / 2),
+                L"旧名反噬，引来更多窥探。\n因果-8"
+            }, goodName ? 2 : -4},
+            {L"切开今生", {
+                L"你承认前世影响，却坚持今生另算，道心因此清醒。\n寿命+3，修为+" + to_wstring(minorGain / 2),
+                L"旁人不接受你的切割，旧名仍在暗处流传。"
+            }, 3}
+        };
+        return evt;
+    }
+
+    evt.title = L"【因果】" + legacy.name;
+    evt.description = L"前世留下的" + legacy.name + L"忽然浮出水面。" +
+        legacyDesc + L"你知道这不是重开一世，而是旧梦与今生互相牵引。";
+    evt.choices = {
+        {L"辨认旧忆", {L"你把这段传承化作今生判断。\n修为+" + to_wstring(minorGain) + L"，因果+6", L"旧忆过重，扰乱心神。\n气血-" + to_wstring(riskLoss)}, 6},
+        {L"查证梦痕", {L"你查到一条能继续追索的线索。\n修为+" + to_wstring(minorGain / 2) + L"，灵石+10", L"线索似是而非，反添疑云。"}, 3},
+        {L"封存片段", {L"你暂时把旧忆压下，不让它吞没今生。\n寿命+2，修为+35", L"片段沉寂，再难唤回。"}, 1}
+    };
+    return evt;
+}
+
 Event BuildLegacyEchoEvent() {
     Event evt;
 
     int memoryEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int knowledgeEcho = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     const LegacyRelic& relic = g_legacySystem.GetRelic();
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(5);
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
 
     if (!unfinishedKarmas.empty() && Random(1, 100) <= 65) {
         return BuildUnfinishedKarmaEchoEvent(unfinishedKarmas);
+    }
+
+    if (!inherited.empty() && Random(1, 100) <= 54) {
+        return BuildInheritedLegacyEchoEvent(inherited[Random(0, (int)inherited.size() - 1)]);
     }
 
     auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(6);
@@ -2637,6 +2756,17 @@ Event BuildLegacyEchoEvent() {
             {L"顺应道音", {L"你没有强求力量，只让旧日大道在心底留下一笔\n修为+160，因果+10", L"大道太重，今生神魂一时难以承受\n气血-35"}, 8},
             {L"借道压人", {L"你短暂借来祖境威压，逼退窥伺者\n修为+120，灵石+30", L"旧道反噬，旁人也记住了你的异常\n因果-20"}, -8},
             {L"另立今生", {L"你承认前世，却不愿完全被前世吞没\n修为+90，寿命+8年", L"斩断太急，旧日道痕沉寂许久"}, 6}
+        };
+        return evt;
+    }
+
+    if (techniqueEcho >= max(memoryEcho, max(knowledgeEcho, treasureEcho)) && techniqueEcho > 0) {
+        evt.title = L"【传承】前世功法余韵";
+        evt.description = L"你忽然按前世熟悉的节奏运转周天，像有一卷残缺功法隔着轮回替你校准经脉。";
+        evt.choices = {
+            {L"顺势行功", {L"你借前世功法余韵少走一段弯路\n修为+130", L"旧法与今生体质不合\n气血-28"}, 6},
+            {L"补全残篇", {L"你把残篇改写成今生能修的版本\n修为+95，因果+6", L"补得太急，越补越乱\n修为-20"}, 4},
+            {L"另开新路", {L"你不完全照搬前世，道心因此更稳\n寿命+4，修为+50", L"旧法暂时沉寂"}, 3}
         };
         return evt;
     }
@@ -3443,11 +3573,12 @@ void ClampFamilyBackground(FamilyBackground& family) {
 wstring ApplyInheritedLegacyToBirth() {
     auto& inherited = g_legacySystem.GetInheritedLegacies();
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int techniqueBonus = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int knowledgeBonus = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int reputationBonus = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     int treasureBonus = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int relicBonus = g_legacySystem.GetRelicResonanceBonus();
-    if (inherited.empty() && memoryBonus == 0 && knowledgeBonus == 0 &&
+    if (inherited.empty() && memoryBonus == 0 && techniqueBonus == 0 && knowledgeBonus == 0 &&
         reputationBonus == 0 && treasureBonus == 0 && relicBonus == 0) {
         return L"";
     }
@@ -3481,6 +3612,13 @@ wstring ApplyInheritedLegacyToBirth() {
         family.fame += min(12, memoryBonus / 12);
         AppendFamilySecret(family, L"幼年常梦呓前世地名与旧债，旁人只当你早慧或中邪");
         addNote(L"前世记忆没有只变成数值，而是提前渗进幼年梦境和家中隐情。");
+    }
+
+    if (techniqueBonus >= 35) {
+        family.fame += min(10, techniqueBonus / 16);
+        family.wealth += min(6, techniqueBonus / 24);
+        AppendFamilySecret(family, L"幼年行功姿势不像初学，疑似带着前世功法残影");
+        addNote(L"前世功法传承会在今生行功、试炼和长辈观察中提前露出端倪。");
     }
 
     if (knowledgeBonus >= 35) {
@@ -4757,12 +4895,14 @@ void StartNextLife() {
     wstring birthEcho = ApplyInheritedLegacyToBirth();
 
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int techniqueBonus = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int knowledgeBonus = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int reputationBonus = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     int treasureBonus = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int relicBonus = g_legacySystem.GetRelicResonanceBonus();
+    auto& inheritedLegacies = g_legacySystem.GetInheritedLegacies();
 
-    g_player.exp += memoryBonus + relicBonus * 3;
+    g_player.exp += memoryBonus + techniqueBonus + relicBonus * 3;
     g_player.attackPower += knowledgeBonus / 5 + relicBonus / 2;
     g_player.defense += treasureBonus / 12;
     g_player.karma += reputationBonus;
@@ -4784,13 +4924,24 @@ void StartNextLife() {
 
     wstringstream detail;
     detail << L"第" << g_generation << L"世醒来";
-    if (memoryBonus || knowledgeBonus || reputationBonus || treasureBonus || relicBonus) {
+    if (memoryBonus || techniqueBonus || knowledgeBonus || reputationBonus || treasureBonus || relicBonus) {
         detail << L"，继承前世余韵：记忆+" << memoryBonus
+               << L"，功法+" << techniqueBonus
                << L"，战斗+" << knowledgeBonus / 5
                << L"，因果" << (reputationBonus >= 0 ? L"+" : L"") << reputationBonus
                << L"，灵宝共鸣+" << relicBonus;
     }
     AddMemory(L"轮回再起", detail.str());
+    if (!inheritedLegacies.empty()) {
+        wstringstream inheritedText;
+        inheritedText << L"今生最先浮现的前世传承：";
+        for (size_t i = 0; i < min<size_t>(inheritedLegacies.size(), 4); ++i) {
+            if (i > 0) inheritedText << L"、";
+            inheritedText << inheritedLegacies[i].name;
+        }
+        inheritedText << L"。这些传承会在历练中被点名牵动，而不只是开局数值。";
+        AddMemory(L"继承传承", inheritedText.str());
+    }
     AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
