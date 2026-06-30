@@ -4,13 +4,13 @@ set -euo pipefail
 WORK_DIR="${WORK_DIR:-$HOME/wendao_lora}"
 MODEL_ID="${MODEL_ID:-google/gemma-4-E4B-it-qat-q4_0-unquantized}"
 CONTAINER_OUT_DIR="${CONTAINER_OUT_DIR:-/workspace/out/wendao_gemma4_lora}"
-TRAIN_COUNT="${TRAIN_COUNT:-1200}"
-EVAL_COUNT="${EVAL_COUNT:-120}"
+TRAIN_COUNT="${TRAIN_COUNT:-900}"
+EVAL_COUNT="${EVAL_COUNT:-90}"
 EPOCHS="${EPOCHS:-1}"
-MAX_LENGTH="${MAX_LENGTH:-1152}"
-GRAD_ACCUM="${GRAD_ACCUM:-8}"
-LORA_R="${LORA_R:-16}"
-LORA_ALPHA="${LORA_ALPHA:-32}"
+MAX_LENGTH="${MAX_LENGTH:-768}"
+GRAD_ACCUM="${GRAD_ACCUM:-16}"
+LORA_R="${LORA_R:-8}"
+LORA_ALPHA="${LORA_ALPHA:-16}"
 
 mkdir -p "$WORK_DIR/data" "$WORK_DIR/out" "$WORK_DIR/logs"
 
@@ -39,6 +39,7 @@ docker run --rm \
   -e HF_ENDPOINT=https://hf-mirror.com \
   -e TRANSFORMERS_CACHE=/hf-cache/hub \
   -e HF_XET_HIGH_PERFORMANCE=1 \
+  -e PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
   -e TOKENIZERS_PARALLELISM=false \
   nvidia/cuda:12.4.1-devel-ubuntu22.04 \
   bash -lc "
@@ -60,6 +61,7 @@ docker run --rm \
       --grad-accum '$GRAD_ACCUM' \
       --lora-r '$LORA_R' \
       --lora-alpha '$LORA_ALPHA' \
-      --load-in-4bit
+      --load-in-4bit \
+      --skip-kbit-prepare
     python3 /llama.cpp/convert_lora_to_gguf.py '$CONTAINER_OUT_DIR' --outfile '$CONTAINER_OUT_DIR/wendao_gemma4_lora.gguf' || true
   "

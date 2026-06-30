@@ -105,6 +105,7 @@ def parse_args():
     parser.add_argument("--lora-dropout", type=float, default=0.05)
     parser.add_argument("--target-modules", default="q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj")
     parser.add_argument("--load-in-4bit", action="store_true")
+    parser.add_argument("--skip-kbit-prepare", action="store_true")
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--save-every", type=int, default=0)
     parser.add_argument("--eval-generations", type=int, default=4)
@@ -142,8 +143,13 @@ def main():
         attn_implementation="eager",
     )
     model.config.use_cache = False
-    if args.load_in_4bit:
+    for param in model.parameters():
+        param.requires_grad_(False)
+    if args.load_in_4bit and not args.skip_kbit_prepare:
+        print("preparing model for k-bit training", flush=True)
         model = prepare_model_for_kbit_training(model)
+    elif args.load_in_4bit:
+        print("skipping k-bit preparation to reduce peak VRAM", flush=True)
     if hasattr(model, "enable_input_require_grads"):
         model.enable_input_require_grads()
     if hasattr(model, "gradient_checkpointing_enable"):
