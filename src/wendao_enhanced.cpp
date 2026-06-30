@@ -2780,6 +2780,108 @@ void GenerateLifeStoryHooks() {
     }
 }
 
+void AppendFamilySecret(FamilyBackground& family, const wstring& secret) {
+    if (secret.empty()) return;
+    if (family.secret.find(secret) != wstring::npos) return;
+    if (family.secret.empty()) family.secret = secret;
+    else family.secret += wstring(L"；") + secret;
+}
+
+void ClampFamilyBackground(FamilyBackground& family) {
+    family.fame = max(-100, min(100, family.fame));
+    family.wealth = max(0, min(60, family.wealth));
+}
+
+wstring ApplyInheritedLegacyToBirth() {
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
+    int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int knowledgeBonus = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
+    int reputationBonus = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    int treasureBonus = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
+    int relicBonus = g_legacySystem.GetRelicResonanceBonus();
+    if (inherited.empty() && memoryBonus == 0 && knowledgeBonus == 0 &&
+        reputationBonus == 0 && treasureBonus == 0 && relicBonus == 0) {
+        return L"";
+    }
+
+    FamilyBackground& family = g_player.family;
+    vector<wstring> notes;
+    auto addNote = [&](const wstring& note) {
+        if (!note.empty() && find(notes.begin(), notes.end(), note) == notes.end()) {
+            notes.push_back(note);
+        }
+    };
+
+    if (treasureBonus >= 35 || relicBonus >= 12) {
+        if ((family.origin == L"寒门农户" || family.origin == L"坊市小族" || family.origin == L"孤儿") &&
+            Random(1, 100) <= 65) {
+            family.origin = Random(0, 1) == 0 ? L"隐秘血脉" : L"没落修真世家";
+            if (family.familyName == L"无名" || family.familyName.empty()) {
+                family.familyName = PickOne({L"沈氏旧族", L"陆氏旧族", L"顾氏旧族", L"林氏旧族"});
+            }
+        }
+        family.fame += 8 + min(22, treasureBonus / 8 + relicBonus / 2);
+        family.wealth += min(14, 4 + treasureBonus / 18 + relicBonus / 4);
+        AppendFamilySecret(family, L"出生时曾有通天灵宝器纹一闪，家中长辈选择隐瞒");
+        if (!family.knowsParents && family.guardian.empty()) {
+            family.guardian = PickOne({L"护道旧仆", L"沉默剑修", L"外门执事"});
+        }
+        addNote(L"通天灵宝残印扰动今生出身，家族或养育者知道你身上有不可明说的器纹。");
+    }
+
+    if (memoryBonus >= 40) {
+        family.fame += min(12, memoryBonus / 12);
+        AppendFamilySecret(family, L"幼年常梦呓前世地名与旧债，旁人只当你早慧或中邪");
+        addNote(L"前世记忆没有只变成数值，而是提前渗进幼年梦境和家中隐情。");
+    }
+
+    if (knowledgeBonus >= 35) {
+        family.wealth += min(8, knowledgeBonus / 10);
+        AppendFamilySecret(family, L"你无师自通地认得几种阵纹，已被附近势力暗中记录");
+        addNote(L"前世经验让你显得不合年龄，工坊、宗门或道网更容易提前盯上你。");
+    }
+
+    if (reputationBonus >= 30) {
+        family.fame += min(25, reputationBonus / 4);
+        AppendFamilySecret(family, L"前世善名化作今生接引，有长辈愿意先给你一次机会");
+        addNote(L"前世善名影响今生门第和长辈态度，不只是开局因果加成。");
+    } else if (reputationBonus <= -30) {
+        family.fame += max(-25, reputationBonus / 4);
+        AppendFamilySecret(family, L"前世恶名被仇家旧册记下，今生尚未修行就有人试探");
+        addNote(L"前世恶名追进今生身份，仇家和势力会更早借家世试探你。");
+    }
+
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    if (relic.daoLinked && relic.daoDepth >= 80) {
+        AppendFamilySecret(family, wstring(L"旧玉简中反复出现") + relic.daoName + L"四字，父母或养育者不敢解释");
+        family.fame += min(16, relic.daoDepth / 20);
+        addNote(wstring(L"上一世证成的") + relic.daoName + L"成为今生身世谜团的一部分。");
+    }
+
+    if (!inherited.empty()) {
+        wstringstream ss;
+        ss << L"最先浮现的传承为";
+        int count = 0;
+        for (const auto& legacy : inherited) {
+            if (count++ >= 2) break;
+            if (count > 1) ss << L"、";
+            ss << legacy.name;
+        }
+        ss << L"，它们会改变今生最早遇见的人和势力。";
+        addNote(ss.str());
+    }
+
+    ClampFamilyBackground(family);
+    if (notes.empty()) return L"";
+
+    wstringstream out;
+    for (size_t i = 0; i < notes.size(); ++i) {
+        if (i > 0) out << L" ";
+        out << notes[i];
+    }
+    return CompactMemoryFragment(out.str());
+}
+
 wstring ReadAiStatusFile(const wchar_t* fileName) {
     return ReadUtf8FileToWide(WideToUtf8(fileName));
 }
@@ -3714,7 +3816,7 @@ void TrackHongmengInsightFromEvent(const Event& event, const Choice& choice, con
     }
 }
 
-bool AddLifeStoryHook(const wstring& hook) {
+bool AddLifeStoryHook(const wstring& hook, bool recordMemory = true) {
     if (hook.empty()) return false;
 
     wstring compact = CompactMemoryFragment(hook);
@@ -3730,7 +3832,9 @@ bool AddLifeStoryHook(const wstring& hook) {
     while (g_lifeStoryHooks.size() > 7) {
         g_lifeStoryHooks.erase(g_lifeStoryHooks.begin());
     }
-    AddMemory(L"本世线索推进", compact);
+    if (recordMemory) {
+        AddMemory(L"本世线索推进", compact);
+    }
     return true;
 }
 
@@ -3950,6 +4054,7 @@ void StartNextLife() {
 
     g_player = Player();
     g_player.name = oldName;
+    wstring birthEcho = ApplyInheritedLegacyToBirth();
 
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int knowledgeBonus = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
@@ -3972,6 +4077,9 @@ void StartNextLife() {
     g_discoveredItems.clear();
     g_lifeArtifacts.clear();
     GenerateSocialRumors();
+    if (!birthEcho.empty()) {
+        AddLifeStoryHook(wstring(L"传承扰动出身：") + birthEcho, false);
+    }
 
     wstringstream detail;
     detail << L"第" << g_generation << L"世醒来";
@@ -4002,6 +4110,9 @@ void StartNextLife() {
         AddMemory(L"通天灵宝", g_legacySystem.GetDaoContextText());
     }
     AddMemory(L"此世出身", GetFamilySummary(g_player.family));
+    if (!birthEcho.empty()) {
+        AddMemory(L"传承扰动出身", birthEcho);
+    }
     if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
     if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
     DiscoverItemsFromText(BuildFactionTieDigest());
