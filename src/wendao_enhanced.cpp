@@ -3195,6 +3195,32 @@ wstring BuildTechniqueLegendLabel(const LegacyItem& legacy) {
     return L"失传古法·" + name;
 }
 
+wstring BuildTechniqueEraInterpretation(const wstring& legendLabel) {
+    if (legendLabel.empty()) return L"";
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        return L"灵机工坊想把" + legendLabel +
+            L"拆成可复刻的经脉回路，旧宗门却认为这是亵渎古法。";
+    }
+    if (g_worldEraName == L"星穹道网纪") {
+        return L"道网档案师正在把" + legendLabel +
+            L"与断代功法库比对，一旦命中，远方节点都会看见你的影子。";
+    }
+    if (g_worldEraName == L"末法裂变纪") {
+        return L"末法修士不问来历，只问" + legendLabel +
+            L"能否替人破境；每多一句传闻，抢夺的人就多一批。";
+    }
+    if (g_worldEraName == L"废土返道纪") {
+        return L"残宗把" + legendLabel +
+            L"当作重建法统的火种，拾荒者则只想知道它能换几口灵粮。";
+    }
+    if (g_worldEraName == L"仙朝鼎盛纪") {
+        return L"天册司想给" + legendLabel +
+            L"定品入册；一旦入册，古法、家世和气运都会被仙朝写成名位。";
+    }
+    return L"古修宗门只敢把" + legendLabel +
+        L"写进残页旁注，既想收你入门，又怕旧法背后牵出前世因果。";
+}
+
 wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation, int delta,
                                     const Event& event, const Choice& choice) {
     bool improved = delta > 0;
@@ -3714,10 +3740,11 @@ void GenerateSocialThreads() {
     const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
     if (techniqueLegacy && techniqueEcho >= 35) {
         wstring legendLabel = BuildTechniqueLegendLabel(*techniqueLegacy);
+        wstring eraInterpretation = BuildTechniqueEraInterpretation(legendLabel);
         AddSocialThread(sectName + L"藏经长老", L"功法见证者",
             techniqueEcho >= 80 ? L"惊疑认可" : L"暗中观察",
             L"他看见你行功起手式后当场压低声音：难道这是" + legendLabel +
-            L"？他不知你前世是谁，却已认出旧时代功法的影子。",
+            L"？他不知你前世是谁，却已认出旧时代功法的影子。" + eraInterpretation,
             techniqueEcho >= 80 ? 26 : 14);
     }
 
@@ -3878,6 +3905,7 @@ void GenerateSocialRumors() {
         wstring legendLabel = techniqueLegacy ? BuildTechniqueLegendLabel(*techniqueLegacy) : L"失传古法";
         g_socialRumors.push_back(L"藏经处有人翻出残页，低声说你的行功节奏像" + legendLabel +
             L"，不像少年自悟，更像旧法借今生重开。");
+        g_socialRumors.push_back(BuildTechniqueEraInterpretation(legendLabel));
     }
 
     if (reputationEcho >= 30) {
@@ -3905,8 +3933,8 @@ void GenerateSocialRumors() {
             L"名册，态度是“" + g_factionTie.stance + L"”。");
     }
 
-    if (g_socialRumors.size() > 6) {
-        g_socialRumors.resize(6);
+    if (g_socialRumors.size() > 8) {
+        g_socialRumors.resize(8);
     }
 }
 
@@ -4697,6 +4725,13 @@ PlayerContext BuildPlayerContext() {
         legacy << L"当前继承的传承:\n";
         for (size_t i = 0; i < min<size_t>(inherited.size(), 4); i++) {
             legacy << L"- " << inherited[i].name << L"：" << inherited[i].description << L"\n";
+        }
+        for (const auto& item : inherited) {
+            if (item.type == LEGACY_TECHNIQUE) {
+                wstring legendLabel = BuildTechniqueLegendLabel(item);
+                legacy << L"失传古法当世解读: " << BuildTechniqueEraInterpretation(legendLabel) << L"\n";
+                break;
+            }
         }
     }
 
