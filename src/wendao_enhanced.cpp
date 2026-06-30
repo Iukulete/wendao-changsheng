@@ -2753,6 +2753,164 @@ int ClampRelation(int value) {
     return max(-100, min(100, value));
 }
 
+const SocialThread* PickSocialAdventureThread() {
+    if (g_socialThreads.empty()) return nullptr;
+
+    vector<int> weighted;
+    for (int i = 0; i < (int)g_socialThreads.size(); ++i) {
+        const SocialThread& thread = g_socialThreads[i];
+        int weight = 2 + min(6, abs(thread.relation) / 12);
+        if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") weight += 2;
+        if (thread.role == L"欺压者" || thread.role == L"竞争者") weight += 2;
+        if (thread.role == L"势力牵连") weight += 1;
+        for (int j = 0; j < weight; ++j) {
+            weighted.push_back(i);
+        }
+    }
+
+    if (weighted.empty()) return &g_socialThreads[0];
+    return &g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
+}
+
+bool ShouldTriggerSocialAdventureEvent() {
+    if (g_socialThreads.empty()) return false;
+
+    int chance = 14;
+    for (const auto& thread : g_socialThreads) {
+        if (abs(thread.relation) >= 35) chance += 3;
+        if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") chance += 1;
+        if (thread.role == L"欺压者" || thread.role == L"竞争者") chance += 2;
+    }
+    if (HasFactionTie() && abs(g_factionTie.favor) >= 25) chance += 3;
+    if (g_player.totalEvents <= 2) chance += 4;
+    chance = max(10, min(34, chance));
+    return Random(1, 100) <= chance;
+}
+
+wstring BuildSocialTalentPressureText() {
+    int totalRoot = g_player.GetTotalRoot();
+    if (g_player.hasBalancedRoots || totalRoot >= 42) {
+        return L"你资质出众后，赞许、押注和嫉妒都来得比灵气更快。";
+    }
+    if (totalRoot < 30 && !g_player.hasBalancedRoots) {
+        return L"测灵结果不算好，旁人的轻慢与少数善意都显得格外刺眼。";
+    }
+    return L"你的资质不上不下，正处在值得押注也容易被试探的位置。";
+}
+
+wstring BuildSocialEraPressureText() {
+    if (g_worldEraName == L"仙朝鼎盛纪") {
+        return L"仙朝名册在旁，家世与关系都会被写成筹码。";
+    }
+    if (g_worldEraName == L"末法裂变纪") {
+        return L"末法资源紧缺，人情往来也常带着配给与欠债的味道。";
+    }
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        return L"工坊炉声渐盛，旧宗门的人情被新式合约重新估价。";
+    }
+    if (g_worldEraName == L"星穹道网纪") {
+        return L"道网会记下每一次公开选择，流言传得比飞剑更远。";
+    }
+    if (g_worldEraName == L"废土返道纪") {
+        return L"废土路远，能信谁、欠谁，都可能决定下一次能否活着回来。";
+    }
+    return L"山门与坊市都在看人下菜，少年道途从来不只看灵根。";
+}
+
+Event BuildSocialAdventureEvent() {
+    Event evt;
+    const SocialThread* picked = PickSocialAdventureThread();
+    if (!picked) {
+        evt.title = L"【因果】无人问津";
+        evt.description = L"你独自外出历练，竟无人认得你的姓名，天地辽阔得近乎冷清。";
+        evt.choices = {
+            {L"独自前行", {L"你把冷清当作磨砺，默默走完一段路\n修为+45", L"山路太长，只添疲惫\n气血-10"}, 0}
+        };
+        return evt;
+    }
+
+    const SocialThread& thread = *picked;
+    bool positive = thread.relation >= 18;
+    bool negative = thread.relation <= -18;
+    bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
+    bool challenger = TextContainsAny(thread.role, {L"欺压者", L"竞争者", L"资源把关者"});
+    bool factionTie = (thread.role == L"势力牵连") || TextContainsAny(thread.role + thread.attitude, {
+        L"册封", L"工坊", L"道网", L"残宗", L"仙朝", L"联系人"
+    });
+
+    if (familyTie) {
+        evt.title = L"【因果】家门问心";
+    } else if (challenger || negative) {
+        evt.title = L"【危机】人情逼试";
+    } else if (factionTie) {
+        evt.title = L"【机缘】势力递帖";
+    } else {
+        evt.title = L"【因果】故人递手";
+    }
+
+    wstring realmHint;
+    if (!thread.visibleRealm.empty()) {
+        realmHint = L"对方外显" + thread.visibleRealm;
+        if (thread.hidesPower || !thread.hiddenHint.empty()) {
+            realmHint += L"，但气机未必可信";
+        }
+        realmHint += L"。";
+    }
+
+    evt.description = thread.name + L"以" + thread.role + L"身份在历练途中拦住你，态度是“" +
+        thread.attitude + L"”。" + BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
+        realmHint + L"旧线索是：" + CompactMemoryFragment(thread.hook);
+
+    if (positive) {
+        evt.choices = {
+            {L"坦然受教", {
+                thread.name + L"见你没有自矜，终于当面认可你，并替你指明一条稳妥去处。\n修为+85，因果+8",
+                thread.name + L"觉得你把善意看得太轻，话虽温和，关系却淡了一层。\n因果-5"
+            }, 6},
+            {L"追问隐情", {
+                thread.name + L"被你问住，透露出一段与家世、势力或前世旧名有关的新线索。\n修为+70，灵石+12，因果+6",
+                thread.name + L"不愿把隐情说穿，只提醒你别太早暴露前世般的判断。\n气血-12"
+            }, 4},
+            {L"婉拒好意", {
+                L"你谢过对方却没有立刻站队，保住今生自己的主动权。\n寿命+3，修为+45",
+                thread.name + L"误以为你不信任这份善意，日后未必还会主动护持。\n因果-6"
+            }, 2}
+        };
+    } else if (negative) {
+        evt.choices = {
+            {L"当众回应", {
+                L"你没有被轻慢压住，反让旁人重新衡量你的胆气与资质。\n修为+90，因果+6",
+                thread.name + L"当场记恨于你，暗中把一次普通历练变成设局。\n气血-28，因果-8"
+            }, 4},
+            {L"暂避锋芒", {
+                L"你没有争一时脸面，反而看清对方借势欺压的破绽。\n修为+55，寿命+2",
+                L"旁人以为你怯弱，轻慢之声比先前更多。\n因果-7"
+            }, 0},
+            {L"暗查底细", {
+                thread.name + L"的外显修为和真实气机并不完全相合，你记下了这个活人般的破绽。\n修为+65，灵石+10",
+                L"你查得太近，被对方反向看穿行迹。\n气血-25"
+            }, 2}
+        };
+    } else {
+        evt.choices = {
+            {L"顺势结交", {
+                thread.name + L"接受你的善意，关系从观望变成可继续经营的人情线。\n修为+60，因果+6",
+                thread.name + L"笑着收下话，却没有给出真正承诺。\n灵石-6"
+            }, 5},
+            {L"试探虚实", {
+                L"你从几句闲谈里看出对方态度未定，也看出这条关系值得继续观察。\n修为+55",
+                L"试探过浅，对方反而觉得你心思太重。\n因果-4"
+            }, 0},
+            {L"保持距离", {
+                L"你没有被临时善恶牵着走，只把这次相遇记成今生的一条线索。\n寿命+2，修为+35",
+                L"距离拉开后，这条人脉短期内也帮不上你。"
+            }, 1}
+        };
+    }
+
+    return evt;
+}
+
 int NarrativeRelationDelta(const wstring& text) {
     int delta = 0;
     if (TextContainsAny(text, {L"认可", L"亲近", L"信任", L"体面", L"护持", L"查到", L"稳住", L"主动权"})) delta += 8;
@@ -5341,6 +5499,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         s_legacyEchoEvent = BuildLegacyEchoEvent();
                         g_currentEvent = &s_legacyEchoEvent;
                         AddMemory(L"前世牵动", L"外出历练时触发了前世遗响。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerSocialAdventureEvent()) {
+                        static Event s_socialAdventureEvent;
+                        s_socialAdventureEvent = BuildSocialAdventureEvent();
+                        g_currentEvent = &s_socialAdventureEvent;
+                        AddMemory(L"人情牵动", L"外出历练时本世人脉主动入局。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
