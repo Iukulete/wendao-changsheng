@@ -920,6 +920,8 @@ HWND g_btnStart;
 
 void ShowNotice(const wstring& title, const wstring& text);
 vector<vector<wstring>> LoadItemDbRows();
+void DiscoverItemsFromText(const wstring& text);
+PlayerContext BuildPlayerContext();
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -1087,6 +1089,112 @@ wstring BuildLifeArtifactText() {
     ss << L"这些是这一世真正入手或动用过的兵刃、法宝。它们能影响今生事件和 AI 叙事，但本体不能跨过轮回。\n";
     ss << L"死亡或转世后，普通器物会失散、损毁或被后人夺走；能留下来的只有记忆、因果、器痕，以及通天灵宝残印。\n\n";
     ss << BuildLifeArtifactDigest(8);
+    return ss.str();
+}
+
+int GetForgeArtifactCost() {
+    int cost = 8 + g_player.realm * 3;
+    if (g_worldEraName == L"灵机蒸汽纪") cost -= 3;
+    else if (g_worldEraName == L"星穹道网纪") cost += 2;
+    else if (g_worldEraName == L"末法裂变纪") cost += 8;
+    else if (g_worldEraName == L"废土返道纪") cost += 6;
+    return max(5, cost);
+}
+
+wstring GetForgeOriginText() {
+    if (g_worldEraName == L"灵机蒸汽纪") return L"玄炉工坊铸炼";
+    if (g_worldEraName == L"星穹道网纪") return L"道网器坊定制";
+    if (g_worldEraName == L"末法裂变纪") return L"半枯灵炉抢炼";
+    if (g_worldEraName == L"废土返道纪") return L"废墟残炉重铸";
+    if (g_worldEraName == L"仙朝鼎盛纪") return L"仙朝官坊铸给";
+    return L"坊市炼器铺铸成";
+}
+
+void AddForgedLifeArtifact(const LifeArtifact& forged) {
+    auto existing = find_if(g_lifeArtifacts.begin(), g_lifeArtifacts.end(),
+        [&](const LifeArtifact& item) { return item.name == forged.name; });
+    if (existing != g_lifeArtifacts.end()) {
+        existing->tier = forged.tier;
+        existing->origin = forged.origin;
+        existing->ageFound = forged.ageFound;
+        existing->resonant = existing->resonant || forged.resonant;
+        AddMemory(L"重铸器物", forged.name + L"重新祭炼，仍只是本世器物，本体不能跨过轮回。");
+        return;
+    }
+
+    g_lifeArtifacts.push_back(forged);
+    AddMemory(L"铸成本世器物",
+        forged.name + L"成为今生可用的" + GetLifeArtifactCategoryLabel(forged.category) +
+        (forged.resonant ? L"，铸成时已有细微器纹回响。" : L"，但本体终会随此世失散。"));
+    if (g_lifeArtifacts.size() > 8) {
+        g_lifeArtifacts.erase(g_lifeArtifacts.begin());
+    }
+}
+
+wstring ForgeLifeArtifact() {
+    int cost = GetForgeArtifactCost();
+    if (g_player.spiritStones < cost) {
+        return L"灵石不足，铸炼一件本世兵刃或法宝需要 " + to_wstring(cost) +
+               L" 灵石。\n\n普通器物可以陪你走完今生，但本体不能跨过轮回。";
+    }
+
+    auto rows = LoadItemDbRows();
+    vector<vector<wstring>> candidates;
+    bool preferArtifact = g_worldEraName == L"灵机蒸汽纪" ||
+                          g_worldEraName == L"星穹道网纪" ||
+                          g_player.realm >= GOLDEN_CORE;
+    for (auto& cols : rows) {
+        if (cols.size() < 9 || !IsLifeArtifactCategory(cols[2])) continue;
+        if (preferArtifact && cols[2] != L"artifacts") continue;
+        candidates.push_back(cols);
+    }
+    if (candidates.empty()) {
+        for (auto& cols : rows) {
+            if (cols.size() >= 9 && IsLifeArtifactCategory(cols[2])) candidates.push_back(cols);
+        }
+    }
+    if (candidates.empty()) {
+        return L"没有可用的器物图录，暂时无法铸炼。";
+    }
+
+    vector<vector<wstring>> fresh;
+    for (auto& cols : candidates) {
+        bool owned = any_of(g_lifeArtifacts.begin(), g_lifeArtifacts.end(),
+            [&](const LifeArtifact& item) { return item.name == cols[1]; });
+        if (!owned) fresh.push_back(cols);
+    }
+    auto& pool = fresh.empty() ? candidates : fresh;
+    auto cols = pool[Random(0, (int)pool.size() - 1)];
+
+    g_player.spiritStones -= cost;
+    int resonanceChance = 8 + g_player.realm * 2 + g_legacySystem.GetRelicResonanceBonus() / 3;
+    if (g_worldEraName == L"灵机蒸汽纪") resonanceChance += 8;
+    if (g_worldEraName == L"末法裂变纪") resonanceChance -= 4;
+    bool resonant = Random(1, 100) <= max(3, min(42, resonanceChance));
+
+    LifeArtifact forged;
+    forged.name = cols[1];
+    forged.category = cols[2];
+    forged.tier = cols[4];
+    forged.origin = GetForgeOriginText();
+    forged.ageFound = g_player.age;
+    forged.resonant = resonant;
+    AddForgedLifeArtifact(forged);
+    DiscoverItemsFromText(forged.name);
+    g_contextMgr.SetContext(BuildPlayerContext());
+
+    wstringstream ss;
+    ss << L"你耗费 " << cost << L" 灵石，请匠人以此世法门铸成 " << forged.name
+       << L"（" << GetLifeArtifactCategoryLabel(forged.category) << L" / " << forged.tier << L"）。\n\n";
+    if (cols.size() >= 9 && !cols[8].empty()) {
+        ss << cols[8] << L"\n\n";
+    }
+    ss << L"它会进入本世器物，后续历练和本地 AI 可以围绕它续写。";
+    if (resonant) {
+        ss << L"\n铸成一瞬，器纹与通天灵宝残印轻轻相触；这不是跨世保留本体，只是留下可被轮回辨认的器痕。";
+    } else {
+        ss << L"\n它只是今生器物，本体终会随死亡、转世或时代更替而失散。";
+    }
     return ss.str();
 }
 
@@ -4729,6 +4837,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[3] 突破境界",
                 L"[4] 服用丹药",
                 L"[5] 灵石闭关",
+                L"[6] 铸炼器物",
                 L"[W] 修真界现状",
                 L"[P] 本世主线",
                 L"[F] 此世家世",
@@ -5231,6 +5340,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         ShowNotice(L"灵石闭关", closedDoorMsg);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
+                }
+                else if (wParam == '6') {
+                    ShowNotice(L"铸炼器物", ForgeLifeArtifact());
+                    InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'W' || wParam == 'w') {
                     OpenInfoPage(L"修真界现状", GetWorldInfoText(), STATE_GAME);
