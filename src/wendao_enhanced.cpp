@@ -2354,7 +2354,8 @@ wstring GetWorldInfoText() {
         if (count++ >= 8) break;
         ss << L"- " << npc->name
            << L" · 外显 " << GetRealmName(static_cast<Realm>(npc->shownRealm))
-           << L" " << npc->level << L"层";
+           << L" " << npc->level << L"层"
+           << L" · " << g_dynamicWorld.GetGoalText(npc->goal);
         if (npc->shownRealm < npc->realm) ss << L" · 气机不明";
         if (!npc->ally.empty()) ss << L" · 盟友 " << npc->ally;
         if (!npc->enemy.empty()) ss << L" · 仇敌 " << npc->enemy;
@@ -2522,7 +2523,8 @@ PlayerContext BuildPlayerContext() {
         world << L"- 活跃修士传闻修为: ";
         for (size_t i = 0; i < min<size_t>(aliveNpcs.size(), 3); i++) {
             if (i > 0) world << L"、";
-            world << aliveNpcs[i]->name << L"(外显" << GetRealmName(static_cast<Realm>(aliveNpcs[i]->shownRealm)) << L")";
+            world << aliveNpcs[i]->name << L"(外显" << GetRealmName(static_cast<Realm>(aliveNpcs[i]->shownRealm))
+                  << L"，" << g_dynamicWorld.GetGoalText(aliveNpcs[i]->goal) << L")";
         }
         world << L"，不排除隐藏实力\n";
     }

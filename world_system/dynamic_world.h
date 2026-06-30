@@ -97,6 +97,70 @@ private:
         L"魔君·天魔", L"仙子·紫霞", L"道君·玄天"
     };
 
+    vector<wstring> GetEraNpcNames() const {
+        if (worldEraName == L"灵机蒸汽纪") {
+            return {
+                L"炉师·沈玄枢", L"齿轮修士·陆青铜", L"飞舟司·顾远航", L"阵械师·林百铆",
+                L"灵煤商·秦九炉", L"旧宗剑客·叶寒机", L"机关傀师·苏铁心", L"蒸汽丹师·韩白雾",
+                L"工坊客卿·楚鸣钟", L"量产符师·白千线", L"巡炉执事·萧赤阀", L"矿脉散修·许黑铲",
+                L"灵机女冠·沈听澜", L"飞梭匣主·陆断星", L"铸炉盟使·顾燃灯"
+            };
+        }
+        if (worldEraName == L"星穹道网纪") {
+            return {
+                L"远讯使·林星回", L"道网客·秦无延", L"星舟剑修·叶渡河", L"万象录师·苏镜台",
+                L"节点守·韩九环", L"灵网散人·楚回声", L"榜单修士·白观澜", L"外域客·萧逐星",
+                L"神识医修·许闻微", L"数据阁主·沈算天", L"坠星符师·陆拾光", L"远程弟子·顾寒窗",
+                L"断链刺客·林暗潮", L"星港管事·秦越洲", L"虚阵师·叶空明"
+            };
+        }
+        if (worldEraName == L"末法裂变纪") {
+            return {
+                L"枯井守·沈半瓢", L"配给执事·陆算盘", L"阵械破境者·顾残灯", L"争粮散修·林苦渡",
+                L"旧派长老·秦守缺", L"灵井猎人·叶断泉", L"替道医修·苏寒针", L"秘境走私客·韩无契",
+                L"末法剑客·楚灰刃", L"荒庙符师·白纸灯", L"劫粮体修·萧铁肩", L"枯潮女冠·许冷月",
+                L"井盟巡使·沈寸灵", L"裂变术士·陆无常", L"藏丹客·顾一粒"
+            };
+        }
+        if (worldEraName == L"废土返道纪") {
+            return {
+                L"拾荒修士·沈破罐", L"黑雨镇邪使·陆无伞", L"残宗向导·顾灰路", L"古机猎人·林铁骨",
+                L"返道火种·秦守灯", L"荒墟医修·叶缝魂", L"迁徙队长·苏背山", L"废城符师·韩裂墙",
+                L"旧库守门人·楚锈锁", L"荒野剑客·白断碑", L"邪祟剥皮客·萧黑雨", L"灵粮师·许半仓",
+                L"黑匣译者·沈听噪", L"残塔佛修·陆灰烛", L"返道盟使·顾归墟"
+            };
+        }
+        if (worldEraName == L"仙朝鼎盛纪") {
+            return {
+                L"天册使·沈承诏", L"隐龙世子·陆怀璧", L"气运榜首·顾青云", L"朝宗剑侍·林听诏",
+                L"王族医修·秦明棠", L"册封吏·叶执圭", L"旧盟客卿·苏玄礼", L"金印符师·韩照壁",
+                L"仙朝巡狩·楚御风", L"门阀女修·白绛雪", L"榜外散修·萧无籍", L"龙脉阵师·许观玺",
+                L"功勋武修·沈破阵", L"密诏暗线·陆无名", L"朝堂丹师·顾清炉"
+            };
+        }
+        return npcNames;
+    }
+
+    DynamicNPC::Goal PickEraGoal(int index) const {
+        if (worldEraName == L"灵机蒸汽纪") {
+            if (index % 4 == 0) return DynamicNPC::GOAL_WEALTH;
+            if (index % 4 == 1) return DynamicNPC::GOAL_FAME;
+        } else if (worldEraName == L"星穹道网纪") {
+            if (index % 3 == 0) return DynamicNPC::GOAL_FAME;
+            if (index % 3 == 1) return DynamicNPC::GOAL_BREAKTHROUGH;
+        } else if (worldEraName == L"末法裂变纪") {
+            if (index % 3 == 0) return DynamicNPC::GOAL_WEALTH;
+            if (index % 3 == 1) return DynamicNPC::GOAL_REVENGE;
+        } else if (worldEraName == L"废土返道纪") {
+            if (index % 3 == 0) return DynamicNPC::GOAL_PEACE;
+            if (index % 3 == 1) return DynamicNPC::GOAL_WEALTH;
+        } else if (worldEraName == L"仙朝鼎盛纪") {
+            if (index % 3 == 0) return DynamicNPC::GOAL_FAME;
+            if (index % 3 == 1) return DynamicNPC::GOAL_BREAKTHROUGH;
+        }
+        return static_cast<DynamicNPC::Goal>(rand() % 5);
+    }
+
 public:
     DynamicWorld() : worldTime(0), gen(rd()) {
         worldEraName = L"灵气初盛纪";
@@ -118,10 +182,19 @@ public:
     }
 
     void InitNPCs() {
+        vector<wstring> names = GetEraNpcNames();
         // 生成15个初始NPC
-        for (int i = 0; i < min(15, (int)npcNames.size()); i++) {
+        for (int i = 0; i < min(15, (int)names.size()); i++) {
             int realm = 1 + rand() % 5;  // 炼气期到化神期
-            npcs.push_back(DynamicNPC(npcNames[i], realm));
+            DynamicNPC npc(names[i], realm);
+            npc.goal = PickEraGoal(i);
+            if (worldEraName == L"末法裂变纪" || worldEraName == L"废土返道纪") {
+                npc.lifespan = max(55, npc.lifespan - 12 - rand() % 18);
+                npc.karma -= rand() % 20;
+            } else if (worldEraName == L"仙朝鼎盛纪") {
+                npc.karma += rand() % 25;
+            }
+            npcs.push_back(npc);
         }
 
         // 建立部分关系
@@ -355,6 +428,17 @@ public:
         AddHistory(chosen.first);
     }
 
+    wstring GetGoalText(DynamicNPC::Goal goal) const {
+        switch (goal) {
+            case DynamicNPC::GOAL_BREAKTHROUGH: return L"求突破";
+            case DynamicNPC::GOAL_REVENGE: return L"寻仇";
+            case DynamicNPC::GOAL_WEALTH: return L"争资源";
+            case DynamicNPC::GOAL_FAME: return L"争名位";
+            case DynamicNPC::GOAL_PEACE: return L"避世修行";
+        }
+        return L"未知";
+    }
+
     // 获取当前活跃的世界事件
     WorldEvent* GetActiveWorldEvent() {
         for (auto& event : worldEvents) {
@@ -388,6 +472,17 @@ public:
         ss << L"时代纪元: " << worldEraName << L"\n";
         ss << L"世界时间: 第" << worldTime << L"年\n";
         ss << L"存活修士: " << GetAliveNPCs().size() << L"人\n";
+        auto alive = GetAliveNPCs();
+        if (!alive.empty()) {
+            ss << L"活跃倾向: ";
+            int count = 0;
+            for (auto npc : alive) {
+                if (count++ >= 3) break;
+                if (count > 1) ss << L"、";
+                ss << npc->name << L"(" << GetGoalText(npc->goal) << L")";
+            }
+            ss << L"\n";
+        }
 
         auto event = GetActiveWorldEvent();
         if (event) {
