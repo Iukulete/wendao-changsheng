@@ -3,6 +3,8 @@
     [string]$Model = "wendao-xiuxian",
     [string]$ModelPath = (Join-Path $PSScriptRoot "models\Qwen_Qwen3-0.6B-Q4_K_M.gguf"),
     [string]$LlamaCli = (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-cli.exe"),
+    [int]$PortableTimeoutSec = 25,
+    [int]$OllamaTimeoutSec = 20,
     [ValidateSet("auto", "portable", "ollama")]
     [string]$Backend = "auto"
 )
@@ -12,13 +14,32 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+$ReleaseDir = [System.IO.Path]::GetFullPath($ReleaseDir)
+$ModelPath = [System.IO.Path]::GetFullPath($ModelPath)
+$LlamaCli = [System.IO.Path]::GetFullPath($LlamaCli)
+
 $promptPath = Join-Path $ReleaseDir "ai_prompt.txt"
 $eventPath = Join-Path $ReleaseDir "ai_event.txt"
 $rawPath = Join-Path $ReleaseDir "ai_event_raw.txt"
 $backendPath = Join-Path $ReleaseDir "ai_backend.txt"
+$statusPath = Join-Path $ReleaseDir "ai_status.txt"
 $llamaLogPath = Join-Path $ReleaseDir "ai_llama.log"
 $ollamaLogPath = Join-Path $ReleaseDir "ai_ollama.log"
 $encoding = New-Object System.Text.UTF8Encoding($false)
+
+function Write-StatusFile {
+    param(
+        [string]$BackendLabel,
+        [string]$StatusText
+    )
+
+    if ($BackendLabel) {
+        [System.IO.File]::WriteAllText($backendPath, $BackendLabel, $encoding)
+    }
+    if ($StatusText) {
+        [System.IO.File]::WriteAllText($statusPath, $StatusText, $encoding)
+    }
+}
 
 if (-not (Test-Path -LiteralPath $promptPath)) {
     throw "Missing prompt file: $promptPath"
@@ -35,7 +56,7 @@ function Invoke-PortableLlama {
         throw "Missing GGUF model: $ModelPath"
     }
 
-    $runtimePromptPath = Join-Path $ReleaseDir "ai_prompt_runtime.txt"
+    $runtimePromptPath = [System.IO.Path]::GetFullPath((Join-Path $ReleaseDir "ai_prompt_runtime.txt"))
     [System.IO.File]::WriteAllText($runtimePromptPath, $prompt, [System.Text.Encoding]::UTF8)
 
     $args = @(
@@ -55,19 +76,40 @@ function Invoke-PortableLlama {
         "--simple-io"
     )
 
-    $oldErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    try {
-        $output = & $LlamaCli @args 2> $llamaLogPath
-        $exitCode = $LASTEXITCODE
-    } finally {
-        $ErrorActionPreference = $oldErrorActionPreference
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $LlamaCli
+    $psi.WorkingDirectory = Split-Path -Parent $LlamaCli
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $psi.Arguments = (($args | ForEach-Object {
+        if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
+    }) -join ' ')
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+    [void]$process.Start()
+
+    if (-not $process.WaitForExit($PortableTimeoutSec * 1000)) {
+        try { $process.Kill() } catch {}
+        $stderr = $process.StandardError.ReadToEnd()
+        if ($stderr) {
+            [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
+        }
+        throw "llama.cpp timed out after ${PortableTimeoutSec}s"
     }
 
-    if ($exitCode -ne 0) {
-        throw "llama.cpp exited with code $exitCode"
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    if ($stderr) {
+        [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
     }
-    return ($output -join "`n")
+    if ($process.ExitCode -ne 0) {
+        throw "llama.cpp exited with code $($process.ExitCode)"
+    }
+
+    return $stdout
 }
 
 function Invoke-Ollama {
@@ -89,7 +131,8 @@ function Invoke-Ollama {
             -Uri "http://127.0.0.1:11434/api/generate" `
             -Method Post `
             -ContentType "application/json" `
-            -Body $body
+            -Body $body `
+            -TimeoutSec $OllamaTimeoutSec
     } catch {
         [System.IO.File]::WriteAllText($ollamaLogPath, $_.Exception.ToString(), $encoding)
         throw
@@ -106,8 +149,10 @@ if ($Backend -eq "auto" -or $Backend -eq "portable") {
     try {
         $text = Invoke-PortableLlama
         $usedBackend = "portable-llama.cpp"
+        Write-StatusFile -BackendLabel $usedBackend -StatusText "便携模型生成成功。"
     } catch {
         $errors += "portable: $($_.Exception.Message)"
+        Write-StatusFile -BackendLabel "portable-llama.cpp" -StatusText "便携模型失败：$($_.Exception.Message)"
         if ($Backend -eq "portable") { throw }
     }
 }
@@ -116,17 +161,21 @@ if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -
     try {
         $text = Invoke-Ollama
         $usedBackend = "ollama:$Model"
+        Write-StatusFile -BackendLabel $usedBackend -StatusText "Ollama 生成成功。"
     } catch {
         $errors += "ollama: $($_.Exception.Message)"
+        Write-StatusFile -BackendLabel "ollama:$Model" -StatusText "Ollama 失败：$($_.Exception.Message)"
         if ($Backend -eq "ollama") { throw }
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($text)) {
+    Write-StatusFile -BackendLabel "模板回退" -StatusText "未获取有效模型输出，已回退到内置模板。$($errors -join '; ')"
     throw "No AI backend generated text. $($errors -join '; ')"
 }
 
 [System.IO.File]::WriteAllText($backendPath, $usedBackend, $encoding)
+[System.IO.File]::WriteAllText($statusPath, "已生成动态事件。", $encoding)
 [System.IO.File]::WriteAllText($rawPath, $text, $encoding)
 $text = [regex]::Replace($text, "(?s)<think>.*?</think>", "")
 $text = [regex]::Replace($text, "(?s)Thinking.*?done thinking\.", "")
@@ -145,16 +194,16 @@ function Normalize-EventLine {
     param([string]$Line)
 
     $clean = $Line.Trim()
-    $clean = [regex]::Replace($clean, "^```(?:text|markdown)?\s*", "", "IgnoreCase")
-    $clean = [regex]::Replace($clean, "\s*```$", "")
-    $clean = [regex]::Replace($clean, "\*\*", "")
-    $clean = [regex]::Replace($clean, "^[`"“”'‘’]+|[`"“”'‘’]+$", "")
-    $clean = [regex]::Replace($clean, "^\s*[-*•]\s*", "")
-    $clean = [regex]::Replace($clean, "^[A-Za-z][\.、:：\)]\s*", "")
-    $clean = [regex]::Replace($clean, "^第[一二三四五六七八九十0-9]+行[:：]\s*", "")
-    $clean = [regex]::Replace($clean, "^(标题|事件标题|描述|事件描述|选项[一二三四五六七八九十0-9]*|选项一|选项二|选项三|选择[一二三四五六七八九十0-9]*)[:：]\s*", "")
-    $clean = [regex]::Replace($clean, "^\s*[-*•0-9一二三四五]+[\.、:：\)]\s*", "")
-    $clean = [regex]::Replace($clean, "\s+", " ")
+    $clean = [regex]::Replace($clean, '^```(?:text|markdown)?\s*', '', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $clean = [regex]::Replace($clean, '\s*```$', '')
+    $clean = [regex]::Replace($clean, '\*\*', '')
+    $clean = $clean.Trim(@([char]96, [char]34, [char]39))
+    $clean = [regex]::Replace($clean, '^\s*[-*]\s*', '')
+    $clean = [regex]::Replace($clean, '^[A-Za-z][\.、:：\)]\s*', '')
+    $clean = [regex]::Replace($clean, '^第[一二三四五六七八九十0-9]+行[:：]\s*', '')
+    $clean = [regex]::Replace($clean, '^(标题|事件标题|描述|事件描述|选项[一二三四五六七八九十0-9]*|选项一|选项二|选项三|选择[一二三四五六七八九十0-9]*)[:：]\s*', '')
+    $clean = [regex]::Replace($clean, '^\s*[-*0-9一二三四五]+[\.、:：\)]\s*', '')
+    $clean = [regex]::Replace($clean, '\s+', ' ')
     return $clean.Trim()
 }
 
@@ -242,4 +291,5 @@ for ($i = 2; $i -lt 5; $i++) {
 }
 
 [System.IO.File]::WriteAllText($eventPath, ($lines -join [Environment]::NewLine), $encoding)
+Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成 1 条动态事件并写入 ai_event.txt。"
 Write-Output "Generated $eventPath"

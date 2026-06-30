@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <fstream>
 #include <limits>
 
@@ -49,12 +50,54 @@ struct PastLife {
                  karma(0), totalEvents(0), battlesWon(0), npcsMet(0) {}
 };
 
+struct LegacyRelic {
+    wstring name;
+    int resonance;
+    int awakenings;
+    wstring aspect;
+    bool daoLinked;
+
+    LegacyRelic()
+        : name(L"通天灵宝残印"), resonance(0), awakenings(0),
+          aspect(L"未定道痕"), daoLinked(false) {}
+};
+
 // ==================== 传承系统 ====================
 class LegacySystem {
 private:
     vector<PastLife> pastLives;
     int currentGeneration;
     vector<LegacyItem> inheritedLegacies;  // 当前世继承的传承
+    LegacyRelic relic;
+
+    void InheritEchoesFromLastLife(const PastLife& last) {
+        int inheritedCount = 0;
+        for (int i = (int)last.legacies.size() - 1; i >= 0 && inheritedCount < 2; --i) {
+            const LegacyItem& legacy = last.legacies[i];
+            int inheritedPower = max(12, legacy.power / 2);
+            wstring inheritedDesc = legacy.description;
+
+            if (legacy.type == LEGACY_TECHNIQUE) {
+                inheritedDesc = L"轮回后仍记得部分行功脉络与破境手感，像是前世亲手封存下来的道法残篇。";
+            } else if (legacy.type == LEGACY_TREASURE) {
+                inheritedDesc = L"上一世祭炼过的灵宝虽不能永存，却仍留下器纹与认主余响，会在梦里回应你。";
+            } else if (legacy.type == LEGACY_MEMORY) {
+                inheritedDesc = L"前世某些场景会反复重现，你知道那不是幻觉，而是尚未散尽的记忆。";
+            } else if (legacy.type == LEGACY_REPUTATION) {
+                inheritedDesc = L"前世留下的善名或恶名没有完全散去，这一世仍会以流言和态度的方式追上你。";
+            } else if (legacy.type == LEGACY_KNOWLEDGE) {
+                inheritedDesc = L"前世沉淀下来的判断与出手习惯仍留在骨子里，不经思考也会自然浮现。";
+            }
+
+            inheritedLegacies.push_back(LegacyItem(
+                legacy.type,
+                L"前世遗响·" + legacy.name,
+                inheritedDesc,
+                inheritedPower
+            ));
+            inheritedCount++;
+        }
+    }
 
 public:
     LegacySystem() : currentGeneration(1) {}
@@ -101,6 +144,10 @@ public:
                     30
                 ));
             }
+
+            if (!last.legacies.empty()) {
+                InheritEchoesFromLastLife(last);
+            }
         }
     }
 
@@ -110,8 +157,32 @@ public:
 
         // 根据成就生成传承
         GenerateLegacies(life);
+        AdvanceRelicFromLife(life);
 
         pastLives.push_back(life);
+    }
+
+    void AdvanceRelicFromLife(const PastLife& life) {
+        if (life.realmReached < 12) return;
+
+        relic.resonance += 10 + life.realmReached * 2 + life.battlesWon / 3 + life.totalEvents / 10;
+
+        if (life.realmReached >= 17) {
+            relic.awakenings += 1;
+        }
+        if (life.realmReached >= 19) {
+            relic.daoLinked = true;
+        }
+
+        if (life.realmReached >= 19) {
+            relic.aspect = L"帝道器痕";
+        } else if (life.realmReached >= 17) {
+            relic.aspect = L"通天杀伐";
+        } else if (life.realmReached >= 14) {
+            relic.aspect = L"镇界守御";
+        } else if (life.realmReached >= 12) {
+            relic.aspect = L"灵机演化";
+        }
     }
 
     void GenerateLegacies(PastLife& life) {
@@ -151,6 +222,38 @@ public:
                 life.battlesWon
             ));
         }
+
+        if (life.realmReached >= 17) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_TREASURE,
+                L"通天灵宝残印",
+                L"凡兵终会朽坏，唯有被大道反复祭炼过的重宝，才可能在轮回后留下认主痕迹。",
+                70 + life.realmReached * 3
+            ));
+        } else if (life.realmReached >= 12) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_TREASURE,
+                L"本命法宝器痕",
+                L"前世祭炼过的本命法宝未能长存，却仍有一缕器纹与灵性在轮回里回荡。",
+                35 + life.realmReached * 2
+            ));
+        }
+
+        if (life.karma >= 120) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_REPUTATION,
+                L"善名道契",
+                L"你前世护道济世的因果尚未散尽，这一世更容易得到接引与信任。",
+                40
+            ));
+        } else if (life.karma <= -120) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_REPUTATION,
+                L"血债回声",
+                L"前世种下的仇怨没有随肉身一并腐烂，恶名往往比尸骨活得更久。",
+                40
+            ));
+        }
     }
 
     // 获取当前继承的加成
@@ -162,6 +265,30 @@ public:
             }
         }
         return bonus;
+    }
+
+    int GetRelicResonanceBonus() const {
+        return relic.resonance / 20 + relic.awakenings * 10;
+    }
+
+    LegacyRelic& GetRelic() { return relic; }
+    const LegacyRelic& GetRelic() const { return relic; }
+
+    wstring GetRelicStatusText() const {
+        wstringstream ss;
+        ss << L"【通天灵宝残印】\n\n";
+        ss << L"名号: " << relic.name << L"\n";
+        ss << L"当前道痕: " << relic.aspect << L"\n";
+        ss << L"共鸣值: " << relic.resonance << L"\n";
+        ss << L"苏醒次数: " << relic.awakenings << L"\n";
+        ss << L"本世加持: +" << GetRelicResonanceBonus() << L"\n";
+        if (relic.daoLinked) {
+            ss << L"状态: 已沾染帝道与祖境余韵，未来可望与大道同鸣。\n";
+        } else {
+            ss << L"状态: 仍在轮回中缓慢成形，尚未真正显化为完整灵宝。\n";
+        }
+        ss << L"\n说明: 凡兵会朽，器物会坏，能穿过轮回留下来的，只有反复祭炼后仍未断绝的道痕。";
+        return ss.str();
     }
 
     // 获取历史记录文本
@@ -198,9 +325,15 @@ public:
             for (auto& legacy : inheritedLegacies) {
                 ss << L"◆ " << legacy.name << L"\n";
                 ss << L"  " << legacy.description << L"\n";
-                ss << L"  效果: +" << legacy.power << L"\n\n";
+                if (legacy.type == LEGACY_REPUTATION && legacy.power < 0) {
+                    ss << L"  效果: " << legacy.power << L"\n\n";
+                } else {
+                    ss << L"  效果: +" << legacy.power << L"\n\n";
+                }
             }
         }
+
+        ss << L"\n" << GetRelicStatusText();
 
         return ss.str();
     }
@@ -217,6 +350,8 @@ public:
             file << (int)legacy.type << L"\n" << legacy.name << L"\n"
                  << legacy.description << L"\n" << legacy.power << L"\n";
         }
+        file << relic.name << L"\n" << relic.resonance << L"\n" << relic.awakenings << L"\n"
+             << relic.aspect << L"\n" << relic.daoLinked << L"\n";
 
         file << pastLives.size() << L"\n";
         for (auto& life : pastLives) {
@@ -258,6 +393,14 @@ public:
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
             inheritedLegacies.push_back(LegacyItem(static_cast<LegacyType>(type), name, description, power));
         }
+
+        getline(file, relic.name);
+        file >> relic.resonance;
+        file >> relic.awakenings;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        getline(file, relic.aspect);
+        file >> relic.daoLinked;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
 
         file >> count;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');

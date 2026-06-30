@@ -55,6 +55,13 @@ inline bool LooksMojibake(const wstring& text) {
     return hits >= 2;
 }
 
+inline wstring ReadUtf8FileToWide(const string& path) {
+    ifstream file(path, ios::binary);
+    if (!file) return L"";
+    string bytes((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    return CleanModelText(Utf8ToWide(bytes));
+}
+
 // ==================== 玩家上下文 ====================
 struct PlayerContext {
     wstring name;
@@ -66,6 +73,7 @@ struct PlayerContext {
     wstring worldState;
     wstring familyState;
     wstring socialState;
+    wstring legacyState;
 
     // 性格标签
     vector<wstring> personality;  // "善良", "邪恶", "谨慎", "冒险"
@@ -123,9 +131,9 @@ public:
 
         // 物品
         templates.items = {
-            L"发光的玉简", L"破损的法宝", L"神秘的卷轴", L"古老的令牌", L"奇异的种子",
-            L"封印的宝箱", L"褪色的画像", L"共鸣的音叉", L"碎裂的镜子", L"永燃的火炬",
-            L"呼吸的石头", L"流动的沙漏", L"凝固的雷霆", L"液化的星光", L"实体化的回忆"
+            L"古修玉简", L"养灵葫芦", L"镇魂铜镜", L"镇狱小塔", L"青冥阵盘",
+            L"翠灵丹瓶", L"瞬影符", L"灵石", L"月华草", L"玄铁矿",
+            L"星辉飞剑", L"赤魄灵剑", L"惊霆长枪", L"逐风弓", L"寒魄环刃"
         };
 
         // 行动
@@ -177,10 +185,40 @@ public:
             contextHint = L"对方听闻你的善名，态度友好。";
         }
 
+        wstring legacyHint = L"";
+        if (player.legacyState.find(L"通天灵宝") != wstring::npos ||
+            player.legacyState.find(L"法宝") != wstring::npos ||
+            player.legacyState.find(L"灵宝") != wstring::npos) {
+            legacyHint = L"识海深处忽有器鸣一闪而过，仿佛前世祭炼过的重宝也在注视这场相遇。";
+        } else if (player.legacyState.find(L"战斗") != wstring::npos ||
+                   player.legacyState.find(L"斗法") != wstring::npos) {
+            legacyHint = L"你几乎本能地预判了对方下一步动作，这种熟悉感不像今生才有。";
+        } else if (player.legacyState.find(L"前世") != wstring::npos ||
+                   player.legacyState.find(L"轮回") != wstring::npos) {
+            legacyHint = L"这场相逢让你短暂恍神，像是又踩进了一段前世未走完的因果。";
+        }
+
+        wstring eraHint = L"";
+        if (player.worldState.find(L"灵机蒸汽纪") != wstring::npos) {
+            eraHint = L"四周还能看见灵机工坊留下的蒸汽光痕与机关残响。";
+        } else if (player.worldState.find(L"星穹道网纪") != wstring::npos) {
+            eraHint = L"附近阵台与灵网节点交错运转，连偶遇都像被时代放大。";
+        } else if (player.worldState.find(L"末法裂变纪") != wstring::npos) {
+            eraHint = L"空气中的灵气明显更薄，谁都不愿轻易浪费任何一份机缘。";
+        } else if (player.worldState.find(L"废土返道纪") != wstring::npos) {
+            eraHint = L"远处荒野上仍残留古代文明崩毁后的焦黑痕迹，让人不敢久留。";
+        }
+
         wstringstream ss;
         ss << L"你遇到了一位" << character << L"，ta手持" << item << L"，似乎想要" << action << L"。";
         if (!contextHint.empty()) {
             ss << contextHint;
+        }
+        if (!eraHint.empty()) {
+            ss << eraHint;
+        }
+        if (!legacyHint.empty()) {
+            ss << legacyHint;
         }
 
         return ss.str();
@@ -224,6 +262,8 @@ public:
         ss << L"- 标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n";
         ss << L"- 描述45到90个中文字符，要贴合境界、因果、年龄、家世、人情风波、最近记忆和当前世界。\n";
         ss << L"- 可以写长辈认可、同辈嫉妒、被人巴结、遭人欺压、暗中试探、隐藏修为，但不要写成旁白总结。\n";
+        ss << L"- 当前世界不一定是纯古典修仙，也可能已演化到灵机蒸汽、星穹道网、末法裂变或废土返道时代，必须尊重上下文时代风貌。\n";
+        ss << L"- 如果上下文中出现前世传承、旧名、通天灵宝残印、前世梦痕等信息，可以直接把事件写成上一世因果在这一世继续发酵。\n";
         ss << L"- 三个选项各2到8个中文字符，只写行动短语，不要编号、不要解释、不要“请选择”。\n";
         ss << L"- 借鉴修仙小说的节奏和意象，但必须原创，不要复述或仿写现成小说段落。\n\n";
         ss << L"玩家: " << player.name << L"\n";
@@ -241,6 +281,9 @@ public:
         }
         if (!player.socialState.empty()) {
             ss << L"人情风波: " << player.socialState << L"\n";
+        }
+        if (!player.legacyState.empty()) {
+            ss << L"轮回传承:\n" << player.legacyState << L"\n";
         }
         ss << L"杀伐: " << player.killCount << L"\n";
         ss << L"助人: " << player.helpCount << L"\n";
@@ -268,11 +311,8 @@ public:
     }
 
     bool TryLoadExternalEvent(wstring& title, wstring& description, vector<wstring>& choices) {
-        ifstream file("ai_event.txt", ios::binary);
-        if (!file) return false;
-
-        string bytes((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-        wstring text = CleanModelText(Utf8ToWide(bytes));
+        wstring text = ReadUtf8FileToWide("ai_event.txt");
+        if (text.empty()) return false;
         if (LooksMojibake(text)) return false;
         wstringstream ss(text);
 

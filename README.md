@@ -2,7 +2,7 @@
 
 文本修仙 Roguelike，从凡人修炼到道祖。
 
-当前主版本是 **AI增强版**：
+当前主版本是 **AI 增强版**：
 
 - 主源码：`src/wendao_enhanced.cpp`
 - 主程序：`release/wendao_enhanced.exe`
@@ -43,15 +43,15 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 
 ## 游戏特色
 
-- **20个境界**：凡人 -> 道祖
-- **事件系统**：24个手写事件 + 30%概率动态模板事件
-- **活的世界**：15个NPC自主修炼、战斗、飞升
+- **20 个境界**：凡人 -> 道祖
+- **事件系统**：24 个手写事件 + 30% 概率动态事件
+- **活的世界**：15 个 NPC 自主修炼、战斗、飞升
 - **五行系统**：灵根影响修炼，飞升需五行均衡
 - **因果系统**：选择会影响事件倾向和突破成功率
 - **道途记忆**：关键选择、突破、死亡和转世会沉淀为可查看记忆
 - **轮回传承**：死亡或证道会生成前世记录，下一世继承余韵
 - **世界反馈**：灵气暴动、宗门大战等世界事件会影响修炼和历练风险
-- **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，并尝试用 Ollama 生成 `release/ai_event.txt`
+- **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，优先尝试便携 `llama.cpp`，失败后回退到 Ollama 或内置模板
 
 ## 操作
 
@@ -61,9 +61,11 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 [3] 突破境界
 [4] 服用丹药
 [5] 灵石闭关
-[W] 查看世界  - 看NPC状态
+[W] 查看世界  - 看 NPC 状态
+[F] 查看家世
+[R] 查看人情风波
 [H] 道途记忆
-[G] 前世传承/成就
+[G] 前世传承 / 成就
 [S] 保存
 [L] 读取
 [N] 游戏结束后转世
@@ -77,14 +79,16 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 ├── src/
 │   └── wendao_enhanced.cpp
 ├── ai_engine/
-│   └── ai_core.h
+│   ├── ai_core.h
+│   ├── generate_event.ps1
+│   ├── models/
+│   └── runtime/llama.cpp/
 ├── world_system/
 │   └── dynamic_world.h
 ├── procedural_gen/
 │   └── procedural_gen.h
 ├── legacy_system/
 │   └── legacy_system.h
-├── battle_system/
 ├── assets/
 │   └── background.png
 ├── release/
@@ -96,8 +100,8 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 
 ## 自定义
 
-- **AI事件概率**：修改 `src/wendao_enhanced.cpp` 中 `Random(1, 100) <= 30` 的 `30`
-- **NPC数量**：修改 `world_system/dynamic_world.h` 的 `InitNPCs`
+- **AI 事件概率**：修改 `src/wendao_enhanced.cpp` 中 `Random(1, 100) <= 30` 的 `30`
+- **NPC 数量**：修改 `world_system/dynamic_world.h` 的 `InitNPCs`
 - **背景图**：替换 `assets/background.png` 后重新运行 `build.bat`
 
 ## 本地模型桥
@@ -106,6 +110,13 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 
 ```text
 ai_prompt.txt
+ai_prompt_runtime.txt
+ai_event.txt
+ai_event_raw.txt
+ai_backend.txt
+ai_status.txt
+ai_llama.log
+ai_ollama.log
 ```
 
 项目已内置便携 AI 后端：
@@ -115,12 +126,27 @@ ai_engine/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
 ai_engine/runtime/llama.cpp/
 ```
 
-触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 GGUF 模型，不要求玩家安装 Ollama。模型输出会先保存在 `release/ai_event_raw.txt`，清洗后的 5 行事件写入 `release/ai_event.txt`，使用的后端写入 `release/ai_backend.txt`。
+触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 GGUF 模型，不要求玩家安装 Ollama。
+
+当前模型桥行为：
+
+- 优先尝试便携 `llama.cpp`
+- 便携后端超时默认 25 秒
+- 若便携失败，会自动尝试 Ollama
+- Ollama 超时默认 20 秒
+- 两者都失败时，游戏自动回退到内置动态模板
+- 主界面左侧会显示当前动态事件后端与最近一次状态
 
 如果想强制手动测试便携后端：
 
 ```bat
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1 -ReleaseDir release -Backend portable
+```
+
+如果想强制测试 Ollama：
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1 -ReleaseDir release -Backend ollama
 ```
 
 Ollama 仍可作为备用后端。如果想用 Ollama，可以创建同名模型：
@@ -140,9 +166,9 @@ ollama create wendao-xiuxian -f ai_engine/Modelfile.wendao
 叩问前世
 ```
 
-没有 `ai_event.txt`、便携模型缺失、或本地模型生成失败时，游戏自动回退到内置动态模板。
+没有 `ai_event.txt`、便携模型缺失、模型超时、或本地模型生成失败时，游戏会自动回退到内置动态模板。
 
-### 打包分发
+## 打包分发
 
 想让别人解压即玩，打包当前文件夹时保留这些内容：
 
@@ -157,13 +183,22 @@ ai_engine/runtime/llama.cpp/
 
 便携 AI 文件约 500MB；如果删掉 `ai_engine/models` 或 `ai_engine/runtime`，游戏仍能运行，只是 AI 动态事件会回退到模板或 Ollama。
 
-### 小说语料边界
+## 小说语料边界
 
 网上的优质小说适合拆成“叙事结构、事件模板、意象词库、取舍模式”来借鉴，不适合直接复制段落进游戏事件。当前本地模型提示词要求原创输出；如果后续使用公开小说数据集做训练、微调或检索，请先确认数据授权和许可证，并保留来源记录。
 
+## 当前阶段
+
+项目已经处于“可玩纵切版 / Alpha 原型”阶段：
+
+- 核心玩法闭环已完成
+- 动态世界、轮回传承、存档、动态事件桥均已接入主线
+- 目前仍有较多内容硬编码在 C++ 中
+- 体验层和美术资源还有明显扩展空间
+
 ## 下一步建议
 
-1. 给项目初始化 Git，并提交当前可玩纵切版本。
-2. 把事件数据迁移到外部 JSON/CSV，继续扩展内容而不频繁改 C++。
-3. 给本地模型桥增加超时和更友好的失败提示。
-4. 后续补美术资源和更完整的窗口布局。
+1. 把手写事件迁移到外部 JSON/CSV，降低后续扩展成本。
+2. 拆分主程序中的大文件，逐步把 UI、事件、存档、战斗数值拆开。
+3. 继续补 UI 反馈和美术资源，提升沉浸感与信息可读性。
+4. 给动态事件增加更多结果类型，而不是主要依赖文本解析奖励。

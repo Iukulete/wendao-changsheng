@@ -1,0 +1,136 @@
+{
+  "weapons": [
+    {
+      "id": "weapon_sword_astral",
+      "name": "星辉飞剑",
+      "tier": "灵阶",
+      "asset": "items/weapons/weapon_sword_astral.png"
+    },
+    {
+      "id": "weapon_sword_crimson",
+      "name": "赤魄灵剑",
+      "tier": "地阶",
+      "asset": "items/weapons/weapon_sword_crimson.png"
+    },
+    {
+      "id": "weapon_spear_storm",
+      "name": "惊霆长枪",
+      "tier": "灵阶",
+      "asset": "items/weapons/weapon_spear_storm.png"
+    },
+    {
+      "id": "weapon_bow_windchase",
+      "name": "逐风弓",
+      "tier": "灵阶",
+      "asset": "items/weapons/weapon_bow_windchase.png"
+    },
+    {
+      "id": "weapon_ringblade_frost",
+      "name": "寒魄环刃",
+      "tier": "地阶",
+      "asset": "items/weapons/weapon_ringblade_frost.png"
+    },
+    {
+      "id": "weapon_dagger_shadowfang",
+      "name": "影牙短匕",
+      "tier": "灵阶",
+      "asset": "items/weapons/weapon_dagger_shadowfang.png"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact_spirit_gourd",
+      "name": "养灵葫芦",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_spirit_gourd.png"
+    },
+    {
+      "id": "artifact_jade_slip_ancient",
+      "name": "古修玉简",
+      "tier": "灵阶",
+      "asset": "items/artifacts/artifact_jade_slip_ancient.png"
+    },
+    {
+      "id": "artifact_bronze_mirror",
+      "name": "镇魂铜镜",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_bronze_mirror.png"
+    },
+    {
+      "id": "artifact_seal_tower",
+      "name": "镇狱小塔",
+      "tier": "天阶",
+      "asset": "items/artifacts/artifact_seal_tower.png"
+    },
+    {
+      "id": "artifact_sigil_disk",
+      "name": "青冥阵盘",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_sigil_disk.png"
+    },
+    {
+      "id": "artifact_orb_tideheart",
+      "name": "潮心灵珠",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_orb_tideheart.png"
+    },
+    {
+      "id": "artifact_crimson_seal",
+      "name": "赤霄印",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_crimson_seal.png"
+    },
+    {
+      "id": "artifact_soul_banner",
+      "name": "摄魂幡",
+      "tier": "地阶",
+      "asset": "items/artifacts/artifact_soul_banner.png"
+    }
+  ],
+  "consumables": [
+    {
+      "id": "consumable_pill_bottle_emerald",
+      "name": "翠灵丹瓶",
+      "tier": "凡阶",
+      "asset": "items/consumables/consumable_pill_bottle_emerald.png"
+    },
+    {
+      "id": "consumable_talisman_blinkstep",
+      "name": "瞬影符",
+      "tier": "灵阶",
+      "asset": "items/consumables/consumable_talisman_blinkstep.png"
+    },
+    {
+      "id": "consumable_scroll_flameward",
+      "name": "炎障卷轴",
+      "tier": "灵阶",
+      "asset": "items/consumables/consumable_scroll_flameward.png"
+    }
+  ],
+  "materials": [
+    {
+      "id": "material_ling_stone",
+      "name": "灵石",
+      "tier": "凡阶",
+      "asset": "items/materials/material_ling_stone.png"
+    },
+    {
+      "id": "material_moon_grass",
+      "name": "月华草",
+      "tier": "灵阶",
+      "asset": "items/materials/material_moon_grass.png"
+    },
+    {
+      "id": "material_blackiron_ore",
+      "name": "玄铁矿",
+      "tier": "灵阶",
+      "asset": "items/materials/material_blackiron_ore.png"
+    },
+    {
+      "id": "material_demon_core",
+      "name": "妖丹",
+      "tier": "灵阶",
+      "asset": "items/materials/material_demon_core.png"
+    }
+  ]
+}

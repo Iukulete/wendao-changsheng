@@ -32,6 +32,13 @@ int Random(int min, int max) {
     return dis(g_gen);
 }
 
+wstring GetCurrentWorldEraName();
+int GetEraMeditationModifierPercent();
+int GetEraBreakthroughModifier();
+int GetEraAdventureRiskModifier();
+int GetEraClosedDoorBonus();
+int GetEraAiEventChance();
+
 // ==================== 完整境界系统（20个） ====================
 enum Realm {
     // 下界修真（10个）
@@ -289,13 +296,14 @@ public:
         CheckRootBalance();
     }
 
-    int Meditate(int multiplier = 1) {
+    int Meditate(int multiplier = 1, int percentModifier = 100) {
         int gain = Random(10, 20) + GetTotalRoot() / 5;
         // 杂灵根修炼速度惩罚
         if (GetTotalRoot() < 30 && !hasBalancedRoots) {
             gain = gain * 7 / 10;
         }
         gain *= max(1, multiplier);
+        gain = gain * max(10, percentModifier) / 100;
         exp += gain;
         age += 1;
 
@@ -326,10 +334,10 @@ public:
         mp = maxMp;
     }
 
-    bool TryBreakthrough() {
+    bool TryBreakthrough(int rateModifier = 0) {
         if (!CanBreakthrough()) return false;
 
-        int successRate = 50 + GetTotalRoot() + karma / 2;
+        int successRate = 50 + GetTotalRoot() + karma / 2 + rateModifier;
 
         // 五行均衡加成
         if (hasBalancedRoots) {
@@ -415,64 +423,84 @@ struct Event {
     vector<Choice> choices;
 };
 
+enum EventTheme {
+    THEME_GENERAL = 0,
+    THEME_CULTIVATION = 1,
+    THEME_TECH = 2,
+    THEME_WASTELAND = 3,
+    THEME_FINAL_AGE = 4
+};
+
+struct TaggedEvent {
+    Event event;
+    EventTheme theme;
+};
+
 // ==================== 事件管理器 ====================
 class EventManager {
 private:
-    vector<Event> events;
+    vector<TaggedEvent> events;
 
 public:
     EventManager() {
         InitEvents();
     }
 
+    void AddEvent(const Event& event, EventTheme theme = THEME_GENERAL) {
+        TaggedEvent tagged;
+        tagged.event = event;
+        tagged.theme = theme;
+        events.push_back(tagged);
+    }
+
     void InitEvents() {
         // ========== 战斗事件系列（20个） ==========
         // 妖兽系列
-        events.push_back({
+        AddEvent({
             L"【危机】野狼妖袭击", L"一只野狼妖盯上了你！",
             {{L"战斗", {L"击败妖兽\n修为+40", L"被击败\n气血-40"}, 0},
              {L"逃跑", {L"成功逃脱", L"被追上\n气血-30"}, -5}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【危机】猛虎妖袭击", L"一只猛虎妖出现！",
             {{L"战斗", {L"击败猛虎\n修为+50", L"被击败\n气血-50"}, 0}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【危机】毒蛇妖袭击", L"毒蛇妖缠上了你！",
             {{L"战斗", {L"击败毒蛇\n修为+45", L"中毒\n气血-45"}, 0}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【危机】巨蟒妖袭击", L"巨蟒妖横空出世！",
             {{L"战斗", {L"击败巨蟒\n修为+60", L"被缠住\n气血-55"}, 0}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【危机】狐妖袭击", L"狐妖施展幻术！",
             {{L"战斗", {L"破除幻术\n修为+55", L"中幻术\n气血-40"}, 0}}
-        });
+        }, THEME_CULTIVATION);
 
         // 修士对决系列
-        events.push_back({
+        AddEvent({
             L"【对决】邪修", L"遭遇邪修挑衅",
             {{L"应战", {L"击败邪修\n修为+70", L"被击败\n气血-60"}, 0},
              {L"逃跑", {L"逃脱", L"被追杀\n气血-40"}, -10}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【对决】散修", L"与散修起冲突",
             {{L"应战", {L"战胜\n修为+50", L"战败\n气血-45"}, 0}}
-        });
-        events.push_back({
+        }, THEME_CULTIVATION);
+        AddEvent({
             L"【对决】魔修", L"魔修欲夺舍！",
             {{L"拼死一战", {L"反杀魔修\n修为+150", L"险些被夺舍\n气血-70"}, 10}}
-        });
+        }, THEME_CULTIVATION);
 
         // ========== 奇遇事件系列（25个） ==========
         // 事件1：负伤修士
-        events.push_back({
+        AddEvent({
             L"【奇遇】负伤修士",
             L"你在山道上遇见一位身受重伤的修士，他请求你的帮助。",
             {
                 {L"救助他", {
-                    L"他感激涕零，传授你一门功法！\n修为+50",
+                    L"他感激涕零，将一枚记着残篇的古修玉简交给你\n修为+50",
                     L"他恢复后反咬一口\n气血-30",
                     L"他其实是魔修，种下心魔\n修为-30"
                 }, 10},
@@ -485,19 +513,19 @@ public:
                     L"被他临死反扑重伤\n气血-30"
                 }, -20}
             }
-        });
+        }, THEME_GENERAL);
 
         // 事件2：神秘洞府
-        events.push_back({
+        AddEvent({
             L"【奇遇】神秘洞府",
             L"你发现一个隐蔽的洞府，散发着灵气波动。",
             {
                 {L"小心探索", {
-                    L"发现灵石和丹药\n灵石+15，丹药+3",
+                    L"发现灵石、月华草与一瓶翠灵丹\n灵石+15，丹药+3",
                     L"触发禁制受伤\n气血-20"
                 }, 0},
                 {L"强行破阵", {
-                    L"获得大量资源\n灵石+30，修为+80",
+                    L"破开阵眼，夺得青冥阵盘与大量资源\n灵石+30，修为+80",
                     L"禁制反噬，重伤\n气血-50"
                 }, 5},
                 {L"记下位置离开", {
@@ -505,15 +533,15 @@ public:
                     L"回来时被他人捷足先登"
                 }, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
         // 事件3：妖兽袭击
-        events.push_back({
+        AddEvent({
             L"【危机】妖兽袭击",
             L"一只炼气期妖兽盯上了你！",
             {
                 {L"正面战斗", {
-                    L"击败妖兽，获得妖丹\n修为+40，灵石+10",
+                    L"击败妖兽，剖出一枚妖丹\n修为+40，灵石+10",
                     L"被妖兽击败\n气血-40"
                 }, 0},
                 {L"尝试逃跑", {
@@ -525,15 +553,15 @@ public:
                     L"偷袭失败，妖兽狂暴\n气血-50"
                 }, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
         // 事件4：宗门招收
-        events.push_back({
+        AddEvent({
             L"【机遇】宗门招收",
             L"一个修仙宗门正在招收弟子，你是否参加考核？",
             {
                 {L"参加考核", {
-                    L"通过考核，成为外门弟子\n灵石+20，修为+30",
+                    L"通过考核，获赠一枚灵石袋与宗门玉简\n灵石+20，修为+30",
                     L"考核失败，灰溜溜离开"
                 }, 5},
                 {L"拒绝，散修自由", {
@@ -541,19 +569,19 @@ public:
                     L"错过良机"
                 }, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
         // 事件5：天材地宝
-        events.push_back({
+        AddEvent({
             L"【机遇】天材地宝",
             L"你发现了一株千年灵芝，但旁边有妖兽守护。",
             {
                 {L"智取", {
-                    L"成功引开妖兽，取得灵芝\n修为+100",
+                    L"成功引开妖兽，顺手采得月华草与灵芝\n修为+100",
                     L"妖兽察觉，追击你\n气血-30"
                 }, 5},
                 {L"强取", {
-                    L"击败妖兽，获得灵芝\n修为+120",
+                    L"击败妖兽，获得灵芝与妖丹\n修为+120",
                     L"不敌妖兽，逃跑\n气血-40"
                 }, 0},
                 {L"放弃", {
@@ -561,26 +589,26 @@ public:
                     L"机缘尽失"
                 }, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
         // 添加更多事件...
-        events.push_back({
+        AddEvent({
             L"【大机遇】前辈传承",
             L"你误入一处上古洞府，发现前辈留下的传承。",
             {
                 {L"接受传承", {
-                    L"获得强大功法！\n修为+200",
+                    L"获得镇魂铜镜与强大功法！\n修为+200",
                     L"传承不适合，走火入魔\n气血-60"
                 }, 10},
                 {L"只取宝物", {
-                    L"获得大量资源\n灵石+50，丹药+10",
+                    L"卷走养灵葫芦与大量资源\n灵石+50，丹药+10",
                     L"触发机关\n气血-30"
                 }, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
         // 事件7-15：更多事件（包含五行相关）
-        events.push_back({
+        AddEvent({
             L"【大机遇】五行秘境",
             L"你误入一处五行秘境，可以选择一种五行之力吸收。",
             {
@@ -590,9 +618,9 @@ public:
                 {L"吸收金铁之力", {L"金灵根+2！\n修为+50", L"金气反噬\n气血-20"}, 5},
                 {L"吸收大地之力", {L"土灵根+2！\n修为+50", L"被地脉震伤\n气血-20"}, 5}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【传承】五行老祖",
             L"你遇到一位五行老祖的传承，他可以帮你补全灵根。",
             {
@@ -600,18 +628,18 @@ public:
                 {L"只求指点", {L"获得修炼心得\n修为+100", L"老祖不满\n修为-50"}, 0},
                 {L"放弃机缘", {L"明哲保身", L"错失良机"}, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【危机】魔修伏击",
             L"一名魔修盯上了你，想要夺舍！",
             {
                 {L"拼死一战", {L"反杀魔修\n修为+150", L"险些被夺舍\n气血-50"}, 10},
                 {L"舍财保命", {L"魔修拿走灵石\n灵石-30", L"魔修不满\n气血-40"}, -5}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【机遇】秘境开启",
             L"附近秘境开启，无数修士涌入，你是否前往？",
             {
@@ -619,63 +647,104 @@ public:
                 {L"等人少了再去", {L"避开争斗\n灵石+30", L"去晚了，秘境关闭"}, 5},
                 {L"不去", {L"谨慎保命", L"错失良机"}, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【见闻】渡劫修士",
             L"你远远观摩到一位修士渡劫，有所感悟。",
             {
                 {L"仔细观摩", {L"领悟天道\n修为+120", L"被劫雷余波击中\n气血-40"}, 5},
                 {L"立即远离", {L"明哲保身", L"错失感悟"}, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【大机遇】仙缘降临",
             L"天降仙缘，一道金光笼罩着你！",
             {
                 {L"接受仙缘", {L"境界突破！\n直接提升一个小境界，寿命+50年", L"福缘不够\n仙缘消散"}, 20},
                 {L"推辞", {L"获得部分好处\n修为+100", L"惹怒天道\n气血-50"}, 0}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【奇遇】灵根洗髓丹",
             L"坊市中有人出售灵根洗髓丹，可提升灵根资质。",
             {
-                {L"购买服用", {L"随机一种灵根+1\n灵石-20", L"是假药\n灵石-20"}, 0},
-                {L"讨价还价", {L"半价买到\n灵根+1，灵石-10", L"卖家拒绝"}, 0}
+                {L"购买服用", {L"连同翠灵丹一并服下，随机一种灵根+1\n灵石-20", L"是假药\n灵石-20"}, 0},
+                {L"讨价还价", {L"半价买到，还捎上一株月华草\n灵根+1，灵石-10", L"卖家拒绝"}, 0}
             }
-        });
+        }, THEME_GENERAL);
 
-        events.push_back({
+        AddEvent({
             L"【危机】天劫降临",
             L"你在修炼时引发天劫，必须应对！",
             {
                 {L"正面硬抗", {L"抗过天劫\n修为+150", L"被天雷重伤\n气血-60"}, 10},
-                {L"借助法宝", {L"成功渡劫\n修为+100", L"法宝损毁\n气血-30"}, 5},
+                {L"借助法宝", {L"借镇狱小塔护体，成功渡劫\n修为+100", L"法宝损毁\n气血-30"}, 5},
                 {L"逃避天劫", {L"暂时逃过", L"天道记恨\n因果-30"}, -20}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【奇遇】仙药园",
             L"你偶然发现一个无人看守的仙药园。",
             {
-                {L"采摘仙药", {L"获得大量丹药\n丹药+15", L"触发守护阵法\n气血-30"}, 0},
-                {L"只取一株", {L"小心谨慎\n丹药+5", L"还是触发了阵法\n气血-15"}, 5}
+                {L"采摘仙药", {L"采下月华草与多种仙药，获得大量丹药\n丹药+15", L"触发守护阵法\n气血-30"}, 0},
+                {L"只取一株", {L"只摘走一株月华草，小心谨慎\n丹药+5", L"还是触发了阵法\n气血-15"}, 5}
             }
-        });
+        }, THEME_CULTIVATION);
 
-        events.push_back({
+        AddEvent({
             L"【奇遇】神秘商人",
             L"你遇到一位神秘商人，他出售稀有物品。",
             {
-                {L"购买丹药", {L"获得筑基丹\n丹药+5，灵石-15", L"是假货\n灵石-15"}, 0},
-                {L"购买功法", {L"获得强大功法\n修为+80，灵石-25", L"是残缺功法\n灵石-25"}, 0},
+                {L"购买丹药", {L"买下一瓶翠灵丹与筑基丹\n丹药+5，灵石-15", L"是假货\n灵石-15"}, 0},
+                {L"购买功法", {L"连同古修玉简一并买下，获强大功法\n修为+80，灵石-25", L"是残缺功法\n灵石-25"}, 0},
+                {L"购买法宝", {L"买下潮心灵珠与瞬影符\n修为+40，灵石-25", L"商人掉包成残次品\n灵石-25"}, 0},
                 {L"不买", {L"保留灵石", L"错失机会"}, 0}
             }
-        });
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【奇遇】灵机工坊试炼",
+            L"一座半公开的灵机工坊正在测试新型遁行装置，招募敢于试机的修士。",
+            {
+                {L"报名试机", {L"你借灵机遁行悟出新身法\n修为+110，灵石+15", L"装置失控爆鸣\n气血-35"}, 5},
+                {L"偷看图纸", {L"你记下几道关键纹路，闭关时大有裨益\n修为+80", L"被工坊护卫发现\n气血-20"}, 0},
+                {L"出售意见", {L"你指出阵纹缺口，工坊以灵石酬谢\n灵石+25", L"对方不以为然，把你赶了出去"}, 3}
+            }
+        }, THEME_TECH);
+
+        AddEvent({
+            L"【机缘】道网远讯",
+            L"灵网节点忽然向你推送一段跨洲讯息，里面藏着某座高阶宗门遗留的远程试炼入口。",
+            {
+                {L"接入试炼", {L"你远程闯过一层试炼，获赠算法阵图\n修为+120", L"神识过载，头痛欲裂\n气血-30"}, 6},
+                {L"转卖线索", {L"你把入口坐标卖给别人，换得不菲灵石\n灵石+30", L"对方反悔，反向锁定了你的气息\n气血-20"}, 0},
+                {L"谨慎断开", {L"你没有贸然接入，但仍记下一丝道网逻辑\n修为+50", L"机缘短暂熄灭，只剩空白提示"}, 2}
+            }
+        }, THEME_TECH);
+
+        AddEvent({
+            L"【危机】荒野古机失控",
+            L"荒野中一具残存的古代灵机忽然复苏，把你误判成入侵者，废土沙尘里满是焦黑火线。",
+            {
+                {L"拆解核心", {L"你险中求胜，拆下可用部件与灵核\n修为+130，灵石+20", L"核心自爆，整片荒坡都被炸塌\n气血-45"}, 8},
+                {L"躲入废墟", {L"你借残墙避开锋芒，还顺手摸到旧时代物资\n灵石+18", L"废墟同时坍塌，把你埋在尘里\n气血-30"}, 0},
+                {L"唤醒残阵", {L"你强行接管附近残阵，反将古机困死\n修为+100", L"阵列年久失修，先一步反噬了你\n气血-35"}, 5}
+            }
+        }, THEME_WASTELAND);
+
+        AddEvent({
+            L"【因果】末法争井",
+            L"一口尚未完全枯竭的灵井引来数方修士对峙，在末法时代，每一缕灵气都像会咬人的肉。",
+            {
+                {L"强夺灵井", {L"你趁乱夺得灵井余气，破境感悟大涨\n修为+140", L"众人联手围杀，几乎把你逼上绝路\n气血-50"}, -5},
+                {L"结盟分润", {L"你与几人暂结同盟，分得一份灵气与人脉\n修为+90，因果+10", L"盟友翻脸，分润变成陷阱\n气血-30"}, 6},
+                {L"旁观待变", {L"你等到残局收尾，再捡走被忽略的资源\n灵石+22，修为+50", L"拖得太久，什么也没剩下"}, 0}
+            }
+        }, THEME_FINAL_AGE);
     }
 
     Event* GetRandomEvent(int playerKarma, bool needRootBalance) {
@@ -685,12 +754,41 @@ public:
         if (needRootBalance && Random(1, 100) <= 40) {
             int rootEventIndex = Random(6, 8);  // 五行秘境、五行老祖
             if (rootEventIndex < events.size()) {
-                return &events[rootEventIndex];
+                return &events[rootEventIndex].event;
             }
         }
 
-        int index = Random(0, events.size() - 1);
-        return &events[index];
+        vector<int> preferred;
+        vector<int> fallback;
+        EventTheme preferredTheme = THEME_GENERAL;
+
+        wstring eraName = GetCurrentWorldEraName();
+        if (eraName == L"灵机蒸汽纪" || eraName == L"星穹道网纪") {
+            preferredTheme = THEME_TECH;
+        } else if (eraName == L"废土返道纪") {
+            preferredTheme = THEME_WASTELAND;
+        } else if (eraName == L"末法裂变纪") {
+            preferredTheme = THEME_FINAL_AGE;
+        } else {
+            preferredTheme = THEME_CULTIVATION;
+        }
+
+        for (int i = 0; i < (int)events.size(); i++) {
+            if (events[i].theme == preferredTheme) preferred.push_back(i);
+            if (events[i].theme == THEME_GENERAL || events[i].theme == THEME_CULTIVATION) fallback.push_back(i);
+        }
+
+        if (!preferred.empty() && Random(1, 100) <= 65) {
+            int index = preferred[Random(0, (int)preferred.size() - 1)];
+            return &events[index].event;
+        }
+        if (!fallback.empty()) {
+            int index = fallback[Random(0, (int)fallback.size() - 1)];
+            return &events[index].event;
+        }
+
+        int index = Random(0, (int)events.size() - 1);
+        return &events[index].event;
     }
 };
 
@@ -708,10 +806,18 @@ LegacySystem g_legacySystem;
 AchievementSystem g_achievementSystem;
 vector<wstring> g_memoryLog;
 vector<wstring> g_socialRumors;
+vector<wstring> g_discoveredItems;
 int g_generation = 1;
+wstring g_lastAiBackend = L"未触发";
+wstring g_lastAiStatus = L"本局尚未触发动态事件。";
+wstring g_worldEraName = L"灵气初盛纪";
+wstring g_worldEraDescription = L"诸宗并立，洞府初开，天下仍以修仙宗门为正统。";
+wstring g_worldEraRule = L"灵气丰沛，修士主宰秩序，凡俗仍仰望山门。";
+wstring g_reincarnationEcho = L"前世的残响尚浅，还不足以彻底改变这一世。";
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
+Image* g_itemAtlasImage = nullptr;
 
 enum GameState {
     STATE_MENU = 0,
@@ -741,6 +847,39 @@ HWND g_nameInput;
 HWND g_btnStart;
 
 void ShowNotice(const wstring& title, const wstring& text);
+vector<vector<wstring>> LoadItemDbRows();
+
+void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
+                  REAL fontSize, const RectF& rect, StringFormat& format) {
+    GraphicsPath textPath;
+    textPath.AddString(text.c_str(), -1, &fontFamily, FontStyleRegular, fontSize, rect, &format);
+
+    SolidBrush glowBrush(Color(28, 88, 228, 220));
+    for (int dx = -3; dx <= 3; ++dx) {
+        for (int dy = -3; dy <= 3; ++dy) {
+            if (dx == 0 && dy == 0) continue;
+            GraphicsPath* shadowPath = textPath.Clone();
+            Matrix matrix;
+            matrix.Translate((REAL)dx, (REAL)dy);
+            shadowPath->Transform(&matrix);
+            graphics.FillPath(&glowBrush, shadowPath);
+            delete shadowPath;
+        }
+    }
+
+    Pen outlinePen(Color(232, 50, 28, 16), 8.0f);
+    outlinePen.SetLineJoin(LineJoinRound);
+    LinearGradientBrush fillBrush(
+        PointF(rect.X, rect.Y),
+        PointF(rect.X, rect.Y + rect.Height),
+        Color(255, 244, 228, 178),
+        Color(255, 176, 122, 44));
+    SolidBrush sheenBrush(Color(80, 255, 246, 220));
+
+    graphics.DrawPath(&outlinePen, &textPath);
+    graphics.FillPath(&fillBrush, &textPath);
+    graphics.FillEllipse(&sheenBrush, rect.X + rect.Width * 0.33f, rect.Y + 10.0f, rect.Width * 0.18f, 22.0f);
+}
 
 void LayoutMenuControls() {
     if (!g_hWnd || !g_nameInput || !g_btnStart) return;
@@ -784,6 +923,18 @@ void AddMemory(const wstring& title, const wstring& detail) {
     }
 }
 
+void DiscoverItemsFromText(const wstring& text) {
+    auto rows = LoadItemDbRows();
+    for (auto& cols : rows) {
+        if (cols.size() >= 2 && text.find(cols[1]) != wstring::npos) {
+            if (find(g_discoveredItems.begin(), g_discoveredItems.end(), cols[1]) == g_discoveredItems.end()) {
+                g_discoveredItems.push_back(cols[1]);
+                AddMemory(L"灵物见闻", L"将 " + cols[1] + L" 记入了灵物图录");
+            }
+        }
+    }
+}
+
 wstring GetMemoryText(int limit = 12) {
     wstringstream ss;
     ss << L"【道途记忆】\n\n";
@@ -806,6 +957,10 @@ void SaveMemory(wofstream& file) {
     file << g_generation << L"\n";
     file << g_memoryLog.size() << L"\n";
     for (auto& item : g_memoryLog) {
+        file << item << L"\n";
+    }
+    file << g_discoveredItems.size() << L"\n";
+    for (auto& item : g_discoveredItems) {
         file << item << L"\n";
     }
 }
@@ -854,13 +1009,191 @@ bool LoadMemory(wifstream& file) {
         getline(file, item);
         g_memoryLog.push_back(item);
     }
+    file >> count;
+    file.ignore(numeric_limits<streamsize>::max(), L'\n');
+    g_discoveredItems.clear();
+    for (size_t i = 0; i < count; i++) {
+        wstring item;
+        getline(file, item);
+        g_discoveredItems.push_back(item);
+    }
     return true;
+}
+
+void GenerateWorldEra() {
+    struct EraProfile {
+        const wchar_t* name;
+        const wchar_t* desc;
+        const wchar_t* rule;
+    };
+
+    static const vector<EraProfile> eras = {
+        {L"灵气初盛纪", L"诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。", L"山门法统压过王朝法度，凡俗与修士之间仍隔着天堑。"},
+        {L"仙朝鼎盛纪", L"仙门与皇朝合流，气运、血脉与册封制度开始左右修行上限。", L"想要更进一步，不仅要修为，也要站队、门第与气运。"},
+        {L"末法裂变纪", L"灵气日渐稀薄，秘境争夺加剧，许多人开始研究阵械与替代性的修行体系。", L"单靠苦修越来越难，资源、机巧和掠夺变得同样重要。"},
+        {L"灵机蒸汽纪", L"修真文明和机关术深度融合，灵石驱动的工坊、飞舟与阵列城邦开始扩张。", L"宗门仍在，但炼器、机巧、量产灵具正在改变旧秩序。"},
+        {L"星穹道网纪", L"灵网覆盖大域，神识终端、远程阵列和跨洲飞舟让道统传播前所未有地迅捷。", L"信息与道法同样重要，闭门苦修者也可能被时代抛下。"},
+        {L"废土返道纪", L"上一轮文明在灾变中崩塌，残存修士、古代灵机与荒野邪祟共同瓜分世界。", L"活下去与重建秩序比纯粹飞升更难，传承因此格外珍贵。"}
+    };
+
+    int baseIndex = Random(0, (int)eras.size() - 1);
+    if (g_generation >= 3) {
+        baseIndex = (g_generation - 1 + Random(0, 2)) % (int)eras.size();
+    }
+
+    const EraProfile& era = eras[baseIndex];
+    g_worldEraName = era.name;
+    g_worldEraDescription = era.desc;
+    g_worldEraRule = era.rule;
+
+    int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
+    int knowledgeEcho = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
+    int memoryEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+
+    if (treasureEcho >= 40) {
+        g_reincarnationEcho = L"你隐约能感到某件前世祭炼过的重宝仍在呼应自己，这一世有关器灵、法宝与遗府的因果会更浓。";
+    } else if (knowledgeEcho >= 40) {
+        g_reincarnationEcho = L"你对阵法、斗法与局势判断有一种不合年龄的熟悉感，像是旧世经验仍在替你做选择。";
+    } else if (memoryEcho >= 30) {
+        g_reincarnationEcho = L"梦境里反复出现前世的山门、故人和败亡之地，你知道这一世迟早会与那些残影重逢。";
+    } else if (reputationEcho >= 40) {
+        g_reincarnationEcho = L"尚未踏上道途，外界却已对你投来莫名善意或敌意，仿佛前世的名声先你一步归来。";
+    } else {
+        g_reincarnationEcho = L"前世残响仍浅，只会在某些关键时刻轻轻拨动你的心念。";
+    }
+}
+
+wstring GetEraSummaryText() {
+    wstringstream ss;
+    ss << L"【时代风貌】\n\n";
+    ss << L"纪元: " << g_worldEraName << L"\n";
+    ss << g_worldEraDescription << L"\n";
+    ss << L"时代法则: " << g_worldEraRule << L"\n";
+    ss << L"轮回余烬: " << g_reincarnationEcho;
+    return ss.str();
+}
+
+wstring GetCurrentWorldEraName() {
+    return g_worldEraName;
+}
+
+int GetEraMeditationModifierPercent() {
+    if (g_worldEraName == L"灵气初盛纪") return 120;
+    if (g_worldEraName == L"仙朝鼎盛纪") return 105;
+    if (g_worldEraName == L"末法裂变纪") return 82;
+    if (g_worldEraName == L"灵机蒸汽纪") return 95;
+    if (g_worldEraName == L"星穹道网纪") return 108;
+    if (g_worldEraName == L"废土返道纪") return 88;
+    return 100;
+}
+
+int GetEraBreakthroughModifier() {
+    if (g_worldEraName == L"灵气初盛纪") return 8;
+    if (g_worldEraName == L"仙朝鼎盛纪") return 3;
+    if (g_worldEraName == L"末法裂变纪") return -12;
+    if (g_worldEraName == L"灵机蒸汽纪") return 0;
+    if (g_worldEraName == L"星穹道网纪") return 5;
+    if (g_worldEraName == L"废土返道纪") return -6;
+    return 0;
+}
+
+int GetEraAdventureRiskModifier() {
+    if (g_worldEraName == L"灵气初盛纪") return -6;
+    if (g_worldEraName == L"仙朝鼎盛纪") return 2;
+    if (g_worldEraName == L"末法裂变纪") return 12;
+    if (g_worldEraName == L"灵机蒸汽纪") return -2;
+    if (g_worldEraName == L"星穹道网纪") return -4;
+    if (g_worldEraName == L"废土返道纪") return 14;
+    return 0;
+}
+
+int GetEraClosedDoorBonus() {
+    if (g_worldEraName == L"灵机蒸汽纪") return 20;
+    if (g_worldEraName == L"星穹道网纪") return 12;
+    if (g_worldEraName == L"末法裂变纪") return -15;
+    if (g_worldEraName == L"废土返道纪") return -8;
+    return 0;
+}
+
+int GetEraAiEventChance() {
+    if (g_worldEraName == L"星穹道网纪") return 42;
+    if (g_worldEraName == L"灵机蒸汽纪") return 36;
+    if (g_worldEraName == L"末法裂变纪") return 26;
+    if (g_worldEraName == L"废土返道纪") return 24;
+    return 30;
+}
+
+bool ShouldTriggerLegacyEchoEvent() {
+    int totalEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) +
+                    g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) +
+                    g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) +
+                    abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION));
+    if (totalEcho <= 0) return false;
+
+    int chance = 12 + totalEcho / 18;
+    if (g_worldEraName == L"废土返道纪") chance += 8;
+    if (g_worldEraName == L"星穹道网纪") chance += 4;
+    chance = max(10, min(45, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildLegacyEchoEvent() {
+    Event evt;
+
+    int memoryEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int knowledgeEcho = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
+    int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
+    int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+
+    if (treasureEcho >= max(memoryEcho, knowledgeEcho) && treasureEcho > 0) {
+        evt.title = L"【传承】前世灵宝残响";
+        evt.description = L"你在历练途中被一阵熟悉的器鸣牵引，像是上一世祭炼过的通天灵宝正隔着轮回回应你。";
+        evt.choices = {
+            {L"追索器鸣", {L"你顺着残响找到灵宝器痕，心神与其短暂共鸣\n修为+140，灵石+20", L"器鸣过于狂暴，反噬经脉\n气血-35"}, 8},
+            {L"稳住心神", {L"你没有贸然触碰，而是记下器纹变化\n修为+80", L"残响消散，只剩淡淡遗憾"}, 2},
+            {L"强行炼化", {L"旧日器灵认出你的一缕神识\n修为+180，寿命+10年", L"灵宝并不承认这一世的你\n气血-50"}, 12}
+        };
+        return evt;
+    }
+
+    if (knowledgeEcho >= max(memoryEcho, treasureEcho) && knowledgeEcho > 0) {
+        evt.title = L"【因果】前世斗法手感";
+        evt.description = L"面对陌生局势时，你忽然生出一种近乎本能的判断，像是上一世的斗法经验提前替你落子。";
+        evt.choices = {
+            {L"顺着本能出手", {L"你以近乎老练的手段化解凶险\n修为+120", L"本能与现实错位，反被局势拖累\n气血-30"}, 5},
+            {L"细查来源", {L"你在恍惚中看见前世片段，悟透一层因果\n修为+90，因果+10", L"片段过于破碎，徒增心神负担\n气血-20"}, 6},
+            {L"压下悸动", {L"你拒绝被旧经验牵着走，心境更稳\n修为+60", L"你错过了一次本可利用的先机"}, 0}
+        };
+        return evt;
+    }
+
+    if (reputationEcho != 0) {
+        evt.title = L"【因果】旧名再临";
+        evt.description = L"有人在见到你后神色骤变，像是认出了某个不该属于今生的名字，前世名声正穿过岁月追上你。";
+        evt.choices = {
+            {L"追问真相", {L"对方说出前世旧闻，你借机理清部分因果\n修为+90，因果+15", L"对方认错后羞怒离去，还暗中记恨上你\n因果-15"}, 6},
+            {L"借势行事", {L"你顺势利用旧名换来资源与情报\n灵石+25，修为+60", L"名声反噬，引来不必要的窥视\n气血-25"}, 0},
+            {L"装作不知", {L"你保持沉默，对方反而更敬畏你几分\n修为+50", L"沉默未能化解误会，流言继续扩散\n因果-10"}, 0}
+        };
+        return evt;
+    }
+
+    evt.title = L"【传承】前世梦痕";
+    evt.description = L"你在一处寻常之地忽然恍神，仿佛又看见上一世未走完的山门、故人和败亡之夜。";
+    evt.choices = {
+        {L"沉入梦痕", {L"你从前世残梦里拾回一段修行感悟\n修为+110", L"旧梦过重，心神震荡\n气血-25"}, 4},
+        {L"记下线索", {L"你把梦中地名和器纹都记了下来\n修为+70", L"醒来后线索迅速模糊，只剩只言片语"}, 2},
+        {L"斩断执念", {L"你主动与前世拉开距离，道心更稳\n因果+10，修为+40", L"执念反噬，胸口隐隐作痛\n气血-20"}, 8}
+    };
+    return evt;
 }
 
 void GenerateSocialRumors() {
     g_socialRumors.clear();
     int totalRoot = g_player.GetTotalRoot();
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
 
     if (totalRoot >= 42 || g_player.hasBalancedRoots) {
         g_socialRumors.push_back(L"族中长辈看过你的灵根后，语气明显软了几分，说你日后可争内门名额。");
@@ -884,6 +1217,20 @@ void GenerateSocialRumors() {
 
     if (memoryBonus >= 30) {
         g_socialRumors.push_back(L"你偶尔露出的眼神不像少年，令一位执事多看了你两眼。");
+    }
+
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        g_socialRumors.push_back(L"坊市里新开的灵机工坊很抢眼，不少年轻修士都在谈论机关臂、飞梭匣与量产灵具。");
+    } else if (g_worldEraName == L"星穹道网纪") {
+        g_socialRumors.push_back(L"有人议论远方宗门通过灵网收徒，哪怕出身寒微，也可能一夜之间被大势卷走。");
+    } else if (g_worldEraName == L"末法裂变纪") {
+        g_socialRumors.push_back(L"老一辈都在感叹灵气不如从前，许多修士开始明争暗夺每一口能用来破境的资源。");
+    } else if (g_worldEraName == L"废土返道纪") {
+        g_socialRumors.push_back(L"荒野之外常有失控的古代灵机游荡，很多传承洞府因此成了拿命去换的机缘。");
+    }
+
+    if (treasureEcho >= 40) {
+        g_socialRumors.push_back(L"你偶尔会对某些残破法宝生出异样熟悉感，像是它们曾在另一世陪你见过血与雷劫。");
     }
 
     if (g_socialRumors.size() > 6) {
@@ -917,13 +1264,261 @@ void InitWorldData() {
     g_worldData = g_procGen.GenerateWorld();
 }
 
-void TryRunLocalModelGenerator() {
+wstring ReadAiStatusFile(const wchar_t* fileName) {
+    return ReadUtf8FileToWide(WideToUtf8(fileName));
+}
+
+vector<vector<wstring>> LoadItemDbRows() {
+    wstring tsv = ReadUtf8FileToWide("..\\assets\\item_db.tsv");
+    if (tsv.empty()) tsv = ReadUtf8FileToWide("item_db.tsv");
+    if (tsv.empty()) tsv = ReadUtf8FileToWide("assets\\item_db.tsv");
+    vector<vector<wstring>> rows;
+    if (tsv.empty()) return rows;
+
+    wstringstream ss(tsv);
+    wstring line;
+    getline(ss, line); // header
+    while (getline(ss, line)) {
+        if (line.empty()) continue;
+        vector<wstring> cols;
+        size_t start = 0;
+        while (true) {
+            size_t tab = line.find(L'\t', start);
+            if (tab == wstring::npos) {
+                cols.push_back(line.substr(start));
+                break;
+            }
+            cols.push_back(line.substr(start, tab - start));
+            start = tab + 1;
+        }
+        if (!cols.empty()) rows.push_back(cols);
+    }
+    return rows;
+}
+
+wstring LoadItemLoreDigest(int limit = 6) {
+    auto rows = LoadItemDbRows();
+    if (!rows.empty()) {
+        wstringstream out;
+        out << L"- 近来流传的器物:\n";
+        int count = 0;
+        for (auto& cols : rows) {
+            if (count >= limit) break;
+            if (cols.size() >= 8) {
+                out << L"  * " << cols[1] << L"：" << cols[7] << L"\n";
+                count++;
+            }
+        }
+        return out.str();
+    }
+
+    wstring raw = ReadUtf8FileToWide("..\\assets\\item_lore.json");
+    if (raw.empty()) raw = ReadUtf8FileToWide("assets\\item_lore.json");
+    if (raw.empty()) return L"";
+
+    vector<wstring> names;
+    vector<wstring> uses;
+    size_t pos = 0;
+    while ((pos = raw.find(L"\"name\"", pos)) != wstring::npos) {
+        size_t start = raw.find(L"\"", pos + 6);
+        if (start == wstring::npos) break;
+        start = raw.find(L"\"", start + 1);
+        if (start == wstring::npos) break;
+        size_t end = raw.find(L"\"", start + 1);
+        if (end == wstring::npos) break;
+        names.push_back(raw.substr(start + 1, end - start - 1));
+        pos = end + 1;
+    }
+
+    pos = 0;
+    while ((pos = raw.find(L"\"use\"", pos)) != wstring::npos) {
+        size_t colon = raw.find(L":", pos);
+        if (colon == wstring::npos) break;
+        size_t start = raw.find(L"\"", colon);
+        if (start == wstring::npos) break;
+        size_t end = raw.find(L"\"", start + 1);
+        if (end == wstring::npos) break;
+        uses.push_back(raw.substr(start + 1, end - start - 1));
+        pos = end + 1;
+    }
+
+    if (names.empty()) return L"";
+
+    wstringstream ss;
+    ss << L"- 近来流传的器物:\n";
+    int count = min(limit, (int)names.size());
+    for (int i = 0; i < count; ++i) {
+        ss << L"  * " << names[i];
+        if (i < (int)uses.size() && !uses[i].empty()) {
+            ss << L"：" << uses[i];
+        }
+        ss << L"\n";
+    }
+    return ss.str();
+}
+
+wstring BuildItemCodexText() {
+    auto rows = LoadItemDbRows();
+    if (!rows.empty()) {
+        wstringstream out;
+        out << L"【灵物图录】\n\n";
+        out << L"已见灵物: " << g_discoveredItems.size() << L" / " << rows.size() << L"\n\n";
+        int index = 1;
+        for (auto& cols : rows) {
+            if (cols.size() >= 9) {
+                out << L"[" << index++ << L"] " << cols[1] << L" · " << cols[4] << L"\n";
+                out << cols[8] << L"\n";
+                out << L"用途: " << cols[7] << L"\n\n";
+            }
+        }
+        return out.str();
+    }
+
+    wstring raw = ReadUtf8FileToWide("..\\assets\\item_lore.json");
+    if (raw.empty()) raw = ReadUtf8FileToWide("assets\\item_lore.json");
+    if (raw.empty()) {
+        return L"【灵物图录】\n\n当前尚未载入物品设定数据。";
+    }
+
+    vector<wstring> names;
+    vector<wstring> tiers;
+    vector<wstring> lores;
+    vector<wstring> uses;
+    size_t pos = 0;
+
+    auto collectField = [&](const wstring& key, vector<wstring>& out) {
+        size_t cursor = 0;
+        while ((cursor = raw.find(key, cursor)) != wstring::npos) {
+            size_t colon = raw.find(L":", cursor);
+            if (colon == wstring::npos) break;
+            size_t start = raw.find(L"\"", colon);
+            if (start == wstring::npos) break;
+            size_t end = raw.find(L"\"", start + 1);
+            if (end == wstring::npos) break;
+            out.push_back(raw.substr(start + 1, end - start - 1));
+            cursor = end + 1;
+        }
+    };
+
+    collectField(L"\"name\"", names);
+    collectField(L"\"tier\"", tiers);
+    collectField(L"\"lore\"", lores);
+    collectField(L"\"use\"", uses);
+
+    wstringstream ss;
+    ss << L"【灵物图录】\n\n";
+    int count = (int)names.size();
+    for (int i = 0; i < count; ++i) {
+        ss << L"[" << (i + 1) << L"] " << names[i];
+        if (i < (int)tiers.size()) ss << L" · " << tiers[i];
+        ss << L"\n";
+        if (i < (int)lores.size()) ss << lores[i] << L"\n";
+        if (i < (int)uses.size()) ss << L"用途: " << uses[i] << L"\n";
+        ss << L"\n";
+    }
+    return ss.str();
+}
+
+wstring BuildItemCatalogDigest() {
+    auto rows = LoadItemDbRows();
+    if (!rows.empty()) {
+        map<wstring, vector<wstring>> groups;
+        map<wstring, wstring> labels = {
+            {L"weapons", L"兵刃"},
+            {L"artifacts", L"法宝"},
+            {L"consumables", L"消耗品"},
+            {L"materials", L"材料"},
+        };
+        for (auto& cols : rows) {
+            if (cols.size() >= 3) {
+                groups[cols[2]].push_back(cols[1]);
+            }
+        }
+
+        wstringstream out;
+        out << L"【灵物流传】\n";
+        for (auto& pair : groups) {
+            wstring label = labels.count(pair.first) ? labels[pair.first] : pair.first;
+            out << L"- " << label << L": ";
+            for (size_t i = 0; i < pair.second.size(); ++i) {
+                if (i > 0) out << L"、";
+                out << pair.second[i];
+            }
+            out << L"\n";
+        }
+        return out.str();
+    }
+
+    wstring raw = ReadUtf8FileToWide("..\\assets\\item_catalog.json");
+    if (raw.empty()) raw = ReadUtf8FileToWide("assets\\item_catalog.json");
+    if (raw.empty()) return L"";
+
+    vector<pair<wstring, vector<wstring>>> groups;
+    vector<wstring> keys = {L"weapons", L"artifacts", L"consumables", L"materials"};
+    vector<wstring> labels = {L"兵刃", L"法宝", L"消耗品", L"材料"};
+
+    for (size_t k = 0; k < keys.size(); ++k) {
+        size_t pos = raw.find(L"\"" + keys[k] + L"\"");
+        if (pos == wstring::npos) continue;
+        size_t lbracket = raw.find(L"[", pos);
+        size_t rbracket = raw.find(L"]", lbracket);
+        if (lbracket == wstring::npos || rbracket == wstring::npos) continue;
+        wstring block = raw.substr(lbracket, rbracket - lbracket);
+        vector<wstring> names;
+        size_t cursor = 0;
+        while ((cursor = block.find(L"\"", cursor)) != wstring::npos) {
+            size_t end = block.find(L"\"", cursor + 1);
+            if (end == wstring::npos) break;
+            names.push_back(block.substr(cursor + 1, end - cursor - 1));
+            cursor = end + 1;
+        }
+        groups.push_back({labels[k], names});
+    }
+
+    if (groups.empty()) return L"";
+
+    wstringstream ss;
+    ss << L"【灵物流传】\n";
+    for (auto& group : groups) {
+        ss << L"- " << group.first << L": ";
+        for (size_t i = 0; i < group.second.size(); ++i) {
+            if (i > 0) ss << L"、";
+            ss << group.second[i];
+        }
+        ss << L"\n";
+    }
+    return ss.str();
+}
+
+void RefreshAiStatus() {
+    wstring backend = ReadAiStatusFile(L"ai_backend.txt");
+    wstring status = ReadAiStatusFile(L"ai_status.txt");
+
+    if (!backend.empty()) {
+        g_lastAiBackend = backend;
+    }
+    if (!status.empty()) {
+        g_lastAiStatus = status;
+    }
+}
+
+bool TryRunLocalModelGenerator() {
     if (GetFileAttributesW(L"..\\ai_engine\\generate_event.ps1") == INVALID_FILE_ATTRIBUTES) {
-        return;
+        g_lastAiBackend = L"模板回退";
+        g_lastAiStatus = L"缺少 ai_engine/generate_event.ps1，已直接使用内置模板事件。";
+        return false;
     }
 
     DeleteFileW(L"ai_event.txt");
-    _wsystem(L"powershell -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"wendao-xiuxian\" > ai_model.log 2>&1");
+    DeleteFileW(L"ai_status.txt");
+    DeleteFileW(L"ai_backend.txt");
+    int exitCode = _wsystem(L"powershell -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"wendao-xiuxian\" > ai_model.log 2>&1");
+    RefreshAiStatus();
+    if (exitCode != 0 && g_lastAiStatus == L"本局尚未触发动态事件。") {
+        g_lastAiBackend = L"模板回退";
+        g_lastAiStatus = L"本地模型脚本执行失败，已回退到内置模板事件。";
+    }
+    return exitCode == 0;
 }
 
 wstring GetGeneratedWorldText() {
@@ -944,6 +1539,7 @@ wstring GetGeneratedWorldText() {
 
 wstring GetWorldInfoText() {
     wstringstream ss;
+    ss << GetEraSummaryText() << L"\n\n";
     ss << g_dynamicWorld.GetWorldSummary() << L"\n";
 
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
@@ -978,7 +1574,8 @@ wstring GetWorldInfoText() {
 }
 
 wstring GetLegacyInfoText() {
-    return g_legacySystem.GetHistoryText() + L"\n\n" +
+    return GetEraSummaryText() + L"\n\n" +
+           g_legacySystem.GetHistoryText() + L"\n\n" +
            g_legacySystem.GetInheritedLegaciesText() + L"\n\n" +
            g_achievementSystem.GetAchievementsText();
 }
@@ -1032,7 +1629,36 @@ PlayerContext BuildPlayerContext() {
         ctx.history.push_back(g_memoryLog[i]);
     }
 
+    wstringstream legacy;
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
+    if (!inherited.empty()) {
+        legacy << L"当前继承的传承:\n";
+        for (size_t i = 0; i < min<size_t>(inherited.size(), 4); i++) {
+            legacy << L"- " << inherited[i].name << L"：" << inherited[i].description << L"\n";
+        }
+    }
+
+    auto& pastLives = g_legacySystem.GetPastLives();
+    if (!pastLives.empty()) {
+        legacy << L"最近前世记录:\n";
+        int start = max(0, (int)pastLives.size() - 2);
+        for (int i = start; i < (int)pastLives.size(); i++) {
+            const auto& life = pastLives[i];
+            legacy << L"- 第" << life.generation << L"世，止步于"
+                   << GetRealmName(static_cast<Realm>(life.realmReached))
+                   << L"，死因是" << life.causeOfDeath << L"\n";
+        }
+    }
+    if (!g_reincarnationEcho.empty()) {
+        legacy << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+    }
+    ctx.legacyState = legacy.str();
+
     wstringstream world;
+    world << L"- 时代纪元: " << g_worldEraName << L"\n";
+    world << L"- 时代概况: " << g_worldEraDescription << L"\n";
+    world << L"- 时代法则: " << g_worldEraRule << L"\n";
+    world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
     world << L"- 世界时间: 第" << g_dynamicWorld.GetWorldTime() << L"年\n";
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
     if (activeEvent) {
@@ -1069,6 +1695,15 @@ PlayerContext BuildPlayerContext() {
             world << g_worldData.locations[i].name << L"危" << g_worldData.locations[i].dangerLevel;
         }
         world << L"\n";
+    }
+
+    wstring itemLoreDigest = LoadItemLoreDigest();
+    if (!itemLoreDigest.empty()) {
+        world << itemLoreDigest;
+    }
+    wstring itemCatalogDigest = BuildItemCatalogDigest();
+    if (!itemCatalogDigest.empty()) {
+        world << itemCatalogDigest;
     }
 
     ctx.worldState = world.str();
@@ -1245,6 +1880,9 @@ bool LoadGame() {
     LoadSocialRumors(file);
     g_legacySystem.Load(file);
     g_achievementSystem.Load(file);
+    g_lastAiBackend = L"已读档";
+    g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
+    RefreshAiStatus();
 
     g_player.CheckRootBalance();
     file.close();
@@ -1357,6 +1995,8 @@ void StartNextLife() {
     wstring oldName = g_player.name;
     g_legacySystem.StartNewLife();
     g_generation = g_legacySystem.GetGeneration();
+    g_lastAiBackend = L"未触发";
+    g_lastAiStatus = L"本世尚未触发动态事件。";
 
     g_player = Player();
     g_player.name = oldName;
@@ -1369,6 +2009,7 @@ void StartNextLife() {
     g_player.attackPower += knowledgeBonus / 5;
     g_player.karma += reputationBonus;
 
+    GenerateWorldEra();
     InitWorldData();
     g_dynamicWorld.Reset();
     g_memoryLog.clear();
@@ -1382,6 +2023,8 @@ void StartNextLife() {
                << L"，因果" << (reputationBonus >= 0 ? L"+" : L"") << reputationBonus;
     }
     AddMemory(L"轮回再起", detail.str());
+    AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
+    AddMemory(L"前世余烬", g_reincarnationEcho);
     AddMemory(L"此世出身", GetFamilySummary(g_player.family));
     if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
 
@@ -1401,11 +2044,12 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     // 检测是否为AI事件（通过outcomes内容判断）
     bool isAIEvent = (choice.outcomes[0] == L"成功" && choice.outcomes.size() == 2);
+    int eraRisk = GetEraAdventureRiskModifier();
 
     if (isAIEvent) {
         // AI事件：使用AI生成结果
         PlayerContext& ctx = g_contextMgr.GetContext();
-        int successRate = 60 + g_player.karma / 5 - g_dynamicWorld.GetAdventureRiskBonus();
+        int successRate = 60 + g_player.karma / 5 - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
         successRate = max(20, min(90, successRate));
         bool success = (Random(1, 100) <= successRate);
         g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success);
@@ -1419,10 +2063,16 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     ApplyOutcomeEffects(g_messageText);
+    DiscoverItemsFromText(g_currentEvent->title);
+    DiscoverItemsFromText(g_currentEvent->description);
+    DiscoverItemsFromText(g_messageText);
 
     g_player.age += 1;
     g_player.totalEvents++;
     g_dynamicWorld.Update();
+    if (eraRisk >= 10 && g_messageText.find(L"修为+") != wstring::npos) {
+        AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
+    }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
 
     if (g_player.IsDead()) {
@@ -1483,6 +2133,7 @@ void DrawLabelValue(Graphics& graphics, Font& labelFont, Font& valueFont,
 wstring BuildMainWorldDigest() {
     wstringstream ss;
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
+    ss << g_worldEraName << L"\n";
     ss << L"世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
     if (activeEvent) {
         ss << activeEvent->title << L"\n";
@@ -1491,8 +2142,23 @@ wstring BuildMainWorldDigest() {
         ss << L"天下暂静，暗流仍在山门之间潜行。\n";
     }
 
+    ss << L"\n" << g_reincarnationEcho << L"\n";
+    if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") {
+        ss << L"此世奇遇更偏向灵机、工坊、远讯与技术化道统。\n";
+    } else if (g_worldEraName == L"废土返道纪" || g_worldEraName == L"末法裂变纪") {
+        ss << L"此世奇遇更偏向资源争夺、残骸遗迹与生存抉择。\n";
+    } else {
+        ss << L"此世奇遇仍以宗门、秘境、天材地宝与古修传承为主。\n";
+    }
     auto npcs = g_dynamicWorld.GetAliveNPCs();
     ss << L"\n活跃修士: " << npcs.size() << L"人";
+    return ss.str();
+}
+
+wstring BuildAiStatusDigest() {
+    wstringstream ss;
+    ss << L"后端: " << g_lastAiBackend << L"\n";
+    ss << g_lastAiStatus;
     return ss.str();
 }
 
@@ -1533,6 +2199,8 @@ void OnPaint(HDC hdc, RECT& rect) {
     graphics.FillRectangle(&maskBrush, 0, 0, rect.right, rect.bottom);
 
     FontFamily fontFamily(L"微软雅黑");
+    FontFamily titleFamily(L"STZhongsong");
+    FontFamily subtitleFamily(L"KaiTi");
     Font titleFont(&fontFamily, 36, FontStyleBold, UnitPixel);
     Font menuTitleFont(&fontFamily, 42, FontStyleBold, UnitPixel);
     Font menuSubFont(&fontFamily, 18, FontStyleRegular, UnitPixel);
@@ -1560,12 +2228,18 @@ void OnPaint(HDC hdc, RECT& rect) {
             int panelLeft = (width - panelWidth) / 2;
             int panelTop = max(250, (height - panelHeight) / 2 + 70);
 
-            RectF titleBand(0, 110, (REAL)width, 96);
-            graphics.DrawString(L"问道长生", -1, &menuTitleFont,
-                titleBand, &centerFormat, &goldBrush);
+            RectF titleBand(0, 104, (REAL)width, 104);
+            DrawGlowText(graphics, L"问道长生", titleFamily, 92.0f, titleBand, centerFormat);
             RectF subtitleBand(0, 172, (REAL)width, 40);
-            graphics.DrawString(L"一念入道，百年问心", -1, &menuSubFont,
+            Font menuSubDecor(&subtitleFamily, 28, FontStyleRegular, UnitPixel);
+            graphics.DrawString(L"一念入道，百年问心", -1, &menuSubDecor,
                 subtitleBand, &centerFormat, &softWhiteBrush);
+
+            Pen ornamentPen(Color(150, 216, 182, 92), 3);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 - 430), 214.0f, 150.0f, 42.0f, 10.0f, 150.0f);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 - 280), 234.0f, (REAL)(width / 2 - 186), 234.0f);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 + 186), 234.0f, (REAL)(width / 2 + 280), 234.0f);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 + 280), 214.0f, 150.0f, 42.0f, 20.0f, 150.0f);
 
             RectF menuPanel((REAL)panelLeft, (REAL)panelTop, (REAL)panelWidth, (REAL)panelHeight);
             GraphicsPath panelPath;
@@ -1665,9 +2339,12 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            graphics.DrawString(L"动态角色档案预留", -1, &statFont,
+            graphics.DrawString(L"动态事件引擎", -1, &statFont,
                 RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
                 &leftFormat, &mutedBrush);
+            graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
+                RectF(futureRoleRect.X + 12, futureRoleRect.Y + 42, futureRoleRect.Width - 24, futureRoleRect.Height - 54),
+                &leftFormat, &softWhiteBrush);
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
                 RectF(centerPanel.X + 22, centerPanel.Y + 20, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
@@ -1698,6 +2375,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[W] 修真界现状",
                 L"[F] 此世家世",
                 L"[R] 人情风波",
+                L"[I] 灵物图录",
                 L"[H] 道途记忆",
                 L"[G] 前世传承",
                 L"[S] 保存",
@@ -1763,8 +2441,10 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.DrawRectangle(&backPen, backRect);
             graphics.DrawString(L"返回", -1, &smallFont, backRect, &centerFormat, &goldBrush);
 
+            bool showItemAtlas = (g_infoTitle == L"灵物图录" && g_itemAtlasImage != nullptr);
+            REAL contentWidth = showItemAtlas ? (infoRect.Width - 430) : (infoRect.Width - 116);
             RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
-                infoRect.Width - 116, infoRect.Height - 150);
+                contentWidth, infoRect.Height - 150);
             int estimatedContentHeight = CountTextLines(g_infoText) * 24 + 40;
             g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
             g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
@@ -1774,6 +2454,15 @@ void OnPaint(HDC hdc, RECT& rect) {
                 contentClip.Width, (REAL)max(2200, estimatedContentHeight + 120));
             graphics.DrawString(g_infoText.c_str(), -1, &infoTextFont, textRect, &leftFormat, &softWhiteBrush);
             graphics.ResetClip();
+
+            if (showItemAtlas) {
+                RectF atlasRect(infoRect.GetRight() - 332, infoRect.Y + 96, 256, 512);
+                SolidBrush atlasBg(Color(80, 18, 24, 30));
+                Pen atlasPen(Color(120, 228, 190, 76), 1);
+                graphics.FillRectangle(&atlasBg, atlasRect);
+                graphics.DrawRectangle(&atlasPen, atlasRect);
+                graphics.DrawImage(g_itemAtlasImage, atlasRect);
+            }
 
             RectF scrollTrack(infoRect.GetRight() - 58, contentClip.Y, 8, contentClip.Height);
             g_infoScrollTrackRect = {
@@ -1857,13 +2546,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_player = Player();
                 g_player.name = name;
                 g_generation = 1;
+                g_lastAiBackend = L"未触发";
+                g_lastAiStatus = L"本局尚未触发动态事件。";
                 g_memoryLog.clear();
+                g_discoveredItems.clear();
+                GenerateWorldEra();
                 InitWorldData();
                 g_dynamicWorld.Reset();
                 GenerateSocialRumors();
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
+                AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
+                DiscoverItemsFromText(g_player.family.secret);
+                DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
                 g_contextMgr.SetContext(BuildPlayerContext());
                 g_gameState = STATE_GAME;
                 ShowWindow(g_nameInput, SW_HIDE);
@@ -1928,7 +2624,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             if (g_gameState == STATE_GAME) {
                 if (wParam == '1') {
                     int multiplier = g_dynamicWorld.GetCultivationMultiplier();
-                    int gain = g_player.Meditate(multiplier);
+                    int eraMeditation = GetEraMeditationModifierPercent();
+                    int gain = g_player.Meditate(multiplier, eraMeditation);
                     g_dynamicWorld.Update(); // 世界也在演化
                     if (g_player.IsDead()) {
                         g_gameState = STATE_GAMEOVER;
@@ -1938,17 +2635,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         FinishCurrentLife(L"闭关坐化");
                     } else {
                         wstring msg = L"打坐修炼，修为+" + to_wstring(gain);
+                        if (eraMeditation > 100) {
+                            msg += L"\n" + g_worldEraName + L"灵气格外顺遂，闭关效率有所提升。";
+                        } else if (eraMeditation < 100) {
+                            msg += L"\n" + g_worldEraName + L"天地法则晦涩，苦修收益被时代压低了。";
+                        }
                         if (multiplier > 1) {
                             msg += L"\n天地异象加持，修炼收益翻倍。";
                             AddMemory(L"天地异象", L"借灵气暴动修炼，修为+" + to_wstring(gain));
                         }
+                        AddMemory(L"时代修行", L"在" + g_worldEraName + L"打坐一年，修为变化+" + to_wstring(gain));
                         ShowNotice(L"打坐修炼", msg);
                     }
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '2') {
-                    // 外出历练 - 30%概率AI事件，70%传统事件
-                    if (Random(1, 100) <= 30) {
+                    if (ShouldTriggerLegacyEchoEvent()) {
+                        static Event s_legacyEchoEvent;
+                        s_legacyEchoEvent = BuildLegacyEchoEvent();
+                        g_currentEvent = &s_legacyEchoEvent;
+                        AddMemory(L"前世牵动", L"外出历练时触发了前世遗响。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    // 外出历练 - 不同时代AI事件活跃度不同
+                    else if (Random(1, 100) <= GetEraAiEventChance()) {
                         // AI动态事件
                         PlayerContext ctx = BuildPlayerContext();
 
@@ -1959,8 +2670,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         wstring aiDesc;
                         vector<wstring> aiChoices;
                         if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
-                            AddMemory(L"本地模型回应", L"读取 ai_event.txt 生成动态事件。");
+                            if (g_lastAiBackend.empty()) {
+                                g_lastAiBackend = L"本地模型";
+                            }
+                            if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
+                                g_lastAiStatus = L"成功生成 1 条动态事件。";
+                            }
+                            AddMemory(L"本地模型回应", L"读取 ai_event.txt 生成动态事件。后端：" + g_lastAiBackend);
                         } else {
+                            if (g_lastAiBackend.empty() || g_lastAiBackend == L"未触发") {
+                                g_lastAiBackend = L"模板回退";
+                            }
+                            if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
+                                g_lastAiStatus = L"未读取到有效 ai_event.txt，已回退到内置模板事件。";
+                            }
+                            AddMemory(L"动态事件回退", g_lastAiStatus);
                             aiTitle = g_aiGen.GenerateEventTitle(ctx);
                             aiDesc = g_aiGen.GenerateEventDescription(ctx);
                             aiChoices = g_aiGen.GenerateChoices(ctx);
@@ -2018,9 +2742,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             (L"是否突破至 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L"？").c_str(),
                             L"突破境界", MB_YESNO | MB_ICONQUESTION);
                         if (result == IDYES) {
-                            bool success = g_player.TryBreakthrough();
+                            bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier());
                             if (success) {
                                 AddMemory(L"境界突破", L"踏入 " + GetRealmName(g_player.realm));
+                                AddMemory(L"时代法则", L"在" + g_worldEraName + L"中破境成功，说明此世大道仍愿意为你开门。");
                                 if (g_player.realm == DAO_ANCESTOR) {
                                     g_gameState = STATE_GAMEOVER;
                                     g_messageText = L"【证道成祖】\n你走到了此世修仙路的尽头。\n\n";
@@ -2030,11 +2755,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                     g_messageText += L"按 [N] 可开启下一世，按 [ESC] 退出。";
                                     FinishCurrentLife(L"证道成祖");
                                 } else {
-                                    ShowNotice(L"突破成功", L"恭喜！你已进入 " + GetRealmName(g_player.realm) + L"。");
+                                    wstring successMsg = L"恭喜！你已进入 " + GetRealmName(g_player.realm) + L"。";
+                                    if (GetEraBreakthroughModifier() > 0) {
+                                        successMsg += L"\n此世大道尚算开明，突破阻力被时代削弱了。";
+                                    } else if (GetEraBreakthroughModifier() < 0) {
+                                        successMsg += L"\n即便如此，你仍顶着此世晦涩法则强行破境。";
+                                    }
+                                    ShowNotice(L"突破成功", successMsg);
                                 }
                             } else {
                                 AddMemory(L"突破失败", L"冲击 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L" 遭到反噬");
-                                ShowNotice(L"突破失败", L"遭到反噬，气血与修为受损。");
+                                wstring failMsg = L"遭到反噬，气血与修为受损。";
+                                if (GetEraBreakthroughModifier() < 0) {
+                                    failMsg += L"\n" + g_worldEraName + L"的天地法则本就晦涩，这次破境尤其艰难。";
+                                }
+                                ShowNotice(L"突破失败", failMsg);
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
                         }
@@ -2064,12 +2799,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         if (g_dynamicWorld.GetCultivationMultiplier() > 1) {
                             gain *= 2;
                         }
+                        gain += GetEraClosedDoorBonus();
+                        gain = max(20, gain);
                         g_player.exp += gain;
                         g_player.age++;
                         g_dynamicWorld.Update();
                         AddMemory(L"灵石闭关", L"消耗灵石" + to_wstring(cost) + L"，修为+" + to_wstring(gain));
-                        ShowNotice(L"灵石闭关", L"闭关一年，消耗灵石" + to_wstring(cost) +
-                            L"，修为+" + to_wstring(gain) + L"。");
+                        wstring closedDoorMsg = L"闭关一年，消耗灵石" + to_wstring(cost) +
+                            L"，修为+" + to_wstring(gain) + L"。";
+                        if (GetEraClosedDoorBonus() > 0) {
+                            closedDoorMsg += L"\n这一世的灵机与阵械体系让闭关效率更高。";
+                        } else if (GetEraClosedDoorBonus() < 0) {
+                            closedDoorMsg += L"\n这一世天地不稳，哪怕借灵石闭关也难尽如人意。";
+                        }
+                        ShowNotice(L"灵石闭关", closedDoorMsg);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                 }
@@ -2083,6 +2826,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
                 else if (wParam == 'R' || wParam == 'r') {
                     OpenInfoPage(L"人情风波", GetSocialRumorText(8), STATE_GAME);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'I' || wParam == 'i') {
+                    OpenInfoPage(L"灵物图录", BuildItemCodexText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'H' || wParam == 'h') {
@@ -2117,7 +2864,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         int outcome = 0;
                         int outcomeCount = (int)g_currentEvent->choices[choice].outcomes.size();
                         if (outcomeCount > 1) {
-                            int failChance = 45 + g_dynamicWorld.GetAdventureRiskBonus() - g_player.karma / 10;
+                            int failChance = 45 + g_dynamicWorld.GetAdventureRiskBonus() + GetEraAdventureRiskModifier() - g_player.karma / 10;
                             failChance = max(10, min(85, failChance));
                             if (Random(1, 100) <= failChance) {
                                 outcome = Random(1, outcomeCount - 1);
@@ -2179,6 +2926,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     } else if (GetFileAttributesW(L"background.png") != INVALID_FILE_ATTRIBUTES) {
         g_bgImage = Image::FromFile(L"background.png");
     }
+    if (GetFileAttributesW(L"previews\\item_atlas_v4.png") != INVALID_FILE_ATTRIBUTES) {
+        g_itemAtlasImage = Image::FromFile(L"previews\\item_atlas_v4.png");
+    }
 
     WNDCLASSEXA wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -2219,6 +2969,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     }
 
     if (g_bgImage) delete g_bgImage;
+    if (g_itemAtlasImage) delete g_itemAtlasImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }

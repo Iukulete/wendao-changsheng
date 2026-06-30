@@ -1,0 +1,359 @@
+[
+  {
+    "id": "weapon_sword_astral",
+    "name": "星辉飞剑",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "灵阶",
+    "element": "water",
+    "asset": "items/weapons/weapon_sword_astral.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "偏向身法与御剑流的中期武器。",
+    "lore": "据说取自坠入北冥的星铁残片，夜深时剑脊会浮出细微星纹。",
+    "tags": [
+      "灵阶",
+      "water",
+      "weapon"
+    ]
+  },
+  {
+    "id": "weapon_sword_crimson",
+    "name": "赤魄灵剑",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "地阶",
+    "element": "fire",
+    "asset": "items/weapons/weapon_sword_crimson.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "高爆发近战武器，适合因果偏激与杀伐路线。",
+    "lore": "曾在宗门大战中折断半寸，后由炼器师以妖火重铸，故剑锋常带余温。",
+    "tags": [
+      "地阶",
+      "fire",
+      "weapon"
+    ]
+  },
+  {
+    "id": "weapon_spear_storm",
+    "name": "惊霆长枪",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "灵阶",
+    "element": "metal",
+    "asset": "items/weapons/weapon_spear_storm.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合正面对决与破阵事件。",
+    "lore": "枪缨不是布，而是雷蚕丝炼成的导灵束，暴雨天尤为凶厉。",
+    "tags": [
+      "灵阶",
+      "metal",
+      "weapon"
+    ]
+  },
+  {
+    "id": "weapon_bow_windchase",
+    "name": "逐风弓",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "灵阶",
+    "element": "wood",
+    "asset": "items/weapons/weapon_bow_windchase.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合远程袭杀、猎妖与侦察类剧情。",
+    "lore": "弓臂取自百年风雷木，拉满时会发出如雁鸣般的轻响。",
+    "tags": [
+      "灵阶",
+      "wood",
+      "weapon"
+    ]
+  },
+  {
+    "id": "weapon_ringblade_frost",
+    "name": "寒魄环刃",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "地阶",
+    "element": "water",
+    "asset": "items/weapons/weapon_ringblade_frost.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合刺杀、伏击、断敌退路类战斗。",
+    "lore": "刃环内圈常结一层薄霜，出手无声，最适合近身夺命。",
+    "tags": [
+      "地阶",
+      "water",
+      "weapon"
+    ]
+  },
+  {
+    "id": "weapon_dagger_shadowfang",
+    "name": "影牙短匕",
+    "type": "weapon",
+    "category": "weapons",
+    "tier": "灵阶",
+    "element": "dark",
+    "asset": "items/weapons/weapon_dagger_shadowfang.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合偷袭、潜行、暗杀类剧情。",
+    "lore": "匕刃极短，却能在夜色里吃尽灵光，最适合一击定生死。",
+    "tags": [
+      "灵阶",
+      "dark",
+      "weapon"
+    ]
+  },
+  {
+    "id": "artifact_spirit_gourd",
+    "name": "养灵葫芦",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "wood",
+    "asset": "items/artifacts/artifact_spirit_gourd.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "可用于传承、收纳灵气、强化轮回记忆类事件。",
+    "lore": "可温养剑意与残魂，一些散修会把它当作最后的归宿。",
+    "tags": [
+      "地阶",
+      "wood",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_jade_slip_ancient",
+    "name": "古修玉简",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "灵阶",
+    "element": "earth",
+    "asset": "items/artifacts/artifact_jade_slip_ancient.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "可解锁功法、秘闻、身世线索。",
+    "lore": "玉简内封有残篇，不同灵根之人听见的第一句箴言各不相同。",
+    "tags": [
+      "灵阶",
+      "earth",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_bronze_mirror",
+    "name": "镇魂铜镜",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "water",
+    "asset": "items/artifacts/artifact_bronze_mirror.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合幻境、轮回、心魔相关剧情。",
+    "lore": "镜面不照今生容貌，只映出最重的一段旧因果。",
+    "tags": [
+      "地阶",
+      "water",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_seal_tower",
+    "name": "镇狱小塔",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "天阶",
+    "element": "earth",
+    "asset": "items/artifacts/artifact_seal_tower.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合高危封印事件、护道与宗门剧情。",
+    "lore": "塔身每一层都刻着古篆封印，传闻可镇妖、镇魂、镇运。",
+    "tags": [
+      "天阶",
+      "earth",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_sigil_disk",
+    "name": "青冥阵盘",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "metal",
+    "asset": "items/artifacts/artifact_sigil_disk.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合布阵、破阵、镇守洞府类剧情。",
+    "lore": "阵盘一旦展开，周边灵气会沿刻痕流转，显出肉眼可见的星线。",
+    "tags": [
+      "地阶",
+      "metal",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_orb_tideheart",
+    "name": "潮心灵珠",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "water",
+    "asset": "items/artifacts/artifact_orb_tideheart.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合治愈、护体、灵海感应类剧情。",
+    "lore": "珠中似封着一缕潮汐，静置时也会缓缓映出水纹。",
+    "tags": [
+      "地阶",
+      "water",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_crimson_seal",
+    "name": "赤霄印",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "fire",
+    "asset": "items/artifacts/artifact_crimson_seal.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合镇压、破邪、宗门执法类剧情。",
+    "lore": "印底刻有灼痕古篆，祭出时常伴随炽热气浪，专克阴邪。",
+    "tags": [
+      "地阶",
+      "fire",
+      "artifact"
+    ]
+  },
+  {
+    "id": "artifact_soul_banner",
+    "name": "摄魂幡",
+    "type": "artifact",
+    "category": "artifacts",
+    "tier": "地阶",
+    "element": "dark",
+    "asset": "items/artifacts/artifact_soul_banner.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "适合邪修、拘魂、死斗或禁术相关剧情。",
+    "lore": "幡面轻动时会传出极细的哭鸣，寻常修士不敢久视。",
+    "tags": [
+      "地阶",
+      "dark",
+      "artifact"
+    ]
+  },
+  {
+    "id": "consumable_pill_bottle_emerald",
+    "name": "翠灵丹瓶",
+    "type": "consumable",
+    "category": "consumables",
+    "tier": "凡阶",
+    "element": "wood",
+    "asset": "items/consumables/consumable_pill_bottle_emerald.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "基础恢复型消耗品。",
+    "lore": "瓶中丹药多为回气与疗伤用途，是坊市中最常见也最容易被掺假的货物。",
+    "tags": [
+      "凡阶",
+      "wood",
+      "consumable"
+    ]
+  },
+  {
+    "id": "consumable_talisman_blinkstep",
+    "name": "瞬影符",
+    "type": "consumable",
+    "category": "consumables",
+    "tier": "灵阶",
+    "element": "wind",
+    "asset": "items/consumables/consumable_talisman_blinkstep.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "逃遁、追击、秘境位移类消耗品。",
+    "lore": "点燃后可借一缕遁风脱离险地，但若心神不稳，也可能一步踏进更深的局。",
+    "tags": [
+      "灵阶",
+      "wind",
+      "consumable"
+    ]
+  },
+  {
+    "id": "consumable_scroll_flameward",
+    "name": "炎障卷轴",
+    "type": "consumable",
+    "category": "consumables",
+    "tier": "灵阶",
+    "element": "fire",
+    "asset": "items/consumables/consumable_scroll_flameward.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "防御、护体、抵御火煞或守关类剧情。",
+    "lore": "撕开卷轴后可在身前结成一道赤焰壁障，但灵力不足时也可能反噬自身。",
+    "tags": [
+      "灵阶",
+      "fire",
+      "consumable"
+    ]
+  },
+  {
+    "id": "material_ling_stone",
+    "name": "灵石",
+    "type": "material",
+    "category": "materials",
+    "tier": "凡阶",
+    "element": "neutral",
+    "asset": "items/materials/material_ling_stone.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "交易、闭关、阵法与炼器通用材料。",
+    "lore": "最基础的修真硬通货，灵气越纯，切面越清透。",
+    "tags": [
+      "凡阶",
+      "neutral",
+      "material"
+    ]
+  },
+  {
+    "id": "material_moon_grass",
+    "name": "月华草",
+    "type": "material",
+    "category": "materials",
+    "tier": "灵阶",
+    "element": "wood",
+    "asset": "items/materials/material_moon_grass.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "炼丹材料，亦可用于安神与心魔线。",
+    "lore": "只在月明而风止之夜舒展叶片，药性温和，最适合调和躁烈丹方。",
+    "tags": [
+      "灵阶",
+      "wood",
+      "material"
+    ]
+  },
+  {
+    "id": "material_blackiron_ore",
+    "name": "玄铁矿",
+    "type": "material",
+    "category": "materials",
+    "tier": "灵阶",
+    "element": "metal",
+    "asset": "items/materials/material_blackiron_ore.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "炼器、修补兵刃、打造护具。",
+    "lore": "矿脉往往埋在灵气枯竭之地深处，外黑内青，是重器最常见的胚料。",
+    "tags": [
+      "灵阶",
+      "metal",
+      "material"
+    ]
+  },
+  {
+    "id": "material_demon_core",
+    "name": "妖丹",
+    "type": "material",
+    "category": "materials",
+    "tier": "灵阶",
+    "element": "fire",
+    "asset": "items/materials/material_demon_core.png",
+    "preview": "previews/item_atlas_v4.png",
+    "use": "炼丹、炼器、献祭或危险机缘类剧情。",
+    "lore": "多数出自高阶妖兽体内，色泽越艳，蕴藏的狂暴妖气越重。",
+    "tags": [
+      "灵阶",
+      "fire",
+      "material"
+    ]
+  }
+]
