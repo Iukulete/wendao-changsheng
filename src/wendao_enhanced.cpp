@@ -132,6 +132,17 @@ struct FactionTie {
     FactionTie() : favor(0), binding(false) {}
 };
 
+struct LifeArtifact {
+    wstring name;
+    wstring category;
+    wstring tier;
+    wstring origin;
+    int ageFound;
+    bool resonant;
+
+    LifeArtifact() : ageFound(0), resonant(false) {}
+};
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -853,6 +864,7 @@ vector<wstring> g_memoryLog;
 vector<wstring> g_socialRumors;
 vector<SocialThread> g_socialThreads;
 vector<wstring> g_discoveredItems;
+vector<LifeArtifact> g_lifeArtifacts;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -975,6 +987,101 @@ void AddMemory(const wstring& title, const wstring& detail) {
     }
 }
 
+bool IsLifeArtifactCategory(const wstring& category) {
+    return category == L"weapons" || category == L"artifacts";
+}
+
+wstring GetLifeArtifactCategoryLabel(const wstring& category) {
+    if (category == L"weapons") return L"当世兵刃";
+    if (category == L"artifacts") return L"当世法宝";
+    return L"当世器物";
+}
+
+bool LooksLikeArtifactAcquisition(const wstring& text) {
+    static const vector<wstring> positive = {
+        L"获得", L"获赠", L"买下", L"夺得", L"抢得", L"卷走", L"捡走",
+        L"找到", L"摸到", L"拆下", L"借", L"祭炼", L"护体", L"入手"
+    };
+    static const vector<wstring> negative = {
+        L"损毁", L"掉包", L"是假", L"假货", L"错失", L"消散", L"拒绝"
+    };
+    bool hasPositive = false;
+    for (const auto& key : positive) {
+        if (text.find(key) != wstring::npos) {
+            hasPositive = true;
+            break;
+        }
+    }
+    if (!hasPositive) return false;
+    for (const auto& key : negative) {
+        if (text.find(key) != wstring::npos) return false;
+    }
+    return true;
+}
+
+void TrackLifeArtifactsFromText(const wstring& text, const wstring& origin) {
+    if (!LooksLikeArtifactAcquisition(text)) return;
+
+    auto rows = LoadItemDbRows();
+    for (auto& cols : rows) {
+        if (cols.size() < 5 || !IsLifeArtifactCategory(cols[2])) continue;
+        if (text.find(cols[1]) == wstring::npos) continue;
+
+        auto existing = find_if(g_lifeArtifacts.begin(), g_lifeArtifacts.end(),
+            [&](const LifeArtifact& item) { return item.name == cols[1]; });
+        if (existing != g_lifeArtifacts.end()) {
+            existing->origin = origin;
+            existing->resonant = existing->resonant ||
+                text.find(L"器纹") != wstring::npos ||
+                text.find(L"器鸣") != wstring::npos ||
+                text.find(L"道痕") != wstring::npos ||
+                text.find(L"灵宝") != wstring::npos ||
+                text.find(L"前世") != wstring::npos;
+            continue;
+        }
+
+        LifeArtifact item;
+        item.name = cols[1];
+        item.category = cols[2];
+        item.tier = cols[4];
+        item.origin = origin;
+        item.ageFound = g_player.age;
+        item.resonant = text.find(L"器纹") != wstring::npos ||
+                        text.find(L"器鸣") != wstring::npos ||
+                        text.find(L"道痕") != wstring::npos ||
+                        text.find(L"灵宝") != wstring::npos ||
+                        text.find(L"前世") != wstring::npos;
+        g_lifeArtifacts.push_back(item);
+        AddMemory(L"本世器物", L"将 " + item.name + L" 记为本世可用的" + GetLifeArtifactCategoryLabel(item.category));
+        if (g_lifeArtifacts.size() > 8) {
+            g_lifeArtifacts.erase(g_lifeArtifacts.begin());
+        }
+    }
+}
+
+wstring BuildLifeArtifactDigest(int limit = 5) {
+    if (g_lifeArtifacts.empty()) return L"暂无真正入手的当世兵刃或法宝。";
+    wstringstream ss;
+    int count = 0;
+    for (const auto& item : g_lifeArtifacts) {
+        if (count++ >= limit) break;
+        ss << L"- " << item.name << L"（" << GetLifeArtifactCategoryLabel(item.category)
+           << L" / " << item.tier << L"）";
+        if (item.resonant) ss << L" · 有器痕回响";
+        ss << L" · 第" << item.ageFound << L"年得自" << item.origin << L"\n";
+    }
+    return ss.str();
+}
+
+wstring BuildLifeArtifactText() {
+    wstringstream ss;
+    ss << L"【本世器物】\n\n";
+    ss << L"这些是这一世真正入手或动用过的兵刃、法宝。它们能影响今生事件和 AI 叙事，但本体不能跨过轮回。\n";
+    ss << L"死亡或转世后，普通器物会失散、损毁或被后人夺走；能留下来的只有记忆、因果、器痕，以及通天灵宝残印。\n\n";
+    ss << BuildLifeArtifactDigest(8);
+    return ss.str();
+}
+
 void DiscoverItemsFromText(const wstring& text) {
     auto rows = LoadItemDbRows();
     for (auto& cols : rows) {
@@ -1008,7 +1115,8 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响", L"纪元年表", L"未竟"
+        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
+        L"本世器物", L"当世器物", L"旧世残响", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1057,7 +1165,7 @@ vector<wstring> SelectReincarnationMemoryFragments(int limit = 8) {
 }
 
 void SaveMemory(wofstream& file) {
-    file << L"MEMORY_V2\n";
+    file << L"MEMORY_V3\n";
     file << g_generation << L"\n";
     file << g_memoryLog.size() << L"\n";
     for (auto& item : g_memoryLog) {
@@ -1066,6 +1174,14 @@ void SaveMemory(wofstream& file) {
     file << g_discoveredItems.size() << L"\n";
     for (auto& item : g_discoveredItems) {
         file << EscapeSaveField(item) << L"\n";
+    }
+    file << g_lifeArtifacts.size() << L"\n";
+    for (auto& item : g_lifeArtifacts) {
+        file << EscapeSaveField(item.name) << L"\n";
+        file << EscapeSaveField(item.category) << L"\n";
+        file << EscapeSaveField(item.tier) << L"\n";
+        file << EscapeSaveField(item.origin) << L"\n";
+        file << item.ageFound << L" " << item.resonant << L"\n";
     }
 }
 
@@ -1134,7 +1250,8 @@ bool LoadMemory(wifstream& file) {
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
     bool isV2 = (marker == L"MEMORY_V2");
-    if (marker != L"MEMORY_V1" && !isV2) return false;
+    bool isV3 = (marker == L"MEMORY_V3");
+    if (marker != L"MEMORY_V1" && !isV2 && !isV3) return false;
 
     file >> g_generation;
     file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -1147,7 +1264,7 @@ bool LoadMemory(wifstream& file) {
     for (size_t i = 0; i < count; i++) {
         wstring item;
         getline(file, item);
-        if (isV2) item = UnescapeSaveField(item);
+        if (isV2 || isV3) item = UnescapeSaveField(item);
         g_memoryLog.push_back(item);
     }
     file >> count;
@@ -1156,8 +1273,27 @@ bool LoadMemory(wifstream& file) {
     for (size_t i = 0; i < count; i++) {
         wstring item;
         getline(file, item);
-        if (isV2) item = UnescapeSaveField(item);
+        if (isV2 || isV3) item = UnescapeSaveField(item);
         g_discoveredItems.push_back(item);
+    }
+    g_lifeArtifacts.clear();
+    if (isV3) {
+        file >> count;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        for (size_t i = 0; i < count; i++) {
+            LifeArtifact item;
+            getline(file, item.name);
+            getline(file, item.category);
+            getline(file, item.tier);
+            getline(file, item.origin);
+            item.name = UnescapeSaveField(item.name);
+            item.category = UnescapeSaveField(item.category);
+            item.tier = UnescapeSaveField(item.tier);
+            item.origin = UnescapeSaveField(item.origin);
+            file >> item.ageFound >> item.resonant;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            g_lifeArtifacts.push_back(item);
+        }
     }
     return true;
 }
@@ -2427,6 +2563,7 @@ wstring BuildItemCodexText() {
         wstringstream out;
         out << L"【灵物图录】\n\n";
         out << L"说明: 这里记录的是当世见闻。兵刃、材料、丹药与普通法宝都会随时代损毁或失散，不能像通天灵宝道痕那样跨世继承。\n\n";
+        out << BuildLifeArtifactText() << L"\n\n";
         out << L"已见灵物: " << g_discoveredItems.size() << L" / " << rows.size() << L"\n\n";
         int index = 1;
         for (auto& cols : rows) {
@@ -2473,6 +2610,7 @@ wstring BuildItemCodexText() {
     wstringstream ss;
     ss << L"【灵物图录】\n\n";
     ss << L"说明: 图录是当世见闻，不等于轮回传承。能跨世回响的只有记忆、因果、道痕与通天灵宝残印。\n\n";
+    ss << BuildLifeArtifactText() << L"\n\n";
     int count = (int)names.size();
     for (int i = 0; i < count; ++i) {
         ss << L"[" << (i + 1) << L"] " << names[i];
@@ -2845,6 +2983,11 @@ PlayerContext BuildPlayerContext() {
             }
             world << L"\n";
         }
+    }
+
+    if (!g_lifeArtifacts.empty()) {
+        world << L"- 本世器物:\n" << BuildLifeArtifactDigest(5);
+        world << L"- 器物规则: 当世兵刃和普通法宝本体不能跨世，转世后只可能留下记忆、器痕或通天灵宝残印。\n";
     }
 
     wstring itemLoreDigest = LoadItemLoreDigest();
@@ -3280,6 +3423,9 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
     if (HasFactionTie()) {
         add(L"未清的势力牵连：" + BuildFactionTieDigest());
     }
+    if (!g_lifeArtifacts.empty()) {
+        add(L"失散的当世器物：" + CompactMemoryFragment(BuildLifeArtifactDigest(2)));
+    }
     if (!g_eraRemnants.empty()) {
         add(L"旧世残响仍在：" + g_eraRemnants[0]);
     }
@@ -3288,6 +3434,11 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
 
 void FinishCurrentLife(const wstring& causeOfDeath) {
     AddMemory(L"一世落幕", causeOfDeath);
+    if (!g_lifeArtifacts.empty()) {
+        AddMemory(L"当世器物散尽",
+            L"随此世落幕，" + to_wstring(g_lifeArtifacts.size()) +
+            L"件兵刃或法宝本体终将失散；能随轮回回响的只有记忆、器痕和通天灵宝残印。");
+    }
 
     PastLife life;
     life.name = g_player.name;
@@ -3334,6 +3485,8 @@ void StartNextLife() {
     g_dynamicWorld.SetEraFlavor(g_worldEraName);
     g_dynamicWorld.Reset();
     g_memoryLog.clear();
+    g_discoveredItems.clear();
+    g_lifeArtifacts.clear();
     GenerateSocialRumors();
 
     wstringstream detail;
@@ -3408,6 +3561,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     DiscoverItemsFromText(g_currentEvent->title);
     DiscoverItemsFromText(g_currentEvent->description);
     DiscoverItemsFromText(g_messageText);
+    TrackLifeArtifactsFromText(g_messageText, g_currentEvent->title);
 
     g_player.age += 1;
     g_player.totalEvents++;
@@ -3899,6 +4053,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_lastAiStatus = L"本局尚未触发动态事件。";
                 g_memoryLog.clear();
                 g_discoveredItems.clear();
+                g_lifeArtifacts.clear();
                 g_eraChronicle.clear();
                 GenerateWorldEra();
                 InitWorldData();
