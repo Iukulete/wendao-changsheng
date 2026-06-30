@@ -2919,7 +2919,8 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         int successRate = 60 + g_player.karma / 5 - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
         successRate = max(20, min(90, successRate));
         bool success = (Random(1, 100) <= successRate);
-        g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success);
+        g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success,
+            g_currentEvent->title, g_currentEvent->description, choice.description);
 
         // 更新AI上下文
         g_contextMgr.UpdateFromChoice(choiceIndex, g_messageText);
@@ -2941,6 +2942,10 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
+    if (isAIEvent) {
+        AddMemory(L"本地模型抉择",
+            g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
+    }
 
     if (g_player.IsDead()) {
         g_gameState = STATE_GAMEOVER;

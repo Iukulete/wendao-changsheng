@@ -392,25 +392,76 @@ public:
         return choices.size() >= 2;
     }
 
-    wstring GenerateOutcome(PlayerContext& player, int choiceIndex, bool success) {
+    wstring GenerateOutcome(PlayerContext& player, int choiceIndex, bool success,
+                            const wstring& eventTitle = L"",
+                            const wstring& eventDescription = L"",
+                            const wstring& choiceText = L"") {
         uniform_int_distribution<> dis(0, templates.consequences.size() - 1);
         wstring consequence = templates.consequences[dis(gen)];
+        wstring eventText = eventTitle + L" " + eventDescription + L" " + choiceText;
+        auto containsAny = [](const wstring& text, const vector<wstring>& keys) {
+            for (const auto& key : keys) {
+                if (text.find(key) != wstring::npos) return true;
+            }
+            return false;
+        };
+        bool touchesRemnant = containsAny(eventText, {
+            L"旧世", L"上一纪元", L"残响", L"断代", L"遗址", L"遗物",
+            L"旧朝", L"金册", L"断网", L"残频", L"废炉", L"枯井", L"黑匣", L"古修"
+        });
+        bool touchesTreasure = eventText.find(L"通天灵宝") != wstring::npos ||
+                               eventText.find(L"灵宝") != wstring::npos ||
+                               eventText.find(L"道痕") != wstring::npos ||
+                               eventText.find(L"器纹") != wstring::npos;
+        bool touchesDao = containsAny(eventText, {
+            L"大道", L"道祖", L"证道", L"掌道", L"天道", L"道音", L"道痕"
+        });
+        bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
+                             (eventText.find(L"修士") != wstring::npos ||
+                              eventText.find(L"长辈") != wstring::npos ||
+                              eventText.find(L"同辈") != wstring::npos ||
+                              eventText.find(L"执事") != wstring::npos ||
+                              eventText.find(L"道友") != wstring::npos ||
+                              eventText.find(L"父") != wstring::npos ||
+                              eventText.find(L"母") != wstring::npos);
+
+        wstring action = choiceText.empty() ? L"作出抉择" : choiceText;
 
         wstringstream ss;
         if (success) {
-            if (!player.daoState.empty() && player.daoState.find(L"大道") != wstring::npos) {
-                ss << L"你心底的道痕一闪即逝，" << consequence << L"\n修为+";
+            ss << L"你选择「" << action << L"」，";
+            if (touchesRemnant) {
+                ss << L"没有把眼前线索当成普通机缘，而是看出旧世制度被今世重新改写的痕迹。";
+            } else if (touchesTreasure) {
+                ss << L"识海里的通天灵宝残印轻轻一震，像是承认你抓住了这一缕因果。";
+            } else if (touchesSocial) {
+                ss << L"这一步让旁人重新衡量你，本世人脉里的善意与嫉意都被牵动。";
+            } else if (touchesDao) {
+                ss << L"心底的道痕一闪即逝，" << consequence;
             } else {
-                ss << L"你的决定很明智！" << consequence << L"\n修为+";
+                ss << L"局势顺着你的判断展开，" << consequence;
             }
+            ss << L"\n修为+";
             ss << (50 + player.realm * 10);
+            if (touchesRemnant) ss << L"，因果+8";
+            if (touchesTreasure) ss << L"，灵宝共鸣+5";
+            if (touchesDao) ss << L"，掌道+3";
         } else {
-            if (!player.legacyState.empty() && player.legacyState.find(L"前世") != wstring::npos) {
-                ss << L"前世经验没能完全适配今生，" << consequence << L"\n气血-";
+            ss << L"你选择「" << action << L"」，";
+            if (touchesRemnant) {
+                ss << L"却低估了旧世残响在当代秩序里的反噬，断代旧债顺势缠上心神。";
+            } else if (touchesTreasure) {
+                ss << L"但今生根基还不足以承受那道器纹，通天灵宝残印很快沉寂下去。";
+            } else if (touchesSocial) {
+                ss << L"却误判了旁人的立场，本世人脉中有人因此记下了这笔账。";
+            } else if (!player.legacyState.empty() && player.legacyState.find(L"前世") != wstring::npos) {
+                ss << L"前世经验没能完全适配今生，" << consequence;
             } else {
-                ss << L"情况不太妙..." << consequence << L"\n气血-";
+                ss << L"情况不太妙，" << consequence;
             }
+            ss << L"\n气血-";
             ss << (30 + player.realm * 5);
+            if (touchesRemnant || touchesSocial) ss << L"，因果-8";
         }
 
         return ss.str();
