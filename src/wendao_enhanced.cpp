@@ -851,6 +851,7 @@ wstring g_eraTransitionNote = L"这是本局第一段完整时代，后续转世
 wstring g_lifePremise = L"此世尚未显出明确主线，一切仍在暗处酝酿。";
 vector<wstring> g_lifeStoryHooks;
 vector<wstring> g_eraRemnants;
+vector<wstring> g_eraChronicle;
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
@@ -993,7 +994,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响", L"未竟"
+        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1218,6 +1219,46 @@ void GenerateEraRemnants(const wstring& previousEra) {
     }
 }
 
+wstring BuildEraChronicleText(int limit = 8) {
+    if (g_eraChronicle.empty()) return L"";
+    wstringstream ss;
+    ss << L"【纪元年表】\n";
+    int start = max(0, (int)g_eraChronicle.size() - limit);
+    for (int i = start; i < (int)g_eraChronicle.size(); ++i) {
+        ss << L"- " << g_eraChronicle[i] << L"\n";
+    }
+    return ss.str();
+}
+
+void RecordEraChronicle(const wstring& previousEra) {
+    wstringstream entry;
+    entry << L"第" << g_generation << L"世 · " << g_worldEraName << L" · ";
+    if (g_generation <= 1) {
+        entry << L"开局纪元";
+    } else if (previousEra == g_worldEraName) {
+        entry << L"延续自" << previousEra;
+    } else {
+        entry << L"由" << previousEra << L"转入";
+    }
+    entry << L" · " << g_worldEraRule;
+    if (!g_eraRemnants.empty()) {
+        entry << L" · " << CompactMemoryFragment(g_eraRemnants[0]);
+    }
+
+    wstring prefix = L"第" + to_wstring(g_generation) + L"世 · ";
+    for (auto& existing : g_eraChronicle) {
+        if (existing.find(prefix) == 0) {
+            existing = entry.str();
+            return;
+        }
+    }
+
+    g_eraChronicle.push_back(entry.str());
+    if (g_eraChronicle.size() > 16) {
+        g_eraChronicle.erase(g_eraChronicle.begin(), g_eraChronicle.begin() + (g_eraChronicle.size() - 16));
+    }
+}
+
 void GenerateWorldEra() {
     struct EraProfile {
         const wchar_t* name;
@@ -1272,6 +1313,7 @@ void GenerateWorldEra() {
     }
 
     GenerateEraRemnants(previousEra);
+    RecordEraChronicle(previousEra);
 }
 
 wstring GetEraSummaryText() {
@@ -1282,6 +1324,9 @@ wstring GetEraSummaryText() {
     ss << L"时代法则: " << g_worldEraRule << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+    if (!g_eraChronicle.empty()) {
+        ss << BuildEraChronicleText(6) << L"\n";
+    }
     if (!g_eraRemnants.empty()) {
         ss << BuildEraRemnantsText(5) << L"\n";
     }
@@ -2476,6 +2521,9 @@ PlayerContext BuildPlayerContext() {
         legacy << unfinishedContext;
     }
     legacy << L"时代变迁: " << g_eraTransitionNote << L"\n";
+    if (!g_eraChronicle.empty()) {
+        legacy << BuildEraChronicleText(5);
+    }
     if (!g_eraRemnants.empty()) {
         legacy << BuildEraRemnantsText(4);
     }
@@ -2493,6 +2541,13 @@ PlayerContext BuildPlayerContext() {
     world << L"- 时代概况: " << g_worldEraDescription << L"\n";
     world << L"- 时代法则: " << g_worldEraRule << L"\n";
     world << L"- 时代变迁: " << g_eraTransitionNote << L"\n";
+    if (!g_eraChronicle.empty()) {
+        world << L"- 纪元年表:\n";
+        int start = max(0, (int)g_eraChronicle.size() - 5);
+        for (int i = start; i < (int)g_eraChronicle.size(); ++i) {
+            world << L"  * " << g_eraChronicle[i] << L"\n";
+        }
+    }
     if (!g_eraRemnants.empty()) {
         world << L"- 旧世残响:\n";
         for (const auto& remnant : g_eraRemnants) {
@@ -2661,7 +2716,7 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V3\n";
+    file << L"WORLD_ERA_V4\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
@@ -2676,6 +2731,10 @@ void SaveWorldEra(wofstream& file) {
     for (auto& remnant : g_eraRemnants) {
         file << EscapeSaveField(remnant) << L"\n";
     }
+    file << g_eraChronicle.size() << L"\n";
+    for (auto& entry : g_eraChronicle) {
+        file << EscapeSaveField(entry) << L"\n";
+    }
 }
 
 bool LoadWorldEra(wifstream& file) {
@@ -2684,14 +2743,15 @@ bool LoadWorldEra(wifstream& file) {
     if (marker.empty()) getline(file, marker);
     bool isV2 = (marker == L"WORLD_ERA_V2");
     bool isV3 = (marker == L"WORLD_ERA_V3");
-    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3) return false;
+    bool isV4 = (marker == L"WORLD_ERA_V4");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2 || isV3) {
+    if (isV2 || isV3 || isV4) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -2709,7 +2769,7 @@ bool LoadWorldEra(wifstream& file) {
             g_lifeStoryHooks.push_back(UnescapeSaveField(hook));
         }
         g_eraRemnants.clear();
-        if (isV3) {
+        if (isV3 || isV4) {
             size_t remnantCount = 0;
             file >> remnantCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -2719,10 +2779,22 @@ bool LoadWorldEra(wifstream& file) {
                 g_eraRemnants.push_back(UnescapeSaveField(remnant));
             }
         }
+        g_eraChronicle.clear();
+        if (isV4) {
+            size_t chronicleCount = 0;
+            file >> chronicleCount;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            for (size_t i = 0; i < chronicleCount; ++i) {
+                wstring entry;
+                getline(file, entry);
+                g_eraChronicle.push_back(UnescapeSaveField(entry));
+            }
+        }
     } else {
         g_lifePremise = L"此世主线来自旧存档，尚未记录明确线索。";
         g_lifeStoryHooks.clear();
         g_eraRemnants.clear();
+        g_eraChronicle.clear();
     }
     return true;
 }
@@ -3003,6 +3075,7 @@ void StartNextLife() {
     AddMemory(L"轮回再起", detail.str());
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
+    if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
     AddMemory(L"本世主线", g_lifePremise);
     if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
     AddMemory(L"前世余烬", g_reincarnationEcho);
@@ -3552,6 +3625,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_lastAiStatus = L"本局尚未触发动态事件。";
                 g_memoryLog.clear();
                 g_discoveredItems.clear();
+                g_eraChronicle.clear();
                 GenerateWorldEra();
                 InitWorldData();
                 GenerateLifeStoryHooks();
@@ -3561,6 +3635,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
                 AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
                 AddMemory(L"时代变迁", g_eraTransitionNote);
+                if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
                 AddMemory(L"本世主线", g_lifePremise);
                 if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
