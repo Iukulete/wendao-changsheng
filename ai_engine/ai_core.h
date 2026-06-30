@@ -243,30 +243,45 @@ private:
     }
 
     wstring PickFallbackFocus(PlayerContext& player) const {
-        if (player.worldState.find(L"本世势力牵连") != wstring::npos ||
-            player.familyState.find(L"本世势力") != wstring::npos) {
-            return L"faction";
-        }
-        if (player.worldState.find(L"本世器物") != wstring::npos) {
-            return L"artifact";
-        }
+        vector<wstring> candidates;
+        auto add = [&](const wstring& focus) {
+            if (find(candidates.begin(), candidates.end(), focus) == candidates.end()) {
+                candidates.push_back(focus);
+            }
+        };
+
         if (player.legacyState.find(L"前世未竟因果") != wstring::npos ||
             player.worldState.find(L"前世未竟因果") != wstring::npos) {
-            return L"unfinished";
+            add(L"unfinished");
+        }
+        if (player.worldState.find(L"近年大事") != wstring::npos ||
+            (player.history.size() > 0 && FirstHistoryContaining(player, {L"天下大事"}) != L"")) {
+            add(L"world");
         }
         if (player.worldState.find(L"旧世残响") != wstring::npos ||
             player.legacyState.find(L"旧世残响") != wstring::npos ||
             player.worldState.find(L"纪元转折因由") != wstring::npos) {
-            return L"remnant";
-        }
-        if (player.socialState.find(L"本世人脉") != wstring::npos) {
-            return L"social";
+            add(L"remnant");
         }
         if (player.daoState.find(L"大道特性") != wstring::npos ||
             player.daoState.find(L"掌道") != wstring::npos) {
-            return L"dao";
+            add(L"dao");
         }
-        return L"generic";
+        if (player.worldState.find(L"本世器物") != wstring::npos) {
+            add(L"artifact");
+        }
+        if (player.socialState.find(L"本世人脉") != wstring::npos) {
+            add(L"social");
+        }
+        if (player.worldState.find(L"本世势力牵连") != wstring::npos ||
+            player.familyState.find(L"本世势力") != wstring::npos) {
+            add(L"faction");
+        }
+        if (candidates.empty()) return L"generic";
+
+        int seed = player.age + player.realm * 3 + (player.karma >= 0 ? player.karma : -player.karma) +
+                   (int)player.history.size() * 5;
+        return candidates[seed % (int)candidates.size()];
     }
 
 public:
@@ -322,6 +337,9 @@ public:
         if (focus == L"unfinished") {
             return L"【因果】前世未竟";
         }
+        if (focus == L"world") {
+            return L"【因果】天下余波";
+        }
         if (focus == L"remnant") {
             return L"【传承】旧世残响";
         }
@@ -367,6 +385,13 @@ public:
         if (unfinished.empty()) {
             unfinished = FirstHistoryContaining(player, {L"前世未竟", L"未竟因果"});
         }
+        wstring worldEvent = FirstBulletAfter(player.worldState, L"近年大事");
+        if (worldEvent.empty()) {
+            worldEvent = FirstLineContaining(player.worldState, {L"重大事件"});
+        }
+        if (worldEvent.empty()) {
+            worldEvent = FirstHistoryContaining(player, {L"天下大事", L"突破", L"坐化", L"飞升", L"击败", L"挑战"});
+        }
         wstring social = FirstLineContaining(player.socialState, {L"势力牵连", L"父亲", L"母亲", L"同代", L"欺压者", L"竞争者", L"长辈", L"联系人"});
 
         if (focus == L"faction" && !faction.empty()) {
@@ -383,6 +408,11 @@ public:
         if (focus == L"unfinished" && !unfinished.empty()) {
             wstringstream ss;
             ss << L"一段前世未了的旧事重新浮上心头：" << unfinished << L"。今生有人借此设局，逼你表态。";
+            return ss.str();
+        }
+        if (focus == L"world" && !worldEvent.empty()) {
+            wstringstream ss;
+            ss << L"近年大事没有停在传闻里：" << worldEvent << L"。它正改变路上的人心、资源和试炼规矩。";
             return ss.str();
         }
         if (focus == L"remnant" && !remnant.empty()) {
@@ -482,6 +512,12 @@ public:
             choices.push_back(L"斩断牵连");
             return choices;
         }
+        if (focus == L"world") {
+            choices.push_back(L"趁势入局");
+            choices.push_back(L"旁观风向");
+            choices.push_back(L"暗记人名");
+            return choices;
+        }
         if (focus == L"remnant") {
             choices.push_back(L"细查遗痕");
             choices.push_back(L"借势破局");
@@ -546,6 +582,7 @@ public:
         ss << L"- 当前世界不一定是纯古典修仙，也可能已演化到灵机蒸汽、星穹道网、末法裂变或废土返道时代，必须尊重上下文时代风貌。\n";
         ss << L"- 如果上下文出现“纪元转折因由”，要把它当成当前时代形成的前因，而不是可忽略的背景介绍。\n";
         ss << L"- 如果上下文出现“纪元年表”，可以把前几世的纪元变化当成历史压力或旧制度来源来写。\n";
+        ss << L"- 如果上下文出现“近年大事”或“天下大事”，要把它写成正在改变人心、资源和试炼规矩的当代余波。\n";
         ss << L"- 如果当前世界里有“本世主线”或“本世持续线索”，优先让事件与其中一条线索产生关联，形成连续剧情。\n";
         ss << L"- 如果上下文出现“旧世残响”，要把它写成上一纪元留下的物证、制度或遗址被当前纪元重新解释，而不是普通秘境。\n";
         ss << L"- 如果上下文出现“前世未竟因果”，优先让其中一条未了之事在今生重新开局，而不是只当背景设定。\n";
