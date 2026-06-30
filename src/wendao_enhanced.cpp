@@ -1331,6 +1331,100 @@ wstring BuildLifeArtifactTraceText(int limit = 3) {
     return ss.str();
 }
 
+const LifeArtifact* PickLifeArtifactForEvent() {
+    if (g_lifeArtifacts.empty()) return nullptr;
+
+    vector<int> weighted;
+    for (int i = 0; i < (int)g_lifeArtifacts.size(); ++i) {
+        const LifeArtifact& item = g_lifeArtifacts[i];
+        int weight = item.resonant ? 5 : 2;
+        if (item.category == L"artifacts") weight += 1;
+        if (item.tier.find(L"天阶") != wstring::npos) weight += 3;
+        else if (item.tier.find(L"地阶") != wstring::npos) weight += 2;
+        for (int j = 0; j < weight; ++j) {
+            weighted.push_back(i);
+        }
+    }
+
+    if (weighted.empty()) return &g_lifeArtifacts[0];
+    return &g_lifeArtifacts[weighted[Random(0, (int)weighted.size() - 1)]];
+}
+
+bool ShouldTriggerLifeArtifactEvent() {
+    if (g_lifeArtifacts.empty()) return false;
+
+    int chance = 8 + min(10, (int)g_lifeArtifacts.size() * 2);
+    for (const auto& item : g_lifeArtifacts) {
+        if (item.resonant) chance += 4;
+        if (item.category == L"artifacts") chance += 1;
+    }
+    if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") chance += 2;
+    if (g_worldEraName == L"末法裂变纪") chance += 3;
+    chance = max(8, min(32, chance));
+    return Random(1, 100) <= chance;
+}
+
+wstring BuildArtifactEraPressureText() {
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        return L"灵机工坊想拆解它的阵纹，证明器物也能被量产。";
+    }
+    if (g_worldEraName == L"星穹道网纪") {
+        return L"道网器榜正在检索它的灵息，远方修士也可能看见这次动用。";
+    }
+    if (g_worldEraName == L"末法裂变纪") {
+        return L"末法资源稀薄，任何一件可用器物都可能招来抢夺。";
+    }
+    if (g_worldEraName == L"废土返道纪") {
+        return L"废土残炉难再复刻它，一旦损毁，今生便难找替代。";
+    }
+    if (g_worldEraName == L"仙朝鼎盛纪") {
+        return L"仙朝官册想给它定品入册，定了品也就多了一层束缚。";
+    }
+    return L"山门与坊市都知道，好器物能护一世，却护不过轮回。";
+}
+
+Event BuildLifeArtifactEvent() {
+    Event evt;
+    const LifeArtifact* picked = PickLifeArtifactForEvent();
+    if (!picked) {
+        evt.title = L"【机缘】空手问器";
+        evt.description = L"你忽然意识到自己这一世尚无真正可托付的兵刃或法宝。";
+        evt.choices = {
+            {L"记下缺口", {L"你把这份空缺记在心里，准备日后铸炼本世器物。\n修为+30", L"念头一闪而过。"}, 0}
+        };
+        return evt;
+    }
+
+    const LifeArtifact& item = *picked;
+    int tierBonus = 0;
+    if (item.tier.find(L"天阶") != wstring::npos) tierBonus = 32;
+    else if (item.tier.find(L"地阶") != wstring::npos) tierBonus = 22;
+    else if (item.tier.find(L"灵阶") != wstring::npos) tierBonus = 12;
+    int expGain = 70 + g_player.realm * 4 + tierBonus;
+    int relicGain = item.resonant ? 7 : 5;
+    int hpRisk = 18 + g_player.realm + tierBonus / 3;
+    wstring itemLabel = GetLifeArtifactCategoryLabel(item.category);
+
+    evt.title = L"【器物】" + item.name + L"应劫";
+    evt.description = L"历练途中，" + item.name + L"忽然与眼前凶局相合。" +
+        BuildArtifactEraPressureText() + L"它是" + itemLabel + L"，可护今生，却不能把本体带过轮回。";
+    evt.choices = {
+        {L"祭出破局", {
+            L"你祭出" + item.name + L"破开眼前凶险，明白器物强在此世可用。\n修为+" + to_wstring(expGain),
+            item.name + L"承受余波后裂痕暗生，本体终究只是今生器物。\n气血-" + to_wstring(hpRisk)
+        }, 3},
+        {L"封存器痕", {
+            L"你没有强求" + item.name + L"本体跨世，只把一缕器纹封入通天灵宝残印。\n修为+" + to_wstring(expGain - 20) + L"，灵宝共鸣+" + to_wstring(relicGain) + L"，因果+5",
+            item.name + L"器痕太急，反把今生心神震得发闷。\n气血-" + to_wstring(max(12, hpRisk - 5))
+        }, 6},
+        {L"温养不争", {
+            L"你没有急着动用" + item.name + L"，只让它陪你走完今生更长一段路。\n寿命+3，修为+" + to_wstring(max(35, expGain / 2)),
+            L"你保住了器物，却也错过了眼前最锋利的破局时机。"
+        }, 2}
+    };
+    return evt;
+}
+
 void DiscoverItemsFromText(const wstring& text) {
     auto rows = LoadItemDbRows();
     for (auto& cols : rows) {
@@ -5839,6 +5933,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         s_socialAdventureEvent = BuildSocialAdventureEvent();
                         g_currentEvent = &s_socialAdventureEvent;
                         AddMemory(L"人情牵动", L"外出历练时本世人脉主动入局。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerLifeArtifactEvent()) {
+                        static Event s_lifeArtifactEvent;
+                        s_lifeArtifactEvent = BuildLifeArtifactEvent();
+                        g_currentEvent = &s_lifeArtifactEvent;
+                        AddMemory(L"器物牵动", L"外出历练时，本世器物主动卷入凶局。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
