@@ -456,7 +456,10 @@ public:
             worldEvent = FirstHistoryContaining(player, {L"天下大事", L"突破", L"坐化", L"飞升", L"击败", L"挑战"});
         }
         wstring socialAftershock = FirstBulletAfter(player.socialState, L"近日风声");
-        wstring social = FirstLineContaining(player.socialState, {L"势力牵连", L"父亲", L"母亲", L"同代", L"欺压者", L"竞争者", L"长辈", L"联系人"});
+        wstring social = FirstLineContaining(player.socialState, {
+            L"势力牵连", L"父亲", L"母亲", L"同代", L"欺压者", L"竞争者", L"长辈", L"联系人",
+            L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者"
+        });
 
         if (focus == L"faction" && !faction.empty()) {
             wstringstream ss;
@@ -698,6 +701,7 @@ public:
         ss << L"- 描述45到90个中文字符，要贴合境界、因果、年龄、家世、人情风波、最近记忆和当前世界。\n";
         ss << L"- 可以写长辈认可、同辈嫉妒、被人巴结、遭人欺压、暗中试探、隐藏修为，但不要写成旁白总结。\n";
         ss << L"- 如果上下文出现“本世人脉”，优先复用其中的人名、态度和恩怨，让 NPC 像持续存在的人，不要每次都换成陌生路人。\n";
+        ss << L"- 如果本世人脉里出现“功法见证者”“旧名仰慕者”“旧名追债人”或“器痕识别者”，要把前世传承写成今生具体的人情压力；可以写懂行者认出失传古法，但不要直接揭穿前世身份。\n";
         ss << L"- 如果上下文出现“近日风声”“人情余波”或“势力余波”，优先把它写成 NPC 记恩、记仇、夸赞、嫉妒、护短或设局的后续。\n";
         ss << L"- 如果上下文出现“关系数值”，正数代表亲近、认可或押注，负数代表嫉妒、轻慢、敌意或旧怨；事件要沿着这个关系继续发酵。\n";
         ss << L"- 如果上下文出现“本世势力”或“势力牵连”，优先复用该组织、身份、态度和旧债，不要凭空换一个无关宗门。\n";

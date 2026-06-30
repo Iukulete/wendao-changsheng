@@ -3172,6 +3172,29 @@ void AddSocialRumor(const wstring& rumor, bool front = true) {
     }
 }
 
+wstring GetLegacyDisplayName(const LegacyItem& legacy) {
+    wstring name = legacy.name;
+    const wstring prefix = L"前世遗响·";
+    if (name.rfind(prefix, 0) == 0) {
+        name = name.substr(prefix.size());
+    }
+    return name.empty() ? L"无名旧法" : name;
+}
+
+wstring BuildTechniqueLegendLabel(const LegacyItem& legacy) {
+    wstring name = GetLegacyDisplayName(legacy);
+    if (name.find(L"真名") != wstring::npos || legacy.description.find(L"道祖") != wstring::npos) {
+        return L"失传道法·" + name;
+    }
+    if (name.find(L"登仙") != wstring::npos || legacy.description.find(L"仙门") != wstring::npos) {
+        return L"失传古法·" + name;
+    }
+    if (name.find(L"化神") != wstring::npos || legacy.description.find(L"化神") != wstring::npos) {
+        return L"失传古法·" + name;
+    }
+    return L"失传古法·" + name;
+}
+
 wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation, int delta,
                                     const Event& event, const Choice& choice) {
     bool improved = delta > 0;
@@ -3641,8 +3664,12 @@ void GenerateSocialThreads() {
     bool exceptionalRoot = (totalRoot >= 42 || g_player.hasBalancedRoots);
     bool weakRoot = (totalRoot < 30 && !g_player.hasBalancedRoots);
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
+    int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
     auto npcs = g_dynamicWorld.GetAliveNPCs();
+    wstring sectName = g_worldData.sects.empty() ? L"附近宗门" : g_worldData.sects[0].name;
 
     auto npcRealmText = [](DynamicNPC* npc) {
         if (!npc) return wstring();
@@ -3651,6 +3678,12 @@ void GenerateSocialThreads() {
     };
     auto npcHides = [](DynamicNPC* npc) {
         return npc && npc->shownRealm < npc->realm;
+    };
+    auto findInherited = [&](LegacyType type) -> const LegacyItem* {
+        for (const auto& legacy : inherited) {
+            if (legacy.type == type) return &legacy;
+        }
+        return nullptr;
     };
 
     if (g_player.family.knowsParents) {
@@ -3676,6 +3709,37 @@ void GenerateSocialThreads() {
         AddSocialThread(g_player.family.familyName.empty() ? L"族中旁支" : g_player.family.familyName + L"旁支",
             L"身世线索", L"若即若离",
             L"对方承认与你有血缘，却不肯说出父母名讳。", -4);
+    }
+
+    const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
+    if (techniqueLegacy && techniqueEcho >= 35) {
+        wstring legendLabel = BuildTechniqueLegendLabel(*techniqueLegacy);
+        AddSocialThread(sectName + L"藏经长老", L"功法见证者",
+            techniqueEcho >= 80 ? L"惊疑认可" : L"暗中观察",
+            L"他看见你行功起手式后当场压低声音：难道这是" + legendLabel +
+            L"？他不知你前世是谁，却已认出旧时代功法的影子。",
+            techniqueEcho >= 80 ? 26 : 14);
+    }
+
+    const LegacyItem* reputationLegacy = findInherited(LEGACY_REPUTATION);
+    if (reputationLegacy && abs(reputationEcho) >= 30) {
+        if (reputationEcho > 0) {
+            AddSocialThread(sectName + L"递帖人", L"旧名仰慕者", L"提前示好",
+                L"对方说自己只敬今生，却总在你身上寻找前世善名留下的影子。",
+                28);
+        } else {
+            AddSocialThread(sectName + L"查账人", L"旧名追债人", L"警惕试探",
+                L"对方拿着一页旧册来见你，像是确信前世恶名会在今生重新露出破绽。",
+                -32);
+        }
+    }
+
+    const LegacyItem* treasureLegacy = findInherited(LEGACY_TREASURE);
+    if (treasureLegacy && treasureEcho >= 35) {
+        AddSocialThread(sectName + L"器阁执事", L"器痕识别者", L"压低声音",
+            L"此人从你神魂边缘听见" + treasureLegacy->name +
+            L"的余响，提醒你普通法宝不能跨世，能留下的只有器痕。",
+            12);
     }
 
     if (!npcs.empty()) {
@@ -3721,7 +3785,6 @@ void GenerateSocialThreads() {
         }
     }
 
-    wstring sectName = g_worldData.sects.empty() ? L"附近宗门" : g_worldData.sects[0].name;
     if (g_worldEraName == L"灵机蒸汽纪") {
         AddSocialThread(sectName + L"炉师", L"工坊中人", L"热情拉拢",
             L"他看中你的灵根适配性，想让你试一套尚未公开的阵械功法。", 16);
@@ -3776,7 +3839,16 @@ void GenerateSocialRumors() {
     GenerateSocialThreads();
     int totalRoot = g_player.GetTotalRoot();
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
+    int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
+    const LegacyItem* techniqueLegacy = nullptr;
+    for (const auto& legacy : g_legacySystem.GetInheritedLegacies()) {
+        if (legacy.type == LEGACY_TECHNIQUE) {
+            techniqueLegacy = &legacy;
+            break;
+        }
+    }
 
     if (totalRoot >= 42 || g_player.hasBalancedRoots) {
         g_socialRumors.push_back(L"族中长辈看过你的灵根后，语气明显软了几分，说你日后可争内门名额。");
@@ -3800,6 +3872,18 @@ void GenerateSocialRumors() {
 
     if (memoryBonus >= 30) {
         g_socialRumors.push_back(L"你偶尔露出的眼神不像少年，令一位执事多看了你两眼。");
+    }
+
+    if (techniqueEcho >= 35) {
+        wstring legendLabel = techniqueLegacy ? BuildTechniqueLegendLabel(*techniqueLegacy) : L"失传古法";
+        g_socialRumors.push_back(L"藏经处有人翻出残页，低声说你的行功节奏像" + legendLabel +
+            L"，不像少年自悟，更像旧法借今生重开。");
+    }
+
+    if (reputationEcho >= 30) {
+        g_socialRumors.push_back(L"有人因前世善名的余波提前向你示好，话说得客气，却明显带着押注意味。");
+    } else if (reputationEcho <= -30) {
+        g_socialRumors.push_back(L"一页旧册在暗处流转，有人怀疑你与某个前世恶名重新连上了因果。");
     }
 
     if (g_worldEraName == L"灵机蒸汽纪") {
