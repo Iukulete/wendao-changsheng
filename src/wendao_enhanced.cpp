@@ -1459,7 +1459,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
         L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
-        L"伴生玉佩", L"玉佩", L"两仪轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
+        L"伴生玉佩", L"玉佩", L"太一轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -2144,7 +2144,7 @@ wstring BuildCompanionJadeVisibleText() {
 
 wstring BuildCompanionJadeHiddenContext() {
     wstringstream ss;
-    ss << L"隐藏设定: 主角第一世自带伴生玉佩，其真身是九大鸿蒙至宝排名第三的两仪轮回玉。";
+    ss << L"隐藏设定: 主角第一世自带伴生玉佩，其真身是九大鸿蒙至宝排名第三的太一轮回玉。";
     ss << L"它是主角能带着部分记忆转世的根因，但主角本人不知道，旁人通常也无法确认。";
     ss << L"叙事中只能写成黑白旧玉、伴生玉佩、梦中玉意、阴阳玉痕或轮回回响，不要让普通事件直接揭示“这是鸿蒙至宝本体”。";
     return ss.str();
@@ -2185,7 +2185,7 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
             L"你学会在死局里留一线生机，而不是强行改写生死。"
         },
         {
-            L"两仪轮回玉", L"轮回阴阳",
+            L"太一轮回玉", L"轮回阴阳",
             L"可护住一缕真灵穿过生死阴阳，让记忆、因果和未竟道痕在转世后仍有回声。",
             L"黑白玉光在魂魄深处一闪，像有半枚阴玉、半枚阳玉隔着轮回轻轻合拢。",
             L"妄图借它逃避今生，会被阴阳两面同时照见，前世执念反而压住本我。",
@@ -2300,7 +2300,7 @@ void GenerateHongmengOmen() {
         addCandidate(6, 1); // 开界神斧
     } else if (g_worldEraName == L"仙朝鼎盛纪") {
         addCandidate(0, 1);
-        addCandidate(2, 1); // 两仪轮回玉
+        addCandidate(2, 1); // 太一轮回玉
         addCandidate(5, 2); // 无量天书
     } else if (g_worldEraName == L"末法裂变纪") {
         addCandidate(1, 1);
@@ -3305,6 +3305,164 @@ Event BuildSocialAdventureEvent() {
         };
     }
 
+    return evt;
+}
+
+bool ShouldTriggerEraPulseEvent() {
+    int chance = 12;
+    if (g_dynamicWorld.GetActiveWorldEvent()) chance += 8;
+    if (!g_eraRemnants.empty()) chance += min(8, (int)g_eraRemnants.size() * 2);
+    if (!g_dynamicWorld.GetRecentHistoryEntries(3).empty()) chance += 3;
+    if (g_worldEraName == L"末法裂变纪" || g_worldEraName == L"废土返道纪") chance += 4;
+    if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") chance += 3;
+    if (g_worldEraName == L"仙朝鼎盛纪") chance += 2;
+    if (g_player.totalEvents <= 2) chance += 3;
+    chance = max(10, min(35, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildEraPulseEvent() {
+    Event evt;
+    auto compactLimit = [](const wstring& text, size_t limit) {
+        wstring compact = CompactMemoryFragment(text);
+        if (compact.size() > limit) {
+            compact = compact.substr(0, limit) + L"...";
+        }
+        return compact;
+    };
+
+    WorldEvent* activeEvent = g_dynamicWorld.GetActiveWorldEvent();
+    vector<wstring> recentHistory = g_dynamicWorld.GetRecentHistoryEntries(4);
+    wstring activeText = activeEvent
+        ? L"当前修仙界大势是" + activeEvent->title + L"：" + compactLimit(activeEvent->description, 76) + L"。"
+        : L"此刻没有单一大事压顶，但时代本身仍在慢慢改写每个人的去路。";
+    wstring remnantText;
+    if (!g_eraRemnants.empty()) {
+        remnantText = L"旧世残响也被卷入其中：" +
+            compactLimit(g_eraRemnants[Random(0, (int)g_eraRemnants.size() - 1)], 76) + L"。";
+    }
+    wstring historyText;
+    if (!recentHistory.empty()) {
+        historyText = L"近年大事还在发酵：" +
+            compactLimit(recentHistory[Random(0, (int)recentHistory.size() - 1)], 56) + L"。";
+    }
+
+    int expGain = 85 + g_player.realm * 6;
+    int majorGain = expGain + 45;
+    int minorGain = max(45, expGain - 25);
+    int hpRisk = 22 + g_player.realm * 2;
+    int stoneReward = 14 + g_player.realm * 2;
+    int daoReward = max(4, min(12, 4 + g_player.realm / 2));
+
+    wstring scene;
+    if (g_worldEraName == L"仙朝鼎盛纪") {
+        evt.title = L"【纪元】仙朝名册";
+        scene = L"仙朝天册司在山道旁设案，要求过路修士登记家世、宗门与气运。";
+        evt.choices = {
+            {L"入册借势", {
+                L"你借仙朝名册换来一次正当通行，名位短暂变成护身符。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(stoneReward) + L"，因果+6",
+                L"册封吏盯上你的家世与旧名，想把你写进更深的局里。\n因果-10，灵石-8"
+            }, 5},
+            {L"拒绝定品", {
+                L"你没有让名册替今生定品，只以本事闯过关口。\n修为+" + to_wstring(expGain) + L"，寿命+3",
+                L"拒绝太硬，仙朝暗线记下你的姓名。\n气血-" + to_wstring(hpRisk) + L"，因果-6"
+            }, 2},
+            {L"查验密诏", {
+                L"你从密诏边角看出旧盟裂痕，知道此世势力并非铁板一块。\n修为+" + to_wstring(minorGain) + L"，因果+10，掌道+" + to_wstring(daoReward),
+                L"密诏反锁神识，差点把你的前世般判断也牵出来。\n气血-" + to_wstring(hpRisk + 8)
+            }, 7}
+        };
+    } else if (g_worldEraName == L"末法裂变纪") {
+        evt.title = L"【纪元】末法配给";
+        scene = L"枯潮压过驿道，一队修士围着灵井配给争得面红耳赤。";
+        evt.choices = {
+            {L"争取配给", {
+                L"你抢在混乱前替自己夺到一份灵气配给，知道末法里温和也是奢侈。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(max(8, stoneReward - 4)),
+                L"配给背后另有债契，你拿得越多，欠得越重。\n因果-12，灵石-10"
+            }, -2},
+            {L"让出一份", {
+                L"你把一份灵气让给将死散修，末法中这点善意反而被很多人记住。\n因果+14，寿命+4，修为+" + to_wstring(minorGain),
+                L"善意没能立刻换来回报，你被枯潮拖得气血发冷。\n气血-" + to_wstring(hpRisk)
+            }, 9},
+            {L"追查枯潮", {
+                L"你顺着灵井裂纹查到法则破口，通天灵宝残印记下一缕末法器痕。\n修为+" + to_wstring(expGain) + L"，灵宝共鸣+5，掌道+" + to_wstring(daoReward),
+                L"枯潮突然回卷，经脉像被干井刮过。\n气血-" + to_wstring(hpRisk + 12)
+            }, 6}
+        };
+    } else if (g_worldEraName == L"灵机蒸汽纪") {
+        evt.title = L"【纪元】灵机工坊";
+        scene = L"一座灵机工坊把旧宗门洞府改成试炼矿坊，炉火和阵纹一同轰鸣。";
+        evt.choices = {
+            {L"签下工坊约", {
+                L"你借工坊契约换到灵机资源，也看清新秩序如何给修行标价。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(stoneReward + 8),
+                L"契约细字藏着扣押条款，差点把你变成低价供奉。\n灵石-14，因果-6"
+            }, 2},
+            {L"拆看阵械", {
+                L"你拆开阵械核心，发现旧法则也能被新工艺暂时重排。\n修为+" + to_wstring(expGain) + L"，灵宝共鸣+4",
+                L"炉压失衡，阵械碎片割伤经脉。\n气血-" + to_wstring(hpRisk + 5)
+            }, 5},
+            {L"护住旧宗弟子", {
+                L"你把被工坊压价的旧宗弟子护下，旧宗门的人情因此续了一线。\n因果+10，修为+" + to_wstring(minorGain),
+                L"工坊管事记住你的插手，下一次报价会更苛刻。\n灵石-10"
+            }, 8}
+        };
+    } else if (g_worldEraName == L"星穹道网纪") {
+        evt.title = L"【纪元】道网余波";
+        scene = L"道网节点忽然在你头顶亮起，远方榜单、旧案影像和招揽玉简同时投来。";
+        evt.choices = {
+            {L"接入道网", {
+                L"你借道网共振看见远方机缘，今生的名字第一次被更多人看见。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(stoneReward) + L"，因果+5",
+                L"道网记下你的异常判断，有人开始追索你为何像带着前世经验。\n因果-10"
+            }, 4},
+            {L"隐去真名", {
+                L"你没有把真名交给节点，只留下一个可进可退的虚号。\n寿命+3，修为+" + to_wstring(minorGain),
+                L"隐匿触发审查，节点反向锁住你的神识波纹。\n气血-" + to_wstring(hpRisk)
+            }, 3},
+            {L"追查断链", {
+                L"你顺着断链查到一段旧世影像，明白道网也会保存被人抹去的因果。\n修为+" + to_wstring(expGain) + L"，因果+12，掌道+" + to_wstring(daoReward),
+                L"断链里藏着恶意回响，几乎把你拖进别人的旧案。\n气血-" + to_wstring(hpRisk + 8) + L"，因果-6"
+            }, 7}
+        };
+    } else if (g_worldEraName == L"废土返道纪") {
+        evt.title = L"【纪元】废土迁徙";
+        scene = L"黑雨将至，残宗迁徙队拖着伤员、灵粮和破损法器从荒野经过。";
+        evt.choices = {
+            {L"护送迁徙", {
+                L"你护住迁徙队穿过黑雨边缘，残宗火种因此多留一息。\n修为+" + to_wstring(expGain) + L"，因果+12",
+                L"荒野邪祟盯上队尾，你被迫硬接一场消耗战。\n气血-" + to_wstring(hpRisk + 10)
+            }, 9},
+            {L"翻检古机", {
+                L"你从旧文明古机里拆出可用阵核，废土里破损之物也能再生路。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(stoneReward) + L"，灵宝共鸣+4",
+                L"古机警戒未灭，黑匣噪声反噬识海。\n气血-" + to_wstring(hpRisk + 14)
+            }, 5},
+            {L"点燃火种", {
+                L"你没有只顾眼前收益，而是帮残宗重立一条微弱法统。\n寿命+4，因果+10，掌道+" + to_wstring(daoReward),
+                L"火种太弱，短期内换不来资源，还暴露了你的行踪。\n灵石-8，气血-" + to_wstring(max(12, hpRisk - 6))
+            }, 8}
+        };
+    } else {
+        evt.title = L"【纪元】古修遗响";
+        scene = L"山门之外忽现古修洞府裂隙，诸宗还没来得及给它定规矩。";
+        evt.choices = {
+            {L"入山查旧", {
+                L"你趁诸宗未定章程时先入裂隙，拾到一段古修感悟。\n修为+" + to_wstring(majorGain) + L"，灵石+" + to_wstring(stoneReward),
+                L"裂隙里旧禁制尚未衰尽，险些把你困在山腹。\n气血-" + to_wstring(hpRisk)
+            }, 4},
+            {L"结交古修", {
+                L"你没有独吞线索，反与同行修士立下互不相害的约定。\n因果+9，修为+" + to_wstring(minorGain),
+                L"约定太浅，对方离开后仍可能另起心思。\n因果-4"
+            }, 6},
+            {L"避开争端", {
+                L"你看出洞府会引来宗门争夺，提前记下地势后抽身。\n寿命+3，修为+" + to_wstring(minorGain),
+                L"避得太早，错过了一件当世可用的法宝线索。"
+            }, 2}
+        };
+    }
+
+    evt.description = L"你外出历练时，纪元大势主动压到眼前。" + scene +
+        L"此世法则是：" + compactLimit(g_worldEraRule, 72) + L"。" +
+        activeText + remnantText + historyText +
+        L"纪元转折因由仍在暗处发酵：" + compactLimit(g_eraShiftCause, 72) + L"。";
     return evt;
 }
 
@@ -5941,6 +6099,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         s_lifeArtifactEvent = BuildLifeArtifactEvent();
                         g_currentEvent = &s_lifeArtifactEvent;
                         AddMemory(L"器物牵动", L"外出历练时，本世器物主动卷入凶局。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerEraPulseEvent()) {
+                        static Event s_eraPulseEvent;
+                        s_eraPulseEvent = BuildEraPulseEvent();
+                        g_currentEvent = &s_eraPulseEvent;
+                        AddMemory(L"纪元余波", L"外出历练时，当前时代的大势主动卷入此身。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }

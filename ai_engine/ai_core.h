@@ -822,7 +822,7 @@ public:
                                eventText.find(L"器纹") != wstring::npos;
         bool touchesHongmeng = containsAny(eventText, {
             L"鸿蒙", L"创世级", L"天象", L"至宝", L"投影", L"显化",
-            L"鸿蒙道印", L"造化青莲", L"两仪轮回玉", L"太初源炉", L"归墟玄图",
+            L"鸿蒙道印", L"造化青莲", L"太一轮回玉", L"太初源炉", L"归墟玄图",
             L"无量天书", L"开界神斧", L"太虚照世镜", L"万道母鼎"
         });
         bool touchesDao = containsAny(eventText, {
