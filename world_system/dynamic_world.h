@@ -533,6 +533,16 @@ public:
         return ss.str();
     }
 
+    vector<wstring> GetRecentHistoryEntries(int limit = 8) const {
+        vector<wstring> result;
+        if (limit <= 0 || worldHistory.empty()) return result;
+        int start = max(0, (int)worldHistory.size() - limit);
+        for (int i = start; i < (int)worldHistory.size(); i++) {
+            result.push_back(worldHistory[i]);
+        }
+        return result;
+    }
+
     void Save(wofstream& file) {
         file << L"WORLD_V2\n";
         file << worldTime << L"\n";

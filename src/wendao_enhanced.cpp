@@ -3225,6 +3225,13 @@ PlayerContext BuildPlayerContext() {
         }
         world << L"，不排除隐藏实力\n";
     }
+    auto recentWorldEvents = g_dynamicWorld.GetRecentHistoryEntries(5);
+    if (!recentWorldEvents.empty()) {
+        world << L"- 近年大事:\n";
+        for (const auto& entry : recentWorldEvents) {
+            world << L"  * " << entry << L"\n";
+        }
+    }
 
     if (!g_worldData.sects.empty()) {
         world << L"- 近旁宗门:\n";
@@ -3266,6 +3273,23 @@ PlayerContext BuildPlayerContext() {
 
     ctx.worldState = world.str();
     return ctx;
+}
+
+void AdvanceDynamicWorld(const wstring& reason) {
+    vector<wstring> before = g_dynamicWorld.GetRecentHistoryEntries(8);
+    g_dynamicWorld.Update();
+    vector<wstring> after = g_dynamicWorld.GetRecentHistoryEntries(8);
+
+    int added = 0;
+    for (const auto& entry : after) {
+        if (find(before.begin(), before.end(), entry) != before.end()) continue;
+        AddMemory(L"天下大事", entry + L"（" + reason + L"后传来）");
+        added++;
+        if (added >= 3) break;
+    }
+    if (added > 0) {
+        g_contextMgr.SetContext(BuildPlayerContext());
+    }
 }
 
 void SaveGeneratedWorld(wofstream& file) {
@@ -3841,7 +3865,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     g_player.age += 1;
     g_player.totalEvents++;
-    g_dynamicWorld.Update();
+    AdvanceDynamicWorld(L"历练抉择");
     if (eraRisk >= 10 && g_messageText.find(L"修为+") != wstring::npos) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
@@ -4421,7 +4445,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     int daoMeditation = GetDaoMeditationModifierPercent();
                     int totalMeditation = max(10, eraMeditation + daoMeditation);
                     int gain = g_player.Meditate(multiplier, totalMeditation);
-                    g_dynamicWorld.Update(); // 世界也在演化
+                    AdvanceDynamicWorld(L"闭关修行"); // 世界也在演化
                     if (g_player.IsDead()) {
                         g_gameState = STATE_GAMEOVER;
                         g_messageText = L"【寿元耗尽】\n你在闭关中坐化...\n\n最终境界：" +
@@ -4633,7 +4657,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         gain = max(20, gain);
                         g_player.exp += gain;
                         g_player.age++;
-                        g_dynamicWorld.Update();
+                        AdvanceDynamicWorld(L"灵石闭关");
                         AddMemory(L"灵石闭关", L"消耗灵石" + to_wstring(cost) + L"，修为+" + to_wstring(gain));
                         wstring closedDoorMsg = L"闭关一年，消耗灵石" + to_wstring(cost) +
                             L"，修为+" + to_wstring(gain) + L"。";
