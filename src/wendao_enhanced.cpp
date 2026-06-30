@@ -850,6 +850,7 @@ wstring g_reincarnationEcho = L"前世的残响尚浅，还不足以彻底改变
 wstring g_eraTransitionNote = L"这是本局第一段完整时代，后续转世可能迎来完全不同的天地秩序。";
 wstring g_lifePremise = L"此世尚未显出明确主线，一切仍在暗处酝酿。";
 vector<wstring> g_lifeStoryHooks;
+vector<wstring> g_eraRemnants;
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
@@ -992,7 +993,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线"
+        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1146,6 +1147,77 @@ bool LoadMemory(wifstream& file) {
     return true;
 }
 
+wstring BuildEraRemnantsText(int limit = 6) {
+    if (g_eraRemnants.empty()) return L"";
+    wstringstream ss;
+    ss << L"【旧世残响】\n";
+    int count = 0;
+    for (const auto& remnant : g_eraRemnants) {
+        if (count++ >= limit) break;
+        ss << L"- " << remnant << L"\n";
+    }
+    return ss.str();
+}
+
+void AddEraRemnant(const wstring& remnant) {
+    if (remnant.empty()) return;
+    if (find(g_eraRemnants.begin(), g_eraRemnants.end(), remnant) == g_eraRemnants.end()) {
+        g_eraRemnants.push_back(remnant);
+    }
+}
+
+void GenerateEraRemnants(const wstring& previousEra) {
+    g_eraRemnants.clear();
+
+    if (g_generation <= 1) {
+        AddEraRemnant(L"初世锚点：这一世尚无可考前代遗迹，所有宗门、秘境与人情债都在为后世埋下第一批痕迹。");
+        return;
+    }
+
+    if (previousEra == g_worldEraName) {
+        AddEraRemnant(L"延续纪痕：大时代未变，但上一世熟悉的宗门名册、坊市债契和秘境入口已经被新人重新分配。");
+    } else {
+        AddEraRemnant(L"断代裂隙：上一世的" + previousEra + L"没有彻底消失，只是被" + g_worldEraName + L"覆盖成新的秩序。");
+    }
+
+    if (previousEra == L"灵气初盛纪") {
+        AddEraRemnant(L"古修石简：早期宗门刻下的修行注解仍埋在山腹里，后世修士常把它误认成普通碑文。");
+    } else if (previousEra == L"仙朝鼎盛纪") {
+        AddEraRemnant(L"旧朝金册：仙朝册封残卷仍能牵动气运，世家和宗门都想知道你的姓名是否曾被写入其中。");
+    } else if (previousEra == L"末法裂变纪") {
+        AddEraRemnant(L"枯井断契：末法时代留下的灵井配给契约仍在流转，每一页都记着资源争夺中的旧仇。");
+    } else if (previousEra == L"灵机蒸汽纪") {
+        AddEraRemnant(L"废炉齿印：失效灵机工坊深处仍有齿轮阵列自转，像在复演上一世未完成的器纹。");
+    } else if (previousEra == L"星穹道网纪") {
+        AddEraRemnant(L"断网残频：旧灵网节点偶尔吐出上一纪元的试炼坐标，其中夹着不该属于今生的旧名。");
+    } else if (previousEra == L"废土返道纪") {
+        AddEraRemnant(L"荒墟黑匣：废土修士封存的逃亡记录仍能回放，只是声音里常混进前世记忆。");
+    }
+
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        AddEraRemnant(L"当世改写：工坊修士正在拆解旧时代遗物，试图把宗门秘法改造成可量产的阵械。");
+    } else if (g_worldEraName == L"星穹道网纪") {
+        AddEraRemnant(L"当世改写：道网会把旧时代传说做成榜单和试炼，真假因果混在同一条远讯里。");
+    } else if (g_worldEraName == L"末法裂变纪") {
+        AddEraRemnant(L"当世改写：灵气衰落后，旧时代遗物不再只是文物，而是可以换命的资源。");
+    } else if (g_worldEraName == L"废土返道纪") {
+        AddEraRemnant(L"当世改写：文明断裂让旧时代遗址变成荒野禁区，能读懂它们的人会被各方争夺。");
+    } else if (g_worldEraName == L"仙朝鼎盛纪") {
+        AddEraRemnant(L"当世改写：仙朝试图把旧时代遗迹纳入册封体系，凡是无法登记的传承都会被暗中盯上。");
+    } else {
+        AddEraRemnant(L"当世改写：古典宗门把旧世线索称作天机，只有入门试炼后才准弟子靠近。");
+    }
+
+    auto fragments = g_legacySystem.GetLatestMemoryFragments(2);
+    if (!fragments.empty()) {
+        AddEraRemnant(L"前世叠影：" + fragments[0]);
+    }
+
+    if (g_eraRemnants.size() > 5) {
+        g_eraRemnants.resize(5);
+    }
+}
+
 void GenerateWorldEra() {
     struct EraProfile {
         const wchar_t* name;
@@ -1198,6 +1270,8 @@ void GenerateWorldEra() {
     } else {
         g_reincarnationEcho = L"前世残响仍浅，只会在某些关键时刻轻轻拨动你的心念。";
     }
+
+    GenerateEraRemnants(previousEra);
 }
 
 wstring GetEraSummaryText() {
@@ -1208,6 +1282,9 @@ wstring GetEraSummaryText() {
     ss << L"时代法则: " << g_worldEraRule << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+    if (!g_eraRemnants.empty()) {
+        ss << BuildEraRemnantsText(5) << L"\n";
+    }
     ss << L"本世主题: " << g_lifePremise << L"\n";
     if (!g_lifeStoryHooks.empty()) {
         ss << L"本世线索:\n";
@@ -1872,6 +1949,10 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"一处古修遗府与" + familySecret + L"隐隐相连。");
     }
 
+    if (!g_eraRemnants.empty()) {
+        g_lifeStoryHooks.push_back(L"旧世残响：" + g_eraRemnants[0]);
+    }
+
     if (!pastFragments.empty()) {
         g_lifeStoryHooks.push_back(L"前世碎片反复浮现：" + pastFragments[0]);
     } else {
@@ -2310,6 +2391,9 @@ PlayerContext BuildPlayerContext() {
         legacy << memoryContext;
     }
     legacy << L"时代变迁: " << g_eraTransitionNote << L"\n";
+    if (!g_eraRemnants.empty()) {
+        legacy << BuildEraRemnantsText(4);
+    }
     legacy << g_legacySystem.GetDaoContextText() << L"\n";
     legacy << BuildHongmengContextText() << L"\n";
     ctx.legacyState = legacy.str();
@@ -2322,6 +2406,12 @@ PlayerContext BuildPlayerContext() {
     world << L"- 时代概况: " << g_worldEraDescription << L"\n";
     world << L"- 时代法则: " << g_worldEraRule << L"\n";
     world << L"- 时代变迁: " << g_eraTransitionNote << L"\n";
+    if (!g_eraRemnants.empty()) {
+        world << L"- 旧世残响:\n";
+        for (const auto& remnant : g_eraRemnants) {
+            world << L"  * " << remnant << L"\n";
+        }
+    }
     world << L"- 本世主线: " << g_lifePremise << L"\n";
     if (!g_lifeStoryHooks.empty()) {
         world << L"- 本世持续线索:\n";
@@ -2483,7 +2573,7 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V2\n";
+    file << L"WORLD_ERA_V3\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
@@ -2494,6 +2584,10 @@ void SaveWorldEra(wofstream& file) {
     for (auto& hook : g_lifeStoryHooks) {
         file << EscapeSaveField(hook) << L"\n";
     }
+    file << g_eraRemnants.size() << L"\n";
+    for (auto& remnant : g_eraRemnants) {
+        file << EscapeSaveField(remnant) << L"\n";
+    }
 }
 
 bool LoadWorldEra(wifstream& file) {
@@ -2501,14 +2595,15 @@ bool LoadWorldEra(wifstream& file) {
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
     bool isV2 = (marker == L"WORLD_ERA_V2");
-    if (marker != L"WORLD_ERA_V1" && !isV2) return false;
+    bool isV3 = (marker == L"WORLD_ERA_V3");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2) {
+    if (isV2 || isV3) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -2525,9 +2620,21 @@ bool LoadWorldEra(wifstream& file) {
             getline(file, hook);
             g_lifeStoryHooks.push_back(UnescapeSaveField(hook));
         }
+        g_eraRemnants.clear();
+        if (isV3) {
+            size_t remnantCount = 0;
+            file >> remnantCount;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            for (size_t i = 0; i < remnantCount; ++i) {
+                wstring remnant;
+                getline(file, remnant);
+                g_eraRemnants.push_back(UnescapeSaveField(remnant));
+            }
+        }
     } else {
         g_lifePremise = L"此世主线来自旧存档，尚未记录明确线索。";
         g_lifeStoryHooks.clear();
+        g_eraRemnants.clear();
     }
     return true;
 }
@@ -2775,6 +2882,7 @@ void StartNextLife() {
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
     AddMemory(L"本世主线", g_lifePremise);
+    if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
     AddMemory(L"前世余烬", g_reincarnationEcho);
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
     for (const auto& fragment : rememberedFragments) {
@@ -3322,6 +3430,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
                 AddMemory(L"时代变迁", g_eraTransitionNote);
                 AddMemory(L"本世主线", g_lifePremise);
+                if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
                 if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
