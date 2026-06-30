@@ -1808,6 +1808,55 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
     return treasures;
 }
 
+void AddHongmengTreasureMentions(vector<wstring>& names, const wstring& text) {
+    if (text.find(L"鸿蒙") == wstring::npos && text.find(L"创世级") == wstring::npos) return;
+
+    for (const auto& treasure : GetHongmengTreasures()) {
+        if (text.find(treasure.name) == wstring::npos && text.find(treasure.dao) == wstring::npos) continue;
+
+        wstring name = treasure.name;
+        if (find(names.begin(), names.end(), name) == names.end()) {
+            names.push_back(name);
+        }
+    }
+}
+
+vector<wstring> CollectHongmengInsightNames() {
+    vector<wstring> names;
+    for (const auto& memory : g_memoryLog) {
+        AddHongmengTreasureMentions(names, memory);
+    }
+
+    auto fragments = g_legacySystem.GetLatestMemoryFragments(12);
+    for (const auto& fragment : fragments) {
+        AddHongmengTreasureMentions(names, fragment);
+    }
+    return names;
+}
+
+int CountHongmengInsightKinds() {
+    return (int)CollectHongmengInsightNames().size();
+}
+
+wstring BuildHongmengInsightContext(int limit = 9) {
+    auto names = CollectHongmengInsightNames();
+    wstringstream ss;
+    ss << L"当前鸿蒙参悟: " << names.size() << L"/9";
+    if (names.empty()) {
+        ss << L"，尚无稳定参悟。";
+        return ss.str();
+    }
+
+    ss << L"，已留下";
+    int count = min(limit, (int)names.size());
+    for (int i = 0; i < count; ++i) {
+        if (i > 0) ss << L"、";
+        ss << names[i];
+    }
+    ss << L"的投影记忆。";
+    return ss.str();
+}
+
 wstring BuildHongmengTreasureSummary(int limit = 3) {
     const auto& treasures = GetHongmengTreasures();
     wstringstream ss;
@@ -1817,6 +1866,7 @@ wstring BuildHongmengTreasureSummary(int limit = 3) {
         ss << L"- " << treasures[i].name << L"（" << treasures[i].dao << L"）: " << treasures[i].miracle << L"\n";
     }
     ss << L"- 运行规则: 道祖可参悟、借势、被选中或被拒绝，但不可毁灭；掌尽诸道的道祖-天道境才具备理论毁灭力，且毁灭没有意义，只是力量映射。\n";
+    ss << L"- " << BuildHongmengInsightContext(limit) << L"\n";
     return ss.str();
 }
 
@@ -1849,6 +1899,7 @@ wstring BuildHongmengContextText() {
         ss << treasures[i].name << L"=" << treasures[i].dao;
     }
     ss << L"。它们不是普通装备，也不是通天灵宝；各自权柄不同，只能写投影、线索、参悟、拒绝或遥远因果。道祖无法毁灭，只有掌尽诸道的道祖-天道境具备理论毁灭力，但毁灭没有必要。";
+    ss << L" " << BuildHongmengInsightContext();
     return ss.str();
 }
 
@@ -1936,6 +1987,7 @@ int GetHeavenlyDaoProgressScore() {
     score += g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) / 5;
     score += max(0, g_player.GetTotalRoot()) * 2;
     score += min(120, g_generation * 8);
+    score += min(90, CountHongmengInsightKinds() * 10);
     return score;
 }
 
@@ -1953,7 +2005,8 @@ wstring GetHeavenlyDaoRequirementText() {
     ss << L"当前掌道: " << (relic.daoLinked ? relic.daoName : L"尚未真正证成") << L"\n";
     ss << L"万道归一: " << progress << L" / 360\n";
     ss << L"通天灵宝共鸣: " << relic.resonance << L"\n";
-    ss << L"掌道深度: " << relic.daoDepth << L"\n\n";
+    ss << L"掌道深度: " << relic.daoDepth << L"\n";
+    ss << L"鸿蒙参悟: " << CountHongmengInsightKinds() << L" / 9\n\n";
     if (!relic.daoLinked) {
         ss << L"你还没有真正把今生大道刻入通天灵宝残印。先证成道祖，让自身大道稳定下来。\n";
     } else if (progress < 360) {
@@ -3213,6 +3266,7 @@ PlayerContext BuildPlayerContext() {
     }
     world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
     world << L"- 道祖-天道境进度: " << GetHeavenlyDaoProgressScore() << L" / 360\n";
+    world << L"- 鸿蒙参悟: " << CountHongmengInsightKinds() << L" / 9\n";
     world << L"- 世界时间: 第" << g_dynamicWorld.GetWorldTime() << L"年\n";
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
     if (activeEvent) {
@@ -3630,6 +3684,36 @@ void ImproveRandomRoot(int amount) {
     else g_player.ImproveRoot(g_player.rootEarth, amount);
 }
 
+const HongmengTreasure* FindHongmengTreasureInText(const wstring& text) {
+    for (const auto& treasure : GetHongmengTreasures()) {
+        if (text.find(treasure.name) != wstring::npos || text.find(treasure.dao) != wstring::npos) {
+            return &treasure;
+        }
+    }
+    return nullptr;
+}
+
+void TrackHongmengInsightFromEvent(const Event& event, const Choice& choice, const wstring& outcome) {
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    const HongmengTreasure* treasure = FindHongmengTreasureInText(text);
+    if (!treasure) return;
+
+    bool hasProgress = ExtractValue(outcome, L"掌道+") > 0 ||
+                       ExtractValue(outcome, L"灵宝共鸣+") > 0;
+    bool hasInsight = TextContainsAny(outcome, {
+        L"参悟", L"看清", L"明白", L"学会", L"懂得", L"知道", L"余光", L"显化"
+    });
+
+    if (hasProgress || hasInsight) {
+        AddMemory(L"鸿蒙参悟",
+            wstring(treasure->name) + L"只留投影与因果，不可据为己有；其权柄映照" +
+            treasure->dao + L"。" + treasure->insight);
+    } else if (TextContainsAny(outcome, {L"拒绝", L"反噬", L"压回", L"禁忌", L"气血-", L"因果-"})) {
+        AddMemory(L"鸿蒙警戒",
+            wstring(treasure->name) + L"拒绝被占有或强夺；禁忌为：" + treasure->taboo);
+    }
+}
+
 void ApplyOutcomeEffects(const wstring& outcome) {
     int expGain = ExtractValue(outcome, L"修为+");
     int expLoss = ExtractValue(outcome, L"修为-");
@@ -3878,6 +3962,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
+    TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
     if (isAIEvent) {
         AddMemory(L"本地模型抉择",
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
