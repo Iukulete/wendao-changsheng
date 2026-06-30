@@ -648,6 +648,24 @@ public:
             return choices;
         }
         if (focus == L"social") {
+            if (ContainsAny(player.socialState, {L"失传古法", L"失传道法", L"功法见证者"})) {
+                choices.push_back(L"藏锋应对");
+                choices.push_back(L"请教残页");
+                choices.push_back(L"顺势露手");
+                return choices;
+            }
+            if (ContainsAny(player.socialState, {L"旧名仰慕者", L"旧名追债人", L"旧名"})) {
+                choices.push_back(L"当众澄清");
+                choices.push_back(L"借名递话");
+                choices.push_back(L"暗查旧册");
+                return choices;
+            }
+            if (ContainsAny(player.socialState, {L"器痕识别者", L"器痕"})) {
+                choices.push_back(L"压住器鸣");
+                choices.push_back(L"询问器痕");
+                choices.push_back(L"借器破局");
+                return choices;
+            }
             choices.push_back(L"借势交谈");
             choices.push_back(L"冷眼旁观");
             choices.push_back(player.karma >= 0 ? L"给足体面" : L"反将一军");
@@ -865,6 +883,18 @@ public:
         bool touchesLifespan = containsAny(eventText, {
             L"寿元", L"仙寿", L"坐化", L"延寿", L"寿药", L"闭死关", L"叩道门"
         });
+        wstring socialRumor = FirstBulletAfter(player.socialState, L"近日风声");
+        wstring socialActor = FirstLineContaining(player.socialState, {
+            L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者",
+            L"父亲", L"母亲", L"长辈", L"同代", L"欺压者", L"竞争者", L"联系人"
+        });
+        wstring socialContext = eventText + L" " + player.socialState + L" " + socialRumor + L" " + socialActor;
+        bool touchesLostTechnique = containsAny(socialContext, {
+            L"失传古法", L"失传道法", L"功法见证者", L"藏经", L"残页", L"行功"
+        });
+        bool touchesLegacySocial = containsAny(socialContext, {
+            L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"旧名", L"器痕", L"追债"
+        });
         bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
                              (eventText.find(L"修士") != wstring::npos ||
                               eventText.find(L"长辈") != wstring::npos ||
@@ -872,7 +902,9 @@ public:
                               eventText.find(L"执事") != wstring::npos ||
                               eventText.find(L"道友") != wstring::npos ||
                               eventText.find(L"父") != wstring::npos ||
-                              eventText.find(L"母") != wstring::npos);
+                              eventText.find(L"母") != wstring::npos ||
+                              eventText.find(L"近日风声") != wstring::npos ||
+                              touchesLostTechnique || touchesLegacySocial);
 
         wstring action = choiceText.empty() ? L"作出抉择" : choiceText;
 
@@ -883,6 +915,10 @@ public:
                 ss << L"没有强求答案，只借玉佩温意稳住几段前世碎片，让今生仍由自己作主。";
             } else if (touchesUnfinished) {
                 ss << L"没有把前世旧债当成梦兆，而是替今生争回了主动权。";
+            } else if (touchesLostTechnique) {
+                ss << L"没有急着炫耀旧法，只顺着残页破绽补了一手，让懂行者看见失传古法仍可在今生重开。";
+            } else if (touchesLegacySocial) {
+                ss << L"把前世留下的旧名、器痕或流言压成今生可用的人情筹码，没有让旁人直接定你的身份。";
             } else if (touchesFaction) {
                 ss << L"顺势摸清了对方真正想要的筹码，本世势力对你的评价因此改写。";
             } else if (touchesArtifact) {
@@ -909,6 +945,8 @@ public:
             if (touchesRemnant) ss << L"，因果+8";
             if (touchesFaction) ss << L"，因果+6";
             if (touchesUnfinished) ss << L"，因果+10";
+            if (touchesLostTechnique) ss << L"，因果+8，掌道+2";
+            if (touchesLegacySocial && !touchesLostTechnique) ss << L"，因果+8";
             if (touchesJade) ss << L"，因果+5";
             if (touchesStory) ss << L"，因果+6";
             if (touchesLifespan) ss << L"，寿命+18";
@@ -922,6 +960,10 @@ public:
                 ss << L"却太急着追问玉佩来历，梦中旧语反而扰乱心神，今生判断也被带偏。";
             } else if (touchesUnfinished) {
                 ss << L"却被前世未竟因果牵着走，今生立场反而被旁人看穿。";
+            } else if (touchesLostTechnique) {
+                ss << L"却把失传古法露得太直，藏经残页和旁人目光同时压来，今生身份变得更难遮掩。";
+            } else if (touchesLegacySocial) {
+                ss << L"却让旧名、器痕或追债流言先一步传开，旁人还没确认真相，已经开始按前世影子看你。";
             } else if (touchesFaction) {
                 ss << L"却误判了势力旧债的分量，对方没有翻脸，只是把你的名字记得更重。";
             } else if (touchesArtifact) {
@@ -948,6 +990,7 @@ public:
             if (touchesRemnant || touchesSocial) ss << L"，因果-8";
             if (touchesFaction) ss << L"，因果-6";
             if (touchesUnfinished) ss << L"，因果-10";
+            if (touchesLostTechnique || touchesLegacySocial) ss << L"，因果-8";
             if (touchesJade) ss << L"，因果-5";
             if (touchesStory) ss << L"，因果-6";
             if (touchesLifespan) ss << L"，寿命-8";
