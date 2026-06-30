@@ -46,6 +46,7 @@ struct PastLife {
     // 留下的传承
     vector<LegacyItem> legacies;
     vector<wstring> memoryFragments;
+    vector<wstring> unfinishedKarmas;
 
     PastLife() : generation(1), realmReached(0), ageAtDeath(0),
                  karma(0), totalEvents(0), battlesWon(0), npcsMet(0) {}
@@ -185,6 +186,15 @@ public:
                 ));
             }
 
+            if (!last.unfinishedKarmas.empty()) {
+                inheritedLegacies.push_back(LegacyItem(
+                    LEGACY_MEMORY,
+                    L"前世未竟因果",
+                    L"上一世尚未了结的主线、人情债与旧时代线索，会在这一世以梦兆和巧合重新靠近。",
+                    max(24, (int)last.unfinishedKarmas.size() * 16 + last.realmReached * 2)
+                ));
+            }
+
             if (last.karma > 100) {
                 inheritedLegacies.push_back(LegacyItem(
                     LEGACY_REPUTATION,
@@ -294,6 +304,15 @@ public:
                 L"亲历记忆",
                 L"上一世真正经历过的几段道途碎片，转世后会以梦境、直觉或似曾相识的方式浮现。",
                 min(120, 20 + (int)life.memoryFragments.size() * 12 + life.totalEvents / 5)
+            ));
+        }
+
+        if (!life.unfinishedKarmas.empty()) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_MEMORY,
+                L"未竟因果",
+                L"这一世没能完全了结的主线、人脉和旧世残响并未消失，只是等下一次轮回重新开局。",
+                min(140, 28 + (int)life.unfinishedKarmas.size() * 18 + life.totalEvents / 6)
             ));
         }
 
@@ -527,6 +546,7 @@ public:
                 ss << L"  死因: " << life.causeOfDeath << L"\n";
                 ss << L"  留下传承: " << life.legacies.size() << L"个\n";
                 ss << L"  记忆碎片: " << life.memoryFragments.size() << L"段\n";
+                ss << L"  未竟因果: " << life.unfinishedKarmas.size() << L"条\n";
             }
         }
 
@@ -553,8 +573,35 @@ public:
         }
 
         ss << L"\n" << GetMemoryFragmentsText(6);
+        wstring unfinished = GetUnfinishedKarmaText(5);
+        if (!unfinished.empty()) {
+            ss << L"\n\n" << unfinished;
+        }
         ss << L"\n\n" << GetRelicStatusText();
 
+        return ss.str();
+    }
+
+    vector<wstring> GetLatestUnfinishedKarmas(int limit = 5) const {
+        vector<wstring> result;
+        if (pastLives.empty() || limit <= 0) return result;
+        const auto& karmas = pastLives.back().unfinishedKarmas;
+        int start = max(0, (int)karmas.size() - limit);
+        for (int i = start; i < (int)karmas.size(); ++i) {
+            result.push_back(karmas[i]);
+        }
+        return result;
+    }
+
+    wstring GetUnfinishedKarmaText(int limit = 5) const {
+        auto karmas = GetLatestUnfinishedKarmas(limit);
+        if (karmas.empty()) return L"";
+
+        wstringstream ss;
+        ss << L"【前世未竟因果】\n";
+        for (const auto& karma : karmas) {
+            ss << L"- " << karma << L"\n";
+        }
         return ss.str();
     }
 
@@ -563,7 +610,7 @@ public:
     vector<LegacyItem>& GetInheritedLegacies() { return inheritedLegacies; }
 
     void Save(wofstream& file) {
-        file << L"LEGACY_V3\n";
+        file << L"LEGACY_V4\n";
         file << currentGeneration << L"\n";
         file << inheritedLegacies.size() << L"\n";
         for (auto& legacy : inheritedLegacies) {
@@ -592,6 +639,11 @@ public:
             for (auto& fragment : life.memoryFragments) {
                 file << fragment << L"\n";
             }
+
+            file << life.unfinishedKarmas.size() << L"\n";
+            for (auto& karma : life.unfinishedKarmas) {
+                file << karma << L"\n";
+            }
         }
     }
 
@@ -601,7 +653,8 @@ public:
         if (marker.empty()) getline(file, marker);
         bool isV2 = (marker == L"LEGACY_V2");
         bool isV3 = (marker == L"LEGACY_V3");
-        if (marker != L"LEGACY_V1" && !isV2 && !isV3) return false;
+        bool isV4 = (marker == L"LEGACY_V4");
+        if (marker != L"LEGACY_V1" && !isV2 && !isV3 && !isV4) return false;
 
         file >> currentGeneration;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -629,7 +682,7 @@ public:
         getline(file, relic.aspect);
         file >> relic.daoLinked;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
-        if (isV2 || isV3) {
+        if (isV2 || isV3 || isV4) {
             getline(file, relic.daoName);
             file >> relic.daoDepth;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -668,7 +721,7 @@ public:
                 life.legacies.push_back(LegacyItem(static_cast<LegacyType>(type), name, description, power));
             }
 
-            if (isV3) {
+            if (isV3 || isV4) {
                 size_t fragmentCount = 0;
                 file >> fragmentCount;
                 file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -676,6 +729,16 @@ public:
                     wstring fragment;
                     getline(file, fragment);
                     life.memoryFragments.push_back(fragment);
+                }
+            }
+            if (isV4) {
+                size_t unfinishedCount = 0;
+                file >> unfinishedCount;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n');
+                for (size_t j = 0; j < unfinishedCount; ++j) {
+                    wstring karma;
+                    getline(file, karma);
+                    life.unfinishedKarmas.push_back(karma);
                 }
             }
             pastLives.push_back(life);

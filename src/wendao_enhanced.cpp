@@ -993,7 +993,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响"
+        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线", L"旧世残响", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1921,6 +1921,7 @@ void GenerateLifeStoryHooks() {
     wstring locName = g_worldData.locations.empty() ? L"无名秘地" : g_worldData.locations[0].name;
     wstring familySecret = g_player.family.secret.empty() ? L"家中旧事无人提起" : g_player.family.secret;
     auto pastFragments = g_legacySystem.GetLatestMemoryFragments(2);
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(2);
     const LegacyRelic& relic = g_legacySystem.GetRelic();
 
     if (g_worldEraName == L"灵机蒸汽纪") {
@@ -1951,6 +1952,10 @@ void GenerateLifeStoryHooks() {
 
     if (!g_eraRemnants.empty()) {
         g_lifeStoryHooks.push_back(L"旧世残响：" + g_eraRemnants[0]);
+    }
+
+    if (!unfinishedKarmas.empty()) {
+        g_lifeStoryHooks.push_back(L"前世未竟因果：" + unfinishedKarmas[0]);
     }
 
     if (!pastFragments.empty()) {
@@ -2389,6 +2394,10 @@ PlayerContext BuildPlayerContext() {
     wstring memoryContext = g_legacySystem.GetMemoryContextText(6);
     if (!memoryContext.empty()) {
         legacy << memoryContext;
+    }
+    wstring unfinishedContext = g_legacySystem.GetUnfinishedKarmaText(5);
+    if (!unfinishedContext.empty()) {
+        legacy << unfinishedContext;
     }
     legacy << L"时代变迁: " << g_eraTransitionNote << L"\n";
     if (!g_eraRemnants.empty()) {
@@ -2831,6 +2840,30 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     }
 }
 
+vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5) {
+    vector<wstring> karmas;
+    auto add = [&](const wstring& text) {
+        if ((int)karmas.size() >= limit || text.empty()) return;
+        wstring compact = CompactMemoryFragment(text);
+        if (find(karmas.begin(), karmas.end(), compact) == karmas.end()) {
+            karmas.push_back(compact);
+        }
+    };
+
+    add(L"死因未了：" + causeOfDeath);
+    add(L"本世主线未尽：" + g_lifePremise);
+    for (const auto& hook : g_lifeStoryHooks) {
+        add(L"未追完的线索：" + hook);
+    }
+    if (!g_socialThreads.empty()) {
+        add(L"未结清的人情债：" + BuildSocialThreadLine(g_socialThreads[0]));
+    }
+    if (!g_eraRemnants.empty()) {
+        add(L"旧世残响仍在：" + g_eraRemnants[0]);
+    }
+    return karmas;
+}
+
 void FinishCurrentLife(const wstring& causeOfDeath) {
     AddMemory(L"一世落幕", causeOfDeath);
 
@@ -2844,6 +2877,7 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
     life.battlesWon = g_player.battlesWon;
     life.npcsMet = g_player.npcsMet;
     life.memoryFragments = SelectReincarnationMemoryFragments();
+    life.unfinishedKarmas = BuildUnfinishedKarmas(causeOfDeath);
 
     g_legacySystem.EndCurrentLife(life);
     auto& recorded = g_legacySystem.GetPastLives().back();
@@ -2896,6 +2930,10 @@ void StartNextLife() {
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
     for (const auto& fragment : rememberedFragments) {
         AddMemory(L"前世忆起", fragment);
+    }
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(3);
+    for (const auto& karma : unfinishedKarmas) {
+        AddMemory(L"前世未竟", karma);
     }
     if (relicBonus > 0 || treasureBonus > 0) {
         AddMemory(L"通天灵宝", g_legacySystem.GetDaoContextText());
