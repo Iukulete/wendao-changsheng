@@ -1083,6 +1083,72 @@ wstring BuildLifeArtifactText() {
     return ss.str();
 }
 
+bool TextMentionsArtifactResonance(const wstring& text) {
+    static const vector<wstring> keys = {
+        L"器痕", L"器纹", L"器鸣", L"道痕", L"灵宝", L"前世", L"封存器痕", L"残印"
+    };
+    for (const auto& key : keys) {
+        if (text.find(key) != wstring::npos) return true;
+    }
+    return false;
+}
+
+void MarkLifeArtifactsResonantFromText(const wstring& text) {
+    if (g_lifeArtifacts.empty() || !TextMentionsArtifactResonance(text)) return;
+
+    bool markedAny = false;
+    for (auto& item : g_lifeArtifacts) {
+        if (text.find(item.name) != wstring::npos ||
+            text.find(L"本世器物") != wstring::npos ||
+            text.find(L"今生器物") != wstring::npos ||
+            text.find(L"当世兵刃") != wstring::npos ||
+            text.find(L"当世法宝") != wstring::npos) {
+            item.resonant = true;
+            markedAny = true;
+        }
+    }
+
+    if (!markedAny && g_lifeArtifacts.size() == 1) {
+        g_lifeArtifacts[0].resonant = true;
+    }
+}
+
+int LifeArtifactTraceValue(const LifeArtifact& item) {
+    if (!item.resonant) return 0;
+    int value = item.category == L"artifacts" ? 4 : 3;
+    if (item.tier.find(L"天阶") != wstring::npos) value += 6;
+    else if (item.tier.find(L"地阶") != wstring::npos) value += 4;
+    else if (item.tier.find(L"灵阶") != wstring::npos) value += 2;
+    return value;
+}
+
+int GetLifeArtifactTraceResonanceGain() {
+    int gain = 0;
+    for (const auto& item : g_lifeArtifacts) {
+        gain += LifeArtifactTraceValue(item);
+    }
+    return min(45, gain);
+}
+
+wstring BuildLifeArtifactTraceText(int limit = 3) {
+    vector<wstring> traces;
+    for (const auto& item : g_lifeArtifacts) {
+        if (item.resonant) {
+            traces.push_back(item.name + L"（" + GetLifeArtifactCategoryLabel(item.category) + L"）");
+        }
+    }
+    if (traces.empty()) return L"";
+
+    wstringstream ss;
+    int count = min(limit, (int)traces.size());
+    for (int i = 0; i < count; ++i) {
+        if (i > 0) ss << L"、";
+        ss << traces[i];
+    }
+    if ((int)traces.size() > count) ss << L"等" << traces.size() << L"件器物";
+    return ss.str();
+}
+
 void DiscoverItemsFromText(const wstring& text) {
     auto rows = LoadItemDbRows();
     for (auto& cols : rows) {
@@ -4023,9 +4089,28 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
 void FinishCurrentLife(const wstring& causeOfDeath) {
     AddMemory(L"一世落幕", causeOfDeath);
     if (!g_lifeArtifacts.empty()) {
+        int traceGain = GetLifeArtifactTraceResonanceGain();
+        wstring traceText = BuildLifeArtifactTraceText();
+        int oldRelicAwakenings = g_legacySystem.GetRelic().awakenings;
+        if (traceGain > 0) {
+            g_legacySystem.AddRelicResonance(traceGain);
+            const LegacyRelic& relic = g_legacySystem.GetRelic();
+            AddMemory(L"器痕归灵",
+                traceText + L"的本体没有跨过轮回，但器痕沉入" + relic.name +
+                L"，通天灵宝共鸣+" + to_wstring(traceGain));
+            if (relic.awakenings > oldRelicAwakenings) {
+                AddMemory(L"通天灵宝觉醒",
+                    relic.name + L"由" + to_wstring(oldRelicAwakenings) +
+                    L"次苏醒推进至" + to_wstring(relic.awakenings) +
+                    L"次，觉醒阶段为" + g_legacySystem.GetRelicAwakeningStage() +
+                    L"，道痕显作" + relic.aspect);
+            }
+        }
+
         AddMemory(L"当世器物散尽",
             L"随此世落幕，" + to_wstring(g_lifeArtifacts.size()) +
-            L"件兵刃或法宝本体终将失散；能随轮回回响的只有记忆、器痕和通天灵宝残印。");
+            L"件兵刃或法宝本体终将失散；能随轮回回响的只有记忆、器痕和通天灵宝残印。" +
+            (traceGain > 0 ? wstring(L"其中") + traceText + L"只留下器痕。" : L""));
     }
 
     PastLife life;
@@ -4159,6 +4244,9 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     DiscoverItemsFromText(g_currentEvent->description);
     DiscoverItemsFromText(g_messageText);
     TrackLifeArtifactsFromText(g_messageText, g_currentEvent->title);
+    MarkLifeArtifactsResonantFromText(
+        g_currentEvent->title + L" " + g_currentEvent->description + L" " +
+        choice.description + L" " + g_messageText);
 
     g_player.age += 1;
     g_player.totalEvents++;
