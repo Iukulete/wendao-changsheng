@@ -25,6 +25,7 @@ ai_ollama.log
 save.txt
 
 # OS/editor noise
+__pycache__/
 Thumbs.db
 Desktop.ini
 .vscode/
