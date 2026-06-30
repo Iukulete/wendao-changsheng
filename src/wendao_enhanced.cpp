@@ -1967,18 +1967,93 @@ wstring GetHeavenlyDaoRequirementText() {
 }
 
 bool ShouldTriggerLegacyEchoEvent() {
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(5);
+    int unfinishedPressure = (int)unfinishedKarmas.size() * 30;
     int totalEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) +
                     g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) +
                     g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) +
                     abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION)) +
-                    g_legacySystem.GetRelicResonanceBonus() * 2;
+                    g_legacySystem.GetRelicResonanceBonus() * 2 +
+                    unfinishedPressure;
     if (totalEcho <= 0) return false;
 
-    int chance = 12 + totalEcho / 18;
+    int chance = 12 + totalEcho / 18 + (int)unfinishedKarmas.size() * 6;
     if (g_worldEraName == L"废土返道纪") chance += 8;
     if (g_worldEraName == L"星穹道网纪") chance += 4;
-    chance = max(10, min(45, chance));
+    chance = max(10, min(58, chance));
     return Random(1, 100) <= chance;
+}
+
+wstring BuildUnfinishedKarmaEraPressureText() {
+    if (g_worldEraName == L"灵气初盛纪") {
+        return L"如今山门初立，旧债常被伪装成古修遗训。";
+    }
+    if (g_worldEraName == L"仙朝鼎盛纪") {
+        return L"仙朝名册森严，旧债一旦入册便会变成公开案牍。";
+    }
+    if (g_worldEraName == L"末法裂变纪") {
+        return L"末法之下人人都缺资源，旧债更容易被人拿来换命。";
+    }
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        return L"灵机工坊把旧誓刻进齿轮和账本，前世因果因此有了新的证据。";
+    }
+    if (g_worldEraName == L"星穹道网纪") {
+        return L"道网会记录名字、坐标和欠债者的灵息，连轮回后的相似波动也可能被查到。";
+    }
+    if (g_worldEraName == L"废土返道纪") {
+        return L"废土残宗把旧债当成活下去的理由，没人愿意让一段未竟因果自然散去。";
+    }
+    return L"此世天地仍会记账，只是换了一种方式催人偿还。";
+}
+
+Event BuildUnfinishedKarmaEchoEvent(const vector<wstring>& unfinishedKarmas) {
+    Event evt;
+    auto compactLimit = [](const wstring& text, size_t limit) {
+        wstring compact = CompactMemoryFragment(text);
+        if (compact.size() > limit) {
+            compact = compact.substr(0, limit) + L"...";
+        }
+        return compact;
+    };
+    wstring oldDebt = unfinishedKarmas.empty()
+        ? L"上一世有一段未能说清的旧事"
+        : unfinishedKarmas[Random(0, (int)unfinishedKarmas.size() - 1)];
+    oldDebt = compactLimit(oldDebt, 96);
+
+    wstring currentTie;
+    if (HasFactionTie()) {
+        currentTie = L"这件事又牵到" + BuildFactionTieDigest() + L"。";
+    } else if (!g_socialThreads.empty()) {
+        const SocialThread& thread = g_socialThreads[0];
+        currentTie = L"第一个看出端倪的人是" + thread.name + L"（" + thread.role + L"，" + thread.attitude + L"）。";
+    } else if (!g_eraRemnants.empty()) {
+        currentTie = L"线索落在一处旧世残响上：" + compactLimit(g_eraRemnants[0], 72) + L"。";
+    }
+
+    evt.title = L"【因果】前世未竟";
+    evt.description = L"你外出时忽然想起一段并不属于今生的旧债：" + oldDebt + L"。" +
+        BuildUnfinishedKarmaEraPressureText() + currentTie;
+
+    wstring traceSuccess = L"你顺着旧债查下去，确认这不是梦，而是上一世没能收束的因果重新找到你。\n修为+110，因果+16，灵宝共鸣+4";
+    if (g_legacySystem.GetRelic().daoLinked) {
+        traceSuccess += L"，掌道+4";
+    }
+
+    evt.choices = {
+        {L"追问旧因", {
+            traceSuccess,
+            L"你追得太急，被旧人旧账反咬一口，连今生身份也被旁人怀疑。\n气血-35，因果-12"
+        }, 12},
+        {L"借今世身份查证", {
+            L"你没有暴露前世记忆，只借此世家世、人脉或势力身份查到一段新线索。\n修为+80，灵石+20，因果+8",
+            L"今世身份压不住旧债，对方反而确信你与前世有关。\n气血-25，因果-8"
+        }, 8},
+        {L"稳住今生", {
+            L"你承认旧债存在，却没有让前世替你做决定，道心因此更稳。\n修为+70，寿命+5",
+            L"你暂时避开旧债，但那段因果没有消失，只是沉进更深处。\n气血-15"
+        }, 4}
+    };
+    return evt;
 }
 
 Event BuildLegacyEchoEvent() {
@@ -1989,6 +2064,11 @@ Event BuildLegacyEchoEvent() {
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     const LegacyRelic& relic = g_legacySystem.GetRelic();
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(5);
+
+    if (!unfinishedKarmas.empty() && Random(1, 100) <= 65) {
+        return BuildUnfinishedKarmaEchoEvent(unfinishedKarmas);
+    }
 
     if (g_player.realm >= DAO_ANCESTOR || relic.daoDepth >= 120 || relic.resonance >= 180) {
         const auto& treasures = GetHongmengTreasures();
