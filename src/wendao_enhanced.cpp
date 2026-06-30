@@ -2403,6 +2403,179 @@ wstring BuildDaoPassiveText() {
     return ss.str();
 }
 
+bool ShouldTriggerDaoTrialEvent() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    if (!relic.daoLinked || relic.daoDepth <= 0) return false;
+
+    int chance = 6 + min(16, relic.daoDepth / 26) + relic.awakenings * 2;
+    if (g_player.realm >= DAO_ANCESTOR) chance += 8;
+    if (g_player.realm >= IMMORTAL_EMPEROR) chance += 3;
+    if (g_worldEraName == L"末法裂变纪" || g_worldEraName == L"废土返道纪") chance += 2;
+    chance = max(6, min(36, chance));
+    return Random(1, 100) <= chance;
+}
+
+wstring GetDaoTrialFocusName() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    if (DaoNameContains(relic, L"万道归一")) return L"万道归一";
+    if (DaoNameContains(relic, L"杀伐大道")) return L"杀伐大道";
+    if (DaoNameContains(relic, L"护生大道")) return L"护生大道";
+    if (DaoNameContains(relic, L"血煞大道")) return L"血煞大道";
+    if (DaoNameContains(relic, L"因果大道")) return L"因果大道";
+    if (DaoNameContains(relic, L"长生大道")) return L"长生大道";
+    if (DaoNameContains(relic, L"众生大道")) return L"众生大道";
+    return L"本我大道";
+}
+
+wstring BuildDaoTrialSceneText(const wstring& daoName) {
+    if (daoName == L"杀伐大道") return L"死局中忽有一线可斩之机，敌意、破绽与退路同时显形。";
+    if (daoName == L"护生大道") return L"数名弱小修士被卷入余波，救与不救都会改写这条路。";
+    if (daoName == L"血煞大道") return L"旧怨像血雾一样翻涌，杀债越重，路反而越清楚。";
+    if (daoName == L"因果大道") return L"几件看似无关的小事同时扣住你，像一张旧网重新收紧。";
+    if (daoName == L"长生大道") return L"岁月忽然变慢，寿元、执念与修行效率都被摆到眼前。";
+    if (daoName == L"众生大道") return L"人声、愿望与怨气一同涌来，所有关系都像在替你叩问道心。";
+    if (daoName == L"万道归一") return L"万道同时低鸣，所有熟悉的大道都不再愿意只做一条支流。";
+    return L"你最不愿承认的念头浮上心湖，像是在问今生究竟由谁作主。";
+}
+
+Event BuildDaoTrialEvent() {
+    Event evt;
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    wstring daoName = GetDaoTrialFocusName();
+    int scale = max(4, GetDaoPowerScale());
+    int daoGain = max(5, min(28, scale + relic.daoDepth / 35));
+    int expGain = 85 + daoGain * 5;
+    int hpRisk = 22 + daoGain;
+
+    evt.title = L"【大道】" + daoName + L"问心";
+    evt.description = L"历练途中，通天灵宝残印忽然映出" + daoName + L"的缺口。" +
+        BuildDaoTrialSceneText(daoName) + L"道祖强弱不在境界名号，而在掌道深度。";
+
+    if (daoName == L"杀伐大道") {
+        evt.choices = {
+            {L"斩破死局", {
+                L"你没有靠境界硬压，只顺着杀伐大道看见死局破绽。\n修为+" + to_wstring(expGain) + L"，掌道+" + to_wstring(daoGain),
+                L"杀意过盛，破绽尚未斩开，心神先被反噬。\n气血-" + to_wstring(hpRisk) + L"，因果-6"
+            }, 2},
+            {L"留一退路", {
+                L"你在杀局里故意留下一线生机，反而看清杀伐不是滥杀。\n掌道+" + to_wstring(max(4, daoGain - 4)) + L"，因果+6",
+                L"退路被敌人利用，局势拖得更险。\n气血-" + to_wstring(hpRisk - 4)
+            }, 6},
+            {L"以战证心", {
+                L"你把这一战记入道心，不让胜负遮住大道真名。\n修为+" + to_wstring(expGain - 20) + L"，灵宝共鸣+4",
+                L"胜负心压过道心，只剩一场空耗。"
+            }, 3}
+        };
+    } else if (daoName == L"护生大道") {
+        evt.choices = {
+            {L"护住弱者", {
+                L"你以护生大道接住余波，善缘化成真实的护道之力。\n修为+" + to_wstring(expGain - 10) + L"，掌道+" + to_wstring(daoGain) + L"，因果+10",
+                L"你护得太急，反把自身拖入余波中心。\n气血-" + to_wstring(hpRisk)
+            }, 10},
+            {L"断恶护生", {
+                L"你没有滥慈悲，而是先斩断祸源再护住生机。\n掌道+" + to_wstring(daoGain) + L"，修为+" + to_wstring(expGain - 25),
+                L"判断慢了一线，祸源借善意反扑。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+            }, 6},
+            {L"借缘问道", {
+                L"你听见众人因你而改写的命数，道心更知何为护生。\n寿命+4，掌道+" + to_wstring(max(4, daoGain - 5)),
+                L"善缘太杂，一时扰乱判断。"
+            }, 5}
+        };
+    } else if (daoName == L"血煞大道") {
+        evt.choices = {
+            {L"镇住血债", {
+                L"你压住血煞反噬，让旧怨成为可控的道痕而非疯魔。\n修为+" + to_wstring(expGain) + L"，掌道+" + to_wstring(daoGain),
+                L"血债反扑，旧怨趁机咬住今生名声。\n气血-" + to_wstring(hpRisk) + L"，因果-10"
+            }, -3},
+            {L"以债还债", {
+                L"你承认血债存在，却没有把所有人都拖进恶因。\n掌道+" + to_wstring(daoGain - 1) + L"，因果+4",
+                L"还债太迟，怨气越积越深。\n气血-" + to_wstring(hpRisk - 2)
+            }, 4},
+            {L"借煞破局", {
+                L"你借一缕血煞逼开死路，立刻收手，没有沉迷其中。\n修为+" + to_wstring(expGain - 15) + L"，灵宝共鸣+5",
+                L"血煞借机上涌，几乎替你作出选择。\n因果-12"
+            }, -6}
+        };
+    } else if (daoName == L"因果大道") {
+        evt.choices = {
+            {L"追索因线", {
+                L"你从偶然里拆出必然，找回一条被藏起来的因果线。\n修为+" + to_wstring(expGain - 5) + L"，掌道+" + to_wstring(daoGain) + L"，因果+6",
+                L"因线太多，你反被旧事绕住。\n气血-" + to_wstring(hpRisk - 4)
+            }, 6},
+            {L"偿还旧账", {
+                L"你主动还掉一笔小债，因果大道反而更清亮。\n掌道+" + to_wstring(max(4, daoGain - 3)) + L"，寿命+3",
+                L"旧账牵出新债，短期内更难脱身。\n因果-8"
+            }, 5},
+            {L"借果设局", {
+                L"你借现成结果倒推源头，把局势重新摆到自己面前。\n修为+" + to_wstring(expGain - 15) + L"，灵石+12",
+                L"设局过深，旁人也开始防你。\n因果-6"
+            }, 1}
+        };
+    } else if (daoName == L"长生大道") {
+        evt.choices = {
+            {L"观岁月纹", {
+                L"你没有只求多活几年，而是看见寿元背后的法则纹路。\n寿命+6，掌道+" + to_wstring(daoGain),
+                L"岁月纹太深，心神像被拖老数十年。\n气血-" + to_wstring(hpRisk - 5)
+            }, 6},
+            {L"缓息修行", {
+                L"你把长生大道化入周天，修行不再只靠蛮力堆年岁。\n修为+" + to_wstring(expGain) + L"，掌道+" + to_wstring(max(4, daoGain - 4)),
+                L"缓息太过，错失眼前机缘。"
+            }, 4},
+            {L"拒绝贪寿", {
+                L"你拒绝把长生变成怕死，道心反而更清醒。\n因果+5，掌道+" + to_wstring(max(4, daoGain - 5)),
+                L"一念贪寿仍在心底留痕。\n因果-4"
+            }, 5}
+        };
+    } else if (daoName == L"众生大道") {
+        evt.choices = {
+            {L"听众生愿", {
+                L"你没有把众人当成资源，而是听清他们各自所求。\n修为+" + to_wstring(expGain - 10) + L"，掌道+" + to_wstring(daoGain) + L"，因果+8",
+                L"众声太杂，几乎压过你的本心。\n气血-" + to_wstring(hpRisk - 3)
+            }, 8},
+            {L"择一人护", {
+                L"你承认自己不能救尽众生，只先守住眼前一人。\n掌道+" + to_wstring(max(4, daoGain - 2)) + L"，因果+6",
+                L"旁人不理解你的取舍，怨声随之而来。\n因果-6"
+            }, 6},
+            {L"断开喧声", {
+                L"你暂时退开众声，守住自己的主位。\n寿命+3，修为+" + to_wstring(expGain - 40),
+                L"退得太远，众生大道短暂沉寂。"
+            }, 1}
+        };
+    } else if (daoName == L"万道归一") {
+        evt.choices = {
+            {L"统摄万道", {
+                L"你让诸道各归其位，看见天道境并非毁灭万物，而是映照万道。\n修为+" + to_wstring(expGain + 40) + L"，掌道+" + to_wstring(daoGain + 8) + L"，灵宝共鸣+8",
+                L"诸道同时反问，你险些被自己的万道之名压垮。\n气血-" + to_wstring(hpRisk + 12)
+            }, 10},
+            {L"留道生长", {
+                L"你没有封死新道可能，只让万道在掌中继续生长。\n掌道+" + to_wstring(daoGain + 5) + L"，因果+8",
+                L"新道未成，旧道先乱。\n气血-" + to_wstring(hpRisk)
+            }, 8},
+            {L"回望鸿蒙", {
+                L"你从万道之上回望鸿蒙，明白至宝可毁只是力量映射。\n掌道+" + to_wstring(daoGain + 4) + L"，灵宝共鸣+6",
+                L"鸿蒙太远，只留一道沉默余光。"
+            }, 6}
+        };
+    } else {
+        evt.choices = {
+            {L"正视本我", {
+                L"你没有把前世、家世或境界当作自己，终于看清本我缺口。\n修为+" + to_wstring(expGain) + L"，掌道+" + to_wstring(daoGain),
+                L"本我太近，反而最难看清。\n气血-" + to_wstring(hpRisk - 4)
+            }, 5},
+            {L"承认旧影", {
+                L"你承认前世旧影仍在，却不让它替今生活完这一世。\n掌道+" + to_wstring(max(4, daoGain - 2)) + L"，因果+5",
+                L"旧影一闪而过，心湖久久不平。"
+            }, 4},
+            {L"另定道名", {
+                L"你把这次问心记成今生自己的道名起点。\n修为+" + to_wstring(expGain - 25) + L"，寿命+3",
+                L"道名未稳，暂时难以反哺自身。"
+            }, 3}
+        };
+    }
+
+    return evt;
+}
+
 int GetHeavenlyDaoProgressScore() {
     const LegacyRelic& relic = g_legacySystem.GetRelic();
     int score = 0;
@@ -5645,7 +5818,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '2') {
-                    if (ShouldTriggerLegacyEchoEvent()) {
+                    if (ShouldTriggerDaoTrialEvent()) {
+                        static Event s_daoTrialEvent;
+                        s_daoTrialEvent = BuildDaoTrialEvent();
+                        g_currentEvent = &s_daoTrialEvent;
+                        AddMemory(L"大道问心", L"外出历练时，所掌大道主动显出一道缺口。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerLegacyEchoEvent()) {
                         static Event s_legacyEchoEvent;
                         s_legacyEchoEvent = BuildLegacyEchoEvent();
                         g_currentEvent = &s_legacyEchoEvent;
