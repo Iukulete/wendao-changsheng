@@ -312,7 +312,10 @@ private:
         if (player.worldState.find(L"本世器物") != wstring::npos) {
             add(L"artifact");
         }
-        if (player.socialState.find(L"本世人脉") != wstring::npos) {
+        if (player.socialState.find(L"本世人脉") != wstring::npos ||
+            player.socialState.find(L"近日风声") != wstring::npos ||
+            player.socialState.find(L"人情余波") != wstring::npos ||
+            player.socialState.find(L"势力余波") != wstring::npos) {
             add(L"social");
         }
         if (player.worldState.find(L"本世势力牵连") != wstring::npos ||
@@ -452,6 +455,7 @@ public:
         if (worldEvent.empty()) {
             worldEvent = FirstHistoryContaining(player, {L"天下大事", L"突破", L"坐化", L"飞升", L"击败", L"挑战"});
         }
+        wstring socialAftershock = FirstBulletAfter(player.socialState, L"近日风声");
         wstring social = FirstLineContaining(player.socialState, {L"势力牵连", L"父亲", L"母亲", L"同代", L"欺压者", L"竞争者", L"长辈", L"联系人"});
 
         if (focus == L"faction" && !faction.empty()) {
@@ -509,7 +513,12 @@ public:
         }
         if (focus == L"social" && !social.empty()) {
             wstringstream ss;
-            ss << L"近日" << social << L"开始频繁试探你，话里有认可也有轻慢，像是在等你露出前世不该有的破绽。";
+            if (!socialAftershock.empty()) {
+                ss << L"近日风声正在发酵：" << socialAftershock
+                   << L"。这不是路人传闻，而是你与本世人脉之间继续变化的情绪余波。";
+            } else {
+                ss << L"近日" << social << L"开始频繁试探你，话里有认可也有轻慢，像是在等你露出前世不该有的破绽。";
+            }
             return ss.str();
         }
         if (focus == L"dao") {
@@ -689,6 +698,7 @@ public:
         ss << L"- 描述45到90个中文字符，要贴合境界、因果、年龄、家世、人情风波、最近记忆和当前世界。\n";
         ss << L"- 可以写长辈认可、同辈嫉妒、被人巴结、遭人欺压、暗中试探、隐藏修为，但不要写成旁白总结。\n";
         ss << L"- 如果上下文出现“本世人脉”，优先复用其中的人名、态度和恩怨，让 NPC 像持续存在的人，不要每次都换成陌生路人。\n";
+        ss << L"- 如果上下文出现“近日风声”“人情余波”或“势力余波”，优先把它写成 NPC 记恩、记仇、夸赞、嫉妒、护短或设局的后续。\n";
         ss << L"- 如果上下文出现“关系数值”，正数代表亲近、认可或押注，负数代表嫉妒、轻慢、敌意或旧怨；事件要沿着这个关系继续发酵。\n";
         ss << L"- 如果上下文出现“本世势力”或“势力牵连”，优先复用该组织、身份、态度和旧债，不要凭空换一个无关宗门。\n";
         ss << L"- 当前世界不一定是纯古典修仙，也可能已演化到灵机蒸汽、星穹道网、末法裂变或废土返道时代，必须尊重上下文时代风貌。\n";

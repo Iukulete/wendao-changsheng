@@ -3150,6 +3150,99 @@ int ClampRelation(int value) {
     return max(-100, min(100, value));
 }
 
+void AddSocialRumor(const wstring& rumor, bool front = true) {
+    if (rumor.empty()) return;
+
+    wstring compact = CompactMemoryFragment(rumor);
+    if (compact.size() > 150) {
+        compact = compact.substr(0, 150) + L"...";
+    }
+
+    auto existing = find(g_socialRumors.begin(), g_socialRumors.end(), compact);
+    if (existing != g_socialRumors.end()) {
+        g_socialRumors.erase(existing);
+    }
+    if (front) {
+        g_socialRumors.insert(g_socialRumors.begin(), compact);
+    } else {
+        g_socialRumors.push_back(compact);
+    }
+    while (g_socialRumors.size() > 8) {
+        g_socialRumors.pop_back();
+    }
+}
+
+wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation, int delta,
+                                    const Event& event, const Choice& choice) {
+    bool improved = delta > 0;
+    bool worsened = delta < 0;
+    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
+    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
+
+    if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") {
+        if (improved) {
+            return thread.name + L"听闻你在「" + trigger +
+                L"」中的取舍后，终于把担忧压成一句认可；这份长辈期许会继续护着你。";
+        }
+        if (worsened) {
+            return thread.name + L"因「" + trigger +
+                L"」对你更不放心，嘴上不责怪，暗里却开始替你收拾可能爆开的因果。";
+        }
+    }
+
+    if (thread.role == L"欺压者" || thread.role == L"竞争者" || thread.role == L"资源把关者") {
+        if (improved) {
+            return thread.name + L"看见你在「" + trigger +
+                L"」里没有露怯，态度虽仍带刺，却开始承认你不是能随便欺负的人。";
+        }
+        if (worsened) {
+            return thread.name + L"把「" + trigger +
+                L"」当成新把柄，嫉妒与轻慢一起发酵，下一次很可能主动设局。";
+        }
+    }
+
+    if (thread.role == L"同代修士" || thread.role == L"同路人" || thread.role == L"接引修士") {
+        if (improved) {
+            return thread.name + L"因「" + trigger +
+                L"」更愿意与你同行；若你资质继续显眼，亲近里也会混着押注。";
+        }
+        if (worsened) {
+            return thread.name + L"因「" + trigger +
+                L"」重新衡量你，表面客气，背后已经把你当成需要防备的对手。";
+        }
+    }
+
+    if (thread.role == L"势力牵连" || thread.role.find(L"联系人") != wstring::npos ||
+        thread.role.find(L"耳目") != wstring::npos) {
+        if (improved) {
+            return thread.name + L"把「" + trigger +
+                L"」写成一条正面评语，所在势力对你的押注开始加重。";
+        }
+        if (worsened) {
+            return thread.name + L"把「" + trigger +
+                L"」写进回报，所在势力对你的审查、试探和索取都会更重。";
+        }
+    }
+
+    if (gifted && worsened) {
+        return thread.name + L"听过「" + trigger +
+            L"」后没有当面翻脸，却因你资质出众而更嫉妒，风声会越传越酸。";
+    }
+    if (weak && worsened) {
+        return thread.name + L"借「" + trigger +
+            L"」确认你根基不稳，轻慢之声很快会传到下一场试炼。";
+    }
+    if (improved) {
+        return thread.name + L"记住了你在「" + trigger +
+            L"」里的表现，态度从" + GetRelationLabel(oldRelation) + L"往" +
+            GetRelationLabel(thread.relation) + L"偏了一步。";
+    }
+    return thread.name + L"因「" + trigger +
+        L"」把你看得更复杂，关系从" + GetRelationLabel(oldRelation) + L"滑向" +
+        GetRelationLabel(thread.relation) + L"。";
+}
+
 const SocialThread* PickSocialAdventureThread() {
     if (g_socialThreads.empty()) return nullptr;
 
@@ -3497,11 +3590,20 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
         int oldFavor = g_factionTie.favor;
         g_factionTie.favor = ClampRelation(g_factionTie.favor + baseDelta);
         if (g_factionTie.favor != oldFavor) {
+            wstring factionRumor = g_factionTie.name + L"因「" +
+                CompactMemoryFragment(event.title + L"·" + choice.description) + L"」调整了对你的态度：";
+            if (baseDelta > 0) {
+                factionRumor += L"有人开始替你说话，也有人觉得你值得提前押注。";
+            } else {
+                factionRumor += L"审查、试探与索取都变重了，旧债可能被重新翻出。";
+            }
+            AddSocialRumor(factionRumor);
             AddMemory(L"势力回响",
                 g_factionTie.name + L"对你的牵连值由" +
                 (oldFavor >= 0 ? L"+" : L"") + to_wstring(oldFavor) + L"变为" +
                 (g_factionTie.favor >= 0 ? L"+" : L"") + to_wstring(g_factionTie.favor) +
                 L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+            AddMemory(L"势力余波", factionRumor);
         }
     }
 
@@ -3519,10 +3621,13 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
         thread.relation = ClampRelation(thread.relation + localDelta);
         if (thread.relation != oldRelation) {
             g_dynamicWorld.PlayerInteractWithNPC(thread.name, localDelta);
+            wstring aftershock = BuildRelationAftershockText(thread, oldRelation, localDelta, event, choice);
+            AddSocialRumor(aftershock);
             AddMemory(L"人情回响",
                 thread.name + L"（" + thread.role + L"）对你的关系由" +
                 GetRelationLabel(oldRelation) + L"变为" + GetRelationLabel(thread.relation) +
                 L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+            AddMemory(L"人情余波", aftershock);
             changed++;
         }
         if (changed >= 2) break;
