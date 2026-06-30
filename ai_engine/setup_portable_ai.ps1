@@ -1,8 +1,12 @@
 param(
     [switch]$CheckOnly,
     [switch]$Force,
-    [string]$ModelUrl = "https://huggingface.co/bartowski/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf?download=true",
-    [string]$RuntimeUrl = "https://github.com/ggml-org/llama.cpp/releases/download/b9803/llama-b9803-bin-win-cpu-x64.zip"
+    [string]$ModelPath = "",
+    [string]$ModelUrl = "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/main/gemma-4-E4B_q4_0-it.gguf?download=true",
+    [string]$ExpectedModelSha256 = "E8B6A059BA86947A44ACE84D6E5679795BC41862C25C30513142588F0E9DBA1D",
+    [switch]$SkipModelHash,
+    [string]$RuntimeUrl = "https://github.com/ggml-org/llama.cpp/releases/download/b9843/llama-b9843-bin-win-cpu-x64.zip",
+    [string]$ExpectedRuntimeZipSha256 = "8EBF156B4543FC8B0A4C3D1FC5CBD952516646AF0CFABB74D1E53BD86321F1E0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,12 +19,14 @@ $Root = Split-Path -Parent $PSScriptRoot
 $ModelDir = Join-Path $PSScriptRoot "models"
 $RuntimeDir = Join-Path $PSScriptRoot "runtime"
 $LlamaDir = Join-Path $RuntimeDir "llama.cpp"
-$ModelPath = Join-Path $ModelDir "Qwen_Qwen3-0.6B-Q4_K_M.gguf"
-$RuntimeZip = Join-Path $RuntimeDir "llama-b9803-bin-win-cpu-x64.zip"
-$LlamaCli = Join-Path $LlamaDir "llama-cli.exe"
-
-$ExpectedModelSha256 = "9ACFC1E001311F34B4252001B626F2E466D592A42065F66571BFF3790D4E1B14"
-$ExpectedRuntimeZipSha256 = "4D942D5FCB7F3AB026844208306C5EEBECF4530F4E52EED5C4717DBDF9FE3C5D"
+if ([string]::IsNullOrWhiteSpace($ModelPath)) {
+    $ModelPath = Join-Path $ModelDir "gemma-4-E4B_q4_0-it.gguf"
+} elseif (-not [System.IO.Path]::IsPathRooted($ModelPath)) {
+    $ModelPath = Join-Path $PSScriptRoot $ModelPath
+}
+$ModelPath = [System.IO.Path]::GetFullPath($ModelPath)
+$RuntimeZip = Join-Path $RuntimeDir "llama-b9843-bin-win-cpu-x64.zip"
+$LlamaCli = Join-Path $LlamaDir "llama-completion.exe"
 
 function Assert-Hash {
     param(
@@ -67,22 +73,32 @@ Write-Host "Wendao portable AI setup"
 Write-Host "Project: $Root"
 
 if ($Force -or -not (Test-Path -LiteralPath $ModelPath)) {
-    Download-File -Url $ModelUrl -OutFile $ModelPath -Label "Qwen3 0.6B GGUF model"
+    Download-File -Url $ModelUrl -OutFile $ModelPath -Label "Gemma 4 E4B QAT Q4_0 GGUF model"
 } else {
     Write-Host "Model exists: $ModelPath"
 }
-Assert-Hash -Path $ModelPath -Expected $ExpectedModelSha256 -Label "Model"
+if ($SkipModelHash -or [string]::IsNullOrWhiteSpace($ExpectedModelSha256)) {
+    Write-Host "Model hash check skipped. Use this only for trusted local model files."
+} else {
+    Assert-Hash -Path $ModelPath -Expected $ExpectedModelSha256 -Label "Model"
+}
 
+$runtimeDownloaded = $false
 if ($Force -or -not (Test-Path -LiteralPath $RuntimeZip)) {
     Download-File -Url $RuntimeUrl -OutFile $RuntimeZip -Label "llama.cpp Windows CPU runtime"
+    $runtimeDownloaded = $true
 } else {
     Write-Host "Runtime zip exists: $RuntimeZip"
 }
-Assert-Hash -Path $RuntimeZip -Expected $ExpectedRuntimeZipSha256 -Label "Runtime zip"
+if ([string]::IsNullOrWhiteSpace($ExpectedRuntimeZipSha256)) {
+    Write-Host "Runtime zip hash check skipped."
+} else {
+    Assert-Hash -Path $RuntimeZip -Expected $ExpectedRuntimeZipSha256 -Label "Runtime zip"
+}
 
-if ($Force -or -not (Test-Path -LiteralPath $LlamaCli)) {
+if ($Force -or $runtimeDownloaded -or -not (Test-Path -LiteralPath $LlamaCli)) {
     if ($CheckOnly) {
-        throw "llama-cli.exe missing and CheckOnly was set: $LlamaCli"
+        throw "llama-completion.exe missing and CheckOnly was set: $LlamaCli"
     }
 
     Write-Host "Extracting llama.cpp runtime..."
@@ -96,7 +112,7 @@ if ($Force -or -not (Test-Path -LiteralPath $LlamaCli)) {
 }
 
 if (-not (Test-Path -LiteralPath $LlamaCli)) {
-    throw "llama-cli.exe was not found after setup: $LlamaCli"
+    throw "llama-completion.exe was not found after setup: $LlamaCli"
 }
 
 Write-Host ""

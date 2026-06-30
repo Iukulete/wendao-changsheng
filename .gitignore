@@ -8,6 +8,8 @@ release/
 # Local AI model/runtime bundles
 ai_engine/models/
 ai_engine/runtime/
+ai_engine/model_path.txt
+ai_engine/lora_path.txt
 
 # Runtime-generated AI files
 ai_prompt.txt

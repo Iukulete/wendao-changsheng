@@ -85,7 +85,8 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **九大鸿蒙至宝**：九件创世级恒在之物，各有固定权柄、显化和禁忌；道祖不可毁灭，道祖-天道境才具备理论毁灭力，但毁灭没有必要
 - **鸿蒙参悟**：玩家只能留下至宝投影、线索、拒绝和因果记忆；参悟过的至宝会有限推动道祖-天道境进度，但本体永不进入装备栏
 - **世界反馈**：灵气暴动、宗门大战等世界事件会影响修炼和历练风险
-- **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，优先尝试便携 `llama.cpp`，失败后回退到 Ollama 或内置模板
+- **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，优先尝试便携 Gemma 4 + `llama.cpp`，失败后回退到 Ollama 或内置模板
+- **NPC 情绪代理**：本世人脉会带情绪标签和口吻示例，让长辈护短、同辈嫉妒、执事卡资源、旧怨追债等关系进入事件文本
 - **回退焦点轮换**：内置动态事件会在前世未竟、天下大事、旧世残响、大道、器物、人脉和势力之间轮换取材
 - **上下文回退**：即使本地模型不可用，内置动态事件也会主动续写本世持续线索、势力牵连、本世器物、人脉和前世未竟因果
 
@@ -161,11 +162,11 @@ ai_ollama.log
 项目支持便携 AI 后端：
 
 ```text
-ai_engine/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+ai_engine/models/gemma-4-E4B_q4_0-it.gguf
 ai_engine/runtime/llama.cpp/
 ```
 
-触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 GGUF 模型，不要求玩家安装 Ollama。开源仓库不会提交 `models/` 和 `runtime/` 这类大文件；拉仓库后可运行：
+触发 AI 动态事件时，游戏会优先调用项目内的 `llama.cpp` 和 Gemma 4 GGUF 模型，不要求玩家安装 Ollama。开源仓库不会提交 `models/` 和 `runtime/` 这类大文件；拉仓库后可运行：
 
 ```bat
 准备本地AI.bat
@@ -177,11 +178,14 @@ ai_engine/runtime/llama.cpp/
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.ps1
 ```
 
-已有模型和运行时时，脚本只校验 SHA256 并跳过下载。
+已有模型和运行时时，脚本会跳过重复下载；如脚本内填入 SHA256，会同时做哈希校验。
 
 当前模型桥行为：
 
 - 优先尝试便携 `llama.cpp`
+- 默认 GGUF：`google/gemma-4-E4B-it-qat-q4_0-gguf` 的 `gemma-4-E4B_q4_0-it.gguf`
+- 可通过 `WENDAO_GGUF_MODEL` 或 `ai_engine/model_path.txt` 指向其他 GGUF
+- 可通过 `WENDAO_LORA_PATH` 或 `ai_engine/lora_path.txt` 挂载 llama.cpp 兼容 LoRA 适配器
 - 便携后端超时默认 25 秒
 - 若便携失败，会自动尝试 Ollama
 - Ollama 超时默认 20 秒
@@ -194,6 +198,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1 -ReleaseDir release -Backend portable
 ```
 
+如果想跑 4 组事件质量压测：
+
+```bat
+powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\evaluate_ai_quality.ps1 -Backend portable -TimeoutSec 120
+```
+
 如果想强制测试 Ollama：
 
 ```bat
@@ -203,7 +213,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1
 Ollama 仍可作为备用后端。如果想用 Ollama，可以创建同名模型：
 
 ```bat
-ollama pull qwen3:0.6b
+ollama pull gemma4:e4b
 ollama create wendao-xiuxian -f ai_engine/Modelfile.wendao
 ```
 
@@ -228,13 +238,23 @@ release/wendao_enhanced.exe
 release/background.png
 ai_engine/generate_event.ps1
 ai_engine/setup_portable_ai.ps1
-ai_engine/models/Qwen_Qwen3-0.6B-Q4_K_M.gguf
+ai_engine/models/gemma-4-E4B_q4_0-it.gguf
 ai_engine/runtime/llama.cpp/
 准备本地AI.bat
 启动游戏.bat
 ```
 
-便携 AI 文件约 500MB；如果删掉 `ai_engine/models` 或 `ai_engine/runtime`，游戏仍能运行，只是 AI 动态事件会回退到 Ollama 或上下文模板。重新运行 `准备本地AI.bat` 可以补齐便携后端。
+便携 AI 文件约 5GB 以上；如果删掉 `ai_engine/models` 或 `ai_engine/runtime`，游戏仍能运行，只是 AI 动态事件会回退到 Ollama 或上下文模板。重新运行 `准备本地AI.bat` 可以补齐便携后端。
+
+## LoRA 训练实验
+
+`ai_engine/lora/` 中放了当前的 Gemma 4 LoRA 实验脚本：
+
+- `build_wendao_lora_dataset.py`：生成原创修仙事件微调样本
+- `train_gemma4_lora.py`：PEFT QLoRA 训练入口
+- `run_remote_gemma4_lora.sh`：远端 x86 + NVIDIA Docker 训练启动脚本
+
+训练产物、模型缓存和 GGUF/adapter 文件不进入仓库；训练完成后可通过 `WENDAO_LORA_PATH` 或 `ai_engine/lora_path.txt` 指向转换后的 llama.cpp LoRA。
 
 ## 小说语料边界
 

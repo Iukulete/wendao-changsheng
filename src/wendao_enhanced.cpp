@@ -3114,17 +3114,107 @@ void AddSocialThread(const wstring& name, const wstring& role, const wstring& at
     }
 }
 
+wstring BuildSocialEmotionTag(const SocialThread& thread) {
+    auto has = [&](const wstring& needle) {
+        return thread.role.find(needle) != wstring::npos ||
+               thread.attitude.find(needle) != wstring::npos ||
+               thread.hook.find(needle) != wstring::npos;
+    };
+
+    if (has(L"父亲") || has(L"母亲") || has(L"养育者")) {
+        return thread.relation >= 0 ? L"护短期许" : L"担忧管束";
+    }
+    if (has(L"欺压者")) return L"轻慢挑衅";
+    if (has(L"竞争者")) return L"酸意较劲";
+    if (has(L"资源把关者")) return L"冷脸卡资源";
+    if (has(L"旧名追债人")) return L"旧怨追问";
+    if (has(L"旧名仰慕者")) return L"仰慕押注";
+    if (has(L"功法见证者")) return L"惊疑认可";
+    if (has(L"器痕识别者")) return L"压声提醒";
+    if (has(L"仙朝耳目") || has(L"势力牵连")) return L"礼貌审查";
+    if (has(L"道网联系人")) return L"隔空围观";
+    if (has(L"残宗向导")) return L"现实互利";
+    if (thread.relation >= 35) return L"热切拉拢";
+    if (thread.relation >= 18) return L"认可示好";
+    if (thread.relation <= -35) return L"敌意带刺";
+    if (thread.relation <= -18) return L"嫉妒戒备";
+    return L"观望试探";
+}
+
+wstring BuildSocialNpcUtterance(const SocialThread& thread) {
+    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
+    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    auto has = [&](const wstring& needle) {
+        return thread.role.find(needle) != wstring::npos ||
+               thread.attitude.find(needle) != wstring::npos ||
+               thread.hook.find(needle) != wstring::npos;
+    };
+
+    if (has(L"父亲")) {
+        if (gifted) return L"「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」";
+        if (weak) return L"「修不成最快的路也无妨，先把命和心气护住。」";
+        return L"「入道不是给别人看的，别急着把自己押进大局。」";
+    }
+    if (has(L"母亲")) {
+        if (gifted) return L"「他们夸你，是想提前押注；我护你，是怕你太早被看穿。」";
+        if (weak) return L"「测灵碑冷，娘不冷，你慢慢走也有人给你留灯。」";
+        return L"「旁人看灵根，我看你能不能守住自己的心。」";
+    }
+    if (has(L"养育者")) {
+        return L"「有些事我现在不能说，但你别把那枚旧玉交给任何人看。」";
+    }
+    if (has(L"欺压者")) {
+        return weak
+            ? L"「测灵碑都替你把话说完了，还想跟我们争名额？」"
+            : L"「有点根骨就敢抬头？山门里会教你什么叫规矩。」";
+    }
+    if (has(L"竞争者")) {
+        return gifted
+            ? L"「资质好又怎样，谁知道你家世里藏着什么债？」"
+            : L"「你我都没稳进内门，少摆出已经赢了的样子。」";
+    }
+    if (has(L"资源把关者")) {
+        return L"「灵井不是给热血少年的，拿得出筹码再谈破境。」";
+    }
+    if (has(L"功法见证者")) {
+        return L"「这一式别在外头乱用，懂行的人会认出失传古法的骨头。」";
+    }
+    if (has(L"旧名仰慕者")) {
+        return L"「我敬的是你今生这一眼，但也盼你配得上旧名留下的光。」";
+    }
+    if (has(L"旧名追债人")) {
+        return L"「别急着装无辜，有些旧债换了皮囊也会认人。」";
+    }
+    if (has(L"器痕识别者")) {
+        return L"「你身边没有那件法宝本体，可器痕的响声瞒不过我。」";
+    }
+    if (has(L"仙朝耳目")) {
+        return L"「名册只问事实，不问你愿不愿意被写进去。」";
+    }
+    if (has(L"道网联系人")) {
+        return L"「你这一步会被远方节点看见，别装成没人围观。」";
+    }
+    if (thread.relation >= 18) {
+        return L"「我愿意先信你一次，但你最好让我觉得这份押注值得。」";
+    }
+    if (thread.relation <= -18) {
+        return L"「我不喜欢你这种眼神，像早就知道别人会怎么输。」";
+    }
+    return L"「先别急着站队，我还想看看你到底是哪种人。」";
+}
+
 wstring BuildSocialThreadLine(const SocialThread& thread) {
     wstringstream ss;
     ss << thread.name << L"（" << thread.role << L"）";
     ss << L" · " << thread.attitude << L" · " << GetRelationLabel(thread.relation);
+    ss << L" · 情绪" << BuildSocialEmotionTag(thread);
     if (!thread.visibleRealm.empty()) {
         ss << L" · 外显" << thread.visibleRealm;
     }
     if (thread.hidesPower || !thread.hiddenHint.empty()) {
         ss << L" · " << (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint);
     }
-    ss << L": " << thread.hook;
+    ss << L": " << thread.hook << L" NPC情绪代理口吻" << BuildSocialNpcUtterance(thread);
     return ss.str();
 }
 
@@ -3398,7 +3488,7 @@ Event BuildSocialAdventureEvent() {
 
     evt.description = thread.name + L"以" + thread.role + L"身份在历练途中拦住你，态度是“" +
         thread.attitude + L"”。" + BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
-        realmHint + L"旧线索是：" + CompactMemoryFragment(thread.hook);
+        realmHint + BuildSocialNpcUtterance(thread) + L"旧线索是：" + CompactMemoryFragment(thread.hook);
 
     if (positive) {
         evt.choices = {
