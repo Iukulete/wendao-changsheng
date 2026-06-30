@@ -1491,6 +1491,79 @@ wstring GetSocialDigest() {
 
 void InitWorldData() {
     g_worldData = g_procGen.GenerateWorld();
+
+    auto addSect = [&](const wstring& name, const wstring& philosophy, const wstring& specialty,
+                       const wstring& lore, int power) {
+        GeneratedSect sect;
+        sect.name = name;
+        sect.philosophy = philosophy;
+        sect.specialty = specialty;
+        sect.lore = lore;
+        sect.power = power;
+        g_worldData.sects.insert(g_worldData.sects.begin(), sect);
+    };
+
+    auto addLocation = [&](const wstring& name, const wstring& type, int danger,
+                           const wstring& desc) {
+        GeneratedLocation loc;
+        loc.name = name;
+        loc.type = type;
+        loc.dangerLevel = danger;
+        loc.description = desc;
+        g_worldData.locations.insert(g_worldData.locations.begin(), loc);
+    };
+
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        addSect(L"玄炉工造盟", L"工坊联盟", L"灵机炼器",
+                L"由炼器师、机关师与散修资本共同组成，主张用量产灵具打破旧宗门垄断。", 8);
+        addSect(L"太乙齿轮宗", L"技术道统", L"阵械推演",
+                L"以齿轮阵列演算功法流转，认为机关术也是大道的一种旁门入口。", 7);
+        addLocation(L"蒸汽灵石城", L"工坊城邦", 5,
+                    L"灵石锅炉昼夜轰鸣，坊市、铸炉和修炼塔挤在同一片蒸汽里。");
+        addLocation(L"废弃飞舟坞", L"灵机遗址", 7,
+                    L"坠毁飞舟的残骸埋着旧航图，也常有失控机关护卫徘徊。");
+    } else if (g_worldEraName == L"星穹道网纪") {
+        addSect(L"星穹远讯院", L"道网学派", L"神识远讯",
+                L"掌握跨洲灵网节点，能让寒门修士隔着万里参加入门试炼。", 9);
+        addSect(L"万象数据阁", L"中立商会", L"因果记录",
+                L"收集秘境坐标、修士战绩与旧案影像，出售的情报往往比法宝更贵。", 7);
+        addLocation(L"九环灵网塔", L"道网节点", 6,
+                    L"九层阵台同时接入大域灵网，越往上越容易听见不属于本洲的声音。");
+        addLocation(L"坠星转运港", L"星舟港", 5,
+                    L"跨洲飞舟在此起落，许多机缘先以一串远讯坐标的形式出现。");
+    } else if (g_worldEraName == L"末法裂变纪") {
+        addSect(L"枯井守盟", L"资源同盟", L"灵井镇守",
+                L"由几家衰落宗门抱团而成，所有弟子都围绕灵井配给修行。", 6);
+        addSect(L"替道机枢院", L"异端学派", L"阵械破境",
+                L"他们认为苦修已不能适应末法，开始用阵械、药剂和因果借贷替代传统破境。", 8);
+        addLocation(L"半枯灵井", L"争夺地", 8,
+                    L"井中灵气时有时无，每一次涌动都会引来数方修士明争暗斗。");
+        addLocation(L"裂法试验场", L"阵械禁地", 7,
+                    L"地面刻满失败阵图，许多修士在这里换来了破境，也换来了短命。");
+    } else if (g_worldEraName == L"废土返道纪") {
+        addSect(L"返道拾荒盟", L"残宗同盟", L"废墟寻道",
+                L"由幸存修士、拾荒者和旧宗门弟子组成，靠修复古代灵机维持法统。", 6);
+        addSect(L"黑雨镇邪司", L"守序残部", L"邪祟镇压",
+                L"他们在黑雨边界筑城，负责清理荒野邪祟和失控灵机。", 7);
+        addLocation(L"黑雨边城", L"幸存城邦", 6,
+                    L"城墙外是邪祟和废墟，城墙内则挤满试图重建秩序的人。");
+        addLocation(L"归墟旧都", L"文明残骸", 9,
+                    L"上一轮文明的中心已经坍塌，地下仍有道网残响和古机巡逻。");
+    } else if (g_worldEraName == L"仙朝鼎盛纪") {
+        addSect(L"天册仙朝", L"仙朝正统", L"气运册封",
+                L"以皇朝法度统合宗门气运，册封、血脉与功勋共同决定修行上限。", 9);
+        addSect(L"隐龙旧族", L"世家门阀", L"血脉秘术",
+                L"他们表面臣服仙朝，暗中仍保存着上古道统和旧王血契。", 7);
+        addLocation(L"气运金榜台", L"册封重地", 5,
+                    L"修士在此受封，也在此被天下记录功过因果。");
+        addLocation(L"王族血脉秘境", L"世家秘境", 7,
+                    L"秘境只认血脉与功勋，却偶尔会把寒门修士也卷进去。");
+    } else {
+        addSect(L"古修问道宗", L"古典正宗", L"洞府传承",
+                L"最早追索古修遗府的宗门之一，仍相信大道藏在秘境、天劫与心性之中。", 8);
+        addLocation(L"初代古修遗府", L"上古洞府", 7,
+                    L"灵气初盛时留下的洞府，许多传承尚未被后世宗门分割。");
+    }
 }
 
 wstring ReadAiStatusFile(const wchar_t* fileName) {
@@ -1759,11 +1832,17 @@ wstring GetGeneratedWorldText() {
     for (size_t i = 0; i < min<size_t>(g_worldData.sects.size(), 5); i++) {
         auto& sect = g_worldData.sects[i];
         ss << L"- " << sect.name << L"（" << sect.philosophy << L" / " << sect.specialty << L"）\n";
+        if (!sect.lore.empty()) {
+            ss << L"  " << sect.lore << L"\n";
+        }
     }
     ss << L"\n地点:\n";
     for (size_t i = 0; i < min<size_t>(g_worldData.locations.size(), 6); i++) {
         auto& loc = g_worldData.locations[i];
-        ss << L"- " << loc.name << L" 危险度" << loc.dangerLevel << L"\n";
+        ss << L"- " << loc.name << L"（" << loc.type << L"，危险度" << loc.dangerLevel << L"）\n";
+        if (!loc.description.empty()) {
+            ss << L"  " << loc.description << L"\n";
+        }
     }
     return ss.str();
 }
@@ -1932,21 +2011,27 @@ PlayerContext BuildPlayerContext() {
     }
 
     if (!g_worldData.sects.empty()) {
-        world << L"- 近旁宗门: ";
+        world << L"- 近旁宗门:\n";
         for (size_t i = 0; i < min<size_t>(g_worldData.sects.size(), 2); i++) {
-            if (i > 0) world << L"、";
-            world << g_worldData.sects[i].name << L"(" << g_worldData.sects[i].specialty << L")";
+            const auto& sect = g_worldData.sects[i];
+            world << L"  * " << sect.name << L"(" << sect.philosophy << L"/" << sect.specialty << L")";
+            if (!sect.lore.empty()) {
+                world << L": " << sect.lore;
+            }
+            world << L"\n";
         }
-        world << L"\n";
     }
 
     if (!g_worldData.locations.empty()) {
-        world << L"- 可闻秘境: ";
+        world << L"- 可闻地点:\n";
         for (size_t i = 0; i < min<size_t>(g_worldData.locations.size(), 2); i++) {
-            if (i > 0) world << L"、";
-            world << g_worldData.locations[i].name << L"危" << g_worldData.locations[i].dangerLevel;
+            const auto& loc = g_worldData.locations[i];
+            world << L"  * " << loc.name << L"(" << loc.type << L"，危" << loc.dangerLevel << L")";
+            if (!loc.description.empty()) {
+                world << L": " << loc.description;
+            }
+            world << L"\n";
         }
-        world << L"\n";
     }
 
     wstring itemLoreDigest = LoadItemLoreDigest();
@@ -2152,6 +2237,7 @@ bool LoadGame() {
     LoadFamily(file, g_player.family);
     LoadWorldEra(file);
     LoadGeneratedWorld(file);
+    g_dynamicWorld.SetEraFlavor(g_worldEraName);
     g_dynamicWorld.Load(file);
     g_contextMgr.Load(file);
     LoadMemory(file);
@@ -2303,6 +2389,7 @@ void StartNextLife() {
 
     GenerateWorldEra();
     InitWorldData();
+    g_dynamicWorld.SetEraFlavor(g_worldEraName);
     g_dynamicWorld.Reset();
     g_memoryLog.clear();
     GenerateSocialRumors();
@@ -2855,6 +2942,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_discoveredItems.clear();
                 GenerateWorldEra();
                 InitWorldData();
+                g_dynamicWorld.SetEraFlavor(g_worldEraName);
                 g_dynamicWorld.Reset();
                 GenerateSocialRumors();
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");

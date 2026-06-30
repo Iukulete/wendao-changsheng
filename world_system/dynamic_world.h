@@ -86,6 +86,7 @@ private:
     vector<DynamicNPC> npcs;
     vector<WorldEvent> worldEvents;
     int worldTime;  // 游戏内时间（年）
+    wstring worldEraName;
     random_device rd;
     mt19937 gen;
 
@@ -98,8 +99,13 @@ private:
 
 public:
     DynamicWorld() : worldTime(0), gen(rd()) {
+        worldEraName = L"灵气初盛纪";
         InitNPCs();
         InitWorldEvents();
+    }
+
+    void SetEraFlavor(const wstring& eraName) {
+        worldEraName = eraName.empty() ? L"灵气初盛纪" : eraName;
     }
 
     void Reset() {
@@ -128,12 +134,49 @@ public:
     }
 
     void InitWorldEvents() {
-        worldEvents.push_back(WorldEvent(
-            L"【天降异象】灵气暴动",
-            L"天地灵气异常活跃，修炼速度翻倍！",
-            10,
-            WorldEvent::HEAVENLY_VISION
-        ));
+        if (worldEraName == L"灵机蒸汽纪") {
+            worldEvents.push_back(WorldEvent(
+                L"【灵机浪潮】工坊扩张",
+                L"灵石驱动的工坊与阵械城邦快速扩张，修炼不再只靠山门闭关。",
+                10,
+                WorldEvent::HEAVENLY_VISION
+            ));
+        } else if (worldEraName == L"星穹道网纪") {
+            worldEvents.push_back(WorldEvent(
+                L"【道网潮汐】灵网共振",
+                L"跨洲灵网短暂共振，远方宗门的试炼、传讯与招揽同时涌来。",
+                10,
+                WorldEvent::HEAVENLY_VISION
+            ));
+        } else if (worldEraName == L"末法裂变纪") {
+            worldEvents.push_back(WorldEvent(
+                L"【末法震荡】灵井枯潮",
+                L"多处灵井出现枯潮，修士争夺资源的烈度明显上升。",
+                8,
+                WorldEvent::SECT_WAR
+            ));
+        } else if (worldEraName == L"废土返道纪") {
+            worldEvents.push_back(WorldEvent(
+                L"【废土异动】古机苏醒",
+                L"荒野深处有旧文明灵机复苏，残存宗门被迫迁徙或结盟。",
+                8,
+                WorldEvent::DEMON_INVASION
+            ));
+        } else if (worldEraName == L"仙朝鼎盛纪") {
+            worldEvents.push_back(WorldEvent(
+                L"【仙朝册封】气运开榜",
+                L"仙朝重开气运榜，宗门、世家与散修都在争夺名位。",
+                10,
+                WorldEvent::TREASURE_APPEAR
+            ));
+        } else {
+            worldEvents.push_back(WorldEvent(
+                L"【天降异象】灵气暴动",
+                L"天地灵气异常活跃，修炼速度翻倍！",
+                10,
+                WorldEvent::HEAVENLY_VISION
+            ));
+        }
     }
 
     // 世界更新（每次玩家行动调用）
@@ -243,25 +286,73 @@ public:
     }
 
     void TriggerRandomWorldEvent() {
-        vector<wstring> titles = {
-            L"【魔族入侵】边境告急",
-            L"【秘境开启】上古遗迹现世",
-            L"【宗门大战】正魔对决",
-            L"【天劫降临】有人渡劫",
-            L"【宝物出世】众修争夺"
-        };
+        vector<pair<wstring, wstring>> events;
+        if (worldEraName == L"灵机蒸汽纪") {
+            events = {
+                {L"【灵机事故】飞舟坠城", L"一艘大型灵机飞舟坠入坊市，工坊派与旧宗门互相指责。"},
+                {L"【阵械竞标】量产灵具", L"数家工坊争夺量产灵具的阵图，散修也被卷入试炼。"},
+                {L"【机关兽潮】失控暴走", L"旧型号机关兽成群失控，沿灵石矿脉四处游荡。"},
+                {L"【工坊秘约】炼器联盟", L"炼器师们试图绕开宗门垄断，建立新的灵机联盟。"}
+            };
+        } else if (worldEraName == L"星穹道网纪") {
+            events = {
+                {L"【道网断链】远讯中止", L"一段跨洲灵网忽然断链，多个宗门怀疑有人篡改阵台。"},
+                {L"【星舟归航】外域线索", L"跨洲星舟带回外域秘境坐标，引来高阶修士暗中下注。"},
+                {L"【神识泄露】旧案翻出", L"灵网节点泄出旧年影像，许多被掩盖的因果重新浮出。"},
+                {L"【远程收徒】寒门入榜", L"大宗门通过灵网收徒，寒门修士也可能一夜改命。"}
+            };
+        } else if (worldEraName == L"末法裂变纪") {
+            events = {
+                {L"【灵井争夺】三宗对峙", L"一口未枯灵井引来三宗对峙，低阶修士被迫选择阵营。"},
+                {L"【替道实验】阵械破境", L"有人公开用阵械替代苦修破境，旧派修士大为震怒。"},
+                {L"【秘境封锁】资源禁令", L"各宗封锁秘境入口，散修开始铤而走险。"},
+                {L"【枯潮蔓延】灵气骤降", L"灵气枯潮向外扩散，闭关和突破都变得更昂贵。"}
+            };
+        } else if (worldEraName == L"废土返道纪") {
+            events = {
+                {L"【荒野迁徙】残宗结盟", L"数个残存宗门向安全地带迁徙，沿途不断爆发冲突。"},
+                {L"【古机苏醒】废墟鸣钟", L"旧文明废墟深处响起钟声，古代灵机开始无差别巡行。"},
+                {L"【邪祟潮生】黑雨入城", L"黑雨后荒野邪祟逼近城邦，许多传承洞府被迫开放。"},
+                {L"【返道烽火】重建法统", L"幸存修士试图重建道统，却必须先解决粮、灵石和秩序。"}
+            };
+        } else if (worldEraName == L"仙朝鼎盛纪") {
+            events = {
+                {L"【仙朝征召】册封入榜", L"仙朝征召修士入榜，册封、气运与宗门利益纠缠不清。"},
+                {L"【王族秘境】血脉试炼", L"王族秘境开启，非世家修士也想借机改命。"},
+                {L"【气运倾斜】新贵崛起", L"气运榜突然变动，某个小族被推到天下目光中央。"},
+                {L"【朝宗暗斗】旧盟破裂", L"仙朝与宗门之间旧盟出现裂痕，暗线修士开始活动。"}
+            };
+        } else {
+            events = {
+                {L"【魔族入侵】边境告急", L"魔气从边境裂缝涌出，正魔两道都被迫表态。"},
+                {L"【秘境开启】上古遗迹现世", L"一处古修遗迹破土现世，天材地宝与杀机一同浮出。"},
+                {L"【宗门大战】正魔对决", L"正魔两道冲突扩大，附近坊市人人自危。"},
+                {L"【天劫降临】有人渡劫", L"远处劫云压境，许多修士都赶去观摩或捡漏。"},
+                {L"【宝物出世】众修争夺", L"疑似重宝出世，各路修士都在追索气机。"}
+            };
+        }
 
-        uniform_int_distribution<> dis(0, titles.size() - 1);
-        wstring title = titles[dis(gen)];
+        uniform_int_distribution<> dis(0, events.size() - 1);
+        auto chosen = events[dis(gen)];
+        WorldEvent::EventType type = static_cast<WorldEvent::EventType>(rand() % 5);
+        if (chosen.first.find(L"争夺") != wstring::npos || chosen.first.find(L"大战") != wstring::npos || chosen.first.find(L"对峙") != wstring::npos) {
+            type = WorldEvent::SECT_WAR;
+        } else if (chosen.first.find(L"秘境") != wstring::npos || chosen.first.find(L"宝物") != wstring::npos || chosen.first.find(L"星舟") != wstring::npos) {
+            type = WorldEvent::TREASURE_APPEAR;
+        } else if (chosen.first.find(L"古机") != wstring::npos || chosen.first.find(L"邪祟") != wstring::npos || chosen.first.find(L"魔族") != wstring::npos) {
+            type = WorldEvent::DEMON_INVASION;
+        } else if (chosen.first.find(L"异象") != wstring::npos || chosen.first.find(L"道网") != wstring::npos || chosen.first.find(L"气运") != wstring::npos) {
+            type = WorldEvent::HEAVENLY_VISION;
+        }
 
         worldEvents.push_back(WorldEvent(
-            title,
-            L"修真界发生了大事！",
+            chosen.first,
+            chosen.second,
             5 + rand() % 10,
-            static_cast<WorldEvent::EventType>(rand() % 5)
+            type
         ));
 
-        AddHistory(title);
+        AddHistory(chosen.first);
     }
 
     // 获取当前活跃的世界事件
@@ -294,6 +385,7 @@ public:
     wstring GetWorldSummary() {
         wstringstream ss;
         ss << L"【修真界现状】\n\n";
+        ss << L"时代纪元: " << worldEraName << L"\n";
         ss << L"世界时间: 第" << worldTime << L"年\n";
         ss << L"存活修士: " << GetAliveNPCs().size() << L"人\n";
 
