@@ -2384,16 +2384,18 @@ wstring GetHeavenlyDaoRequirementText() {
 
 bool ShouldTriggerLegacyEchoEvent() {
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(5);
+    auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(6);
     int unfinishedPressure = (int)unfinishedKarmas.size() * 30;
+    int jadeMemoryPressure = (int)memoryFragments.size() * 16;
     int totalEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) +
                     g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) +
                     g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) +
                     abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION)) +
                     g_legacySystem.GetRelicResonanceBonus() * 2 +
-                    unfinishedPressure;
+                    unfinishedPressure + jadeMemoryPressure;
     if (totalEcho <= 0) return false;
 
-    int chance = 12 + totalEcho / 18 + (int)unfinishedKarmas.size() * 6;
+    int chance = 12 + totalEcho / 18 + (int)unfinishedKarmas.size() * 6 + (int)memoryFragments.size() * 2;
     if (g_worldEraName == L"废土返道纪") chance += 8;
     if (g_worldEraName == L"星穹道网纪") chance += 4;
     chance = max(10, min(58, chance));
@@ -2472,6 +2474,56 @@ Event BuildUnfinishedKarmaEchoEvent(const vector<wstring>& unfinishedKarmas) {
     return evt;
 }
 
+Event BuildCompanionJadeMemoryEvent(const vector<wstring>& memoryFragments) {
+    Event evt;
+    auto compactLimit = [](const wstring& text, size_t limit) {
+        wstring compact = CompactMemoryFragment(text);
+        if (compact.size() > limit) {
+            compact = compact.substr(0, limit) + L"...";
+        }
+        return compact;
+    };
+
+    wstring fragment = memoryFragments.empty()
+        ? L"一段被黑白玉意托住的前世残梦"
+        : memoryFragments[Random(0, (int)memoryFragments.size() - 1)];
+    fragment = compactLimit(fragment, 92);
+
+    wstring eraEcho;
+    if (g_worldEraName == L"星穹道网纪") {
+        eraEcho = L"附近灵网节点闪过相似旧名，像是在用今世技术追踪前世波纹。";
+    } else if (g_worldEraName == L"灵机蒸汽纪") {
+        eraEcho = L"工坊炉声与玉佩温意同频，像把前世残梦敲成可辨的节拍。";
+    } else if (g_worldEraName == L"末法裂变纪") {
+        eraEcho = L"末法灵气稀薄，梦中旧事反而比眼前灵光更清楚。";
+    } else if (g_worldEraName == L"废土返道纪") {
+        eraEcho = L"荒野旧墟里吹来冷风，玉佩把某段前世败局重新推到眼前。";
+    } else if (g_worldEraName == L"仙朝鼎盛纪") {
+        eraEcho = L"仙朝名册翻动时，你胸口旧玉微温，像有一个名字不愿入册。";
+    } else {
+        eraEcho = L"山门钟声未远，胸口旧玉却先一步把残梦托出识海。";
+    }
+
+    evt.title = L"【因果】玉佩梦回";
+    evt.description = L"夜半行至无人处，黑白伴生玉佩忽然发温，托起前世碎片：" +
+        fragment + L"。" + eraEcho + L"你仍不知道它真正来历。";
+    evt.choices = {
+        {L"握玉静听", {
+            L"你没有追问玉佩真名，只顺着温意辨认前世残梦，把它化作今生判断。\n修为+95，因果+8",
+            L"残梦过重，前世情绪短暂压住今生心神。\n气血-25，因果-5"
+        }, 8},
+        {L"以今证旧", {
+            L"你拿今生见闻反证旧梦真假，确认其中一条线索仍可继续追查。\n修为+75，灵石+12，因果+6",
+            L"你误把旧梦当成事实，反被今世局势牵着走。\n气血-20，因果-6"
+        }, 6},
+        {L"强追来历", {
+            L"你只摸到一缕阴阳玉痕，明白此物绝非寻常，却仍看不透真名。\n修为+60，灵宝共鸣+3",
+            L"你太急着追问旧玉来历，梦中杂音反噬识海。\n气血-35，因果-10"
+        }, -6}
+    };
+    return evt;
+}
+
 Event BuildLegacyEchoEvent() {
     Event evt;
 
@@ -2484,6 +2536,11 @@ Event BuildLegacyEchoEvent() {
 
     if (!unfinishedKarmas.empty() && Random(1, 100) <= 65) {
         return BuildUnfinishedKarmaEchoEvent(unfinishedKarmas);
+    }
+
+    auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(6);
+    if (!memoryFragments.empty() && Random(1, 100) <= 62) {
+        return BuildCompanionJadeMemoryEvent(memoryFragments);
     }
 
     if (g_player.realm >= DAO_ANCESTOR || relic.daoDepth >= 120 || relic.resonance >= 180) {
