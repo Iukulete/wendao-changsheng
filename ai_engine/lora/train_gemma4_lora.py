@@ -16,6 +16,8 @@ except Exception:  # pragma: no cover
 
 
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
+os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
 
 
 class WendaoDataset(Dataset):
@@ -114,6 +116,7 @@ def main():
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    print(f"loading tokenizer: {args.model_id}", flush=True)
     tokenizer = AutoTokenizer.from_pretrained(args.model_id, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -129,6 +132,7 @@ def main():
             bnb_4bit_use_double_quant=True,
         )
 
+    print(f"loading model: {args.model_id}", flush=True)
     model = AutoModelForCausalLM.from_pretrained(
         args.model_id,
         torch_dtype=torch.float16,
@@ -156,8 +160,10 @@ def main():
     model = get_peft_model(model, lora_config)
     model.print_trainable_parameters()
 
+    print("loading datasets", flush=True)
     train_ds = WendaoDataset(args.train_file, tokenizer, args.max_length)
     eval_ds = WendaoDataset(args.eval_file, tokenizer, args.max_length)
+    print(f"train samples={len(train_ds)} eval samples={len(eval_ds)}", flush=True)
     train_loader = DataLoader(
         train_ds,
         batch_size=args.batch_size,
@@ -171,6 +177,7 @@ def main():
     running = 0.0
     optimizer.zero_grad(set_to_none=True)
 
+    print("starting training", flush=True)
     for epoch in range(args.epochs):
         for step, batch in enumerate(train_loader, start=1):
             batch = {k: v.to(model.device) for k, v in batch.items()}
