@@ -165,7 +165,7 @@ private:
         static const vector<wstring> labels = {
             L"本世势力牵连", L"本世势力", L"本世器物", L"旧世残响", L"前世未竟因果",
             L"本世主线", L"本世持续线索", L"轮回余烬", L"重大事件", L"纪元转折因由",
-            L"纪元转折", L"时代变迁", L"鸿蒙天象", L"天象影响", L"鸿蒙参悟"
+            L"纪元转折", L"时代变迁", L"鸿蒙天象", L"天象影响", L"鸿蒙参悟", L"伴生玉佩"
         };
         for (const auto& label : labels) {
             size_t labelPos = text.find(label);
@@ -276,6 +276,11 @@ private:
             player.worldState.find(L"前世未竟因果") != wstring::npos) {
             add(L"unfinished");
         }
+        if (player.familyState.find(L"伴生玉佩") != wstring::npos ||
+            player.worldState.find(L"伴生玉佩") != wstring::npos ||
+            player.legacyState.find(L"伴生玉佩") != wstring::npos) {
+            add(L"jade");
+        }
         if (player.worldState.find(L"近年大事") != wstring::npos ||
             (player.history.size() > 0 && FirstHistoryContaining(player, {L"天下大事"}) != L"")) {
             add(L"world");
@@ -374,6 +379,9 @@ public:
         if (focus == L"unfinished") {
             return L"【因果】前世未竟";
         }
+        if (focus == L"jade") {
+            return L"【因果】玉佩微温";
+        }
         if (focus == L"world") {
             return L"【因果】天下余波";
         }
@@ -427,6 +435,8 @@ public:
             hook = FirstLineContaining(player.worldState, {L"本世主线"});
         }
         wstring remnant = FirstLineContaining(player.worldState + L"\n" + player.legacyState, {L"旧世残响", L"旧世", L"断代"});
+        wstring jade = FirstLineContaining(player.familyState + L"\n" + player.worldState + L"\n" + player.legacyState,
+            {L"伴生玉佩", L"黑白旧玉", L"梦中玉意", L"阴阳玉痕"});
         wstring hongmengOmen = FirstLineContaining(player.worldState + L"\n" + player.daoState + L"\n" + player.legacyState,
             {L"鸿蒙天象", L"当前当世鸿蒙天象"});
         wstring hongmengInfluence = FirstLineContaining(player.worldState + L"\n" + player.daoState,
@@ -458,6 +468,11 @@ public:
         if (focus == L"unfinished" && !unfinished.empty()) {
             wstringstream ss;
             ss << L"一段前世未了的旧事重新浮上心头：" << unfinished << L"。今生有人借此设局，逼你表态。";
+            return ss.str();
+        }
+        if (focus == L"jade" && !jade.empty()) {
+            wstringstream ss;
+            ss << L"夜半醒来，" << jade << L"在胸口微微发温，梦里残留几句前世旧语；你仍不知道它真正来历，只知道这不是寻常旧物。";
             return ss.str();
         }
         if (focus == L"world" && !worldEvent.empty()) {
@@ -584,6 +599,12 @@ public:
             choices.push_back(L"斩断牵连");
             return choices;
         }
+        if (focus == L"jade") {
+            choices.push_back(L"握玉静听");
+            choices.push_back(L"藏起旧玉");
+            choices.push_back(L"追问来历");
+            return choices;
+        }
         if (focus == L"world") {
             choices.push_back(L"趁势入局");
             choices.push_back(L"旁观风向");
@@ -681,6 +702,7 @@ public:
         ss << L"- 如果上下文出现“本世器物”，可以让这些兵刃或法宝在今生事件中发挥作用，但必须承认本体会损毁或失散，不能跨世保存。\n";
         ss << L"- 普通兵刃、丹药、材料和当世法宝只能属于这一世；它们会损毁或失散，不能写成跨世继承物。\n";
         ss << L"- 真正能跨过轮回的是记忆、因果、道痕，以及被大道反复祭炼过的通天灵宝残印。\n";
+        ss << L"- 主角第一世自带黑白伴生玉佩；它和转世记忆有关，但主角不知道真相。事件里可以写玉佩发热、梦中玉意、阴阳玉痕或轮回回响，不要直接揭示它的鸿蒙至宝真身。\n";
         ss << L"- 如果上下文出现“大道特性”，事件中的优势与代价要贴合具体大道，不要把道祖强弱写成单纯境界碾压。\n";
         ss << L"- 仙帝仍有寿数限制；只有道祖能与所掌大道共生。道祖强弱取决于掌握的大道与掌道深度，不要写成单纯等级碾压。\n";
         ss << L"- 如果上下文出现“寿元压力”，事件要承认时间正在逼迫玩家；仙帝也会寿尽，只有道祖与大道共生后才不再被寿元追赶。\n";
@@ -800,8 +822,8 @@ public:
                                eventText.find(L"器纹") != wstring::npos;
         bool touchesHongmeng = containsAny(eventText, {
             L"鸿蒙", L"创世级", L"天象", L"至宝", L"投影", L"显化",
-            L"鸿蒙道印", L"造化青莲", L"混沌天钟", L"太初源炉", L"归墟玄图",
-            L"无量天书", L"开界神斧", L"轮回古镜", L"万道母鼎"
+            L"鸿蒙道印", L"造化青莲", L"两仪轮回玉", L"太初源炉", L"归墟玄图",
+            L"无量天书", L"开界神斧", L"太虚照世镜", L"万道母鼎"
         });
         bool touchesDao = containsAny(eventText, {
             L"大道", L"道祖", L"证道", L"掌道", L"天道", L"道音", L"道痕"
@@ -819,6 +841,9 @@ public:
             L"前世未竟", L"未竟因果", L"追问旧因", L"旧因", L"稳住今生"
         }) || (!player.legacyState.empty() && player.legacyState.find(L"前世未竟因果") != wstring::npos &&
               containsAny(eventText, {L"前世", L"旧事", L"旧因", L"因果"}));
+        bool touchesJade = containsAny(eventText, {
+            L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕", L"握玉", L"旧玉"
+        });
         bool touchesStory = containsAny(eventText, {
             L"本世线头", L"本世主线", L"本世持续线索", L"上一件事", L"同一条线索",
             L"追索线头", L"借题布局", L"暂压不表"
@@ -840,7 +865,9 @@ public:
         wstringstream ss;
         if (success) {
             ss << L"你选择「" << action << L"」，";
-            if (touchesUnfinished) {
+            if (touchesJade) {
+                ss << L"没有强求答案，只借玉佩温意稳住几段前世碎片，让今生仍由自己作主。";
+            } else if (touchesUnfinished) {
                 ss << L"没有把前世旧债当成梦兆，而是替今生争回了主动权。";
             } else if (touchesFaction) {
                 ss << L"顺势摸清了对方真正想要的筹码，本世势力对你的评价因此改写。";
@@ -868,6 +895,7 @@ public:
             if (touchesRemnant) ss << L"，因果+8";
             if (touchesFaction) ss << L"，因果+6";
             if (touchesUnfinished) ss << L"，因果+10";
+            if (touchesJade) ss << L"，因果+5";
             if (touchesStory) ss << L"，因果+6";
             if (touchesLifespan) ss << L"，寿命+18";
             if (touchesHongmeng) ss << L"，掌道+6，灵宝共鸣+4，因果+6";
@@ -876,7 +904,9 @@ public:
             if (touchesArtifact && action.find(L"转手") != wstring::npos) ss << L"，灵石+15";
         } else {
             ss << L"你选择「" << action << L"」，";
-            if (touchesUnfinished) {
+            if (touchesJade) {
+                ss << L"却太急着追问玉佩来历，梦中旧语反而扰乱心神，今生判断也被带偏。";
+            } else if (touchesUnfinished) {
                 ss << L"却被前世未竟因果牵着走，今生立场反而被旁人看穿。";
             } else if (touchesFaction) {
                 ss << L"却误判了势力旧债的分量，对方没有翻脸，只是把你的名字记得更重。";
@@ -904,6 +934,7 @@ public:
             if (touchesRemnant || touchesSocial) ss << L"，因果-8";
             if (touchesFaction) ss << L"，因果-6";
             if (touchesUnfinished) ss << L"，因果-10";
+            if (touchesJade) ss << L"，因果-5";
             if (touchesStory) ss << L"，因果-6";
             if (touchesLifespan) ss << L"，寿命-8";
             if (touchesHongmeng) ss << L"，因果-12";

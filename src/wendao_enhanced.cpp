@@ -922,6 +922,9 @@ void ShowNotice(const wstring& title, const wstring& text);
 vector<vector<wstring>> LoadItemDbRows();
 void DiscoverItemsFromText(const wstring& text);
 PlayerContext BuildPlayerContext();
+wstring BuildCompanionJadeVisibleText();
+wstring BuildCompanionJadeHiddenContext();
+void ApplyCompanionJadeToBirth();
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -1298,7 +1301,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
         L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
-        L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
+        L"伴生玉佩", L"玉佩", L"两仪轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1921,6 +1924,8 @@ wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
+    ss << L"【伴生玉佩】\n";
+    ss << BuildCompanionJadeVisibleText() << L"\n\n";
     if (HasFactionTie()) {
         ss << BuildFactionTieText() << L"\n\n";
     }
@@ -1937,6 +1942,7 @@ wstring BuildLifeStoryText() {
 wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
+    ss << L"伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     if (HasFactionTie()) {
         ss << L"本世势力牵连: " << BuildFactionTieDigest() << L"\n";
     }
@@ -1947,6 +1953,32 @@ wstring BuildLifeStoryContext() {
         }
     }
     return ss.str();
+}
+
+void AppendFamilySecret(FamilyBackground& family, const wstring& secret);
+
+wstring BuildCompanionJadeVisibleText() {
+    if (g_generation <= 1) {
+        return L"你自出生起便带着一枚黑白相间的伴生玉佩。无论家世如何，它都跟在你身边；你只当它是旧物，并不知道它真正的来历。";
+    }
+    return L"转世后，那枚黑白伴生玉佩未必还以原样出现，但梦醒时总有温凉玉意贴着神魂，像在替你守住几段不该留下的记忆。";
+}
+
+wstring BuildCompanionJadeHiddenContext() {
+    wstringstream ss;
+    ss << L"隐藏设定: 主角第一世自带伴生玉佩，其真身是九大鸿蒙至宝排名第三的两仪轮回玉。";
+    ss << L"它是主角能带着部分记忆转世的根因，但主角本人不知道，旁人通常也无法确认。";
+    ss << L"叙事中只能写成黑白旧玉、伴生玉佩、梦中玉意、阴阳玉痕或轮回回响，不要让普通事件直接揭示“这是鸿蒙至宝本体”。";
+    return ss.str();
+}
+
+void ApplyCompanionJadeToBirth() {
+    FamilyBackground& family = g_player.family;
+    if (g_generation <= 1) {
+        AppendFamilySecret(family, L"出生时随身带着一枚黑白伴生玉佩，来历无人说清");
+    } else {
+        AppendFamilySecret(family, L"幼年偶尔梦见黑白玉光，醒后仍记得不属于今生的片段");
+    }
 }
 
 struct HongmengTreasure {
@@ -1975,11 +2007,11 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
             L"你学会在死局里留一线生机，而不是强行改写生死。"
         },
         {
-            L"混沌天钟", L"时空定序",
-            L"钟声能定住一段时代的因果，使文明在崩塌前多喘一口气。",
-            L"万物声息骤停，只有钟纹在时空与因果之间缓缓扩散。",
-            L"强改已成历史，会招来时序反噬，把今生也卷入旧日。",
-            L"你听懂一个时代将崩前的停顿，知道何时该争一口气。"
+            L"两仪轮回玉", L"轮回阴阳",
+            L"可护住一缕真灵穿过生死阴阳，让记忆、因果和未竟道痕在转世后仍有回声。",
+            L"黑白玉光在魂魄深处一闪，像有半枚阴玉、半枚阳玉隔着轮回轻轻合拢。",
+            L"妄图借它逃避今生，会被阴阳两面同时照见，前世执念反而压住本我。",
+            L"你明白转世不是重来一次，而是带着旧债、旧梦和今生选择继续往前走。"
         },
         {
             L"太初源炉", L"炼法归元",
@@ -2010,11 +2042,11 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
             L"你懂得在绝境中劈出新路，而不是只求胜负。"
         },
         {
-            L"轮回古镜", L"前尘照命",
-            L"不照容貌，只照灵魂在无数世里反复避开的那一道裂痕。",
-            L"镜面不照今貌，只照历世反复错过、反复逃避的同一处裂痕。",
-            L"沉迷前世会失去今生主位，被旧名替你活完这一世。",
-            L"你认出轮回里反复回避的裂痕，终于能在今生正视它。"
+            L"太虚照世镜", L"本我照命",
+            L"不照容貌，只照众生在虚实、名相与本我之间反复逃避的那一道裂痕。",
+            L"镜面不照今貌，只映出你以为自己是谁，以及真正不敢承认的本心。",
+            L"沉迷镜中旧名会失去今生主位，被幻相替你活完这一世。",
+            L"你看清自己反复避开的本心，终于能在今生正视它。"
         },
         {
             L"万道母鼎", L"诸道孕育",
@@ -2028,8 +2060,6 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
 }
 
 void AddHongmengTreasureMentions(vector<wstring>& names, const wstring& text) {
-    if (text.find(L"鸿蒙") == wstring::npos && text.find(L"创世级") == wstring::npos) return;
-
     for (const auto& treasure : GetHongmengTreasures()) {
         if (text.find(treasure.name) == wstring::npos && text.find(treasure.dao) == wstring::npos) continue;
 
@@ -2092,7 +2122,7 @@ void GenerateHongmengOmen() {
         addCandidate(6, 1); // 开界神斧
     } else if (g_worldEraName == L"仙朝鼎盛纪") {
         addCandidate(0, 1);
-        addCandidate(2, 1); // 混沌天钟
+        addCandidate(2, 1); // 两仪轮回玉
         addCandidate(5, 2); // 无量天书
     } else if (g_worldEraName == L"末法裂变纪") {
         addCandidate(1, 1);
@@ -2105,7 +2135,7 @@ void GenerateHongmengOmen() {
     } else if (g_worldEraName == L"星穹道网纪") {
         addCandidate(2, 2);
         addCandidate(5, 2);
-        addCandidate(7, 1); // 轮回古镜
+        addCandidate(7, 1); // 太虚照世镜
     } else if (g_worldEraName == L"废土返道纪") {
         addCandidate(1, 1);
         addCandidate(4, 2);
@@ -3067,6 +3097,8 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"本世势力牵连：" + BuildFactionTieDigest());
     }
 
+    g_lifeStoryHooks.push_back(L"伴生玉佩：" + BuildCompanionJadeVisibleText());
+
     if (!g_hongmengOmenTreasureName.empty()) {
         g_lifeStoryHooks.push_back(L"本世鸿蒙天象：" + BuildHongmengOmenBrief() +
             L"；此线只会留下投影、线索、参悟和遥远因果，不能获得或毁灭本体。");
@@ -3568,6 +3600,7 @@ PlayerContext BuildPlayerContext() {
     if (!g_player.family.secret.empty()) {
         ctx.familyState += L"；隐情:" + g_player.family.secret;
     }
+    ctx.familyState += L"；伴生玉佩:" + BuildCompanionJadeVisibleText();
     if (HasFactionTie()) {
         ctx.familyState += L"；本世势力:" + g_factionTie.name + L"(" + g_factionTie.role + L")";
     }
@@ -3630,6 +3663,7 @@ PlayerContext BuildPlayerContext() {
     if (!g_reincarnationEcho.empty()) {
         legacy << L"轮回余烬: " << g_reincarnationEcho << L"\n";
     }
+    legacy << BuildCompanionJadeHiddenContext() << L"\n";
     wstring memoryContext = g_legacySystem.GetMemoryContextText(6);
     if (!memoryContext.empty()) {
         legacy << memoryContext;
@@ -3661,6 +3695,7 @@ PlayerContext BuildPlayerContext() {
     world << L"- 时代法则: " << g_worldEraRule << L"\n";
     world << L"- 时代变迁: " << g_eraTransitionNote << L"\n";
     world << L"- 纪元转折因由: " << g_eraShiftCause << L"\n";
+    world << L"- 伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     world << L"- 鸿蒙天象: " << BuildHongmengOmenBrief() << L"\n";
     world << L"- 天象影响: " << g_hongmengOmenInfluence << L"\n";
     if (!g_eraChronicle.empty()) {
@@ -4203,6 +4238,11 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
             treasure->dao + L"的抉择会更容易牵动它。");
     }
 
+    if (TextContainsAny(text, {L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕"})) {
+        add(wstring(successLike ? L"玉佩暗线推进：" : L"玉佩暗线受扰：") +
+            L"那枚黑白旧玉仍未显露真名，却继续把前世记忆、今生选择和轮回回响牵在一起。");
+    }
+
     if (TextContainsAny(text, {L"前世未竟", L"未竟因果", L"旧因", L"旧债", L"前世", L"旧名"})) {
         add((successLike ? L"前世未竟推进：" : L"前世未竟加深：") +
             choice.description + L"后，上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
@@ -4412,6 +4452,7 @@ void StartNextLife() {
 
     g_player = Player();
     g_player.name = oldName;
+    ApplyCompanionJadeToBirth();
     wstring birthEcho = ApplyInheritedLegacyToBirth();
 
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
@@ -4449,6 +4490,7 @@ void StartNextLife() {
                << L"，灵宝共鸣+" << relicBonus;
     }
     AddMemory(L"轮回再起", detail.str());
+    AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
     AddMemory(L"纪元转折", g_eraShiftCause);
@@ -5014,6 +5056,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_player = Player();
                 g_player.name = name;
                 g_generation = 1;
+                ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
                 g_memoryLog.clear();
@@ -5029,6 +5072,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_dynamicWorld.Reset();
                 GenerateSocialRumors();
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
+                AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
                 AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
                 AddMemory(L"时代变迁", g_eraTransitionNote);
                 AddMemory(L"纪元转折", g_eraShiftCause);
