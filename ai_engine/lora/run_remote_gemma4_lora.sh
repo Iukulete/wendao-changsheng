@@ -46,6 +46,8 @@ docker run --rm \
     set -euo pipefail
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y python3 python3-pip python3-venv git ca-certificates
+    mkdir -p /root/.cache/pip
+    chown -R root:root /root/.cache/pip || true
     python3 -m pip install --upgrade pip
     python3 -m pip install --index-url https://download.pytorch.org/whl/cu124 torch
     python3 -m pip install 'transformers>=4.56.0' accelerate peft bitsandbytes safetensors sentencepiece protobuf hf_transfer 'huggingface_hub[hf_xet]'
