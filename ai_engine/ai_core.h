@@ -242,6 +242,28 @@ private:
         return L"";
     }
 
+    wstring LastBulletAfter(const wstring& text, const wstring& header) const {
+        size_t pos = text.find(header);
+        if (pos == wstring::npos) return L"";
+        wstringstream ss(text.substr(pos));
+        wstring line;
+        bool afterHeader = false;
+        wstring result;
+        while (getline(ss, line)) {
+            if (!afterHeader) {
+                afterHeader = true;
+                continue;
+            }
+            wstring trimmed = TrimContext(line);
+            if (trimmed.rfind(L"- ", 0) == 0) break;
+            wstring stripped = StripContextPrefix(line);
+            if (!stripped.empty() && stripped != header) {
+                result = ShortContext(stripped);
+            }
+        }
+        return result;
+    }
+
     wstring PickFallbackFocus(PlayerContext& player) const {
         vector<wstring> candidates;
         auto add = [&](const wstring& focus) {
@@ -262,6 +284,10 @@ private:
             player.legacyState.find(L"旧世残响") != wstring::npos ||
             player.worldState.find(L"纪元转折因由") != wstring::npos) {
             add(L"remnant");
+        }
+        if (player.worldState.find(L"本世持续线索") != wstring::npos ||
+            FirstHistoryContaining(player, {L"本世线索推进"}) != L"") {
+            add(L"story");
         }
         if (player.daoState.find(L"大道特性") != wstring::npos ||
             player.daoState.find(L"掌道") != wstring::npos) {
@@ -343,6 +369,9 @@ public:
         if (focus == L"remnant") {
             return L"【传承】旧世残响";
         }
+        if (focus == L"story") {
+            return L"【因果】本世线头";
+        }
         if (focus == L"social") {
             return L"【奇遇】人情暗流";
         }
@@ -376,7 +405,7 @@ public:
         if (artifact.empty()) {
             artifact = FirstLineContaining(player.worldState, {L"（当世兵刃", L"（当世法宝", L"本世器物"});
         }
-        wstring hook = FirstBulletAfter(player.worldState, L"本世持续线索");
+        wstring hook = LastBulletAfter(player.worldState, L"本世持续线索");
         if (hook.empty()) {
             hook = FirstLineContaining(player.worldState, {L"本世主线"});
         }
@@ -418,6 +447,11 @@ public:
         if (focus == L"remnant" && !remnant.empty()) {
             wstringstream ss;
             ss << L"你在途中撞见一处被今世重新利用的旧世痕迹：" << remnant << L"。它不像普通秘境，更像上一纪元留下的账本。";
+            return ss.str();
+        }
+        if (focus == L"story" && !hook.empty()) {
+            wstringstream ss;
+            ss << L"上一件事没有真正结束：" << hook << L"。如今同一条线索换了面目再度靠近，像是在逼你给今生一个明确态度。";
             return ss.str();
         }
         if (focus == L"social" && !social.empty()) {
@@ -516,6 +550,12 @@ public:
             choices.push_back(L"趁势入局");
             choices.push_back(L"旁观风向");
             choices.push_back(L"暗记人名");
+            return choices;
+        }
+        if (focus == L"story") {
+            choices.push_back(L"追索线头");
+            choices.push_back(L"借题布局");
+            choices.push_back(L"暂压不表");
             return choices;
         }
         if (focus == L"remnant") {
@@ -722,6 +762,10 @@ public:
             L"前世未竟", L"未竟因果", L"追问旧因", L"旧因", L"稳住今生"
         }) || (!player.legacyState.empty() && player.legacyState.find(L"前世未竟因果") != wstring::npos &&
               containsAny(eventText, {L"前世", L"旧事", L"旧因", L"因果"}));
+        bool touchesStory = containsAny(eventText, {
+            L"本世线头", L"本世主线", L"本世持续线索", L"上一件事", L"同一条线索",
+            L"追索线头", L"借题布局", L"暂压不表"
+        });
         bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
                              (eventText.find(L"修士") != wstring::npos ||
                               eventText.find(L"长辈") != wstring::npos ||
@@ -748,6 +792,8 @@ public:
                 ss << L"识海里的通天灵宝残印轻轻一震，像是承认你抓住了这一缕因果。";
             } else if (touchesSocial) {
                 ss << L"这一步让旁人重新衡量你，本世人脉里的善意与嫉意都被牵动。";
+            } else if (touchesStory) {
+                ss << L"你没有把线索当成偶然，而是让它并入本世主线，后续人和事都会沿着这条脉络靠近。";
             } else if (touchesDao) {
                 ss << L"心底的道痕一闪即逝，" << consequence;
             } else {
@@ -758,6 +804,7 @@ public:
             if (touchesRemnant) ss << L"，因果+8";
             if (touchesFaction) ss << L"，因果+6";
             if (touchesUnfinished) ss << L"，因果+10";
+            if (touchesStory) ss << L"，因果+6";
             if (touchesTreasure) ss << L"，灵宝共鸣+5";
             if (touchesDao) ss << L"，掌道+3";
             if (touchesArtifact && action.find(L"转手") != wstring::npos) ss << L"，灵石+15";
@@ -775,6 +822,8 @@ public:
                 ss << L"但今生根基还不足以承受那道器纹，通天灵宝残印很快沉寂下去。";
             } else if (touchesSocial) {
                 ss << L"却误判了旁人的立场，本世人脉中有人因此记下了这笔账。";
+            } else if (touchesStory) {
+                ss << L"却让线索暂时沉入暗处，相关人等没有离开，只是换了更隐蔽的方式观察你。";
             } else if (!player.legacyState.empty() && player.legacyState.find(L"前世") != wstring::npos) {
                 ss << L"前世经验没能完全适配今生，" << consequence;
             } else {
@@ -785,6 +834,7 @@ public:
             if (touchesRemnant || touchesSocial) ss << L"，因果-8";
             if (touchesFaction) ss << L"，因果-6";
             if (touchesUnfinished) ss << L"，因果-10";
+            if (touchesStory) ss << L"，因果-6";
         }
 
         return ss.str();
