@@ -3714,6 +3714,100 @@ void TrackHongmengInsightFromEvent(const Event& event, const Choice& choice, con
     }
 }
 
+bool AddLifeStoryHook(const wstring& hook) {
+    if (hook.empty()) return false;
+
+    wstring compact = CompactMemoryFragment(hook);
+    if (compact.size() > 150) {
+        compact = compact.substr(0, 150) + L"...";
+    }
+
+    for (const auto& existing : g_lifeStoryHooks) {
+        if (existing == compact) return false;
+    }
+
+    g_lifeStoryHooks.push_back(compact);
+    while (g_lifeStoryHooks.size() > 7) {
+        g_lifeStoryHooks.erase(g_lifeStoryHooks.begin());
+    }
+    AddMemory(L"本世线索推进", compact);
+    return true;
+}
+
+void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent) {
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    bool successLike = ExtractValue(outcome, L"修为+") > 0 ||
+                       ExtractValue(outcome, L"灵石+") > 0 ||
+                       ExtractValue(outcome, L"因果+") > 0 ||
+                       ExtractValue(outcome, L"掌道+") > 0 ||
+                       ExtractValue(outcome, L"灵宝共鸣+") > 0;
+    bool setbackLike = ExtractValue(outcome, L"气血-") > 0 ||
+                       ExtractValue(outcome, L"寿命-") > 0 ||
+                       ExtractValue(outcome, L"因果-") > 0 ||
+                       TextContainsAny(outcome, {L"反噬", L"拒绝", L"怀疑", L"记恨", L"旧债"});
+
+    int added = 0;
+    auto add = [&](const wstring& hook) {
+        if (added >= 2 || hook.empty()) return;
+        if (AddLifeStoryHook(hook)) {
+            added++;
+        }
+    };
+
+    if (const HongmengTreasure* treasure = FindHongmengTreasureInText(text)) {
+        add((successLike ? L"鸿蒙参悟后续：" : L"鸿蒙警戒后续：") +
+            wstring(treasure->name) + L"投影仍在识海边缘回响，下一次涉及" +
+            treasure->dao + L"的抉择会更容易牵动它。");
+    }
+
+    if (TextContainsAny(text, {L"前世未竟", L"未竟因果", L"旧因", L"旧债", L"前世", L"旧名"})) {
+        add((successLike ? L"前世未竟推进：" : L"前世未竟加深：") +
+            choice.description + L"后，上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
+    }
+
+    if (HasFactionTie() && TextContainsAny(text, {
+        g_factionTie.name, L"本世势力", L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
+    })) {
+        add((successLike ? L"势力线推进：" : L"势力线受阻：") +
+            g_factionTie.name + L"因「" + choice.description + L"」重新衡量你，牵连值为" +
+            (g_factionTie.favor >= 0 ? L"+" : L"") + to_wstring(g_factionTie.favor) + L"。");
+    }
+
+    for (const auto& thread : g_socialThreads) {
+        bool directHit = text.find(thread.name) != wstring::npos ||
+                         text.find(thread.role) != wstring::npos ||
+                         text.find(thread.attitude) != wstring::npos;
+        if (!directHit && !TextContainsAny(text, {L"本世人脉", L"长辈", L"同辈", L"父亲", L"母亲", L"养育者", L"欺压者", L"旁人"})) {
+            continue;
+        }
+        add((successLike ? L"人情线推进：" : L"人情线生隙：") +
+            thread.name + L"（" + thread.role + L"）会记住你在「" + choice.description +
+            L"」中的表现，后续态度是" + GetRelationLabel(thread.relation) + L"。");
+        break;
+    }
+
+    if (TextContainsAny(text, {L"旧世残响", L"上一纪元", L"旧世", L"遗址", L"断代", L"废墟", L"残响"})) {
+        add(wstring(successLike ? L"旧世残响推进：" : L"旧世残响反噬：") +
+            L"这次选择让上一纪元留下的物证继续影响今生，下一次遇到遗址、制度或旧器时应追查同一条线。");
+    }
+
+    if (TextContainsAny(text, {L"本世器物", L"当世兵刃", L"当世法宝", L"器痕", L"器纹", L"法宝", L"兵刃"})) {
+        add(wstring(successLike ? L"器物线推进：" : L"器物线裂痕：") +
+            L"今生器物本体终会失散，但这次取舍可能留下器痕，供通天灵宝残印在轮回中辨认。");
+    }
+
+    if (TextContainsAny(text, {L"大道", L"掌道", L"道祖", L"天道", L"道音"}) ||
+        ExtractValue(outcome, L"掌道+") > 0) {
+        add(wstring(successLike ? L"大道线推进：" : L"大道线受压：") +
+            L"这次抉择让你的道心更清楚自身缺口，后续事件可继续考验同一条大道。");
+    }
+
+    if (isAIEvent && added == 0) {
+        add(wstring(setbackLike ? L"动态事件余波：" : L"动态事件后续：") +
+            L"「" + event.title + L"」没有当场结束，相关人和事会在今生继续发酵。");
+    }
+}
+
 void ApplyOutcomeEffects(const wstring& outcome) {
     int expGain = ExtractValue(outcome, L"修为+");
     int expLoss = ExtractValue(outcome, L"修为-");
@@ -3963,10 +4057,12 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
+    ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
     if (isAIEvent) {
         AddMemory(L"本地模型抉择",
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
     }
+    g_contextMgr.SetContext(BuildPlayerContext());
 
     if (g_player.IsDead()) {
         g_gameState = STATE_GAMEOVER;
