@@ -98,6 +98,34 @@ private:
         return L"尚未定型的祖境道痕，仍会随每一世选择而偏转。";
     }
 
+    int ResonanceAwakeningStage(int resonance) const {
+        if (resonance >= 760) return 5;
+        if (resonance >= 520) return 4;
+        if (resonance >= 320) return 3;
+        if (resonance >= 180) return 2;
+        if (resonance >= 80) return 1;
+        return 0;
+    }
+
+    wstring GetResonanceAspect(int stage) const {
+        if (stage >= 5) return L"半步通天";
+        if (stage >= 4) return L"通天灵胚";
+        if (stage >= 3) return L"道胚成形";
+        if (stage >= 2) return L"认主残印";
+        if (stage >= 1) return L"器鸣初醒";
+        return L"未定道痕";
+    }
+
+    void NormalizeRelicAwakening() {
+        int stage = ResonanceAwakeningStage(relic.resonance);
+        if (stage > relic.awakenings) {
+            relic.awakenings = stage;
+        }
+        if (!relic.daoLinked && stage > 0) {
+            relic.aspect = GetResonanceAspect(stage);
+        }
+    }
+
     void InheritEchoesFromLastLife(const PastLife& last) {
         int inheritedCount = 0;
         for (int i = (int)last.legacies.size() - 1; i >= 0 && inheritedCount < 2; --i) {
@@ -222,6 +250,7 @@ public:
         } else if (life.realmReached >= 12) {
             relic.aspect = L"灵机演化";
         }
+        NormalizeRelicAwakening();
     }
 
     void GenerateLegacies(PastLife& life) {
@@ -335,6 +364,7 @@ public:
 
     void AddRelicResonance(int amount) {
         relic.resonance = max(0, min(999, relic.resonance + amount));
+        NormalizeRelicAwakening();
     }
 
     void AddDaoDepth(int amount) {
@@ -360,6 +390,7 @@ public:
             relic.aspect = L"天道境·万道归一";
             relic.resonance = min(999, relic.resonance + 120 + battlesWon / 5);
             relic.daoDepth = 999;
+            NormalizeRelicAwakening();
             return;
         }
 
@@ -374,6 +405,7 @@ public:
         relic.aspect = dao + L"·祖境道痕";
         relic.resonance = min(999, relic.resonance + 40 + realmReached * 2 + battlesWon / 5);
         relic.daoDepth = min(999, relic.daoDepth + 45 + totalEvents / 10 + battlesWon / 5 + KarmaMagnitude(karma) / 10);
+        NormalizeRelicAwakening();
     }
 
     wstring GetDaoTier() const {
@@ -387,11 +419,22 @@ public:
     LegacyRelic& GetRelic() { return relic; }
     const LegacyRelic& GetRelic() const { return relic; }
 
+    wstring GetRelicAwakeningStage() const {
+        int stage = max(relic.awakenings, ResonanceAwakeningStage(relic.resonance));
+        if (stage >= 5) return L"半步通天";
+        if (stage >= 4) return L"通天灵胚";
+        if (stage >= 3) return L"道胚成形";
+        if (stage >= 2) return L"认主残印";
+        if (stage >= 1) return L"器鸣初醒";
+        return L"沉寂残痕";
+    }
+
     wstring GetRelicStatusText() const {
         wstringstream ss;
         ss << L"【通天灵宝残印】\n\n";
         ss << L"名号: " << relic.name << L"\n";
         ss << L"当前道痕: " << relic.aspect << L"\n";
+        ss << L"觉醒阶段: " << GetRelicAwakeningStage() << L"\n";
         ss << L"共鸣值: " << relic.resonance << L"\n";
         ss << L"苏醒次数: " << relic.awakenings << L"\n";
         ss << L"本世加持: +" << GetRelicResonanceBonus() << L"\n";
@@ -409,6 +452,7 @@ public:
     wstring GetDaoContextText() const {
         wstringstream ss;
         ss << L"通天灵宝: " << relic.name << L"，道痕 " << relic.aspect
+           << L"，觉醒阶段 " << GetRelicAwakeningStage()
            << L"，共鸣 " << relic.resonance << L"，苏醒 " << relic.awakenings << L" 次。";
         if (relic.daoLinked) {
             ss << L" 前世曾证 " << relic.daoName << L"，当前掌道深度 "
@@ -593,6 +637,7 @@ public:
             relic.daoName = relic.daoLinked ? L"本我大道" : L"未证大道";
             relic.daoDepth = relic.daoLinked ? relic.resonance / 2 : 0;
         }
+        NormalizeRelicAwakening();
 
         file >> count;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');

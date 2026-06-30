@@ -2768,6 +2768,7 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     int karmaLoss = ExtractValue(outcome, L"因果-");
     int relicGain = ExtractValue(outcome, L"灵宝共鸣+");
     int daoGain = ExtractValue(outcome, L"掌道+");
+    int oldRelicAwakenings = g_legacySystem.GetRelic().awakenings;
 
     g_player.exp = max(0, g_player.exp + expGain - expLoss);
     g_player.spiritStones = max(0, g_player.spiritStones + stoneGain - stoneLoss);
@@ -2777,6 +2778,14 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     g_player.karma += karmaGain - karmaLoss;
     if (relicGain > 0) {
         g_legacySystem.AddRelicResonance(relicGain);
+        const LegacyRelic& relic = g_legacySystem.GetRelic();
+        if (relic.awakenings > oldRelicAwakenings) {
+            AddMemory(L"通天灵宝觉醒",
+                relic.name + L"由" + to_wstring(oldRelicAwakenings) +
+                L"次苏醒推进至" + to_wstring(relic.awakenings) +
+                L"次，觉醒阶段为" + g_legacySystem.GetRelicAwakeningStage() +
+                L"，道痕显作" + relic.aspect);
+        }
     }
     if (daoGain > 0) {
         g_legacySystem.AddDaoDepth(daoGain);
