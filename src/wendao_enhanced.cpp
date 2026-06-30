@@ -119,6 +119,19 @@ struct SocialThread {
     SocialThread() : relation(0), hidesPower(false) {}
 };
 
+struct FactionTie {
+    wstring name;
+    wstring kind;
+    wstring role;
+    wstring stance;
+    wstring obligation;
+    wstring hook;
+    int favor;
+    bool binding;
+
+    FactionTie() : favor(0), binding(false) {}
+};
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -852,6 +865,7 @@ wstring g_lifePremise = L"此世尚未显出明确主线，一切仍在暗处酝
 vector<wstring> g_lifeStoryHooks;
 vector<wstring> g_eraRemnants;
 vector<wstring> g_eraChronicle;
+FactionTie g_factionTie;
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
@@ -1259,6 +1273,47 @@ void RecordEraChronicle(const wstring& previousEra) {
     }
 }
 
+bool HasFactionTie() {
+    return !g_factionTie.name.empty();
+}
+
+wstring BuildFactionTieDigest() {
+    if (!HasFactionTie()) return L"暂无明确势力牵连。";
+    wstringstream ss;
+    ss << g_factionTie.name << L"（" << g_factionTie.kind << L"）"
+       << L" · " << g_factionTie.role
+       << L" · " << g_factionTie.stance
+       << L" · 牵连值" << (g_factionTie.favor >= 0 ? L"+" : L"") << g_factionTie.favor;
+    if (g_factionTie.binding) ss << L" · 已有契约";
+    if (!g_factionTie.obligation.empty()) ss << L" · " << g_factionTie.obligation;
+    if (!g_factionTie.hook.empty()) ss << L" · " << g_factionTie.hook;
+    return ss.str();
+}
+
+wstring BuildFactionTieText() {
+    wstringstream ss;
+    ss << L"【本世势力牵连】\n\n";
+    if (!HasFactionTie()) {
+        ss << L"这一世尚未被明确势力记录，但只要踏入道途，宗门、世家、仙朝或工坊迟早会注意到你。";
+        return ss.str();
+    }
+
+    ss << L"势力: " << g_factionTie.name << L"\n";
+    ss << L"类型: " << g_factionTie.kind << L"\n";
+    ss << L"身份: " << g_factionTie.role << L"\n";
+    ss << L"态度: " << g_factionTie.stance << L"\n";
+    ss << L"牵连值: " << (g_factionTie.favor >= 0 ? L"+" : L"") << g_factionTie.favor << L"\n";
+    ss << L"约束: " << (g_factionTie.binding ? L"已有契约或旧债" : L"尚可抽身，但已被记录") << L"\n";
+    if (!g_factionTie.obligation.empty()) {
+        ss << L"旧债/条件: " << g_factionTie.obligation << L"\n";
+    }
+    if (!g_factionTie.hook.empty()) {
+        ss << L"后续线索: " << g_factionTie.hook << L"\n";
+    }
+    ss << L"\n本地 AI 会优先把这个势力当成本世持续存在的组织来续写，而不是每次凭空换一个宗门。";
+    return ss.str();
+}
+
 void GenerateWorldEra() {
     struct EraProfile {
         const wchar_t* name;
@@ -1331,6 +1386,9 @@ wstring GetEraSummaryText() {
         ss << BuildEraRemnantsText(5) << L"\n";
     }
     ss << L"本世主题: " << g_lifePremise << L"\n";
+    if (HasFactionTie()) {
+        ss << L"本世势力: " << BuildFactionTieDigest() << L"\n";
+    }
     if (!g_lifeStoryHooks.empty()) {
         ss << L"本世线索:\n";
         for (const auto& hook : g_lifeStoryHooks) {
@@ -1399,6 +1457,9 @@ wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
+    if (HasFactionTie()) {
+        ss << BuildFactionTieText() << L"\n\n";
+    }
     if (g_lifeStoryHooks.empty()) {
         ss << L"线索尚未显露。";
         return ss.str();
@@ -1412,6 +1473,9 @@ wstring BuildLifeStoryText() {
 wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
+    if (HasFactionTie()) {
+        ss << L"本世势力牵连: " << BuildFactionTieDigest() << L"\n";
+    }
     if (!g_lifeStoryHooks.empty()) {
         ss << L"本世持续线索:\n";
         for (const auto& hook : g_lifeStoryHooks) {
@@ -1922,8 +1986,35 @@ void GenerateSocialThreads() {
             L"对方说是核验名册，实际在查你家世与前世旧名是否有关。", -6);
     }
 
+    if (HasFactionTie()) {
+        AddSocialThread(g_factionTie.name + L"联系人", L"势力牵连", g_factionTie.stance,
+            g_factionTie.hook.empty() ? g_factionTie.obligation : g_factionTie.hook,
+            g_factionTie.favor);
+    }
+
     if (g_socialThreads.size() > 5) {
+        SocialThread factionThread;
+        bool hasFactionThread = false;
+        for (const auto& thread : g_socialThreads) {
+            if (thread.role == L"势力牵连") {
+                factionThread = thread;
+                hasFactionThread = true;
+                break;
+            }
+        }
         g_socialThreads.resize(5);
+        if (hasFactionThread) {
+            bool kept = false;
+            for (const auto& thread : g_socialThreads) {
+                if (thread.role == L"势力牵连") {
+                    kept = true;
+                    break;
+                }
+            }
+            if (!kept) {
+                g_socialThreads[4] = factionThread;
+            }
+        }
     }
 }
 
@@ -1970,6 +2061,11 @@ void GenerateSocialRumors() {
 
     if (treasureEcho >= 40) {
         g_socialRumors.push_back(L"你偶尔会对某些残破法宝生出异样熟悉感，像是它们曾在另一世陪你见过血与雷劫。");
+    }
+
+    if (HasFactionTie()) {
+        g_socialRumors.push_back(g_factionTie.name + L"已经把你记入" + g_factionTie.role +
+            L"名册，态度是“" + g_factionTie.stance + L"”。");
     }
 
     if (g_socialRumors.size() > 6) {
@@ -2094,6 +2190,79 @@ void InitWorldData() {
     }
 }
 
+void GenerateFactionTie() {
+    g_factionTie = FactionTie();
+
+    const GeneratedSect* sect = nullptr;
+    if (!g_worldData.sects.empty()) {
+        int maxIndex = min<int>((int)g_worldData.sects.size() - 1, 2);
+        int index = (g_player.family.fame >= 55 || g_player.family.wealth >= 18) ? 0 : Random(0, maxIndex);
+        sect = &g_worldData.sects[index];
+    }
+
+    wstring baseName = sect ? sect->name : L"无名山门";
+    wstring baseKind = sect ? (sect->philosophy + L" / " + sect->specialty) : L"散修势力";
+    int totalRoot = g_player.GetTotalRoot();
+    bool gifted = (totalRoot >= 40 || g_player.hasBalancedRoots);
+    bool weak = (totalRoot < 30 && !g_player.hasBalancedRoots);
+    bool hiddenBirth = !g_player.family.knowsParents || !g_player.family.secret.empty();
+
+    int favor = g_player.family.fame / 3 + g_player.family.wealth / 4;
+    favor += gifted ? 24 : (weak ? -18 : 6);
+    favor += g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION) / 8;
+    favor = max(-80, min(90, favor));
+
+    g_factionTie.name = baseName;
+    g_factionTie.kind = baseKind;
+    g_factionTie.favor = favor;
+    g_factionTie.binding = hiddenBirth || g_player.family.fame >= 45 || g_player.family.origin == L"宗门附庸";
+
+    if (hiddenBirth) {
+        g_factionTie.obligation = L"对方掌握你身世或旧物线索，暂时不肯明说。";
+    } else if (g_player.family.origin == L"宗门附庸") {
+        g_factionTie.obligation = L"家中本就依附此势力，入道后需还一份供奉旧债。";
+    } else if (g_player.family.fame >= 55) {
+        g_factionTie.obligation = L"你的姓氏与此势力有旧交，也可能牵出旧仇。";
+    } else if (weak) {
+        g_factionTie.obligation = L"对方只愿给低阶差事，想看你能否熬过轻慢与杂役。";
+    } else {
+        g_factionTie.obligation = L"对方愿意给一次入局机会，但要看你如何偿还资源。";
+    }
+
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        g_factionTie.name = (sect && sect->name.find(L"盟") != wstring::npos) ? sect->name : baseName;
+        g_factionTie.kind = L"灵机工坊 / 阵械合约";
+        g_factionTie.role = gifted ? L"阵械功法试机人" : (weak ? L"低阶炉线学徒" : L"工坊合约候选");
+        g_factionTie.stance = gifted ? L"热情押注" : (weak ? L"务实利用" : L"谨慎拉拢");
+        g_factionTie.hook = L"他们想让你试用一套会记录经脉反馈的阵械功法，失败者往往寿元受损。";
+    } else if (g_worldEraName == L"星穹道网纪") {
+        g_factionTie.kind = L"道网节点 / 远讯试炼";
+        g_factionTie.role = gifted ? L"远程试炼种子" : (weak ? L"榜单边缘记录者" : L"道网背调对象");
+        g_factionTie.stance = gifted ? L"隔空下注" : (weak ? L"冷淡记录" : L"持续观察");
+        g_factionTie.hook = L"对方已经把你的灵根、家世和前世异常录入道网，后续机缘会以远讯坐标出现。";
+    } else if (g_worldEraName == L"末法裂变纪") {
+        g_factionTie.kind = L"灵井配给 / 替道试验";
+        g_factionTie.role = gifted ? L"灵井优先名额" : (weak ? L"配给末席" : L"阵械破境观察者");
+        g_factionTie.stance = gifted ? L"争相拉拢" : (weak ? L"轻慢压价" : L"利益衡量");
+        g_factionTie.hook = L"他们掌着一口半枯灵井，你得到的每份灵气都可能换来新的债。";
+    } else if (g_worldEraName == L"废土返道纪") {
+        g_factionTie.kind = L"残宗同盟 / 荒野护送";
+        g_factionTie.role = gifted ? L"重建法统人选" : (weak ? L"迁徙队伍累赘" : L"废墟探索同伴");
+        g_factionTie.stance = gifted ? L"现实重视" : (weak ? L"刻薄试探" : L"互利观望");
+        g_factionTie.hook = L"残宗准备迁徙进一片旧都废墟，你的前世记忆可能决定整队能不能活着出来。";
+    } else if (g_worldEraName == L"仙朝鼎盛纪") {
+        g_factionTie.kind = L"仙朝名册 / 世家旧契";
+        g_factionTie.role = gifted ? L"金榜预录名" : (weak ? L"旁支待核人" : L"册封候选");
+        g_factionTie.stance = gifted ? L"礼重试探" : (weak ? L"居高临下" : L"规矩审视");
+        g_factionTie.hook = L"仙朝名册似乎曾记录过与你相近的旧名，册封吏正在核验你的家世与前世因果。";
+    } else {
+        g_factionTie.kind = L"古典宗门 / 入门试炼";
+        g_factionTie.role = gifted ? L"内门种子" : (weak ? L"杂役试炼者" : L"外门候选");
+        g_factionTie.stance = gifted ? L"长辈认可" : (weak ? L"轻慢考验" : L"愿给机会");
+        g_factionTie.hook = L"山门入门试炼会牵出你的家世旧债，也会决定第一批同辈是巴结你还是欺负你。";
+    }
+}
+
 void GenerateLifeStoryHooks() {
     g_lifeStoryHooks.clear();
 
@@ -2128,6 +2297,10 @@ void GenerateLifeStoryHooks() {
         g_lifePremise = L"这是古典修仙秩序尚强的一世，宗门、秘境、天劫与家世旧债仍是道途主轴。";
         g_lifeStoryHooks.push_back(sectName + L"正在寻找能进入" + locName + L"的人，你的灵根与家世都可能被盯上。");
         g_lifeStoryHooks.push_back(L"一处古修遗府与" + familySecret + L"隐隐相连。");
+    }
+
+    if (HasFactionTie()) {
+        g_lifeStoryHooks.push_back(L"本世势力牵连：" + BuildFactionTieDigest());
     }
 
     if (!g_eraRemnants.empty()) {
@@ -2521,6 +2694,9 @@ PlayerContext BuildPlayerContext() {
     if (!g_player.family.secret.empty()) {
         ctx.familyState += L"；隐情:" + g_player.family.secret;
     }
+    if (HasFactionTie()) {
+        ctx.familyState += L"；本世势力:" + g_factionTie.name + L"(" + g_factionTie.role + L")";
+    }
     ctx.socialState = GetSocialDigest();
     ctx.killCount = g_player.battlesWon;
     ctx.helpCount = max(0, g_player.karma / 10);
@@ -2615,6 +2791,9 @@ PlayerContext BuildPlayerContext() {
         }
     }
     world << L"- 本世主线: " << g_lifePremise << L"\n";
+    if (HasFactionTie()) {
+        world << L"- 本世势力牵连: " << BuildFactionTieDigest() << L"\n";
+    }
     if (!g_lifeStoryHooks.empty()) {
         world << L"- 本世持续线索:\n";
         for (const auto& hook : g_lifeStoryHooks) {
@@ -2776,7 +2955,7 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V4\n";
+    file << L"WORLD_ERA_V5\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
@@ -2795,6 +2974,13 @@ void SaveWorldEra(wofstream& file) {
     for (auto& entry : g_eraChronicle) {
         file << EscapeSaveField(entry) << L"\n";
     }
+    file << EscapeSaveField(g_factionTie.name) << L"\n";
+    file << EscapeSaveField(g_factionTie.kind) << L"\n";
+    file << EscapeSaveField(g_factionTie.role) << L"\n";
+    file << EscapeSaveField(g_factionTie.stance) << L"\n";
+    file << EscapeSaveField(g_factionTie.obligation) << L"\n";
+    file << EscapeSaveField(g_factionTie.hook) << L"\n";
+    file << g_factionTie.favor << L" " << g_factionTie.binding << L"\n";
 }
 
 bool LoadWorldEra(wifstream& file) {
@@ -2804,14 +2990,15 @@ bool LoadWorldEra(wifstream& file) {
     bool isV2 = (marker == L"WORLD_ERA_V2");
     bool isV3 = (marker == L"WORLD_ERA_V3");
     bool isV4 = (marker == L"WORLD_ERA_V4");
-    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4) return false;
+    bool isV5 = (marker == L"WORLD_ERA_V5");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2 || isV3 || isV4) {
+    if (isV2 || isV3 || isV4 || isV5) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -2840,7 +3027,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_eraChronicle.clear();
-        if (isV4) {
+        if (isV4 || isV5) {
             size_t chronicleCount = 0;
             file >> chronicleCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -2850,11 +3037,29 @@ bool LoadWorldEra(wifstream& file) {
                 g_eraChronicle.push_back(UnescapeSaveField(entry));
             }
         }
+        g_factionTie = FactionTie();
+        if (isV5) {
+            getline(file, g_factionTie.name);
+            getline(file, g_factionTie.kind);
+            getline(file, g_factionTie.role);
+            getline(file, g_factionTie.stance);
+            getline(file, g_factionTie.obligation);
+            getline(file, g_factionTie.hook);
+            g_factionTie.name = UnescapeSaveField(g_factionTie.name);
+            g_factionTie.kind = UnescapeSaveField(g_factionTie.kind);
+            g_factionTie.role = UnescapeSaveField(g_factionTie.role);
+            g_factionTie.stance = UnescapeSaveField(g_factionTie.stance);
+            g_factionTie.obligation = UnescapeSaveField(g_factionTie.obligation);
+            g_factionTie.hook = UnescapeSaveField(g_factionTie.hook);
+            file >> g_factionTie.favor >> g_factionTie.binding;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        }
     } else {
         g_lifePremise = L"此世主线来自旧存档，尚未记录明确线索。";
         g_lifeStoryHooks.clear();
         g_eraRemnants.clear();
         g_eraChronicle.clear();
+        g_factionTie = FactionTie();
     }
     return true;
 }
@@ -2932,6 +3137,9 @@ bool LoadGame() {
     LoadFamily(file, g_player.family);
     LoadWorldEra(file);
     LoadGeneratedWorld(file);
+    if (!HasFactionTie()) {
+        GenerateFactionTie();
+    }
     g_dynamicWorld.SetEraFlavor(g_worldEraName);
     g_dynamicWorld.Load(file);
     g_contextMgr.Load(file);
@@ -3069,6 +3277,9 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
     if (!g_socialThreads.empty()) {
         add(L"未结清的人情债：" + BuildSocialThreadLine(g_socialThreads[0]));
     }
+    if (HasFactionTie()) {
+        add(L"未清的势力牵连：" + BuildFactionTieDigest());
+    }
     if (!g_eraRemnants.empty()) {
         add(L"旧世残响仍在：" + g_eraRemnants[0]);
     }
@@ -3118,6 +3329,7 @@ void StartNextLife() {
 
     GenerateWorldEra();
     InitWorldData();
+    GenerateFactionTie();
     GenerateLifeStoryHooks();
     g_dynamicWorld.SetEraFlavor(g_worldEraName);
     g_dynamicWorld.Reset();
@@ -3139,6 +3351,7 @@ void StartNextLife() {
     AddMemory(L"本世主线", g_lifePremise);
     if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
     AddMemory(L"前世余烬", g_reincarnationEcho);
+    if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
     for (const auto& fragment : rememberedFragments) {
         AddMemory(L"前世忆起", fragment);
@@ -3153,6 +3366,7 @@ void StartNextLife() {
     AddMemory(L"此世出身", GetFamilySummary(g_player.family));
     if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
     if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
+    DiscoverItemsFromText(BuildFactionTieDigest());
 
     g_contextMgr.SetContext(BuildPlayerContext());
 
@@ -3688,6 +3902,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_eraChronicle.clear();
                 GenerateWorldEra();
                 InitWorldData();
+                GenerateFactionTie();
                 GenerateLifeStoryHooks();
                 g_dynamicWorld.SetEraFlavor(g_worldEraName);
                 g_dynamicWorld.Reset();
@@ -3697,11 +3912,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 AddMemory(L"时代变迁", g_eraTransitionNote);
                 if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
                 AddMemory(L"本世主线", g_lifePremise);
+                if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
                 if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
                 if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
                 DiscoverItemsFromText(g_player.family.secret);
+                DiscoverItemsFromText(BuildFactionTieDigest());
                 DiscoverItemsFromText(BuildSocialThreadDigest(5));
                 DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
                 g_contextMgr.SetContext(BuildPlayerContext());
@@ -4006,7 +4223,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'F' || wParam == 'f') {
-                    OpenInfoPage(L"此世家世", GetFamilyDetailText(g_player.family), STATE_GAME);
+                    OpenInfoPage(L"此世家世", GetFamilyDetailText(g_player.family) + L"\n\n" + BuildFactionTieText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'R' || wParam == 'r') {
