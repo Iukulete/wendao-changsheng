@@ -99,6 +99,46 @@ private:
         return L"尚未定型的祖境道痕，仍会随每一世选择而偏转。";
     }
 
+    wstring SelectDaoTechniqueName(const PastLife& life) const {
+        wstring daoName = SelectDaoName(life);
+        if (daoName == L"杀伐大道") return L"斩劫真名";
+        if (daoName == L"护生大道") return L"青莲护生经";
+        if (daoName == L"血煞大道") return L"血海还真录";
+        if (daoName == L"因果大道") return L"照因问果书";
+        if (daoName == L"长生大道") return L"岁月长生章";
+        if (daoName == L"众生大道") return L"愿海众生经";
+        return L"太虚照我诀";
+    }
+
+    wstring SelectAscensionTechniqueName(const PastLife& life) const {
+        if (life.battlesWon >= 30) return L"踏阙斩雷诀";
+        if (life.karma >= 80) return L"青灯登仙经";
+        if (life.karma <= -80) return L"血影渡阙录";
+        if (life.npcsMet >= 15) return L"万缘登仙篇";
+        if (life.totalEvents >= 60) return L"百劫登仙录";
+        return L"太虚登仙诀";
+    }
+
+    wstring SelectSpiritTechniqueName(const PastLife& life) const {
+        if (life.battlesWon >= 12) return L"裂魂化神篇";
+        if (life.karma >= 50) return L"护生化神诀";
+        if (life.karma <= -50) return L"煞影化神录";
+        if (life.totalEvents >= 35) return L"百劫照神篇";
+        return L"照虚化神篇";
+    }
+
+    wstring BuildLegacyNameDigest(const vector<LegacyItem>& legacies, int limit = 3) const {
+        if (legacies.empty()) return L"";
+        wstringstream ss;
+        int count = min(limit, (int)legacies.size());
+        for (int i = 0; i < count; ++i) {
+            if (i > 0) ss << L"、";
+            ss << legacies[i].name;
+        }
+        if ((int)legacies.size() > count) ss << L"等";
+        return ss.str();
+    }
+
     int ResonanceAwakeningStage(int resonance) const {
         if (resonance >= 760) return 5;
         if (resonance >= 520) return 4;
@@ -269,22 +309,22 @@ public:
         if (life.realmReached >= 19) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TECHNIQUE,
-                SelectDaoName(life) + L"真名",
+                SelectDaoTechniqueName(life),
                 L"上一世证成道祖，肉身与仙帝寿元都会走到尽头，唯有掌握的大道可与轮回共鸣。",
                 160 + life.totalEvents / 4 + KarmaMagnitude(life.karma) / 6
             ));
         } else if (life.realmReached >= 10) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TECHNIQUE,
-                L"登仙道诀",
-                L"前世冲过仙门后留下的行功脉络，并非道祖真传，却足以让这一世少走弯路。",
+                SelectAscensionTechniqueName(life),
+                L"前世冲过仙门后留下的行功脉络，被后世误作失传古法，并非道祖真传，却足以让这一世少走弯路。",
                 80
             ));
         } else if (life.realmReached >= 5) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TECHNIQUE,
-                L"化神感悟",
-                L"前世的修炼心得",
+                SelectSpiritTechniqueName(life),
+                L"前世化神前后反复打磨出的修炼心得，行功节奏与寻常入门法完全不同。",
                 50
             ));
         }
@@ -545,7 +585,10 @@ public:
                 ss << L"  境界: " << life.realmReached << L"\n";
                 ss << L"  享年: " << life.ageAtDeath << L"岁\n";
                 ss << L"  死因: " << life.causeOfDeath << L"\n";
-                ss << L"  留下传承: " << life.legacies.size() << L"个\n";
+                ss << L"  留下传承: " << life.legacies.size() << L"个";
+                wstring digest = BuildLegacyNameDigest(life.legacies, 3);
+                if (!digest.empty()) ss << L"（" << digest << L"）";
+                ss << L"\n";
                 ss << L"  记忆碎片: " << life.memoryFragments.size() << L"段\n";
                 ss << L"  未竟因果: " << life.unfinishedKarmas.size() << L"条\n";
             }
