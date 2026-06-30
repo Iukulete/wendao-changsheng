@@ -39,7 +39,7 @@ int GetEraAdventureRiskModifier();
 int GetEraClosedDoorBonus();
 int GetEraAiEventChance();
 
-// ==================== 完整境界系统（20个） ====================
+// ==================== 完整境界系统（21个） ====================
 enum Realm {
     // 下界修真（10个）
     MORTAL = 0,         // 凡人
@@ -65,7 +65,8 @@ enum Realm {
     IMMORTAL_KING,      // 仙王
     IMMORTAL_SOVEREIGN, // 仙尊
     IMMORTAL_EMPEROR,   // 仙帝
-    DAO_ANCESTOR        // 道祖
+    DAO_ANCESTOR,       // 道祖
+    HEAVENLY_DAO        // 天道境
 };
 
 wstring GetRealmName(Realm realm) {
@@ -74,14 +75,15 @@ wstring GetRealmName(Realm realm) {
         L"元婴期", L"化神期", L"炼虚期", L"合体期",
         L"渡劫期", L"大乘期", L"半仙之体",
         L"真仙境", L"天仙境", L"玄仙境", L"金仙境",
-        L"仙君", L"仙王", L"仙尊", L"仙帝", L"道祖"
+        L"仙君", L"仙王", L"仙尊", L"仙帝", L"道祖", L"天道境"
     };
-    int index = max(0, min((int)realm, (int)DAO_ANCESTOR));
+    int index = max(0, min((int)realm, (int)HEAVENLY_DAO));
     return names[index];
 }
 
 wstring GetRealmPhase(Realm realm) {
-    if (realm >= DAO_ANCESTOR) return L"【至高主宰】";
+    if (realm >= HEAVENLY_DAO) return L"【万道归一】";
+    if (realm >= DAO_ANCESTOR) return L"【与道共生】";
     if (realm <= MAHAYANA) return L"【下界修真】";
     if (realm == HALF_IMMORTAL) return L"【冲仙门】";
     if (realm <= GOLDEN_IMMORTAL) return L"【仙界低阶】";
@@ -282,7 +284,7 @@ public:
     }
 
     bool CanBreakthrough() const {
-        if (realm >= DAO_ANCESTOR) return false;
+        if (realm >= HEAVENLY_DAO) return false;
         if (level < 9 || exp < GetExpNeeded()) return false;
         // 大乘期→半仙之体，必须五行均衡
         if (realm == MAHAYANA && !hasBalancedRoots) {
@@ -348,6 +350,9 @@ public:
         if (realm >= TRUE_IMMORTAL) {
             successRate -= 20;
         }
+        if (realm >= DAO_ANCESTOR) {
+            successRate -= 35;
+        }
 
         if (successRate > 95) successRate = 95;
         if (successRate < 10) successRate = 10;
@@ -366,6 +371,14 @@ public:
                 hpBonus = 500;
                 mpBonus = 300;
                 lifespanBonus = 1000;
+            } else if (realm == DAO_ANCESTOR) {
+                hpBonus = 5000;
+                mpBonus = 3000;
+                lifespanBonus = 100000;
+            } else if (realm == HEAVENLY_DAO) {
+                hpBonus = 20000;
+                mpBonus = 12000;
+                lifespanBonus = 1000000;
             }
 
             maxHp += hpBonus;
@@ -384,7 +397,9 @@ public:
     }
 
     bool IsDead() const {
-        return age >= lifespan || hp <= 0;
+        if (hp <= 0) return true;
+        if (realm >= DAO_ANCESTOR) return false;
+        return age >= lifespan;
     }
 
     wstring GetStatusText() const {
@@ -403,7 +418,11 @@ public:
         }
 
         ss << L"因果: " << karma << L"\n";
-        ss << L"年龄: " << age << L" / " << lifespan << L"\n";
+        if (realm >= DAO_ANCESTOR) {
+            ss << L"年龄: " << age << L" / 与道共生\n";
+        } else {
+            ss << L"年龄: " << age << L" / " << lifespan << L"\n";
+        }
         ss << L"灵石: " << spiritStones << L" | 丹药: " << pills << L"\n";
         ss << L"历练: " << totalEvents << L" | 胜场: " << battlesWon << L" | 结识: " << npcsMet;
         return ss.str();
@@ -814,6 +833,7 @@ wstring g_worldEraName = L"灵气初盛纪";
 wstring g_worldEraDescription = L"诸宗并立，洞府初开，天下仍以修仙宗门为正统。";
 wstring g_worldEraRule = L"灵气丰沛，修士主宰秩序，凡俗仍仰望山门。";
 wstring g_reincarnationEcho = L"前世的残响尚浅，还不足以彻底改变这一世。";
+wstring g_eraTransitionNote = L"这是本局第一段完整时代，后续转世可能迎来完全不同的天地秩序。";
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
@@ -1036,6 +1056,7 @@ void GenerateWorldEra() {
         {L"废土返道纪", L"上一轮文明在灾变中崩塌，残存修士、古代灵机与荒野邪祟共同瓜分世界。", L"活下去与重建秩序比纯粹飞升更难，传承因此格外珍贵。"}
     };
 
+    wstring previousEra = g_worldEraName;
     int baseIndex = Random(0, (int)eras.size() - 1);
     if (g_generation >= 3) {
         baseIndex = (g_generation - 1 + Random(0, 2)) % (int)eras.size();
@@ -1046,12 +1067,21 @@ void GenerateWorldEra() {
     g_worldEraDescription = era.desc;
     g_worldEraRule = era.rule;
 
+    if (g_generation <= 1) {
+        g_eraTransitionNote = L"这是本局第一段完整时代。若你死后转世，下一世可能已经从古典修仙演化到灵机、道网、末法或废土。";
+    } else if (previousEra == g_worldEraName) {
+        g_eraTransitionNote = L"轮回之后，时代大势仍延续为" + g_worldEraName + L"，但人事、宗门与机缘已经重新洗牌。";
+    } else {
+        g_eraTransitionNote = L"轮回醒来时，天地秩序已由" + previousEra + L"转入" + g_worldEraName + L"，旧经验只能作为参考。";
+    }
+
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int knowledgeEcho = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int memoryEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    int relicEcho = g_legacySystem.GetRelicResonanceBonus();
 
-    if (treasureEcho >= 40) {
+    if (relicEcho >= 25 || treasureEcho >= 40) {
         g_reincarnationEcho = L"你隐约能感到某件前世祭炼过的重宝仍在呼应自己，这一世有关器灵、法宝与遗府的因果会更浓。";
     } else if (knowledgeEcho >= 40) {
         g_reincarnationEcho = L"你对阵法、斗法与局势判断有一种不合年龄的熟悉感，像是旧世经验仍在替你做选择。";
@@ -1070,6 +1100,7 @@ wstring GetEraSummaryText() {
     ss << L"纪元: " << g_worldEraName << L"\n";
     ss << g_worldEraDescription << L"\n";
     ss << L"时代法则: " << g_worldEraRule << L"\n";
+    ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"轮回余烬: " << g_reincarnationEcho;
     return ss.str();
 }
@@ -1117,18 +1148,125 @@ int GetEraClosedDoorBonus() {
 }
 
 int GetEraAiEventChance() {
-    if (g_worldEraName == L"星穹道网纪") return 42;
-    if (g_worldEraName == L"灵机蒸汽纪") return 36;
-    if (g_worldEraName == L"末法裂变纪") return 26;
-    if (g_worldEraName == L"废土返道纪") return 24;
-    return 30;
+    int chance = 30;
+    if (g_worldEraName == L"星穹道网纪") chance = 42;
+    else if (g_worldEraName == L"灵机蒸汽纪") chance = 36;
+    else if (g_worldEraName == L"末法裂变纪") chance = 26;
+    else if (g_worldEraName == L"废土返道纪") chance = 24;
+
+    int echoWeight = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) / 35 +
+                     g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) / 45 +
+                     g_legacySystem.GetRelicResonanceBonus() / 8;
+    return max(18, min(55, chance + echoWeight));
+}
+
+struct HongmengTreasure {
+    const wchar_t* name;
+    const wchar_t* dao;
+    const wchar_t* miracle;
+};
+
+const vector<HongmengTreasure>& GetHongmengTreasures() {
+    static const vector<HongmengTreasure> treasures = {
+        {L"鸿蒙道印", L"万道源流", L"可映照一切大道的真名，见印者会知道自己离道祖还有多远。"},
+        {L"造化青莲", L"生灭造化", L"一瓣可开一界，一息可让死地重生，但不会为凡俗愿望轻易摇动。"},
+        {L"混沌天钟", L"时空定序", L"钟声能定住一段时代的因果，使文明在崩塌前多喘一口气。"},
+        {L"太初源炉", L"炼法归元", L"能把破碎法则重新炼成可修之路，末法时代最忌惮它的影子。"},
+        {L"归墟玄图", L"终末归藏", L"记录诸界走向终点的方式，能让灭亡不只是毁灭，也成为重启。"},
+        {L"无量天书", L"因果全录", L"页中不写命运，却会显出每一次选择真正欠下的债。"},
+        {L"开界神斧", L"破混开天", L"只需一线斧光，便能把混沌劈成可容众生立足的新界。"},
+        {L"轮回古镜", L"前尘照命", L"不照容貌，只照灵魂在无数世里反复避开的那一道裂痕。"},
+        {L"万道母鼎", L"诸道孕育", L"鼎中可孕育尚未被命名的新道，连道祖也只能参拜其影。"}
+    };
+    return treasures;
+}
+
+wstring BuildHongmengTreasureSummary(int limit = 3) {
+    const auto& treasures = GetHongmengTreasures();
+    wstringstream ss;
+    ss << L"【九大鸿蒙至宝】创世级恒在之物，不属于任何一世，也不会被普通道祖毁灭。\n";
+    int count = min(limit, (int)treasures.size());
+    for (int i = 0; i < count; ++i) {
+        ss << L"- " << treasures[i].name << L"（" << treasures[i].dao << L"）: " << treasures[i].miracle << L"\n";
+    }
+    ss << L"- 只有掌尽诸道的天道境，才具备毁灭它们的理论力量；但毁灭本身没有意义，只证明其已凌驾万道。\n";
+    return ss.str();
+}
+
+wstring BuildHongmengTreasuresText() {
+    const auto& treasures = GetHongmengTreasures();
+    wstringstream ss;
+    ss << L"【九大鸿蒙至宝】\n\n";
+    ss << L"它们是创世级恒在之物，不是兵刃、法宝或通天灵宝，也不会随某一世兴衰而消失。\n";
+    ss << L"道祖可以参悟、借势、被其选中或被其拒绝，却无法毁灭它们。\n";
+    ss << L"只有掌握所有大道、抵达天道境的存在，才具备毁灭鸿蒙至宝的理论力量；但真到那一步，毁灭已经没有必要，只是一种力量映射。\n\n";
+
+    for (size_t i = 0; i < treasures.size(); ++i) {
+        ss << L"[" << (i + 1) << L"] " << treasures[i].name << L"\n";
+        ss << L"所映大道: " << treasures[i].dao << L"\n";
+        ss << L"神奇: " << treasures[i].miracle << L"\n";
+        ss << L"状态: 永恒在世，不可被普通道祖毁灭。\n\n";
+    }
+    return ss.str();
+}
+
+wstring BuildHongmengContextText() {
+    wstringstream ss;
+    ss << L"九大鸿蒙至宝为创世级恒在之物: ";
+    const auto& treasures = GetHongmengTreasures();
+    for (size_t i = 0; i < treasures.size(); ++i) {
+        if (i > 0) ss << L"、";
+        ss << treasures[i].name;
+    }
+    ss << L"。它们不是普通装备，也不是通天灵宝；道祖无法毁灭，只有掌尽诸道的天道境具备理论毁灭力，但毁灭没有必要。";
+    return ss.str();
+}
+
+int GetHeavenlyDaoProgressScore() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    int score = 0;
+    score += relic.daoDepth;
+    score += relic.resonance / 2;
+    score += g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) / 4;
+    score += g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) / 4;
+    score += g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) / 5;
+    score += max(0, g_player.GetTotalRoot()) * 2;
+    score += min(120, g_generation * 8);
+    return score;
+}
+
+bool CanAttainHeavenlyDao() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    return g_player.realm == DAO_ANCESTOR && relic.daoLinked && GetHeavenlyDaoProgressScore() >= 360;
+}
+
+wstring GetHeavenlyDaoRequirementText() {
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+    int progress = GetHeavenlyDaoProgressScore();
+    wstringstream ss;
+    ss << L"【天道境】\n\n";
+    ss << L"道祖只是与一条或数条大道共生；天道境则是掌尽诸道，能从万道之上回望鸿蒙。\n";
+    ss << L"当前掌道: " << (relic.daoLinked ? relic.daoName : L"尚未真正证成") << L"\n";
+    ss << L"万道归一: " << progress << L" / 360\n";
+    ss << L"通天灵宝共鸣: " << relic.resonance << L"\n";
+    ss << L"掌道深度: " << relic.daoDepth << L"\n\n";
+    if (!relic.daoLinked) {
+        ss << L"你还没有真正把今生大道刻入通天灵宝残印。先证成道祖，让自身大道稳定下来。\n";
+    } else if (progress < 360) {
+        ss << L"你已经是道祖，但仍未能统摄万道。继续历练、触发前世回响、加深通天灵宝共鸣，才可能触及天道境。\n";
+    } else {
+        ss << L"你已具备叩问天道境的资格。若成功，九大鸿蒙至宝也只剩理论上的可毁之物。\n";
+    }
+    ss << L"\n" << BuildHongmengTreasureSummary(2);
+    return ss.str();
 }
 
 bool ShouldTriggerLegacyEchoEvent() {
     int totalEcho = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) +
                     g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE) +
                     g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) +
-                    abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION));
+                    abs(g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION)) +
+                    g_legacySystem.GetRelicResonanceBonus() * 2;
     if (totalEcho <= 0) return false;
 
     int chance = 12 + totalEcho / 18;
@@ -1145,6 +1283,42 @@ Event BuildLegacyEchoEvent() {
     int knowledgeEcho = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    const LegacyRelic& relic = g_legacySystem.GetRelic();
+
+    if (g_player.realm >= DAO_ANCESTOR || relic.daoDepth >= 120 || relic.resonance >= 180) {
+        const auto& treasures = GetHongmengTreasures();
+        const HongmengTreasure& treasure = treasures[Random(0, (int)treasures.size() - 1)];
+        wstring treasureName = treasure.name;
+        wstring treasureDao = treasure.dao;
+        evt.title = L"【鸿蒙】" + treasureName + L"投影";
+        evt.description = L"一缕创世级气息掠过识海，" + treasureName + L"的影子在万道之外显现。你知道它永恒在世，道祖也只能参悟，不能毁灭。";
+        evt.choices = {
+            {L"参悟其影", {
+                L"你借" + treasureDao + L"之影稳住自身大道\n修为+220，掌道+18，灵宝共鸣+12",
+                L"鸿蒙之影过于高远，你的神魂被震得发白\n气血-45"
+            }, 10},
+            {L"叩问来路", {
+                L"你没有妄求占有，只从投影里问出一段创世旧闻\n修为+120，因果+15，掌道+10",
+                L"投影沉默不答，只留下一道难解的谜痕"
+            }, 8},
+            {L"妄图摄取", {
+                L"你只摄来一缕余光，便立刻明白至宝不可据为己有\n修为+80",
+                L"至宝投影拒绝了你，道心被压回尘土\n气血-60，因果-25"
+            }, -15}
+        };
+        return evt;
+    }
+
+    if (relic.daoLinked && relic.daoDepth > 0) {
+        evt.title = L"【传承】大道旧痕";
+        evt.description = L"你忽然听见识海深处有古老道音回应，上一世证成的" + relic.daoName + L"并未真正消散，只是在等待今生重新承认它。";
+        evt.choices = {
+            {L"顺应道音", {L"你没有强求力量，只让旧日大道在心底留下一笔\n修为+160，因果+10", L"大道太重，今生神魂一时难以承受\n气血-35"}, 8},
+            {L"借道压人", {L"你短暂借来祖境威压，逼退窥伺者\n修为+120，灵石+30", L"旧道反噬，旁人也记住了你的异常\n因果-20"}, -8},
+            {L"另立今生", {L"你承认前世，却不愿完全被前世吞没\n修为+90，寿命+8年", L"斩断太急，旧日道痕沉寂许久"}, 6}
+        };
+        return evt;
+    }
 
     if (treasureEcho >= max(memoryEcho, knowledgeEcho) && treasureEcho > 0) {
         evt.title = L"【传承】前世灵宝残响";
@@ -1362,6 +1536,7 @@ wstring BuildItemCodexText() {
     if (!rows.empty()) {
         wstringstream out;
         out << L"【灵物图录】\n\n";
+        out << L"说明: 这里记录的是当世见闻。兵刃、材料、丹药与普通法宝都会随时代损毁或失散，不能像通天灵宝道痕那样跨世继承。\n\n";
         out << L"已见灵物: " << g_discoveredItems.size() << L" / " << rows.size() << L"\n\n";
         int index = 1;
         for (auto& cols : rows) {
@@ -1407,6 +1582,7 @@ wstring BuildItemCodexText() {
 
     wstringstream ss;
     ss << L"【灵物图录】\n\n";
+    ss << L"说明: 图录是当世见闻，不等于轮回传承。能跨世回响的只有记忆、因果、道痕与通天灵宝残印。\n\n";
     int count = (int)names.size();
     for (int i = 0; i < count; ++i) {
         ss << L"[" << (i + 1) << L"] " << names[i];
@@ -1424,8 +1600,8 @@ wstring BuildItemCatalogDigest() {
     if (!rows.empty()) {
         map<wstring, vector<wstring>> groups;
         map<wstring, wstring> labels = {
-            {L"weapons", L"兵刃"},
-            {L"artifacts", L"法宝"},
+            {L"weapons", L"当世兵刃"},
+            {L"artifacts", L"当世法宝"},
             {L"consumables", L"消耗品"},
             {L"materials", L"材料"},
         };
@@ -1455,7 +1631,7 @@ wstring BuildItemCatalogDigest() {
 
     vector<pair<wstring, vector<wstring>>> groups;
     vector<wstring> keys = {L"weapons", L"artifacts", L"consumables", L"materials"};
-    vector<wstring> labels = {L"兵刃", L"法宝", L"消耗品", L"材料"};
+    vector<wstring> labels = {L"当世兵刃", L"当世法宝", L"消耗品", L"材料"};
 
     for (size_t k = 0; k < keys.size(); ++k) {
         size_t pos = raw.find(L"\"" + keys[k] + L"\"");
@@ -1570,6 +1746,7 @@ wstring GetWorldInfoText() {
 
     ss << L"\n" << g_dynamicWorld.GetRecentHistoryText(6) << L"\n";
     ss << L"\n" << GetGeneratedWorldText();
+    ss << L"\n" << BuildHongmengTreasureSummary(4);
     return ss.str();
 }
 
@@ -1577,6 +1754,8 @@ wstring GetLegacyInfoText() {
     return GetEraSummaryText() + L"\n\n" +
            g_legacySystem.GetHistoryText() + L"\n\n" +
            g_legacySystem.GetInheritedLegaciesText() + L"\n\n" +
+           GetHeavenlyDaoRequirementText() + L"\n\n" +
+           BuildHongmengTreasuresText() + L"\n\n" +
            g_achievementSystem.GetAchievementsText();
 }
 
@@ -1652,13 +1831,21 @@ PlayerContext BuildPlayerContext() {
     if (!g_reincarnationEcho.empty()) {
         legacy << L"轮回余烬: " << g_reincarnationEcho << L"\n";
     }
+    legacy << L"时代变迁: " << g_eraTransitionNote << L"\n";
+    legacy << g_legacySystem.GetDaoContextText() << L"\n";
+    legacy << BuildHongmengContextText() << L"\n";
     ctx.legacyState = legacy.str();
+    ctx.daoState = g_legacySystem.GetDaoContextText() + L"\n" +
+                   GetHeavenlyDaoRequirementText() + L"\n" +
+                   BuildHongmengContextText();
 
     wstringstream world;
     world << L"- 时代纪元: " << g_worldEraName << L"\n";
     world << L"- 时代概况: " << g_worldEraDescription << L"\n";
     world << L"- 时代法则: " << g_worldEraRule << L"\n";
+    world << L"- 时代变迁: " << g_eraTransitionNote << L"\n";
     world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
+    world << L"- 天道境进度: " << GetHeavenlyDaoProgressScore() << L" / 360\n";
     world << L"- 世界时间: 第" << g_dynamicWorld.GetWorldTime() << L"年\n";
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
     if (activeEvent) {
@@ -1804,12 +1991,35 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
     return true;
 }
 
+void SaveWorldEra(wofstream& file) {
+    file << L"WORLD_ERA_V1\n";
+    file << g_worldEraName << L"\n";
+    file << g_worldEraDescription << L"\n";
+    file << g_worldEraRule << L"\n";
+    file << g_reincarnationEcho << L"\n";
+    file << g_eraTransitionNote << L"\n";
+}
+
+bool LoadWorldEra(wifstream& file) {
+    wstring marker;
+    getline(file, marker);
+    if (marker.empty()) getline(file, marker);
+    if (marker != L"WORLD_ERA_V1") return false;
+
+    getline(file, g_worldEraName);
+    getline(file, g_worldEraDescription);
+    getline(file, g_worldEraRule);
+    getline(file, g_reincarnationEcho);
+    getline(file, g_eraTransitionNote);
+    return true;
+}
+
 // ==================== 存档系统 ====================
 void SaveGame() {
     wofstream file(L"save.txt");
     if (!file) return;
 
-    file << L"SAVE_V3\n";
+    file << L"SAVE_V4\n";
     file << g_player.name << L"\n";
     file << g_player.realm << L"\n";
     file << g_player.level << L"\n";
@@ -1835,6 +2045,7 @@ void SaveGame() {
     file << g_player.npcsMet << L"\n";
 
     SaveFamily(file, g_player.family);
+    SaveWorldEra(file);
     SaveGeneratedWorld(file);
     g_dynamicWorld.Save(file);
     g_contextMgr.Save(file);
@@ -1853,8 +2064,8 @@ bool LoadGame() {
 
     wstring firstLine;
     getline(file, firstLine);
-    bool isV3 = (firstLine == L"SAVE_V3");
-    if (!isV3) return false;
+    bool isV4 = (firstLine == L"SAVE_V4");
+    if (!isV4) return false;
 
     getline(file, g_player.name);
 
@@ -1873,6 +2084,7 @@ bool LoadGame() {
     file >> g_player.totalEvents >> g_player.battlesWon >> g_player.npcsMet;
     file.ignore(numeric_limits<streamsize>::max(), L'\n');
     LoadFamily(file, g_player.family);
+    LoadWorldEra(file);
     LoadGeneratedWorld(file);
     g_dynamicWorld.Load(file);
     g_contextMgr.Load(file);
@@ -1926,6 +2138,8 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     int lifeGain = ExtractValue(outcome, L"寿命+");
     int karmaGain = ExtractValue(outcome, L"因果+");
     int karmaLoss = ExtractValue(outcome, L"因果-");
+    int relicGain = ExtractValue(outcome, L"灵宝共鸣+");
+    int daoGain = ExtractValue(outcome, L"掌道+");
 
     g_player.exp = max(0, g_player.exp + expGain - expLoss);
     g_player.spiritStones = max(0, g_player.spiritStones + stoneGain - stoneLoss);
@@ -1933,6 +2147,12 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     g_player.hp = min(g_player.maxHp, max(0, g_player.hp + hpGain - hpLoss));
     g_player.lifespan = max(g_player.age, g_player.lifespan + lifeGain - lifeLoss);
     g_player.karma += karmaGain - karmaLoss;
+    if (relicGain > 0) {
+        g_legacySystem.AddRelicResonance(relicGain);
+    }
+    if (daoGain > 0) {
+        g_legacySystem.AddDaoDepth(daoGain);
+    }
 
     int rootGain = ExtractValue(outcome, L"灵根+");
     if (rootGain > 0) {
@@ -2004,9 +2224,12 @@ void StartNextLife() {
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int knowledgeBonus = g_legacySystem.GetLegacyBonus(LEGACY_KNOWLEDGE);
     int reputationBonus = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    int treasureBonus = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
+    int relicBonus = g_legacySystem.GetRelicResonanceBonus();
 
-    g_player.exp += memoryBonus;
-    g_player.attackPower += knowledgeBonus / 5;
+    g_player.exp += memoryBonus + relicBonus * 3;
+    g_player.attackPower += knowledgeBonus / 5 + relicBonus / 2;
+    g_player.defense += treasureBonus / 12;
     g_player.karma += reputationBonus;
 
     GenerateWorldEra();
@@ -2017,14 +2240,19 @@ void StartNextLife() {
 
     wstringstream detail;
     detail << L"第" << g_generation << L"世醒来";
-    if (memoryBonus || knowledgeBonus || reputationBonus) {
+    if (memoryBonus || knowledgeBonus || reputationBonus || treasureBonus || relicBonus) {
         detail << L"，继承前世余韵：记忆+" << memoryBonus
                << L"，战斗+" << knowledgeBonus / 5
-               << L"，因果" << (reputationBonus >= 0 ? L"+" : L"") << reputationBonus;
+               << L"，因果" << (reputationBonus >= 0 ? L"+" : L"") << reputationBonus
+               << L"，灵宝共鸣+" << relicBonus;
     }
     AddMemory(L"轮回再起", detail.str());
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
+    AddMemory(L"时代变迁", g_eraTransitionNote);
     AddMemory(L"前世余烬", g_reincarnationEcho);
+    if (relicBonus > 0 || treasureBonus > 0) {
+        AddMemory(L"通天灵宝", g_legacySystem.GetDaoContextText());
+    }
     AddMemory(L"此世出身", GetFamilySummary(g_player.family));
     if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
 
@@ -2134,6 +2362,7 @@ wstring BuildMainWorldDigest() {
     wstringstream ss;
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
     ss << g_worldEraName << L"\n";
+    ss << g_eraTransitionNote << L"\n";
     ss << L"世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
     if (activeEvent) {
         ss << activeEvent->title << L"\n";
@@ -2376,6 +2605,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[F] 此世家世",
                 L"[R] 人情风波",
                 L"[I] 灵物图录",
+                L"[T] 鸿蒙至宝",
                 L"[H] 道途记忆",
                 L"[G] 前世传承",
                 L"[S] 保存",
@@ -2556,6 +2786,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 GenerateSocialRumors();
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
                 AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
+                AddMemory(L"时代变迁", g_eraTransitionNote);
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
                 DiscoverItemsFromText(g_player.family.secret);
@@ -2728,8 +2959,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 else if (wParam == '3') {
                     if (!g_player.CanBreakthrough()) {
                         wstring msg = L"还不满足突破条件！\n";
-                        if (g_player.realm >= DAO_ANCESTOR) {
-                            msg = L"你已证道成祖，道途已至此世终点。";
+                        if (g_player.realm >= HEAVENLY_DAO) {
+                            msg = L"你已抵达天道境，万道归一，此世道途已至极点。";
+                        } else if (g_player.realm == DAO_ANCESTOR) {
+                            msg += L"你已与自身大道共生，但若要叩问天道境，仍需修至道祖九层并积蓄足够修为。\n\n";
+                            msg += GetHeavenlyDaoRequirementText();
                         } else if (g_player.realm == MAHAYANA && !g_player.hasBalancedRoots) {
                             msg += L"\n⚠ 五行不均，无法飞升！\n需要五行灵根均衡才能冲仙门\n";
                             msg += L"当前灵根：\n" + g_player.GetRootDetails();
@@ -2738,6 +2972,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         }
                         ShowNotice(L"突破条件", msg);
                     } else {
+                        if (g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao()) {
+                            ShowNotice(L"天道未合", GetHeavenlyDaoRequirementText());
+                            InvalidateRect(hWnd, NULL, FALSE);
+                            break;
+                        }
                         int result = MessageBoxW(hWnd,
                             (L"是否突破至 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L"？").c_str(),
                             L"突破境界", MB_YESNO | MB_ICONQUESTION);
@@ -2747,13 +2986,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 AddMemory(L"境界突破", L"踏入 " + GetRealmName(g_player.realm));
                                 AddMemory(L"时代法则", L"在" + g_worldEraName + L"中破境成功，说明此世大道仍愿意为你开门。");
                                 if (g_player.realm == DAO_ANCESTOR) {
+                                    g_legacySystem.AttuneDaoFromCurrentLife(
+                                        g_player.realm, g_player.karma, g_player.totalEvents,
+                                        g_player.battlesWon, g_player.npcsMet, g_player.age);
+                                    AddMemory(L"证道成祖", g_legacySystem.GetDaoContextText());
+                                    ShowNotice(L"证道成祖",
+                                        L"你已不再被寿元追赶，而是与自身大道共生。\n\n" +
+                                        g_legacySystem.GetDaoContextText() +
+                                        L"\n\n天道境仍在万道之上，需继续积累掌道深度与灵宝共鸣。");
+                                } else if (g_player.realm == HEAVENLY_DAO) {
                                     g_gameState = STATE_GAMEOVER;
-                                    g_messageText = L"【证道成祖】\n你走到了此世修仙路的尽头。\n\n";
-                                    g_messageText += L"修真界将永远记得 " + g_player.name + L" 的道号。\n";
+                                    g_legacySystem.AttuneDaoFromCurrentLife(
+                                        g_player.realm, g_player.karma, g_player.totalEvents,
+                                        g_player.battlesWon, g_player.npcsMet, g_player.age);
+                                    g_legacySystem.AddDaoDepth(80);
+                                    g_messageText = L"【万道归一】\n你越过道祖之上，抵达天道境。\n\n";
+                                    g_messageText += L"九大鸿蒙至宝仍在，但你已具备理论上毁灭它们的力量。\n";
+                                    g_messageText += L"只是当万道尽在掌中，毁灭已无必要。\n\n";
                                     g_messageText += L"享年：" + to_wstring(g_player.age) + L"岁\n";
                                     g_messageText += L"因果：" + to_wstring(g_player.karma) + L"\n\n";
                                     g_messageText += L"按 [N] 可开启下一世，按 [ESC] 退出。";
-                                    FinishCurrentLife(L"证道成祖");
+                                    FinishCurrentLife(L"天道归一");
                                 } else {
                                     wstring successMsg = L"恭喜！你已进入 " + GetRealmName(g_player.realm) + L"。";
                                     if (GetEraBreakthroughModifier() > 0) {
@@ -2830,6 +3083,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
                 else if (wParam == 'I' || wParam == 'i') {
                     OpenInfoPage(L"灵物图录", BuildItemCodexText(), STATE_GAME);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'T' || wParam == 't') {
+                    OpenInfoPage(L"鸿蒙至宝", BuildHongmengTreasuresText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'H' || wParam == 'h') {

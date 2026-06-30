@@ -74,6 +74,7 @@ struct PlayerContext {
     wstring familyState;
     wstring socialState;
     wstring legacyState;
+    wstring daoState;
 
     // 性格标签
     vector<wstring> personality;  // "善良", "邪恶", "谨慎", "冒险"
@@ -133,7 +134,7 @@ public:
         templates.items = {
             L"古修玉简", L"养灵葫芦", L"镇魂铜镜", L"镇狱小塔", L"青冥阵盘",
             L"翠灵丹瓶", L"瞬影符", L"灵石", L"月华草", L"玄铁矿",
-            L"星辉飞剑", L"赤魄灵剑", L"惊霆长枪", L"逐风弓", L"寒魄环刃"
+            L"当世飞剑", L"残破器纹", L"旧主魂印", L"通天灵宝残印", L"大道真名"
         };
 
         // 行动
@@ -187,9 +188,13 @@ public:
 
         wstring legacyHint = L"";
         if (player.legacyState.find(L"通天灵宝") != wstring::npos ||
+            player.daoState.find(L"通天灵宝") != wstring::npos ||
             player.legacyState.find(L"法宝") != wstring::npos ||
             player.legacyState.find(L"灵宝") != wstring::npos) {
             legacyHint = L"识海深处忽有器鸣一闪而过，仿佛前世祭炼过的重宝也在注视这场相遇。";
+        } else if (player.daoState.find(L"掌道深度") != wstring::npos ||
+                   player.daoState.find(L"大道") != wstring::npos) {
+            legacyHint = L"你心底有一缕大道旧痕微微发热，提醒你这不是偶然。";
         } else if (player.legacyState.find(L"战斗") != wstring::npos ||
                    player.legacyState.find(L"斗法") != wstring::npos) {
             legacyHint = L"你几乎本能地预判了对方下一步动作，这种熟悉感不像今生才有。";
@@ -234,16 +239,21 @@ public:
         // 根据性格添加特殊选择
         bool hasPersonality = false;
         for (auto& p : player.personality) {
-            if (p == L"邪恶" && !hasPersonality) {
-                choices.push_back(L"伺机偷袭");
+            if ((p == L"邪恶" || p.find(L"因果沉重") != wstring::npos || p.find(L"杀伐") != wstring::npos) && !hasPersonality) {
+                choices.push_back(L"伺机出手");
                 hasPersonality = true;
-            } else if (p == L"善良" && !hasPersonality) {
-                choices.push_back(L"提供帮助");
+            } else if ((p == L"善良" || p.find(L"善缘") != wstring::npos) && !hasPersonality) {
+                choices.push_back(L"援手相助");
                 hasPersonality = true;
             } else if (p == L"冒险" && !hasPersonality) {
                 choices.push_back(L"大胆尝试");
                 hasPersonality = true;
             }
+        }
+
+        if (!hasPersonality && !player.daoState.empty() && player.daoState.find(L"大道") != wstring::npos) {
+            choices.push_back(L"叩问道痕");
+            hasPersonality = true;
         }
 
         if (!hasPersonality) {
@@ -264,7 +274,13 @@ public:
         ss << L"- 可以写长辈认可、同辈嫉妒、被人巴结、遭人欺压、暗中试探、隐藏修为，但不要写成旁白总结。\n";
         ss << L"- 当前世界不一定是纯古典修仙，也可能已演化到灵机蒸汽、星穹道网、末法裂变或废土返道时代，必须尊重上下文时代风貌。\n";
         ss << L"- 如果上下文中出现前世传承、旧名、通天灵宝残印、前世梦痕等信息，可以直接把事件写成上一世因果在这一世继续发酵。\n";
+        ss << L"- 普通兵刃、丹药、材料和当世法宝只能属于这一世；它们会损毁或失散，不能写成跨世继承物。\n";
+        ss << L"- 真正能跨过轮回的是记忆、因果、道痕，以及被大道反复祭炼过的通天灵宝残印。\n";
+        ss << L"- 仙帝仍有寿数限制；只有道祖能与所掌大道共生。道祖强弱取决于掌握的大道与掌道深度，不要写成单纯等级碾压。\n";
+        ss << L"- 九大鸿蒙至宝是创世级恒在之物，不是装备奖励；道祖无法毁灭，只有掌尽诸道的天道境具备理论毁灭力，但毁灭没有必要。\n";
+        ss << L"- 如果写到鸿蒙至宝，只能写投影、线索、参悟、拒绝或遥远因果，不要写玩家直接获得或摧毁它们。\n";
         ss << L"- 三个选项各2到8个中文字符，只写行动短语，不要编号、不要解释、不要“请选择”。\n";
+        ss << L"- 这是文字修仙 Roguelike 事件，不要写 UI、按钮、插图、美术包装或系统说明。\n";
         ss << L"- 借鉴修仙小说的节奏和意象，但必须原创，不要复述或仿写现成小说段落。\n\n";
         ss << L"玩家: " << player.name << L"\n";
         ss << L"境界编号: " << player.realm << L"\n";
@@ -284,6 +300,9 @@ public:
         }
         if (!player.legacyState.empty()) {
             ss << L"轮回传承:\n" << player.legacyState << L"\n";
+        }
+        if (!player.daoState.empty()) {
+            ss << L"大道与灵宝状态:\n" << player.daoState << L"\n";
         }
         ss << L"杀伐: " << player.killCount << L"\n";
         ss << L"助人: " << player.helpCount << L"\n";
@@ -344,10 +363,18 @@ public:
 
         wstringstream ss;
         if (success) {
-            ss << L"你的决定很明智！" << consequence << L"\n修为+";
+            if (!player.daoState.empty() && player.daoState.find(L"大道") != wstring::npos) {
+                ss << L"你心底的道痕一闪即逝，" << consequence << L"\n修为+";
+            } else {
+                ss << L"你的决定很明智！" << consequence << L"\n修为+";
+            }
             ss << (50 + player.realm * 10);
         } else {
-            ss << L"情况不太妙..." << consequence << L"\n气血-";
+            if (!player.legacyState.empty() && player.legacyState.find(L"前世") != wstring::npos) {
+                ss << L"前世经验没能完全适配今生，" << consequence << L"\n气血-";
+            } else {
+                ss << L"情况不太妙..." << consequence << L"\n气血-";
+            }
             ss << (30 + player.realm * 5);
         }
 

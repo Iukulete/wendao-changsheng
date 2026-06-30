@@ -56,10 +56,13 @@ struct LegacyRelic {
     int awakenings;
     wstring aspect;
     bool daoLinked;
+    wstring daoName;
+    int daoDepth;
 
     LegacyRelic()
         : name(L"通天灵宝残印"), resonance(0), awakenings(0),
-          aspect(L"未定道痕"), daoLinked(false) {}
+          aspect(L"未定道痕"), daoLinked(false),
+          daoName(L"未证大道"), daoDepth(0) {}
 };
 
 // ==================== 传承系统 ====================
@@ -69,6 +72,30 @@ private:
     int currentGeneration;
     vector<LegacyItem> inheritedLegacies;  // 当前世继承的传承
     LegacyRelic relic;
+
+    int KarmaMagnitude(int karma) const {
+        return karma >= 0 ? karma : -karma;
+    }
+
+    wstring SelectDaoName(const PastLife& life) const {
+        if (life.battlesWon >= max(20, life.totalEvents / 3)) return L"杀伐大道";
+        if (life.karma >= 120) return L"护生大道";
+        if (life.karma <= -120) return L"血煞大道";
+        if (life.totalEvents >= 80) return L"因果大道";
+        if (life.ageAtDeath >= 500) return L"长生大道";
+        if (life.npcsMet >= 20) return L"众生大道";
+        return L"本我大道";
+    }
+
+    wstring DescribeDao(const wstring& daoName) const {
+        if (daoName == L"杀伐大道") return L"以战止战，越是死局越能看见破局之线。";
+        if (daoName == L"护生大道") return L"以护道济世立身，善缘会在轮回中反复回响。";
+        if (daoName == L"血煞大道") return L"以血债与恐惧铸道，旧怨会比肉身活得更久。";
+        if (daoName == L"因果大道") return L"能从偶然里看见必然，从旧事里牵出新局。";
+        if (daoName == L"长生大道") return L"不只求寿数绵长，更求与天地法则同息。";
+        if (daoName == L"众生大道") return L"道不独行，所结之人与所负之情都会化为路。";
+        return L"尚未定型的祖境道痕，仍会随每一世选择而偏转。";
+    }
 
     void InheritEchoesFromLastLife(const PastLife& last) {
         int inheritedCount = 0;
@@ -172,10 +199,12 @@ public:
         }
         if (life.realmReached >= 19) {
             relic.daoLinked = true;
+            relic.daoName = SelectDaoName(life);
+            relic.daoDepth = min(999, relic.daoDepth + 30 + life.totalEvents / 8 + life.battlesWon / 4 + KarmaMagnitude(life.karma) / 8);
         }
 
         if (life.realmReached >= 19) {
-            relic.aspect = L"帝道器痕";
+            relic.aspect = relic.daoName + L"·祖境道痕";
         } else if (life.realmReached >= 17) {
             relic.aspect = L"通天杀伐";
         } else if (life.realmReached >= 14) {
@@ -187,12 +216,19 @@ public:
 
     void GenerateLegacies(PastLife& life) {
         // 境界高可以留下功法
-        if (life.realmReached >= 10) {
+        if (life.realmReached >= 19) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TECHNIQUE,
-                L"道祖心法",
-                L"前世证道时的顿悟",
-                100
+                SelectDaoName(life) + L"真名",
+                L"上一世证成道祖，肉身与仙帝寿元都会走到尽头，唯有掌握的大道可与轮回共鸣。",
+                160 + life.totalEvents / 4 + KarmaMagnitude(life.karma) / 6
+            ));
+        } else if (life.realmReached >= 10) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_TECHNIQUE,
+                L"登仙道诀",
+                L"前世冲过仙门后留下的行功脉络，并非道祖真传，却足以让这一世少走弯路。",
+                80
             ));
         } else if (life.realmReached >= 5) {
             life.legacies.push_back(LegacyItem(
@@ -223,7 +259,14 @@ public:
             ));
         }
 
-        if (life.realmReached >= 17) {
+        if (life.realmReached >= 19) {
+            life.legacies.push_back(LegacyItem(
+                LEGACY_TREASURE,
+                L"通天灵宝道胚",
+                L"普通兵刃与法宝都会在岁月中朽坏，唯有被大道反复祭炼过的通天灵宝，才会留下可被下一世唤醒的道胚。",
+                95 + life.realmReached * 4
+            ));
+        } else if (life.realmReached >= 17) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TREASURE,
                 L"通天灵宝残印",
@@ -271,6 +314,57 @@ public:
         return relic.resonance / 20 + relic.awakenings * 10;
     }
 
+    void AddRelicResonance(int amount) {
+        relic.resonance = max(0, min(999, relic.resonance + amount));
+    }
+
+    void AddDaoDepth(int amount) {
+        if (!relic.daoLinked) return;
+        relic.daoDepth = max(0, min(999, relic.daoDepth + amount));
+    }
+
+    void AttuneDaoFromCurrentLife(int realmReached, int karma, int totalEvents,
+                                  int battlesWon, int npcsMet, int ageAtAttainment) {
+        if (realmReached < 19) return;
+
+        PastLife imprint;
+        imprint.realmReached = realmReached;
+        imprint.karma = karma;
+        imprint.totalEvents = totalEvents;
+        imprint.battlesWon = battlesWon;
+        imprint.npcsMet = npcsMet;
+        imprint.ageAtDeath = ageAtAttainment;
+
+        if (realmReached >= 20) {
+            relic.daoLinked = true;
+            relic.daoName = L"万道归一";
+            relic.aspect = L"天道境·万道归一";
+            relic.resonance = min(999, relic.resonance + 120 + battlesWon / 5);
+            relic.daoDepth = 999;
+            return;
+        }
+
+        wstring dao = SelectDaoName(imprint);
+        relic.daoLinked = true;
+        if (relic.daoName == L"未证大道" || relic.daoName.empty()) {
+            relic.daoName = dao;
+        } else if (relic.daoName != dao && relic.daoName.find(dao) == wstring::npos) {
+            relic.daoName += L"、" + dao;
+        }
+
+        relic.aspect = dao + L"·祖境道痕";
+        relic.resonance = min(999, relic.resonance + 40 + realmReached * 2 + battlesWon / 5);
+        relic.daoDepth = min(999, relic.daoDepth + 45 + totalEvents / 10 + battlesWon / 5 + KarmaMagnitude(karma) / 10);
+    }
+
+    wstring GetDaoTier() const {
+        if (!relic.daoLinked) return L"未证道祖";
+        if (relic.daoDepth >= 240) return L"大道共生";
+        if (relic.daoDepth >= 160) return L"祖境稳固";
+        if (relic.daoDepth >= 80) return L"初掌大道";
+        return L"道痕新成";
+    }
+
     LegacyRelic& GetRelic() { return relic; }
     const LegacyRelic& GetRelic() const { return relic; }
 
@@ -282,12 +376,29 @@ public:
         ss << L"共鸣值: " << relic.resonance << L"\n";
         ss << L"苏醒次数: " << relic.awakenings << L"\n";
         ss << L"本世加持: +" << GetRelicResonanceBonus() << L"\n";
+        ss << L"掌道: " << (relic.daoLinked ? relic.daoName : L"尚未证成") << L"\n";
+        ss << L"掌道深度: " << relic.daoDepth << L"（" << GetDaoTier() << L"）\n";
         if (relic.daoLinked) {
-            ss << L"状态: 已沾染帝道与祖境余韵，未来可望与大道同鸣。\n";
+            ss << L"状态: 已沾染祖境余韵，" << DescribeDao(relic.daoName) << L"\n";
         } else {
             ss << L"状态: 仍在轮回中缓慢成形，尚未真正显化为完整灵宝。\n";
         }
-        ss << L"\n说明: 凡兵会朽，器物会坏，能穿过轮回留下来的，只有反复祭炼后仍未断绝的道痕。";
+        ss << L"\n说明: 凡兵会朽，普通法宝也会坏。能穿过轮回留下来的，不是实物本身，而是反复祭炼后仍未断绝的道痕。";
+        return ss.str();
+    }
+
+    wstring GetDaoContextText() const {
+        wstringstream ss;
+        ss << L"通天灵宝: " << relic.name << L"，道痕 " << relic.aspect
+           << L"，共鸣 " << relic.resonance << L"，苏醒 " << relic.awakenings << L" 次。";
+        if (relic.daoLinked) {
+            ss << L" 前世曾证 " << relic.daoName << L"，当前掌道深度 "
+               << relic.daoDepth << L"（" << GetDaoTier() << L"）。"
+               << DescribeDao(relic.daoName);
+        } else {
+            ss << L" 尚未真正与大道相连。";
+        }
+        ss << L" 普通兵刃和当世法宝不可跨世保存，跨世回响只来自记忆、道痕和通天灵宝残印。";
         return ss.str();
     }
 
@@ -343,7 +454,7 @@ public:
     vector<LegacyItem>& GetInheritedLegacies() { return inheritedLegacies; }
 
     void Save(wofstream& file) {
-        file << L"LEGACY_V1\n";
+        file << L"LEGACY_V2\n";
         file << currentGeneration << L"\n";
         file << inheritedLegacies.size() << L"\n";
         for (auto& legacy : inheritedLegacies) {
@@ -351,7 +462,8 @@ public:
                  << legacy.description << L"\n" << legacy.power << L"\n";
         }
         file << relic.name << L"\n" << relic.resonance << L"\n" << relic.awakenings << L"\n"
-             << relic.aspect << L"\n" << relic.daoLinked << L"\n";
+             << relic.aspect << L"\n" << relic.daoLinked << L"\n"
+             << relic.daoName << L"\n" << relic.daoDepth << L"\n";
 
         file << pastLives.size() << L"\n";
         for (auto& life : pastLives) {
@@ -373,7 +485,8 @@ public:
         wstring marker;
         getline(file, marker);
         if (marker.empty()) getline(file, marker);
-        if (marker != L"LEGACY_V1") return false;
+        bool isV2 = (marker == L"LEGACY_V2");
+        if (marker != L"LEGACY_V1" && !isV2) return false;
 
         file >> currentGeneration;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -401,6 +514,14 @@ public:
         getline(file, relic.aspect);
         file >> relic.daoLinked;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        if (isV2) {
+            getline(file, relic.daoName);
+            file >> relic.daoDepth;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        } else {
+            relic.daoName = relic.daoLinked ? L"本我大道" : L"未证大道";
+            relic.daoDepth = relic.daoLinked ? relic.resonance / 2 : 0;
+        }
 
         file >> count;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -461,6 +582,7 @@ public:
         achievements.push_back(Achievement(L"魔道至尊", L"因果值低于-200"));
         achievements.push_back(Achievement(L"长生不老", L"活到500岁"));
         achievements.push_back(Achievement(L"证道成祖", L"达到道祖境界"));
+        achievements.push_back(Achievement(L"万道归一", L"达到天道境"));
         achievements.push_back(Achievement(L"十世轮回", L"经历10次轮回"));
         achievements.push_back(Achievement(L"传承者", L"留下5个以上传承"));
     }
@@ -491,12 +613,16 @@ public:
             achievements[5].unlocked = true;
         }
 
-        if (generation >= 10 && !achievements[6].unlocked) {
+        if (life.realmReached >= 20 && !achievements[6].unlocked) {
             achievements[6].unlocked = true;
         }
 
-        if (life.legacies.size() >= 5 && !achievements[7].unlocked) {
+        if (generation >= 10 && !achievements[7].unlocked) {
             achievements[7].unlocked = true;
+        }
+
+        if (life.legacies.size() >= 5 && !achievements[8].unlocked) {
+            achievements[8].unlocked = true;
         }
     }
 
