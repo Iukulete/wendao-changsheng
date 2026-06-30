@@ -106,6 +106,19 @@ struct FamilyBackground {
     FamilyBackground() : fame(0), wealth(0), knowsParents(true), adopted(false) {}
 };
 
+struct SocialThread {
+    wstring name;
+    wstring role;
+    wstring attitude;
+    wstring hook;
+    wstring visibleRealm;
+    wstring hiddenHint;
+    int relation;
+    bool hidesPower;
+
+    SocialThread() : relation(0), hidesPower(false) {}
+};
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -825,6 +838,7 @@ LegacySystem g_legacySystem;
 AchievementSystem g_achievementSystem;
 vector<wstring> g_memoryLog;
 vector<wstring> g_socialRumors;
+vector<SocialThread> g_socialThreads;
 vector<wstring> g_discoveredItems;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
@@ -978,7 +992,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"此世出身", L"本世主线"
+        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -1040,10 +1054,20 @@ void SaveMemory(wofstream& file) {
 }
 
 void SaveSocialRumors(wofstream& file) {
-    file << L"SOCIAL_V1\n";
+    file << L"SOCIAL_V2\n";
     file << g_socialRumors.size() << L"\n";
     for (auto& item : g_socialRumors) {
-        file << item << L"\n";
+        file << EscapeSaveField(item) << L"\n";
+    }
+    file << g_socialThreads.size() << L"\n";
+    for (auto& thread : g_socialThreads) {
+        file << EscapeSaveField(thread.name) << L"\n";
+        file << EscapeSaveField(thread.role) << L"\n";
+        file << EscapeSaveField(thread.attitude) << L"\n";
+        file << EscapeSaveField(thread.hook) << L"\n";
+        file << EscapeSaveField(thread.visibleRealm) << L"\n";
+        file << EscapeSaveField(thread.hiddenHint) << L"\n";
+        file << thread.relation << L" " << thread.hidesPower << L"\n";
     }
 }
 
@@ -1051,7 +1075,8 @@ bool LoadSocialRumors(wifstream& file) {
     wstring marker;
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
-    if (marker != L"SOCIAL_V1") return false;
+    bool isV2 = (marker == L"SOCIAL_V2");
+    if (marker != L"SOCIAL_V1" && !isV2) return false;
     size_t count = 0;
     file >> count;
     file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -1059,7 +1084,31 @@ bool LoadSocialRumors(wifstream& file) {
     for (size_t i = 0; i < count; i++) {
         wstring item;
         getline(file, item);
+        if (isV2) item = UnescapeSaveField(item);
         g_socialRumors.push_back(item);
+    }
+    g_socialThreads.clear();
+    if (isV2) {
+        file >> count;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        for (size_t i = 0; i < count; i++) {
+            SocialThread thread;
+            getline(file, thread.name);
+            getline(file, thread.role);
+            getline(file, thread.attitude);
+            getline(file, thread.hook);
+            getline(file, thread.visibleRealm);
+            getline(file, thread.hiddenHint);
+            thread.name = UnescapeSaveField(thread.name);
+            thread.role = UnescapeSaveField(thread.role);
+            thread.attitude = UnescapeSaveField(thread.attitude);
+            thread.hook = UnescapeSaveField(thread.hook);
+            thread.visibleRealm = UnescapeSaveField(thread.visibleRealm);
+            thread.hiddenHint = UnescapeSaveField(thread.hiddenHint);
+            file >> thread.relation >> thread.hidesPower;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            g_socialThreads.push_back(thread);
+        }
     }
     return true;
 }
@@ -1453,8 +1502,177 @@ Event BuildLegacyEchoEvent() {
     return evt;
 }
 
+wstring GetRelationLabel(int relation) {
+    if (relation >= 45) return L"亲近";
+    if (relation >= 18) return L"善意";
+    if (relation <= -45) return L"敌视";
+    if (relation <= -18) return L"恶感";
+    return L"观望";
+}
+
+void AddSocialThread(const wstring& name, const wstring& role, const wstring& attitude,
+                     const wstring& hook, int relation,
+                     const wstring& visibleRealm = L"", bool hidesPower = false,
+                     const wstring& hiddenHint = L"") {
+    if (name.empty()) return;
+    for (const auto& existing : g_socialThreads) {
+        if (existing.name == name && existing.role == role) return;
+    }
+
+    SocialThread thread;
+    thread.name = name;
+    thread.role = role;
+    thread.attitude = attitude;
+    thread.hook = hook;
+    thread.relation = max(-100, min(100, relation));
+    thread.visibleRealm = visibleRealm;
+    thread.hidesPower = hidesPower;
+    thread.hiddenHint = hiddenHint;
+    g_socialThreads.push_back(thread);
+
+    if (relation != 0) {
+        g_dynamicWorld.PlayerInteractWithNPC(name, relation);
+    }
+}
+
+wstring BuildSocialThreadLine(const SocialThread& thread) {
+    wstringstream ss;
+    ss << thread.name << L"（" << thread.role << L"）";
+    ss << L" · " << thread.attitude << L" · " << GetRelationLabel(thread.relation);
+    if (!thread.visibleRealm.empty()) {
+        ss << L" · 外显" << thread.visibleRealm;
+    }
+    if (thread.hidesPower || !thread.hiddenHint.empty()) {
+        ss << L" · " << (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint);
+    }
+    ss << L": " << thread.hook;
+    return ss.str();
+}
+
+wstring BuildSocialThreadDigest(int limit = 4) {
+    if (g_socialThreads.empty()) return L"";
+    wstringstream ss;
+    int count = 0;
+    for (const auto& thread : g_socialThreads) {
+        if (count++ >= limit) break;
+        ss << L"- " << BuildSocialThreadLine(thread) << L"\n";
+    }
+    return ss.str();
+}
+
+void GenerateSocialThreads() {
+    g_socialThreads.clear();
+
+    int totalRoot = g_player.GetTotalRoot();
+    bool exceptionalRoot = (totalRoot >= 42 || g_player.hasBalancedRoots);
+    bool weakRoot = (totalRoot < 30 && !g_player.hasBalancedRoots);
+    int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
+    int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    auto npcs = g_dynamicWorld.GetAliveNPCs();
+
+    auto npcRealmText = [](DynamicNPC* npc) {
+        if (!npc) return wstring();
+        Realm shown = static_cast<Realm>(max(0, min(npc->shownRealm, (int)HEAVENLY_DAO)));
+        return GetRealmName(shown) + L" " + to_wstring(npc->level) + L"层";
+    };
+    auto npcHides = [](DynamicNPC* npc) {
+        return npc && npc->shownRealm < npc->realm;
+    };
+
+    if (g_player.family.knowsParents) {
+        if (exceptionalRoot) {
+            AddSocialThread(g_player.family.father, L"父亲", L"克制认可",
+                L"他没有当众夸你，却私下把一枚入门信物交到你手里。", 32);
+            AddSocialThread(g_player.family.mother, L"母亲", L"护持期待",
+                L"她替你压下族中闲话，只提醒你别太早暴露前世般的眼神。", 36);
+        } else if (weakRoot) {
+            AddSocialThread(g_player.family.mother, L"母亲", L"心疼护短",
+                L"测灵结果传回家中后，她仍替你留着一份最朴素的行囊。", 28);
+            AddSocialThread(g_player.family.father, L"父亲", L"沉默担忧",
+                L"他嘴上说修行随缘，却开始四处打听能改命的偏方。", 12);
+        } else {
+            AddSocialThread(g_player.family.father, L"父亲", L"审慎期许",
+                L"他认为你可以入道，但不许你轻易卷进宗门旧债。", 22);
+        }
+    } else if (g_player.family.adopted || !g_player.family.guardian.empty()) {
+        AddSocialThread(g_player.family.guardian.empty() ? L"无名养育者" : g_player.family.guardian,
+            L"养育者", L"护短隐瞒",
+            L"此人知道你来历并不简单，却总在关键处把话咽回去。", 24);
+    } else {
+        AddSocialThread(g_player.family.familyName.empty() ? L"族中旁支" : g_player.family.familyName + L"旁支",
+            L"身世线索", L"若即若离",
+            L"对方承认与你有血缘，却不肯说出父母名讳。", -4);
+    }
+
+    if (!npcs.empty()) {
+        DynamicNPC* first = npcs[0];
+        DynamicNPC* second = npcs.size() > 1 ? npcs[1] : nullptr;
+        DynamicNPC* third = npcs.size() > 2 ? npcs[2] : nullptr;
+
+        if (exceptionalRoot) {
+            AddSocialThread(first->name, L"同代修士", L"主动亲近",
+                L"对方称你将来必入内门，言语里已有几分提前下注的意思。",
+                30, npcRealmText(first), npcHides(first), npcHides(first) ? L"外显修为偏低" : L"");
+            if (second) {
+                AddSocialThread(second->name, L"竞争者", L"嫉妒试探",
+                    L"此人表面祝贺你灵根出众，背后却在打听你的家世短处。",
+                    -34, npcRealmText(second), npcHides(second), npcHides(second) ? L"气机不明" : L"");
+            }
+        } else if (weakRoot) {
+            AddSocialThread(first->name, L"欺压者", L"轻慢挑衅",
+                L"此人认定你道途有限，故意在杂役与试炼名额上为难你。",
+                -42, npcRealmText(first), npcHides(first), npcHides(first) ? L"也许并未显露真修为" : L"");
+            if (second) {
+                AddSocialThread(second->name, L"旁观长辈", L"暗中照看",
+                    L"对方没有替你出头，却提醒你记下每一次被轻慢的因果。",
+                    18, npcRealmText(second), npcHides(second), npcHides(second) ? L"藏拙很深" : L"");
+            }
+        } else {
+            AddSocialThread(first->name, L"接引修士", L"谨慎观察",
+                L"此人愿意给你一次试炼机会，但还在判断你是否值得投入资源。",
+                14, npcRealmText(first), npcHides(first), npcHides(first) ? L"外显修为未必可信" : L"");
+            if (second) {
+                AddSocialThread(second->name, L"同路人", L"可拉拢也可翻脸",
+                    L"你们都想抓住同一份机缘，暂时合作不代表没有暗斗。",
+                    -8, npcRealmText(second), npcHides(second), npcHides(second) ? L"气机不明" : L"");
+            }
+        }
+
+        if (memoryBonus >= 30 && third) {
+            AddSocialThread(third->name, L"前世眼熟者",
+                reputationEcho < 0 ? L"警惕旧名" : L"莫名亲近",
+                L"你看见此人时会短暂恍神，像是前世某段未了因果换了面目。",
+                reputationEcho < 0 ? -26 : 24,
+                npcRealmText(third), npcHides(third), npcHides(third) ? L"可能隐藏实力" : L"");
+        }
+    }
+
+    wstring sectName = g_worldData.sects.empty() ? L"附近宗门" : g_worldData.sects[0].name;
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        AddSocialThread(sectName + L"炉师", L"工坊中人", L"热情拉拢",
+            L"他看中你的灵根适配性，想让你试一套尚未公开的阵械功法。", 16);
+    } else if (g_worldEraName == L"星穹道网纪") {
+        AddSocialThread(sectName + L"远讯使", L"道网联系人", L"隔空关注",
+            L"对方通过灵网给你发来试炼坐标，也记录着你每一次选择。", 12);
+    } else if (g_worldEraName == L"末法裂变纪") {
+        AddSocialThread(sectName + L"配给执事", L"资源把关者", L"冷硬审视",
+            L"此人掌着灵井配给，你的资质、家世和态度都会影响下一份资源。", -10);
+    } else if (g_worldEraName == L"废土返道纪") {
+        AddSocialThread(sectName + L"巡荒者", L"残宗向导", L"现实互利",
+            L"他愿意带你进废墟，但先要确认你不会拖累整支队伍。", 6);
+    } else if (g_worldEraName == L"仙朝鼎盛纪") {
+        AddSocialThread(sectName + L"册封吏", L"仙朝耳目", L"礼貌试探",
+            L"对方说是核验名册，实际在查你家世与前世旧名是否有关。", -6);
+    }
+
+    if (g_socialThreads.size() > 5) {
+        g_socialThreads.resize(5);
+    }
+}
+
 void GenerateSocialRumors() {
     g_socialRumors.clear();
+    GenerateSocialThreads();
     int totalRoot = g_player.GetTotalRoot();
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
@@ -1505,10 +1723,22 @@ void GenerateSocialRumors() {
 wstring GetSocialRumorText(int limit = 6) {
     wstringstream ss;
     ss << L"【人情风波】\n\n";
-    if (g_socialRumors.empty()) {
+    if (g_socialThreads.empty() && g_socialRumors.empty()) {
         ss << L"暂时无人特别留意你。";
         return ss.str();
     }
+
+    if (!g_socialThreads.empty()) {
+        ss << L"【本世人脉】\n";
+        ss << L"这些人会影响本世事件走向，也会被本地 AI 当作可续写的关系线。\n";
+        ss << BuildSocialThreadDigest(6) << L"\n";
+    }
+
+    if (g_socialRumors.empty()) {
+        return ss.str();
+    }
+
+    ss << L"【近日风声】\n";
     for (size_t i = 0; i < min<size_t>(g_socialRumors.size(), limit); i++) {
         ss << L"- " << g_socialRumors[i] << L"\n";
     }
@@ -1516,8 +1746,14 @@ wstring GetSocialRumorText(int limit = 6) {
 }
 
 wstring GetSocialDigest() {
-    if (g_socialRumors.empty()) return L"暂无明显风波。";
+    if (g_socialThreads.empty() && g_socialRumors.empty()) return L"暂无明显风波。";
     wstringstream ss;
+    if (!g_socialThreads.empty()) {
+        ss << L"本世人脉:\n" << BuildSocialThreadDigest(3);
+    }
+    if (!g_socialRumors.empty()) {
+        ss << L"近日风声:\n";
+    }
     for (size_t i = 0; i < min<size_t>(g_socialRumors.size(), 2); i++) {
         ss << L"- " << g_socialRumors[i] << L"\n";
     }
@@ -2006,7 +2242,18 @@ PlayerContext BuildPlayerContext() {
     ctx.karma = g_player.karma;
     ctx.age = g_player.age;
     ctx.rootState = g_player.GetRootQuality() + L"；" + g_player.GetRootDetails();
-    ctx.familyState = GetFamilySummary(g_player.family) + L"；" + g_player.family.secret;
+    ctx.familyState = GetFamilySummary(g_player.family);
+    if (g_player.family.knowsParents) {
+        ctx.familyState += L"；父亲:" + g_player.family.father + L"；母亲:" + g_player.family.mother;
+    } else {
+        ctx.familyState += L"；父母身份被隐去";
+    }
+    if (!g_player.family.guardian.empty()) {
+        ctx.familyState += L"；养育者:" + g_player.family.guardian;
+    }
+    if (!g_player.family.secret.empty()) {
+        ctx.familyState += L"；隐情:" + g_player.family.secret;
+    }
     ctx.socialState = GetSocialDigest();
     ctx.killCount = g_player.battlesWon;
     ctx.helpCount = max(0, g_player.karma / 10);
@@ -2537,6 +2784,7 @@ void StartNextLife() {
         AddMemory(L"通天灵宝", g_legacySystem.GetDaoContextText());
     }
     AddMemory(L"此世出身", GetFamilySummary(g_player.family));
+    if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
     if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
 
     g_contextMgr.SetContext(BuildPlayerContext());
@@ -3075,8 +3323,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 AddMemory(L"时代变迁", g_eraTransitionNote);
                 AddMemory(L"本世主线", g_lifePremise);
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
+                if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
                 DiscoverItemsFromText(g_player.family.secret);
+                DiscoverItemsFromText(BuildSocialThreadDigest(5));
                 DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
                 g_contextMgr.SetContext(BuildPlayerContext());
                 g_gameState = STATE_GAME;
