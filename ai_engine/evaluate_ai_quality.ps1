@@ -157,7 +157,7 @@ $cases = @(
 function Test-Mojibake {
     param([string]$Text)
     $scan = [regex]::Replace($Text, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]{3,}"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
 function Test-Forbidden {
@@ -198,6 +198,7 @@ function Test-ChoiceShape {
     if ($Text.Length -lt 2 -or $Text.Length -gt 8) { return "选项长度异常" }
     if (Test-TitleLike $Text) { return "选项像标题" }
     if (Test-ContextLabelLine $Text) { return "选项像上下文字段" }
+    if ($Text -match "^(机缘|机遇|危机|奇遇|因果|传承)") { return "选项像事件标题" }
     if ($Text -match "请选择|选项|^\d|^一|^二|^三|解释|标题|描述") { return "选项疑似带编号/说明" }
     if ($Text -match "[：:。！？!?，,；;]") { return "选项含标点" }
     if ($Text -match "\s") { return "选项含空格" }
@@ -286,6 +287,10 @@ foreach ($case in $cases) {
         if ($descLen -lt 35 -or $descLen -gt 120) {
             $ok = $false
             $issues.Add("描述长度异常: $descLen")
+        }
+        if ($lines[1] -notmatch "[。！？]$") {
+            $ok = $false
+            $issues.Add("描述疑似截断: $($lines[1])")
         }
         if (Test-TitleLike $lines[1]) {
             $ok = $false

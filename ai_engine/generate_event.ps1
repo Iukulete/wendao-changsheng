@@ -308,8 +308,12 @@ function Normalize-EventLine {
     $clean = $Line.Trim()
     $clean = [regex]::Replace($clean, '^```(?:text|markdown)?\s*', '', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     $clean = [regex]::Replace($clean, '\s*```$', '')
-    $clean = [regex]::Replace($clean, '\s*\[end of text\]\s*$', '', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    $clean = [regex]::Replace($clean, '\s*\[end of text\]\s*', '', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     $clean = [regex]::Replace($clean, '\*\*', '')
+    $clean = [regex]::Replace($clean, '[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]+', '')
+    $clean = [regex]::Replace($clean, '[A-Za-z]\s*级', '低阶')
+    $clean = [regex]::Replace($clean, '[A-Za-z]+', '')
+    $clean = [regex]::Replace($clean, '[\[\]]+', '')
     $clean = $clean.Trim(@([char]96, [char]34, [char]39))
     $clean = [regex]::Replace($clean, '^\s*[-*]\s*', '')
     $clean = [regex]::Replace($clean, '^[A-Za-z][\.、:：\)]\s*', '')
@@ -324,7 +328,7 @@ function Normalize-EventLine {
 function Test-MojibakeText {
     param([string]$Value)
     $scan = [regex]::Replace($Value, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]{3,}"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
 function Test-TitleLike {
@@ -493,6 +497,7 @@ function Test-GoodDescription {
     if (Test-MojibakeText $clean) { return $false }
     if ($clean -match "^(请选择|选择|选项|标题|描述)") { return $false }
     if ($clean.Length -lt 35 -or $clean.Length -gt 130) { return $false }
+    if ($clean -notmatch "[。！？]$") { return $false }
     if (-not (Test-ContainsAny $clean $Keywords)) { return $false }
     return $true
 }
@@ -511,10 +516,13 @@ function Convert-ToChoice {
     }
     $choice = $choice.Trim()
     if ($choice -eq "走后门") { $choice = "暗通执事" }
+    if ($choice -match "^暂避锋芒") { $choice = "暂避锋芒" }
+    if ($choice -eq "请长辈证词") { $choice = "请长辈证" }
     if ($choice.Length -lt 2 -or $choice.Length -gt 8) { return $null }
     if (Test-TitleLike $choice) { return $null }
     if (Test-ContextLabelLine $choice) { return $null }
     if (Test-MojibakeText $choice) { return $null }
+    if ($choice -match "^(机缘|机遇|危机|奇遇|因果|传承)") { return $null }
     if ($choice -match "^(请选择|选项|解释|标题|描述)") { return $null }
     if ($choice -match "[：:。！？!?，,；;]") { return $null }
     if ($choice -match "\s") { return $null }
@@ -524,24 +532,26 @@ function Convert-ToChoice {
 $fallback = New-ContextFallbackEvent $basePrompt
 $keywords = Get-ContextKeywords $basePrompt
 $repairNotes = New-Object System.Collections.Generic.List[string]
-
-$candidateLines = @()
-if (-not (Test-MojibakeText $text)) {
-    foreach ($line in ($text -split "`r?`n")) {
-        $clean = Normalize-EventLine $line
-        if ($clean -match "^(下面|以下|好的|输出|格式|事件如下|生成)") { continue }
-        if ($clean -match "^(请选择|请从|请在|选择如下|选项如下)\s*[:：]?\s*$") { continue }
-        if ($clean.Length -gt 0) {
-            $candidateLines += $clean
-        }
-    }
-} else {
-    $repairNotes.Add("疑似乱码")
+$rawHadNoise = Test-MojibakeText $text
+if ($rawHadNoise) {
+    $repairNotes.Add("清理噪声")
 }
 
+$candidateLines = @()
+foreach ($line in ($text -split "`r?`n")) {
+    $clean = Normalize-EventLine $line
+    if ($clean -match "^(下面|以下|好的|输出|格式|事件如下|生成)") { continue }
+    if ($clean -match "^(请选择|请从|请在|选择如下|选项如下)\s*[:：]?\s*$") { continue }
+    if ($clean.Length -gt 0) {
+        $candidateLines += $clean
+    }
+}
+
+$usedFallbackTitle = $false
+$usedFallbackDescription = $false
 $title = $null
 foreach ($line in $candidateLines) {
-    if (Test-TitleLike $line) {
+    if ((Test-TitleLike $line) -or $line -match "^(机缘|机遇|危机|奇遇|因果|传承).{1,18}$") {
         $candidateTitle = Normalize-Title $line
         if ($candidateTitle.Length -le 34 -and -not (Test-ContextLabelLine $candidateTitle) -and -not (Test-MojibakeText $candidateTitle)) {
             $title = $candidateTitle
@@ -551,6 +561,7 @@ foreach ($line in $candidateLines) {
 }
 if ([string]::IsNullOrWhiteSpace($title)) {
     $title = $fallback.Title
+    $usedFallbackTitle = $true
     $repairNotes.Add("标题")
 }
 
@@ -565,17 +576,23 @@ foreach ($line in $candidateLines) {
 }
 if ([string]::IsNullOrWhiteSpace($description)) {
     $description = $fallback.Description
+    $usedFallbackDescription = $true
     $repairNotes.Add("描述")
 } elseif ($description.Length -gt 120) {
     $description = $description.Substring(0, 120)
 }
 if ((Get-KeywordHitCount ($title + "`n" + $description) $keywords) -lt 2) {
     $description = $fallback.Description
+    $usedFallbackDescription = $true
     $repairNotes.Add("描述贴合上下文")
+}
+if ($usedFallbackDescription -and -not $usedFallbackTitle) {
+    $title = $fallback.Title
+    $repairNotes.Add("标题贴合上下文")
 }
 
 $choices = @()
-if ($repairNotes.Count -eq 0) {
+if (-not $usedFallbackDescription) {
     foreach ($line in $candidateLines) {
         $choiceLine = Normalize-EventLine $line
         if ($choiceLine.Length -gt 16) { continue }
@@ -588,6 +605,9 @@ if ($repairNotes.Count -eq 0) {
         if ($choices.Count -ge 3) { break }
     }
 } else {
+    $repairNotes.Add("选项贴合上下文")
+}
+if ($choices.Count -lt 3) {
     $repairNotes.Add("选项")
 }
 foreach ($choice in $fallback.Choices) {
