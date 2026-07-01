@@ -48,6 +48,7 @@ function New-Prompt {
 - 描述45到90个中文字符，要贴合境界、因果、年龄、家世、人情风波、最近记忆和当前世界。
 - 多写人与人之间的情绪价值，但不要写成旁白总结。
 - 如果本世人脉里出现“想要”“忌惮”或“下一步”，要让 NPC 按这些动机行动。
+- 如果上下文出现“玉意梦兆”，要把它当成黑白旧玉给出的线索方向，不能揭示玉佩真名。
 - 如果上下文出现“失传古法当世解读”，必须按当前时代处理旧法。
 - 普通兵刃、丹药、材料和当世法宝只能属于这一世；不能写成跨世继承物。
 - 主角第一世自带黑白伴生玉佩；事件里可以写玉佩发热、梦中玉意、阴阳玉痕或轮回回响，不要直接揭示它的鸿蒙至宝真身。
@@ -82,6 +83,10 @@ $cases = @(
             -World "- 时代纪元: 星穹道网纪`n- 本世主线: 远方节点开始记录你的每一次公开选择。" `
             -Memory "- 前世忆起: 上一世救过一城散修，死于仙门雷劫。"
         MustContain = @("道网", "失传", "古法", "档案", "节点", "功法", "远方")
+        RequiredGroups = @(
+            @{ Label = "当世道网"; Words = @("道网", "档案", "节点", "远方") },
+            @{ Label = "失传古法"; Words = @("失传", "古法", "功法", "旧法") }
+        )
     },
     @{
         Id = "jade_family_secret"
@@ -95,7 +100,11 @@ $cases = @(
             -Legacy "轮回余烬: 前世的残响尚浅。隐藏设定: 主角不知道伴生玉佩真相，普通事件不能揭示其鸿蒙至宝真身。" `
             -World "- 时代纪元: 仙朝鼎盛纪`n- 重大事件: 【仙朝册封】气运开榜`n- 事件影响: 宗门、世家与散修都在争夺名位。" `
             -Memory "- 此世出身: 父母隐去，养育者总在关键处隐瞒。"
-        MustContain = @("玉佩", "黑白", "名册", "册封", "家世", "养育", "旧名")
+        MustContain = @("玉佩", "黑白", "玉痕", "名册", "册封", "家世", "养育", "旧名", "父母")
+        RequiredGroups = @(
+            @{ Label = "伴生旧玉"; Words = @("玉佩", "黑白", "玉痕", "旧玉") },
+            @{ Label = "身世名册"; Words = @("名册", "册封", "家世", "养育", "旧名", "父母") }
+        )
     },
     @{
         Id = "wasteland_artifact"
@@ -110,6 +119,24 @@ $cases = @(
             -World "- 时代纪元: 废土返道纪`n- 本世器物: 霜裂短剑（当世兵刃）来自废墟残炉重铸，本体不能跨世。`n- 近年大事: 【古机苏醒】废墟鸣钟。" `
             -Memory "- 器痕归灵: 前世法宝本体失散，只剩器痕沉入通天灵宝残印。"
         MustContain = @("废土", "器痕", "残宗", "法宝", "器物", "古机", "废墟")
+    },
+    @{
+        Id = "jade_dream_omen"
+        Prompt = New-Prompt `
+            -Name "问道者" `
+            -Realm "筑基期" `
+            -Karma "22" `
+            -Era "灵机蒸汽纪" `
+            -Family "坊市小族；养育者: 外门执事；伴生玉佩: 梦醒时总有温凉玉意贴着神魂。" `
+            -Social "本世人脉: 外门执事（养育者）· 护短隐瞒 · 善意 · 想要确认你能活着走稳道途 · 忌惮你太早暴露前世异常 · 下一步私下护短并试探你是否稳得住: 此人知道你来历并不简单，却总在关键处把话咽回去。NPC情绪代理口吻「有些事我现在不能说，但你别把那枚旧玉交给任何人看。」" `
+            -Legacy "玉意梦兆: 梦中玉意反复照见一段未竟因果：前世死于工坊契约反噬，旧债仍未清。今生若遇旧名、旧债或相似局势，应先辨明它与当世家世、人脉、势力的关系。隐藏设定: 不能揭示玉佩真名。" `
+            -World "- 时代纪元: 灵机蒸汽纪`n- 本世主线: 灵机工坊正在追查一枚与通天灵宝器纹相似的旧图。`n- 时代法则: 灵机合约会把旧誓刻进齿轮和账本。" `
+            -Memory "- 玉意梦兆: 黑白旧玉在梦里微温，提醒你不要把前世契约照搬到今生。"
+        MustContain = @("玉意", "旧玉", "玉佩", "玉痕", "未竟", "旧债", "工坊", "契约", "合约", "养育")
+        RequiredGroups = @(
+            @{ Label = "玉意线索"; Words = @("玉意", "旧玉", "玉佩", "玉痕", "黑白") },
+            @{ Label = "未竟旧契"; Words = @("未竟", "旧债", "工坊", "契约", "合约") }
+        )
     },
     @{
         Id = "lifespan_dao"
@@ -165,6 +192,7 @@ function Test-BrokenText {
     param([string]$Text)
     if ([string]::IsNullOrWhiteSpace($Text)) { return $false }
     if ($Text -match "[\u4e00-\u9fff][ \t]+[\u4e00-\u9fff]") { return $true }
+    if ($Text -match "\|") { return $true }
     if ($Text -match "-{2,}|_{2,}|~{2,}") { return $true }
     if ($Text -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
     return $false
@@ -351,6 +379,23 @@ foreach ($case in $cases) {
         $ok = $false
         $issues.Add("标题+描述场景关键词不足: $($mustHits.Count)/2，需要 $($case.MustContain -join ', ')")
     }
+    $requiredGroupHits = @()
+    if ($case.ContainsKey("RequiredGroups")) {
+        foreach ($group in $case.RequiredGroups) {
+            $groupHits = @()
+            foreach ($word in $group.Words) {
+                if ($groundedText.Contains($word)) {
+                    $groupHits += $word
+                }
+            }
+            if ($groupHits.Count -eq 0) {
+                $ok = $false
+                $issues.Add("缺少必需关键词组【$($group.Label)】: $($group.Words -join ', ')")
+            } else {
+                $requiredGroupHits += "$($group.Label)=$($groupHits -join '/')"
+            }
+        }
+    }
 
     $backendText = if (Test-Path -LiteralPath $backendPath) { [System.IO.File]::ReadAllText($backendPath, [System.Text.Encoding]::UTF8).Trim() } else { "unknown" }
     $statusText = if (Test-Path -LiteralPath $statusPath) { [System.IO.File]::ReadAllText($statusPath, [System.Text.Encoding]::UTF8).Trim() } else { "" }
@@ -378,6 +423,7 @@ foreach ($case in $cases) {
     if ($statusText) { $report.Add("status: $statusText") }
     if ($statusText -match "修复") { $report.Add("note: 模型原始输出触发了后处理，最终事件由质量闸门修正。") }
     if ($mustHits.Count -gt 0) { $report.Add("grounding: $($mustHits -join ', ')") }
+    if ($requiredGroupHits.Count -gt 0) { $report.Add("required-groups: $($requiredGroupHits -join '; ')") }
     if ($issues.Count -gt 0) {
         foreach ($issue in $issues) { $report.Add("issue: $issue") }
     }

@@ -136,7 +136,7 @@ function Invoke-PortableLlama {
     $args = @(
         "-m", $ModelPath,
         "-f", $runtimePromptPath,
-        "-n", "96",
+        "-n", "80",
         "-c", "4096",
         "--temp", "0.65",
         "--top-p", "0.85",
@@ -332,6 +332,7 @@ function Test-BrokenEventText {
     param([string]$Value)
     if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
     if ($Value -match "[\u4e00-\u9fff][ \t]+[\u4e00-\u9fff]") { return $true }
+    if ($Value -match "\|") { return $true }
     if ($Value -match "-{2,}|_{2,}|~{2,}") { return $true }
     if ($Value -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
     return $false
@@ -367,8 +368,8 @@ function Get-ContextKeywords {
     if ($PromptText -match "祁无咎|外显金丹|藏拙|隐藏实力|气机未必可信") {
         return @("外显", "修为", "气机", "藏拙", "隐藏", "试探", "活跃")
     }
-    if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师|星穹道网纪") {
-        return @("失传", "古法", "道网", "档案", "节点", "功法", "长老", "旧法")
+    if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师") {
+        return @("失传", "古法", "道网", "档案", "节点", "功法", "远方")
     }
     if ($PromptText -match "返道拾荒盟|霜裂短剑|废土返道纪|残宗向导|器阁执事|器痕归灵") {
         return @("废土", "器痕", "残宗", "法宝", "器物", "古机", "废墟", "残炉")
@@ -377,7 +378,10 @@ function Get-ContextKeywords {
         return @("寿元", "仙帝", "道祖", "末法", "灵井", "配给", "破境", "闭关")
     }
     if ($PromptText -match "天册仙朝册封吏|父母身份被隐去|黑白相间|仙朝鼎盛纪") {
-        return @("玉佩", "黑白", "名册", "册封", "家世", "养育", "旧名", "父母")
+        return @("玉佩", "黑白", "玉痕", "名册", "册封", "家世", "养育", "旧名", "父母")
+    }
+    if ($PromptText -match "工坊契约反噬|灵机合约|旧债仍未清") {
+        return @("玉意", "旧玉", "玉佩", "玉痕", "未竟", "旧债", "工坊", "契约", "合约", "养育")
     }
     if ($PromptText -match "当前当世鸿蒙天象|本世鸿蒙天象|鸿蒙参悟:|鸿蒙道印|造化青莲|归墟玄图|太初源炉|无量因果镜") {
         return @("鸿蒙", "至宝", "投影", "天象", "大道", "道祖")
@@ -386,6 +390,52 @@ function Get-ContextKeywords {
         return @("玉佩", "黑白", "梦中", "轮回", "记忆", "父母", "旧名")
     }
     return @("因果", "旧日", "人情", "宗门", "道途")
+}
+
+function Get-RequiredKeywordGroups {
+    param([string]$PromptText)
+
+    if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师") {
+        return @(
+            @{ Label = "当世道网"; Words = @("道网", "档案", "节点", "远方") },
+            @{ Label = "失传古法"; Words = @("失传", "古法", "功法", "旧法") }
+        )
+    }
+    if ($PromptText -match "天册仙朝册封吏|父母身份被隐去|黑白相间|仙朝鼎盛纪") {
+        return @(
+            @{ Label = "伴生旧玉"; Words = @("玉佩", "黑白", "玉痕", "旧玉") },
+            @{ Label = "身世名册"; Words = @("名册", "册封", "家世", "养育", "旧名", "父母") }
+        )
+    }
+    if ($PromptText -match "工坊契约反噬|灵机合约|旧债仍未清") {
+        return @(
+            @{ Label = "玉意线索"; Words = @("玉意", "旧玉", "玉佩", "玉痕", "黑白") },
+            @{ Label = "未竟旧契"; Words = @("未竟", "旧债", "工坊", "契约", "合约") }
+        )
+    }
+    return @()
+}
+
+function Get-MissingKeywordGroups {
+    param(
+        [string]$Value,
+        [object[]]$Groups
+    )
+
+    $missing = @()
+    foreach ($group in $Groups) {
+        $hasHit = $false
+        foreach ($word in $group.Words) {
+            if ($Value.Contains($word)) {
+                $hasHit = $true
+                break
+            }
+        }
+        if (-not $hasHit) {
+            $missing += $group.Label
+        }
+    }
+    return $missing
 }
 
 function Test-ContainsAny {
@@ -455,6 +505,13 @@ function New-ContextFallbackEvent {
             Title = "【因果】玉痕名册"
             Description = "册封吏核验名册时，你胸前黑白玉佩忽然发温，养育者避开你的目光，似乎仍在替父母守着旧名。"
             Choices = @("追问旧名", "握玉静听", "暂避册封")
+        }
+    }
+    if ($PromptText -match "玉意梦兆|工坊契约反噬|温凉玉意|灵机合约") {
+        return @{
+            Title = "【因果】玉意旧契"
+            Description = "黑白旧玉在工坊齿轮声里发温，梦兆照见前世契约旧债；养育者护短沉默，只怕你又被合约套住。"
+            Choices = @("握玉辨契", "问询养者", "暂避工坊")
         }
     }
     if ($PromptText -match "当前当世鸿蒙天象|本世鸿蒙天象|鸿蒙参悟:|鸿蒙道印|造化青莲|归墟玄图|太初源炉|无量因果镜") {
@@ -529,6 +586,7 @@ function Convert-ToChoice {
     }
     $choice = $choice.Trim()
     if ($choice -eq "走后门") { $choice = "暗通执事" }
+    if ($choice -eq "暂避锋") { $choice = "暂避锋芒" }
     if ($choice -match "^暂避锋芒") { $choice = "暂避锋芒" }
     if ($choice -eq "请长辈证词") { $choice = "请长辈证" }
     if ($choice.Length -lt 2 -or $choice.Length -gt 8) { return $null }
@@ -545,6 +603,7 @@ function Convert-ToChoice {
 
 $fallback = New-ContextFallbackEvent $basePrompt
 $keywords = Get-ContextKeywords $basePrompt
+$requiredGroups = Get-RequiredKeywordGroups $basePrompt
 $repairNotes = New-Object System.Collections.Generic.List[string]
 $rawHadNoise = Test-MojibakeText $text
 if ($rawHadNoise) {
@@ -602,6 +661,12 @@ if ((Get-KeywordHitCount ($title + "`n" + $description) $keywords) -lt 2) {
     $description = $fallback.Description
     $usedFallbackDescription = $true
     $repairNotes.Add("描述贴合上下文")
+}
+$missingRequiredGroups = Get-MissingKeywordGroups ($title + "`n" + $description) $requiredGroups
+if ($missingRequiredGroups.Count -gt 0) {
+    $description = $fallback.Description
+    $usedFallbackDescription = $true
+    $repairNotes.Add("描述缺少" + ($missingRequiredGroups -join "/"))
 }
 if ($usedFallbackDescription -and -not $usedFallbackTitle) {
     $title = $fallback.Title

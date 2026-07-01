@@ -202,7 +202,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1 -ReleaseDir release -Backend portable
 ```
 
-如果想跑 6 组事件质量压测：
+如果想跑 7 组事件质量压测：
 
 ```bat
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\evaluate_ai_quality.ps1 -Backend portable -TimeoutSec 120
