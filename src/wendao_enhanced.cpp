@@ -936,6 +936,7 @@ vector<wstring> g_socialRumors;
 vector<SocialThread> g_socialThreads;
 vector<wstring> g_discoveredItems;
 vector<LifeArtifact> g_lifeArtifacts;
+int g_jadeDreamOmenEventsThisLife = 0;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -2901,6 +2902,108 @@ Event BuildCompanionJadeMemoryEvent(const vector<wstring>& memoryFragments) {
             L"你只摸到一缕阴阳玉痕，明白此物绝非寻常，却仍看不透真名。\n修为+60，灵宝共鸣+3",
             L"你太急着追问旧玉来历，梦中杂音反噬识海。\n气血-35，因果-10"
         }, -6}
+    };
+    return evt;
+}
+
+bool ShouldTriggerCompanionJadeOmenEvent() {
+    if (g_jadeDreamOmenEventsThisLife >= 1) return false;
+
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(3);
+    auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(4);
+    int chance = 12;
+    if (g_generation <= 1) chance += 6;
+    if (!unfinishedKarmas.empty()) chance += 14;
+    if (!memoryFragments.empty()) chance += 8;
+    if (!g_legacySystem.GetInheritedLegacies().empty()) chance += 6;
+    if (HasFactionTie()) chance += 4;
+    if (!g_socialThreads.empty()) chance += 4;
+    if (!g_eraRemnants.empty()) chance += 3;
+    if (g_player.totalEvents <= 3) chance += 6;
+    if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") chance += 4;
+    chance = max(14, min(46, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildCompanionJadeOmenEvent() {
+    Event evt;
+    auto compactLimit = [](const wstring& text, size_t limit) {
+        wstring compact = CompactMemoryFragment(text);
+        if (compact.size() > limit) {
+            compact = compact.substr(0, limit) + L"...";
+        }
+        return compact;
+    };
+
+    auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(3);
+    auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(4);
+    wstring omen = compactLimit(BuildCompanionJadeDreamOmen(), 132);
+
+    wstring currentTie;
+    if (!g_socialThreads.empty()) {
+        const SocialThread& thread = g_socialThreads[0];
+        currentTie = L"最先被牵动的人是" + thread.name + L"（" + thread.role + L"），对方的态度是" + thread.attitude + L"。";
+    } else if (HasFactionTie()) {
+        currentTie = L"这道梦兆又绕到本世势力：" + compactLimit(BuildFactionTieDigest(), 64) + L"。";
+    } else if (!g_player.family.knowsParents) {
+        currentTie = L"父母身份仍被隐去，养育者的沉默像是早知这枚旧玉不寻常。";
+    } else if (!g_player.family.father.empty() || !g_player.family.mother.empty()) {
+        currentTie = L"父母尚不知你为何忽然沉默，却本能地替你挡下一些旁人的打量。";
+    } else if (!g_eraRemnants.empty()) {
+        currentTie = L"线索落在旧世残响上：" + compactLimit(g_eraRemnants[0], 64) + L"。";
+    } else {
+        currentTie = L"今生还没有旁人真正看懂这份异样。";
+    }
+
+    bool hasUnfinished = !unfinishedKarmas.empty();
+    bool hasMemory = !memoryFragments.empty();
+    if (hasUnfinished) {
+        evt.title = L"【因果】玉意照债";
+    } else if (hasMemory) {
+        evt.title = L"【因果】旧玉托梦";
+    } else if (!g_eraRemnants.empty()) {
+        evt.title = L"【奇遇】玉照旧世";
+    } else {
+        evt.title = L"【奇遇】旧玉微温";
+    }
+
+    evt.description = L"外出前夜，黑白旧玉忽然发温。" + omen + currentTie +
+        L"你仍不知道它真正来历，只能把它当成今生可用的一线提醒。";
+
+    wstring traceChoice = hasUnfinished ? L"追查旧债" : (g_player.family.knowsParents ? L"问询亲缘" : L"问询养者");
+    wstring traceSuccess;
+    wstring traceFailure;
+    if (hasUnfinished) {
+        traceSuccess = L"你没有让旧债直接吞没今生，而是借此世家世、人脉和时代规则查到新的入口。\n修为+90，因果+12，灵宝共鸣+3";
+        traceFailure = L"你追得太急，旧债反而借今生身份反噬回来。\n气血-28，因果-8";
+    } else if (g_player.family.knowsParents) {
+        traceSuccess = L"你没有说出前世记忆，只从父母的反应里听出一处被他们压下的隐情。\n修为+65，因果+6";
+        traceFailure = L"你问得太直，亲缘担忧变成了新的遮掩。\n因果-5";
+    } else {
+        traceSuccess = L"养育者没有解释旧玉，只替你挡开一场不该这么早来的试探。\n修为+65，因果+6";
+        traceFailure = L"养育者把话咽回去，你反而被自己的疑心牵住。\n气血-12，因果-4";
+    }
+
+    wstring proveSuccess = hasMemory
+        ? L"你拿今生见闻反证旧梦真假，确认其中一段前世碎片仍能用于判断。\n修为+75，因果+8"
+        : L"你把梦兆和当前纪元互相校准，没有把前世经验照搬成今生答案。\n修为+70，因果+6";
+    if (g_legacySystem.GetRelic().daoLinked) {
+        proveSuccess += L"，掌道+2";
+    }
+
+    evt.choices = {
+        {L"握玉辨兆", {
+            proveSuccess,
+            L"梦兆太杂，阴阳玉痕一闪而过，反让你短暂分不清旧梦与今生。\n气血-18，因果-5"
+        }, 8},
+        {traceChoice, {
+            traceSuccess,
+            traceFailure
+        }, hasUnfinished ? 8 : 5},
+        {L"稳住今生", {
+            L"你承认玉意有用，却没有把选择交给前世；今生心神因此更稳。\n修为+55，寿命+3",
+            L"你暂时压下梦兆，它没有消失，只是沉回识海深处等待下一次因果靠近。"
+        }, 4}
     };
     return evt;
 }
@@ -6209,6 +6312,7 @@ void StartNextLife() {
     g_generation = g_legacySystem.GetGeneration();
     g_lastAiBackend = L"未触发";
     g_lastAiStatus = L"本世尚未触发动态事件。";
+    g_jadeDreamOmenEventsThisLife = 0;
 
     g_player = Player();
     g_player.name = oldName;
@@ -6868,6 +6972,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_player = Player();
                 g_player.name = name;
                 g_generation = 1;
+                g_jadeDreamOmenEventsThisLife = 0;
                 ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -7027,6 +7132,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         s_daoTrialEvent = BuildDaoTrialEvent();
                         g_currentEvent = &s_daoTrialEvent;
                         AddMemory(L"大道问心", L"外出历练时，所掌大道主动显出一道缺口。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerCompanionJadeOmenEvent()) {
+                        static Event s_jadeOmenEvent;
+                        s_jadeOmenEvent = BuildCompanionJadeOmenEvent();
+                        g_currentEvent = &s_jadeOmenEvent;
+                        g_jadeDreamOmenEventsThisLife++;
+                        AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
