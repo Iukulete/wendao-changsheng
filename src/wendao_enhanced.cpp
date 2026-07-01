@@ -3779,6 +3779,64 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
     }
 }
 
+bool PulseSocialEmotions(const wstring& reason) {
+    if (g_socialThreads.empty()) return false;
+    if (Random(1, 100) > 28) return false;
+
+    vector<int> weighted;
+    for (int i = 0; i < (int)g_socialThreads.size(); ++i) {
+        const SocialThread& thread = g_socialThreads[i];
+        int weight = 1 + min(5, abs(thread.relation) / 18);
+        if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") weight += 2;
+        if (thread.role == L"欺压者" || thread.role == L"竞争者" || thread.role == L"资源把关者") weight += 2;
+        for (int j = 0; j < weight; ++j) {
+            weighted.push_back(i);
+        }
+    }
+    if (weighted.empty()) return false;
+
+    SocialThread& thread = g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
+    int oldRelation = thread.relation;
+    int totalRoot = g_player.GetTotalRoot();
+    bool gifted = g_player.hasBalancedRoots || totalRoot >= 42;
+    bool weak = totalRoot < 30 && !g_player.hasBalancedRoots;
+
+    int delta = Random(-1, 1);
+    if (TextContainsAny(thread.role + thread.attitude, {L"父亲", L"母亲", L"养育者", L"长辈"})) {
+        delta += gifted ? 2 : (weak ? 1 : 0);
+    }
+    if (TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者"})) {
+        delta += gifted ? -2 : (weak ? -1 : 0);
+    }
+    if (TextContainsAny(thread.role + thread.attitude, {L"资源把关者", L"配给"})) {
+        delta += (g_worldEraName == L"末法裂变纪") ? -2 : -1;
+    }
+    if (thread.relation >= 18 && g_player.karma >= 30) delta += 1;
+    if (thread.relation <= -18 && g_player.karma <= -30) delta -= 1;
+
+    delta = max(-3, min(3, delta));
+    if (delta == 0) return false;
+
+    thread.relation = ClampRelation(thread.relation + delta);
+    if (thread.relation == oldRelation) return false;
+    g_dynamicWorld.PlayerInteractWithNPC(thread.name, delta);
+
+    wstring rumor = thread.name + L"（" + thread.role + L"）听过你" + reason + L"后的风声，";
+    if (delta > 0) {
+        rumor += L"情绪从" + GetRelationLabel(oldRelation) + L"往" +
+            GetRelationLabel(thread.relation) + L"松了一分；" + BuildSocialNpcUtterance(thread);
+    } else {
+        rumor += L"情绪从" + GetRelationLabel(oldRelation) + L"往" +
+            GetRelationLabel(thread.relation) + L"冷了一分；" + BuildSocialNpcUtterance(thread);
+    }
+    AddSocialRumor(rumor);
+    AddMemory(L"情绪脉动",
+        thread.name + L"（" + thread.role + L"）因" + reason + L"后的传闻，关系由" +
+        GetRelationLabel(oldRelation) + L"变为" + GetRelationLabel(thread.relation) +
+        L"，当前情绪是" + BuildSocialEmotionTag(thread) + L"。");
+    return true;
+}
+
 void GenerateSocialThreads() {
     g_socialThreads.clear();
 
@@ -5131,7 +5189,8 @@ void AdvanceDynamicWorld(const wstring& reason) {
         added++;
         if (added >= 3) break;
     }
-    if (added > 0) {
+    bool socialChanged = PulseSocialEmotions(reason);
+    if (added > 0 || socialChanged) {
         g_contextMgr.SetContext(BuildPlayerContext());
     }
 }
