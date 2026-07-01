@@ -3407,6 +3407,117 @@ const SocialThread* PickSocialAdventureThread() {
     return &g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
 }
 
+const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& choice, const wstring& outcome) {
+    if (g_socialThreads.empty()) return nullptr;
+
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    int bestScore = 0;
+    const SocialThread* best = nullptr;
+    for (const auto& thread : g_socialThreads) {
+        int score = 0;
+        wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+        if (text.find(thread.name) != wstring::npos) score += 12;
+        if (text.find(thread.role) != wstring::npos) score += 7;
+        if (!thread.attitude.empty() && text.find(thread.attitude) != wstring::npos) score += 4;
+        if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"}) &&
+            TextContainsAny(text, {L"家世", L"父亲", L"母亲", L"长辈", L"养育", L"玉佩", L"旧名"})) {
+            score += 5;
+        }
+        if (TextContainsAny(profile, {L"欺压者", L"竞争者", L"同代修士", L"同路人"}) &&
+            TextContainsAny(text, {L"资质", L"灵根", L"试炼", L"同辈", L"旁人", L"嫉妒", L"轻慢"})) {
+            score += 5;
+        }
+        if (TextContainsAny(profile, {L"资源把关者", L"势力牵连", L"仙朝耳目", L"道网联系人", L"残宗向导", L"工坊中人"}) &&
+            TextContainsAny(text, {L"势力", L"名册", L"配给", L"道网", L"仙朝", L"工坊", L"残宗", L"宗门"})) {
+            score += 5;
+        }
+        if (TextContainsAny(profile, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"}) &&
+            TextContainsAny(text, {L"前世", L"旧名", L"失传古法", L"功法", L"器痕", L"法宝", L"通天灵宝"})) {
+            score += 6;
+        }
+        if ((thread.hidesPower || !thread.hiddenHint.empty()) &&
+            TextContainsAny(text, {L"外显", L"隐藏", L"藏拙", L"修为", L"气机", L"试探"})) {
+            score += 4;
+        }
+        if (score > bestScore) {
+            bestScore = score;
+            best = &thread;
+        }
+    }
+
+    if (best && bestScore >= 5) return best;
+    if (TextContainsAny(text, {
+        L"本世人脉", L"人情", L"旁人", L"长辈", L"同辈", L"家世", L"旧名",
+        L"势力", L"名册", L"试探", L"嫉妒", L"护短", L"资源", L"配给"
+    }) || Random(1, 100) <= 42) {
+        return PickSocialAdventureThread();
+    }
+    return nullptr;
+}
+
+wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
+                                const Event& event, const Choice& choice) {
+    wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
+    bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
+    bool challenger = TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者", L"资源把关者", L"轻慢", L"嫉妒"});
+    bool factionLike = TextContainsAny(thread.role + thread.attitude, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"残宗向导"});
+    bool legacyLike = TextContainsAny(thread.role + thread.attitude, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
+
+    wstringstream ss;
+    ss << L"\n人情回响: ";
+    if (!thread.visibleRealm.empty()) {
+        ss << thread.name << L"外显" << thread.visibleRealm;
+        if (thread.hidesPower || !thread.hiddenHint.empty()) {
+            ss << L"，但" << (thread.hiddenHint.empty() ? L"气机未必可信" : thread.hiddenHint);
+        }
+        ss << L"。";
+    }
+
+    if (success) {
+        if (familyTie) {
+            ss << thread.name << L"听闻「" << trigger
+               << L"」后没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
+        } else if (challenger) {
+            ss << thread.name << L"嘴上仍带酸意，却因「" << trigger
+               << L"」不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
+        } else if (legacyLike) {
+            ss << thread.name << L"把「" << trigger
+               << L"」记进旧法与旧名的账里，语气压低却多了几分认可：" << BuildSocialNpcUtterance(thread);
+        } else if (factionLike) {
+            ss << thread.name << L"把「" << trigger
+               << L"」递回身后势力，评语从观望变成值得押注：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"因「" << trigger
+               << L"」对你亲近一分，话说得不满，眼神却先承认了你的分量。";
+        }
+    } else {
+        if (familyTie) {
+            ss << thread.name << L"听见「" << trigger
+               << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
+        } else if (challenger) {
+            ss << thread.name << L"抓住「" << trigger
+               << L"」里的破绽继续轻慢你，下一次很可能借势设局。";
+        } else if (legacyLike) {
+            ss << thread.name << L"因「" << trigger
+               << L"」更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
+        } else if (factionLike) {
+            ss << thread.name << L"把「" << trigger
+               << L"」写成审查理由，身后势力对你的试探会更重。";
+        } else {
+            ss << thread.name << L"因「" << trigger
+               << L"」把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
+        }
+    }
+    return ss.str();
+}
+
+void AppendAiOutcomeSocialReaction(wstring& outcome, bool success,
+                                   const Event& event, const Choice& choice) {
+    const SocialThread* thread = PickOutcomeReactionThread(event, choice, outcome);
+    if (!thread) return;
+    outcome += BuildOutcomeNpcReaction(*thread, success, event, choice);
+}
+
 bool ShouldTriggerSocialAdventureEvent() {
     if (g_socialThreads.empty()) return false;
 
@@ -5949,6 +6060,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         bool success = (Random(1, 100) <= successRate);
         g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success,
             g_currentEvent->title, g_currentEvent->description, choice.description);
+        AppendAiOutcomeSocialReaction(g_messageText, success, *g_currentEvent, choice);
 
         // 更新AI上下文
         g_contextMgr.UpdateFromChoice(choiceIndex, g_messageText);

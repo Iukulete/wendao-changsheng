@@ -345,6 +345,12 @@ function Test-ContextLabelLine {
 
 function Get-ContextKeywords {
     param([string]$PromptText)
+    if ($PromptText -match "顾临渊|叶微澜|江照雪|测灵碑|资质出众") {
+        return @("父亲", "母亲", "顾临渊", "叶微澜", "江照雪", "测灵")
+    }
+    if ($PromptText -match "祁无咎|外显金丹|藏拙|隐藏实力|气机未必可信") {
+        return @("外显", "修为", "气机", "藏拙", "隐藏", "试探", "活跃")
+    }
     if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师|星穹道网纪") {
         return @("失传", "古法", "道网", "档案", "节点", "功法", "长老", "旧法")
     }
@@ -393,6 +399,20 @@ function Get-KeywordHitCount {
 function New-ContextFallbackEvent {
     param([string]$PromptText)
 
+    if ($PromptText -match "顾临渊|叶微澜|江照雪|测灵碑|资质出众") {
+        return @{
+            Title = "【因果】测灵余声"
+            Description = "测灵碑亮起后，父亲压住夸赞，母亲暗中护短，同代江照雪却因你资质出众生出嫉妒。"
+            Choices = @("谢过长辈", "稳住锋芒", "正面应试")
+        }
+    }
+    if ($PromptText -match "祁无咎|外显金丹|藏拙|隐藏实力|气机未必可信") {
+        return @{
+            Title = "【奇遇】外显藏锋"
+            Description = "活跃修士祁无咎外显金丹修为，却在试炼前漏出一丝藏拙气机，像要借你反应继续试探。"
+            Choices = @("顺势试探", "暗记气机", "暂留余地")
+        }
+    }
     if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师|星穹道网纪") {
         return @{
             Title = "【传承】道网旧法"
