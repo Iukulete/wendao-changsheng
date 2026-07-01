@@ -7325,7 +7325,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     RegisterClassExA(&wcex);
 
     g_hWnd = CreateWindowA("WenDaoChangSheng", "The Immortal Path",
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 1360, 900,
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, 1440, 920,
         nullptr, nullptr, hInstance, nullptr);
 
     if (!g_hWnd) return FALSE;
