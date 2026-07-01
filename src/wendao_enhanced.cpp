@@ -116,11 +116,16 @@ struct SocialThread {
     wstring hook;
     wstring visibleRealm;
     wstring hiddenHint;
+    wstring desire;
+    wstring fear;
+    wstring nextMove;
     int relation;
     bool hidesPower;
 
     SocialThread() : relation(0), hidesPower(false) {}
 };
+
+void RefreshSocialAgentState(SocialThread& thread);
 
 struct FactionTie {
     wstring name;
@@ -1555,7 +1560,7 @@ void SaveMemory(wofstream& file) {
 }
 
 void SaveSocialRumors(wofstream& file) {
-    file << L"SOCIAL_V2\n";
+    file << L"SOCIAL_V3\n";
     file << g_socialRumors.size() << L"\n";
     for (auto& item : g_socialRumors) {
         file << EscapeSaveField(item) << L"\n";
@@ -1568,6 +1573,9 @@ void SaveSocialRumors(wofstream& file) {
         file << EscapeSaveField(thread.hook) << L"\n";
         file << EscapeSaveField(thread.visibleRealm) << L"\n";
         file << EscapeSaveField(thread.hiddenHint) << L"\n";
+        file << EscapeSaveField(thread.desire) << L"\n";
+        file << EscapeSaveField(thread.fear) << L"\n";
+        file << EscapeSaveField(thread.nextMove) << L"\n";
         file << thread.relation << L" " << thread.hidesPower << L"\n";
     }
 }
@@ -1577,7 +1585,8 @@ bool LoadSocialRumors(wifstream& file) {
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
     bool isV2 = (marker == L"SOCIAL_V2");
-    if (marker != L"SOCIAL_V1" && !isV2) return false;
+    bool isV3 = (marker == L"SOCIAL_V3");
+    if (marker != L"SOCIAL_V1" && !isV2 && !isV3) return false;
     size_t count = 0;
     file >> count;
     file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -1589,7 +1598,7 @@ bool LoadSocialRumors(wifstream& file) {
         g_socialRumors.push_back(item);
     }
     g_socialThreads.clear();
-    if (isV2) {
+    if (isV2 || isV3) {
         file >> count;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
         for (size_t i = 0; i < count; i++) {
@@ -1600,14 +1609,23 @@ bool LoadSocialRumors(wifstream& file) {
             getline(file, thread.hook);
             getline(file, thread.visibleRealm);
             getline(file, thread.hiddenHint);
+            if (isV3) {
+                getline(file, thread.desire);
+                getline(file, thread.fear);
+                getline(file, thread.nextMove);
+            }
             thread.name = UnescapeSaveField(thread.name);
             thread.role = UnescapeSaveField(thread.role);
             thread.attitude = UnescapeSaveField(thread.attitude);
             thread.hook = UnescapeSaveField(thread.hook);
             thread.visibleRealm = UnescapeSaveField(thread.visibleRealm);
             thread.hiddenHint = UnescapeSaveField(thread.hiddenHint);
+            thread.desire = UnescapeSaveField(thread.desire);
+            thread.fear = UnescapeSaveField(thread.fear);
+            thread.nextMove = UnescapeSaveField(thread.nextMove);
             file >> thread.relation >> thread.hidesPower;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            RefreshSocialAgentState(thread);
             g_socialThreads.push_back(thread);
         }
     }
@@ -3095,6 +3113,61 @@ wstring GetRelationLabel(int relation) {
     return L"观望";
 }
 
+bool SocialThreadHas(const SocialThread& thread, const vector<wstring>& keys) {
+    wstring profile = thread.role + L" " + thread.attitude + L" " + thread.hook;
+    for (const auto& key : keys) {
+        if (!key.empty() && profile.find(key) != wstring::npos) return true;
+    }
+    return false;
+}
+
+void RefreshSocialAgentState(SocialThread& thread) {
+    bool familyTie = SocialThreadHas(thread, {L"父亲", L"母亲", L"养育者", L"身世"});
+    bool challenger = SocialThreadHas(thread, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
+    bool gatekeeper = SocialThreadHas(thread, {L"资源把关者", L"配给", L"仙朝耳目", L"势力牵连"});
+    bool legacyWatcher = SocialThreadHas(thread, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
+    bool hidden = thread.hidesPower || !thread.hiddenHint.empty();
+
+    if (thread.desire.empty()) {
+        if (familyTie) thread.desire = L"确认你能活着走稳道途";
+        else if (challenger) thread.desire = L"证明你没有资格压过自己";
+        else if (gatekeeper) thread.desire = L"判断你值不值得分配资源";
+        else if (legacyWatcher) thread.desire = L"弄清旧名、旧法或器痕的真假";
+        else thread.desire = L"看清你是哪种可结交的人";
+    }
+    if (thread.fear.empty()) {
+        if (familyTie) thread.fear = L"你太早暴露前世异常";
+        else if (challenger) thread.fear = L"你的资质和旧名抢走自己的位置";
+        else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
+        else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
+        else thread.fear = hidden ? L"自己藏拙被你看穿" : L"站错队后被时代卷走";
+    }
+
+    if (familyTie) {
+        thread.nextMove = thread.relation >= 18
+            ? L"私下护短，并试探你是否稳得住"
+            : L"收紧管束，先替你压下风声";
+    } else if (challenger) {
+        thread.nextMove = thread.relation <= -18
+            ? L"借下一场试炼设局"
+            : L"继续酸言试探，不急着翻脸";
+    } else if (gatekeeper) {
+        thread.nextMove = thread.relation >= 18
+            ? L"递出小额资源，观察回报"
+            : L"卡住名额，逼你拿筹码";
+    } else if (legacyWatcher) {
+        thread.nextMove = thread.relation >= 18
+            ? L"压低声音提醒旧法风险"
+            : L"暗查你的旧名与器痕";
+    } else if (hidden) {
+        thread.nextMove = L"继续隐藏真实修为，看你是否识破";
+    } else {
+        thread.nextMove = thread.relation >= 18
+            ? L"试着拉近关系"
+            : (thread.relation <= -18 ? L"寻找你的破绽" : L"继续观望");
+    }
+}
+
 void AddSocialThread(const wstring& name, const wstring& role, const wstring& attitude,
                      const wstring& hook, int relation,
                      const wstring& visibleRealm = L"", bool hidesPower = false,
@@ -3113,6 +3186,7 @@ void AddSocialThread(const wstring& name, const wstring& role, const wstring& at
     thread.visibleRealm = visibleRealm;
     thread.hidesPower = hidesPower;
     thread.hiddenHint = hiddenHint;
+    RefreshSocialAgentState(thread);
     g_socialThreads.push_back(thread);
 
     if (relation != 0) {
@@ -3219,6 +3293,15 @@ wstring BuildSocialThreadLine(const SocialThread& thread) {
     }
     if (thread.hidesPower || !thread.hiddenHint.empty()) {
         ss << L" · " << (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint);
+    }
+    if (!thread.desire.empty()) {
+        ss << L" · 想要" << thread.desire;
+    }
+    if (!thread.fear.empty()) {
+        ss << L" · 忌惮" << thread.fear;
+    }
+    if (!thread.nextMove.empty()) {
+        ss << L" · 下一步" << thread.nextMove;
     }
     ss << L": " << thread.hook << L" NPC情绪代理口吻" << BuildSocialNpcUtterance(thread);
     return ss.str();
@@ -3507,6 +3590,9 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
             ss << thread.name << L"因「" << trigger
                << L"」把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
         }
+    }
+    if (!thread.nextMove.empty()) {
+        ss << L" 接下来，" << thread.name << L"多半会" << thread.nextMove << L"。";
     }
     return ss.str();
 }
@@ -3876,6 +3962,7 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
         if (localDelta == 0) localDelta = baseDelta > 0 ? 1 : -1;
         thread.relation = ClampRelation(thread.relation + localDelta);
         if (thread.relation != oldRelation) {
+            RefreshSocialAgentState(thread);
             g_dynamicWorld.PlayerInteractWithNPC(thread.name, localDelta);
             wstring aftershock = BuildRelationAftershockText(thread, oldRelation, localDelta, event, choice);
             AddSocialRumor(aftershock);
@@ -3930,6 +4017,7 @@ bool PulseSocialEmotions(const wstring& reason) {
 
     thread.relation = ClampRelation(thread.relation + delta);
     if (thread.relation == oldRelation) return false;
+    RefreshSocialAgentState(thread);
     g_dynamicWorld.PlayerInteractWithNPC(thread.name, delta);
 
     wstring rumor = thread.name + L"（" + thread.role + L"）听过你" + reason + L"后的风声，";
