@@ -1010,6 +1010,7 @@ void ApplyCompanionJadeToBirth();
 int CountHongmengInsightKinds();
 wstring BuildPlannedLegacyDigest(int limit = 4);
 bool AddLifeStoryHook(const wstring& hook, bool recordMemory);
+bool HasPriorLifeEcho();
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -1476,7 +1477,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
     static const vector<wstring> keys = {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
-        L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
+        L"境界突破", L"天机", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
         L"伴生玉佩", L"玉佩", L"玄牝轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
@@ -2991,7 +2992,9 @@ Event BuildCompanionJadeOmenEvent() {
         traceSuccess = L"你没有让旧债直接吞没今生，而是借此世家世、人脉和时代规则查到新的入口。\n修为+90，因果+12，灵宝共鸣+3";
         traceFailure = L"你追得太急，旧债反而借今生身份反噬回来。\n气血-28，因果-8";
     } else if (g_player.family.knowsParents) {
-        traceSuccess = L"你没有说出前世记忆，只从父母的反应里听出一处被他们压下的隐情。\n修为+65，因果+6";
+        traceSuccess = HasPriorLifeEcho()
+            ? L"你没有说出前世记忆，只从父母的反应里听出一处被他们压下的隐情。\n修为+65，因果+6"
+            : L"你没有说出旧玉梦兆，只从父母的反应里听出一处被他们压下的隐情。\n修为+65，因果+6";
         traceFailure = L"你问得太直，亲缘担忧变成了新的遮掩。\n因果-5";
     } else {
         traceSuccess = L"养育者没有解释旧玉，只替你挡开一场不该这么早来的试探。\n修为+65，因果+6";
@@ -3000,7 +3003,9 @@ Event BuildCompanionJadeOmenEvent() {
 
     wstring proveSuccess = hasMemory
         ? L"你拿今生见闻反证旧梦真假，确认其中一段前世碎片仍能用于判断。\n修为+75，因果+8"
-        : L"你把梦兆和当前纪元互相校准，没有把前世经验照搬成今生答案。\n修为+70，因果+6";
+        : (HasPriorLifeEcho()
+            ? L"你把梦兆和当前纪元互相校准，没有把前世经验照搬成今生答案。\n修为+70，因果+6"
+            : L"你把梦兆和当前纪元互相校准，没有把旧玉画面照搬成今生答案。\n修为+70，因果+6");
     if (g_legacySystem.GetRelic().daoLinked) {
         proveSuccess += L"，掌道+2";
     }
@@ -3015,7 +3020,9 @@ Event BuildCompanionJadeOmenEvent() {
             traceFailure
         }, hasUnfinished ? 8 : 5},
         {L"稳住今生", {
-            L"你承认玉意有用，却没有把选择交给前世；今生心神因此更稳。\n修为+55，寿命+3",
+            (HasPriorLifeEcho()
+                ? L"你承认玉意有用，却没有把选择交给前世；今生心神因此更稳。\n修为+55，寿命+3"
+                : L"你承认玉意有用，却没有把选择交给梦兆；今生心神因此更稳。\n修为+55，寿命+3"),
             L"你暂时压下梦兆，它没有消失，只是沉回识海深处等待下一次因果靠近。"
         }, 4}
     };
@@ -3261,6 +3268,16 @@ bool SocialThreadHas(const SocialThread& thread, const vector<wstring>& keys) {
     return false;
 }
 
+bool HasPriorLifeEcho() {
+    return g_generation > 1 ||
+           !g_legacySystem.GetPastLives().empty() ||
+           !g_legacySystem.GetInheritedLegacies().empty() ||
+           g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) > 0 ||
+           g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE) > 0 ||
+           g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION) != 0 ||
+           g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) > 0;
+}
+
 void RefreshSocialAgentState(SocialThread& thread) {
     bool familyTie = SocialThreadHas(thread, {L"父亲", L"母亲", L"养育者", L"身世"});
     bool challenger = SocialThreadHas(thread, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
@@ -3276,8 +3293,8 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else thread.desire = L"看清你是哪种可结交的人";
     }
     if (thread.fear.empty()) {
-        if (familyTie) thread.fear = L"你太早暴露前世异常";
-        else if (challenger) thread.fear = L"你的资质和旧名抢走自己的位置";
+        if (familyTie) thread.fear = HasPriorLifeEcho() ? L"你太早暴露前世异常" : L"你太早暴露旧玉异样";
+        else if (challenger) thread.fear = HasPriorLifeEcho() ? L"你的资质和旧名抢走自己的位置" : L"你的资质和家世抢走自己的位置";
         else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
         else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
         else thread.fear = hidden ? L"自己藏拙被你看穿" : L"站错队后被时代卷走";
@@ -3423,37 +3440,42 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     return L"「先别急着站队，我还想看看你到底是哪种人。」";
 }
 
-wstring BuildSocialThreadLine(const SocialThread& thread) {
+wstring BuildSocialThreadLine(const SocialThread& thread, bool includeInternal = false) {
     wstringstream ss;
     ss << thread.name << L"（" << thread.role << L"）";
     ss << L" · " << thread.attitude << L" · " << GetRelationLabel(thread.relation);
-    ss << L" · 情绪" << BuildSocialEmotionTag(thread);
+    ss << L" · " << BuildSocialEmotionTag(thread);
     if (!thread.visibleRealm.empty()) {
         ss << L" · 外显" << thread.visibleRealm;
     }
     if (thread.hidesPower || !thread.hiddenHint.empty()) {
         ss << L" · " << (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint);
     }
-    if (!thread.desire.empty()) {
-        ss << L" · 想要" << thread.desire;
+    if (includeInternal) {
+        if (!thread.desire.empty()) {
+            ss << L" · 想要" << thread.desire;
+        }
+        if (!thread.fear.empty()) {
+            ss << L" · 忌惮" << thread.fear;
+        }
+        if (!thread.nextMove.empty()) {
+            ss << L" · 下一步" << thread.nextMove;
+        }
     }
-    if (!thread.fear.empty()) {
-        ss << L" · 忌惮" << thread.fear;
+    ss << L": " << thread.hook;
+    if (includeInternal) {
+        ss << L" 台词参考" << BuildSocialNpcUtterance(thread);
     }
-    if (!thread.nextMove.empty()) {
-        ss << L" · 下一步" << thread.nextMove;
-    }
-    ss << L": " << thread.hook << L" NPC情绪代理口吻" << BuildSocialNpcUtterance(thread);
     return ss.str();
 }
 
-wstring BuildSocialThreadDigest(int limit = 4) {
+wstring BuildSocialThreadDigest(int limit = 4, bool includeInternal = false) {
     if (g_socialThreads.empty()) return L"";
     wstringstream ss;
     int count = 0;
     for (const auto& thread : g_socialThreads) {
         if (count++ >= limit) break;
-        ss << L"- " << BuildSocialThreadLine(thread) << L"\n";
+        ss << L"- " << BuildSocialThreadLine(thread, includeInternal) << L"\n";
     }
     return ss.str();
 }
@@ -3831,7 +3853,14 @@ Event BuildSocialAdventureEvent() {
 
     evt.description = thread.name + L"以" + thread.role + L"身份在历练途中拦住你，态度是“" +
         thread.attitude + L"”。" + BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
-        realmHint + BuildSocialNpcUtterance(thread) + L"旧线索是：" + CompactMemoryFragment(thread.hook);
+        realmHint + BuildSocialNpcUtterance(thread) + L"牵连是：" + CompactMemoryFragment(thread.hook);
+
+    wstring hiddenLine = HasPriorLifeEcho()
+        ? L"家世、势力或前世旧名"
+        : L"家世、势力或伴生旧玉";
+    wstring exposedJudgment = HasPriorLifeEcho()
+        ? L"前世般的判断"
+        : L"异于同龄人的判断";
 
     if (positive) {
         evt.choices = {
@@ -3840,8 +3869,8 @@ Event BuildSocialAdventureEvent() {
                 thread.name + L"觉得你把善意看得太轻，话虽温和，关系却淡了一层。\n因果-5"
             }, 6},
             {L"追问隐情", {
-                thread.name + L"被你问住，透露出一段与家世、势力或前世旧名有关的新线索。\n修为+70，灵石+12，因果+6",
-                thread.name + L"不愿把隐情说穿，只提醒你别太早暴露前世般的判断。\n气血-12"
+                thread.name + L"被你问住，透露出一段与" + hiddenLine + L"有关的新线索。\n修为+70，灵石+12，因果+6",
+                thread.name + L"不愿把隐情说穿，只提醒你别太早暴露" + exposedJudgment + L"。\n气血-12"
             }, 4},
             {L"婉拒好意", {
                 L"你谢过对方却没有立刻站队，保住今生自己的主动权。\n寿命+3，修为+45",
@@ -3859,7 +3888,7 @@ Event BuildSocialAdventureEvent() {
                 L"旁人以为你怯弱，轻慢之声比先前更多。\n因果-7"
             }, 0},
             {L"暗查底细", {
-                thread.name + L"的外显修为和真实气机并不完全相合，你记下了这个活人般的破绽。\n修为+65，灵石+10",
+                thread.name + L"的外显修为和真实气机并不完全相合，你记下了这个真实破绽。\n修为+65，灵石+10",
                 L"你查得太近，被对方反向看穿行迹。\n气血-25"
             }, 2}
         };
@@ -3944,7 +3973,9 @@ Event BuildEraPulseEvent() {
             }, 2},
             {L"查验密诏", {
                 L"你从密诏边角看出旧盟裂痕，知道此世势力并非铁板一块。\n修为+" + to_wstring(minorGain) + L"，因果+10，掌道+" + to_wstring(daoReward),
-                L"密诏反锁神识，差点把你的前世般判断也牵出来。\n气血-" + to_wstring(hpRisk + 8)
+                (HasPriorLifeEcho()
+                    ? L"密诏反锁神识，差点把你的前世般判断也牵出来。\n气血-"
+                    : L"密诏反锁神识，差点把你与同龄人不同的判断也牵出来。\n气血-") + to_wstring(hpRisk + 8)
             }, 7}
         };
     } else if (g_worldEraName == L"末法裂变纪") {
@@ -4210,7 +4241,9 @@ void GenerateSocialThreads() {
             AddSocialThread(g_player.family.father, L"父亲", L"克制认可",
                 L"他没有当众夸你，却私下把一枚入门信物交到你手里。", 32);
             AddSocialThread(g_player.family.mother, L"母亲", L"护持期待",
-                L"她替你压下族中闲话，只提醒你别太早暴露前世般的眼神。", 36);
+                HasPriorLifeEcho()
+                    ? L"她替你压下族中闲话，只提醒你别太早暴露前世般的眼神。"
+                    : L"她替你压下族中闲话，只提醒你别太早暴露旧玉带来的异样。", 36);
         } else if (weakRoot) {
             AddSocialThread(g_player.family.mother, L"母亲", L"心疼护短",
                 L"测灵结果传回家中后，她仍替你留着一份最朴素的行囊。", 28);
@@ -4441,7 +4474,7 @@ wstring GetSocialRumorText(int limit = 6) {
 
     if (!g_socialThreads.empty()) {
         ss << L"【本世人脉】\n";
-        ss << L"这些人会影响本世事件走向，也会被本地 AI 当作可续写的关系线。\n";
+        ss << L"这些人会影响本世事件走向，也可能在后续风波里继续出手。\n";
         ss << BuildSocialThreadDigest(6) << L"\n";
     }
 
@@ -4597,7 +4630,9 @@ void GenerateFactionTie() {
         g_factionTie.kind = L"道网节点 / 远讯试炼";
         g_factionTie.role = gifted ? L"远程试炼种子" : (weak ? L"榜单边缘记录者" : L"道网背调对象");
         g_factionTie.stance = gifted ? L"隔空下注" : (weak ? L"冷淡记录" : L"持续观察");
-        g_factionTie.hook = L"对方已经把你的灵根、家世和前世异常录入道网，后续机缘会以远讯坐标出现。";
+        g_factionTie.hook = HasPriorLifeEcho()
+            ? L"对方已经把你的灵根、家世和前世异常录入道网，后续机缘会以远讯坐标出现。"
+            : L"对方已经把你的灵根、家世和伴生旧玉异样录入道网，后续机缘会以远讯坐标出现。";
     } else if (g_worldEraName == L"末法裂变纪") {
         g_factionTie.kind = L"灵井配给 / 替道试验";
         g_factionTie.role = gifted ? L"灵井优先名额" : (weak ? L"配给末席" : L"阵械破境观察者");
@@ -4607,12 +4642,16 @@ void GenerateFactionTie() {
         g_factionTie.kind = L"残宗同盟 / 荒野护送";
         g_factionTie.role = gifted ? L"重建法统人选" : (weak ? L"迁徙队伍累赘" : L"废墟探索同伴");
         g_factionTie.stance = gifted ? L"现实重视" : (weak ? L"刻薄试探" : L"互利观望");
-        g_factionTie.hook = L"残宗准备迁徙进一片旧都废墟，你的前世记忆可能决定整队能不能活着出来。";
+        g_factionTie.hook = HasPriorLifeEcho()
+            ? L"残宗准备迁徙进一片旧都废墟，你的前世记忆可能决定整队能不能活着出来。"
+            : L"残宗准备迁徙进一片旧都废墟，你的判断和那枚旧玉梦兆可能决定整队能不能活着出来。";
     } else if (g_worldEraName == L"仙朝鼎盛纪") {
         g_factionTie.kind = L"仙朝名册 / 世家旧契";
         g_factionTie.role = gifted ? L"金榜预录名" : (weak ? L"旁支待核人" : L"册封候选");
         g_factionTie.stance = gifted ? L"礼重试探" : (weak ? L"居高临下" : L"规矩审视");
-        g_factionTie.hook = L"仙朝名册似乎曾记录过与你相近的旧名，册封吏正在核验你的家世与前世因果。";
+        g_factionTie.hook = HasPriorLifeEcho()
+            ? L"仙朝名册似乎曾记录过与你相近的旧名，册封吏正在核验你的家世与前世因果。"
+            : L"仙朝名册似乎曾记录过你家中旧契，册封吏正在核验你的家世与伴生旧玉。";
     } else {
         g_factionTie.kind = L"古典宗门 / 入门试炼";
         g_factionTie.role = gifted ? L"内门种子" : (weak ? L"杂役试炼者" : L"外门候选");
@@ -4630,22 +4669,33 @@ void GenerateLifeStoryHooks() {
     auto pastFragments = g_legacySystem.GetLatestMemoryFragments(2);
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(2);
     const LegacyRelic& relic = g_legacySystem.GetRelic();
+    bool priorLife = HasPriorLifeEcho();
 
     if (g_worldEraName == L"灵机蒸汽纪") {
-        g_lifePremise = L"你降生在灵机与旧修真秩序冲突最烈的年代，工坊、宗门与前世道痕都可能争夺你的去向。";
+        g_lifePremise = priorLife
+            ? L"你降生在灵机与旧修真秩序冲突最烈的年代，工坊、宗门与前世道痕都可能争夺你的去向。"
+            : L"你降生在灵机与旧修真秩序冲突最烈的年代，工坊、宗门与伴生旧玉都可能争夺你的去向。";
         g_lifeStoryHooks.push_back(L"灵机工坊正在追查一枚与通天灵宝器纹相似的旧图，而你的识海会对它发热。");
         g_lifeStoryHooks.push_back(sectName + L"与" + locName + L"之间有一条被封锁的飞舟旧航线。");
     } else if (g_worldEraName == L"星穹道网纪") {
-        g_lifePremise = L"这一世的机缘会先以远讯、榜单和泄露影像出现，前世因果也可能被灵网重新翻出。";
-        g_lifeStoryHooks.push_back(L"灵网节点偶尔会推送不属于今生的旧名，像是有人在隔世定位你。");
+        g_lifePremise = priorLife
+            ? L"这一世的机缘会先以远讯、榜单和泄露影像出现，前世因果也可能被灵网重新翻出。"
+            : L"这一世的机缘会先以远讯、榜单和泄露影像出现，伴生旧玉的异常也可能被灵网记录。";
+        g_lifeStoryHooks.push_back(priorLife
+            ? L"灵网节点偶尔会推送不属于今生的旧名，像是有人在隔世定位你。"
+            : L"灵网节点偶尔会推送与你家世旧契相近的名字，像是有人在远方标记你的旧玉。");
         g_lifeStoryHooks.push_back(sectName + L"掌握一段远程试炼入口，" + locName + L"则藏着对应的实体阵台。");
     } else if (g_worldEraName == L"末法裂变纪") {
-        g_lifePremise = L"灵气衰落让每一份资源都带着血味，前世记忆会变成你判断谁可信的少数凭据。";
+        g_lifePremise = priorLife
+            ? L"灵气衰落让每一份资源都带着血味，前世记忆会变成你判断谁可信的少数凭据。"
+            : L"灵气衰落让每一份资源都带着血味，家世、旧玉和直觉会变成你判断谁可信的少数凭据。";
         g_lifeStoryHooks.push_back(L"有人提出用阵械替代苦修破境，但代价可能会折损寿元与因果。");
         g_lifeStoryHooks.push_back(sectName + L"正在争夺" + locName + L"，你的家世隐情可能成为入局筹码。");
     } else if (g_worldEraName == L"废土返道纪") {
         g_lifePremise = L"文明废墟、残宗迁徙和荒野邪祟构成这一世的底色，活下去本身就是修行。";
-        g_lifeStoryHooks.push_back(L"荒野古机记录过某个前世片段，只有靠近废墟时才会断续回放。");
+        g_lifeStoryHooks.push_back(priorLife
+            ? L"荒野古机记录过某个前世片段，只有靠近废墟时才会断续回放。"
+            : L"荒野古机会对你的伴生旧玉起反应，只有靠近废墟时才会断续回放旧时代画面。");
         g_lifeStoryHooks.push_back(sectName + L"想重建法统，" + locName + L"里的旧时代残响是关键。");
     } else if (g_worldEraName == L"仙朝鼎盛纪") {
         g_lifePremise = L"仙朝、世家和宗门共同瓜分气运，出身、册封与旧债会比单纯天资更早盯上你。";
@@ -4678,8 +4728,10 @@ void GenerateLifeStoryHooks() {
 
     if (!pastFragments.empty()) {
         g_lifeStoryHooks.push_back(L"前世碎片反复浮现：" + pastFragments[0]);
+    } else if (!priorLife) {
+        g_lifeStoryHooks.push_back(L"第一世没有前世记忆；若梦境出现异样，也只是伴生旧玉在暗示未来取舍。");
     } else {
-        g_lifeStoryHooks.push_back(L"你还没有清晰前世记忆，但某些梦境会提前暗示未来取舍。");
+        g_lifeStoryHooks.push_back(L"这一世暂未想起清晰前世碎片，旧玉梦兆只能作为模糊提醒。");
     }
 
     if (relic.daoLinked || relic.resonance >= 80) {
@@ -5259,7 +5311,7 @@ void RefreshAiStatus() {
 bool TryRunLocalModelGenerator() {
     if (GetFileAttributesW(L"..\\ai_engine\\generate_event.ps1") == INVALID_FILE_ATTRIBUTES) {
         g_lastAiBackend = L"模板回退";
-        g_lastAiStatus = L"缺少 ai_engine/generate_event.ps1，已直接使用内置模板事件。";
+        g_lastAiStatus = L"天机暂不显化，已由既有因果继续牵动。";
         return false;
     }
 
@@ -5270,7 +5322,7 @@ bool TryRunLocalModelGenerator() {
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus == L"本局尚未触发动态事件。") {
         g_lastAiBackend = L"模板回退";
-        g_lastAiStatus = L"本地模型脚本执行失败，已回退到内置模板事件。";
+        g_lastAiStatus = L"天机一度不稳，已由既有因果继续牵动。";
     }
     return exitCode == 0;
 }
@@ -5295,7 +5347,7 @@ void CloseAiProcessHandles() {
 bool BeginLocalModelGeneratorAsync() {
     if (GetFileAttributesW(L"..\\ai_engine\\generate_event.ps1") == INVALID_FILE_ATTRIBUTES) {
         g_lastAiBackend = L"模板回退";
-        g_lastAiStatus = L"缺少 ai_engine/generate_event.ps1，已直接使用内置模板事件。";
+        g_lastAiStatus = L"天机暂不显化，已由既有因果继续牵动。";
         return false;
     }
 
@@ -5336,7 +5388,7 @@ bool BeginLocalModelGeneratorAsync() {
 
     if (!started) {
         g_lastAiBackend = L"模板回退";
-        g_lastAiStatus = L"本地模型进程启动失败，已回退到内置模板事件。";
+        g_lastAiStatus = L"天机一度不稳，已由既有因果继续牵动。";
         return false;
     }
 
@@ -5344,7 +5396,7 @@ bool BeginLocalModelGeneratorAsync() {
     g_aiProcessRunning = true;
     g_aiStartTick = GetTickCount();
     g_lastAiBackend = L"portable-llama.cpp";
-    g_lastAiStatus = L"本地模型正在推演此世因果，完成后会自动显出事件。";
+    g_lastAiStatus = L"天机正在推演此世因果，完成后会自动显出事件。";
     SetTimer(g_hWnd, IDT_AI_POLL, 500, nullptr);
     return true;
 }
@@ -5355,21 +5407,21 @@ void EnterAiEventFromContext(PlayerContext ctx) {
     vector<wstring> aiChoices;
     if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
         if (g_lastAiBackend.empty()) {
-            g_lastAiBackend = L"本地模型";
+            g_lastAiBackend = L"天机推演";
         }
         if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
             g_lastAiStatus = L"成功生成 1 条动态事件。";
         }
-        AddMemory(L"本地模型回应", L"读取 ai_event.txt 生成动态事件。后端：" + g_lastAiBackend);
+        AddMemory(L"天机生波", L"此世家世、人情与天下大势交汇，牵出一段新的动态因果。");
     } else {
         if (g_lastAiBackend.empty() || g_lastAiBackend == L"未触发" || g_lastAiBackend == L"portable-llama.cpp") {
             g_lastAiBackend = L"模板回退";
         }
         if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。" ||
             g_lastAiStatus.find(L"正在推演") != wstring::npos) {
-            g_lastAiStatus = L"未读取到有效 ai_event.txt，已回退到内置模板事件。";
+            g_lastAiStatus = L"天机没有显出额外变数，已由既有因果继续牵动。";
         }
-        AddMemory(L"动态事件回退", g_lastAiStatus);
+        AddMemory(L"天机转稳", L"本次历练没有显出额外天机，改由既有因果继续牵动。");
         aiTitle = g_aiGen.GenerateEventTitle(ctx);
         aiDesc = g_aiGen.GenerateEventDescription(ctx);
         aiChoices = g_aiGen.GenerateChoices(ctx);
@@ -5462,7 +5514,7 @@ void CompleteLocalModelGenerator(DWORD exitCode) {
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus.find(L"正在推演") != wstring::npos) {
         g_lastAiBackend = L"模板回退";
-        g_lastAiStatus = L"本地模型脚本执行失败，已回退到内置模板事件。";
+        g_lastAiStatus = L"天机一度不稳，已由既有因果继续牵动。";
     }
     EnterAiEventFromContext(g_pendingAiContext);
     InvalidateRect(g_hWnd, NULL, FALSE);
@@ -5475,7 +5527,7 @@ void CancelLocalModelGenerator() {
         CloseAiProcessHandles();
     }
     g_lastAiBackend = L"模板回退";
-    g_lastAiStatus = L"本地模型推演已取消。";
+    g_lastAiStatus = L"本次天机推演已被你压下。";
 }
 
 wstring GetGeneratedWorldText() {
@@ -5591,6 +5643,9 @@ PlayerContext BuildPlayerContext() {
         ctx.familyState += L"；本世势力:" + g_factionTie.name + L"(" + g_factionTie.role + L")";
     }
     ctx.socialState = GetSocialDigest();
+    if (!g_socialThreads.empty()) {
+        ctx.socialState += L"\n人物动机参考:\n" + BuildSocialThreadDigest(5, true);
+    }
     for (const auto& thread : g_socialThreads) {
         ctx.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
     }
@@ -6750,7 +6805,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
     ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
     if (isAIEvent) {
-        AddMemory(L"本地模型抉择",
+        AddMemory(L"天机抉择",
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
     }
     g_contextMgr.SetContext(BuildPlayerContext());
@@ -6838,10 +6893,30 @@ wstring BuildMainWorldDigest() {
 }
 
 wstring BuildAiStatusDigest() {
-    wstringstream ss;
-    ss << L"后端: " << g_lastAiBackend << L"\n";
-    ss << g_lastAiStatus;
-    return ss.str();
+    if (g_lastAiStatus.empty() ||
+        g_lastAiStatus == L"本局尚未触发动态事件。" ||
+        g_lastAiStatus == L"本世尚未触发动态事件。") {
+        return L"暂未起波澜。\n外出历练时，旧玉、家世和天下大势可能牵出新的机缘。";
+    }
+    if (g_lastAiStatus.find(L"正在推演") != wstring::npos) {
+        return L"天机正在推演。\n前世残响、此世人情与近年大事正在交汇。";
+    }
+    if (g_lastAiStatus.find(L"回退") != wstring::npos ||
+        g_lastAiStatus.find(L"失败") != wstring::npos ||
+        g_lastAiStatus.find(L"超时") != wstring::npos) {
+        return L"天机一度不稳。\n本次历练已改由既有因果继续牵动。";
+    }
+    if (g_lastAiStatus.find(L"读取") != wstring::npos) {
+        return L"旧档已续上。\n下一次外出历练仍可能牵出新的动态事件。";
+    }
+    if (g_lastAiStatus.find(L"修复") != wstring::npos) {
+        return L"新的因果已经校准。\n事件会按当前家世、人情与时代继续发酵。";
+    }
+    if (g_lastAiStatus.find(L"已生成") != wstring::npos ||
+        g_lastAiStatus.find(L"写入") != wstring::npos) {
+        return L"新的因果已经显现。\n本世人情和天下大势会记住这次选择。";
+    }
+    return g_lastAiStatus;
 }
 
 wstring BuildRecentMemoryDigest() {
@@ -7023,7 +7098,7 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            graphics.DrawString(L"动态事件引擎", -1, &statFont,
+            graphics.DrawString(L"天机动向", -1, &statFont,
                 RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
                 &leftFormat, &mutedBrush);
             graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
@@ -7239,9 +7314,9 @@ void OnPaint(HDC hdc, RECT& rect) {
                 RectF(waitRect.X + 40, waitRect.Y + 44, waitRect.Width - 80, 54), &centerFormat, &goldBrush);
 
             wstring waitText =
-                L"黑白旧玉微微发温，前世残响、此世家世与近年大事正在交汇。\n\n"
-                L"这次历练会由本地模型生成，完成后会自动显出因果。\n\n"
-                L"按 [ESC] 可放弃本次推演，回到当前道途。";
+                HasPriorLifeEcho()
+                    ? L"黑白旧玉微微发温，前世残响、此世家世与近年大事正在交汇。\n\n这次历练会从这些因果里显出新的变数。\n\n按 [ESC] 可放弃本次推演，回到当前道途。"
+                    : L"黑白旧玉微微发温，此世家世、人情风波与近年大事正在交汇。\n\n这次历练会从这些因果里显出新的变数。\n\n按 [ESC] 可放弃本次推演，回到当前道途。";
             graphics.DrawString(waitText.c_str(), -1, &textFont,
                 RectF(waitRect.X + 58, waitRect.Y + 122, waitRect.Width - 116, 134), &leftFormat, &whiteBrush);
 
@@ -7453,7 +7528,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     } else if (GetTickCount() - g_aiStartTick > 100000) {
                         KillAiProcessTree();
                         g_lastAiBackend = L"模板回退";
-                        g_lastAiStatus = L"本地模型推演超时，已回退到内置模板事件。";
+                        g_lastAiStatus = L"天机推演太久未显，已由既有因果继续牵动。";
                         CompleteLocalModelGenerator(1);
                     } else {
                         InvalidateRect(hWnd, NULL, FALSE);

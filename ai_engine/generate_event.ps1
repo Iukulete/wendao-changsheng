@@ -333,6 +333,7 @@ function Test-BrokenEventText {
     if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
     if ($Value -match "[\u4e00-\u9fff][ \t]+[\u4e00-\u9fff]") { return $true }
     if ($Value -match "\|") { return $true }
+    if ($Value -match "\*") { return $true }
     if ($Value -match "-{2,}|_{2,}|~{2,}") { return $true }
     if ($Value -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
     return $false

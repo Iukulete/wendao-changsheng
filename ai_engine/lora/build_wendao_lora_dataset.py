@@ -126,7 +126,7 @@ def prompt_for(case):
 因果: {case["karma"]}
 此世家世: {case["family"]}
 人情风波:
-- {case["npc_name"]}（{npc_role}） · 情绪{emotion} · 关系{relation:+d}: {case["hook"]} NPC情绪代理口吻{utterance}
+- {case["npc_name"]}（{npc_role}） · 情绪{emotion} · 关系{relation:+d}: {case["hook"]} 台词参考{utterance}
 轮回传承:
 {case["legacy"]}
 当前世界:
