@@ -370,15 +370,15 @@ public:
         if (life.realmReached >= 19) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TREASURE,
-                L"通天灵宝道胚",
-                L"普通兵刃与法宝都会在岁月中朽坏，唯有被大道反复祭炼过的通天灵宝，才会留下可被下一世唤醒的道胚。",
+                L"本命至宝道胚",
+                L"前世以自身大道温养出的本命至宝已接近后天通天层次，本体未必随身跨世，但道胚和器痕可被下一世唤醒。",
                 95 + life.realmReached * 4
             ));
         } else if (life.realmReached >= 17) {
             life.legacies.push_back(LegacyItem(
                 LEGACY_TREASURE,
                 L"通天灵宝残印",
-                L"凡兵终会朽坏，唯有被大道反复祭炼过的重宝，才可能在轮回后留下认主痕迹。",
+                L"后天通天灵宝可跨纪元长存，但久无人温养也会衰退；这一缕残印只证明旧器曾被大道反复祭炼。",
                 70 + life.realmReached * 3
             ));
         } else if (life.realmReached >= 12) {
@@ -491,7 +491,7 @@ public:
 
     wstring GetRelicStatusText() const {
         wstringstream ss;
-        ss << L"【通天灵宝残印】\n\n";
+        ss << L"【本命至宝与通天残印】\n\n";
         ss << L"名号: " << relic.name << L"\n";
         ss << L"当前道痕: " << relic.aspect << L"\n";
         ss << L"觉醒阶段: " << GetRelicAwakeningStage() << L"\n";
@@ -505,7 +505,9 @@ public:
         } else {
             ss << L"状态: 仍在轮回中缓慢成形，尚未真正显化为完整灵宝。\n";
         }
-        ss << L"\n说明: 凡兵会朽，普通法宝也会坏。能穿过轮回留下来的，不是实物本身，而是反复祭炼后仍未断绝的道痕。";
+        ss << L"\n说明: 普通兵刃和法宝也有器境，未达通天层次不能稳定跨世。";
+        ss << L"本命至宝最契合主人道途，可后天温养到通天层次；后天通天灵宝可长存但缺少先天一气，久无人温养会衰退。";
+        ss << L"先天通天灵宝自带先天一气，在多数修士眼中已是器物顶点。";
         return ss.str();
     }
 
@@ -521,7 +523,7 @@ public:
         } else {
             ss << L" 尚未真正与大道相连。";
         }
-        ss << L" 普通兵刃和当世法宝不可跨世保存，跨世回响只来自记忆、道痕和通天灵宝残印。";
+        ss << L" 普通兵刃和当世法宝未达通天层次前不能稳定跨世；本命至宝可随主人道途成长，后天通天灵宝可长存但会衰退，先天通天灵宝自带先天一气。";
         return ss.str();
     }
 
