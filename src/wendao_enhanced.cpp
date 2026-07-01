@@ -937,6 +937,7 @@ vector<SocialThread> g_socialThreads;
 vector<wstring> g_discoveredItems;
 vector<LifeArtifact> g_lifeArtifacts;
 int g_jadeDreamOmenEventsThisLife = 0;
+int g_lifeStoryProgressThisLife = 0;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -2124,6 +2125,7 @@ wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
+    ss << L"主线阶段: " << g_lifeStoryProgressThisLife << L" / 3\n\n";
     ss << L"【伴生玉佩】\n";
     ss << BuildCompanionJadeVisibleText() << L"\n\n";
     if (HasFactionTie()) {
@@ -2142,6 +2144,7 @@ wstring BuildLifeStoryText() {
 wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
+    ss << L"本世主线阶段: " << g_lifeStoryProgressThisLife << L"/3\n";
     ss << L"伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     if (HasFactionTie()) {
         ss << L"本世势力牵连: " << BuildFactionTieDigest() << L"\n";
@@ -4679,6 +4682,90 @@ void GenerateLifeStoryHooks() {
     }
 }
 
+bool ShouldTriggerLifeStoryProgressEvent() {
+    if (g_lifeStoryProgressThisLife >= 3) return false;
+    if (g_lifeStoryHooks.empty()) return false;
+
+    int chance = 14 + (int)g_lifeStoryHooks.size() * 2;
+    if (g_player.totalEvents <= 5) chance += 8;
+    if (HasFactionTie()) chance += 4;
+    if (!g_socialThreads.empty()) chance += 4;
+    if (!g_eraRemnants.empty()) chance += 3;
+    if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) chance += 5;
+    if (g_lifeStoryProgressThisLife == 1) chance += 3;
+    if (g_lifeStoryProgressThisLife == 2) chance += 5;
+    chance = max(16, min(44, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildLifeStoryProgressEvent() {
+    Event evt;
+    auto compactLimit = [](const wstring& text, size_t limit) {
+        wstring compact = CompactMemoryFragment(text);
+        if (compact.size() > limit) {
+            compact = compact.substr(0, limit) + L"...";
+        }
+        return compact;
+    };
+
+    int stage = max(0, min(2, g_lifeStoryProgressThisLife));
+    wstring stageName = stage == 0 ? L"线索显露" : (stage == 1 ? L"局中转折" : L"此世取舍");
+    wstring focusHook = g_lifeStoryHooks.empty()
+        ? g_lifePremise
+        : g_lifeStoryHooks[min((size_t)stage, g_lifeStoryHooks.size() - 1)];
+
+    wstring pressure;
+    if (HasFactionTie()) {
+        pressure = L"牵动此事的势力是" + compactLimit(BuildFactionTieDigest(), 72) + L"。";
+    } else if (!g_socialThreads.empty()) {
+        const SocialThread& thread = g_socialThreads[min((size_t)stage, g_socialThreads.size() - 1)];
+        pressure = L"牵动此事的人是" + thread.name + L"（" + thread.role + L"，" + thread.attitude + L"）。";
+    } else if (!g_eraRemnants.empty()) {
+        pressure = L"旧世残响也压在这条线上：" + compactLimit(g_eraRemnants[0], 72) + L"。";
+    } else {
+        pressure = L"这条线暂时还没有明面上的主使，只像时代自己递来的试卷。";
+    }
+
+    if (stage == 0) {
+        evt.title = L"【因果】主线初显";
+    } else if (stage == 1) {
+        evt.title = L"【危机】主线转折";
+    } else {
+        evt.title = L"【传承】主线收束";
+    }
+
+    evt.description = L"这一世的主线忽然从背景里站到你面前。当前阶段是" + stageName + L"。" +
+        compactLimit(g_lifePremise, 84) + L"眼下最亮的线索是：" +
+        compactLimit(focusHook, 92) + L"。" + pressure +
+        L"你必须决定这条线如何进入今生。";
+
+    int expGain = 75 + g_player.realm * 7 + stage * 20;
+    int majorGain = expGain + 35;
+    int minorGain = max(45, expGain - 20);
+    int hpRisk = 22 + g_player.realm * 2 + stage * 4;
+    int daoGain = max(2, min(10, 3 + stage + g_player.realm / 3));
+    bool touchesLegacy = focusHook.find(L"前世") != wstring::npos ||
+                         focusHook.find(L"旧") != wstring::npos ||
+                         focusHook.find(L"玉") != wstring::npos ||
+                         focusHook.find(L"通天灵宝") != wstring::npos;
+
+    evt.choices = {
+        {L"顺线追查", {
+            L"你把这条主线从传闻里拽出来，确认它会继续影响今生道途。\n修为+" + to_wstring(majorGain) + L"，因果+10" + (touchesLegacy ? L"，灵宝共鸣+3" : L""),
+            L"线索背后的旧账比预想更深，你刚踏进去就被反咬。\n气血-" + to_wstring(hpRisk) + L"，因果-6"
+        }, 8},
+        {L"借势入局", {
+            L"你没有单打独斗，而是借家世、人脉或势力身份切入，暂时拿到主动权。\n修为+" + to_wstring(expGain) + L"，灵石+18，因果+6",
+            L"你借来的势也在索价，旁人开始重新衡量你能否被利用。\n灵石-10，因果-8"
+        }, 5},
+        {L"定下今生", {
+            L"你承认前世、时代和人情都会拉扯自己，却仍把选择落回今生。\n修为+" + to_wstring(minorGain) + L"，寿命+3，掌道+" + to_wstring(daoGain),
+            L"你想把主线压下去，反而让它变成下一次更难避开的暗潮。\n气血-" + to_wstring(max(12, hpRisk - 8))
+        }, 4}
+    };
+    return evt;
+}
+
 void AppendFamilySecret(FamilyBackground& family, const wstring& secret) {
     if (secret.empty()) return;
     if (family.secret.find(secret) != wstring::npos) return;
@@ -5676,13 +5763,14 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V7\n";
+    file << L"WORLD_ERA_V8\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
     file << EscapeSaveField(g_reincarnationEcho) << L"\n";
     file << EscapeSaveField(g_eraTransitionNote) << L"\n";
     file << EscapeSaveField(g_lifePremise) << L"\n";
+    file << g_lifeStoryProgressThisLife << L" " << g_jadeDreamOmenEventsThisLife << L"\n";
     file << g_lifeStoryHooks.size() << L"\n";
     for (auto& hook : g_lifeStoryHooks) {
         file << EscapeSaveField(hook) << L"\n";
@@ -5719,14 +5807,15 @@ bool LoadWorldEra(wifstream& file) {
     bool isV5 = (marker == L"WORLD_ERA_V5");
     bool isV6 = (marker == L"WORLD_ERA_V6");
     bool isV7 = (marker == L"WORLD_ERA_V7");
-    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7) return false;
+    bool isV8 = (marker == L"WORLD_ERA_V8");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7 && !isV8) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7) {
+    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7 || isV8) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -5734,6 +5823,15 @@ bool LoadWorldEra(wifstream& file) {
         g_eraTransitionNote = UnescapeSaveField(g_eraTransitionNote);
         getline(file, g_lifePremise);
         g_lifePremise = UnescapeSaveField(g_lifePremise);
+        if (isV8) {
+            file >> g_lifeStoryProgressThisLife >> g_jadeDreamOmenEventsThisLife;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            g_lifeStoryProgressThisLife = max(0, min(3, g_lifeStoryProgressThisLife));
+            g_jadeDreamOmenEventsThisLife = max(0, min(1, g_jadeDreamOmenEventsThisLife));
+        } else {
+            g_lifeStoryProgressThisLife = 0;
+            g_jadeDreamOmenEventsThisLife = 0;
+        }
         size_t hookCount = 0;
         file >> hookCount;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -5744,7 +5842,7 @@ bool LoadWorldEra(wifstream& file) {
             g_lifeStoryHooks.push_back(UnescapeSaveField(hook));
         }
         g_eraRemnants.clear();
-        if (isV3 || isV4 || isV5 || isV6 || isV7) {
+        if (isV3 || isV4 || isV5 || isV6 || isV7 || isV8) {
             size_t remnantCount = 0;
             file >> remnantCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -5755,7 +5853,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_eraChronicle.clear();
-        if (isV4 || isV5 || isV6 || isV7) {
+        if (isV4 || isV5 || isV6 || isV7 || isV8) {
             size_t chronicleCount = 0;
             file >> chronicleCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -5766,7 +5864,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_factionTie = FactionTie();
-        if (isV5 || isV6 || isV7) {
+        if (isV5 || isV6 || isV7 || isV8) {
             getline(file, g_factionTie.name);
             getline(file, g_factionTie.kind);
             getline(file, g_factionTie.role);
@@ -5782,13 +5880,13 @@ bool LoadWorldEra(wifstream& file) {
             file >> g_factionTie.favor >> g_factionTie.binding;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
         }
-        if (isV6 || isV7) {
+        if (isV6 || isV7 || isV8) {
             getline(file, g_eraShiftCause);
             g_eraShiftCause = UnescapeSaveField(g_eraShiftCause);
         } else {
             g_eraShiftCause = L"旧存档没有记录纪元转折因由，只能从残留的时代变迁中推断。";
         }
-        if (isV7) {
+        if (isV7 || isV8) {
             getline(file, g_hongmengOmenTreasureName);
             getline(file, g_hongmengOmenDao);
             getline(file, g_hongmengOmenManifestation);
@@ -5806,6 +5904,8 @@ bool LoadWorldEra(wifstream& file) {
         g_eraRemnants.clear();
         g_eraChronicle.clear();
         g_factionTie = FactionTie();
+        g_lifeStoryProgressThisLife = 0;
+        g_jadeDreamOmenEventsThisLife = 0;
         g_eraShiftCause = L"旧存档没有记录纪元转折因由。";
         GenerateHongmengOmen();
     }
@@ -6313,6 +6413,7 @@ void StartNextLife() {
     g_lastAiBackend = L"未触发";
     g_lastAiStatus = L"本世尚未触发动态事件。";
     g_jadeDreamOmenEventsThisLife = 0;
+    g_lifeStoryProgressThisLife = 0;
 
     g_player = Player();
     g_player.name = oldName;
@@ -6973,6 +7074,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_player.name = name;
                 g_generation = 1;
                 g_jadeDreamOmenEventsThisLife = 0;
+                g_lifeStoryProgressThisLife = 0;
                 ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -7141,6 +7243,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         g_currentEvent = &s_jadeOmenEvent;
                         g_jadeDreamOmenEventsThisLife++;
                         AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerLifeStoryProgressEvent()) {
+                        static Event s_lifeStoryEvent;
+                        s_lifeStoryEvent = BuildLifeStoryProgressEvent();
+                        g_currentEvent = &s_lifeStoryEvent;
+                        g_lifeStoryProgressThisLife++;
+                        AddMemory(L"本世主线推进",
+                            L"外出历练时，本世主线进入第" +
+                            to_wstring(g_lifeStoryProgressThisLife) + L"段。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
