@@ -88,7 +88,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **世界反馈**：灵气暴动、宗门大战等世界事件会影响修炼和历练风险
 - **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，优先尝试便携 Gemma 4 + `llama.cpp`，失败后回退到 Ollama 或内置模板
 - **非阻塞 AI 等待**：触发本地模型事件时会显示“天机推演中”，窗口不会像卡死一样等待 CPU 生成
-- **NPC 情绪代理**：本世人脉会带情绪标签和口吻示例，让长辈护短、同辈嫉妒、执事卡资源、旧怨追债等关系进入事件文本
+- **NPC 情绪代理**：本世人脉会带情绪标签、口吻示例、想要、忌惮和下一步倾向，让长辈护短、同辈嫉妒、执事卡资源、旧怨追债等关系进入事件文本
 - **回退焦点轮换**：内置动态事件会在前世未竟、天下大事、旧世残响、大道、器物、人脉和势力之间轮换取材
 - **上下文回退**：即使本地模型不可用，内置动态事件也会主动续写本世持续线索、势力牵连、本世器物、人脉和前世未竟因果
 
@@ -201,7 +201,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1 -ReleaseDir release -Backend portable
 ```
 
-如果想跑 4 组事件质量压测：
+如果想跑 6 组事件质量压测：
 
 ```bat
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\evaluate_ai_quality.ps1 -Backend portable -TimeoutSec 120
