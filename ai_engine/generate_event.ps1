@@ -82,6 +82,7 @@ $LlamaCli = [System.IO.Path]::GetFullPath($LlamaCli)
 $promptPath = Join-Path $ReleaseDir "ai_prompt.txt"
 $eventPath = Join-Path $ReleaseDir "ai_event.txt"
 $rawPath = Join-Path $ReleaseDir "ai_event_raw.txt"
+$scenePath = Join-Path $ReleaseDir "ai_scene.json"
 $backendPath = Join-Path $ReleaseDir "ai_backend.txt"
 $statusPath = Join-Path $ReleaseDir "ai_status.txt"
 $llamaLogPath = Join-Path $ReleaseDir "ai_llama.log"
@@ -355,8 +356,8 @@ function Test-ContextLabelLine {
     param([string]$Line)
     $clean = Normalize-EventLine $Line
     if ([string]::IsNullOrWhiteSpace($clean)) { return $false }
-    if ($clean -match "^(玩家|境界名称|境界|因果|年龄|此世家世|家世|人情风波|轮回传承|当前世界|最近记忆|本世人脉|本世器物|当前继承的传承|失传古法当世解读|大道特性|寿元压力|隐藏设定|时代纪元|重大事件|事件影响|近年大事|世界时间|伴生玉佩|父亲|母亲|养育者|轮回余烬|本命法宝器纹|器痕归灵)\s*[:：]") { return $true }
-    if ($clean -match "(境界名称|因果|本世器物|最近记忆|轮回传承|当前世界|本世人脉|隐藏设定|轮回余烬|本命法宝器纹|器痕归灵|当前继承的传承)\s*[:：]") { return $true }
+    if ($clean -match "^(玩家|境界名称|境界|因果|年龄|此世家世|家世|人情风波|轮回传承|当前世界|最近记忆|本世人脉|本世器物|当前继承的传承|失传古法当世解读|大道特性|寿元压力|隐藏设定|时代纪元|重大事件|事件影响|近年大事|世界时间|伴生玉佩|父亲|母亲|养育者|轮回余烬|本命法宝器纹|器痕归灵|天机底线|近期因果摘要|下一处因果钩子|未收束线头|人情压力|NPC近况|势力压力)\s*[:：]") { return $true }
+    if ($clean -match "(境界名称|因果|本世器物|最近记忆|轮回传承|当前世界|本世人脉|隐藏设定|轮回余烬|本命法宝器纹|器痕归灵|当前继承的传承|天机底线|近期因果摘要|下一处因果钩子|未收束线头|人情压力|NPC近况|势力压力)\s*[:：]") { return $true }
     if ($clean -match "^(炼气期|筑基期|金丹期|元婴期|化神期|仙帝|道祖)\s+因果\s*[+-]?\d+") { return $true }
     return $false
 }
@@ -606,6 +607,132 @@ function Convert-ToChoice {
     return $choice
 }
 
+function Get-LooseJsonCandidates {
+    param([string]$RawText)
+
+    $candidates = New-Object System.Collections.Generic.List[string]
+    $trimmed = $RawText.Trim()
+    if ($trimmed.StartsWith("{") -and $trimmed.EndsWith("}")) {
+        $candidates.Add($trimmed)
+    }
+
+    foreach ($match in ([regex]::Matches($RawText, '(?s)```(?:json)?\s*(\{.*?\})\s*```', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase))) {
+        $candidates.Add($match.Groups[1].Value.Trim())
+    }
+
+    $start = $RawText.IndexOf("{")
+    $end = $RawText.LastIndexOf("}")
+    if ($start -ge 0 -and $end -gt $start) {
+        $candidates.Add($RawText.Substring($start, $end - $start + 1).Trim())
+    }
+
+    return @($candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+}
+
+function ConvertFrom-LooseJson {
+    param([string]$RawText)
+
+    foreach ($candidate in (Get-LooseJsonCandidates $RawText)) {
+        $variants = @(
+            $candidate,
+            ([regex]::Replace($candidate, ",\s*([}\]])", '$1'))
+        ) | Select-Object -Unique
+
+        foreach ($variant in $variants) {
+            try {
+                return $variant | ConvertFrom-Json -ErrorAction Stop
+            } catch {
+                continue
+            }
+        }
+    }
+    return $null
+}
+
+function Get-ObjectText {
+    param(
+        [object]$Object,
+        [string[]]$Names
+    )
+    foreach ($name in $Names) {
+        if ($null -eq $Object) { continue }
+        $property = $Object.PSObject.Properties[$name]
+        if ($null -ne $property -and $null -ne $property.Value) {
+            $value = [string]$property.Value
+            if (-not [string]::IsNullOrWhiteSpace($value)) {
+                return $value
+            }
+        }
+    }
+    return ""
+}
+
+function Convert-StructuredEvent {
+    param([string]$RawText)
+
+    $obj = ConvertFrom-LooseJson $RawText
+    if ($null -eq $obj) { return $null }
+
+    $titleRaw = Get-ObjectText $obj @("title", "eventTitle", "标题")
+    $descriptionRaw = Get-ObjectText $obj @("description", "desc", "narration", "描述")
+
+    $beatTexts = New-Object System.Collections.Generic.List[string]
+    $beatsProperty = $obj.PSObject.Properties["beats"]
+    if ($null -ne $beatsProperty -and $null -ne $beatsProperty.Value) {
+        foreach ($beat in @($beatsProperty.Value)) {
+            if ($beat -is [string]) {
+                if (-not [string]::IsNullOrWhiteSpace($beat)) { $beatTexts.Add($beat) }
+            } else {
+                $beatText = Get-ObjectText $beat @("narration", "text", "line", "描述")
+                if (-not [string]::IsNullOrWhiteSpace($beatText)) { $beatTexts.Add($beatText) }
+            }
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($descriptionRaw) -and $beatTexts.Count -gt 0) {
+        $descriptionRaw = ($beatTexts | Select-Object -First 2) -join "。"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($titleRaw) -or [string]::IsNullOrWhiteSpace($descriptionRaw)) {
+        return $null
+    }
+
+    $title = Normalize-Title $titleRaw
+    $description = Normalize-EventLine $descriptionRaw
+    if ($description.Length -gt 120) {
+        $description = $description.Substring(0, 120)
+    }
+    if ($description -notmatch "[。！？]$") {
+        $description += "。"
+    }
+
+    $choices = New-Object System.Collections.Generic.List[string]
+    $choicesProperty = $obj.PSObject.Properties["choices"]
+    if ($null -ne $choicesProperty -and $null -ne $choicesProperty.Value) {
+        foreach ($rawChoice in @($choicesProperty.Value)) {
+            $label = ""
+            if ($rawChoice -is [string]) {
+                $label = $rawChoice
+            } else {
+                $label = Get-ObjectText $rawChoice @("label", "text", "description", "选项")
+            }
+            $choice = Convert-ToChoice $label
+            if ($null -ne $choice -and -not $choices.Contains($choice)) {
+                $choices.Add($choice)
+            }
+            if ($choices.Count -ge 3) { break }
+        }
+    }
+
+    if ($choices.Count -lt 2) { return $null }
+
+    [pscustomobject]@{
+        Title = $title
+        Description = $description
+        Choices = @($choices.ToArray())
+        Raw = $obj
+    }
+}
+
 $fallback = New-ContextFallbackEvent $basePrompt
 $keywords = Get-ContextKeywords $basePrompt
 $requiredGroups = Get-RequiredKeywordGroups $basePrompt
@@ -616,6 +743,26 @@ if ($rawHadNoise) {
 }
 if (Test-BrokenEventText $text) {
     $repairNotes.Add("清理病句")
+}
+
+$structuredEvent = Convert-StructuredEvent $text
+if ($null -ne $structuredEvent) {
+    $repairNotes.Add("结构化事件")
+    try {
+        $sceneJson = $structuredEvent.Raw | ConvertTo-Json -Depth 8
+        [System.IO.File]::WriteAllText($scenePath, $sceneJson, $encoding)
+    } catch {
+        [System.IO.File]::WriteAllText($scenePath, "{}", $encoding)
+    }
+    $structuredLines = New-Object System.Collections.Generic.List[string]
+    $structuredLines.Add($structuredEvent.Title)
+    $structuredLines.Add($structuredEvent.Description)
+    foreach ($choice in $structuredEvent.Choices) {
+        $structuredLines.Add([string]$choice)
+        if ($structuredLines.Count -ge 5) { break }
+    }
+    $text = (($structuredLines | Select-Object -First 5) -join [Environment]::NewLine) +
+        [Environment]::NewLine + $text
 }
 
 $candidateLines = @()

@@ -69,6 +69,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **本世主线**：每次转世生成本世主题和持续线索，AI 动态事件会优先围绕这些线索续写
 - **本世主线阶段事件**：外出历练会推进每世最多三段主线阶段，让线索从显露、转折走向此世取舍
 - **动态线索推进**：历练选择会把前世、势力、人脉、旧世残响、器物、大道和鸿蒙余波写回本世持续线索，后续 AI 事件可继续接上
+- **剧情状态补丁**：每次事件会把近期摘要、未收束线头、关系压力和 NPC 近况写回统一剧情状态；稳定设定如鸿蒙至宝规则、伴生玉佩规则不会被模型输出覆盖
 - **本世势力牵连**：每世根据时代、家世和资质生成宗门/仙朝/工坊/道网/残宗关系，形成可续写的旧债和身份
 - **本世人脉**：父母、养育者、同辈、欺压者和时代联系人会形成持续关系线，并进入 AI 上下文
 - **人脉历练事件**：外出历练可能直接触发父母认可、同辈嫉妒、欺压试探、势力递帖等本世关系事件
@@ -94,6 +95,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **NPC 情绪代理**：本世人脉会带情绪标签、口吻示例、想要、忌惮和下一步倾向，让长辈护短、同辈嫉妒、执事卡资源、旧怨追债等关系进入事件文本
 - **回退焦点轮换**：内置动态事件会在前世未竟、天下大事、旧世残响、大道、器物、人脉和势力之间轮换取材
 - **上下文回退**：即使本地模型不可用，内置动态事件也会主动续写本世持续线索、势力牵连、本世器物、人脉和前世未竟因果
+- **结构化解析闸门**：本地模型或未来 API 若输出 JSON，会先被解析为标题、描述、选项与场景数据；失败时仍回退到 5 行文本解析和模板修复
 
 ## 操作
 
@@ -158,6 +160,7 @@ ai_prompt.txt
 ai_prompt_runtime.txt
 ai_event.txt
 ai_event_raw.txt
+ai_scene.json
 ai_backend.txt
 ai_status.txt
 ai_llama.log
@@ -197,6 +200,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.
 - Ollama 超时默认 20 秒
 - 两者都失败时，游戏自动回退到内置动态模板
 - 主界面左侧会显示当前动态事件后端与最近一次状态
+- 兼容两种模型输出：传统 5 行文本，以及包含 `title`、`description`、`choices`、`beats`、`storyStatePatch` 的 JSON；最终都会被清洗成游戏可用事件
 
 如果想强制手动测试便携后端：
 
@@ -263,6 +267,10 @@ ai_engine/runtime/llama.cpp/
 - `run_remote_gemma4_lora.sh`：远端 x86 + NVIDIA Docker 训练启动脚本
 
 训练产物、模型缓存和 GGUF/adapter 文件不进入仓库；训练完成后可通过 `WENDAO_LORA_PATH` 或 `ai_engine/lora_path.txt` 指向转换后的 llama.cpp LoRA。
+
+## 开源项目借鉴边界
+
+已参考 `zonghaoyuan/infiplot` 的高层数据流思想：`Session/Context -> Scene -> StatePatch`、稳定剧情设定与活动剧情状态分层、模型输出先解析/校验/修复再进入游戏。该项目使用 AGPL-3.0，本仓库没有直接复制其源码；这里只按同类架构重新实现适合本游戏的 C++/PowerShell 版本。
 
 ## 小说语料边界
 

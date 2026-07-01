@@ -487,6 +487,64 @@ struct Event {
     vector<Choice> choices;
 };
 
+// 剧情导演层：借鉴“稳定设定 + 活动状态补丁”的数据流，但不依赖外部项目代码。
+struct SceneChoice {
+    wstring label;
+    wstring intent;
+    wstring expectedThread;
+};
+
+struct SceneBeat {
+    wstring id;
+    wstring narration;
+    wstring speaker;
+    wstring line;
+    vector<SceneChoice> choices;
+};
+
+struct DirectedScene {
+    wstring id;
+    wstring sceneKey;
+    vector<SceneBeat> beats;
+    wstring entryBeatId;
+};
+
+struct StoryRelationshipDelta {
+    wstring name;
+    int delta;
+};
+
+struct StoryStatePatch {
+    wstring synopsis;
+    vector<wstring> openThreadsToAdd;
+    vector<StoryRelationshipDelta> relationshipDeltas;
+    vector<wstring> npcMoodNotes;
+    wstring nextHook;
+    int factionPressureDelta;
+    wstring factionPressureNote;
+    wstring memoryNote;
+
+    StoryStatePatch() : factionPressureDelta(0) {}
+};
+
+struct StoryState {
+    // Stable: 每一世开局确定，事件补丁不能覆盖。
+    wstring worldLaw;
+    wstring hongmengRule;
+    wstring companionJadeRule;
+    wstring protagonistDestiny;
+
+    // Volatile: 每次事件之后允许被补丁推进。
+    wstring synopsis;
+    vector<wstring> openThreads;
+    map<wstring, int> relationships;
+    wstring nextHook;
+    vector<wstring> npcMoods;
+    int factionPressure;
+
+    StoryState() : factionPressure(0) {}
+};
+
 enum EventTheme {
     THEME_GENERAL = 0,
     THEME_CULTIVATION = 1,
@@ -957,6 +1015,7 @@ vector<wstring> g_lifeStoryHooks;
 vector<wstring> g_eraRemnants;
 vector<wstring> g_eraChronicle;
 FactionTie g_factionTie;
+StoryState g_storyState;
 
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
@@ -1011,6 +1070,9 @@ int CountHongmengInsightKinds();
 wstring BuildPlannedLegacyDigest(int limit = 4);
 bool AddLifeStoryHook(const wstring& hook, bool recordMemory);
 bool HasPriorLifeEcho();
+void InitializeStoryStateForLife();
+wstring BuildStoryStateContext();
+void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent);
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -1503,6 +1565,249 @@ wstring CompactMemoryFragment(const wstring& memory) {
     return out;
 }
 
+wstring NormalizeStoryNote(const wstring& text, size_t limit = 150) {
+    wstring compact = CompactMemoryFragment(text);
+    if (compact.size() > limit) {
+        compact = compact.substr(0, limit) + L"...";
+    }
+    return compact;
+}
+
+void AddUniqueLimited(vector<wstring>& items, const wstring& text, size_t limit) {
+    wstring compact = NormalizeStoryNote(text);
+    if (compact.empty()) return;
+    auto existing = find(items.begin(), items.end(), compact);
+    if (existing != items.end()) {
+        items.erase(existing);
+    }
+    items.push_back(compact);
+    while (items.size() > limit) {
+        items.erase(items.begin());
+    }
+}
+
+void RefreshStoryStateStableFields() {
+    g_storyState.worldLaw = g_worldEraName + L"：" + g_worldEraRule;
+    g_storyState.hongmengRule =
+        L"九大鸿蒙至宝恒在，只能写投影、线索、参悟、拒绝与遥远因果；本体不可入手。";
+    g_storyState.companionJadeRule = HasPriorLifeEcho()
+        ? L"黑白旧玉可托起前世碎片，但普通事件不得揭示玄牝轮回玉真名。"
+        : L"第一世只有黑白伴生玉佩与梦兆，不存在明确前世记忆。";
+    g_storyState.protagonistDestiny =
+        L"主角以今生选择承接轮回，而不是让前世、家世或至宝替自己决定。";
+}
+
+void InitializeStoryStateForLife() {
+    g_storyState = StoryState();
+    RefreshStoryStateStableFields();
+    g_storyState.synopsis = NormalizeStoryNote(g_lifePremise);
+    g_storyState.nextHook = g_lifeStoryHooks.empty()
+        ? NormalizeStoryNote(g_lifePremise)
+        : NormalizeStoryNote(g_lifeStoryHooks.front());
+
+    AddUniqueLimited(g_storyState.openThreads, L"本世主线：" + g_lifePremise, 8);
+    for (const auto& hook : g_lifeStoryHooks) {
+        AddUniqueLimited(g_storyState.openThreads, hook, 8);
+    }
+    if (!g_factionTie.name.empty()) {
+        AddUniqueLimited(g_storyState.openThreads,
+            L"势力牵连：" + g_factionTie.name + L"以" + g_factionTie.role +
+            L"身份" + g_factionTie.stance + L"，旧债为" + g_factionTie.obligation, 8);
+        g_storyState.factionPressure = g_factionTie.favor;
+    }
+    for (const auto& thread : g_socialThreads) {
+        g_storyState.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
+        AddUniqueLimited(g_storyState.npcMoods,
+            thread.name + L"：" + thread.attitude +
+            (thread.nextMove.empty() ? L"" : L"，下一步" + thread.nextMove), 8);
+    }
+}
+
+void ApplyStoryStatePatch(const StoryStatePatch& patch) {
+    RefreshStoryStateStableFields();
+
+    if (!patch.synopsis.empty()) {
+        g_storyState.synopsis = NormalizeStoryNote(patch.synopsis, 180);
+    }
+    for (const auto& thread : patch.openThreadsToAdd) {
+        AddUniqueLimited(g_storyState.openThreads, thread, 8);
+    }
+    for (const auto& delta : patch.relationshipDeltas) {
+        if (delta.name.empty()) continue;
+        int& value = g_storyState.relationships[delta.name];
+        value = max(-100, min(100, value + delta.delta));
+    }
+    for (const auto& mood : patch.npcMoodNotes) {
+        AddUniqueLimited(g_storyState.npcMoods, mood, 8);
+    }
+    if (!patch.nextHook.empty()) {
+        g_storyState.nextHook = NormalizeStoryNote(patch.nextHook);
+    }
+    if (patch.factionPressureDelta != 0) {
+        g_storyState.factionPressure = max(-100, min(100,
+            g_storyState.factionPressure + patch.factionPressureDelta));
+    }
+    if (!patch.factionPressureNote.empty()) {
+        AddUniqueLimited(g_storyState.openThreads,
+            L"势力压力：" + patch.factionPressureNote, 8);
+    }
+    if (!patch.memoryNote.empty()) {
+        AddMemory(L"剧情线索", patch.memoryNote);
+    }
+}
+
+DirectedScene BuildDirectedSceneFromEvent(const Event& event) {
+    DirectedScene scene;
+    scene.id = L"scene-" + to_wstring(g_player.totalEvents + 1);
+    scene.sceneKey = event.title;
+    scene.entryBeatId = L"beat-1";
+
+    SceneBeat beat;
+    beat.id = scene.entryBeatId;
+    beat.narration = event.description;
+    for (const auto& choice : event.choices) {
+        SceneChoice sceneChoice;
+        sceneChoice.label = choice.description;
+        sceneChoice.intent = L"让玩家决定此事如何进入今生因果";
+        sceneChoice.expectedThread = g_storyState.nextHook;
+        beat.choices.push_back(sceneChoice);
+    }
+    scene.beats.push_back(beat);
+    return scene;
+}
+
+StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& choice,
+                                             const wstring& outcome, bool isAIEvent) {
+    StoryStatePatch patch;
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    wstring compactOutcome = NormalizeStoryNote(outcome, 96);
+    patch.synopsis = event.title + L"：" + choice.description + L"后，" + compactOutcome;
+    patch.nextHook = g_lifeStoryHooks.empty()
+        ? event.title + L"尚未完全结束，后续可从此事余波继续。"
+        : g_lifeStoryHooks.back();
+
+    auto containsAnyLocal = [&](const vector<wstring>& keys) {
+        for (const auto& key : keys) {
+            if (!key.empty() && text.find(key) != wstring::npos) return true;
+        }
+        return false;
+    };
+    bool positive = containsAnyLocal({
+        L"修为+", L"灵石+", L"因果+", L"寿命+", L"掌道+", L"灵宝共鸣+",
+        L"认可", L"亲近", L"查到", L"主动权", L"护住", L"成功"
+    });
+    bool negative = containsAnyLocal({
+        L"气血-", L"灵石-", L"因果-", L"寿命-", L"怀疑", L"记恨",
+        L"反噬", L"设局", L"看穿", L"失败"
+    });
+    int relationDelta = positive ? 4 : (negative ? -4 : 0);
+
+    if (containsAnyLocal({L"本世主线", L"主线", L"线索", L"旧债", L"未竟", L"旧世残响"})) {
+        patch.openThreadsToAdd.push_back(L"本世线索余波：" + event.title + L"仍与「" +
+            choice.description + L"」有关。");
+    }
+    if (containsAnyLocal({L"玉佩", L"黑白旧玉", L"玉意", L"阴阳玉痕", L"轮回回响"})) {
+        patch.openThreadsToAdd.push_back(HasPriorLifeEcho()
+            ? L"旧玉余波：黑白旧玉继续把前世碎片与今生取舍牵在一起。"
+            : L"旧玉余波：第一世只留下梦兆与异样直觉，不能写成前世记忆。");
+    }
+    if (containsAnyLocal({L"失传古法", L"旧法", L"功法", L"藏经", L"道网档案"})) {
+        patch.openThreadsToAdd.push_back(L"失传古法线：懂行者已注意到旧法骨架，后续应带来认可、审查或争夺。");
+    }
+    if (containsAnyLocal({L"器痕", L"法宝", L"当世器物", L"本世器物", L"通天灵宝"})) {
+        patch.openThreadsToAdd.push_back(L"器痕线：普通器物本体不跨世，余响只可沉入记忆、器痕或通天灵宝残印。");
+    }
+    if (containsAnyLocal({L"鸿蒙", L"至宝", L"投影", L"天象"})) {
+        patch.openThreadsToAdd.push_back(L"鸿蒙线：至宝只显投影和因果，不能变成可获得装备。");
+    }
+
+    if (!g_factionTie.name.empty() && containsAnyLocal({
+        g_factionTie.name, L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
+    })) {
+        patch.factionPressureDelta = relationDelta == 0 ? (positive ? 2 : (negative ? -2 : 1)) : relationDelta;
+        patch.factionPressureNote = g_factionTie.name + L"因「" + choice.description +
+            L"」重新估量你，后续会影响审查、资源或旧债。";
+    }
+
+    int changed = 0;
+    for (const auto& thread : g_socialThreads) {
+        bool directHit = text.find(thread.name) != wstring::npos ||
+                         text.find(thread.role) != wstring::npos ||
+                         text.find(thread.attitude) != wstring::npos;
+        if (!directHit && !containsAnyLocal({
+            L"父亲", L"母亲", L"养育者", L"长辈", L"同辈", L"欺压者", L"竞争者", L"人情"
+        })) {
+            continue;
+        }
+        StoryRelationshipDelta delta;
+        delta.name = thread.name + L"（" + thread.role + L"）";
+        delta.delta = directHit ? relationDelta : relationDelta / 2;
+        if (delta.delta == 0) delta.delta = positive ? 1 : (negative ? -1 : 0);
+        if (delta.delta != 0) {
+            patch.relationshipDeltas.push_back(delta);
+        }
+        patch.npcMoodNotes.push_back(thread.name + L"因「" + choice.description +
+            L"」后的风声继续" + (positive ? L"靠近或押注" : (negative ? L"戒备或设局" : L"观望")) + L"。");
+        if (++changed >= 2) break;
+    }
+
+    if (isAIEvent) {
+        patch.openThreadsToAdd.push_back(L"天机事件后续：" + event.title +
+            L"已经进入本世持续因果，不应下次完全重置。");
+    }
+    return patch;
+}
+
+void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice,
+                              const wstring& outcome, bool isAIEvent) {
+    ApplyStoryStatePatch(BuildStoryPatchFromNarrative(event, choice, outcome, isAIEvent));
+}
+
+wstring BuildStoryStateContext() {
+    RefreshStoryStateStableFields();
+    wstringstream ss;
+    ss << L"- 天机底线:\n";
+    ss << L"  * " << g_storyState.worldLaw << L"\n";
+    ss << L"  * " << g_storyState.hongmengRule << L"\n";
+    ss << L"  * " << g_storyState.companionJadeRule << L"\n";
+    ss << L"  * " << g_storyState.protagonistDestiny << L"\n";
+    if (!g_storyState.synopsis.empty()) {
+        ss << L"- 近期因果摘要: " << g_storyState.synopsis << L"\n";
+    }
+    if (!g_storyState.nextHook.empty()) {
+        ss << L"- 下一处因果钩子: " << g_storyState.nextHook << L"\n";
+    }
+    if (!g_storyState.openThreads.empty()) {
+        ss << L"- 未收束线头:\n";
+        int count = 0;
+        for (const auto& thread : g_storyState.openThreads) {
+            if (count++ >= 6) break;
+            ss << L"  * " << thread << L"\n";
+        }
+    }
+    if (!g_storyState.relationships.empty()) {
+        ss << L"- 人情压力:\n";
+        int count = 0;
+        for (const auto& pair : g_storyState.relationships) {
+            if (count++ >= 6) break;
+            ss << L"  * " << pair.first << L" " << (pair.second >= 0 ? L"+" : L"")
+               << pair.second << L"\n";
+        }
+    }
+    if (!g_storyState.npcMoods.empty()) {
+        ss << L"- NPC 近况:\n";
+        int count = 0;
+        for (const auto& mood : g_storyState.npcMoods) {
+            if (count++ >= 5) break;
+            ss << L"  * " << mood << L"\n";
+        }
+    }
+    if (!g_factionTie.name.empty()) {
+        ss << L"- 势力压力: " << g_storyState.factionPressure << L"\n";
+    }
+    return ss.str();
+}
+
 vector<wstring> SelectReincarnationMemoryFragments(int limit = 8) {
     vector<wstring> fragments;
     auto addUnique = [&](const wstring& memory) {
@@ -1993,7 +2298,9 @@ void GenerateWorldEra() {
         g_eraTransitionNote = L"轮回醒来时，天地秩序已由" + previousEra + L"转入" + g_worldEraName + L"，旧经验只能作为参考。";
     }
 
-    if (relicEcho >= 25 || treasureEcho >= 40) {
+    if (g_generation <= 1) {
+        g_reincarnationEcho = L"这是第一世，尚无前世记忆；黑白伴生玉佩只带来模糊梦兆、早熟直觉和来历不明的温凉玉意。";
+    } else if (relicEcho >= 25 || treasureEcho >= 40) {
         g_reincarnationEcho = L"你隐约能感到某件前世祭炼过的重宝仍在呼应自己，这一世有关器灵、法宝与遗府的因果会更浓。";
     } else if (knowledgeEcho >= 40) {
         g_reincarnationEcho = L"你对阵法、斗法与局势判断有一种不合年龄的熟悉感，像是旧世经验仍在替你做选择。";
@@ -5769,6 +6076,7 @@ PlayerContext BuildPlayerContext() {
             world << L"  * " << hook << L"\n";
         }
     }
+    world << BuildStoryStateContext();
     world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
     world << L"- 寿元压力: " << BuildLifespanPressureText() << L"\n";
     world << L"- 道祖-天道境进度: " << GetHeavenlyDaoProgressScore() << L" / 360\n";
@@ -5955,8 +6263,88 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
     return true;
 }
 
+void SaveStoryState(wofstream& file) {
+    file << L"STORY_STATE_V1\n";
+    file << EscapeSaveField(g_storyState.worldLaw) << L"\n";
+    file << EscapeSaveField(g_storyState.hongmengRule) << L"\n";
+    file << EscapeSaveField(g_storyState.companionJadeRule) << L"\n";
+    file << EscapeSaveField(g_storyState.protagonistDestiny) << L"\n";
+    file << EscapeSaveField(g_storyState.synopsis) << L"\n";
+    file << EscapeSaveField(g_storyState.nextHook) << L"\n";
+    file << g_storyState.factionPressure << L"\n";
+
+    file << g_storyState.openThreads.size() << L"\n";
+    for (const auto& item : g_storyState.openThreads) {
+        file << EscapeSaveField(item) << L"\n";
+    }
+    file << g_storyState.relationships.size() << L"\n";
+    for (const auto& pair : g_storyState.relationships) {
+        file << EscapeSaveField(pair.first) << L"\n" << pair.second << L"\n";
+    }
+    file << g_storyState.npcMoods.size() << L"\n";
+    for (const auto& item : g_storyState.npcMoods) {
+        file << EscapeSaveField(item) << L"\n";
+    }
+}
+
+bool LoadStoryState(wifstream& file) {
+    wstring marker;
+    getline(file, marker);
+    if (marker.empty()) getline(file, marker);
+    if (marker != L"STORY_STATE_V1") return false;
+
+    getline(file, g_storyState.worldLaw);
+    getline(file, g_storyState.hongmengRule);
+    getline(file, g_storyState.companionJadeRule);
+    getline(file, g_storyState.protagonistDestiny);
+    getline(file, g_storyState.synopsis);
+    getline(file, g_storyState.nextHook);
+    g_storyState.worldLaw = UnescapeSaveField(g_storyState.worldLaw);
+    g_storyState.hongmengRule = UnescapeSaveField(g_storyState.hongmengRule);
+    g_storyState.companionJadeRule = UnescapeSaveField(g_storyState.companionJadeRule);
+    g_storyState.protagonistDestiny = UnescapeSaveField(g_storyState.protagonistDestiny);
+    g_storyState.synopsis = UnescapeSaveField(g_storyState.synopsis);
+    g_storyState.nextHook = UnescapeSaveField(g_storyState.nextHook);
+    file >> g_storyState.factionPressure;
+    file.ignore(numeric_limits<streamsize>::max(), L'\n');
+
+    size_t count = 0;
+    file >> count;
+    file.ignore(numeric_limits<streamsize>::max(), L'\n');
+    g_storyState.openThreads.clear();
+    for (size_t i = 0; i < count; ++i) {
+        wstring item;
+        getline(file, item);
+        g_storyState.openThreads.push_back(UnescapeSaveField(item));
+    }
+
+    file >> count;
+    file.ignore(numeric_limits<streamsize>::max(), L'\n');
+    g_storyState.relationships.clear();
+    for (size_t i = 0; i < count; ++i) {
+        wstring name;
+        int value = 0;
+        getline(file, name);
+        file >> value;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        g_storyState.relationships[UnescapeSaveField(name)] = max(-100, min(100, value));
+    }
+
+    file >> count;
+    file.ignore(numeric_limits<streamsize>::max(), L'\n');
+    g_storyState.npcMoods.clear();
+    for (size_t i = 0; i < count; ++i) {
+        wstring item;
+        getline(file, item);
+        g_storyState.npcMoods.push_back(UnescapeSaveField(item));
+    }
+    RefreshStoryStateStableFields();
+    return true;
+}
+
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V9\n";
+    RefreshStoryStateStableFields();
+    file << L"WORLD_ERA_V10\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
@@ -5995,6 +6383,7 @@ void SaveWorldEra(wofstream& file) {
     file << EscapeSaveField(g_hongmengOmenDao) << L"\n";
     file << EscapeSaveField(g_hongmengOmenManifestation) << L"\n";
     file << EscapeSaveField(g_hongmengOmenInfluence) << L"\n";
+    SaveStoryState(file);
 }
 
 bool LoadWorldEra(wifstream& file) {
@@ -6009,14 +6398,15 @@ bool LoadWorldEra(wifstream& file) {
     bool isV7 = (marker == L"WORLD_ERA_V7");
     bool isV8 = (marker == L"WORLD_ERA_V8");
     bool isV9 = (marker == L"WORLD_ERA_V9");
-    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7 && !isV8 && !isV9) return false;
+    bool isV10 = (marker == L"WORLD_ERA_V10");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7 && !isV8 && !isV9 && !isV10) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
+    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9 || isV10) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -6024,7 +6414,7 @@ bool LoadWorldEra(wifstream& file) {
         g_eraTransitionNote = UnescapeSaveField(g_eraTransitionNote);
         getline(file, g_lifePremise);
         g_lifePremise = UnescapeSaveField(g_lifePremise);
-        if (isV8 || isV9) {
+        if (isV8 || isV9 || isV10) {
             file >> g_lifeStoryProgressThisLife >> g_jadeDreamOmenEventsThisLife;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
             g_lifeStoryProgressThisLife = max(0, min(3, g_lifeStoryProgressThisLife));
@@ -6034,7 +6424,7 @@ bool LoadWorldEra(wifstream& file) {
             g_jadeDreamOmenEventsThisLife = 0;
         }
         g_plannedLegacies.clear();
-        if (isV9) {
+        if (isV9 || isV10) {
             size_t plannedCount = 0;
             file >> plannedCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -6070,7 +6460,7 @@ bool LoadWorldEra(wifstream& file) {
             g_lifeStoryHooks.push_back(UnescapeSaveField(hook));
         }
         g_eraRemnants.clear();
-        if (isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
+        if (isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9 || isV10) {
             size_t remnantCount = 0;
             file >> remnantCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -6081,7 +6471,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_eraChronicle.clear();
-        if (isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
+        if (isV4 || isV5 || isV6 || isV7 || isV8 || isV9 || isV10) {
             size_t chronicleCount = 0;
             file >> chronicleCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -6092,7 +6482,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_factionTie = FactionTie();
-        if (isV5 || isV6 || isV7 || isV8 || isV9) {
+        if (isV5 || isV6 || isV7 || isV8 || isV9 || isV10) {
             getline(file, g_factionTie.name);
             getline(file, g_factionTie.kind);
             getline(file, g_factionTie.role);
@@ -6108,13 +6498,13 @@ bool LoadWorldEra(wifstream& file) {
             file >> g_factionTie.favor >> g_factionTie.binding;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
         }
-        if (isV6 || isV7 || isV8 || isV9) {
+        if (isV6 || isV7 || isV8 || isV9 || isV10) {
             getline(file, g_eraShiftCause);
             g_eraShiftCause = UnescapeSaveField(g_eraShiftCause);
         } else {
             g_eraShiftCause = L"旧存档没有记录纪元转折因由，只能从残留的时代变迁中推断。";
         }
-        if (isV7 || isV8 || isV9) {
+        if (isV7 || isV8 || isV9 || isV10) {
             getline(file, g_hongmengOmenTreasureName);
             getline(file, g_hongmengOmenDao);
             getline(file, g_hongmengOmenManifestation);
@@ -6125,6 +6515,11 @@ bool LoadWorldEra(wifstream& file) {
             g_hongmengOmenInfluence = UnescapeSaveField(g_hongmengOmenInfluence);
         } else {
             GenerateHongmengOmen();
+        }
+        if (isV10) {
+            LoadStoryState(file);
+        } else {
+            InitializeStoryStateForLife();
         }
     } else {
         g_lifePremise = L"此世主线来自旧存档，尚未记录明确线索。";
@@ -6137,6 +6532,7 @@ bool LoadWorldEra(wifstream& file) {
         g_plannedLegacies.clear();
         g_eraShiftCause = L"旧存档没有记录纪元转折因由。";
         GenerateHongmengOmen();
+        InitializeStoryStateForLife();
     }
     return true;
 }
@@ -6224,6 +6620,23 @@ bool LoadGame() {
     LoadSocialRumors(file);
     g_legacySystem.Load(file);
     g_achievementSystem.Load(file);
+    if (g_storyState.synopsis.empty() && g_storyState.openThreads.empty()) {
+        InitializeStoryStateForLife();
+    } else {
+        RefreshStoryStateStableFields();
+    }
+    for (const auto& thread : g_socialThreads) {
+        wstring key = thread.name + L"（" + thread.role + L"）";
+        if (g_storyState.relationships.find(key) == g_storyState.relationships.end()) {
+            g_storyState.relationships[key] = thread.relation;
+        }
+        AddUniqueLimited(g_storyState.npcMoods,
+            thread.name + L"：" + thread.attitude +
+            (thread.nextMove.empty() ? L"" : L"，下一步" + thread.nextMove), 8);
+    }
+    if (!g_factionTie.name.empty() && g_storyState.factionPressure == 0) {
+        g_storyState.factionPressure = g_factionTie.favor;
+    }
     g_contextMgr.SetContext(BuildPlayerContext());
     g_lastAiBackend = L"已读档";
     g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
@@ -6688,6 +7101,7 @@ void StartNextLife() {
     }
     wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
     AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
+    InitializeStoryStateForLife();
 
     wstringstream detail;
     detail << L"第" << g_generation << L"世醒来";
@@ -6804,6 +7218,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
     TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
     ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
+    ApplyNarrativeStoryPatch(*g_currentEvent, choice, g_messageText, isAIEvent);
     if (isAIEvent) {
         AddMemory(L"天机抉择",
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
@@ -7406,6 +7821,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 GenerateSocialRumors();
                 wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
                 AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
+                InitializeStoryStateForLife();
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
                 AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
                 AddMemory(L"玉意梦兆", jadeDreamOmen);

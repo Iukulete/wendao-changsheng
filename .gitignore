@@ -20,6 +20,7 @@ ai_prompt.txt
 ai_prompt_runtime.txt
 ai_event.txt
 ai_event_raw.txt
+ai_scene.json
 ai_backend.txt
 ai_model.log
 ai_llama.log
