@@ -6714,7 +6714,12 @@ void OnPaint(HDC hdc, RECT& rect) {
             REAL contentWidth = showItemAtlas ? (infoRect.Width - 430) : (infoRect.Width - 116);
             RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
                 contentWidth, infoRect.Height - 150);
-            int estimatedContentHeight = CountTextLines(g_infoText) * 24 + 40;
+            RectF measureRect(contentClip.X, contentClip.Y, contentClip.Width, 100000.0f);
+            RectF measuredBounds;
+            graphics.MeasureString(g_infoText.c_str(), -1, &infoTextFont, measureRect,
+                &leftFormat, &measuredBounds);
+            int estimatedContentHeight = max(CountTextLines(g_infoText) * 24 + 40,
+                (int)(measuredBounds.Height + 48.0f));
             g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
             g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
 
@@ -6749,7 +6754,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 graphics.FillRectangle(&thumbBrush, RectF(scrollTrack.X, thumbY, scrollTrack.Width, thumbHeight));
             }
 
-            graphics.DrawString(L"ESC 返回  |  ↑↓ 滚动", -1, &smallFont,
+            graphics.DrawString(L"ESC 返回  |  ↑↓/滚轮 滚动  |  拖动右侧滑条", -1, &smallFont,
                 RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
                 &leftFormat, &mutedBrush);
             break;
