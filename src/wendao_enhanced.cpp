@@ -959,12 +959,17 @@ enum GameState {
     STATE_GAME = 1,
     STATE_EVENT = 2,
     STATE_GAMEOVER = 3,
-    STATE_INFO = 4
+    STATE_INFO = 4,
+    STATE_AI_WAIT = 5
 };
 
 GameState g_gameState = STATE_MENU;
 Event* g_currentEvent = nullptr;
 wstring g_messageText;
+PlayerContext g_pendingAiContext;
+PROCESS_INFORMATION g_aiProcessInfo = {};
+bool g_aiProcessRunning = false;
+DWORD g_aiStartTick = 0;
 wstring g_infoTitle;
 wstring g_infoText;
 GameState g_infoReturnState = STATE_GAME;
@@ -977,6 +982,7 @@ int g_infoScrollMax = 0;
 
 #define ID_NAME_INPUT 1001
 #define ID_BTN_START 1002
+#define IDT_AI_POLL 2001
 
 HWND g_nameInput;
 HWND g_btnStart;
@@ -4661,6 +4667,148 @@ bool TryRunLocalModelGenerator() {
     return exitCode == 0;
 }
 
+void KillAiProcessTree() {
+    if (!g_aiProcessInfo.hProcess || g_aiProcessInfo.dwProcessId == 0) return;
+    wstring command = L"taskkill /F /T /PID " + to_wstring(g_aiProcessInfo.dwProcessId) + L" > nul 2>&1";
+    _wsystem(command.c_str());
+}
+
+void CloseAiProcessHandles() {
+    if (g_aiProcessInfo.hProcess) {
+        CloseHandle(g_aiProcessInfo.hProcess);
+    }
+    if (g_aiProcessInfo.hThread) {
+        CloseHandle(g_aiProcessInfo.hThread);
+    }
+    g_aiProcessInfo = {};
+    g_aiProcessRunning = false;
+}
+
+bool BeginLocalModelGeneratorAsync() {
+    if (GetFileAttributesW(L"..\\ai_engine\\generate_event.ps1") == INVALID_FILE_ATTRIBUTES) {
+        g_lastAiBackend = L"模板回退";
+        g_lastAiStatus = L"缺少 ai_engine/generate_event.ps1，已直接使用内置模板事件。";
+        return false;
+    }
+
+    if (g_aiProcessRunning) {
+        KillAiProcessTree();
+        KillTimer(g_hWnd, IDT_AI_POLL);
+        CloseAiProcessHandles();
+    }
+
+    DeleteFileW(L"ai_event.txt");
+    DeleteFileW(L"ai_status.txt");
+    DeleteFileW(L"ai_backend.txt");
+
+    wstring command = L"cmd.exe /c powershell -NoProfile -ExecutionPolicy Bypass "
+        L"-File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" "
+        L"-Model \"wendao-xiuxian\" > ai_model.log 2>&1";
+    vector<wchar_t> commandBuffer(command.begin(), command.end());
+    commandBuffer.push_back(L'\0');
+
+    STARTUPINFOW startupInfo = {};
+    startupInfo.cb = sizeof(startupInfo);
+    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+    startupInfo.wShowWindow = SW_HIDE;
+
+    PROCESS_INFORMATION processInfo = {};
+    BOOL started = CreateProcessW(
+        nullptr,
+        commandBuffer.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        CREATE_NO_WINDOW,
+        nullptr,
+        nullptr,
+        &startupInfo,
+        &processInfo
+    );
+
+    if (!started) {
+        g_lastAiBackend = L"模板回退";
+        g_lastAiStatus = L"本地模型进程启动失败，已回退到内置模板事件。";
+        return false;
+    }
+
+    g_aiProcessInfo = processInfo;
+    g_aiProcessRunning = true;
+    g_aiStartTick = GetTickCount();
+    g_lastAiBackend = L"portable-llama.cpp";
+    g_lastAiStatus = L"本地模型正在推演此世因果，完成后会自动显出事件。";
+    SetTimer(g_hWnd, IDT_AI_POLL, 500, nullptr);
+    return true;
+}
+
+void EnterAiEventFromContext(PlayerContext ctx) {
+    wstring aiTitle;
+    wstring aiDesc;
+    vector<wstring> aiChoices;
+    if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
+        if (g_lastAiBackend.empty()) {
+            g_lastAiBackend = L"本地模型";
+        }
+        if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
+            g_lastAiStatus = L"成功生成 1 条动态事件。";
+        }
+        AddMemory(L"本地模型回应", L"读取 ai_event.txt 生成动态事件。后端：" + g_lastAiBackend);
+    } else {
+        if (g_lastAiBackend.empty() || g_lastAiBackend == L"未触发" || g_lastAiBackend == L"portable-llama.cpp") {
+            g_lastAiBackend = L"模板回退";
+        }
+        if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。" ||
+            g_lastAiStatus.find(L"正在推演") != wstring::npos) {
+            g_lastAiStatus = L"未读取到有效 ai_event.txt，已回退到内置模板事件。";
+        }
+        AddMemory(L"动态事件回退", g_lastAiStatus);
+        aiTitle = g_aiGen.GenerateEventTitle(ctx);
+        aiDesc = g_aiGen.GenerateEventDescription(ctx);
+        aiChoices = g_aiGen.GenerateChoices(ctx);
+    }
+
+    Event tempEvent;
+    tempEvent.title = aiTitle;
+    tempEvent.description = aiDesc;
+    for (auto& choice : aiChoices) {
+        Choice c;
+        c.description = choice;
+        c.outcomes.push_back(L"成功");
+        c.outcomes.push_back(L"失败");
+        c.karmaChange = 0;
+        tempEvent.choices.push_back(c);
+    }
+
+    g_contextMgr.SetContext(ctx);
+
+    static Event s_aiEvent;
+    s_aiEvent = tempEvent;
+    g_currentEvent = &s_aiEvent;
+    g_gameState = STATE_EVENT;
+}
+
+void CompleteLocalModelGenerator(DWORD exitCode) {
+    KillTimer(g_hWnd, IDT_AI_POLL);
+    CloseAiProcessHandles();
+    RefreshAiStatus();
+    if (exitCode != 0 && g_lastAiStatus.find(L"正在推演") != wstring::npos) {
+        g_lastAiBackend = L"模板回退";
+        g_lastAiStatus = L"本地模型脚本执行失败，已回退到内置模板事件。";
+    }
+    EnterAiEventFromContext(g_pendingAiContext);
+    InvalidateRect(g_hWnd, NULL, FALSE);
+}
+
+void CancelLocalModelGenerator() {
+    if (g_aiProcessRunning) {
+        KillAiProcessTree();
+        KillTimer(g_hWnd, IDT_AI_POLL);
+        CloseAiProcessHandles();
+    }
+    g_lastAiBackend = L"模板回退";
+    g_lastAiStatus = L"本地模型推演已取消。";
+}
+
 wstring GetGeneratedWorldText() {
     wstringstream ss;
     ss << L"【宗门与秘境】\n\n";
@@ -6192,6 +6340,29 @@ void OnPaint(HDC hdc, RECT& rect) {
             break;
         }
 
+        case STATE_AI_WAIT: {
+            int width = max(900, (int)rect.right);
+            int height = max(620, (int)rect.bottom);
+            RectF waitRect((REAL)(width / 2 - 320), (REAL)(height / 2 - 170), 640, 340);
+            DrawPanel(graphics, waitRect, 228);
+
+            int dotCount = (GetTickCount() / 500) % 4;
+            wstring dots(dotCount, L'。');
+            graphics.DrawString((L"天机推演中" + dots).c_str(), -1, &titleFont,
+                RectF(waitRect.X + 40, waitRect.Y + 44, waitRect.Width - 80, 54), &centerFormat, &goldBrush);
+
+            wstring waitText =
+                L"黑白旧玉微微发温，前世残响、此世家世与近年大事正在交汇。\n\n"
+                L"这次历练会由本地模型生成，完成后会自动显出因果。\n\n"
+                L"按 [ESC] 可放弃本次推演，回到当前道途。";
+            graphics.DrawString(waitText.c_str(), -1, &textFont,
+                RectF(waitRect.X + 58, waitRect.Y + 122, waitRect.Width - 116, 134), &leftFormat, &whiteBrush);
+
+            graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
+                RectF(waitRect.X + 58, waitRect.Y + 276, waitRect.Width - 116, 38), &leftFormat, &mutedBrush);
+            break;
+        }
+
         case STATE_GAMEOVER: {
             RectF overRect(100, 100, rect.right - 200, rect.bottom - 200);
             SolidBrush panelBrush(Color(220, 10, 10, 20));
@@ -6344,6 +6515,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             break;
         }
 
+        case WM_TIMER: {
+            if (wParam == IDT_AI_POLL && g_aiProcessRunning) {
+                DWORD exitCode = STILL_ACTIVE;
+                if (GetExitCodeProcess(g_aiProcessInfo.hProcess, &exitCode)) {
+                    if (exitCode != STILL_ACTIVE) {
+                        CompleteLocalModelGenerator(exitCode);
+                    } else if (GetTickCount() - g_aiStartTick > 100000) {
+                        KillAiProcessTree();
+                        g_lastAiBackend = L"模板回退";
+                        g_lastAiStatus = L"本地模型推演超时，已回退到内置模板事件。";
+                        CompleteLocalModelGenerator(1);
+                    } else {
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                }
+            }
+            break;
+        }
+
         case WM_KEYDOWN: {
             if (g_gameState == STATE_GAME) {
                 if (wParam == '1') {
@@ -6430,56 +6620,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         PlayerContext ctx = BuildPlayerContext();
 
                         g_aiGen.WritePromptFile(ctx);
-                        TryRunLocalModelGenerator();
-
-                        wstring aiTitle;
-                        wstring aiDesc;
-                        vector<wstring> aiChoices;
-                        if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
-                            if (g_lastAiBackend.empty()) {
-                                g_lastAiBackend = L"本地模型";
-                            }
-                            if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
-                                g_lastAiStatus = L"成功生成 1 条动态事件。";
-                            }
-                            AddMemory(L"本地模型回应", L"读取 ai_event.txt 生成动态事件。后端：" + g_lastAiBackend);
+                        g_pendingAiContext = ctx;
+                        if (BeginLocalModelGeneratorAsync()) {
+                            g_gameState = STATE_AI_WAIT;
                         } else {
-                            if (g_lastAiBackend.empty() || g_lastAiBackend == L"未触发") {
-                                g_lastAiBackend = L"模板回退";
-                            }
-                            if (g_lastAiStatus.empty() || g_lastAiStatus == L"本局尚未触发动态事件。") {
-                                g_lastAiStatus = L"未读取到有效 ai_event.txt，已回退到内置模板事件。";
-                            }
-                            AddMemory(L"动态事件回退", g_lastAiStatus);
-                            aiTitle = g_aiGen.GenerateEventTitle(ctx);
-                            aiDesc = g_aiGen.GenerateEventDescription(ctx);
-                            aiChoices = g_aiGen.GenerateChoices(ctx);
+                            EnterAiEventFromContext(ctx);
                         }
-
-                        // 创建临时AI事件用于显示
-                        Event tempEvent;
-                        tempEvent.title = aiTitle;
-                        tempEvent.description = aiDesc;
-
-                        // 转换AI选择为传统格式
-                        for (auto& choice : aiChoices) {
-                            Choice c;
-                            c.description = choice;
-                            c.outcomes.push_back(L"成功"); // 占位，实际由AI生成
-                            c.outcomes.push_back(L"失败");
-                            c.karmaChange = 0;
-                            tempEvent.choices.push_back(c);
-                        }
-
-                        // 保存当前AI上下文到全局
-                        g_contextMgr.SetContext(ctx);
-
-                        // 使用传统事件槽位显示AI事件
-                        static Event s_aiEvent;
-                        s_aiEvent = tempEvent;
-                        g_currentEvent = &s_aiEvent;
-
-                        g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     } else {
                         // 传统事件
@@ -6686,6 +6832,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     }
                 }
                 else if (wParam == VK_ESCAPE) {
+                    g_gameState = STATE_GAME;
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+            }
+            else if (g_gameState == STATE_AI_WAIT) {
+                if (wParam == VK_ESCAPE) {
+                    CancelLocalModelGenerator();
                     g_gameState = STATE_GAME;
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
