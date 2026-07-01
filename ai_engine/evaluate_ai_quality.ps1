@@ -185,7 +185,7 @@ $cases = @(
 function Test-Mojibake {
     param([string]$Text)
     $scan = [regex]::Replace($Text, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0980-\u09ff\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u00c0-\u024f\u1e00-\u1eff\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0980-\u09ff\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
 function Test-BrokenText {

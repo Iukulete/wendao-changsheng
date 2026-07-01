@@ -341,7 +341,7 @@ function Test-BrokenEventText {
 function Test-MojibakeText {
     param([string]$Value)
     $scan = [regex]::Replace($Value, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0980-\u09ff\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u00c0-\u024f\u1e00-\u1eff\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0980-\u09ff\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
 function Test-TitleLike {
@@ -586,6 +586,10 @@ function Convert-ToChoice {
     }
     $choice = $choice.Trim()
     if ($choice -eq "走后门") { $choice = "暗通执事" }
+    if ($choice -eq "压下") { $choice = "压下旧法" }
+    if ($choice -eq "闭关压") { $choice = "闭关压寿" }
+    if ($choice -eq "暂避") { $choice = "暂避锋芒" }
+    if ($choice -eq "问道") { $choice = "问道祖路" }
     if ($choice -eq "暂避锋") { $choice = "暂避锋芒" }
     if ($choice -match "^暂避锋芒") { $choice = "暂避锋芒" }
     if ($choice -eq "请长辈证词") { $choice = "请长辈证" }

@@ -938,6 +938,7 @@ vector<wstring> g_discoveredItems;
 vector<LifeArtifact> g_lifeArtifacts;
 int g_jadeDreamOmenEventsThisLife = 0;
 int g_lifeStoryProgressThisLife = 0;
+vector<LegacyItem> g_plannedLegacies;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -1002,6 +1003,8 @@ wstring BuildCompanionJadeVisibleText();
 wstring BuildCompanionJadeHiddenContext();
 void ApplyCompanionJadeToBirth();
 int CountHongmengInsightKinds();
+wstring BuildPlannedLegacyDigest(int limit = 4);
+bool AddLifeStoryHook(const wstring& hook, bool recordMemory);
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -2126,6 +2129,8 @@ wstring BuildLifeStoryText() {
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
     ss << L"主线阶段: " << g_lifeStoryProgressThisLife << L" / 3\n\n";
+    ss << L"【主动传承】\n";
+    ss << BuildPlannedLegacyDigest(4) << L"\n\n";
     ss << L"【伴生玉佩】\n";
     ss << BuildCompanionJadeVisibleText() << L"\n\n";
     if (HasFactionTie()) {
@@ -2145,6 +2150,7 @@ wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
     ss << L"本世主线阶段: " << g_lifeStoryProgressThisLife << L"/3\n";
+    ss << L"主动传承: " << BuildPlannedLegacyDigest(3) << L"\n";
     ss << L"伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     if (HasFactionTie()) {
         ss << L"本世势力牵连: " << BuildFactionTieDigest() << L"\n";
@@ -4766,6 +4772,133 @@ Event BuildLifeStoryProgressEvent() {
     return evt;
 }
 
+wstring BuildPlannedLegacyDigest(int limit) {
+    if (g_plannedLegacies.empty()) return L"暂无主动立下的传承。";
+    wstringstream ss;
+    int count = min(limit, (int)g_plannedLegacies.size());
+    for (int i = 0; i < count; ++i) {
+        if (i > 0) ss << L"；";
+        ss << g_plannedLegacies[i].name << L"（+" << g_plannedLegacies[i].power << L"）";
+    }
+    if ((int)g_plannedLegacies.size() > count) ss << L"等";
+    return ss.str();
+}
+
+bool HasPlannedLegacyName(const wstring& name) {
+    for (const auto& legacy : g_plannedLegacies) {
+        if (legacy.name == name) return true;
+    }
+    return false;
+}
+
+wstring BuildIntentionalTechniqueName() {
+    if (g_player.realm >= DAO_ANCESTOR) {
+        const LegacyRelic& relic = g_legacySystem.GetRelic();
+        return relic.daoLinked ? relic.daoName + L"留真篇" : L"祖境问道篇";
+    }
+    if (g_player.realm >= TRUE_IMMORTAL) return L"登仙留真诀";
+    if (g_worldEraName == L"灵机蒸汽纪") return L"灵机校道录";
+    if (g_worldEraName == L"星穹道网纪") return L"道网留痕篇";
+    if (g_worldEraName == L"末法裂变纪") return L"枯井证道札";
+    if (g_worldEraName == L"废土返道纪") return L"废土返道记";
+    if (g_worldEraName == L"仙朝鼎盛纪") return L"天册避名诀";
+    return L"问道行功札";
+}
+
+void AddPlannedLegacy(LegacyType type, const wstring& name,
+                      const wstring& description, int power) {
+    if (name.empty() || HasPlannedLegacyName(name) || g_plannedLegacies.size() >= 3) return;
+    int boundedPower = max(18, min(180, power));
+    g_plannedLegacies.push_back(LegacyItem(type, name, description, boundedPower));
+    AddMemory(L"主动留传承",
+        name + L"已被你刻入今生道途；若此世落幕，下一世会更容易以梦兆或旧法形式想起。");
+    AddLifeStoryHook(L"主动传承：" + name + L"会在此世落幕后随黑白旧玉和通天灵宝残印进入轮回。", true);
+}
+
+bool ShouldTriggerIntentionalLegacyEvent() {
+    if (g_plannedLegacies.size() >= 3) return false;
+    if (g_player.realm < QI_REFINING && g_player.totalEvents < 3) return false;
+
+    int chance = 9 + g_player.realm / 2 + g_lifeStoryProgressThisLife * 3;
+    if (g_player.totalEvents >= 5) chance += 4;
+    if (g_player.realm >= FOUNDATION) chance += 4;
+    if (g_player.realm >= SPIRIT_SEVERING) chance += 5;
+    if (!g_lifeArtifacts.empty()) chance += 3;
+    if (g_legacySystem.GetRelic().resonance >= 80) chance += 4;
+    if (g_plannedLegacies.empty()) chance += 6;
+    chance = max(10, min(34, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildIntentionalLegacyEvent() {
+    Event evt;
+    evt.title = L"【传承】立下道标";
+
+    wstring anchor;
+    if (!g_lifeStoryHooks.empty()) {
+        anchor = L"眼下主线仍牵着你：" + CompactMemoryFragment(g_lifeStoryHooks.back()) + L"。";
+    } else {
+        anchor = L"这一世尚未走到尽头，但已有几段经历值得留给后来的自己。";
+    }
+    if (!g_plannedLegacies.empty()) {
+        anchor += L"此前你已留下：" + BuildPlannedLegacyDigest(3) + L"。";
+    }
+
+    evt.description = L"外出归来时，黑白旧玉和通天灵宝残印同时发温，像在问你：若此世忽然断掉，你愿意给下一世留下些什么？" +
+        anchor + L"普通器物不能跨世，能留下的只有记忆、行功脉络、器痕和因果判断。";
+
+    int hpRisk = 18 + g_player.realm * 2;
+
+    evt.choices = {
+        {L"刻下功法", {
+            L"你把最适合今生肉身的行功节奏刻成道标，不求本体跨世，只求下一世梦中能认出这一口气。\n修为+70，因果+6",
+            L"旧法与今生经脉纠缠太深，道标未稳便反噬神魂。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+        }, 6},
+        {L"写因果札", {
+            L"你把本世主线、人情债和几处险局写成因果手札，留给下一世判断谁可信、何事不能急。\n修为+55，寿命+3，因果+8",
+            L"手札写得太满，前世执念反而盖过今生判断。\n气血-" + to_wstring(max(12, hpRisk - 6)) + L"，因果-4"
+        }, 7},
+        {L"封存器痕", {
+            L"你没有奢望法宝本体跨世，只把一缕器痕或道痕封入通天灵宝残印。\n修为+50，灵宝共鸣+6",
+            L"器痕不肯沉稳，震得识海里旧梦翻涌。\n气血-" + to_wstring(hpRisk + 6)
+        }, 4}
+    };
+    return evt;
+}
+
+void TrackIntentionalLegacyEvent(const Event& event, const Choice& choice,
+                                 const wstring& outcome, int outcomeIndex) {
+    if (event.title != L"【传承】立下道标" || outcomeIndex != 0) return;
+    if (g_plannedLegacies.size() >= 3) return;
+
+    int basePower = 36 + g_player.realm * 5 + g_player.totalEvents / 3;
+    if (g_player.realm >= TRUE_IMMORTAL) basePower += 20;
+    if (g_player.realm >= DAO_ANCESTOR) basePower += 40;
+
+    if (choice.description == L"刻下功法") {
+        AddPlannedLegacy(
+            LEGACY_TECHNIQUE,
+            BuildIntentionalTechniqueName(),
+            L"这一世主动封存下来的行功脉络，转世后会以梦中旧法、长辈惊疑或失传古法的方式重新浮现。",
+            basePower + 18
+        );
+    } else if (choice.description == L"写因果札") {
+        AddPlannedLegacy(
+            LEGACY_MEMORY,
+            L"今生因果手札",
+            L"这一世主动整理过的主线、人情债和旧世残响，下一世会更容易记起相关取舍。",
+            basePower + 12
+        );
+    } else if (choice.description == L"封存器痕") {
+        AddPlannedLegacy(
+            LEGACY_TREASURE,
+            L"亲封器痕道标",
+            L"这一世主动封入通天灵宝残印的器痕或道痕；法宝本体不跨世，只留下可被轮回辨认的余响。",
+            basePower + 10
+        );
+    }
+}
+
 void AppendFamilySecret(FamilyBackground& family, const wstring& secret) {
     if (secret.empty()) return;
     if (family.secret.find(secret) != wstring::npos) return;
@@ -5763,7 +5896,7 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveWorldEra(wofstream& file) {
-    file << L"WORLD_ERA_V8\n";
+    file << L"WORLD_ERA_V9\n";
     file << EscapeSaveField(g_worldEraName) << L"\n";
     file << EscapeSaveField(g_worldEraDescription) << L"\n";
     file << EscapeSaveField(g_worldEraRule) << L"\n";
@@ -5771,6 +5904,13 @@ void SaveWorldEra(wofstream& file) {
     file << EscapeSaveField(g_eraTransitionNote) << L"\n";
     file << EscapeSaveField(g_lifePremise) << L"\n";
     file << g_lifeStoryProgressThisLife << L" " << g_jadeDreamOmenEventsThisLife << L"\n";
+    file << g_plannedLegacies.size() << L"\n";
+    for (const auto& legacy : g_plannedLegacies) {
+        file << (int)legacy.type << L"\n";
+        file << EscapeSaveField(legacy.name) << L"\n";
+        file << EscapeSaveField(legacy.description) << L"\n";
+        file << legacy.power << L"\n";
+    }
     file << g_lifeStoryHooks.size() << L"\n";
     for (auto& hook : g_lifeStoryHooks) {
         file << EscapeSaveField(hook) << L"\n";
@@ -5808,14 +5948,15 @@ bool LoadWorldEra(wifstream& file) {
     bool isV6 = (marker == L"WORLD_ERA_V6");
     bool isV7 = (marker == L"WORLD_ERA_V7");
     bool isV8 = (marker == L"WORLD_ERA_V8");
-    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7 && !isV8) return false;
+    bool isV9 = (marker == L"WORLD_ERA_V9");
+    if (marker != L"WORLD_ERA_V1" && !isV2 && !isV3 && !isV4 && !isV5 && !isV6 && !isV7 && !isV8 && !isV9) return false;
 
     getline(file, g_worldEraName);
     getline(file, g_worldEraDescription);
     getline(file, g_worldEraRule);
     getline(file, g_reincarnationEcho);
     getline(file, g_eraTransitionNote);
-    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7 || isV8) {
+    if (isV2 || isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
         g_worldEraName = UnescapeSaveField(g_worldEraName);
         g_worldEraDescription = UnescapeSaveField(g_worldEraDescription);
         g_worldEraRule = UnescapeSaveField(g_worldEraRule);
@@ -5823,7 +5964,7 @@ bool LoadWorldEra(wifstream& file) {
         g_eraTransitionNote = UnescapeSaveField(g_eraTransitionNote);
         getline(file, g_lifePremise);
         g_lifePremise = UnescapeSaveField(g_lifePremise);
-        if (isV8) {
+        if (isV8 || isV9) {
             file >> g_lifeStoryProgressThisLife >> g_jadeDreamOmenEventsThisLife;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
             g_lifeStoryProgressThisLife = max(0, min(3, g_lifeStoryProgressThisLife));
@@ -5831,6 +5972,33 @@ bool LoadWorldEra(wifstream& file) {
         } else {
             g_lifeStoryProgressThisLife = 0;
             g_jadeDreamOmenEventsThisLife = 0;
+        }
+        g_plannedLegacies.clear();
+        if (isV9) {
+            size_t plannedCount = 0;
+            file >> plannedCount;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            for (size_t i = 0; i < plannedCount; ++i) {
+                int type = 0;
+                int power = 0;
+                wstring name;
+                wstring description;
+                file >> type;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n');
+                getline(file, name);
+                getline(file, description);
+                file >> power;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n');
+                type = max(0, min((int)LEGACY_REPUTATION, type));
+                if (g_plannedLegacies.size() < 3) {
+                    g_plannedLegacies.push_back(LegacyItem(
+                        static_cast<LegacyType>(type),
+                        UnescapeSaveField(name),
+                        UnescapeSaveField(description),
+                        max(0, min(180, power))
+                    ));
+                }
+            }
         }
         size_t hookCount = 0;
         file >> hookCount;
@@ -5842,7 +6010,7 @@ bool LoadWorldEra(wifstream& file) {
             g_lifeStoryHooks.push_back(UnescapeSaveField(hook));
         }
         g_eraRemnants.clear();
-        if (isV3 || isV4 || isV5 || isV6 || isV7 || isV8) {
+        if (isV3 || isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
             size_t remnantCount = 0;
             file >> remnantCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -5853,7 +6021,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_eraChronicle.clear();
-        if (isV4 || isV5 || isV6 || isV7 || isV8) {
+        if (isV4 || isV5 || isV6 || isV7 || isV8 || isV9) {
             size_t chronicleCount = 0;
             file >> chronicleCount;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
@@ -5864,7 +6032,7 @@ bool LoadWorldEra(wifstream& file) {
             }
         }
         g_factionTie = FactionTie();
-        if (isV5 || isV6 || isV7 || isV8) {
+        if (isV5 || isV6 || isV7 || isV8 || isV9) {
             getline(file, g_factionTie.name);
             getline(file, g_factionTie.kind);
             getline(file, g_factionTie.role);
@@ -5880,13 +6048,13 @@ bool LoadWorldEra(wifstream& file) {
             file >> g_factionTie.favor >> g_factionTie.binding;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
         }
-        if (isV6 || isV7 || isV8) {
+        if (isV6 || isV7 || isV8 || isV9) {
             getline(file, g_eraShiftCause);
             g_eraShiftCause = UnescapeSaveField(g_eraShiftCause);
         } else {
             g_eraShiftCause = L"旧存档没有记录纪元转折因由，只能从残留的时代变迁中推断。";
         }
-        if (isV7 || isV8) {
+        if (isV7 || isV8 || isV9) {
             getline(file, g_hongmengOmenTreasureName);
             getline(file, g_hongmengOmenDao);
             getline(file, g_hongmengOmenManifestation);
@@ -5906,6 +6074,7 @@ bool LoadWorldEra(wifstream& file) {
         g_factionTie = FactionTie();
         g_lifeStoryProgressThisLife = 0;
         g_jadeDreamOmenEventsThisLife = 0;
+        g_plannedLegacies.clear();
         g_eraShiftCause = L"旧存档没有记录纪元转折因由。";
         GenerateHongmengOmen();
     }
@@ -6388,6 +6557,10 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
             L"件兵刃或法宝本体终将失散；能随轮回回响的只有记忆、器痕和通天灵宝残印。" +
             (traceGain > 0 ? wstring(L"其中") + traceText + L"只留下器痕。" : L""));
     }
+    if (!g_plannedLegacies.empty()) {
+        AddMemory(L"主动传承入轮回",
+            BuildPlannedLegacyDigest(4) + L"随此世落幕沉入黑白旧玉与通天灵宝残印，等待下一世想起。");
+    }
 
     PastLife life;
     life.name = g_player.name;
@@ -6400,6 +6573,9 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
     life.npcsMet = g_player.npcsMet;
     life.memoryFragments = SelectReincarnationMemoryFragments(GetCompanionJadeMemoryLimit());
     life.unfinishedKarmas = BuildUnfinishedKarmas(causeOfDeath);
+    for (const auto& legacy : g_plannedLegacies) {
+        life.legacies.push_back(legacy);
+    }
 
     g_legacySystem.EndCurrentLife(life);
     auto& recorded = g_legacySystem.GetPastLives().back();
@@ -6414,6 +6590,7 @@ void StartNextLife() {
     g_lastAiStatus = L"本世尚未触发动态事件。";
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
+    g_plannedLegacies.clear();
 
     g_player = Player();
     g_player.name = oldName;
@@ -6563,6 +6740,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
+    TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
     ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
     if (isAIEvent) {
         AddMemory(L"本地模型抉择",
@@ -6726,16 +6904,19 @@ void OnPaint(HDC hdc, RECT& rect) {
 
             RectF titleBand(0, 108, (REAL)width, 100);
             DrawGlowText(graphics, L"问道长生", titleFamily, 78.0f, titleBand, centerFormat);
-            RectF subtitleBand(0, 232, (REAL)width, 38);
+            REAL subtitleY = 254.0f;
+            REAL ornamentTop = subtitleY + 48.0f;
+            REAL ornamentLineY = subtitleY + 68.0f;
+            RectF subtitleBand(0, subtitleY, (REAL)width, 38);
             Font menuSubDecor(&subtitleFamily, 24, FontStyleRegular, UnitPixel);
             graphics.DrawString(L"一念入道，百年问心", -1, &menuSubDecor,
                 subtitleBand, &centerFormat, &softWhiteBrush);
 
             Pen ornamentPen(Color(150, 216, 182, 92), 3);
-            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 - 430), 274.0f, 150.0f, 42.0f, 10.0f, 150.0f);
-            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 - 280), 294.0f, (REAL)(width / 2 - 186), 294.0f);
-            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 + 186), 294.0f, (REAL)(width / 2 + 280), 294.0f);
-            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 + 280), 274.0f, 150.0f, 42.0f, 20.0f, 150.0f);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 - 430), ornamentTop, 150.0f, 42.0f, 10.0f, 150.0f);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 - 280), ornamentLineY, (REAL)(width / 2 - 186), ornamentLineY);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 + 186), ornamentLineY, (REAL)(width / 2 + 280), ornamentLineY);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 + 280), ornamentTop, 150.0f, 42.0f, 20.0f, 150.0f);
 
             RectF menuPanel((REAL)panelLeft, (REAL)panelTop, (REAL)panelWidth, (REAL)panelHeight);
             GraphicsPath panelPath;
@@ -7075,6 +7256,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_generation = 1;
                 g_jadeDreamOmenEventsThisLife = 0;
                 g_lifeStoryProgressThisLife = 0;
+                g_plannedLegacies.clear();
                 ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -7254,6 +7436,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         AddMemory(L"本世主线推进",
                             L"外出历练时，本世主线进入第" +
                             to_wstring(g_lifeStoryProgressThisLife) + L"段。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerIntentionalLegacyEvent()) {
+                        static Event s_intentionalLegacyEvent;
+                        s_intentionalLegacyEvent = BuildIntentionalLegacyEvent();
+                        g_currentEvent = &s_intentionalLegacyEvent;
+                        AddMemory(L"主动传承牵动",
+                            L"黑白旧玉和通天灵宝残印提醒你：此世也该给下一世留下可辨认的道标。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
