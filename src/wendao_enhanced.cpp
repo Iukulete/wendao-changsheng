@@ -983,10 +983,15 @@ wstring g_infoText;
 GameState g_infoReturnState = STATE_GAME;
 RECT g_backButtonRect = {0, 0, 0, 0};
 RECT g_infoScrollTrackRect = {0, 0, 0, 0};
+RECT g_mainScrollTrackRect = {0, 0, 0, 0};
+RECT g_mainScrollAreaRect = {0, 0, 0, 0};
 bool g_backButtonVisible = false;
 bool g_infoScrollDragging = false;
+bool g_mainScrollDragging = false;
 int g_infoScroll = 0;
 int g_infoScrollMax = 0;
+int g_mainScroll = 0;
+int g_mainScrollMax = 0;
 
 #define ID_NAME_INPUT 1001
 #define ID_BTN_START 1002
@@ -6167,6 +6172,7 @@ bool LoadGame() {
     g_contextMgr.SetContext(BuildPlayerContext());
     g_lastAiBackend = L"已读档";
     g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
+    g_mainScroll = 0;
     RefreshAiStatus();
 
     g_player.CheckRootBalance();
@@ -6591,6 +6597,7 @@ void StartNextLife() {
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
     g_plannedLegacies.clear();
+    g_mainScroll = 0;
 
     g_player = Player();
     g_player.name = oldName;
@@ -7025,21 +7032,70 @@ void OnPaint(HDC hdc, RECT& rect) {
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
                 RectF(centerPanel.X + 22, centerPanel.Y + 20, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
-            graphics.DrawString(BuildMainWorldDigest().c_str(), -1, &textFont,
-                RectF(centerPanel.X + 22, centerPanel.Y + 58, centerPanel.Width - 44, 175), &leftFormat, &whiteBrush);
+            RectF mainClip(centerPanel.X + 22, centerPanel.Y + 58,
+                centerPanel.Width - 76, centerPanel.Height - 88);
+            g_mainScrollAreaRect = {
+                (LONG)mainClip.X,
+                (LONG)mainClip.Y,
+                (LONG)(mainClip.X + mainClip.Width),
+                (LONG)(mainClip.Y + mainClip.Height)
+            };
+
+            wstring worldDigest = BuildMainWorldDigest();
+            wstring memoryDigest = BuildRecentMemoryDigest();
+            wstring socialDigest = GetSocialDigest();
+            auto measureTextHeight = [&](const wstring& text, Font& font, REAL width) -> REAL {
+                RectF measureRect(0, 0, width, 100000.0f);
+                RectF measuredBounds;
+                graphics.MeasureString(text.c_str(), -1, &font, measureRect, &leftFormat, &measuredBounds);
+                return max(24.0f, measuredBounds.Height + 8.0f);
+            };
+
+            REAL contentWidth = mainClip.Width - 6.0f;
+            REAL worldHeight = measureTextHeight(worldDigest, textFont, contentWidth);
+            REAL memoryHeight = measureTextHeight(memoryDigest, smallFont, contentWidth);
+            REAL socialHeight = measureTextHeight(socialDigest, smallFont, contentWidth);
+            REAL contentHeight = worldHeight + 26.0f + 1.0f + 22.0f + 30.0f + 10.0f +
+                memoryHeight + 28.0f + 30.0f + 10.0f + socialHeight + 18.0f;
+            g_mainScrollMax = max(0, (int)(contentHeight - mainClip.Height + 0.5f));
+            g_mainScroll = max(0, min(g_mainScroll, g_mainScrollMax));
 
             Pen linePen(Color(90, 228, 190, 76), 1);
-            graphics.DrawLine(&linePen, centerPanel.X + 22, centerPanel.Y + 255,
-                centerPanel.GetRight() - 22, centerPanel.Y + 255);
+            graphics.SetClip(mainClip);
+            REAL contentY = mainClip.Y - (REAL)g_mainScroll;
+            graphics.DrawString(worldDigest.c_str(), -1, &textFont,
+                RectF(mainClip.X, contentY, contentWidth, worldHeight), &leftFormat, &whiteBrush);
+            contentY += worldHeight + 24.0f;
+            graphics.DrawLine(&linePen, mainClip.X, contentY, mainClip.X + contentWidth, contentY);
+            contentY += 22.0f;
             graphics.DrawString(L"近年道途", -1, &sectionFont,
-                RectF(centerPanel.X + 22, centerPanel.Y + 276, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
-            graphics.DrawString(BuildRecentMemoryDigest().c_str(), -1, &smallFont,
-                RectF(centerPanel.X + 22, centerPanel.Y + 314, centerPanel.Width - 44, 112), &leftFormat, &softWhiteBrush);
-
+                RectF(mainClip.X, contentY, contentWidth, 30.0f), &leftFormat, &goldBrush);
+            contentY += 40.0f;
+            graphics.DrawString(memoryDigest.c_str(), -1, &smallFont,
+                RectF(mainClip.X, contentY, contentWidth, memoryHeight), &leftFormat, &softWhiteBrush);
+            contentY += memoryHeight + 28.0f;
             graphics.DrawString(L"人情风波", -1, &sectionFont,
-                RectF(centerPanel.X + 22, centerPanel.Y + 455, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
-            graphics.DrawString(GetSocialDigest().c_str(), -1, &smallFont,
-                RectF(centerPanel.X + 22, centerPanel.Y + 493, centerPanel.Width - 44, 120), &leftFormat, &softWhiteBrush);
+                RectF(mainClip.X, contentY, contentWidth, 30.0f), &leftFormat, &goldBrush);
+            contentY += 40.0f;
+            graphics.DrawString(socialDigest.c_str(), -1, &smallFont,
+                RectF(mainClip.X, contentY, contentWidth, socialHeight), &leftFormat, &softWhiteBrush);
+            graphics.ResetClip();
+
+            RectF mainScrollTrack(centerPanel.GetRight() - 30, mainClip.Y, 8, mainClip.Height);
+            g_mainScrollTrackRect = {
+                (LONG)mainScrollTrack.X,
+                (LONG)mainScrollTrack.Y,
+                (LONG)(mainScrollTrack.X + mainScrollTrack.Width),
+                (LONG)(mainScrollTrack.Y + mainScrollTrack.Height)
+            };
+            if (g_mainScrollMax > 0) {
+                SolidBrush trackBrush(Color(125, 48, 48, 52));
+                SolidBrush thumbBrush(Color(215, 228, 190, 76));
+                graphics.FillRectangle(&trackBrush, mainScrollTrack);
+                REAL thumbHeight = max(42.0f, mainClip.Height * mainClip.Height / max(mainClip.Height + 1.0f, contentHeight));
+                REAL thumbY = mainScrollTrack.Y + (mainClip.Height - thumbHeight) * ((REAL)g_mainScroll / (REAL)g_mainScrollMax);
+                graphics.FillRectangle(&thumbBrush, RectF(mainScrollTrack.X, thumbY, mainScrollTrack.Width, thumbHeight));
+            }
 
             graphics.DrawString(L"行动", -1, &sectionFont,
                 RectF(rightPanel.X + 20, rightPanel.Y + 20, rightPanel.Width - 40, 28), &leftFormat, &goldBrush);
@@ -7257,6 +7313,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_jadeDreamOmenEventsThisLife = 0;
                 g_lifeStoryProgressThisLife = 0;
                 g_plannedLegacies.clear();
+                g_mainScroll = 0;
                 ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -7302,9 +7359,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
 
         case WM_LBUTTONDOWN: {
+            int x = GET_X_LPARAM(lParam);
+            int y = GET_Y_LPARAM(lParam);
             if (g_gameState == STATE_INFO && g_backButtonVisible) {
-                int x = GET_X_LPARAM(lParam);
-                int y = GET_Y_LPARAM(lParam);
                 if (x >= g_backButtonRect.left && x <= g_backButtonRect.right &&
                     y >= g_backButtonRect.top && y <= g_backButtonRect.bottom) {
                     ReturnFromInfoPage();
@@ -7320,6 +7377,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
             }
+            else if (g_gameState == STATE_GAME &&
+                x >= g_mainScrollTrackRect.left && x <= g_mainScrollTrackRect.right &&
+                y >= g_mainScrollTrackRect.top && y <= g_mainScrollTrackRect.bottom &&
+                g_mainScrollMax > 0) {
+                int trackHeight = max(1, (int)(g_mainScrollTrackRect.bottom - g_mainScrollTrackRect.top));
+                int relativeY = max(0, min(trackHeight, (int)(y - g_mainScrollTrackRect.top)));
+                g_mainScroll = g_mainScrollMax * relativeY / trackHeight;
+                g_mainScrollDragging = true;
+                SetCapture(hWnd);
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
             break;
         }
 
@@ -7331,12 +7399,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_infoScroll = g_infoScrollMax * relativeY / trackHeight;
                 InvalidateRect(hWnd, NULL, FALSE);
             }
+            else if (g_gameState == STATE_GAME && g_mainScrollDragging && g_mainScrollMax > 0) {
+                int y = GET_Y_LPARAM(lParam);
+                int trackHeight = max(1, (int)(g_mainScrollTrackRect.bottom - g_mainScrollTrackRect.top));
+                int relativeY = max(0, min(trackHeight, (int)(y - g_mainScrollTrackRect.top)));
+                g_mainScroll = g_mainScrollMax * relativeY / trackHeight;
+                InvalidateRect(hWnd, NULL, FALSE);
+            }
             break;
         }
 
         case WM_LBUTTONUP: {
-            if (g_infoScrollDragging) {
+            if (g_infoScrollDragging || g_mainScrollDragging) {
                 g_infoScrollDragging = false;
+                g_mainScrollDragging = false;
                 ReleaseCapture();
             }
             break;
@@ -7348,6 +7424,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_infoScroll += (delta < 0) ? 64 : -64;
                 g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
                 InvalidateRect(hWnd, NULL, FALSE);
+            }
+            else if (g_gameState == STATE_GAME && g_mainScrollMax > 0) {
+                POINT wheelPoint = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+                ScreenToClient(hWnd, &wheelPoint);
+                bool overMainPanel =
+                    wheelPoint.x >= g_mainScrollAreaRect.left && wheelPoint.x <= g_mainScrollAreaRect.right &&
+                    wheelPoint.y >= g_mainScrollAreaRect.top && wheelPoint.y <= g_mainScrollAreaRect.bottom;
+                bool overMainTrack =
+                    wheelPoint.x >= g_mainScrollTrackRect.left && wheelPoint.x <= g_mainScrollTrackRect.right &&
+                    wheelPoint.y >= g_mainScrollTrackRect.top && wheelPoint.y <= g_mainScrollTrackRect.bottom;
+                if (overMainPanel || overMainTrack) {
+                    int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+                    g_mainScroll += (delta < 0) ? 64 : -64;
+                    g_mainScroll = max(0, min(g_mainScroll, g_mainScrollMax));
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
             }
             break;
         }
