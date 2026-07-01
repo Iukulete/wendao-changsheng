@@ -1459,7 +1459,7 @@ bool IsKeyReincarnationMemory(const wstring& memory) {
         L"一世落幕", L"死亡", L"坐化", L"证道", L"万道归一",
         L"通天灵宝", L"鸿蒙", L"传承", L"前世", L"轮回",
         L"境界突破", L"本地模型", L"人情风波", L"本世人脉", L"此世出身", L"本世主线",
-        L"伴生玉佩", L"玉佩", L"太一轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
+        L"伴生玉佩", L"玉佩", L"玄牝轮回玉", L"本世器物", L"当世器物", L"旧世残响", L"纪元转折", L"纪元年表", L"未竟"
     };
     for (const auto& key : keys) {
         if (memory.find(key) != wstring::npos) return true;
@@ -2144,7 +2144,7 @@ wstring BuildCompanionJadeVisibleText() {
 
 wstring BuildCompanionJadeHiddenContext() {
     wstringstream ss;
-    ss << L"隐藏设定: 主角第一世自带伴生玉佩，其真身是九大鸿蒙至宝排名第三的太一轮回玉。";
+    ss << L"隐藏设定: 主角第一世自带伴生玉佩，其真身是九大鸿蒙至宝排名第三的玄牝轮回玉。";
     ss << L"它是主角能带着部分记忆转世的根因，但主角本人不知道，旁人通常也无法确认。";
     ss << L"叙事中只能写成黑白旧玉、伴生玉佩、梦中玉意、阴阳玉痕或轮回回响，不要让普通事件直接揭示“这是鸿蒙至宝本体”。";
     return ss.str();
@@ -2185,7 +2185,7 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
             L"你学会在死局里留一线生机，而不是强行改写生死。"
         },
         {
-            L"太一轮回玉", L"轮回阴阳",
+            L"玄牝轮回玉", L"轮回阴阳",
             L"可护住一缕真灵穿过生死阴阳，让记忆、因果和未竟道痕在转世后仍有回声。",
             L"黑白玉光在魂魄深处一闪，像有半枚阴玉、半枚阳玉隔着轮回轻轻合拢。",
             L"妄图借它逃避今生，会被阴阳两面同时照见，前世执念反而压住本我。",
@@ -2300,7 +2300,7 @@ void GenerateHongmengOmen() {
         addCandidate(6, 1); // 开界神斧
     } else if (g_worldEraName == L"仙朝鼎盛纪") {
         addCandidate(0, 1);
-        addCandidate(2, 1); // 太一轮回玉
+        addCandidate(2, 1); // 玄牝轮回玉
         addCandidate(5, 2); // 无量天书
     } else if (g_worldEraName == L"末法裂变纪") {
         addCandidate(1, 1);

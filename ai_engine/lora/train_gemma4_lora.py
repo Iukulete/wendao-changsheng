@@ -92,8 +92,8 @@ def collate(batch, pad_token_id):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-id", default="google/gemma-4-E4B-it-qat-q4_0-unquantized")
-    parser.add_argument("--train-file", required=True)
-    parser.add_argument("--eval-file", required=True)
+    parser.add_argument("--train-file", default="")
+    parser.add_argument("--eval-file", default="")
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--max-length", type=int, default=1152)
     parser.add_argument("--epochs", type=int, default=1)
@@ -106,16 +106,78 @@ def parse_args():
     parser.add_argument(
         "--target-modules",
         default=(
-            "q_proj.linear,k_proj.linear,v_proj.linear,o_proj.linear,"
-            "gate_proj.linear,up_proj.linear,down_proj.linear"
+            "q_proj,k_proj,v_proj,o_proj,"
+            "gate_proj,up_proj,down_proj"
         ),
+    )
+    parser.add_argument(
+        "--exclude-modules",
+        default="regex:.*(audio_tower|vision_tower).*",
+        help="Comma-separated module suffixes or regex:... string to skip when injecting LoRA.",
+    )
+    parser.add_argument(
+        "--forbid-trainable-substrings",
+        default="audio_tower,vision_tower",
+        help="Comma-separated substrings that must not appear in trainable parameter names.",
+    )
+    parser.add_argument(
+        "--require-trainable-substrings",
+        default="language_model",
+        help="Comma-separated substrings; at least one trainable parameter must contain each value.",
     )
     parser.add_argument("--load-in-4bit", action="store_true")
     parser.add_argument("--skip-kbit-prepare", action="store_true")
     parser.add_argument("--log-every", type=int, default=10)
     parser.add_argument("--save-every", type=int, default=0)
     parser.add_argument("--eval-generations", type=int, default=4)
+    parser.add_argument("--target-check-only", action="store_true")
     return parser.parse_args()
+
+
+def parse_module_spec(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    if value.startswith("regex:"):
+        return value[len("regex:") :]
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def assert_trainable_targets(model, forbidden_substrings, required_substrings):
+    trainable_names = [name for name, param in model.named_parameters() if param.requires_grad]
+    forbidden = [item.strip() for item in (forbidden_substrings or "").split(",") if item.strip()]
+    bad = [
+        name
+        for name in trainable_names
+        if any(fragment in name for fragment in forbidden)
+    ]
+    if bad:
+        preview = "\n".join(bad[:16])
+        raise RuntimeError(
+            "LoRA target selection reached forbidden trainable modules:\n"
+            f"{preview}\n"
+            "Narrow --target-modules or update --exclude-modules before training."
+        )
+
+    required = [item.strip() for item in (required_substrings or "").split(",") if item.strip()]
+    missing = [
+        fragment
+        for fragment in required
+        if not any(fragment in name for name in trainable_names)
+    ]
+    if missing:
+        preview = "\n".join(trainable_names[:16])
+        raise RuntimeError(
+            "LoRA target selection missed required trainable module substrings: "
+            f"{', '.join(missing)}\n"
+            f"Trainable preview:\n{preview}"
+        )
+
+    language_count = sum("language_model" in name for name in trainable_names)
+    print(
+        f"trainable parameter tensors={len(trainable_names)} language_model_tensors={language_count}",
+        flush=True,
+    )
 
 
 def main():
@@ -167,10 +229,21 @@ def main():
         lora_dropout=args.lora_dropout,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=[item.strip() for item in args.target_modules.split(",") if item.strip()],
+        target_modules=parse_module_spec(args.target_modules),
+        exclude_modules=parse_module_spec(args.exclude_modules),
     )
     model = get_peft_model(model, lora_config)
+    assert_trainable_targets(
+        model,
+        args.forbid_trainable_substrings,
+        args.require_trainable_substrings,
+    )
     model.print_trainable_parameters()
+    if args.target_check_only:
+        print("target check complete; exiting before dataset load/training", flush=True)
+        return
+    if not args.train_file or not args.eval_file:
+        raise ValueError("--train-file and --eval-file are required unless --target-check-only is set.")
 
     print("loading datasets", flush=True)
     train_ds = WendaoDataset(args.train_file, tokenizer, args.max_length)

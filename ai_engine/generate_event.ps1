@@ -4,7 +4,7 @@
     [string]$ModelPath = "",
     [string]$LoraPath = "",
     [string]$LlamaCli = (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-completion.exe"),
-    [int]$PortableTimeoutSec = 25,
+    [int]$PortableTimeoutSec = 75,
     [int]$OllamaTimeoutSec = 20,
     [ValidateSet("auto", "portable", "ollama")]
     [string]$Backend = "auto"
@@ -83,7 +83,7 @@ if (-not (Test-Path -LiteralPath $promptPath)) {
 }
 
 $basePrompt = [System.IO.File]::ReadAllText($promptPath, [System.Text.Encoding]::UTF8)
-$basePrompt = $basePrompt + "`n严格只输出5行：标题、描述、选项一、选项二、选项三。不要解释。"
+$basePrompt = $basePrompt + "`n严格只输出5行：标题、描述、选项一、选项二、选项三。不要解释。标题和描述合计至少写入两个上下文专有词。"
 
 function Format-RuntimePrompt {
     param([string]$PromptText)
@@ -112,11 +112,11 @@ function Invoke-PortableLlama {
     $args = @(
         "-m", $ModelPath,
         "-f", $runtimePromptPath,
-        "-n", "120",
+        "-n", "96",
         "-c", "4096",
-        "--temp", "0.85",
-        "--top-p", "0.9",
-        "--repeat-penalty", "1.12",
+        "--temp", "0.65",
+        "--top-p", "0.85",
+        "--repeat-penalty", "1.08",
         "--reasoning", "off",
         "-no-cnv",
         "--single-turn",
@@ -134,40 +134,67 @@ function Invoke-PortableLlama {
         $args += @("--lora", $LoraPath)
     }
 
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName = $LlamaCli
-    $psi.WorkingDirectory = Split-Path -Parent $LlamaCli
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
-    $psi.CreateNoWindow = $true
-    $psi.Arguments = (($args | ForEach-Object {
-        if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
-    }) -join ' ')
+    $stderrTemp = [System.IO.Path]::GetFullPath((Join-Path $ReleaseDir ("ai_llama_stderr_" + [guid]::NewGuid().ToString("N") + ".tmp")))
+    $workingDir = Split-Path -Parent $LlamaCli
+    $job = Start-Job -ScriptBlock {
+        param(
+            [string]$ExePath,
+            [string[]]$ExeArgs,
+            [string]$ExeWorkingDir,
+            [string]$NativeStdErrPath
+        )
 
-    $process = New-Object System.Diagnostics.Process
-    $process.StartInfo = $psi
-    [void]$process.Start()
+        $ErrorActionPreference = "Continue"
+        $OutputEncoding = [System.Text.Encoding]::UTF8
+        [Console]::InputEncoding = [System.Text.Encoding]::UTF8
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        Set-Location -LiteralPath $ExeWorkingDir
 
-    if (-not $process.WaitForExit($PortableTimeoutSec * 1000)) {
-        try { $process.Kill() } catch {}
-        $stderr = $process.StandardError.ReadToEnd()
+        $nativeOut = & $ExePath @ExeArgs 2> $NativeStdErrPath
+        $nativeExitCode = $LASTEXITCODE
+        $stdoutText = [string]::Join([Environment]::NewLine, @($nativeOut | ForEach-Object { [string]$_ }))
+        [pscustomobject]@{
+            ExitCode = $nativeExitCode
+            StdOut = $stdoutText
+        }
+    } -ArgumentList $LlamaCli, $args, $workingDir, $stderrTemp
+
+    try {
+        $completedJob = Wait-Job -Job $job -Timeout $PortableTimeoutSec
+        if ($null -eq $completedJob) {
+            Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
+            $stderr = ""
+            if (Test-Path -LiteralPath $stderrTemp) {
+                $stderr = [System.IO.File]::ReadAllText($stderrTemp, [System.Text.Encoding]::UTF8)
+            }
+            if ($stderr) {
+                [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
+            }
+            throw "llama.cpp timed out after ${PortableTimeoutSec}s"
+        }
+
+        $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
+        $stderr = ""
+        if (Test-Path -LiteralPath $stderrTemp) {
+            $stderr = [System.IO.File]::ReadAllText($stderrTemp, [System.Text.Encoding]::UTF8)
+        }
         if ($stderr) {
             [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
         }
-        throw "llama.cpp timed out after ${PortableTimeoutSec}s"
-    }
+        if ($null -eq $result) {
+            throw "llama.cpp produced no process result"
+        }
+        if ($result.ExitCode -ne 0) {
+            throw "llama.cpp exited with code $($result.ExitCode)"
+        }
 
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
-    if ($stderr) {
-        [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
+        return [string]$result.StdOut
+    } finally {
+        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path -LiteralPath $stderrTemp) {
+            Remove-Item -LiteralPath $stderrTemp -Force -ErrorAction SilentlyContinue
+        }
     }
-    if ($process.ExitCode -ne 0) {
-        throw "llama.cpp exited with code $($process.ExitCode)"
-    }
-
-    return $stdout
 }
 
 function Invoke-Ollama {
@@ -177,9 +204,9 @@ function Invoke-Ollama {
         stream = $false
         think = $false
         options = @{
-            temperature = 0.85
-            top_p = 0.9
-            repeat_penalty = 1.12
+            temperature = 0.65
+            top_p = 0.85
+            repeat_penalty = 1.08
             num_predict = 180
         }
     } | ConvertTo-Json -Depth 6
@@ -266,12 +293,14 @@ function Normalize-EventLine {
     $clean = [regex]::Replace($clean, '^(标题|事件标题|描述|事件描述|选项[一二三四五六七八九十0-9]*|选项一|选项二|选项三|选择[一二三四五六七八九十0-9]*)[:：]\s*', '')
     $clean = [regex]::Replace($clean, '^\s*[-*0-9一二三四五]+[\.、:：\)]\s*', '')
     $clean = [regex]::Replace($clean, '\s+', ' ')
+    $clean = $clean.Replace(";", "；").Replace(",", "，")
     return $clean.Trim()
 }
 
 function Test-MojibakeText {
     param([string]$Value)
-    return $Value -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€"
+    $scan = [regex]::Replace($Value, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff]|://|[A-Za-z]{3,}"
 }
 
 function Test-TitleLike {
@@ -322,6 +351,19 @@ function Test-ContainsAny {
         if ($Value.Contains($word)) { return $true }
     }
     return $false
+}
+
+function Get-KeywordHitCount {
+    param(
+        [string]$Value,
+        [string[]]$Words
+    )
+
+    $hits = 0
+    foreach ($word in $Words) {
+        if ($Value.Contains($word)) { $hits++ }
+    }
+    return $hits
 }
 
 function New-ContextFallbackEvent {
@@ -424,6 +466,7 @@ function Convert-ToChoice {
         }
     }
     $choice = $choice.Trim()
+    if ($choice -eq "走后门") { $choice = "暗通执事" }
     if ($choice.Length -lt 2 -or $choice.Length -gt 8) { return $null }
     if (Test-TitleLike $choice) { return $null }
     if (Test-ContextLabelLine $choice) { return $null }
@@ -456,7 +499,7 @@ $title = $null
 foreach ($line in $candidateLines) {
     if (Test-TitleLike $line) {
         $candidateTitle = Normalize-Title $line
-        if ($candidateTitle.Length -le 34 -and -not (Test-ContextLabelLine $candidateTitle) -and (Test-ContainsAny $candidateTitle $keywords)) {
+        if ($candidateTitle.Length -le 34 -and -not (Test-ContextLabelLine $candidateTitle) -and -not (Test-MojibakeText $candidateTitle)) {
             $title = $candidateTitle
             break
         }
@@ -481,6 +524,10 @@ if ([string]::IsNullOrWhiteSpace($description)) {
     $repairNotes.Add("描述")
 } elseif ($description.Length -gt 120) {
     $description = $description.Substring(0, 120)
+}
+if ((Get-KeywordHitCount ($title + "`n" + $description) $keywords) -lt 2) {
+    $description = $fallback.Description
+    $repairNotes.Add("描述贴合上下文")
 }
 
 $choices = @()

@@ -10,6 +10,10 @@ ai_engine/models/
 ai_engine/runtime/
 ai_engine/model_path.txt
 ai_engine/lora_path.txt
+ai_engine/lora/*.gguf
+ai_engine/lora/*.safetensors
+ai_engine/lora/*_adapter/
+ai_engine/lora/*_llamacpp/
 
 # Runtime-generated AI files
 ai_prompt.txt

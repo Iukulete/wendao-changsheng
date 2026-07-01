@@ -68,7 +68,30 @@ NPC_LINES = [
         "递帖人拱手道「我敬的是你今生这一眼，也盼你配得上旧名留下的光。」",
         28,
     ),
+    (
+        "活跃修士",
+        "礼貌试探",
+        "活跃修士含笑递帖道「我只显这点修为，是怕旁人误会；至于真底细，要看你值不值得问。」",
+        8,
+    ),
 ]
+
+
+def pick_npc_for_kind(rng, kind):
+    roles_by_kind = {
+        "talent_praise": {"父亲", "旧名仰慕者"},
+        "envy": {"竞争者"},
+        "bully": {"欺压者", "资源把关者"},
+        "lost_tech": {"功法见证者"},
+        "jade_family": {"父亲", "旧名仰慕者"},
+        "artifact": {"器痕识别者"},
+        "lifespan": {"资源把关者"},
+        "old_debt": {"旧名追债人"},
+        "hidden_realm": {"活跃修士"},
+    }
+    roles = roles_by_kind.get(kind)
+    pool = [npc for npc in NPC_LINES if not roles or npc[0] in roles]
+    return rng.choice(pool or NPC_LINES)
 
 
 def prompt_for(case):
@@ -104,87 +127,167 @@ def prompt_for(case):
 - {case["memory"]}"""
 
 
+def stable_pick(items, key):
+    return items[sum(ord(ch) for ch in key) % len(items)]
+
+
+def polish_description(case, description):
+    kind = case["kind"]
+    key = f"{kind}|{case['npc_name']}|{case['karma']}|{case['memory']}"
+    tails = {
+        "talent_praise": [
+            "；那份担心也把旁人的嫉妒挡在门外。",
+            "；这句夸赞不重，却让暗处酸意更难开口。",
+        ],
+        "envy": [
+            "；酸涩与不甘在旁人笑声里越发明显。",
+            "；那点嫉妒没有明说，却已经开始找你的破绽。",
+        ],
+        "bully": [
+            "；轻慢欺压逼得旁人也开始衡量你的底气。",
+            "；他的冷眼像一把尺，专量你敢不敢反抗。",
+        ],
+        "lost_tech": [
+            "；惊疑认可压在他眼底，像怕旧法再惹风波。",
+            "；懂行者的担心很轻，却足以让整座经阁安静下来。",
+        ],
+        "jade_family": [
+            "；那点担心让父母旧名更像被人刻意藏起。",
+            "；回避和护短同时浮现，像有人仍替你守着门。",
+        ],
+        "artifact": [
+            "；惊疑和贪念同时浮起，懂器者已经开始留心。",
+            "；这份认可带着戒备，像怕器痕引来外人争夺。",
+        ],
+        "lifespan": [
+            "；冷眼背后也藏着试探，像要逼你先低头。",
+            "；寿限的忧虑压在话尾，连沉默都像催命声。",
+        ],
+        "old_debt": [
+            "；试探与戒备一并压来，旧怨还没有真正开口。",
+            "；敬畏和旧恨搅在一起，让这场寒暄像审问。",
+        ],
+        "hidden_realm": [
+            "；礼貌试探浮在笑里，真正灵压仍被他压住。",
+            "；这份从容带着戒备，像故意只给你看半层门槛。",
+        ],
+    }
+    if len(description) >= 50:
+        return description
+    tail = stable_pick(tails.get(kind, ["；试探和押注都未明说，却已在人群里散开。"]), key)
+    base = description.rstrip("。")
+    polished = base + tail
+    return polished if len(polished) <= 90 else description
+
+
 def response_for(case):
     kind = case["kind"]
     npc_role, emotion, utterance, relation = case["npc"]
     npc_name = case["npc_name"]
     era, _ = case["era"]
+    key = f"{kind}|{npc_name}|{emotion}|{case['realm']}|{case['karma']}"
 
-    if kind == "talent_praise":
-        return "\n".join([
-            "【因果】长辈护短",
-            f"{npc_name}听见族中酸话后没有发怒，只把你叫到廊下，当面夸你根骨好，却提醒你别被人捧着走。",
-            "低头受教",
-            "追问旧因",
-            "暂避锋芒",
-        ])
-    if kind == "envy":
-        return "\n".join([
-            "【危机】同门酸语",
-            f"{npc_name}表面祝贺你入门，话里却句句带刺，旁人也等着看你这份资质会不会先惹来祸事。",
-            "当众回应",
-            "暗查底细",
-            "不与计较",
-        ])
-    if kind == "bully":
-        return "\n".join([
-            "【危机】试炼名额",
-            f"{npc_name}故意扣下你的试炼名额，笑你根基太薄；可黑白旧玉微微发温，像在替你压住怒意。",
-            "据理争名",
-            "暂忍记账",
-            "请长辈证",
-        ])
-    if kind == "lost_tech":
-        return "\n".join([
-            "【传承】失传古法",
-            f"{npc_name}认出你起手式里的旧法骨相，立刻压低声音；在{era}，这门古法会牵动许多双眼。",
-            "压下旧法",
-            "请教长老",
-            "借势入局",
-        ])
-    if kind == "jade_family":
-        return "\n".join([
-            "【因果】玉痕旧名",
-            f"{npc_name}核验名册时，你胸前黑白玉佩忽然发温，养育者避开目光，像仍在替父母守着旧名。",
-            "追问旧名",
-            "握玉静听",
-            "暂避册封",
-        ])
-    if kind == "artifact":
-        return "\n".join([
-            "【传承】器痕余响",
-            f"{npc_name}听见你神魂边缘的器痕，提醒你前世法宝本体不能跨世，只剩认主余响可入今生。",
-            "询问器痕",
-            "封存余响",
-            "转身离阁",
-        ])
-    if kind == "lifespan":
-        return "\n".join([
-            "【危机】灵井寿限",
-            f"{npc_name}扣住破境配给，冷声要你拿筹码；你虽已近仙帝之路，仍听见寿元在石门外逼近。",
-            "争取配给",
-            "闭关压寿",
-            "问道祖路",
-        ])
-    if kind == "old_debt":
-        return "\n".join([
-            "【因果】旧债认人",
-            f"{npc_name}把旧册摊在灯下，话里全是试探；他不敢确认你前世是谁，却已经把你当成债主影子。",
-            "稳住今生",
-            "反查旧册",
-            "断开牵连",
-        ])
-    return "\n".join([
-        "【奇遇】道途回声",
-        f"{npc_name}没有立刻表态，只用{emotion}的眼神看你，像要确认你到底是今生少年还是旧梦归来。",
-        "顺势结交",
-        "试探虚实",
-        "保持距离",
-    ])
+    templates = {
+        "talent_praise": (
+            ["【因果】长辈护短", "【机缘】廊下赞骨", "【奇遇】护短一语"],
+            [
+                f"{npc_name}先压下族中酸话，又当面夸你根骨清亮；{emotion}藏在话尾，提醒你莫被热眼捧坏道心。",
+                f"{npc_name}听完测灵结果后故作平静，却把旁人挡在廊外；他夸你天资难得，也担心你太早被人押注。",
+                f"{npc_name}没有急着报喜，只低声替你挡住试探；那句认可像一盏灯，也照出暗处几道嫉妒目光。",
+            ],
+            ["低头受教", "追问旧因", "暂避锋芒"],
+        ),
+        "envy": (
+            ["【危机】同门酸语", "【因果】暗刺入耳", "【危机】贺声带刺"],
+            [
+                f"{npc_name}表面向你道贺，袖中名册却被攥出折痕；{emotion}让他句句带刺，想看你先惹来谁的忌惮。",
+                f"{npc_name}笑着称你前途无量，眼底却压着不甘；他不敢明抢机缘，只把怀疑与酸意塞进每一句话。",
+                f"{npc_name}在人前夸你资质出众，人后却散出轻慢传言；那点嫉妒像细针，专挑你家世隐处下手。",
+            ],
+            ["当众回应", "暗查底细", "不与计较"],
+        ),
+        "bully": (
+            ["【危机】试炼名额", "【危机】外门欺压", "【因果】名额被扣"],
+            [
+                f"{npc_name}故意扣下你的试炼名额，笑你根基太薄；轻慢声里，黑白旧玉微微发温，替你压住怒意。",
+                f"{npc_name}把名册往袖里一收，逼你当众认低；旁人等着看笑话，只有旧玉在胸口一阵发烫。",
+                f"{npc_name}借规矩卡住资源，话里全是欺压；你若退一步，今后的试炼名额都会被人拿来试胆。",
+            ],
+            ["据理争名", "暂忍记账", "请长辈证"],
+        ),
+        "lost_tech": (
+            ["【传承】失传古法", "【机缘】古法露骨", "【因果】旧式惊人"],
+            [
+                f"{npc_name}认出你起手式里的旧法骨相，立刻压低声音；在{era}，这点传承足够牵动许多双眼。",
+                f"{npc_name}盯着你的行功脉络，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。",
+                f"{npc_name}只看一眼便合上经卷，像怕旁人听见；失传古法不是招牌，是能把你推上风口的火种。",
+            ],
+            ["压下旧法", "请教长老", "借势入局"],
+        ),
+        "jade_family": (
+            ["【因果】玉痕旧名", "【奇遇】旧玉微温", "【传承】黑白玉痕"],
+            [
+                f"{npc_name}核验名册时，你胸前黑白旧玉忽然发温；养育者避开目光，像仍在替父母守着旧名。",
+                f"{npc_name}提到你家世时忽然收声，黑白玉佩随之发热；那点回避不像无情，更像有人替你藏命。",
+                f"{npc_name}看见玉痕后神色一变，连称呼都放轻了些；你仍不知此物真名，只觉父母旧影近在眼前。",
+            ],
+            ["追问旧名", "握玉静听", "暂避册封"],
+        ),
+        "artifact": (
+            ["【传承】器痕余响", "【机缘】本命余音", "【因果】旧宝不渡"],
+            [
+                f"{npc_name}听见你神魂边缘的器痕，语气忽然郑重；前世法宝本体不能跨世，只剩认主余响可入今生。",
+                f"{npc_name}按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。",
+                f"{npc_name}从残响里听出旧宝气息，惊疑又克制；普通灵宝会朽，只有被你记住的器意还肯回头。",
+            ],
+            ["询问器痕", "封存余响", "转身离阁"],
+        ),
+        "lifespan": (
+            ["【危机】灵井寿限", "【因果】寿元逼近", "【危机】配给冷眼"],
+            [
+                f"{npc_name}扣住破境配给，冷声要你拿筹码；你虽望见仙帝旧路，仍听见寿元在石门外一步步逼近。",
+                f"{npc_name}把灵井名额划给旁人，眼神冷得像账册；若不争这一口资源，今生又会被寿限逼到墙角。",
+                f"{npc_name}提醒你仙帝也有尽头，话不重却刺骨；若不能问到道祖之路，再多前世记忆也会被岁月磨平。",
+            ],
+            ["争取配给", "闭关压寿", "问道祖路"],
+        ),
+        "old_debt": (
+            ["【因果】旧债认人", "【危机】灯下旧册", "【因果】债影回身"],
+            [
+                f"{npc_name}把旧册摊在灯下，话里全是试探；他不敢确认你前世是谁，却已把你当成债主影子。",
+                f"{npc_name}盯着你写下的道号，旧怨在眼底翻涌；他敬的是前世余威，也怕今生的你追账上门。",
+                f"{npc_name}借寒暄翻出一段旧债，笑意里藏着戒备；你若认下因果，今生第一步便会踏进旧局。",
+            ],
+            ["稳住今生", "反查旧册", "断开牵连"],
+        ),
+        "hidden_realm": (
+            ["【奇遇】显境有假", "【因果】藏锋试探", "【危机】金丹虚影"],
+            [
+                f"{npc_name}在人前只显出一层金丹光影，语气却过分从容；{emotion}像薄雾，遮住他真正的修为深浅。",
+                f"{npc_name}笑着递来拜帖，外露境界恰到好处；你从他收放灵压的缝隙里，嗅到一丝刻意藏锋。",
+                f"{npc_name}故意让众人看见金丹虚影，却在看你时收住半分气机；这不是示弱，是试探你能看透几层。",
+            ],
+            ["顺势寒暄", "暗观灵压", "暂不交底"],
+        ),
+    }
+
+    titles, descriptions, options = templates.get(kind, (
+        ["【奇遇】道途回声", "【因果】人情暗涌", "【机缘】旧梦照面"],
+        [
+            f"{npc_name}没有立刻表态，只用{emotion}的眼神看你；他想确认你是今生少年，还是旧梦归来的故人。",
+            f"{npc_name}把话说得很轻，立场却并不含糊；人情风波绕到你身前，连沉默都像一次押注。",
+            f"{npc_name}看见你时神色微变，像把旧名与今生重叠；这份试探不重，却足够让旁人重新衡量你。",
+        ],
+        ["顺势结交", "试探虚实", "保持距离"],
+    ))
+
+    title = stable_pick(titles, key)
+    description = polish_description(case, stable_pick(descriptions, key + "|desc"))
+    return "\n".join([title, description, *options])
 
 
 def build_case(rng, kind):
-    npc = rng.choice(NPC_LINES)
+    npc = pick_npc_for_kind(rng, kind)
     era = rng.choice(ERAS)
     realm = rng.choice(REALMS)
     family = rng.choice(FAMILIES)
@@ -244,7 +347,7 @@ def main():
     rng = random.Random(args.seed)
     kinds = [
         "talent_praise", "envy", "bully", "lost_tech", "jade_family",
-        "artifact", "lifespan", "old_debt", "neutral",
+        "artifact", "lifespan", "old_debt", "hidden_realm", "neutral",
     ]
 
     rows = []

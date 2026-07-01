@@ -128,13 +128,14 @@ $cases = @(
 
 function Test-Mojibake {
     param([string]$Text)
-    return $Text -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯"
+    $scan = [regex]::Replace($Text, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff]|://|[A-Za-z]{3,}"
 }
 
 function Test-Forbidden {
     param([string]$Text)
     $forbidden = @(
-        "太一轮回玉",
+        "玄牝轮回玉",
         "鸿蒙至宝本体",
         "获得鸿蒙",
         "得到鸿蒙",
