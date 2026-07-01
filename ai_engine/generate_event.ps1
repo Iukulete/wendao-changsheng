@@ -42,6 +42,27 @@ function Resolve-ConfiguredPath {
     return [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot $candidate))
 }
 
+function Resolve-AutoLoraPath {
+    $loraDir = Join-Path $PSScriptRoot "lora"
+    if (-not (Test-Path -LiteralPath $loraDir)) {
+        return ""
+    }
+
+    $adapters = @(Get-ChildItem -LiteralPath $loraDir -Filter "*.gguf" -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Length -gt 4096 })
+    if ($adapters.Count -eq 0) {
+        return ""
+    }
+
+    $preferred = @($adapters | Where-Object { $_.Name -match "^(wendao|问道)" })
+    if ($preferred.Count -gt 0) {
+        $adapters = $preferred
+    }
+
+    $selected = $adapters | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+    return [System.IO.Path]::GetFullPath($selected.FullName)
+}
+
 $ReleaseDir = [System.IO.Path]::GetFullPath($ReleaseDir)
 $ModelPath = Resolve-ConfiguredPath `
     -ExplicitPath $ModelPath `
@@ -53,6 +74,9 @@ $LoraPath = Resolve-ConfiguredPath `
     -EnvName "WENDAO_LORA_PATH" `
     -ConfigFile (Join-Path $PSScriptRoot "lora_path.txt") `
     -DefaultPath ""
+if ([string]::IsNullOrWhiteSpace($LoraPath)) {
+    $LoraPath = Resolve-AutoLoraPath
+}
 $LlamaCli = [System.IO.Path]::GetFullPath($LlamaCli)
 
 $promptPath = Join-Path $ReleaseDir "ai_prompt.txt"
@@ -300,7 +324,7 @@ function Normalize-EventLine {
 function Test-MojibakeText {
     param([string]$Value)
     $scan = [regex]::Replace($Value, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff]|://|[A-Za-z]{3,}"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|谟|甯|€|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]{3,}"
 }
 
 function Test-TitleLike {

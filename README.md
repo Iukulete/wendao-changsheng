@@ -71,6 +71,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **人脉历练事件**：外出历练可能直接触发父母认可、同辈嫉妒、欺压试探、势力递帖等本世关系事件
 - **人情回响**：历练和 AI 抉择会反过来改变人脉关系、势力牵连值，并写入道途记忆
 - **情绪余波**：关系变化会生成近日风声，让长辈护短、同辈嫉妒、势力审查或 NPC 记恩记仇继续发酵
+- **情绪脉动**：闭关和历练推进世界后，父母、同辈、欺压者、执事等会因资质、家世、时代压力和风声自然改变态度
 - **关系数值入 AI**：持续人脉和活跃修士的亲疏/敌意会写入模型提示词，方便事件续写旧怨与善缘
 - **AI 抉择回响**：本地 AI 事件的选择结果会结合事件文本、旧世残响、人脉和灵宝状态写入道途记忆
 - **传承后果结算**：AI 回退事件会针对失传古法、旧名追债和器痕识别生成专属选项与成败文本
@@ -86,6 +87,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 - **鸿蒙参悟**：玩家只能留下至宝投影、线索、拒绝和因果记忆；参悟过的至宝会有限推动道祖-天道境进度，但本体永不进入装备栏
 - **世界反馈**：灵气暴动、宗门大战等世界事件会影响修炼和历练风险
 - **本地模型桥**：动态事件会写出 `release/ai_prompt.txt`，优先尝试便携 Gemma 4 + `llama.cpp`，失败后回退到 Ollama 或内置模板
+- **非阻塞 AI 等待**：触发本地模型事件时会显示“天机推演中”，窗口不会像卡死一样等待 CPU 生成
 - **NPC 情绪代理**：本世人脉会带情绪标签和口吻示例，让长辈护短、同辈嫉妒、执事卡资源、旧怨追债等关系进入事件文本
 - **回退焦点轮换**：内置动态事件会在前世未竟、天下大事、旧世残响、大道、器物、人脉和势力之间轮换取材
 - **上下文回退**：即使本地模型不可用，内置动态事件也会主动续写本世持续线索、势力牵连、本世器物、人脉和前世未竟因果
@@ -140,7 +142,7 @@ g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 src/wendao_enhance
 
 ## 自定义
 
-- **AI 事件概率**：修改 `src/wendao_enhanced.cpp` 中 `Random(1, 100) <= 30` 的 `30`
+- **AI 事件概率**：修改 `src/wendao_enhanced.cpp` 中 `GetEraAiEventChance()` 或各纪元权重
 - **NPC 数量**：修改 `world_system/dynamic_world.h` 的 `InitNPCs`
 - **背景图**：替换 `assets/background.png` 后重新运行 `build.bat`
 
@@ -186,7 +188,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\setup_portable_ai.
 - 默认 GGUF：`google/gemma-4-E4B-it-qat-q4_0-gguf` 的 `gemma-4-E4B_q4_0-it.gguf`
 - 可通过 `WENDAO_GGUF_MODEL` 或 `ai_engine/model_path.txt` 指向其他 GGUF
 - 可通过 `WENDAO_LORA_PATH` 或 `ai_engine/lora_path.txt` 挂载 llama.cpp 兼容 LoRA 适配器
-- 便携后端超时默认 25 秒
+- 如果没有显式配置 LoRA，脚本会自动发现 `ai_engine/lora/*.gguf`，优先使用 `wendao*` 适配器
+- 便携脚本超时默认 75 秒；游戏内异步等待上限约 100 秒
 - 若便携失败，会自动尝试 Ollama
 - Ollama 超时默认 20 秒
 - 两者都失败时，游戏自动回退到内置动态模板
