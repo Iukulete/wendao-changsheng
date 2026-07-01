@@ -2171,6 +2171,32 @@ wstring BuildCompanionJadeHiddenContext() {
     return ss.str();
 }
 
+wstring BuildCompanionJadeDreamOmen() {
+    wstring anchor;
+    wstring pressure;
+    auto unfinished = g_legacySystem.GetLatestUnfinishedKarmas(2);
+    auto fragments = g_legacySystem.GetLatestMemoryFragments(3);
+
+    if (!unfinished.empty()) {
+        anchor = L"梦中玉意反复照见一段未竟因果：" + CompactMemoryFragment(unfinished[0]);
+        pressure = L"今生若遇旧名、旧债或相似局势，应先辨明它与当世家世、人脉、势力的关系。";
+    } else if (!fragments.empty()) {
+        anchor = L"梦中玉意托起一段前世碎片：" + CompactMemoryFragment(fragments[0]);
+        pressure = L"这不是命令，只是一枚可用来校准判断的旧梦。";
+    } else if (!g_eraRemnants.empty()) {
+        anchor = L"梦中玉意指向上一纪元残响：" + CompactMemoryFragment(g_eraRemnants[0]);
+        pressure = L"旧世物证会被当前纪元重新解释，不能按旧时代照搬。";
+    } else if (!g_hongmengOmenTreasureName.empty()) {
+        anchor = L"梦中玉意映出本世鸿蒙天象：" + BuildHongmengOmenBrief();
+        pressure = L"那只是遥远投影，不是可占有的装备。";
+    } else {
+        anchor = L"黑白旧玉只在梦醒时微温，没有交出清晰答案。";
+        pressure = L"它像是在提醒你：今生仍要自己选择。";
+    }
+
+    return anchor + L" " + pressure;
+}
+
 void ApplyCompanionJadeToBirth() {
     FamilyBackground& family = g_player.family;
     if (g_generation <= 1) {
@@ -6216,6 +6242,8 @@ void StartNextLife() {
     if (!birthEcho.empty()) {
         AddLifeStoryHook(wstring(L"传承扰动出身：") + birthEcho, false);
     }
+    wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
+    AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
 
     wstringstream detail;
     detail << L"第" << g_generation << L"世醒来";
@@ -6238,6 +6266,7 @@ void StartNextLife() {
         AddMemory(L"继承传承", inheritedText.str());
     }
     AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
+    AddMemory(L"玉意梦兆", jadeDreamOmen);
     AddMemory(L"时代更迭", L"此世降生于" + g_worldEraName + L"，" + g_worldEraDescription);
     AddMemory(L"时代变迁", g_eraTransitionNote);
     AddMemory(L"纪元转折", g_eraShiftCause);
@@ -6855,8 +6884,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_dynamicWorld.SetEraFlavor(g_worldEraName);
                 g_dynamicWorld.Reset();
                 GenerateSocialRumors();
+                wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
+                AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
                 AddMemory(L"初入道途", L"凡人之身踏上长生路。");
                 AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
+                AddMemory(L"玉意梦兆", jadeDreamOmen);
                 AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
                 AddMemory(L"时代变迁", g_eraTransitionNote);
                 AddMemory(L"纪元转折", g_eraShiftCause);
