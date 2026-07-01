@@ -207,6 +207,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\generate_event.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File ai_engine\evaluate_ai_quality.ps1 -Backend portable -TimeoutSec 120
 ```
 
+压测会写出 `release/ai_eval/ai_eval_report.txt` 和机器可读的 `release/ai_eval/ai_eval_summary.json`，方便比较不同模型或 LoRA 的 native/repaired/failed 比例。
+
 如果想强制测试 Ollama：
 
 ```bat

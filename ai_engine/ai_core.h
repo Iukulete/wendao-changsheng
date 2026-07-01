@@ -52,7 +52,23 @@ inline bool LooksMojibake(const wstring& text) {
     for (const auto& marker : markers) {
         if (text.find(marker) != wstring::npos) hits++;
     }
-    return hits >= 2;
+    if (hits >= 2) return true;
+
+    for (wchar_t ch : text) {
+        if ((ch >= L'A' && ch <= L'Z') || (ch >= L'a' && ch <= L'z')) return true;
+        if ((ch >= 0x3040 && ch <= 0x30ff) ||  // Japanese kana
+            (ch >= 0xac00 && ch <= 0xd7af) ||  // Hangul
+            (ch >= 0x0400 && ch <= 0x04ff) ||  // Cyrillic
+            (ch >= 0x0370 && ch <= 0x03ff) ||  // Greek
+            (ch >= 0x0590 && ch <= 0x06ff) ||  // Hebrew/Arabic
+            (ch >= 0x0900 && ch <= 0x097f) ||  // Devanagari
+            (ch >= 0x0980 && ch <= 0x09ff) ||  // Bengali
+            (ch >= 0x0e00 && ch <= 0x0e7f) ||  // Thai
+            (ch >= 0x1000 && ch <= 0x109f)) {  // Myanmar
+            return true;
+        }
+    }
+    return false;
 }
 
 inline wstring ReadUtf8FileToWide(const string& path) {

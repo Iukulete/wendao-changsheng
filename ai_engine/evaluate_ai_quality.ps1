@@ -158,7 +158,7 @@ $cases = @(
 function Test-Mojibake {
     param([string]$Text)
     $scan = [regex]::Replace($Text, "\s*\[end of text\]\s*", "", [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
-    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
+    return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0980-\u09ff\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
 function Test-BrokenText {
@@ -227,6 +227,7 @@ $nativePassCount = 0
 $repairedPassCount = 0
 $repairCount = 0
 $caseIndex = 0
+$caseResults = New-Object System.Collections.Generic.List[object]
 foreach ($case in $cases) {
     $caseIndex++
     $caseDir = Join-Path $EvalRoot ("{0:00}_{1}" -f $caseIndex, $case.Id)
@@ -384,6 +385,18 @@ foreach ($case in $cases) {
         $report.Add("event:")
         foreach ($line in $lines) { $report.Add("  $line") }
     }
+    $caseResults.Add([pscustomobject]@{
+        id = $case.Id
+        ok = $ok
+        quality = $qualityText
+        elapsedSec = [math]::Round($sw.Elapsed.TotalSeconds, 1)
+        backend = $backendText
+        rawChars = $rawLen
+        status = $statusText
+        grounding = @($mustHits)
+        issues = @($issues.ToArray())
+        event = @($lines)
+    })
     $report.Add("")
 }
 
@@ -394,5 +407,21 @@ $report.Insert(5, $repairSummary)
 $report.Insert(6, "")
 $reportPath = Join-Path $EvalRoot "ai_eval_report.txt"
 [System.IO.File]::WriteAllText($reportPath, ($report -join [Environment]::NewLine), $encoding)
+$summaryPath = Join-Path $EvalRoot "ai_eval_summary.json"
+$failedCount = $cases.Count - $passCount
+$summaryObject = [ordered]@{
+    generatedAt = (Get-Date).ToString("s")
+    backend = $Backend
+    timeoutSec = $TimeoutSec
+    total = $cases.Count
+    passed = $passCount
+    native = $nativePassCount
+    repaired = $repairedPassCount
+    failed = $failedCount
+    repairCount = $repairCount
+    cases = @($caseResults.ToArray())
+}
+[System.IO.File]::WriteAllText($summaryPath, ($summaryObject | ConvertTo-Json -Depth 6), $encoding)
 Write-Output $summary
 Write-Output $reportPath
+Write-Output $summaryPath
