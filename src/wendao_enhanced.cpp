@@ -5692,18 +5692,26 @@ bool LoadGame() {
 }
 
 int ExtractValue(const wstring& text, const wstring& marker, int fallback = 0) {
-    size_t pos = text.find(marker);
-    if (pos == wstring::npos) return fallback;
-    pos += marker.size();
+    size_t pos = 0;
+    int total = 0;
+    bool foundAny = false;
 
-    int value = 0;
-    bool found = false;
-    while (pos < text.size() && iswdigit(text[pos])) {
-        found = true;
-        value = value * 10 + (text[pos] - L'0');
-        pos++;
+    while ((pos = text.find(marker, pos)) != wstring::npos) {
+        pos += marker.size();
+        int value = 0;
+        bool found = false;
+        while (pos < text.size() && iswdigit(text[pos])) {
+            found = true;
+            value = value * 10 + (text[pos] - L'0');
+            pos++;
+        }
+        if (found) {
+            foundAny = true;
+            total += value;
+        }
     }
-    return found ? value : fallback;
+
+    return foundAny ? total : fallback;
 }
 
 void ImproveRandomRoot(int amount) {
@@ -5987,7 +5995,8 @@ void AppendReincarnationOutcomeText(wstring& outcome, bool success,
     }
 
     if (success) {
-        outcome += L"\n轮回回响: 你没有让前世替今生决定，只借「" + evidence +
+        outcome += L"\n轮回回响: 前世线索让本次判断更稳（判定+" +
+                   to_wstring(modifier) + L"）。你没有让前世替今生决定，只借「" + evidence +
                    L"」校准了一个判断。\n因果+4";
         if (IsReincarnationLeverageChoice(choice.description)) {
             outcome += L"，修为+25";
@@ -5999,7 +6008,8 @@ void AppendReincarnationOutcomeText(wstring& outcome, bool success,
         AddMemory(L"前世记忆校准",
             choice.description + L"借用了" + evidence + L"，但今生选择仍由自己承担。");
     } else {
-        outcome += L"\n轮回错位: 「" + evidence +
+        outcome += L"\n轮回错位: 前世线索曾让本次判断更稳（判定+" +
+                   to_wstring(modifier) + L"），但「" + evidence +
                    L"」与今生局势并不完全相合，旧经验反而拖慢了半步。\n气血-8";
         AddMemory(L"前世记忆错位",
             choice.description + L"时旧忆没有完全适配今生，提醒你不能照搬前世。");
