@@ -160,6 +160,15 @@ function Test-Mojibake {
     return $scan -match "�|锛|涓|鍙|鐨|绗|椤|掳|€|谟|甯|[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff\u0370-\u03ff\u0590-\u06ff\u0900-\u097f\u0e00-\u0e7f\u1000-\u109f]|://|[A-Za-z]|[\[\]]"
 }
 
+function Test-BrokenText {
+    param([string]$Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) { return $false }
+    if ($Text -match "[\u4e00-\u9fff][ \t]+[\u4e00-\u9fff]") { return $true }
+    if ($Text -match "-{2,}|_{2,}|~{2,}") { return $true }
+    if ($Text -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
+    return $false
+}
+
 function Test-Forbidden {
     param([string]$Text)
     $forbidden = @(
@@ -317,6 +326,10 @@ foreach ($case in $cases) {
     if (Test-Mojibake $eventText) {
         $ok = $false
         $issues.Add("疑似乱码")
+    }
+    if (Test-BrokenText $eventText) {
+        $ok = $false
+        $issues.Add("疑似病句残片")
     }
     $forbiddenHits = Test-Forbidden $eventText
     if ($forbiddenHits.Count -gt 0) {

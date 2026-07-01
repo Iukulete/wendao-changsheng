@@ -314,15 +314,27 @@ function Normalize-EventLine {
     $clean = [regex]::Replace($clean, '[A-Za-z]\s*级', '低阶')
     $clean = [regex]::Replace($clean, '[A-Za-z]+', '')
     $clean = [regex]::Replace($clean, '[\[\]]+', '')
+    $clean = $clean.Replace("您", "你")
+    $clean = $clean.Replace("话说速", "话说时")
+    $clean = $clean.Replace("龙物", "灵物")
     $clean = $clean.Trim(@([char]96, [char]34, [char]39))
     $clean = [regex]::Replace($clean, '^\s*[-*]\s*', '')
     $clean = [regex]::Replace($clean, '^[A-Za-z][\.、:：\)]\s*', '')
     $clean = [regex]::Replace($clean, '^第[一二三四五六七八九十0-9]+行[:：]\s*', '')
     $clean = [regex]::Replace($clean, '^(标题|事件标题|描述|事件描述|选项[一二三四五六七八九十0-9]*|选项一|选项二|选项三|选择[一二三四五六七八九十0-9]*)[:：]\s*', '')
     $clean = [regex]::Replace($clean, '^\s*[-*0-9一二三四五]+[\.、:：\)]\s*', '')
-    $clean = [regex]::Replace($clean, '\s+', ' ')
+    $clean = [regex]::Replace($clean, '\s+', '')
     $clean = $clean.Replace(";", "；").Replace(",", "，")
     return $clean.Trim()
+}
+
+function Test-BrokenEventText {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
+    if ($Value -match "[\u4e00-\u9fff][ \t]+[\u4e00-\u9fff]") { return $true }
+    if ($Value -match "-{2,}|_{2,}|~{2,}") { return $true }
+    if ($Value -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
+    return $false
 }
 
 function Test-MojibakeText {
@@ -495,6 +507,7 @@ function Test-GoodDescription {
     if (Test-TitleLike $clean) { return $false }
     if (Test-ContextLabelLine $clean) { return $false }
     if (Test-MojibakeText $clean) { return $false }
+    if (Test-BrokenEventText $clean) { return $false }
     if ($clean -match "^(请选择|选择|选项|标题|描述)") { return $false }
     if ($clean.Length -lt 35 -or $clean.Length -gt 130) { return $false }
     if ($clean -notmatch "[。！？]$") { return $false }
@@ -524,6 +537,7 @@ function Convert-ToChoice {
     if (Test-MojibakeText $choice) { return $null }
     if ($choice -match "^(机缘|机遇|危机|奇遇|因果|传承)") { return $null }
     if ($choice -match "^(请选择|选项|解释|标题|描述)") { return $null }
+    if (Test-BrokenEventText $choice) { return $null }
     if ($choice -match "[：:。！？!?，,；;]") { return $null }
     if ($choice -match "\s") { return $null }
     return $choice
@@ -535,6 +549,9 @@ $repairNotes = New-Object System.Collections.Generic.List[string]
 $rawHadNoise = Test-MojibakeText $text
 if ($rawHadNoise) {
     $repairNotes.Add("清理噪声")
+}
+if (Test-BrokenEventText $text) {
+    $repairNotes.Add("清理病句")
 }
 
 $candidateLines = @()

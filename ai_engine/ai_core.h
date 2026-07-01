@@ -869,15 +869,17 @@ public:
         });
         bool touchesArtifact = containsAny(eventText, {
             L"本世器物", L"当世兵刃", L"当世法宝", L"祭出器物",
-            L"封存器痕", L"转手换缘", L"今生器物"
+            L"封存器痕", L"转手换缘", L"今生器物", L"借器痕辨"
         }) || (player.worldState.find(L"本世器物") != wstring::npos &&
               containsAny(eventText, {L"器物", L"兵刃", L"法宝", L"器痕"}));
         bool touchesUnfinished = containsAny(eventText, {
-            L"前世未竟", L"未竟因果", L"追问旧因", L"旧因", L"稳住今生"
+            L"前世未竟", L"未竟因果", L"追问旧因", L"旧因", L"稳住今生",
+            L"借前世忆", L"借忆查因", L"以今证旧"
         }) || (!player.legacyState.empty() && player.legacyState.find(L"前世未竟因果") != wstring::npos &&
               containsAny(eventText, {L"前世", L"旧事", L"旧因", L"因果"}));
         bool touchesJade = containsAny(eventText, {
-            L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕", L"握玉", L"旧玉"
+            L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕",
+            L"握玉", L"旧玉", L"握玉辨梦"
         });
         bool touchesStory = containsAny(eventText, {
             L"本世线头", L"本世主线", L"本世持续线索", L"上一件事", L"同一条线索",
@@ -893,10 +895,11 @@ public:
         });
         wstring socialContext = eventText + L" " + player.socialState + L" " + socialRumor + L" " + socialActor;
         bool touchesLostTechnique = containsAny(socialContext, {
-            L"失传古法", L"失传道法", L"功法见证者", L"藏经", L"残页", L"行功"
+            L"失传古法", L"失传道法", L"功法见证者", L"藏经", L"残页", L"行功", L"以旧法证"
         });
         bool touchesLegacySocial = containsAny(socialContext, {
-            L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"旧名", L"器痕", L"追债"
+            L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"旧名", L"器痕",
+            L"追债", L"借器痕辨", L"借旧识气"
         });
         bool touchesSocial = player.socialState.find(L"本世人脉") != wstring::npos &&
                              (eventText.find(L"修士") != wstring::npos ||

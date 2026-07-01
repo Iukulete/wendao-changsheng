@@ -4936,6 +4936,67 @@ void EnterAiEventFromContext(PlayerContext ctx) {
         aiChoices = g_aiGen.GenerateChoices(ctx);
     }
 
+    auto hasReincarnationEcho = [&]() {
+        if (g_generation <= 1) return false;
+        if (!g_legacySystem.GetLatestMemoryFragments(3).empty()) return true;
+        if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) return true;
+        if (!g_legacySystem.GetInheritedLegacies().empty()) return true;
+        if (g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) > 0) return true;
+        if (g_legacySystem.GetRelicResonanceBonus() > 0) return true;
+        return false;
+    };
+    auto containsAnyLocal = [](const wstring& text, const vector<wstring>& keys) {
+        for (const auto& key : keys) {
+            if (!key.empty() && text.find(key) != wstring::npos) return true;
+        }
+        return false;
+    };
+    auto memoryChoiceLabel = [&](const wstring& text) {
+        if (containsAnyLocal(text, {L"玉佩", L"黑白旧玉", L"梦", L"玉痕"})) return wstring(L"握玉辨梦");
+        if (containsAnyLocal(text, {L"失传古法", L"旧法", L"功法", L"藏经"})) return wstring(L"以旧法证");
+        if (containsAnyLocal(text, {L"器痕", L"法宝", L"灵宝", L"器物"})) return wstring(L"借器痕辨");
+        if (containsAnyLocal(text, {L"修为", L"气机", L"藏拙", L"外显"})) return wstring(L"借旧识气");
+        if (containsAnyLocal(text, {L"旧债", L"未竟", L"前世", L"旧名"})) return wstring(L"借忆查因");
+        return wstring(L"借前世忆");
+    };
+    auto isGenericChoice = [&](const wstring& choice) {
+        static const vector<wstring> generic = {
+            L"保持距离", L"暂避锋芒", L"谨慎离开", L"小心观察", L"转身离开",
+            L"旁观风向", L"原地观望", L"冷眼旁观", L"暂不交底", L"暂压不表"
+        };
+        return find(generic.begin(), generic.end(), choice) != generic.end();
+    };
+
+    if (hasReincarnationEcho() && !aiChoices.empty()) {
+        wstring eventText = aiTitle + L" " + aiDesc;
+        bool alreadyHasMemoryChoice = false;
+        for (const auto& choice : aiChoices) {
+            if (containsAnyLocal(choice, {L"前世", L"旧忆", L"旧法", L"玉", L"梦", L"器痕", L"旧识"})) {
+                alreadyHasMemoryChoice = true;
+                break;
+            }
+        }
+        bool eventInvitesMemory = containsAnyLocal(eventText, {
+            L"前世", L"旧", L"梦", L"玉佩", L"玉痕", L"器痕", L"失传",
+            L"名册", L"气机", L"藏拙", L"试探", L"家世", L"道网", L"残响"
+        });
+        if (!alreadyHasMemoryChoice && (eventInvitesMemory || Random(1, 100) <= 32)) {
+            wstring label = memoryChoiceLabel(eventText);
+            int replaceIndex = -1;
+            for (int i = 0; i < (int)aiChoices.size(); ++i) {
+                if (isGenericChoice(aiChoices[i])) {
+                    replaceIndex = i;
+                    break;
+                }
+            }
+            if (replaceIndex < 0 && aiChoices.size() < 3) {
+                aiChoices.push_back(label);
+            } else if (replaceIndex >= 0) {
+                aiChoices[replaceIndex] = label;
+            }
+        }
+    }
+
     Event tempEvent;
     tempEvent.title = aiTitle;
     tempEvent.description = aiDesc;
@@ -5863,6 +5924,88 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     }
 }
 
+bool HasReincarnationLeverage() {
+    if (g_generation <= 1) return false;
+    if (!g_legacySystem.GetLatestMemoryFragments(3).empty()) return true;
+    if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) return true;
+    if (!g_legacySystem.GetInheritedLegacies().empty()) return true;
+    if (g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) > 0) return true;
+    if (g_legacySystem.GetRelicResonanceBonus() > 0) return true;
+    return false;
+}
+
+bool IsReincarnationLeverageChoice(const wstring& choiceText) {
+    return TextContainsAny(choiceText, {
+        L"借前世忆", L"借忆查因", L"握玉辨梦", L"以旧法证",
+        L"借器痕辨", L"借旧识气", L"以今证旧", L"追问旧因",
+        L"握玉静听", L"询问器痕", L"暗观灵压"
+    });
+}
+
+int ComputeReincarnationEventModifier(const Event& event, const Choice& choice) {
+    if (!HasReincarnationLeverage()) return 0;
+    wstring text = event.title + L" " + event.description + L" " + choice.description;
+    bool directChoice = IsReincarnationLeverageChoice(choice.description);
+    bool relevantEvent = TextContainsAny(text, {
+        L"前世", L"旧忆", L"旧债", L"未竟", L"旧名", L"玉佩", L"黑白旧玉",
+        L"梦", L"玉痕", L"器痕", L"法宝", L"灵宝", L"失传", L"旧法",
+        L"旧世", L"残响", L"气机", L"藏拙", L"外显", L"道网", L"名册"
+    });
+    if (!directChoice && !relevantEvent) return 0;
+
+    int modifier = directChoice ? 10 : 5;
+    modifier += min(6, (int)g_legacySystem.GetLatestMemoryFragments(4).size() * 2);
+    modifier += min(4, (int)g_legacySystem.GetInheritedLegacies().size());
+    if (!g_legacySystem.GetLatestUnfinishedKarmas(1).empty()) modifier += 2;
+    if (g_legacySystem.GetRelicResonanceBonus() > 0) modifier += 2;
+    return min(18, modifier);
+}
+
+wstring BuildReincarnationEvidenceText() {
+    auto fragments = g_legacySystem.GetLatestMemoryFragments(2);
+    if (!fragments.empty()) {
+        return CompactMemoryFragment(fragments[0]);
+    }
+    auto karmas = g_legacySystem.GetLatestUnfinishedKarmas(1);
+    if (!karmas.empty()) {
+        return CompactMemoryFragment(karmas[0]);
+    }
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
+    if (!inherited.empty()) {
+        return inherited[0].name;
+    }
+    return L"黑白旧玉托住的一段模糊旧梦";
+}
+
+void AppendReincarnationOutcomeText(wstring& outcome, bool success,
+                                    const Event& event, const Choice& choice,
+                                    int modifier) {
+    if (modifier <= 0) return;
+    wstring evidence = BuildReincarnationEvidenceText();
+    if (evidence.size() > 72) {
+        evidence = evidence.substr(0, 72) + L"...";
+    }
+
+    if (success) {
+        outcome += L"\n轮回回响: 你没有让前世替今生决定，只借「" + evidence +
+                   L"」校准了一个判断。\n因果+4";
+        if (IsReincarnationLeverageChoice(choice.description)) {
+            outcome += L"，修为+25";
+        }
+        if (TextContainsAny(event.title + L" " + event.description + L" " + choice.description,
+            {L"旧法", L"失传", L"大道", L"道痕"})) {
+            outcome += L"，掌道+1";
+        }
+        AddMemory(L"前世记忆校准",
+            choice.description + L"借用了" + evidence + L"，但今生选择仍由自己承担。");
+    } else {
+        outcome += L"\n轮回错位: 「" + evidence +
+                   L"」与今生局势并不完全相合，旧经验反而拖慢了半步。\n气血-8";
+        AddMemory(L"前世记忆错位",
+            choice.description + L"时旧忆没有完全适配今生，提醒你不能照搬前世。");
+    }
+}
+
 vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5) {
     vector<wstring> karmas;
     auto add = [&](const wstring& text) {
@@ -6056,10 +6199,13 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         PlayerContext& ctx = g_contextMgr.GetContext();
         int successRate = 60 + g_player.karma / 5 + GetDaoAdventureSuccessModifier()
             - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
+        int reincarnationModifier = ComputeReincarnationEventModifier(*g_currentEvent, choice);
+        successRate += reincarnationModifier;
         successRate = max(20, min(90, successRate));
         bool success = (Random(1, 100) <= successRate);
         g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success,
             g_currentEvent->title, g_currentEvent->description, choice.description);
+        AppendReincarnationOutcomeText(g_messageText, success, *g_currentEvent, choice, reincarnationModifier);
         AppendAiOutcomeSocialReaction(g_messageText, success, *g_currentEvent, choice);
 
         // 更新AI上下文
