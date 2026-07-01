@@ -1026,11 +1026,8 @@ void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamil
         PointF(rect.X, rect.Y + rect.Height),
         Color(255, 244, 228, 178),
         Color(255, 176, 122, 44));
-    SolidBrush sheenBrush(Color(80, 255, 246, 220));
-
     graphics.DrawPath(&outlinePen, &textPath);
     graphics.FillPath(&fillBrush, &textPath);
-    graphics.FillEllipse(&sheenBrush, rect.X + rect.Width * 0.33f, rect.Y + 10.0f, rect.Width * 0.18f, 22.0f);
 }
 
 void LayoutMenuControls() {
@@ -6494,18 +6491,18 @@ void OnPaint(HDC hdc, RECT& rect) {
             int panelLeft = (width - panelWidth) / 2;
             int panelTop = max(250, (height - panelHeight) / 2 + 70);
 
-            RectF titleBand(0, 104, (REAL)width, 104);
-            DrawGlowText(graphics, L"问道长生", titleFamily, 92.0f, titleBand, centerFormat);
-            RectF subtitleBand(0, 172, (REAL)width, 40);
+            RectF titleBand(0, 112, (REAL)width, 92);
+            DrawGlowText(graphics, L"The Immortal Path", fontFamily, 78.0f, titleBand, centerFormat);
+            RectF subtitleBand(0, 218, (REAL)width, 40);
             Font menuSubDecor(&subtitleFamily, 28, FontStyleRegular, UnitPixel);
             graphics.DrawString(L"一念入道，百年问心", -1, &menuSubDecor,
                 subtitleBand, &centerFormat, &softWhiteBrush);
 
             Pen ornamentPen(Color(150, 216, 182, 92), 3);
-            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 - 430), 214.0f, 150.0f, 42.0f, 10.0f, 150.0f);
-            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 - 280), 234.0f, (REAL)(width / 2 - 186), 234.0f);
-            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 + 186), 234.0f, (REAL)(width / 2 + 280), 234.0f);
-            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 + 280), 214.0f, 150.0f, 42.0f, 20.0f, 150.0f);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 - 430), 262.0f, 150.0f, 42.0f, 10.0f, 150.0f);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 - 280), 282.0f, (REAL)(width / 2 - 186), 282.0f);
+            graphics.DrawLine(&ornamentPen, (REAL)(width / 2 + 186), 282.0f, (REAL)(width / 2 + 280), 282.0f);
+            graphics.DrawArc(&ornamentPen, (REAL)(width / 2 + 280), 262.0f, 150.0f, 42.0f, 20.0f, 150.0f);
 
             RectF menuPanel((REAL)panelLeft, (REAL)panelTop, (REAL)panelWidth, (REAL)panelHeight);
             GraphicsPath panelPath;
