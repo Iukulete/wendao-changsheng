@@ -212,6 +212,9 @@ $report.Add("超时: ${TimeoutSec}s")
 $report.Add("")
 
 $passCount = 0
+$nativePassCount = 0
+$repairedPassCount = 0
+$repairCount = 0
 $caseIndex = 0
 foreach ($case in $cases) {
     $caseIndex++
@@ -344,8 +347,14 @@ foreach ($case in $cases) {
         }
     }
 
-    if ($ok) { $passCount++ }
-    $report.Add("[$($case.Id)] " + ($(if ($ok) { "PASS" } else { "FAIL" })) + " / $([math]::Round($sw.Elapsed.TotalSeconds, 1))s / backend=$backendText / rawChars=$rawLen")
+    $wasRepaired = $statusText -match "修复"
+    if ($wasRepaired) { $repairCount++ }
+    if ($ok) {
+        $passCount++
+        if ($wasRepaired) { $repairedPassCount++ } else { $nativePassCount++ }
+    }
+    $qualityText = if ($wasRepaired) { "repaired" } else { "native" }
+    $report.Add("[$($case.Id)] " + ($(if ($ok) { "PASS" } else { "FAIL" })) + " / $qualityText / $([math]::Round($sw.Elapsed.TotalSeconds, 1))s / backend=$backendText / rawChars=$rawLen")
     if ($statusText) { $report.Add("status: $statusText") }
     if ($statusText -match "修复") { $report.Add("note: 模型原始输出触发了后处理，最终事件由质量闸门修正。") }
     if ($mustHits.Count -gt 0) { $report.Add("grounding: $($mustHits -join ', ')") }
@@ -359,9 +368,11 @@ foreach ($case in $cases) {
     $report.Add("")
 }
 
-$summary = "SUMMARY: $passCount/$($cases.Count) passed"
+$summary = "SUMMARY: $passCount/$($cases.Count) passed (native=$nativePassCount, repaired=$repairedPassCount, failed=$($cases.Count - $passCount))"
+$repairSummary = "REPAIRS: $repairCount/$($cases.Count) cases used quality gate"
 $report.Insert(4, $summary)
-$report.Insert(5, "")
+$report.Insert(5, $repairSummary)
+$report.Insert(6, "")
 $reportPath = Join-Path $EvalRoot "ai_eval_report.txt"
 [System.IO.File]::WriteAllText($reportPath, ($report -join [Environment]::NewLine), $encoding)
 Write-Output $summary
