@@ -4201,6 +4201,101 @@ wstring BuildSocialThreadDigest(int limit = 4, bool includeInternal = false) {
     return ss.str();
 }
 
+const SocialThread* FindSocialThreadByName(const wstring& name) {
+    for (const auto& thread : g_socialThreads) {
+        if (thread.name == name) return &thread;
+    }
+    return nullptr;
+}
+
+int GetStoryRelationForThread(const SocialThread& thread) {
+    wstring key = thread.name + L"（" + thread.role + L"）";
+    auto found = g_storyState.relationships.find(key);
+    if (found != g_storyState.relationships.end()) {
+        return found->second;
+    }
+    return thread.relation;
+}
+
+void AddCharacterEcho(vector<wstring>& echoes, const wstring& text, int limit) {
+    if ((int)echoes.size() >= limit || text.empty()) return;
+    wstring compact = CompactMemoryFragment(text);
+    if (compact.size() > 118) {
+        compact = compact.substr(0, 118) + L"...";
+    }
+    if (find(echoes.begin(), echoes.end(), compact) == echoes.end()) {
+        echoes.push_back(compact);
+    }
+}
+
+vector<wstring> FindCharacterEchoes(const wstring& name, int limit = 3) {
+    vector<wstring> echoes;
+    if (name.empty()) return echoes;
+
+    for (int i = (int)g_memoryLog.size() - 1; i >= 0 && (int)echoes.size() < limit; --i) {
+        if (g_memoryLog[i].find(name) != wstring::npos) {
+            AddCharacterEcho(echoes, g_memoryLog[i], limit);
+        }
+    }
+
+    auto& lives = g_legacySystem.GetPastLives();
+    for (int i = (int)lives.size() - 1; i >= 0 && (int)echoes.size() < limit; --i) {
+        const PastLife& life = lives[i];
+        for (int j = (int)life.unfinishedKarmas.size() - 1; j >= 0 && (int)echoes.size() < limit; --j) {
+            if (life.unfinishedKarmas[j].find(name) != wstring::npos) {
+                AddCharacterEcho(echoes, L"第" + to_wstring(life.generation) + L"世未竟：" + life.unfinishedKarmas[j], limit);
+            }
+        }
+        for (int j = (int)life.memoryFragments.size() - 1; j >= 0 && (int)echoes.size() < limit; --j) {
+            if (life.memoryFragments[j].find(name) != wstring::npos) {
+                AddCharacterEcho(echoes, L"第" + to_wstring(life.generation) + L"世记忆：" + life.memoryFragments[j], limit);
+            }
+        }
+    }
+
+    reverse(echoes.begin(), echoes.end());
+    return echoes;
+}
+
+void AppendCharacterProfile(wstringstream& ss, const wstring& name, const wstring& role,
+                            const wstring& fallback, bool alwaysShow = false) {
+    const SocialThread* thread = FindSocialThreadByName(name);
+    vector<wstring> echoes = FindCharacterEchoes(name, 2);
+    if (!thread && !alwaysShow && echoes.empty()) return;
+
+    ss << L"【" << name << L"】" << role << L"\n";
+    if (thread) {
+        int relation = GetStoryRelationForThread(*thread);
+        ss << L"- 关系温度: " << GetRelationLabel(relation)
+           << L"（" << (relation >= 0 ? L"+" : L"") << relation << L"） · "
+           << BuildSocialEmotionTag(*thread) << L"\n";
+        if (!thread->visibleRealm.empty()) {
+            ss << L"- 外显修为: " << thread->visibleRealm;
+            if (thread->hidesPower || !thread->hiddenHint.empty()) {
+                ss << L"；" << (thread->hiddenHint.empty() ? L"气机未必可信" : thread->hiddenHint);
+            }
+            ss << L"\n";
+        }
+        ss << L"- 近况: " << thread->hook << L"\n";
+        if (!thread->nextMove.empty()) {
+            ss << L"- 下一步可能: " << thread->nextMove << L"\n";
+        }
+        ss << L"- 你能听见的态度: " << BuildSocialNpcUtterance(*thread) << L"\n";
+    } else {
+        ss << L"- 近况: " << fallback << L"\n";
+    }
+
+    if (!echoes.empty()) {
+        ss << L"- 轮回余痕: ";
+        for (size_t i = 0; i < echoes.size(); ++i) {
+            if (i > 0) ss << L"；";
+            ss << echoes[i];
+        }
+        ss << L"\n";
+    }
+    ss << L"\n";
+}
+
 bool TextContainsAny(const wstring& text, const vector<wstring>& keys) {
     for (const auto& key : keys) {
         if (!key.empty() && text.find(key) != wstring::npos) return true;
@@ -5153,7 +5248,7 @@ void GenerateSocialThreads() {
             g_factionTie.favor);
     }
 
-    if (g_socialThreads.size() > 5) {
+    if (g_socialThreads.size() > 7) {
         SocialThread factionThread;
         SocialThread frostCrowThread;
         SocialThread luoNingshuangThread;
@@ -5186,7 +5281,7 @@ void GenerateSocialThreads() {
                 hasAntagonistThread = true;
             }
         }
-        g_socialThreads.resize(5);
+        g_socialThreads.resize(7);
         auto containsRole = [&](const wstring& role) {
             for (const auto& thread : g_socialThreads) {
                 if (thread.role == role) return true;
@@ -5216,7 +5311,7 @@ void GenerateSocialThreads() {
                 if (!roleKey.empty()) protectedRoles.push_back(roleKey);
                 return;
             }
-            for (int i = 4; i >= 0; --i) {
+            for (int i = (int)g_socialThreads.size() - 1; i >= 0; --i) {
                 if (!isProtected(g_socialThreads[i])) {
                     g_socialThreads[i] = thread;
                     break;
@@ -5347,6 +5442,79 @@ wstring GetSocialRumorText(int limit = 6) {
     for (size_t i = 0; i < min<size_t>(g_socialRumors.size(), limit); i++) {
         ss << L"- " << g_socialRumors[i] << L"\n";
     }
+    return ss.str();
+}
+
+wstring BuildCharacterCodexText() {
+    RefreshStoryStateStableFields();
+
+    wstringstream ss;
+    ss << L"【角色因果】\n\n";
+    ss << L"第" << g_generation << L"世 · " << g_worldEraName << L" · "
+       << GetRealmName(g_player.realm) << L" " << g_player.level << L"层\n";
+    ss << L"这里记录你当前能看见、听见或合理推断的人物因果。外显修为只是对方愿意露出的部分，不等于真实底牌。\n\n";
+
+    ss << L"【轮回认知】\n";
+    if (HasPriorLifeEcho()) {
+        ss << L"黑白旧玉会托起一些前世碎片，但旧忆只能帮你校准判断，不能替今生选择。\n\n";
+    } else {
+        ss << L"第一世没有前世记忆；你最多只有伴生旧玉的梦兆、早熟直觉和今生遭遇。\n\n";
+    }
+
+    ss << L"【家世牵挂】\n";
+    if (g_player.family.knowsParents) {
+        AppendCharacterProfile(ss, g_player.family.father, L" · 父亲",
+            L"他与此世出身相连，态度会受你的资质、名声和选择影响。", true);
+        AppendCharacterProfile(ss, g_player.family.mother, L" · 母亲",
+            L"她与此世出身相连，常把担忧压在不外露的护短里。", true);
+    } else if (!g_player.family.guardian.empty() || g_player.family.adopted) {
+        AppendCharacterProfile(ss, g_player.family.guardian.empty() ? L"无名养育者" : g_player.family.guardian,
+            L" · 养育者", L"此人知道你来历并不简单，却未必愿意把真相一次说尽。", true);
+    } else {
+        ss << L"- 父母线仍被遮住。你只知道此世身世另有隐情，真正血亲未必已经入局。\n\n";
+    }
+
+    ss << L"【关键人物】\n";
+    AppendCharacterProfile(ss, L"清蘅真人", L" · 第一世入门师尊",
+        L"第一世古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。",
+        IsFirstLifeClassicalEra() || !FindCharacterEchoes(L"清蘅真人", 1).empty());
+    AppendCharacterProfile(ss, L"玄衡子", L" · 太上玄衡观掌律真人",
+        L"第一世古典修仙纪的掌律反派。他借门规审查你、清蘅真人与洛凝霜之间的因果。",
+        IsFirstLifeClassicalEra() || !FindCharacterEchoes(L"玄衡子", 1).empty());
+    AppendCharacterProfile(ss, L"洛凝霜", L" · 桃华剑脉剑修",
+        L"桃华剑脉里很重要的一条因果。她不会无条件偏向你，第一世好感和后续仙界再会都看你的选择。",
+        IsLuoNingshuangEra() || !FindCharacterEchoes(L"洛凝霜", 1).empty());
+    if (IsFrostCrowEra() || !FindCharacterEchoes(L"霜鸦", 1).empty()) {
+        AppendCharacterProfile(ss, L"霜鸦", L" · 灵机/道网纪清算人",
+            L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。",
+            true);
+    }
+
+    ss << L"【其他本世人脉】\n";
+    int shown = 0;
+    for (const auto& thread : g_socialThreads) {
+        if (TextContainsAny(thread.name, {
+            g_player.family.father, g_player.family.mother, g_player.family.guardian,
+            L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"
+        })) {
+            continue;
+        }
+        ss << L"- " << BuildSocialThreadLine(thread) << L"\n";
+        if (++shown >= 5) break;
+    }
+    if (shown == 0) {
+        ss << L"- 暂无更多独立人物入局；下一次历练可能把同辈、长辈或势力联系人推到台前。\n";
+    }
+
+    if (!g_storyState.openThreads.empty()) {
+        ss << L"\n【未收束线头】\n";
+        int count = 0;
+        for (const auto& thread : g_storyState.openThreads) {
+            if (count++ >= 5) break;
+            ss << L"- " << thread << L"\n";
+        }
+    }
+
     return ss.str();
 }
 
@@ -7801,7 +7969,7 @@ void AppendReincarnationOutcomeText(wstring& outcome, bool success,
     }
 }
 
-vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5) {
+vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 8) {
     vector<wstring> karmas;
     auto add = [&](const wstring& text) {
         if ((int)karmas.size() >= limit || text.empty()) return;
@@ -7813,11 +7981,25 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 5
 
     add(L"死因未了：" + causeOfDeath);
     add(L"本世主线未尽：" + g_lifePremise);
+    for (const auto& thread : g_socialThreads) {
+        if (!TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"})) {
+            continue;
+        }
+        add(L"未结清的人物因果：" + BuildSocialThreadLine(thread));
+    }
     for (const auto& hook : g_lifeStoryHooks) {
         add(L"未追完的线索：" + hook);
     }
     if (!g_socialThreads.empty()) {
-        add(L"未结清的人情债：" + BuildSocialThreadLine(g_socialThreads[0]));
+        const SocialThread* thread = nullptr;
+        for (const auto& candidate : g_socialThreads) {
+            if (!TextContainsAny(candidate.name + candidate.role, {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"})) {
+                thread = &candidate;
+                break;
+            }
+        }
+        if (!thread) thread = &g_socialThreads[0];
+        add(L"未结清的人情债：" + BuildSocialThreadLine(*thread));
     }
     if (HasFactionTie()) {
         add(L"未清的势力牵连：" + BuildFactionTieDigest());
@@ -8481,6 +8663,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[P] 本世主线",
                 L"[F] 此世家世",
                 L"[R] 人情风波",
+                L"[C] 角色因果",
                 L"[I] 灵物图录",
                 L"[T] 鸿蒙至宝",
                 L"[H] 道途记忆",
@@ -9117,6 +9300,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
                 else if (wParam == 'R' || wParam == 'r') {
                     OpenInfoPage(L"人情风波", GetSocialRumorText(8), STATE_GAME);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'C' || wParam == 'c') {
+                    OpenInfoPage(L"角色因果", BuildCharacterCodexText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'I' || wParam == 'i') {
