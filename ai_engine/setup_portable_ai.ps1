@@ -28,6 +28,20 @@ $ModelPath = [System.IO.Path]::GetFullPath($ModelPath)
 $RuntimeZip = Join-Path $RuntimeDir "llama-b9843-bin-win-cpu-x64.zip"
 $LlamaCli = Join-Path $LlamaDir "llama-completion.exe"
 
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+} catch {
+}
+
+function Format-Bytes {
+    param([long]$Bytes)
+
+    if ($Bytes -ge 1GB) { return "{0:N2} GB" -f ($Bytes / 1GB) }
+    if ($Bytes -ge 1MB) { return "{0:N1} MB" -f ($Bytes / 1MB) }
+    if ($Bytes -ge 1KB) { return "{0:N1} KB" -f ($Bytes / 1KB) }
+    return "$Bytes B"
+}
+
 function Assert-Hash {
     param(
         [string]$Path,
@@ -65,7 +79,51 @@ function Download-File {
 
     Write-Host "Downloading $Label..."
     Write-Host $Url
-    Invoke-WebRequest -Uri $Url -OutFile $tempFile -UseBasicParsing
+
+    $request = [System.Net.HttpWebRequest]::Create($Url)
+    $request.AllowAutoRedirect = $true
+    $request.UserAgent = "WendaoChangshengSetup/1.0"
+    $request.Timeout = 30000
+    $request.ReadWriteTimeout = 30000
+
+    $response = $null
+    $inputStream = $null
+    $outputStream = $null
+    $activity = "Downloading $Label"
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $lastProgressMs = 0
+    $downloaded = [long]0
+
+    try {
+        $response = $request.GetResponse()
+        $total = [long]$response.ContentLength
+        $inputStream = $response.GetResponseStream()
+        $outputStream = [System.IO.File]::Open($tempFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+        $buffer = New-Object byte[] (1024 * 1024)
+
+        while (($read = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $outputStream.Write($buffer, 0, $read)
+            $downloaded += $read
+
+            if (($stopwatch.ElapsedMilliseconds - $lastProgressMs) -ge 250) {
+                $elapsedSeconds = [Math]::Max(0.1, $stopwatch.Elapsed.TotalSeconds)
+                $speed = [long]($downloaded / $elapsedSeconds)
+                if ($total -gt 0) {
+                    $percent = [Math]::Min(100, [Math]::Round(($downloaded * 100.0) / $total, 1))
+                    Write-Progress -Activity $activity -Status "$(Format-Bytes $downloaded) / $(Format-Bytes $total)  $(Format-Bytes $speed)/s" -PercentComplete $percent
+                } else {
+                    Write-Progress -Activity $activity -Status "$(Format-Bytes $downloaded)  $(Format-Bytes $speed)/s"
+                }
+                $lastProgressMs = $stopwatch.ElapsedMilliseconds
+            }
+        }
+    } finally {
+        if ($outputStream) { $outputStream.Dispose() }
+        if ($inputStream) { $inputStream.Dispose() }
+        if ($response) { $response.Dispose() }
+        Write-Progress -Activity $activity -Completed
+    }
+
     Move-Item -LiteralPath $tempFile -Destination $OutFile -Force
 }
 
@@ -83,20 +141,25 @@ if ($SkipModelHash -or [string]::IsNullOrWhiteSpace($ExpectedModelSha256)) {
     Assert-Hash -Path $ModelPath -Expected $ExpectedModelSha256 -Label "Model"
 }
 
+$runtimeReady = (Test-Path -LiteralPath $LlamaCli)
 $runtimeDownloaded = $false
-if ($Force -or -not (Test-Path -LiteralPath $RuntimeZip)) {
-    Download-File -Url $RuntimeUrl -OutFile $RuntimeZip -Label "llama.cpp Windows CPU runtime"
-    $runtimeDownloaded = $true
+if (-not $Force -and $runtimeReady) {
+    Write-Host "llama.cpp runtime exists: $LlamaCli"
 } else {
-    Write-Host "Runtime zip exists: $RuntimeZip"
-}
-if ([string]::IsNullOrWhiteSpace($ExpectedRuntimeZipSha256)) {
-    Write-Host "Runtime zip hash check skipped."
-} else {
-    Assert-Hash -Path $RuntimeZip -Expected $ExpectedRuntimeZipSha256 -Label "Runtime zip"
+    if ($Force -or -not (Test-Path -LiteralPath $RuntimeZip)) {
+        Download-File -Url $RuntimeUrl -OutFile $RuntimeZip -Label "llama.cpp Windows CPU runtime"
+        $runtimeDownloaded = $true
+    } else {
+        Write-Host "Runtime zip exists: $RuntimeZip"
+    }
+    if ([string]::IsNullOrWhiteSpace($ExpectedRuntimeZipSha256)) {
+        Write-Host "Runtime zip hash check skipped."
+    } else {
+        Assert-Hash -Path $RuntimeZip -Expected $ExpectedRuntimeZipSha256 -Label "Runtime zip"
+    }
 }
 
-if ($Force -or $runtimeDownloaded -or -not (Test-Path -LiteralPath $LlamaCli)) {
+if ($Force -or $runtimeDownloaded -or -not $runtimeReady) {
     if ($CheckOnly) {
         throw "llama-completion.exe missing and CheckOnly was set: $LlamaCli"
     }
@@ -107,8 +170,6 @@ if ($Force -or $runtimeDownloaded -or -not (Test-Path -LiteralPath $LlamaCli)) {
     }
     New-Item -ItemType Directory -Force -Path $LlamaDir | Out-Null
     Expand-Archive -LiteralPath $RuntimeZip -DestinationPath $LlamaDir -Force
-} else {
-    Write-Host "llama.cpp runtime exists: $LlamaCli"
 }
 
 if (-not (Test-Path -LiteralPath $LlamaCli)) {

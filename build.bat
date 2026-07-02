@@ -9,6 +9,24 @@ set "OUT=%OUT_DIR%\wendao_enhanced.exe"
 echo Building The Immortal Path...
 echo.
 
+where g++ >nul 2>nul
+if errorlevel 1 (
+    echo g++ was not found.
+    echo.
+    echo Required build environment:
+    echo   - Windows 10/11
+    echo   - MinGW-w64 g++ in PATH
+    echo.
+    echo One common install route:
+    echo   1. winget install MSYS2.MSYS2
+    echo   2. Open "MSYS2 UCRT64"
+    echo   3. pacman -S --needed mingw-w64-ucrt-x86_64-gcc
+    echo   4. Add C:\msys64\ucrt64\bin to PATH
+    echo.
+    echo If you already installed MinGW-w64, make sure its bin folder is in PATH.
+    exit /b 1
+)
+
 if not exist "%SRC%" (
     echo Source file not found: %SRC%
     exit /b 1

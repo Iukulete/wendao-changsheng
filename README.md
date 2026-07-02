@@ -16,13 +16,22 @@
 
 如果本地没有编译好的程序，启动脚本会自动尝试调用 `build.bat` 构建。
 
+## 环境需求
+
+- Windows 10/11
+- PowerShell 5 或更新版本
+- g++ / MinGW-w64，用于从源码构建游戏
+- 可选本地 AI：需要网络下载模型与运行时，并预留数 GB 磁盘空间
+
+一种常见的 g++ 安装方式是先安装 MSYS2，再在 `MSYS2 UCRT64` 中安装 `mingw-w64-ucrt-x86_64-gcc`，并把 `C:\msys64\ucrt64\bin` 加入 PATH。
+
 也可以手动编译：
 
 ```bat
 build.bat
 ```
 
-构建需要 Windows + g++/MinGW。游戏运行目录为 `release/`，存档会写入运行目录。
+游戏运行目录为 `release/`，存档会写入运行目录。
 
 ## 游戏内容
 
