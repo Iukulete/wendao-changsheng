@@ -179,6 +179,30 @@ struct SaveSlotInfo {
     SaveSlotInfo() : slot(0), exists(false) {}
 };
 
+enum InfoMenuAction {
+    INFO_MENU_NONE = 0,
+    INFO_MENU_LIFE_STORY,
+    INFO_MENU_FAMILY,
+    INFO_MENU_SOCIAL,
+    INFO_MENU_CHARACTER_CODEX,
+    INFO_MENU_MEMORY,
+    INFO_MENU_LEGACY,
+    INFO_MENU_ITEM_CODEX,
+    INFO_MENU_HONGMENG,
+    INFO_MENU_TONGTIAN,
+    INFO_MENU_LIFE_ARTIFACT
+};
+
+struct InfoMenuItem {
+    InfoMenuAction action;
+    wstring title;
+    wstring detail;
+
+    InfoMenuItem() : action(INFO_MENU_NONE) {}
+    InfoMenuItem(InfoMenuAction action, const wstring& title, const wstring& detail)
+        : action(action), title(title), detail(detail) {}
+};
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -274,7 +298,7 @@ wstring GetFamilyDetailText(const FamilyBackground& bg) {
     if (!bg.secret.empty()) {
         ss << L"\n【隐情】\n" << bg.secret << L"\n";
     }
-    ss << L"\n此世家世会影响开局资源、名望，以及本地 AI 事件中的亲缘、仇家、宗门旧识。";
+    ss << L"\n此世家世会影响开局资源、名望、亲缘、仇家与宗门旧识。";
     return ss.str();
 }
 
@@ -1098,6 +1122,8 @@ vector<wstring> g_characterCodexNames;
 wstring g_characterCodexSelectedName;
 vector<RECT> g_saveSlotButtonRects;
 vector<SaveSlotInfo> g_saveSlotInfos;
+vector<RECT> g_infoMenuButtonRects;
+vector<InfoMenuItem> g_infoMenuItems;
 bool g_backButtonVisible = false;
 bool g_infoScrollDragging = false;
 bool g_mainScrollDragging = false;
@@ -1105,6 +1131,7 @@ bool g_characterCodexListPage = false;
 bool g_characterCodexDetailPage = false;
 bool g_saveSlotPage = false;
 bool g_saveSlotLoadMode = false;
+bool g_infoMenuPage = false;
 int g_infoScroll = 0;
 int g_infoScrollMax = 0;
 int g_mainScroll = 0;
@@ -1121,11 +1148,15 @@ void ShowNotice(const wstring& title, const wstring& text);
 void OpenCharacterCodexPage();
 void OpenCharacterDetailPage(const wstring& name);
 void OpenSaveSlotPage(bool loadMode);
+void OpenLifeInfoMenuPage();
+void OpenLegacyInfoMenuPage();
+void OpenTreasureInfoMenuPage();
 vector<vector<wstring>> LoadItemDbRows();
 void DiscoverItemsFromText(const wstring& text);
 PlayerContext BuildPlayerContext();
 wstring BuildCompanionJadeVisibleText();
 wstring BuildCompanionJadeHiddenContext();
+wstring SanitizePlayerFacingText(wstring text);
 void ApplyCompanionJadeToBirth();
 int CountHongmengInsightKinds();
 wstring BuildPlannedLegacyDigest(int limit = 4);
@@ -1350,6 +1381,26 @@ wstring BuildLifeArtifactText() {
     ss << L"未达通天层次的普通器物不能稳定跨世，死亡或转世后多半失散、损毁或被后人夺走；能留下来的通常只是记忆、因果、器痕或道胚。\n\n";
     ss << BuildTreasureTierSystemText() << L"\n";
     ss << BuildLifeArtifactDigest(8);
+    return ss.str();
+}
+
+wstring BuildTongtianTreasureText() {
+    wstringstream ss;
+    ss << L"【通天灵宝】\n\n";
+    ss << L"通天层次不是普通装备栏里的强力武器，而是能长存于世、承载大道与纪元记忆的器物格位。\n\n";
+    ss << BuildTreasureTierSystemText() << L"\n\n";
+    ss << L"【当前通天残印】\n";
+    ss << g_legacySystem.GetDaoContextText() << L"\n\n";
+    ss << L"后天通天灵宝可由顶尖仙帝或道祖炼成，能跨纪元流传，但久无人温养会衰退；先天通天灵宝自带先天一气，在多数修士眼中已是器物顶点。";
+    return ss.str();
+}
+
+wstring BuildLifeBoundTreasureText() {
+    wstringstream ss;
+    ss << L"【本命至宝】\n\n";
+    ss << L"本命至宝来自修士自身道途的长期温养。它未必先天高贵，却最契合主人，能随境界、道心、器痕与取舍一路成长。\n\n";
+    ss << L"若道途足够深，本命至宝可后天抵达通天层次；天道境道祖的万道本命至宝，甚至可后天触及鸿蒙至宝水平。\n\n";
+    ss << BuildLifeArtifactText();
     return ss.str();
 }
 
@@ -1657,7 +1708,7 @@ wstring GetMemoryText(int limit = 12) {
 
     int start = max(0, (int)g_memoryLog.size() - limit);
     for (int i = start; i < (int)g_memoryLog.size(); i++) {
-        ss << L"- " << g_memoryLog[i] << L"\n";
+        ss << L"- " << SanitizePlayerFacingText(g_memoryLog[i]) << L"\n";
     }
     return ss.str();
 }
@@ -1696,6 +1747,14 @@ wstring NormalizeStoryNote(const wstring& text, size_t limit = 150) {
     wstring compact = CompactMemoryFragment(text);
     if (compact.size() > limit) {
         compact = compact.substr(0, limit) + L"...";
+    }
+    return compact;
+}
+
+wstring ClampUiText(const wstring& text, size_t limit) {
+    wstring compact = CompactMemoryFragment(text);
+    if (compact.size() > limit) {
+        compact = compact.substr(0, limit);
     }
     return compact;
 }
@@ -2280,7 +2339,6 @@ wstring BuildFactionTieText() {
     if (!g_factionTie.hook.empty()) {
         ss << L"后续线索: " << g_factionTie.hook << L"\n";
     }
-    ss << L"\n本地 AI 会优先把这个势力当成本世持续存在的组织来续写，而不是每次凭空换一个宗门。";
     return ss.str();
 }
 
@@ -2427,7 +2485,7 @@ void GenerateWorldEra() {
     }
 
     if (g_generation <= 1) {
-        g_reincarnationEcho = L"这是第一世，尚无前世记忆；黑白伴生玉佩只带来模糊梦兆、早熟直觉和来历不明的温凉玉意。";
+        g_reincarnationEcho = L"黑白伴生玉佩偶尔带来模糊梦兆、早熟直觉和来历不明的温凉玉意。";
     } else if (relicEcho >= 25 || treasureEcho >= 40) {
         g_reincarnationEcho = L"你隐约能感到某件前世祭炼过的重宝仍在呼应自己，这一世有关器灵、法宝与遗府的因果会更浓。";
     } else if (knowledgeEcho >= 40) {
@@ -2444,6 +2502,33 @@ void GenerateWorldEra() {
     RecordEraChronicle(previousEra);
 }
 
+wstring GetVisibleReincarnationEcho() {
+    if (g_reincarnationEcho.find(L"这是第一世") != wstring::npos ||
+        g_reincarnationEcho.find(L"尚无前世记忆") != wstring::npos ||
+        g_reincarnationEcho.find(L"第一世没有前世记忆") != wstring::npos) {
+        return L"黑白伴生玉佩偶尔带来模糊梦兆、早熟直觉和来历不明的温凉玉意。";
+    }
+    return g_reincarnationEcho;
+}
+
+wstring SanitizePlayerFacingText(wstring text) {
+    auto replaceAll = [&](const wstring& from, const wstring& to) {
+        if (from.empty()) return;
+        size_t pos = 0;
+        while ((pos = text.find(from, pos)) != wstring::npos) {
+            text.replace(pos, from.size(), to);
+            pos += to.size();
+        }
+    };
+
+    replaceAll(L"本地 AI 会优先把这个势力当成本世持续存在的组织来续写，而不是每次凭空换一个宗门。", L"");
+    replaceAll(L"第一世没有前世记忆；若梦境出现异样，也只是伴生旧玉在暗示未来取舍。",
+        L"黑白伴生玉佩偶尔牵出梦兆；若梦境出现异样，也只是提醒你留意今生取舍。");
+    replaceAll(L"这是第一世，尚无前世记忆；", L"");
+    replaceAll(L"第一世没有前世记忆；", L"");
+    return text;
+}
+
 wstring GetEraSummaryText() {
     wstringstream ss;
     ss << L"【时代风貌】\n\n";
@@ -2452,7 +2537,7 @@ wstring GetEraSummaryText() {
     ss << L"时代法则: " << g_worldEraRule << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"转折因由: " << g_eraShiftCause << L"\n";
-    ss << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+    ss << L"轮回余烬: " << GetVisibleReincarnationEcho() << L"\n";
     ss << L"鸿蒙天象: " << BuildHongmengOmenBrief() << L"\n";
     if (!g_eraChronicle.empty()) {
         ss << BuildEraChronicleText(6) << L"\n";
@@ -2467,7 +2552,7 @@ wstring GetEraSummaryText() {
     if (!g_lifeStoryHooks.empty()) {
         ss << L"本世线索:\n";
         for (const auto& hook : g_lifeStoryHooks) {
-            ss << L"- " << hook << L"\n";
+            ss << L"- " << SanitizePlayerFacingText(hook) << L"\n";
         }
     }
     return ss.str();
@@ -2582,7 +2667,7 @@ wstring BuildLifeStoryText() {
         return ss.str();
     }
     for (size_t i = 0; i < g_lifeStoryHooks.size(); ++i) {
-        ss << L"[" << (i + 1) << L"] " << g_lifeStoryHooks[i] << L"\n";
+        ss << L"[" << (i + 1) << L"] " << SanitizePlayerFacingText(g_lifeStoryHooks[i]) << L"\n";
     }
     return ss.str();
 }
@@ -5674,7 +5759,7 @@ wstring BuildCharacterDetailText(const wstring& name) {
     if (HasPriorLifeEcho()) {
         ss << L"黑白旧玉会托起一些前世碎片，但旧忆只能帮你校准判断，不能替今生选择。\n\n";
     } else {
-        ss << L"第一世没有前世记忆；你最多只有伴生旧玉的梦兆、早熟直觉和今生遭遇。\n\n";
+        ss << L"此世因果尚浅，你更多依靠今生见闻、早熟直觉与伴生旧玉偶尔浮起的梦兆。\n\n";
     }
 
     AppendCharacterProfile(ss, name, L" · " + GetCharacterRoleCaption(name),
@@ -5936,7 +6021,7 @@ void GenerateLifeStoryHooks() {
     if (!pastFragments.empty()) {
         g_lifeStoryHooks.push_back(L"前世碎片反复浮现：" + pastFragments[0]);
     } else if (!priorLife) {
-        g_lifeStoryHooks.push_back(L"第一世没有前世记忆；若梦境出现异样，也只是伴生旧玉在暗示未来取舍。");
+        g_lifeStoryHooks.push_back(L"黑白伴生玉佩偶尔牵出梦兆；若梦境出现异样，也只是提醒你留意今生取舍。");
     } else {
         g_lifeStoryHooks.push_back(L"这一世暂未想起清晰前世碎片，旧玉梦兆只能作为模糊提醒。");
     }
@@ -6972,6 +7057,9 @@ void OpenInfoPage(const wstring& title, const wstring& text, GameState returnSta
     g_infoText = text;
     g_infoReturnState = returnState;
     g_infoScroll = 0;
+    g_infoMenuPage = false;
+    g_infoMenuItems.clear();
+    g_infoMenuButtonRects.clear();
     g_characterCodexListPage = false;
     g_characterCodexDetailPage = false;
     g_characterCodexSelectedName.clear();
@@ -6980,6 +7068,78 @@ void OpenInfoPage(const wstring& title, const wstring& text, GameState returnSta
     g_saveSlotLoadMode = false;
     g_saveSlotButtonRects.clear();
     g_gameState = STATE_INFO;
+}
+
+void OpenInfoMenuPage(const wstring& title, const wstring& intro, const vector<InfoMenuItem>& items) {
+    OpenInfoPage(title, intro, STATE_GAME);
+    g_infoMenuItems = items;
+    g_infoMenuButtonRects.clear();
+    g_infoMenuPage = true;
+}
+
+void ActivateInfoMenuItem(const InfoMenuItem& item) {
+    switch (item.action) {
+        case INFO_MENU_LIFE_STORY:
+            OpenInfoPage(L"本世主线", BuildLifeStoryText(), STATE_GAME);
+            break;
+        case INFO_MENU_FAMILY:
+            OpenInfoPage(L"此世家世", GetFamilyDetailText(g_player.family) + L"\n\n" + BuildFactionTieText(), STATE_GAME);
+            break;
+        case INFO_MENU_SOCIAL:
+            OpenInfoPage(L"人情风波", GetSocialRumorText(8), STATE_GAME);
+            break;
+        case INFO_MENU_CHARACTER_CODEX:
+            OpenCharacterCodexPage();
+            break;
+        case INFO_MENU_MEMORY:
+            OpenInfoPage(L"道途记忆", GetMemoryText(18), STATE_GAME);
+            break;
+        case INFO_MENU_LEGACY:
+            OpenInfoPage(L"前世传承", GetLegacyInfoText(), STATE_GAME);
+            break;
+        case INFO_MENU_ITEM_CODEX:
+            OpenInfoPage(L"灵物图录", BuildItemCodexText(), STATE_GAME);
+            break;
+        case INFO_MENU_HONGMENG:
+            OpenInfoPage(L"鸿蒙至宝", BuildHongmengTreasuresText(), STATE_GAME);
+            break;
+        case INFO_MENU_TONGTIAN:
+            OpenInfoPage(L"通天灵宝", BuildTongtianTreasureText(), STATE_GAME);
+            break;
+        case INFO_MENU_LIFE_ARTIFACT:
+            OpenInfoPage(L"本命至宝", BuildLifeBoundTreasureText(), STATE_GAME);
+            break;
+        default:
+            break;
+    }
+}
+
+void OpenLifeInfoMenuPage() {
+    OpenInfoMenuPage(L"本世", L"查看这一世已经浮出水面的主线、家世、人情和角色因果。",
+        {
+            InfoMenuItem(INFO_MENU_LIFE_STORY, L"本世主线", L"今生要面对的线索、势力牵连与伴生旧玉异动。"),
+            InfoMenuItem(INFO_MENU_FAMILY, L"此世家世", L"父母、养育者、出身名望、家族隐情与本世势力牵连。"),
+            InfoMenuItem(INFO_MENU_SOCIAL, L"人情风波", L"近日风声、恩怨余波、长辈认可、同辈嫉妒与暗中试探。"),
+            InfoMenuItem(INFO_MENU_CHARACTER_CODEX, L"角色因果", L"已见过或听闻的人物。关键人物会随事件逐步显露。")
+        });
+}
+
+void OpenLegacyInfoMenuPage() {
+    OpenInfoMenuPage(L"传承", L"查看道途记忆、前世传承和当世见闻。这里不替你做选择，只把旧痕摆到眼前。",
+        {
+            InfoMenuItem(INFO_MENU_MEMORY, L"道途记忆", L"本世与轮回中真正留下痕迹的事件。"),
+            InfoMenuItem(INFO_MENU_LEGACY, L"前世传承", L"前世记录、继承传承、天道境条件与成就。"),
+            InfoMenuItem(INFO_MENU_ITEM_CODEX, L"灵物图录", L"当世见过的灵物、材料、丹药与普通法宝图录。")
+        });
+}
+
+void OpenTreasureInfoMenuPage() {
+    OpenInfoMenuPage(L"至宝", L"查看器物层级与至宝权柄。低境界只能远观和参悟，真正调用仍由境界、因果和相性决定。",
+        {
+            InfoMenuItem(INFO_MENU_HONGMENG, L"鸿蒙至宝", L"九大创世级权柄至宝，以及当前可见、可用、可反噬的状态。"),
+            InfoMenuItem(INFO_MENU_TONGTIAN, L"通天灵宝", L"先天/后天通天灵宝、通天残印与跨纪元器物规则。"),
+            InfoMenuItem(INFO_MENU_LIFE_ARTIFACT, L"本命至宝", L"今生器物、本命道胚、万道本命至宝的成长路线。")
+        });
 }
 
 void OpenCharacterCodexPage() {
@@ -7015,6 +7175,9 @@ void ReturnFromInfoPage() {
     g_saveSlotPage = false;
     g_saveSlotLoadMode = false;
     g_saveSlotButtonRects.clear();
+    g_infoMenuPage = false;
+    g_infoMenuItems.clear();
+    g_infoMenuButtonRects.clear();
 }
 
 PlayerContext BuildPlayerContext() {
@@ -7108,7 +7271,7 @@ PlayerContext BuildPlayerContext() {
         }
     }
     if (!g_reincarnationEcho.empty()) {
-        legacy << L"轮回余烬: " << g_reincarnationEcho << L"\n";
+        legacy << L"轮回余烬: " << GetVisibleReincarnationEcho() << L"\n";
     }
     legacy << BuildCompanionJadeHiddenContext() << L"\n";
     wstring memoryContext = g_legacySystem.GetMemoryContextText(6);
@@ -7169,7 +7332,7 @@ PlayerContext BuildPlayerContext() {
         }
     }
     world << BuildStoryStateContext();
-    world << L"- 轮回余烬: " << g_reincarnationEcho << L"\n";
+    world << L"- 轮回余烬: " << GetVisibleReincarnationEcho() << L"\n";
     world << L"- 寿元压力: " << BuildLifespanPressureText() << L"\n";
     world << L"- 道祖-天道境进度: " << GetHeavenlyDaoProgressScore() << L" / 360\n";
     world << L"- 鸿蒙参悟: " << CountHongmengInsightKinds() << L" / 9\n";
@@ -8495,7 +8658,7 @@ void StartNextLife() {
     if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
     AddMemory(L"本世主线", g_lifePremise);
     if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
-    AddMemory(L"前世余烬", g_reincarnationEcho);
+    AddMemory(L"前世余烬", GetVisibleReincarnationEcho());
     if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
     if (!rememberedFragments.empty()) {
@@ -8674,7 +8837,7 @@ wstring BuildMainWorldDigest() {
         ss << L"天下暂静，暗流仍在山门之间潜行。\n";
     }
 
-    ss << L"\n" << g_reincarnationEcho << L"\n";
+    ss << L"\n" << GetVisibleReincarnationEcho() << L"\n";
     if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") {
         ss << L"此世奇遇更偏向灵机、工坊、远讯与技术化道统。\n";
     } else if (g_worldEraName == L"废土返道纪" || g_worldEraName == L"末法裂变纪") {
@@ -8714,12 +8877,37 @@ wstring BuildAiStatusDigest() {
     return g_lastAiStatus;
 }
 
+wstring BuildProtagonistPortraitBrief() {
+    if (g_lastAiStatus.empty() ||
+        g_lastAiStatus == L"本局尚未触发动态事件。" ||
+        g_lastAiStatus == L"本世尚未触发动态事件。") {
+        return L"旧玉微温，静待历练。";
+    }
+    if (g_lastAiStatus.find(L"正在推演") != wstring::npos) {
+        return L"天机推演中。";
+    }
+    if (g_lastAiStatus.find(L"回退") != wstring::npos ||
+        g_lastAiStatus.find(L"失败") != wstring::npos ||
+        g_lastAiStatus.find(L"超时") != wstring::npos) {
+        return L"天机不稳，因果自续。";
+    }
+    if (g_lastAiStatus.find(L"读取") != wstring::npos) {
+        return L"旧档已续，道途未断。";
+    }
+    if (g_lastAiStatus.find(L"修复") != wstring::npos ||
+        g_lastAiStatus.find(L"已生成") != wstring::npos ||
+        g_lastAiStatus.find(L"写入") != wstring::npos) {
+        return L"新因果已显。";
+    }
+    return L"因果暗涌，静待抉择。";
+}
+
 wstring BuildRecentMemoryDigest() {
     if (g_memoryLog.empty()) return L"尚无新的道途记忆。";
     wstringstream ss;
     int start = max(0, (int)g_memoryLog.size() - 3);
     for (int i = start; i < (int)g_memoryLog.size(); i++) {
-        ss << L"- " << g_memoryLog[i] << L"\n";
+        ss << L"- " << SanitizePlayerFacingText(g_memoryLog[i]) << L"\n";
     }
     return ss.str();
 }
@@ -8978,11 +9166,11 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.SetClip(futureRoleRect);
             StringFormat protagonistCenter;
             protagonistCenter.SetAlignment(StringAlignmentCenter);
-            protagonistCenter.SetTrimming(StringTrimmingEllipsisCharacter);
+            protagonistCenter.SetTrimming(StringTrimmingCharacter);
             protagonistCenter.SetFormatFlags(StringFormatFlagsNoWrap);
             StringFormat protagonistText;
             protagonistText.SetAlignment(StringAlignmentNear);
-            protagonistText.SetTrimming(StringTrimmingEllipsisCharacter);
+            protagonistText.SetTrimming(StringTrimmingCharacter);
             protagonistText.SetFormatFlags(StringFormatFlagsLineLimit);
 
             graphics.DrawString(L"主角照影", -1, &statFont,
@@ -9006,17 +9194,17 @@ void OnPaint(HDC hdc, RECT& rect) {
                     portraitHintRect, &protagonistCenter, &mutedBrush);
             }
             REAL detailY = portraitHintRect.GetBottom() + 10.0f;
-            graphics.DrawString(NormalizeStoryNote(g_player.name, 18).c_str(), -1, &statFont,
+            graphics.DrawString(ClampUiText(g_player.name, 18).c_str(), -1, &statFont,
                 RectF(futureRoleRect.X + 12, detailY, futureRoleRect.Width - 24, 24),
                 &protagonistCenter, &goldBrush);
-            wstring realmBrief = NormalizeStoryNote(GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality(), 24);
+            wstring realmBrief = ClampUiText(GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality(), 24);
             graphics.DrawString(realmBrief.c_str(), -1, &smallFont,
                 RectF(futureRoleRect.X + 12, detailY + 26.0f, futureRoleRect.Width - 24, 24),
                 &protagonistCenter, &softWhiteBrush);
             REAL briefTop = detailY + 54.0f;
             REAL briefHeight = futureRoleRect.GetBottom() - briefTop - 10.0f;
             if (briefHeight >= 18.0f) {
-                wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 42);
+                wstring aiBrief = BuildProtagonistPortraitBrief();
                 graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
                     RectF(futureRoleRect.X + 14, briefTop, futureRoleRect.Width - 28, briefHeight),
                     &protagonistText, &mutedBrush);
@@ -9090,34 +9278,38 @@ void OnPaint(HDC hdc, RECT& rect) {
                 graphics.FillRectangle(&thumbBrush, RectF(mainScrollTrack.X, thumbY, mainScrollTrack.Width, thumbHeight));
             }
 
-            graphics.DrawString(L"行动", -1, &sectionFont,
-                RectF(rightPanel.X + 20, rightPanel.Y + 20, rightPanel.Width - 40, 28), &leftFormat, &goldBrush);
-            const vector<wstring> commands = {
-                L"[1] 打坐修炼",
-                L"[2] 外出历练",
-                L"[3] 突破境界",
-                L"[4] 服用丹药",
+            auto drawCommandGroup = [&](const wstring& title, const vector<wstring>& lines, REAL& cmdY) {
+                graphics.DrawString(title.c_str(), -1, &sectionFont,
+                    RectF(rightPanel.X + 20, cmdY, rightPanel.Width - 40, 28), &leftFormat, &goldBrush);
+                cmdY += 36.0f;
+                for (const auto& line : lines) {
+                    graphics.DrawString(line.c_str(), -1, &commandFont,
+                        RectF(rightPanel.X + 24, cmdY, rightPanel.Width - 48, 24), &leftFormat, &softWhiteBrush);
+                    cmdY += 30.0f;
+                }
+                cmdY += 18.0f;
+            };
+
+            REAL cmdY = rightPanel.Y + 20.0f;
+            drawCommandGroup(L"行动", {
+                L"[1] 修炼",
+                L"[2] 历练",
+                L"[3] 突破",
+                L"[4] 调息服药",
                 L"[5] 灵石闭关",
-                L"[6] 铸炼器物",
-                L"[W] 修真界现状",
-                L"[P] 本世主线",
-                L"[F] 此世家世",
-                L"[R] 人情风波",
-                L"[C] 角色因果",
-                L"[I] 灵物图录",
-                L"[T] 鸿蒙至宝",
-                L"[H] 道途记忆",
-                L"[G] 前世传承",
+                L"[6] 铸炼器物"
+            }, cmdY);
+            drawCommandGroup(L"查看", {
+                L"[W] 世界",
+                L"[Q] 本世",
+                L"[E] 传承",
+                L"[T] 至宝"
+            }, cmdY);
+            drawCommandGroup(L"系统", {
                 L"[S] 保存",
                 L"[L] 读取",
                 L"[ESC] 退出"
-            };
-            REAL cmdY = rightPanel.Y + 64;
-            for (const auto& command : commands) {
-                graphics.DrawString(command.c_str(), -1, &commandFont,
-                    RectF(rightPanel.X + 22, cmdY, rightPanel.Width - 44, 24), &leftFormat, &softWhiteBrush);
-                cmdY += 32;
-            }
+            }, cmdY);
             break;
         }
 
@@ -9269,6 +9461,76 @@ void OnPaint(HDC hdc, RECT& rect) {
                     ? L"点击槽位或按数字读取  |  ESC 返回"
                     : L"点击槽位或按数字保存  |  ESC 返回";
                 graphics.DrawString(saveSlotFooter.c_str(), -1, &smallFont,
+                    RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
+                    &leftFormat, &mutedBrush);
+                break;
+            }
+
+            if (g_infoMenuPage) {
+                g_infoMenuButtonRects.clear();
+                Font menuButtonFont(&fontFamily, 20, FontStyleBold, UnitPixel);
+                const REAL menuButtonHeight = 66.0f;
+                const REAL menuButtonStep = 80.0f;
+                RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
+                    infoRect.Width - 116, infoRect.Height - 150);
+                int estimatedContentHeight = max((int)contentClip.Height + 1,
+                    96 + (int)(g_infoMenuItems.size() * menuButtonStep));
+                g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
+                g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
+
+                graphics.SetClip(contentClip);
+                RectF introRect(contentClip.X, contentClip.Y - (REAL)g_infoScroll,
+                    contentClip.Width, 64);
+                graphics.DrawString(g_infoText.c_str(), -1, &infoTextFont,
+                    introRect, &leftFormat, &softWhiteBrush);
+
+                REAL buttonY = contentClip.Y + 92.0f - (REAL)g_infoScroll;
+                for (size_t i = 0; i < g_infoMenuItems.size(); ++i) {
+                    const InfoMenuItem& item = g_infoMenuItems[i];
+                    RectF buttonRect(contentClip.X, buttonY, contentClip.Width - 18, menuButtonHeight);
+                    RECT clickRect = {
+                        (LONG)buttonRect.X,
+                        (LONG)buttonRect.Y,
+                        (LONG)(buttonRect.X + buttonRect.Width),
+                        (LONG)(buttonRect.Y + buttonRect.Height)
+                    };
+                    g_infoMenuButtonRects.push_back(clickRect);
+
+                    if (buttonRect.GetBottom() >= contentClip.Y && buttonRect.Y <= contentClip.GetBottom()) {
+                        SolidBrush buttonBrush(Color(120, 24, 25, 30));
+                        Pen buttonPen(Color(95, 228, 190, 76), 1);
+                        graphics.FillRectangle(&buttonBrush, buttonRect);
+                        graphics.DrawRectangle(&buttonPen, buttonRect);
+
+                        wstring titleText = L"[" + to_wstring(i + 1) + L"] " + item.title;
+                        graphics.DrawString(titleText.c_str(), -1, &menuButtonFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 8, buttonRect.Width - 36, 28),
+                            &leftFormat, &goldBrush);
+                        graphics.DrawString(item.detail.c_str(), -1, &smallFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 38, buttonRect.Width - 36, 22),
+                            &leftFormat, &mutedBrush);
+                    }
+                    buttonY += menuButtonStep;
+                }
+                graphics.ResetClip();
+
+                RectF scrollTrack(infoRect.GetRight() - 58, contentClip.Y, 8, contentClip.Height);
+                g_infoScrollTrackRect = {
+                    (LONG)scrollTrack.X,
+                    (LONG)scrollTrack.Y,
+                    (LONG)(scrollTrack.X + scrollTrack.Width),
+                    (LONG)(scrollTrack.Y + scrollTrack.Height)
+                };
+                SolidBrush trackBrush(Color(120, 48, 48, 52));
+                SolidBrush thumbBrush(Color(210, 228, 190, 76));
+                if (g_infoScrollMax > 0) {
+                    graphics.FillRectangle(&trackBrush, scrollTrack);
+                    REAL thumbHeight = max(36.0f, contentClip.Height * contentClip.Height / (REAL)estimatedContentHeight);
+                    REAL thumbY = scrollTrack.Y + (contentClip.Height - thumbHeight) * ((REAL)g_infoScroll / (REAL)g_infoScrollMax);
+                    graphics.FillRectangle(&thumbBrush, RectF(scrollTrack.X, thumbY, scrollTrack.Width, thumbHeight));
+                }
+
+                graphics.DrawString(L"点击条目或按数字查看  |  ESC 返回", -1, &smallFont,
                     RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
                     &leftFormat, &mutedBrush);
                 break;
@@ -9572,6 +9834,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         }
                     }
                     if (!clickedCharacter &&
+                        x >= g_infoScrollTrackRect.left && x <= g_infoScrollTrackRect.right &&
+                        y >= g_infoScrollTrackRect.top && y <= g_infoScrollTrackRect.bottom &&
+                        g_infoScrollMax > 0) {
+                        int trackHeight = max(1, (int)(g_infoScrollTrackRect.bottom - g_infoScrollTrackRect.top));
+                        int relativeY = max(0, min(trackHeight, (int)(y - g_infoScrollTrackRect.top)));
+                        g_infoScroll = g_infoScrollMax * relativeY / trackHeight;
+                        g_infoScrollDragging = true;
+                        SetCapture(hWnd);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                } else if (g_infoMenuPage) {
+                    bool clickedItem = false;
+                    for (size_t i = 0; i < g_infoMenuButtonRects.size() && i < g_infoMenuItems.size(); ++i) {
+                        const RECT& rc = g_infoMenuButtonRects[i];
+                        if (x >= rc.left && x <= rc.right && y >= rc.top && y <= rc.bottom) {
+                            ActivateInfoMenuItem(g_infoMenuItems[i]);
+                            InvalidateRect(hWnd, NULL, FALSE);
+                            clickedItem = true;
+                            break;
+                        }
+                    }
+                    if (!clickedItem &&
                         x >= g_infoScrollTrackRect.left && x <= g_infoScrollTrackRect.right &&
                         y >= g_infoScrollTrackRect.top && y <= g_infoScrollTrackRect.bottom &&
                         g_infoScrollMax > 0) {
@@ -9950,6 +10234,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     OpenInfoPage(L"修真界现状", GetWorldInfoText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
+                else if (wParam == 'Q' || wParam == 'q') {
+                    OpenLifeInfoMenuPage();
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'E' || wParam == 'e') {
+                    OpenLegacyInfoMenuPage();
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'T' || wParam == 't') {
+                    OpenTreasureInfoMenuPage();
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
                 else if (wParam == 'P' || wParam == 'p') {
                     OpenInfoPage(L"本世主线", BuildLifeStoryText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
@@ -9968,10 +10264,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
                 else if (wParam == 'I' || wParam == 'i') {
                     OpenInfoPage(L"灵物图录", BuildItemCodexText(), STATE_GAME);
-                    InvalidateRect(hWnd, NULL, FALSE);
-                }
-                else if (wParam == 'T' || wParam == 't') {
-                    OpenInfoPage(L"鸿蒙至宝", BuildHongmengTreasuresText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'H' || wParam == 'h') {
@@ -10032,6 +10324,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     int index = (int)(wParam - '1');
                     if (index >= 0 && index < (int)g_saveSlotInfos.size()) {
                         ActivateSaveSlot(g_saveSlotInfos[index].slot);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                } else if (g_infoMenuPage && wParam >= '1' && wParam <= '9') {
+                    int index = (int)(wParam - '1');
+                    if (index >= 0 && index < (int)g_infoMenuItems.size()) {
+                        ActivateInfoMenuItem(g_infoMenuItems[index]);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                 } else if (g_characterCodexListPage && wParam >= '1' && wParam <= '9') {
