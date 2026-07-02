@@ -169,6 +169,16 @@ struct HongmengTreasureProgress {
     HongmengTreasureProgress() : state(HONGMENG_UNSEEN), affinity(0), uses(0) {}
 };
 
+struct SaveSlotInfo {
+    int slot;
+    wstring path;
+    bool exists;
+    wstring title;
+    wstring detail;
+
+    SaveSlotInfo() : slot(0), exists(false) {}
+};
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -1084,11 +1094,15 @@ RECT g_mainScrollAreaRect = {0, 0, 0, 0};
 vector<RECT> g_characterButtonRects;
 vector<wstring> g_characterCodexNames;
 wstring g_characterCodexSelectedName;
+vector<RECT> g_saveSlotButtonRects;
+vector<SaveSlotInfo> g_saveSlotInfos;
 bool g_backButtonVisible = false;
 bool g_infoScrollDragging = false;
 bool g_mainScrollDragging = false;
 bool g_characterCodexListPage = false;
 bool g_characterCodexDetailPage = false;
+bool g_saveSlotPage = false;
+bool g_saveSlotLoadMode = false;
 int g_infoScroll = 0;
 int g_infoScrollMax = 0;
 int g_mainScroll = 0;
@@ -1104,6 +1118,7 @@ HWND g_btnStart;
 void ShowNotice(const wstring& title, const wstring& text);
 void OpenCharacterCodexPage();
 void OpenCharacterDetailPage(const wstring& name);
+void OpenSaveSlotPage(bool loadMode);
 vector<vector<wstring>> LoadItemDbRows();
 void DiscoverItemsFromText(const wstring& text);
 PlayerContext BuildPlayerContext();
@@ -6959,6 +6974,9 @@ void OpenInfoPage(const wstring& title, const wstring& text, GameState returnSta
     g_characterCodexDetailPage = false;
     g_characterCodexSelectedName.clear();
     g_characterButtonRects.clear();
+    g_saveSlotPage = false;
+    g_saveSlotLoadMode = false;
+    g_saveSlotButtonRects.clear();
     g_gameState = STATE_INFO;
 }
 
@@ -6992,6 +7010,9 @@ void ReturnFromInfoPage() {
     g_characterCodexListPage = false;
     g_characterCodexDetailPage = false;
     g_characterButtonRects.clear();
+    g_saveSlotPage = false;
+    g_saveSlotLoadMode = false;
+    g_saveSlotButtonRects.clear();
 }
 
 PlayerContext BuildPlayerContext() {
@@ -7655,9 +7676,112 @@ bool LoadWorldEra(wifstream& file) {
 }
 
 // ==================== 存档系统 ====================
-void SaveGame() {
-    wofstream file(L"save.txt");
-    if (!file) return;
+const int SAVE_SLOT_COUNT = 6;
+
+wstring GetSaveSlotPath(int slot) {
+    if (slot <= 1) return L"save.txt";
+    return L"save_slot_" + to_wstring(slot) + L".txt";
+}
+
+bool FileExists(const wstring& path) {
+    DWORD attrs = GetFileAttributesW(path.c_str());
+    return attrs != INVALID_FILE_ATTRIBUTES && !(attrs & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+wstring FormatFileTimeBrief(const wstring& path) {
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    if (!GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &data)) {
+        return L"未知时间";
+    }
+    FILETIME localTime = {};
+    SYSTEMTIME systemTime = {};
+    FileTimeToLocalFileTime(&data.ftLastWriteTime, &localTime);
+    FileTimeToSystemTime(&localTime, &systemTime);
+    auto two = [](WORD value) {
+        return (value < 10 ? L"0" : L"") + to_wstring(value);
+    };
+    return to_wstring(systemTime.wYear) + L"-" + two(systemTime.wMonth) + L"-" +
+        two(systemTime.wDay) + L" " + two(systemTime.wHour) + L":" + two(systemTime.wMinute);
+}
+
+SaveSlotInfo ReadSaveSlotInfo(int slot) {
+    SaveSlotInfo info;
+    info.slot = slot;
+    info.path = GetSaveSlotPath(slot);
+    info.exists = FileExists(info.path);
+    if (!info.exists) {
+        info.title = L"空槽位";
+        info.detail = slot == 1 ? L"兼容旧版默认存档；保存后写入 save.txt。" : L"尚未写入。";
+        return info;
+    }
+
+    wifstream file(info.path.c_str());
+    if (!file) {
+        info.title = L"无法读取";
+        info.detail = info.path;
+        return info;
+    }
+
+    wstring marker;
+    getline(file, marker);
+    if (marker != L"SAVE_V4") {
+        info.title = L"旧档或损坏";
+        info.detail = info.path + L" · " + FormatFileTimeBrief(info.path);
+        return info;
+    }
+
+    wstring name;
+    int realm = 0;
+    int level = 0;
+    int exp = 0;
+    int hp = 0;
+    int maxHp = 0;
+    int mp = 0;
+    int maxMp = 0;
+    int karma = 0;
+    int age = 0;
+    int lifespan = 0;
+    int spiritStones = 0;
+    int pills = 0;
+    int attack = 0;
+    int defense = 0;
+    int rootFire = 0;
+    int rootWater = 0;
+    int rootWood = 0;
+    int rootMetal = 0;
+    int rootEarth = 0;
+    int totalEvents = 0;
+    int battlesWon = 0;
+    int npcsMet = 0;
+
+    getline(file, name);
+    file >> realm >> level >> exp >> hp >> maxHp >> mp >> maxMp;
+    file >> karma >> age >> lifespan >> spiritStones >> pills;
+    file >> attack >> defense;
+    file >> rootFire >> rootWater >> rootWood >> rootMetal >> rootEarth;
+    file >> totalEvents >> battlesWon >> npcsMet;
+
+    Realm shownRealm = static_cast<Realm>(max(0, min(realm, (int)HEAVENLY_DAO)));
+    info.title = (name.empty() ? L"无名修士" : name) + L" · " +
+        GetRealmName(shownRealm) + L" " + to_wstring(max(1, level)) + L"层";
+    info.detail = L"第" + to_wstring(max(0, age)) + L"年 · 因果" +
+        (karma >= 0 ? L"+" : L"") + to_wstring(karma) +
+        L" · 历练" + to_wstring(max(0, totalEvents)) +
+        L" · " + FormatFileTimeBrief(info.path);
+    return info;
+}
+
+vector<SaveSlotInfo> BuildSaveSlotInfos() {
+    vector<SaveSlotInfo> slots;
+    for (int i = 1; i <= SAVE_SLOT_COUNT; ++i) {
+        slots.push_back(ReadSaveSlotInfo(i));
+    }
+    return slots;
+}
+
+bool SaveGameToPath(const wstring& path) {
+    wofstream file(path.c_str());
+    if (!file) return false;
 
     file << L"SAVE_V4\n";
     file << g_player.name << L"\n";
@@ -7696,11 +7820,11 @@ void SaveGame() {
     g_achievementSystem.Save(file);
 
     file.close();
-    ShowNotice(L"存档", L"存档成功。\n\n你的境界、世界、道途记忆和前世传承都已写入 save.txt。");
+    return true;
 }
 
-bool LoadGame() {
-    wifstream file(L"save.txt");
+bool LoadGameFromPath(const wstring& path) {
+    wifstream file(path.c_str());
     if (!file) return false;
 
     wstring firstLine;
@@ -7764,6 +7888,48 @@ bool LoadGame() {
     g_player.CheckRootBalance();
     file.close();
     return true;
+}
+
+void ActivateSaveSlot(int slot) {
+    if (slot < 1 || slot > SAVE_SLOT_COUNT) return;
+    wstring path = GetSaveSlotPath(slot);
+    if (g_saveSlotLoadMode) {
+        if (!FileExists(path)) {
+            ShowNotice(L"读档", L"这个槽位还没有存档。");
+            return;
+        }
+        if (LoadGameFromPath(path)) {
+            ShowNotice(L"读档", L"已读取第" + to_wstring(slot) + L"号槽位。");
+            InvalidateRect(g_hWnd, NULL, FALSE);
+        } else {
+            ShowNotice(L"读档", L"这个槽位无法读取，可能是旧格式或文件损坏。");
+        }
+        return;
+    }
+
+    if (SaveGameToPath(path)) {
+        ShowNotice(L"存档", L"已保存到第" + to_wstring(slot) + L"号槽位。\n\n" +
+            L"文件: " + path);
+    } else {
+        ShowNotice(L"存档", L"存档失败，无法写入这个槽位。");
+    }
+}
+
+wstring BuildSaveSlotIntroText(bool loadMode) {
+    wstringstream ss;
+    ss << L"【" << (loadMode ? L"读取存档" : L"保存存档") << L"】\n\n";
+    ss << (loadMode
+        ? L"选择一个已有槽位读取。空槽位不会覆盖当前进度。"
+        : L"选择一个槽位写入当前道途。已有槽位会被覆盖。");
+    ss << L"\n1号槽兼容旧版 save.txt，其余槽位写入独立文件。";
+    return ss.str();
+}
+
+void OpenSaveSlotPage(bool loadMode) {
+    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), STATE_GAME);
+    g_saveSlotInfos = BuildSaveSlotInfos();
+    g_saveSlotPage = true;
+    g_saveSlotLoadMode = loadMode;
 }
 
 int ExtractValue(const wstring& text, const wstring& marker, int fallback = 0) {
@@ -8969,6 +9135,79 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.DrawRectangle(&backPen, backRect);
             graphics.DrawString(L"返回", -1, &smallFont, backRect, &centerFormat, &goldBrush);
 
+            if (g_saveSlotPage) {
+                g_saveSlotButtonRects.clear();
+                Font slotTitleFont(&fontFamily, 20, FontStyleBold, UnitPixel);
+                RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
+                    infoRect.Width - 116, infoRect.Height - 150);
+                int estimatedContentHeight = max((int)contentClip.Height + 1,
+                    96 + (int)g_saveSlotInfos.size() * 74);
+                g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
+                g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
+
+                graphics.SetClip(contentClip);
+                RectF introRect(contentClip.X, contentClip.Y - (REAL)g_infoScroll,
+                    contentClip.Width, 64);
+                graphics.DrawString(g_infoText.c_str(), -1, &infoTextFont,
+                    introRect, &leftFormat, &softWhiteBrush);
+
+                REAL buttonY = contentClip.Y + 92.0f - (REAL)g_infoScroll;
+                for (size_t i = 0; i < g_saveSlotInfos.size(); ++i) {
+                    const SaveSlotInfo& slot = g_saveSlotInfos[i];
+                    RectF buttonRect(contentClip.X, buttonY, contentClip.Width - 18, 58);
+                    RECT clickRect = {
+                        (LONG)buttonRect.X,
+                        (LONG)buttonRect.Y,
+                        (LONG)(buttonRect.X + buttonRect.Width),
+                        (LONG)(buttonRect.Y + buttonRect.Height)
+                    };
+                    g_saveSlotButtonRects.push_back(clickRect);
+
+                    if (buttonRect.GetBottom() >= contentClip.Y && buttonRect.Y <= contentClip.GetBottom()) {
+                        bool disabled = g_saveSlotLoadMode && !slot.exists;
+                        SolidBrush buttonBrush(disabled ? Color(72, 22, 22, 25) : Color(120, 24, 25, 30));
+                        Pen buttonPen(disabled ? Color(55, 120, 120, 120) : Color(95, 228, 190, 76), 1);
+                        SolidBrush titleBrush(disabled ? Color(130, 175, 175, 175) : Color(255, 255, 215, 100));
+                        graphics.FillRectangle(&buttonBrush, buttonRect);
+                        graphics.DrawRectangle(&buttonPen, buttonRect);
+
+                        wstring indexText = L"[" + to_wstring(slot.slot) + L"] " + slot.title;
+                        graphics.DrawString(indexText.c_str(), -1, &slotTitleFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 8, buttonRect.Width - 36, 24),
+                            &leftFormat, &titleBrush);
+                        graphics.DrawString(slot.detail.c_str(), -1, &smallFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 34, buttonRect.Width - 36, 20),
+                            &leftFormat, &mutedBrush);
+                    }
+                    buttonY += 74.0f;
+                }
+                graphics.ResetClip();
+
+                RectF scrollTrack(infoRect.GetRight() - 58, contentClip.Y, 8, contentClip.Height);
+                g_infoScrollTrackRect = {
+                    (LONG)scrollTrack.X,
+                    (LONG)scrollTrack.Y,
+                    (LONG)(scrollTrack.X + scrollTrack.Width),
+                    (LONG)(scrollTrack.Y + scrollTrack.Height)
+                };
+                SolidBrush trackBrush(Color(120, 48, 48, 52));
+                SolidBrush thumbBrush(Color(210, 228, 190, 76));
+                if (g_infoScrollMax > 0) {
+                    graphics.FillRectangle(&trackBrush, scrollTrack);
+                    REAL thumbHeight = max(36.0f, contentClip.Height * contentClip.Height / (REAL)estimatedContentHeight);
+                    REAL thumbY = scrollTrack.Y + (contentClip.Height - thumbHeight) * ((REAL)g_infoScroll / (REAL)g_infoScrollMax);
+                    graphics.FillRectangle(&thumbBrush, RectF(scrollTrack.X, thumbY, scrollTrack.Width, thumbHeight));
+                }
+
+                wstring saveSlotFooter = g_saveSlotLoadMode
+                    ? L"点击槽位或按数字读取  |  ESC 返回"
+                    : L"点击槽位或按数字保存  |  ESC 返回";
+                graphics.DrawString(saveSlotFooter.c_str(), -1, &smallFont,
+                    RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
+                    &leftFormat, &mutedBrush);
+                break;
+            }
+
             if (g_characterCodexListPage) {
                 g_characterButtonRects.clear();
                 Font codexButtonFont(&fontFamily, 20, FontStyleBold, UnitPixel);
@@ -9231,6 +9470,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     y >= g_backButtonRect.top && y <= g_backButtonRect.bottom) {
                     ReturnFromInfoPage();
                     InvalidateRect(hWnd, NULL, FALSE);
+                } else if (g_saveSlotPage) {
+                    bool clickedSlot = false;
+                    for (size_t i = 0; i < g_saveSlotButtonRects.size() && i < g_saveSlotInfos.size(); ++i) {
+                        const RECT& rc = g_saveSlotButtonRects[i];
+                        if (x >= rc.left && x <= rc.right && y >= rc.top && y <= rc.bottom) {
+                            ActivateSaveSlot(g_saveSlotInfos[i].slot);
+                            InvalidateRect(hWnd, NULL, FALSE);
+                            clickedSlot = true;
+                            break;
+                        }
+                    }
+                    if (!clickedSlot &&
+                        x >= g_infoScrollTrackRect.left && x <= g_infoScrollTrackRect.right &&
+                        y >= g_infoScrollTrackRect.top && y <= g_infoScrollTrackRect.bottom &&
+                        g_infoScrollMax > 0) {
+                        int trackHeight = max(1, (int)(g_infoScrollTrackRect.bottom - g_infoScrollTrackRect.top));
+                        int relativeY = max(0, min(trackHeight, (int)(y - g_infoScrollTrackRect.top)));
+                        g_infoScroll = g_infoScrollMax * relativeY / trackHeight;
+                        g_infoScrollDragging = true;
+                        SetCapture(hWnd);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
                 } else if (g_characterCodexListPage) {
                     bool clickedCharacter = false;
                     for (size_t i = 0; i < g_characterButtonRects.size() && i < g_characterCodexNames.size(); ++i) {
@@ -9654,15 +9915,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'S' || wParam == 's') {
-                    SaveGame();
+                    OpenSaveSlotPage(false);
+                    InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'L' || wParam == 'l') {
-                    if (LoadGame()) {
-                        ShowNotice(L"读档", L"读档成功。");
-                        InvalidateRect(hWnd, NULL, FALSE);
-                    } else {
-                        ShowNotice(L"读档", L"没有找到存档。");
-                    }
+                    OpenSaveSlotPage(true);
+                    InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == VK_ESCAPE) {
                     if (MessageBoxW(hWnd, L"确定退出？", L"退出", MB_YESNO) == IDYES) {
@@ -9702,7 +9960,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
             }
             else if (g_gameState == STATE_INFO) {
-                if (g_characterCodexListPage && wParam >= '1' && wParam <= '9') {
+                if (g_saveSlotPage && wParam >= '1' && wParam <= '9') {
+                    int index = (int)(wParam - '1');
+                    if (index >= 0 && index < (int)g_saveSlotInfos.size()) {
+                        ActivateSaveSlot(g_saveSlotInfos[index].slot);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                } else if (g_characterCodexListPage && wParam >= '1' && wParam <= '9') {
                     int index = (int)(wParam - '1');
                     if (index >= 0 && index < (int)g_characterCodexNames.size()) {
                         OpenCharacterDetailPage(g_characterCodexNames[index]);
