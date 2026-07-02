@@ -9222,10 +9222,12 @@ void OnPaint(HDC hdc, RECT& rect) {
             if (g_characterCodexListPage) {
                 g_characterButtonRects.clear();
                 Font codexButtonFont(&fontFamily, 20, FontStyleBold, UnitPixel);
+                const REAL codexButtonHeight = 62.0f;
+                const REAL codexButtonStep = 76.0f;
                 RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
                     infoRect.Width - 116, infoRect.Height - 150);
                 int estimatedContentHeight = max((int)contentClip.Height + 1,
-                    92 + (int)g_characterCodexNames.size() * 66);
+                    96 + (int)(g_characterCodexNames.size() * codexButtonStep));
                 g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
                 g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
 
@@ -9238,7 +9240,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 REAL buttonY = contentClip.Y + 88.0f - (REAL)g_infoScroll;
                 for (size_t i = 0; i < g_characterCodexNames.size(); ++i) {
                     const wstring& name = g_characterCodexNames[i];
-                    RectF buttonRect(contentClip.X, buttonY, contentClip.Width - 18, 52);
+                    RectF buttonRect(contentClip.X, buttonY, contentClip.Width - 18, codexButtonHeight);
                     RECT clickRect = {
                         (LONG)buttonRect.X,
                         (LONG)buttonRect.Y,
@@ -9255,13 +9257,13 @@ void OnPaint(HDC hdc, RECT& rect) {
 
                         wstring indexText = L"[" + to_wstring(i + 1) + L"] " + name;
                         graphics.DrawString(indexText.c_str(), -1, &codexButtonFont,
-                            RectF(buttonRect.X + 18, buttonRect.Y + 8, buttonRect.Width - 36, 22),
+                            RectF(buttonRect.X + 18, buttonRect.Y + 8, buttonRect.Width - 36, 28),
                             &leftFormat, &goldBrush);
                         graphics.DrawString(GetCharacterRoleCaption(name).c_str(), -1, &smallFont,
-                            RectF(buttonRect.X + 18, buttonRect.Y + 30, buttonRect.Width - 36, 18),
+                            RectF(buttonRect.X + 18, buttonRect.Y + 38, buttonRect.Width - 36, 22),
                             &leftFormat, &mutedBrush);
                     }
-                    buttonY += 66.0f;
+                    buttonY += codexButtonStep;
                 }
                 graphics.ResetClip();
 
