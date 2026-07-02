@@ -1041,6 +1041,11 @@ HWND g_hWnd;
 Image* g_bgImage = nullptr;
 Image* g_itemAtlasImage = nullptr;
 Image* g_taoistAntagonistImage = nullptr;
+Image* g_frostCrowImage = nullptr;
+
+bool IsFrostCrowEra() {
+    return g_worldEraName == L"星穹道网纪" || g_worldEraName == L"灵机蒸汽纪";
+}
 
 enum GameState {
     STATE_MENU = 0,
@@ -4885,6 +4890,7 @@ void GenerateSocialThreads() {
     int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
+    bool priorLife = HasPriorLifeEcho();
     auto& inherited = g_legacySystem.GetInheritedLegacies();
     auto npcs = g_dynamicWorld.GetAliveNPCs();
     wstring sectName = g_worldData.sects.empty() ? L"附近宗门" : g_worldData.sects[0].name;
@@ -5009,9 +5015,19 @@ void GenerateSocialThreads() {
     if (g_worldEraName == L"灵机蒸汽纪") {
         AddSocialThread(sectName + L"炉师", L"工坊中人", L"热情拉拢",
             L"他看中你的灵根适配性，想让你试一套尚未公开的阵械功法。", 16);
+        AddSocialThread(L"霜鸦", L"灵机契约猎手", L"冷静审查",
+            priorLife
+                ? L"她在工坊契约和非法灵机改造之间追索旧债，尤其在意你身上解释不清的轮回空白。"
+                : L"她在工坊契约和非法灵机改造之间追索旧债，偶尔会盯着你的伴生旧玉多看一眼。",
+            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
     } else if (g_worldEraName == L"星穹道网纪") {
         AddSocialThread(sectName + L"远讯使", L"道网联系人", L"隔空关注",
             L"对方通过灵网给你发来试炼坐标，也记录着你每一次选择。", 12);
+        AddSocialThread(L"霜鸦", L"道网清算人", L"冷静审查",
+            priorLife
+                ? L"她负责追查道网档案里的因果空白，尤其在意旧名重复、转世记忆异常和无法解释的功法来源。"
+                : L"她负责追查道网档案里的异常旧契，尤其在意你的家世记录与伴生旧玉来历。",
+            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
     } else if (g_worldEraName == L"末法裂变纪") {
         AddSocialThread(sectName + L"配给执事", L"资源把关者", L"冷硬审视",
             L"此人掌着灵井配给，你的资质、家世和态度都会影响下一份资源。", -10);
@@ -5031,26 +5047,38 @@ void GenerateSocialThreads() {
 
     if (g_socialThreads.size() > 5) {
         SocialThread factionThread;
+        SocialThread frostCrowThread;
         bool hasFactionThread = false;
+        bool hasFrostCrowThread = false;
         for (const auto& thread : g_socialThreads) {
-            if (thread.role == L"势力牵连") {
+            if (!hasFactionThread && thread.role == L"势力牵连") {
                 factionThread = thread;
                 hasFactionThread = true;
-                break;
+            }
+            if (!hasFrostCrowThread && thread.name == L"霜鸦") {
+                frostCrowThread = thread;
+                hasFrostCrowThread = true;
             }
         }
         g_socialThreads.resize(5);
-        if (hasFactionThread) {
-            bool kept = false;
+        auto containsRole = [&](const wstring& role) {
             for (const auto& thread : g_socialThreads) {
-                if (thread.role == L"势力牵连") {
-                    kept = true;
-                    break;
-                }
+                if (thread.role == role) return true;
             }
-            if (!kept) {
-                g_socialThreads[4] = factionThread;
+            return false;
+        };
+        auto containsName = [&](const wstring& name) {
+            for (const auto& thread : g_socialThreads) {
+                if (thread.name == name) return true;
             }
+            return false;
+        };
+        if (hasFactionThread && !containsRole(L"势力牵连")) {
+            g_socialThreads[4] = factionThread;
+        }
+        if (hasFrostCrowThread && !containsName(L"霜鸦")) {
+            int slot = (hasFactionThread && g_socialThreads[4].role == L"势力牵连") ? 3 : 4;
+            g_socialThreads[slot] = frostCrowThread;
         }
     }
 }
@@ -5110,8 +5138,14 @@ void GenerateSocialRumors() {
 
     if (g_worldEraName == L"灵机蒸汽纪") {
         g_socialRumors.push_back(L"坊市里新开的灵机工坊很抢眼，不少年轻修士都在谈论机关臂、飞梭匣与量产灵具。");
+        g_socialRumors.push_back(HasPriorLifeEcho()
+            ? L"霜鸦近日出现在几家工坊之间，凡是契约账册里出现空白的人，都会被她多看一眼。"
+            : L"霜鸦近日出现在几家工坊之间，凡是旧契和来历说不清的人，都会被她多看一眼。");
     } else if (g_worldEraName == L"星穹道网纪") {
         g_socialRumors.push_back(L"有人议论远方宗门通过灵网收徒，哪怕出身寒微，也可能一夜之间被大势卷走。");
+        g_socialRumors.push_back(HasPriorLifeEcho()
+            ? L"道网清算人霜鸦正在核验旧名档案，传闻她只追那些因果记录对不上的修士。"
+            : L"道网清算人霜鸦正在核验旧契档案，传闻她只追那些来历记录对不上的修士。");
     } else if (g_worldEraName == L"末法裂变纪") {
         g_socialRumors.push_back(L"老一辈都在感叹灵气不如从前，许多修士开始明争暗夺每一口能用来破境的资源。");
     } else if (g_worldEraName == L"废土返道纪") {
@@ -5344,6 +5378,9 @@ void GenerateLifeStoryHooks() {
             ? L"你降生在灵机与旧修真秩序冲突最烈的年代，工坊、宗门与前世道痕都可能争夺你的去向。"
             : L"你降生在灵机与旧修真秩序冲突最烈的年代，工坊、宗门与伴生旧玉都可能争夺你的去向。";
         g_lifeStoryHooks.push_back(L"灵机工坊正在追查一枚与通天灵宝器纹相似的旧图，而你的识海会对它发热。");
+        g_lifeStoryHooks.push_back(priorLife
+            ? L"霜鸦正在追查工坊契约和非法灵机改造，你身上解释不清的轮回空白可能被她盯上。"
+            : L"霜鸦正在追查工坊契约和非法灵机改造，你的伴生旧玉可能被她列入异常旧契。");
         g_lifeStoryHooks.push_back(sectName + L"与" + locName + L"之间有一条被封锁的飞舟旧航线。");
     } else if (g_worldEraName == L"星穹道网纪") {
         g_lifePremise = priorLife
@@ -5352,6 +5389,9 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(priorLife
             ? L"灵网节点偶尔会推送不属于今生的旧名，像是有人在隔世定位你。"
             : L"灵网节点偶尔会推送与你家世旧契相近的名字，像是有人在远方标记你的旧玉。");
+        g_lifeStoryHooks.push_back(priorLife
+            ? L"道网清算人霜鸦开始核验旧名档案，凡是因果记录有空白的人都会被她标记。"
+            : L"道网清算人霜鸦开始核验旧契档案，凡是家世与旧物记录不合的人都会被她标记。");
         g_lifeStoryHooks.push_back(sectName + L"掌握一段远程试炼入口，" + locName + L"则藏着对应的实体阵台。");
     } else if (g_worldEraName == L"末法裂变纪") {
         g_lifePremise = priorLife
@@ -7959,13 +7999,19 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            if (g_taoistAntagonistImage) {
-                graphics.DrawString(L"道影浮现", -1, &statFont,
+            Image* roleImage = (IsFrostCrowEra() && g_frostCrowImage) ? g_frostCrowImage : g_taoistAntagonistImage;
+            wstring roleHeader = (roleImage == g_frostCrowImage) ? L"道网留影" : L"道影浮现";
+            wstring roleName = (roleImage == g_frostCrowImage) ? L"霜鸦" : L"玄衡子";
+            wstring roleTitle = (roleImage == g_frostCrowImage)
+                ? (g_worldEraName == L"星穹道网纪" ? L"星穹道网纪 · 清算人" : L"灵机蒸汽纪 · 契约猎手")
+                : L"太上玄衡观 · 掌律真人";
+            if (roleImage) {
+                graphics.DrawString(roleHeader.c_str(), -1, &statFont,
                     RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
                     &leftFormat, &mutedBrush);
 
-                REAL imageAspect = (REAL)g_taoistAntagonistImage->GetWidth() /
-                    max<REAL>(1.0f, (REAL)g_taoistAntagonistImage->GetHeight());
+                REAL imageAspect = (REAL)roleImage->GetWidth() /
+                    max<REAL>(1.0f, (REAL)roleImage->GetHeight());
                 REAL portraitH = min(280.0f, futureRoleRect.Height - 112.0f);
                 REAL portraitW = portraitH * imageAspect;
                 RectF portraitRect(
@@ -7976,14 +8022,14 @@ void OnPaint(HDC hdc, RECT& rect) {
                 SolidBrush portraitBg(Color(235, 238, 240, 244));
                 Pen portraitPen(Color(95, 228, 190, 76), 1);
                 graphics.FillRectangle(&portraitBg, portraitRect);
-                graphics.DrawImage(g_taoistAntagonistImage, portraitRect);
+                graphics.DrawImage(roleImage, portraitRect);
                 graphics.DrawRectangle(&portraitPen, portraitRect);
 
                 REAL labelY = portraitRect.GetBottom() + 8.0f;
-                graphics.DrawString(L"玄衡子", -1, &statFont,
+                graphics.DrawString(roleName.c_str(), -1, &statFont,
                     RectF(futureRoleRect.X + 12, labelY, futureRoleRect.Width - 24, 24),
                     &centerFormat, &goldBrush);
-                graphics.DrawString(L"太上玄衡观 · 掌律真人", -1, &smallFont,
+                graphics.DrawString(roleTitle.c_str(), -1, &smallFont,
                     RectF(futureRoleRect.X + 12, labelY + 24.0f, futureRoleRect.Width - 24, 22),
                     &centerFormat, &softWhiteBrush);
                 wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 42);
@@ -8825,6 +8871,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (GetFileAttributesW(L"characters\\taoist_antagonist.png") != INVALID_FILE_ATTRIBUTES) {
         g_taoistAntagonistImage = Image::FromFile(L"characters\\taoist_antagonist.png");
     }
+    if (GetFileAttributesW(L"characters\\frost_crow.png") != INVALID_FILE_ATTRIBUTES) {
+        g_frostCrowImage = Image::FromFile(L"characters\\frost_crow.png");
+    }
 
     WNDCLASSEXA wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -8867,6 +8916,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (g_bgImage) delete g_bgImage;
     if (g_itemAtlasImage) delete g_itemAtlasImage;
     if (g_taoistAntagonistImage) delete g_taoistAntagonistImage;
+    if (g_frostCrowImage) delete g_frostCrowImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }
