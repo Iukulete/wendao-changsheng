@@ -4949,6 +4949,125 @@ void AppendAiOutcomeSocialReaction(wstring& outcome, bool success,
     outcome += BuildOutcomeNpcReaction(*thread, success, event, choice);
 }
 
+bool IsPositiveOutcomeText(const wstring& text) {
+    int score = 0;
+    if (TextContainsAny(text, {L"修为+", L"灵石+", L"寿命+", L"因果+", L"掌道+", L"灵宝共鸣+"})) score += 3;
+    if (TextContainsAny(text, {L"认可", L"护住", L"稳住", L"查到", L"记住", L"成功", L"突破成功"})) score += 2;
+    if (TextContainsAny(text, {
+        L"气血-", L"灵石-", L"因果-", L"反噬", L"失败", L"受损", L"错过",
+        L"不足", L"无法", L"没有", L"未能", L"不满足", L"受阻", L"艰难",
+        L"沉寂", L"消散", L"无需"
+    })) score -= 3;
+    return score >= 0;
+}
+
+const SocialThread* PickActionFeedbackThread(const wstring& action) {
+    if (g_socialThreads.empty()) return nullptr;
+
+    vector<int> weighted;
+    for (int i = 0; i < (int)g_socialThreads.size(); ++i) {
+        const SocialThread& thread = g_socialThreads[i];
+        if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) continue;
+
+        wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+        int weight = 1 + min(4, abs(thread.relation) / 18);
+
+        if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
+            if (TextContainsAny(action, {L"修炼", L"突破", L"闭关", L"历练"})) weight += 5;
+        }
+        if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
+            if (TextContainsAny(action, {L"修炼", L"疗伤", L"服药", L"突破", L"闭关"})) weight += 4;
+        }
+        if (TextContainsAny(profile, {L"欺压者", L"竞争者", L"同代修士", L"嫉妒", L"轻慢"})) {
+            if (TextContainsAny(action, {L"修炼", L"突破", L"铸器", L"历练"})) weight += 4;
+        }
+        if (TextContainsAny(profile, {L"洛凝霜", L"桃华剑脉"})) {
+            if (TextContainsAny(action, {L"突破", L"历练", L"修炼"})) weight += 4;
+        }
+        if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+            if (TextContainsAny(action, {L"突破", L"铸器", L"历练"})) weight += 4;
+        }
+        if (TextContainsAny(profile, {L"器痕识别者", L"功法见证者", L"旧名", L"前世眼熟者"})) {
+            if (TextContainsAny(action, {L"铸器", L"修炼", L"闭关"})) weight += 4;
+        }
+        if (TextContainsAny(profile, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"资源把关者"})) {
+            if (TextContainsAny(action, {L"闭关", L"铸器", L"突破", L"历练"})) weight += 3;
+        }
+
+        for (int j = 0; j < max(1, weight); ++j) {
+            weighted.push_back(i);
+        }
+    }
+
+    if (weighted.empty()) return &g_socialThreads[0];
+    return &g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
+}
+
+wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
+    const SocialThread* picked = PickActionFeedbackThread(action);
+    if (!picked) return L"";
+
+    const SocialThread& thread = *picked;
+    wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+    wstringstream ss;
+    ss << L"\n\n人情回响: ";
+
+    if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
+        if (positive) {
+            ss << thread.name << L"没有把话说满，只把担忧压成一句护短：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"听见你在" << action << L"上受阻，担忧更重，却仍给你留了一盏灯。";
+        }
+    } else if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
+        if (positive) {
+            ss << thread.name << L"把你这次" << action << L"记作一次合格答卷，语气仍严：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"没有替你遮掩这次受挫，只说修行先学会认疼。";
+        }
+    } else if (TextContainsAny(profile, {L"洛凝霜", L"桃华剑脉"})) {
+        if (positive) {
+            ss << thread.name << L"听闻你这次" << action << L"，笑意很淡，却像终于把你的名字多记了一笔。";
+        } else {
+            ss << thread.name << L"没有嘲笑，只把距离收回半步，像在等你下一次自己站稳。";
+        }
+    } else if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+        if (positive) {
+            ss << thread.name << L"暂时找不到可用破绽，掌律玉简合上得很慢。";
+        } else {
+            ss << thread.name << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
+        }
+    } else if (TextContainsAny(profile, {L"欺压者", L"竞争者", L"嫉妒", L"轻慢"})) {
+        if (positive) {
+            ss << thread.name << L"嘴上仍酸，却不得不承认你这次" << action << L"压住了场面。";
+        } else {
+            ss << thread.name << L"抓住你这次" << action << L"受阻的风声，轻慢话已经传到同辈耳中。";
+        }
+    } else if (TextContainsAny(profile, {L"器痕识别者", L"功法见证者", L"旧名", L"前世眼熟者"})) {
+        if (positive) {
+            ss << thread.name << L"把这次" << action << L"和你身上的旧痕联系起来，语气压低：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"对你身上的旧痕更加起疑，像是在等下一次破绽。";
+        }
+    } else if (TextContainsAny(profile, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"资源把关者"})) {
+        if (positive) {
+            ss << thread.name << L"把你这次" << action << L"写进身后势力的评语里：值得继续押注。";
+        } else {
+            ss << thread.name << L"把你这次" << action << L"受阻写成审查理由，后续资源会更难松口。";
+        }
+    } else {
+        if (positive) {
+            ss << thread.name << L"因你这次" << action << L"多看了你一眼，观望里添了一分认可。";
+        } else {
+            ss << thread.name << L"因你这次" << action << L"暂时收回善意，观望变得更谨慎。";
+        }
+    }
+
+    if (!thread.nextMove.empty()) {
+        ss << L" 接下来，" << thread.name << L"多半会" << thread.nextMove << L"。";
+    }
+    return ss.str();
+}
+
 bool ShouldTriggerSocialAdventureEvent() {
     if (g_socialThreads.empty()) return false;
 
@@ -8747,6 +8866,13 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     ApplyOutcomeEffects(g_messageText);
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
+    if (!isAIEvent) {
+        bool successLike = (outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText);
+        const SocialThread* thread = PickOutcomeReactionThread(*g_currentEvent, choice, g_messageText);
+        if (thread) {
+            g_messageText += BuildOutcomeNpcReaction(*thread, successLike, *g_currentEvent, choice);
+        }
+    }
     DiscoverItemsFromText(g_currentEvent->title);
     DiscoverItemsFromText(g_currentEvent->description);
     DiscoverItemsFromText(g_messageText);
@@ -10019,6 +10145,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         if (lifespanPressure >= 2 || (lifespanPressure == 1 && g_player.age % 10 == 0)) {
                             AddMemory(L"寿元压力", BuildLifespanPressureText());
                         }
+                        msg += BuildActionEmotionFeedback(L"修炼", true);
                         ShowNotice(L"打坐修炼", msg);
                     }
                     InvalidateRect(hWnd, NULL, FALSE);
@@ -10160,10 +10287,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         g_player.realm, g_player.karma, g_player.totalEvents,
                                         g_player.battlesWon, g_player.npcsMet, g_player.age);
                                     AddMemory(L"证道成祖", g_legacySystem.GetDaoContextText());
-                                    ShowNotice(L"证道成祖",
+                                    wstring daoMsg =
                                         L"你已不再被寿元追赶，而是与自身大道共生。\n\n" +
                                         g_legacySystem.GetDaoContextText() +
-                                        L"\n\n道祖-天道境仍在万道之上，需继续积累掌道深度与灵宝共鸣。");
+                                        L"\n\n道祖-天道境仍在万道之上，需继续积累掌道深度与灵宝共鸣。";
+                                    daoMsg += BuildActionEmotionFeedback(L"突破", true);
+                                    ShowNotice(L"证道成祖", daoMsg);
                                 } else if (g_player.realm == HEAVENLY_DAO) {
                                     g_gameState = STATE_GAMEOVER;
                                     g_legacySystem.AttuneDaoFromCurrentLife(
@@ -10188,6 +10317,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         successMsg += L"\n" + g_legacySystem.GetRelic().daoName +
                                             L"为此番破境托住一线，破境助力+" + to_wstring(daoBreakthrough) + L"。";
                                     }
+                                    successMsg += BuildActionEmotionFeedback(L"突破", true);
                                     ShowNotice(L"突破成功", successMsg);
                                 }
                             } else {
@@ -10200,6 +10330,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                     failMsg += L"\n" + g_legacySystem.GetRelic().daoName +
                                         L"已替你削去部分反噬，但仍未能破关。";
                                 }
+                                failMsg += BuildActionEmotionFeedback(L"突破", false);
                                 ShowNotice(L"突破失败", failMsg);
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
@@ -10216,7 +10347,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         int heal = 80 + g_player.realm * 20;
                         g_player.hp = min(g_player.maxHp, g_player.hp + heal);
                         AddMemory(L"服用丹药", L"调息疗伤，气血恢复" + to_wstring(heal));
-                        ShowNotice(L"服用丹药", L"服下丹药，气血恢复" + to_wstring(heal) + L"。");
+                        wstring healMsg = L"服下丹药，气血恢复" + to_wstring(heal) + L"。";
+                        healMsg += BuildActionEmotionFeedback(L"疗伤", true);
+                        ShowNotice(L"服用丹药", healMsg);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                 }
@@ -10243,12 +10376,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else if (GetEraClosedDoorBonus() < 0) {
                             closedDoorMsg += L"\n这一世天地不稳，哪怕借灵石闭关也难尽如人意。";
                         }
+                        closedDoorMsg += BuildActionEmotionFeedback(L"闭关", true);
                         ShowNotice(L"灵石闭关", closedDoorMsg);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                 }
                 else if (wParam == '6') {
-                    ShowNotice(L"铸炼器物", ForgeLifeArtifact());
+                    wstring forgeMsg = ForgeLifeArtifact();
+                    forgeMsg += BuildActionEmotionFeedback(L"铸器", IsPositiveOutcomeText(forgeMsg));
+                    ShowNotice(L"铸炼器物", forgeMsg);
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'W' || wParam == 'w') {
