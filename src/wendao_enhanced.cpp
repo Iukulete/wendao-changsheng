@@ -1053,6 +1053,7 @@ Image* g_itemAtlasImage = nullptr;
 Image* g_taoistAntagonistImage = nullptr;
 Image* g_frostCrowImage = nullptr;
 Image* g_luoNingshuangImage = nullptr;
+Image* g_qinghengImage = nullptr;
 Image* g_protagonistImage = nullptr;
 
 bool IsFrostCrowEra() {
@@ -8758,8 +8759,12 @@ Image* GetEventPortraitImage(const Event* event, wstring& name, wstring& title) 
         title = L"太上玄衡观";
         return g_taoistAntagonistImage;
     }
-    if (titleText.find(L"清蘅") != wstring::npos || titleText.find(L"师承") != wstring::npos) {
-        return nullptr;
+    if ((titleText.find(L"清蘅") != wstring::npos ||
+         titleText.find(L"师承") != wstring::npos) &&
+        g_qinghengImage) {
+        name = L"清蘅真人";
+        title = L"第一世入门师尊";
+        return g_qinghengImage;
     }
 
     size_t qingPos = text.find(L"清蘅真人");
@@ -8767,20 +8772,23 @@ Image* GetEventPortraitImage(const Event* event, wstring& name, wstring& title) 
     size_t frostPos = text.find(L"霜鸦");
     size_t xuanPos = text.find(L"玄衡子");
     size_t bestPos = wstring::npos;
-    enum PortraitPick { PICK_NONE, PICK_LUO, PICK_FROST, PICK_XUAN } pick = PICK_NONE;
+    enum PortraitPick { PICK_NONE, PICK_QING, PICK_LUO, PICK_FROST, PICK_XUAN } pick = PICK_NONE;
     auto consider = [&](size_t pos, PortraitPick candidate) {
         if (pos != wstring::npos && pos < bestPos) {
             bestPos = pos;
             pick = candidate;
         }
     };
+    consider(qingPos, PICK_QING);
     consider(luoPos, PICK_LUO);
     consider(frostPos, PICK_FROST);
     consider(xuanPos, PICK_XUAN);
-    if (qingPos != wstring::npos && (bestPos == wstring::npos || qingPos < bestPos)) {
-        return nullptr;
-    }
 
+    if (pick == PICK_QING && g_qinghengImage) {
+        name = L"清蘅真人";
+        title = L"第一世入门师尊";
+        return g_qinghengImage;
+    }
     if (pick == PICK_LUO && g_luoNingshuangImage) {
         name = L"洛凝霜";
         title = L"桃华剑脉";
@@ -10090,6 +10098,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (GetFileAttributesW(L"characters\\luo_ningshuang.png") != INVALID_FILE_ATTRIBUTES) {
         g_luoNingshuangImage = Image::FromFile(L"characters\\luo_ningshuang.png");
     }
+    if (GetFileAttributesW(L"characters\\qingheng.png") != INVALID_FILE_ATTRIBUTES) {
+        g_qinghengImage = Image::FromFile(L"characters\\qingheng.png");
+    }
     if (GetFileAttributesW(L"characters\\protagonist.png") != INVALID_FILE_ATTRIBUTES) {
         g_protagonistImage = Image::FromFile(L"characters\\protagonist.png");
     }
@@ -10137,6 +10148,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (g_taoistAntagonistImage) delete g_taoistAntagonistImage;
     if (g_frostCrowImage) delete g_frostCrowImage;
     if (g_luoNingshuangImage) delete g_luoNingshuangImage;
+    if (g_qinghengImage) delete g_qinghengImage;
     if (g_protagonistImage) delete g_protagonistImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
