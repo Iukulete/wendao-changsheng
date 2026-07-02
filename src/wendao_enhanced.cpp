@@ -1151,12 +1151,35 @@ void LayoutMenuControls() {
         centerX - inputWidth / 2 + 1, inputFieldY + 1, inputWidth - 2, inputFieldHeight - 2,
         SWP_NOZORDER | SWP_NOACTIVATE);
 
-    RECT editTextRect = {0, 8, inputWidth - 2, inputFieldHeight - 2};
+    RECT editTextRect = {0, 10, inputWidth - 2, inputFieldHeight - 2};
     SendMessageW(g_nameInput, EM_SETRECT, 0, (LPARAM)&editTextRect);
 
     SetWindowPos(g_btnStart, nullptr,
         centerX - buttonWidth / 2, buttonY, buttonWidth, buttonHeight,
         SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
+wstring SanitizeDaoName(const wstring& raw) {
+    wstring out;
+    bool lastSpace = false;
+    for (wchar_t ch : raw) {
+        if (ch == L'\r' || ch == L'\n' || ch == L'\t') {
+            ch = L' ';
+        }
+        if (iswspace(ch)) {
+            if (!lastSpace && !out.empty()) {
+                out.push_back(L' ');
+                lastSpace = true;
+            }
+        } else {
+            out.push_back(ch);
+            lastSpace = false;
+        }
+    }
+    while (!out.empty() && iswspace(out.back())) {
+        out.pop_back();
+    }
+    return out;
 }
 
 // ==================== 记忆系统 ====================
@@ -8215,12 +8238,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             if (LOWORD(wParam) == ID_BTN_START && g_gameState == STATE_MENU) {
                 wchar_t name[100];
                 GetWindowTextW(g_nameInput, name, 100);
-                if (wcslen(name) == 0) {
+                wstring daoName = SanitizeDaoName(name);
+                if (daoName.empty()) {
                     MessageBoxW(hWnd, L"请输入道号！", L"提示", MB_OK);
                     break;
                 }
                 g_player = Player();
-                g_player.name = name;
+                g_player.name = daoName;
                 g_generation = 1;
                 g_jadeDreamOmenEventsThisLife = 0;
                 g_lifeStoryProgressThisLife = 0;
@@ -8782,7 +8806,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (!g_hWnd) return FALSE;
     SetWindowTextA(g_hWnd, "The Immortal Path");
 
-    g_nameInput = CreateWindowW(L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_CENTER | ES_AUTOHSCROLL,
+    g_nameInput = CreateWindowW(L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_CENTER | ES_MULTILINE | ES_AUTOHSCROLL,
         362, 400, 300, 35, g_hWnd, (HMENU)ID_NAME_INPUT, hInstance, NULL);
     g_btnStart = CreateWindowW(L"BUTTON", L"开始游戏", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         437, 450, 150, 40, g_hWnd, (HMENU)ID_BTN_START, hInstance, NULL);
