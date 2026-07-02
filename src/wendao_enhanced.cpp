@@ -1049,7 +1049,11 @@ bool IsFrostCrowEra() {
 }
 
 bool IsLuoNingshuangEra() {
-    return !IsFrostCrowEra();
+    return g_worldEraName == L"灵气初盛纪" || g_worldEraName == L"仙朝鼎盛纪";
+}
+
+bool IsFirstLifeClassicalEra() {
+    return g_generation <= 1 && g_worldEraName == L"灵气初盛纪";
 }
 
 enum GameState {
@@ -2307,7 +2311,7 @@ void GenerateWorldEra() {
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
     int relicEcho = g_legacySystem.GetRelicResonanceBonus();
 
-    int baseIndex = Random(0, (int)eras.size() - 1);
+    int baseIndex = (g_generation <= 1) ? 0 : Random(0, (int)eras.size() - 1);
     if (g_generation >= 3) {
         baseIndex = (g_generation - 1 + Random(0, 2)) % (int)eras.size();
     }
@@ -2386,7 +2390,7 @@ void GenerateWorldEra() {
     g_eraShiftCause = BuildEraShiftCauseText(previousEra, g_worldEraName);
 
     if (g_generation <= 1) {
-        g_eraTransitionNote = L"这是本局第一段完整时代。若你死后转世，下一世可能已经从古典修仙演化到灵机、道网、末法或废土。";
+        g_eraTransitionNote = L"第一世固定在灵气初盛纪，也就是最典型的古典修仙纪；师尊、玄衡子与洛凝霜的因果都会从这里埋下。若你死后转世，下一世才可能演化到灵机、道网、末法或废土。";
     } else if (previousEra == g_worldEraName) {
         g_eraTransitionNote = L"轮回之后，时代大势仍延续为" + g_worldEraName + L"，但人事、宗门与机缘已经重新洗牌。";
     } else {
@@ -3962,6 +3966,8 @@ void RefreshSocialAgentState(SocialThread& thread) {
     bool gatekeeper = SocialThreadHas(thread, {L"资源把关者", L"配给", L"仙朝耳目", L"势力牵连"});
     bool legacyWatcher = SocialThreadHas(thread, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
     bool heroineTie = SocialThreadHas(thread, {L"桃华剑脉", L"洛凝霜"});
+    bool mentorTie = SocialThreadHas(thread, {L"师尊", L"护道人", L"清蘅真人"});
+    bool antagonistTie = SocialThreadHas(thread, {L"玄衡子", L"掌律真人", L"太上玄衡观"});
     bool hidden = thread.hidesPower || !thread.hiddenHint.empty();
 
     if (thread.desire.empty()) {
@@ -3970,6 +3976,8 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (gatekeeper) thread.desire = L"判断你值不值得分配资源";
         else if (legacyWatcher) thread.desire = L"弄清旧名、旧法或器痕的真假";
         else if (heroineTie) thread.desire = L"确认你是否配得上并肩试剑";
+        else if (mentorTie) thread.desire = L"把你磨成能活过第一世死局的人";
+        else if (antagonistTie) thread.desire = L"用门规确认你是不是会破坏旧秩序的变数";
         else thread.desire = L"看清你是哪种可结交的人";
     }
     if (thread.fear.empty()) {
@@ -3978,6 +3986,8 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
         else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
         else if (heroineTie) thread.fear = L"这份心动被宗门和旧债写成软肋";
+        else if (mentorTie) thread.fear = L"你太早被玄衡子盯死，连成长的时间都没有";
+        else if (antagonistTie) thread.fear = L"你与洛凝霜、清蘅真人的因果连成他看不透的局";
         else thread.fear = hidden ? L"自己藏拙被你看穿" : L"站错队后被时代卷走";
     }
 
@@ -4001,6 +4011,14 @@ void RefreshSocialAgentState(SocialThread& thread) {
         thread.nextMove = thread.relation >= 18
             ? L"邀你去桃林试剑"
             : L"隔着人群观察你的选择";
+    } else if (mentorTie) {
+        thread.nextMove = thread.relation >= 18
+            ? L"安排真正的护道试炼"
+            : L"先冷眼看你能不能自救";
+    } else if (antagonistTie) {
+        thread.nextMove = thread.relation <= -18
+            ? L"借门规和试炼设局"
+            : L"继续以掌律名义审查你";
     } else if (hidden) {
         thread.nextMove = L"继续隐藏真实修为，看你是否识破";
     } else {
@@ -4057,6 +4075,8 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
     if (has(L"道网联系人")) return L"隔空围观";
     if (has(L"残宗向导")) return L"现实互利";
     if (has(L"桃华剑脉") || has(L"洛凝霜")) return L"含笑试剑";
+    if (has(L"师尊") || has(L"清蘅真人")) return L"严中护道";
+    if (has(L"玄衡子") || has(L"掌律真人")) return L"规矩杀机";
     if (thread.relation >= 35) return L"热切拉拢";
     if (thread.relation >= 18) return L"认可示好";
     if (thread.relation <= -35) return L"敌意带刺";
@@ -4121,6 +4141,14 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
         return gifted
             ? L"「他们都说你根骨极好，我倒想知道，你的剑心是不是也一样好看。」"
             : L"「别急着把输赢写死。能接住我这一剑的人，才有资格谈以后。」";
+    }
+    if (has(L"师尊") || has(L"清蘅真人")) {
+        return gifted
+            ? L"「天资是借来的风，心性才是你自己的剑鞘。别急，我会亲手磨你。」"
+            : L"「修行不是给旁人看的。你若还能站起来，我就继续教。」";
+    }
+    if (has(L"玄衡子") || has(L"掌律真人")) {
+        return L"「门规不杀人，违逆门规的人才会自己走到死处。」";
     }
     if (thread.relation >= 18) {
         return L"「我愿意先信你一次，但你最好让我觉得这份押注值得。」";
@@ -4334,6 +4362,7 @@ const SocialThread* PickSocialAdventureThread() {
         if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") weight += 2;
         if (thread.role == L"欺压者" || thread.role == L"竞争者") weight += 2;
         if (thread.role == L"势力牵连") weight += 1;
+        if (TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"清蘅真人", L"玄衡子"})) weight += 2;
         for (int j = 0; j < weight; ++j) {
             weighted.push_back(i);
         }
@@ -4371,6 +4400,18 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
             TextContainsAny(text, {L"前世", L"旧名", L"失传古法", L"功法", L"器痕", L"法宝", L"通天灵宝"})) {
             score += 6;
         }
+        if (TextContainsAny(profile, {L"洛凝霜", L"桃华剑脉"}) &&
+            TextContainsAny(text, {L"试剑", L"剑", L"桃花", L"同代", L"好感", L"情缘", L"仙界"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"}) &&
+            TextContainsAny(text, {L"师尊", L"长辈", L"入门", L"护道", L"试炼", L"门规"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"}) &&
+            TextContainsAny(text, {L"门规", L"掌律", L"审查", L"破绽", L"设局", L"反派"})) {
+            score += 7;
+        }
         if ((thread.hidesPower || !thread.hiddenHint.empty()) &&
             TextContainsAny(text, {L"外显", L"隐藏", L"藏拙", L"修为", L"气机", L"试探"})) {
             score += 4;
@@ -4398,6 +4439,9 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
     bool challenger = TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者", L"资源把关者", L"轻慢", L"嫉妒"});
     bool factionLike = TextContainsAny(thread.role + thread.attitude, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"残宗向导"});
     bool legacyLike = TextContainsAny(thread.role + thread.attitude, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
+    bool heroineLike = TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"桃华剑脉"});
+    bool mentorLike = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
+    bool antagonistLike = TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"});
 
     wstringstream ss;
     ss << L"\n人情回响: ";
@@ -4413,6 +4457,15 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         if (familyTie) {
             ss << thread.name << L"听闻「" << trigger
                << L"」后没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
+        } else if (heroineLike) {
+            ss << thread.name << L"听闻「" << trigger
+               << L"」后没有当众夸你，只把桃花剑光压低半寸：" << BuildSocialNpcUtterance(thread);
+        } else if (mentorLike) {
+            ss << thread.name << L"把「" << trigger
+               << L"」记作一次合格答卷，语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
+        } else if (antagonistLike) {
+            ss << thread.name << L"因「" << trigger
+               << L"」暂时找不到可用破绽，掌律玉简合上得很慢：" << BuildSocialNpcUtterance(thread);
         } else if (challenger) {
             ss << thread.name << L"嘴上仍带酸意，却因「" << trigger
                << L"」不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
@@ -4430,6 +4483,15 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         if (familyTie) {
             ss << thread.name << L"听见「" << trigger
                << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
+        } else if (heroineLike) {
+            ss << thread.name << L"因「" << trigger
+               << L"」收回几分笑意。她不是看不起弱者，只是不愿把好感押给只会认输的人。";
+        } else if (mentorLike) {
+            ss << thread.name << L"因「" << trigger
+               << L"」更加严厉，像是要先确认你有没有被护道的价值：" << BuildSocialNpcUtterance(thread);
+        } else if (antagonistLike) {
+            ss << thread.name << L"把「" << trigger
+               << L"」写成新罪名的影子，下一次门规可能来得更冷：" << BuildSocialNpcUtterance(thread);
         } else if (challenger) {
             ss << thread.name << L"抓住「" << trigger
                << L"」里的破绽继续轻慢你，下一次很可能借势设局。";
@@ -4465,6 +4527,7 @@ bool ShouldTriggerSocialAdventureEvent() {
         if (abs(thread.relation) >= 35) chance += 3;
         if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") chance += 1;
         if (thread.role == L"欺压者" || thread.role == L"竞争者") chance += 2;
+        if (TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"清蘅真人", L"玄衡子"})) chance += 1;
     }
     if (HasFactionTie() && abs(g_factionTie.favor) >= 25) chance += 3;
     if (g_player.totalEvents <= 2) chance += 4;
@@ -4955,15 +5018,29 @@ void GenerateSocialThreads() {
             L"对方承认与你有血缘，却不肯说出父母名讳。", -4);
     }
 
+    if (IsFirstLifeClassicalEra()) {
+        AddSocialThread(L"清蘅真人", L"入门师尊", exceptionalRoot ? L"严中赞许" : (weakRoot ? L"冷眼护短" : L"耐心试炼"),
+            exceptionalRoot
+                ? L"她看出你根骨出众，却不许旁人把你捧得太高，只亲自安排更重的入门试炼。"
+                : (weakRoot
+                    ? L"她没有替你挡下所有轻慢，只在你快被逼到绝路时留下一句能保命的指点。"
+                    : L"她愿意收你入门，却先要看你在秘境、门规和人情之间能不能守住心性。"),
+            exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"真实修为和来历都不愿明说");
+        AddSocialThread(L"玄衡子", L"太上玄衡观掌律真人", L"规矩审查",
+            L"他以门规名义盯上清蘅真人新收的弟子，也注意到洛凝霜与你的试剑因果，像是在等一个能名正言顺出手的破绽。",
+            -24, L"元婴期", true, L"外显修为未必可信");
+    }
+
     if (IsLuoNingshuangEra()) {
         AddSocialThread(L"洛凝霜", L"桃华剑脉剑修",
-            exceptionalRoot ? L"含笑押注" : (weakRoot ? L"护短旁观" : L"试剑结缘"),
+            exceptionalRoot ? L"含笑押注" : (weakRoot ? L"冷淡观望" : L"试剑结缘"),
             exceptionalRoot
-                ? L"她在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
+                ? L"她是桃华剑脉少见的天生剑胚，在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
                 : (weakRoot
-                    ? L"她见你被人轻慢时没有立刻出手，只在桃花剑气里替你留了一条退路。"
-                    : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色。"),
-            exceptionalRoot ? 24 : (weakRoot ? 14 : 18), L"筑基期");
+                    ? L"她天赋极好，宗门皆说她将来有登仙之姿；你若只是一味认输，她不会轻易把目光停在你身上。"
+                    : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色；若不夭折，她将来很可能在仙界仍有名字。"),
+            exceptionalRoot ? 24 : (weakRoot ? 2 : 16), L"筑基期", false,
+            L"天赋极高，未来有望登仙乃至证道祖，但仍会被因果和选择改变");
     }
 
     const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
@@ -5078,9 +5155,13 @@ void GenerateSocialThreads() {
         SocialThread factionThread;
         SocialThread frostCrowThread;
         SocialThread luoNingshuangThread;
+        SocialThread mentorThread;
+        SocialThread antagonistThread;
         bool hasFactionThread = false;
         bool hasFrostCrowThread = false;
         bool hasLuoNingshuangThread = false;
+        bool hasMentorThread = false;
+        bool hasAntagonistThread = false;
         for (const auto& thread : g_socialThreads) {
             if (!hasFactionThread && thread.role == L"势力牵连") {
                 factionThread = thread;
@@ -5093,6 +5174,14 @@ void GenerateSocialThreads() {
             if (!hasLuoNingshuangThread && thread.name == L"洛凝霜") {
                 luoNingshuangThread = thread;
                 hasLuoNingshuangThread = true;
+            }
+            if (!hasMentorThread && thread.name == L"清蘅真人") {
+                mentorThread = thread;
+                hasMentorThread = true;
+            }
+            if (!hasAntagonistThread && thread.name == L"玄衡子") {
+                antagonistThread = thread;
+                hasAntagonistThread = true;
             }
         }
         g_socialThreads.resize(5);
@@ -5136,6 +5225,8 @@ void GenerateSocialThreads() {
         };
 
         if (hasFactionThread) putPriority(factionThread, L"", L"势力牵连");
+        if (hasMentorThread) putPriority(mentorThread, L"清蘅真人", L"");
+        if (hasAntagonistThread) putPriority(antagonistThread, L"玄衡子", L"");
         if (hasLuoNingshuangThread) putPriority(luoNingshuangThread, L"洛凝霜", L"");
         if (hasFrostCrowThread) putPriority(frostCrowThread, L"霜鸦", L"");
     }
@@ -5194,8 +5285,12 @@ void GenerateSocialRumors() {
         g_socialRumors.push_back(L"一页旧册在暗处流转，有人怀疑你与某个前世恶名重新连上了因果。");
     }
 
+    if (IsFirstLifeClassicalEra()) {
+        g_socialRumors.push_back(L"清蘅真人新近收徒，太上玄衡观的玄衡子却借掌律名义盯上了这条师徒线。");
+    }
+
     if (IsLuoNingshuangEra()) {
-        g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利。");
+        g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利；也有人说她若不夭折，将来仙界仍会听见这个名字。");
     }
 
     if (g_worldEraName == L"灵机蒸汽纪") {
@@ -5477,8 +5572,12 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"一处古修遗府与" + familySecret + L"隐隐相连。");
     }
 
+    if (IsFirstLifeClassicalEra()) {
+        g_lifeStoryHooks.push_back(L"清蘅真人会成为你第一世的入门师尊；玄衡子以掌律名义审查她新收的弟子，这条线会牵动宗门、门规与后续反派因果。");
+    }
+
     if (IsLuoNingshuangEra()) {
-        g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人，她可能成为同路人，也可能成为一场牵动道心的劫。");
+        g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人。她天赋极好，未来有望入仙界、甚至触及道祖门槛；但第一世是否对你生出好感，要看你的胆色、心性和具体选择。");
     }
 
     if (HasFactionTie()) {
