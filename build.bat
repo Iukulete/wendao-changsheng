@@ -63,6 +63,12 @@ if exist "%ROOT%assets\previews" (
     echo Synced preview assets.
 )
 
+if exist "%ROOT%assets\characters" (
+    if not exist "%OUT_DIR%\characters" mkdir "%OUT_DIR%\characters"
+    xcopy /E /I /Y "%ROOT%assets\characters" "%OUT_DIR%\characters" >nul
+    echo Synced character assets.
+)
+
 if exist "%ROOT%assets\item_lore.json" (
     copy /Y "%ROOT%assets\item_lore.json" "%OUT_DIR%\item_lore.json" >nul
 )

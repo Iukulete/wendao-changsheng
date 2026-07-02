@@ -1040,6 +1040,7 @@ wstring g_equippedHongmengTreasure;
 HWND g_hWnd;
 Image* g_bgImage = nullptr;
 Image* g_itemAtlasImage = nullptr;
+Image* g_taoistAntagonistImage = nullptr;
 
 enum GameState {
     STATE_MENU = 0,
@@ -7958,12 +7959,45 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            graphics.DrawString(L"天机动向", -1, &statFont,
-                RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
-                &leftFormat, &mutedBrush);
-            graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
-                RectF(futureRoleRect.X + 12, futureRoleRect.Y + 42, futureRoleRect.Width - 24, futureRoleRect.Height - 54),
-                &leftFormat, &softWhiteBrush);
+            if (g_taoistAntagonistImage) {
+                graphics.DrawString(L"道影浮现", -1, &statFont,
+                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
+                    &leftFormat, &mutedBrush);
+
+                REAL imageAspect = (REAL)g_taoistAntagonistImage->GetWidth() /
+                    max<REAL>(1.0f, (REAL)g_taoistAntagonistImage->GetHeight());
+                REAL portraitH = min(280.0f, futureRoleRect.Height - 112.0f);
+                REAL portraitW = portraitH * imageAspect;
+                RectF portraitRect(
+                    futureRoleRect.X + (futureRoleRect.Width - portraitW) / 2.0f,
+                    futureRoleRect.Y + 38.0f,
+                    portraitW,
+                    portraitH);
+                SolidBrush portraitBg(Color(235, 238, 240, 244));
+                Pen portraitPen(Color(95, 228, 190, 76), 1);
+                graphics.FillRectangle(&portraitBg, portraitRect);
+                graphics.DrawImage(g_taoistAntagonistImage, portraitRect);
+                graphics.DrawRectangle(&portraitPen, portraitRect);
+
+                REAL labelY = portraitRect.GetBottom() + 8.0f;
+                graphics.DrawString(L"玄衡子", -1, &statFont,
+                    RectF(futureRoleRect.X + 12, labelY, futureRoleRect.Width - 24, 24),
+                    &centerFormat, &goldBrush);
+                graphics.DrawString(L"太上玄衡观 · 掌律真人", -1, &smallFont,
+                    RectF(futureRoleRect.X + 12, labelY + 24.0f, futureRoleRect.Width - 24, 22),
+                    &centerFormat, &softWhiteBrush);
+                wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 42);
+                graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
+                    RectF(futureRoleRect.X + 12, labelY + 52.0f, futureRoleRect.Width - 24, 38),
+                    &leftFormat, &mutedBrush);
+            } else {
+                graphics.DrawString(L"天机动向", -1, &statFont,
+                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
+                    &leftFormat, &mutedBrush);
+                graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
+                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 42, futureRoleRect.Width - 24, futureRoleRect.Height - 54),
+                    &leftFormat, &softWhiteBrush);
+            }
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
                 RectF(centerPanel.X + 22, centerPanel.Y + 20, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
@@ -8788,6 +8822,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (GetFileAttributesW(L"previews\\item_atlas_v4.png") != INVALID_FILE_ATTRIBUTES) {
         g_itemAtlasImage = Image::FromFile(L"previews\\item_atlas_v4.png");
     }
+    if (GetFileAttributesW(L"characters\\taoist_antagonist.png") != INVALID_FILE_ATTRIBUTES) {
+        g_taoistAntagonistImage = Image::FromFile(L"characters\\taoist_antagonist.png");
+    }
 
     WNDCLASSEXA wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -8829,6 +8866,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 
     if (g_bgImage) delete g_bgImage;
     if (g_itemAtlasImage) delete g_itemAtlasImage;
+    if (g_taoistAntagonistImage) delete g_taoistAntagonistImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }
