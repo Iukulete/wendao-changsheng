@@ -2402,7 +2402,7 @@ void GenerateWorldEra() {
     g_eraShiftCause = BuildEraShiftCauseText(previousEra, g_worldEraName);
 
     if (g_generation <= 1) {
-        g_eraTransitionNote = L"第一世固定在灵气初盛纪，也就是最典型的古典修仙纪；师尊、玄衡子与洛凝霜的因果都会从这里埋下。若你死后转世，下一世才可能演化到灵机、道网、末法或废土。";
+        g_eraTransitionNote = L"这一世正值灵气初盛，山门、秘境与旧契仍是修士最先触到的天地秩序；更远的时代变化尚无人能看清。";
     } else if (previousEra == g_worldEraName) {
         g_eraTransitionNote = L"轮回之后，时代大势仍延续为" + g_worldEraName + L"，但人事、宗门与机缘已经重新洗牌。";
     } else {
@@ -4066,6 +4066,51 @@ void AddSocialThread(const wstring& name, const wstring& role, const wstring& at
     }
 }
 
+bool IsAnchorCharacterName(const wstring& name) {
+    return name == L"清蘅真人" || name == L"玄衡子" ||
+           name == L"洛凝霜" || name == L"霜鸦";
+}
+
+bool HasExplicitCharacterReveal(const wstring& name) {
+    if (!IsAnchorCharacterName(name)) return true;
+
+    auto containsReveal = [&](const wstring& text) {
+        if (text.find(name) == wstring::npos) return false;
+        if (text.find(L"人物入局") != wstring::npos ||
+            text.find(L"关键人物入局") != wstring::npos ||
+            text.find(L"正式进入你的本世因果") != wstring::npos) {
+            return true;
+        }
+        if (name == L"清蘅真人" &&
+            (text.find(L"【师承】") != wstring::npos || text.find(L"清蘅试心") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"玄衡子" &&
+            (text.find(L"【危机】玄衡") != wstring::npos || text.find(L"问律") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"洛凝霜" &&
+            (text.find(L"【情缘】") != wstring::npos || text.find(L"桃林试剑") != wstring::npos ||
+             text.find(L"凝霜再会") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"霜鸦" &&
+            (text.find(L"霜鸦") != wstring::npos &&
+             (text.find(L"清算") != wstring::npos || text.find(L"契约猎手") != wstring::npos))) {
+            return true;
+        }
+        return false;
+    };
+
+    for (const auto& item : g_memoryLog) {
+        if (containsReveal(item)) return true;
+    }
+    for (const auto& item : g_socialRumors) {
+        if (containsReveal(item)) return true;
+    }
+    return false;
+}
+
 void AddQinghengThread() {
     bool exceptionalRoot = (g_player.GetTotalRoot() >= 42 || g_player.hasBalancedRoots);
     bool weakRoot = (g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots);
@@ -4093,10 +4138,10 @@ void AddLuoNingshuangThread() {
         exceptionalRoot
             ? L"她是桃华剑脉少见的天生剑胚，在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
             : (weakRoot
-                ? L"她天赋极好，宗门皆说她将来有登仙之姿；你若只是一味认输，她不会轻易把目光停在你身上。"
-                : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色；若不夭折，她将来很可能在仙界仍有名字。"),
+                ? L"她天赋极好，宗门同辈都不敢轻视；你若只是一味认输，她不会轻易把目光停在你身上。"
+                : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色。"),
         exceptionalRoot ? 24 : (weakRoot ? 2 : 16), L"筑基期", false,
-        L"天赋极高，未来有望登仙乃至证道祖，但仍会被因果和选择改变");
+        L"剑心清亮，锋芒远超同辈");
 }
 
 void AddFrostCrowThread() {
@@ -4116,14 +4161,19 @@ void AddFrostCrowThread() {
 }
 
 void RevealCharacterThread(const wstring& name, const wstring& reason) {
-    if (FindSocialThreadByName(name)) return;
-    if (name == L"清蘅真人") AddQinghengThread();
-    else if (name == L"玄衡子") AddXuanhengThread();
-    else if (name == L"洛凝霜") AddLuoNingshuangThread();
-    else if (name == L"霜鸦") AddFrostCrowThread();
-    else return;
+    const SocialThread* existing = FindSocialThreadByName(name);
+    if (!existing) {
+        if (name == L"清蘅真人") AddQinghengThread();
+        else if (name == L"玄衡子") AddXuanhengThread();
+        else if (name == L"洛凝霜") AddLuoNingshuangThread();
+        else if (name == L"霜鸦") AddFrostCrowThread();
+        else return;
+    }
 
     if (FindSocialThreadByName(name)) {
+        if (!HasExplicitCharacterReveal(name)) {
+            AddMemory(L"人物入局", name + L"因「" + CompactMemoryFragment(reason) + L"」正式进入你的本世因果。");
+        }
         AddSocialRumor(name + L"因「" + CompactMemoryFragment(reason) + L"」正式进入你的本世因果。", true);
         g_storyState.relationships[name + L"（" + GetCharacterRoleCaption(name) + L"）"] =
             FindSocialThreadByName(name)->relation;
@@ -4313,6 +4363,17 @@ int GetStoryRelationForThread(const SocialThread& thread) {
 
 void AddCharacterEcho(vector<wstring>& echoes, const wstring& text, int limit) {
     if ((int)echoes.size() >= limit || text.empty()) return;
+    static const vector<wstring> blocked = {
+        L"若你死后转世", L"下一世才可能", L"可能演化到", L"灵机、道网、末法或废土",
+        L"后续仙界", L"第一世好感", L"女主候选", L"候选之一", L"未来有望",
+        L"上限", L"道祖门槛", L"证道祖", L"设计", L"隐藏设定", L"真身",
+        L"系统", L"玩家", L"按钮", L"UI", L"本世主线未尽", L"未追完的线索",
+        L"未收束线头", L"这条线会牵动", L"后续反派因果"
+    };
+    for (const auto& key : blocked) {
+        if (text.find(key) != wstring::npos) return;
+    }
+
     wstring compact = CompactMemoryFragment(text);
     if (compact.size() > 118) {
         compact = compact.substr(0, 118) + L"...";
@@ -4353,13 +4414,13 @@ vector<wstring> FindCharacterEchoes(const wstring& name, int limit = 3) {
 
 bool HasCharacterTrace(const wstring& name) {
     if (name.empty()) return false;
+    if (IsAnchorCharacterName(name)) {
+        return HasExplicitCharacterReveal(name);
+    }
     for (const auto& thread : g_socialThreads) {
         if (thread.name == name) return true;
     }
     if (!FindCharacterEchoes(name, 1).empty()) return true;
-    for (const auto& hook : g_lifeStoryHooks) {
-        if (hook.find(name) != wstring::npos) return true;
-    }
     return false;
 }
 
@@ -4393,6 +4454,9 @@ vector<wstring> BuildVisibleCharacterNames() {
     }
 
     for (const auto& thread : g_socialThreads) {
+        if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) {
+            continue;
+        }
         AddVisibleCharacterName(names, thread.name);
     }
     for (const auto& keyName : {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"}) {
@@ -4432,7 +4496,7 @@ void AppendCharacterProfile(wstringstream& ss, const wstring& name, const wstrin
     }
 
     if (!echoes.empty()) {
-        ss << L"- 轮回余痕: ";
+        ss << (HasPriorLifeEcho() ? L"- 旧梦余痕: " : L"- 已知交集: ");
         for (size_t i = 0; i < echoes.size(); ++i) {
             if (i > 0) ss << L"；";
             ss << echoes[i];
@@ -4450,9 +4514,9 @@ wstring BuildCharacterFallback(const wstring& name) {
     }
     if (name == L"清蘅真人") return L"第一世古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。";
     if (name == L"玄衡子") return L"第一世古典修仙纪的掌律反派。他会借门规审查你身边正在成形的因果。";
-    if (name == L"洛凝霜") return L"桃华剑脉里很重要的一条因果。她不会无条件偏向你，第一世好感和后续仙界再会都看你的选择。";
+    if (name == L"洛凝霜") return L"桃华剑脉剑修。她看人不只看天资，也看你在剑前如何取舍。";
     if (name == L"霜鸦") return L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。";
-    return L"此人已经进入你的本世因果，后续态度会随选择继续变化。";
+    return L"此人已经进入你的本世因果，态度会随你当下的选择变化。";
 }
 
 bool TextContainsAny(const wstring& text, const vector<wstring>& keys) {
@@ -5517,7 +5581,7 @@ void GenerateSocialRumors() {
     }
 
     if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
-        g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利；也有人说她若不夭折，将来仙界仍会听见这个名字。");
+        g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利。");
     }
 
     if (g_worldEraName == L"灵机蒸汽纪") {
@@ -5598,16 +5662,6 @@ wstring BuildCharacterDetailText(const wstring& name) {
 
     AppendCharacterProfile(ss, name, L" · " + GetCharacterRoleCaption(name),
         BuildCharacterFallback(name), true);
-
-    if (!g_storyState.openThreads.empty()) {
-        ss << L"【相关未收束线头】\n";
-        int count = 0;
-        for (const auto& thread : g_storyState.openThreads) {
-            if (thread.find(name) == wstring::npos && count >= 2) continue;
-            ss << L"- " << thread << L"\n";
-            if (++count >= 4) break;
-        }
-    }
     return ss.str();
 }
 
@@ -5840,7 +5894,7 @@ void GenerateLifeStoryHooks() {
     }
 
     if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
-        g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人。她天赋极好，未来有望入仙界、甚至触及道祖门槛；但第一世是否对你生出好感，要看你的胆色、心性和具体选择。");
+        g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人；她不会无缘无故偏向谁，只看剑前的胆色与心性。");
     }
 
     if (HasFactionTie()) {
@@ -8714,24 +8768,27 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.DrawString(L"主角照影", -1, &statFont,
                 RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
                 &leftFormat, &mutedBrush);
-            RectF silhouetteRect(
-                futureRoleRect.X + 58,
-                futureRoleRect.Y + 46,
-                futureRoleRect.Width - 116,
-                min(260.0f, futureRoleRect.Height - 126.0f));
-            SolidBrush silhouetteBrush(Color(55, 232, 236, 230));
-            Pen silhouettePen(Color(85, 228, 190, 76), 1);
-            graphics.FillRectangle(&silhouetteBrush, silhouetteRect);
-            graphics.DrawRectangle(&silhouettePen, silhouetteRect);
+            RectF portraitHintRect(
+                futureRoleRect.X + 22,
+                futureRoleRect.Y + 48,
+                futureRoleRect.Width - 44,
+                min(116.0f, futureRoleRect.Height - 178.0f));
+            Pen portraitHintPen(Color(70, 228, 190, 76), 1);
+            graphics.DrawRectangle(&portraitHintPen, portraitHintRect);
+            graphics.DrawString(L"暂无主角立绘", -1, &smallFont,
+                portraitHintRect, &centerFormat, &mutedBrush);
+            REAL detailY = portraitHintRect.GetBottom() + 14.0f;
             graphics.DrawString(g_player.name.c_str(), -1, &statFont,
-                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 10.0f, futureRoleRect.Width - 24, 24),
+                RectF(futureRoleRect.X + 12, detailY, futureRoleRect.Width - 24, 24),
                 &centerFormat, &goldBrush);
             graphics.DrawString((GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality()).c_str(), -1, &smallFont,
-                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 36.0f, futureRoleRect.Width - 24, 24),
+                RectF(futureRoleRect.X + 12, detailY + 26.0f, futureRoleRect.Width - 24, 24),
                 &centerFormat, &softWhiteBrush);
-            wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 48);
+            wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 34);
             graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
-                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 64.0f, futureRoleRect.Width - 24, 48),
+                RectF(futureRoleRect.X + 14, detailY + 56.0f,
+                    futureRoleRect.Width - 28,
+                    max<REAL>(24.0f, futureRoleRect.GetBottom() - detailY - 68.0f)),
                 &leftFormat, &mutedBrush);
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
