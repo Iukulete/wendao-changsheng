@@ -1053,6 +1053,7 @@ Image* g_itemAtlasImage = nullptr;
 Image* g_taoistAntagonistImage = nullptr;
 Image* g_frostCrowImage = nullptr;
 Image* g_luoNingshuangImage = nullptr;
+Image* g_protagonistImage = nullptr;
 
 bool IsFrostCrowEra() {
     return g_worldEraName == L"星穹道网纪" || g_worldEraName == L"灵机蒸汽纪";
@@ -8615,6 +8616,22 @@ void DrawPanel(Graphics& graphics, const RectF& rect, int alpha = 210) {
     graphics.DrawRectangle(&panelPen, rect);
 }
 
+void DrawImageContained(Graphics& graphics, Image* image, const RectF& bounds) {
+    if (!image || bounds.Width <= 1.0f || bounds.Height <= 1.0f) return;
+
+    REAL imageW = max<REAL>(1.0f, (REAL)image->GetWidth());
+    REAL imageH = max<REAL>(1.0f, (REAL)image->GetHeight());
+    REAL scale = min(bounds.Width / imageW, bounds.Height / imageH);
+    REAL drawW = imageW * scale;
+    REAL drawH = imageH * scale;
+    RectF target(
+        bounds.X + (bounds.Width - drawW) / 2.0f,
+        bounds.Y + (bounds.Height - drawH) / 2.0f,
+        drawW,
+        drawH);
+    graphics.DrawImage(image, target);
+}
+
 void DrawBar(Graphics& graphics, Font& font, SolidBrush& textBrush,
              const RectF& rect, double ratio, const wstring& label, Color fillColor) {
     ratio = max(0.0, min(1.0, ratio));
@@ -8939,34 +8956,64 @@ void OnPaint(HDC hdc, RECT& rect) {
             DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"出身",
                 GetFamilySummary(g_player.family), leftPanel.X + 18, y, leftPanel.Width - 36);
 
-            RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
+            REAL futureTop = y + 40.0f;
+            REAL futureBottom = leftPanel.GetBottom() - 18.0f;
+            if (futureBottom - futureTop < 210.0f) {
+                futureTop = max(leftPanel.Y + 398.0f, futureBottom - 210.0f);
+            }
+            RectF futureRoleRect(leftPanel.X + 18, futureTop, leftPanel.Width - 36,
+                max<REAL>(180.0f, futureBottom - futureTop));
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
+
+            GraphicsState protagonistClip = graphics.Save();
+            graphics.SetClip(futureRoleRect);
+            StringFormat protagonistCenter;
+            protagonistCenter.SetAlignment(StringAlignmentCenter);
+            protagonistCenter.SetTrimming(StringTrimmingEllipsisCharacter);
+            protagonistCenter.SetFormatFlags(StringFormatFlagsNoWrap);
+            StringFormat protagonistText;
+            protagonistText.SetAlignment(StringAlignmentNear);
+            protagonistText.SetTrimming(StringTrimmingEllipsisCharacter);
+            protagonistText.SetFormatFlags(StringFormatFlagsLineLimit);
+
             graphics.DrawString(L"主角照影", -1, &statFont,
                 RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
                 &leftFormat, &mutedBrush);
             RectF portraitHintRect(
-                futureRoleRect.X + 22,
-                futureRoleRect.Y + 48,
-                futureRoleRect.Width - 44,
-                min(116.0f, futureRoleRect.Height - 178.0f));
+                futureRoleRect.X + 18,
+                futureRoleRect.Y + 42,
+                futureRoleRect.Width - 36,
+                max<REAL>(128.0f, min<REAL>(250.0f, futureRoleRect.Height - 124.0f)));
             Pen portraitHintPen(Color(70, 228, 190, 76), 1);
+            SolidBrush portraitBg(Color(46, 8, 10, 15));
+            graphics.FillRectangle(&portraitBg, portraitHintRect);
             graphics.DrawRectangle(&portraitHintPen, portraitHintRect);
-            graphics.DrawString(L"暂无主角立绘", -1, &smallFont,
-                portraitHintRect, &centerFormat, &mutedBrush);
-            REAL detailY = portraitHintRect.GetBottom() + 14.0f;
-            graphics.DrawString(g_player.name.c_str(), -1, &statFont,
+            if (g_protagonistImage) {
+                DrawImageContained(graphics, g_protagonistImage,
+                    RectF(portraitHintRect.X + 8, portraitHintRect.Y + 6,
+                        portraitHintRect.Width - 16, portraitHintRect.Height - 12));
+            } else {
+                graphics.DrawString(L"暂无主角立绘", -1, &smallFont,
+                    portraitHintRect, &protagonistCenter, &mutedBrush);
+            }
+            REAL detailY = portraitHintRect.GetBottom() + 10.0f;
+            graphics.DrawString(NormalizeStoryNote(g_player.name, 18).c_str(), -1, &statFont,
                 RectF(futureRoleRect.X + 12, detailY, futureRoleRect.Width - 24, 24),
-                &centerFormat, &goldBrush);
-            graphics.DrawString((GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality()).c_str(), -1, &smallFont,
+                &protagonistCenter, &goldBrush);
+            wstring realmBrief = NormalizeStoryNote(GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality(), 24);
+            graphics.DrawString(realmBrief.c_str(), -1, &smallFont,
                 RectF(futureRoleRect.X + 12, detailY + 26.0f, futureRoleRect.Width - 24, 24),
-                &centerFormat, &softWhiteBrush);
-            wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 34);
-            graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
-                RectF(futureRoleRect.X + 14, detailY + 56.0f,
-                    futureRoleRect.Width - 28,
-                    max<REAL>(24.0f, futureRoleRect.GetBottom() - detailY - 68.0f)),
-                &leftFormat, &mutedBrush);
+                &protagonistCenter, &softWhiteBrush);
+            REAL briefTop = detailY + 54.0f;
+            REAL briefHeight = futureRoleRect.GetBottom() - briefTop - 10.0f;
+            if (briefHeight >= 18.0f) {
+                wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 42);
+                graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
+                    RectF(futureRoleRect.X + 14, briefTop, futureRoleRect.Width - 28, briefHeight),
+                    &protagonistText, &mutedBrush);
+            }
+            graphics.Restore(protagonistClip);
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
                 RectF(centerPanel.X + 22, centerPanel.Y + 20, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
@@ -10043,6 +10090,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (GetFileAttributesW(L"characters\\luo_ningshuang.png") != INVALID_FILE_ATTRIBUTES) {
         g_luoNingshuangImage = Image::FromFile(L"characters\\luo_ningshuang.png");
     }
+    if (GetFileAttributesW(L"characters\\protagonist.png") != INVALID_FILE_ATTRIBUTES) {
+        g_protagonistImage = Image::FromFile(L"characters\\protagonist.png");
+    }
 
     WNDCLASSEXA wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -10087,6 +10137,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (g_taoistAntagonistImage) delete g_taoistAntagonistImage;
     if (g_frostCrowImage) delete g_frostCrowImage;
     if (g_luoNingshuangImage) delete g_luoNingshuangImage;
+    if (g_protagonistImage) delete g_protagonistImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }
