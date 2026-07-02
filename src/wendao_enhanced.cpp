@@ -3492,7 +3492,7 @@ wstring GetHeavenlyDaoRequirementText() {
     } else if (progress < 360) {
         ss << L"你已经是道祖，但仍未能统摄万道。继续历练、触发前世回响、加深通天灵宝共鸣，才可能触及道祖-天道境。\n";
     } else {
-        ss << L"你已具备叩问道祖-天道境的资格。若成功，九大鸿蒙至宝也只剩理论上的可毁之物。\n";
+        ss << L"你已具备叩问道祖-天道境的资格。若成功，九大鸿蒙至宝亦是可毁之物。\n";
     }
     ss << L"\n" << BuildDaoPassiveText();
     ss << L"\n" << BuildHongmengTreasureSummary(2);
