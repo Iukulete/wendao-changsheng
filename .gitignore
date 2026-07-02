@@ -28,6 +28,8 @@ ai_ollama.log
 
 # Saves and local state
 save.txt
+save_slot_*.txt
+save/
 
 # OS/editor noise
 __pycache__/

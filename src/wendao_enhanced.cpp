@@ -7677,10 +7677,19 @@ bool LoadWorldEra(wifstream& file) {
 
 // ==================== 存档系统 ====================
 const int SAVE_SLOT_COUNT = 6;
+const wchar_t* SAVE_DIR_NAME = L"save";
 
 wstring GetSaveSlotPath(int slot) {
-    if (slot <= 1) return L"save.txt";
-    return L"save_slot_" + to_wstring(slot) + L".txt";
+    int normalizedSlot = max(1, min(slot, SAVE_SLOT_COUNT));
+    return wstring(SAVE_DIR_NAME) + L"\\slot_" + to_wstring(normalizedSlot) + L".txt";
+}
+
+bool EnsureSaveDirectory() {
+    DWORD attrs = GetFileAttributesW(SAVE_DIR_NAME);
+    if (attrs != INVALID_FILE_ATTRIBUTES) {
+        return (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+    return CreateDirectoryW(SAVE_DIR_NAME, NULL) || GetLastError() == ERROR_ALREADY_EXISTS;
 }
 
 bool FileExists(const wstring& path) {
@@ -7711,7 +7720,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     info.exists = FileExists(info.path);
     if (!info.exists) {
         info.title = L"空槽位";
-        info.detail = slot == 1 ? L"兼容旧版默认存档；保存后写入 save.txt。" : L"尚未写入。";
+        info.detail = L"尚未写入；保存后生成 " + info.path + L"。";
         return info;
     }
 
@@ -7780,6 +7789,8 @@ vector<SaveSlotInfo> BuildSaveSlotInfos() {
 }
 
 bool SaveGameToPath(const wstring& path) {
+    if (!EnsureSaveDirectory()) return false;
+
     wofstream file(path.c_str());
     if (!file) return false;
 
@@ -7921,7 +7932,7 @@ wstring BuildSaveSlotIntroText(bool loadMode) {
     ss << (loadMode
         ? L"选择一个已有槽位读取。空槽位不会覆盖当前进度。"
         : L"选择一个槽位写入当前道途。已有槽位会被覆盖。");
-    ss << L"\n1号槽兼容旧版 save.txt，其余槽位写入独立文件。";
+    ss << L"\n存档统一写入 save 文件夹，每个槽位对应一个 slot 文件。";
     return ss.str();
 }
 

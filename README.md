@@ -31,7 +31,7 @@
 build.bat
 ```
 
-游戏运行目录为 `release/`，存档会写入运行目录。
+游戏运行目录为 `release/`，存档会写入 `release/save/`。
 
 ## 游戏内容
 
