@@ -1081,9 +1081,14 @@ RECT g_backButtonRect = {0, 0, 0, 0};
 RECT g_infoScrollTrackRect = {0, 0, 0, 0};
 RECT g_mainScrollTrackRect = {0, 0, 0, 0};
 RECT g_mainScrollAreaRect = {0, 0, 0, 0};
+vector<RECT> g_characterButtonRects;
+vector<wstring> g_characterCodexNames;
+wstring g_characterCodexSelectedName;
 bool g_backButtonVisible = false;
 bool g_infoScrollDragging = false;
 bool g_mainScrollDragging = false;
+bool g_characterCodexListPage = false;
+bool g_characterCodexDetailPage = false;
 int g_infoScroll = 0;
 int g_infoScrollMax = 0;
 int g_mainScroll = 0;
@@ -1097,6 +1102,8 @@ HWND g_nameInput;
 HWND g_btnStart;
 
 void ShowNotice(const wstring& title, const wstring& text);
+void OpenCharacterCodexPage();
+void OpenCharacterDetailPage(const wstring& name);
 vector<vector<wstring>> LoadItemDbRows();
 void DiscoverItemsFromText(const wstring& text);
 PlayerContext BuildPlayerContext();
@@ -1110,6 +1117,9 @@ bool HasPriorLifeEcho();
 void InitializeStoryStateForLife();
 wstring BuildStoryStateContext();
 void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent);
+const SocialThread* FindSocialThreadByName(const wstring& name);
+void AddSocialRumor(const wstring& rumor, bool front);
+wstring GetCharacterRoleCaption(const wstring& name);
 void EnsureHongmengProgress();
 wstring BuildTreasureTierSystemText();
 wstring BuildHongmengUsabilityText();
@@ -4056,6 +4066,90 @@ void AddSocialThread(const wstring& name, const wstring& role, const wstring& at
     }
 }
 
+void AddQinghengThread() {
+    bool exceptionalRoot = (g_player.GetTotalRoot() >= 42 || g_player.hasBalancedRoots);
+    bool weakRoot = (g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots);
+    AddSocialThread(L"清蘅真人", L"入门师尊",
+        exceptionalRoot ? L"严中赞许" : (weakRoot ? L"冷眼护短" : L"耐心试炼"),
+        exceptionalRoot
+            ? L"她看出你根骨出众，却不许旁人把你捧得太高，只亲自安排更重的入门试炼。"
+            : (weakRoot
+                ? L"她没有替你挡下所有轻慢，只在你快被逼到绝路时留下一句能保命的指点。"
+                : L"她愿意收你入门，却先要看你在秘境、门规和人情之间能不能守住心性。"),
+        exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"真实修为和来历都不愿明说");
+}
+
+void AddXuanhengThread() {
+    AddSocialThread(L"玄衡子", L"太上玄衡观掌律真人", L"规矩审查",
+        L"他以门规名义盯上清蘅真人新收的弟子，也注意到你身边正在成形的因果，像是在等一个能名正言顺出手的破绽。",
+        -24, L"元婴期", true, L"外显修为未必可信");
+}
+
+void AddLuoNingshuangThread() {
+    bool exceptionalRoot = (g_player.GetTotalRoot() >= 42 || g_player.hasBalancedRoots);
+    bool weakRoot = (g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots);
+    AddSocialThread(L"洛凝霜", L"桃华剑脉剑修",
+        exceptionalRoot ? L"含笑押注" : (weakRoot ? L"冷淡观望" : L"试剑结缘"),
+        exceptionalRoot
+            ? L"她是桃华剑脉少见的天生剑胚，在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
+            : (weakRoot
+                ? L"她天赋极好，宗门皆说她将来有登仙之姿；你若只是一味认输，她不会轻易把目光停在你身上。"
+                : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色；若不夭折，她将来很可能在仙界仍有名字。"),
+        exceptionalRoot ? 24 : (weakRoot ? 2 : 16), L"筑基期", false,
+        L"天赋极高，未来有望登仙乃至证道祖，但仍会被因果和选择改变");
+}
+
+void AddFrostCrowThread() {
+    if (g_worldEraName == L"灵机蒸汽纪") {
+        AddSocialThread(L"霜鸦", L"灵机契约猎手", L"冷静审查",
+            HasPriorLifeEcho()
+                ? L"她在工坊契约和非法灵机改造之间追索旧债，尤其在意你身上解释不清的轮回空白。"
+                : L"她在工坊契约和非法灵机改造之间追索旧债，偶尔会盯着你的伴生旧玉多看一眼。",
+            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+    } else {
+        AddSocialThread(L"霜鸦", L"道网清算人", L"冷静审查",
+            HasPriorLifeEcho()
+                ? L"她负责追查道网档案里的因果空白，尤其在意旧名重复、转世记忆异常和无法解释的功法来源。"
+                : L"她负责追查道网档案里的异常旧契，尤其在意你的家世记录与伴生旧玉来历。",
+            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+    }
+}
+
+void RevealCharacterThread(const wstring& name, const wstring& reason) {
+    if (FindSocialThreadByName(name)) return;
+    if (name == L"清蘅真人") AddQinghengThread();
+    else if (name == L"玄衡子") AddXuanhengThread();
+    else if (name == L"洛凝霜") AddLuoNingshuangThread();
+    else if (name == L"霜鸦") AddFrostCrowThread();
+    else return;
+
+    if (FindSocialThreadByName(name)) {
+        AddSocialRumor(name + L"因「" + CompactMemoryFragment(reason) + L"」正式进入你的本世因果。", true);
+        g_storyState.relationships[name + L"（" + GetCharacterRoleCaption(name) + L"）"] =
+            FindSocialThreadByName(name)->relation;
+    }
+}
+
+void RevealCharactersFromNarrative(const Event& event, const Choice& choice, const wstring& outcome) {
+    wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
+    if (text.find(L"清蘅真人") != wstring::npos) {
+        RevealCharacterThread(L"清蘅真人", event.title);
+    }
+    if (text.find(L"玄衡子") != wstring::npos &&
+        (event.title.find(L"玄衡") != wstring::npos || event.title.find(L"问律") != wstring::npos ||
+         outcome.find(L"玄衡子") != wstring::npos || g_player.totalEvents >= 1)) {
+        RevealCharacterThread(L"玄衡子", event.title);
+    }
+    if (text.find(L"洛凝霜") != wstring::npos &&
+        (event.title.find(L"桃林") != wstring::npos || event.title.find(L"凝霜") != wstring::npos ||
+         outcome.find(L"洛凝霜") != wstring::npos || g_player.totalEvents >= 2)) {
+        RevealCharacterThread(L"洛凝霜", event.title);
+    }
+    if (text.find(L"霜鸦") != wstring::npos) {
+        RevealCharacterThread(L"霜鸦", event.title);
+    }
+}
+
 wstring BuildSocialEmotionTag(const SocialThread& thread) {
     auto has = [&](const wstring& needle) {
         return thread.role.find(needle) != wstring::npos ||
@@ -4257,6 +4351,58 @@ vector<wstring> FindCharacterEchoes(const wstring& name, int limit = 3) {
     return echoes;
 }
 
+bool HasCharacterTrace(const wstring& name) {
+    if (name.empty()) return false;
+    for (const auto& thread : g_socialThreads) {
+        if (thread.name == name) return true;
+    }
+    if (!FindCharacterEchoes(name, 1).empty()) return true;
+    for (const auto& hook : g_lifeStoryHooks) {
+        if (hook.find(name) != wstring::npos) return true;
+    }
+    return false;
+}
+
+wstring GetCharacterRoleCaption(const wstring& name) {
+    const SocialThread* thread = FindSocialThreadByName(name);
+    if (thread) return thread->role;
+    if (name == g_player.family.father) return L"父亲";
+    if (name == g_player.family.mother) return L"母亲";
+    if (!g_player.family.guardian.empty() && name == g_player.family.guardian) return L"养育者";
+    if (name == L"清蘅真人") return L"第一世入门师尊";
+    if (name == L"玄衡子") return L"太上玄衡观掌律真人";
+    if (name == L"洛凝霜") return L"桃华剑脉剑修";
+    if (name == L"霜鸦") return g_worldEraName == L"星穹道网纪" ? L"道网清算人" : L"灵机契约猎手";
+    return L"本世人脉";
+}
+
+void AddVisibleCharacterName(vector<wstring>& names, const wstring& name) {
+    if (name.empty()) return;
+    if (find(names.begin(), names.end(), name) == names.end()) {
+        names.push_back(name);
+    }
+}
+
+vector<wstring> BuildVisibleCharacterNames() {
+    vector<wstring> names;
+    if (g_player.family.knowsParents) {
+        AddVisibleCharacterName(names, g_player.family.father);
+        AddVisibleCharacterName(names, g_player.family.mother);
+    } else if (!g_player.family.guardian.empty() || g_player.family.adopted) {
+        AddVisibleCharacterName(names, g_player.family.guardian.empty() ? L"无名养育者" : g_player.family.guardian);
+    }
+
+    for (const auto& thread : g_socialThreads) {
+        AddVisibleCharacterName(names, thread.name);
+    }
+    for (const auto& keyName : {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"}) {
+        if (HasCharacterTrace(keyName)) {
+            AddVisibleCharacterName(names, keyName);
+        }
+    }
+    return names;
+}
+
 void AppendCharacterProfile(wstringstream& ss, const wstring& name, const wstring& role,
                             const wstring& fallback, bool alwaysShow = false) {
     const SocialThread* thread = FindSocialThreadByName(name);
@@ -4294,6 +4440,19 @@ void AppendCharacterProfile(wstringstream& ss, const wstring& name, const wstrin
         ss << L"\n";
     }
     ss << L"\n";
+}
+
+wstring BuildCharacterFallback(const wstring& name) {
+    if (name == g_player.family.father) return L"他与此世出身相连，态度会受你的资质、名声和选择影响。";
+    if (name == g_player.family.mother) return L"她与此世出身相连，常把担忧压在不外露的护短里。";
+    if (!g_player.family.guardian.empty() && name == g_player.family.guardian) {
+        return L"此人知道你来历并不简单，却未必愿意把真相一次说尽。";
+    }
+    if (name == L"清蘅真人") return L"第一世古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。";
+    if (name == L"玄衡子") return L"第一世古典修仙纪的掌律反派。他会借门规审查你身边正在成形的因果。";
+    if (name == L"洛凝霜") return L"桃华剑脉里很重要的一条因果。她不会无条件偏向你，第一世好感和后续仙界再会都看你的选择。";
+    if (name == L"霜鸦") return L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。";
+    return L"此人已经进入你的本世因果，后续态度会随选择继续变化。";
 }
 
 bool TextContainsAny(const wstring& text, const vector<wstring>& keys) {
@@ -5115,30 +5274,9 @@ void GenerateSocialThreads() {
             L"对方承认与你有血缘，却不肯说出父母名讳。", -4);
     }
 
-    if (IsFirstLifeClassicalEra()) {
-        AddSocialThread(L"清蘅真人", L"入门师尊", exceptionalRoot ? L"严中赞许" : (weakRoot ? L"冷眼护短" : L"耐心试炼"),
-            exceptionalRoot
-                ? L"她看出你根骨出众，却不许旁人把你捧得太高，只亲自安排更重的入门试炼。"
-                : (weakRoot
-                    ? L"她没有替你挡下所有轻慢，只在你快被逼到绝路时留下一句能保命的指点。"
-                    : L"她愿意收你入门，却先要看你在秘境、门规和人情之间能不能守住心性。"),
-            exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"真实修为和来历都不愿明说");
-        AddSocialThread(L"玄衡子", L"太上玄衡观掌律真人", L"规矩审查",
-            L"他以门规名义盯上清蘅真人新收的弟子，也注意到洛凝霜与你的试剑因果，像是在等一个能名正言顺出手的破绽。",
-            -24, L"元婴期", true, L"外显修为未必可信");
-    }
-
-    if (IsLuoNingshuangEra()) {
-        AddSocialThread(L"洛凝霜", L"桃华剑脉剑修",
-            exceptionalRoot ? L"含笑押注" : (weakRoot ? L"冷淡观望" : L"试剑结缘"),
-            exceptionalRoot
-                ? L"她是桃华剑脉少见的天生剑胚，在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
-                : (weakRoot
-                    ? L"她天赋极好，宗门皆说她将来有登仙之姿；你若只是一味认输，她不会轻易把目光停在你身上。"
-                    : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色；若不夭折，她将来很可能在仙界仍有名字。"),
-            exceptionalRoot ? 24 : (weakRoot ? 2 : 16), L"筑基期", false,
-            L"天赋极高，未来有望登仙乃至证道祖，但仍会被因果和选择改变");
-    }
+    if (HasCharacterTrace(L"清蘅真人")) AddQinghengThread();
+    if (HasCharacterTrace(L"玄衡子")) AddXuanhengThread();
+    if (HasCharacterTrace(L"洛凝霜")) AddLuoNingshuangThread();
 
     const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
     if (techniqueLegacy && techniqueEcho >= 35) {
@@ -5218,19 +5356,11 @@ void GenerateSocialThreads() {
     if (g_worldEraName == L"灵机蒸汽纪") {
         AddSocialThread(sectName + L"炉师", L"工坊中人", L"热情拉拢",
             L"他看中你的灵根适配性，想让你试一套尚未公开的阵械功法。", 16);
-        AddSocialThread(L"霜鸦", L"灵机契约猎手", L"冷静审查",
-            priorLife
-                ? L"她在工坊契约和非法灵机改造之间追索旧债，尤其在意你身上解释不清的轮回空白。"
-                : L"她在工坊契约和非法灵机改造之间追索旧债，偶尔会盯着你的伴生旧玉多看一眼。",
-            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+        if (HasCharacterTrace(L"霜鸦")) AddFrostCrowThread();
     } else if (g_worldEraName == L"星穹道网纪") {
         AddSocialThread(sectName + L"远讯使", L"道网联系人", L"隔空关注",
             L"对方通过灵网给你发来试炼坐标，也记录着你每一次选择。", 12);
-        AddSocialThread(L"霜鸦", L"道网清算人", L"冷静审查",
-            priorLife
-                ? L"她负责追查道网档案里的因果空白，尤其在意旧名重复、转世记忆异常和无法解释的功法来源。"
-                : L"她负责追查道网档案里的异常旧契，尤其在意你的家世记录与伴生旧玉来历。",
-            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+        if (HasCharacterTrace(L"霜鸦")) AddFrostCrowThread();
     } else if (g_worldEraName == L"末法裂变纪") {
         AddSocialThread(sectName + L"配给执事", L"资源把关者", L"冷硬审视",
             L"此人掌着灵井配给，你的资质、家世和态度都会影响下一份资源。", -10);
@@ -5383,10 +5513,10 @@ void GenerateSocialRumors() {
     }
 
     if (IsFirstLifeClassicalEra()) {
-        g_socialRumors.push_back(L"清蘅真人新近收徒，太上玄衡观的玄衡子却借掌律名义盯上了这条师徒线。");
+        g_socialRumors.push_back(L"山门里有人说，近日会有一位严厉长辈亲自验看新弟子的心性。");
     }
 
-    if (IsLuoNingshuangEra()) {
+    if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
         g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利；也有人说她若不夭折，将来仙界仍会听见这个名字。");
     }
 
@@ -5446,75 +5576,38 @@ wstring GetSocialRumorText(int limit = 6) {
 }
 
 wstring BuildCharacterCodexText() {
-    RefreshStoryStateStableFields();
-
     wstringstream ss;
     ss << L"【角色因果】\n\n";
     ss << L"第" << g_generation << L"世 · " << g_worldEraName << L" · "
        << GetRealmName(g_player.realm) << L" " << g_player.level << L"层\n";
-    ss << L"这里记录你当前能看见、听见或合理推断的人物因果。外显修为只是对方愿意露出的部分，不等于真实底牌。\n\n";
+    ss << L"当前只列出你已经见过、听过或与此世家世直接相关的人。关键人物会随事件逐步显露，不会一开始全摊开。\n";
+    ss << L"外显修为只是对方愿意露出的部分，不等于真实底牌。";
+    return ss.str();
+}
 
-    ss << L"【轮回认知】\n";
+wstring BuildCharacterDetailText(const wstring& name) {
+    RefreshStoryStateStableFields();
+
+    wstringstream ss;
+    ss << L"【角色因果】\n\n";
     if (HasPriorLifeEcho()) {
         ss << L"黑白旧玉会托起一些前世碎片，但旧忆只能帮你校准判断，不能替今生选择。\n\n";
     } else {
         ss << L"第一世没有前世记忆；你最多只有伴生旧玉的梦兆、早熟直觉和今生遭遇。\n\n";
     }
 
-    ss << L"【家世牵挂】\n";
-    if (g_player.family.knowsParents) {
-        AppendCharacterProfile(ss, g_player.family.father, L" · 父亲",
-            L"他与此世出身相连，态度会受你的资质、名声和选择影响。", true);
-        AppendCharacterProfile(ss, g_player.family.mother, L" · 母亲",
-            L"她与此世出身相连，常把担忧压在不外露的护短里。", true);
-    } else if (!g_player.family.guardian.empty() || g_player.family.adopted) {
-        AppendCharacterProfile(ss, g_player.family.guardian.empty() ? L"无名养育者" : g_player.family.guardian,
-            L" · 养育者", L"此人知道你来历并不简单，却未必愿意把真相一次说尽。", true);
-    } else {
-        ss << L"- 父母线仍被遮住。你只知道此世身世另有隐情，真正血亲未必已经入局。\n\n";
-    }
-
-    ss << L"【关键人物】\n";
-    AppendCharacterProfile(ss, L"清蘅真人", L" · 第一世入门师尊",
-        L"第一世古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。",
-        IsFirstLifeClassicalEra() || !FindCharacterEchoes(L"清蘅真人", 1).empty());
-    AppendCharacterProfile(ss, L"玄衡子", L" · 太上玄衡观掌律真人",
-        L"第一世古典修仙纪的掌律反派。他借门规审查你、清蘅真人与洛凝霜之间的因果。",
-        IsFirstLifeClassicalEra() || !FindCharacterEchoes(L"玄衡子", 1).empty());
-    AppendCharacterProfile(ss, L"洛凝霜", L" · 桃华剑脉剑修",
-        L"桃华剑脉里很重要的一条因果。她不会无条件偏向你，第一世好感和后续仙界再会都看你的选择。",
-        IsLuoNingshuangEra() || !FindCharacterEchoes(L"洛凝霜", 1).empty());
-    if (IsFrostCrowEra() || !FindCharacterEchoes(L"霜鸦", 1).empty()) {
-        AppendCharacterProfile(ss, L"霜鸦", L" · 灵机/道网纪清算人",
-            L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。",
-            true);
-    }
-
-    ss << L"【其他本世人脉】\n";
-    int shown = 0;
-    for (const auto& thread : g_socialThreads) {
-        if (TextContainsAny(thread.name, {
-            g_player.family.father, g_player.family.mother, g_player.family.guardian,
-            L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"
-        })) {
-            continue;
-        }
-        ss << L"- " << BuildSocialThreadLine(thread) << L"\n";
-        if (++shown >= 5) break;
-    }
-    if (shown == 0) {
-        ss << L"- 暂无更多独立人物入局；下一次历练可能把同辈、长辈或势力联系人推到台前。\n";
-    }
+    AppendCharacterProfile(ss, name, L" · " + GetCharacterRoleCaption(name),
+        BuildCharacterFallback(name), true);
 
     if (!g_storyState.openThreads.empty()) {
-        ss << L"\n【未收束线头】\n";
+        ss << L"【相关未收束线头】\n";
         int count = 0;
         for (const auto& thread : g_storyState.openThreads) {
-            if (count++ >= 5) break;
+            if (thread.find(name) == wstring::npos && count >= 2) continue;
             ss << L"- " << thread << L"\n";
+            if (++count >= 4) break;
         }
     }
-
     return ss.str();
 }
 
@@ -5743,10 +5836,10 @@ void GenerateLifeStoryHooks() {
     }
 
     if (IsFirstLifeClassicalEra()) {
-        g_lifeStoryHooks.push_back(L"清蘅真人会成为你第一世的入门师尊；玄衡子以掌律名义审查她新收的弟子，这条线会牵动宗门、门规与后续反派因果。");
+        g_lifeStoryHooks.push_back(L"山门入门试炼将牵出一位严厉师长与掌律一脉的审查；具体人名，要等你真正入局后才会落到耳边。");
     }
 
-    if (IsLuoNingshuangEra()) {
+    if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
         g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人。她天赋极好，未来有望入仙界、甚至触及道祖门槛；但第一世是否对你生出好感，要看你的胆色、心性和具体选择。");
     }
 
@@ -5880,19 +5973,16 @@ bool HasAnchorCharacterThread(const wstring& name) {
 }
 
 bool ShouldTriggerAnchorCharacterEvent() {
-    bool firstLifeArc = IsFirstLifeClassicalEra() &&
-        (HasAnchorCharacterThread(L"清蘅真人") ||
-         HasAnchorCharacterThread(L"玄衡子") ||
-         HasAnchorCharacterThread(L"洛凝霜"));
+    bool firstLifeArc = IsFirstLifeClassicalEra();
     bool immortalReunion = g_player.realm >= TRUE_IMMORTAL && HasAnchorCharacterThread(L"洛凝霜");
     if (!firstLifeArc && !immortalReunion) return false;
 
-    int chance = firstLifeArc ? 24 : 14;
-    if (firstLifeArc && g_player.totalEvents <= 2) chance += 24;
-    else if (firstLifeArc && g_player.totalEvents <= 8) chance += 12;
+    int chance = firstLifeArc ? 18 : 14;
+    if (firstLifeArc && !HasAnchorCharacterThread(L"清蘅真人")) chance += 14;
+    else if (firstLifeArc && g_player.totalEvents <= 8) chance += 8;
     if (immortalReunion) chance += 12;
     if (g_lifeStoryProgressThisLife <= 1) chance += 4;
-    chance = max(12, min(58, chance));
+    chance = max(12, min(46, chance));
     return Random(1, 100) <= chance;
 }
 
@@ -6022,7 +6112,11 @@ Event BuildAnchorCharacterEvent() {
     }
     if (IsFirstLifeClassicalEra()) {
         int step = g_player.totalEvents;
-        if (step <= 2 && HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
+        if (!HasAnchorCharacterThread(L"清蘅真人") || step <= 2) return BuildMentorTrialEvent();
+        if (!HasAnchorCharacterThread(L"洛凝霜") && step >= 2 && Random(1, 100) <= 60) {
+            return BuildLuoNingshuangTrialEvent();
+        }
+        if (!HasAnchorCharacterThread(L"玄衡子") && step >= 2) return BuildXuanhengTrapEvent();
         if (step <= 6 && HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
         if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
     }
@@ -6807,7 +6901,26 @@ void OpenInfoPage(const wstring& title, const wstring& text, GameState returnSta
     g_infoText = text;
     g_infoReturnState = returnState;
     g_infoScroll = 0;
+    g_characterCodexListPage = false;
+    g_characterCodexDetailPage = false;
+    g_characterCodexSelectedName.clear();
+    g_characterButtonRects.clear();
     g_gameState = STATE_INFO;
+}
+
+void OpenCharacterCodexPage() {
+    OpenInfoPage(L"角色因果", BuildCharacterCodexText(), STATE_GAME);
+    g_characterCodexNames = BuildVisibleCharacterNames();
+    g_characterCodexListPage = true;
+    g_characterCodexDetailPage = false;
+}
+
+void OpenCharacterDetailPage(const wstring& name) {
+    if (name.empty()) return;
+    OpenInfoPage(name, BuildCharacterDetailText(name), STATE_GAME);
+    g_characterCodexSelectedName = name;
+    g_characterCodexListPage = false;
+    g_characterCodexDetailPage = true;
 }
 
 void ShowNotice(const wstring& title, const wstring& text) {
@@ -6815,9 +6928,16 @@ void ShowNotice(const wstring& title, const wstring& text) {
 }
 
 void ReturnFromInfoPage() {
+    if (g_characterCodexDetailPage) {
+        OpenCharacterCodexPage();
+        return;
+    }
     g_gameState = g_infoReturnState;
     g_infoTitle.clear();
     g_infoText.clear();
+    g_characterCodexListPage = false;
+    g_characterCodexDetailPage = false;
+    g_characterButtonRects.clear();
 }
 
 PlayerContext BuildPlayerContext() {
@@ -8225,6 +8345,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
+    RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
     TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
     ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
@@ -8361,6 +8482,73 @@ int CountTextLines(const wstring& text) {
         if (ch == L'\n') lines++;
     }
     return lines;
+}
+
+Image* GetEventPortraitImage(const Event* event, wstring& name, wstring& title) {
+    if (!event) return nullptr;
+    wstring titleText = event->title;
+    wstring text = titleText + L" " + event->description;
+
+    if ((titleText.find(L"洛凝霜") != wstring::npos ||
+         titleText.find(L"凝霜") != wstring::npos ||
+         titleText.find(L"桃林") != wstring::npos) &&
+        g_luoNingshuangImage) {
+        name = L"洛凝霜";
+        title = L"桃华剑脉";
+        return g_luoNingshuangImage;
+    }
+    if (titleText.find(L"霜鸦") != wstring::npos && g_frostCrowImage) {
+        name = L"霜鸦";
+        title = g_worldEraName == L"星穹道网纪" ? L"道网清算人" : L"灵机契约猎手";
+        return g_frostCrowImage;
+    }
+    if ((titleText.find(L"玄衡") != wstring::npos ||
+         titleText.find(L"掌律") != wstring::npos ||
+         titleText.find(L"问律") != wstring::npos) &&
+        g_taoistAntagonistImage) {
+        name = L"玄衡子";
+        title = L"太上玄衡观";
+        return g_taoistAntagonistImage;
+    }
+    if (titleText.find(L"清蘅") != wstring::npos || titleText.find(L"师承") != wstring::npos) {
+        return nullptr;
+    }
+
+    size_t qingPos = text.find(L"清蘅真人");
+    size_t luoPos = text.find(L"洛凝霜");
+    size_t frostPos = text.find(L"霜鸦");
+    size_t xuanPos = text.find(L"玄衡子");
+    size_t bestPos = wstring::npos;
+    enum PortraitPick { PICK_NONE, PICK_LUO, PICK_FROST, PICK_XUAN } pick = PICK_NONE;
+    auto consider = [&](size_t pos, PortraitPick candidate) {
+        if (pos != wstring::npos && pos < bestPos) {
+            bestPos = pos;
+            pick = candidate;
+        }
+    };
+    consider(luoPos, PICK_LUO);
+    consider(frostPos, PICK_FROST);
+    consider(xuanPos, PICK_XUAN);
+    if (qingPos != wstring::npos && (bestPos == wstring::npos || qingPos < bestPos)) {
+        return nullptr;
+    }
+
+    if (pick == PICK_LUO && g_luoNingshuangImage) {
+        name = L"洛凝霜";
+        title = L"桃华剑脉";
+        return g_luoNingshuangImage;
+    }
+    if (pick == PICK_FROST && g_frostCrowImage) {
+        name = L"霜鸦";
+        title = g_worldEraName == L"星穹道网纪" ? L"道网清算人" : L"灵机契约猎手";
+        return g_frostCrowImage;
+    }
+    if (pick == PICK_XUAN && g_taoistAntagonistImage) {
+        name = L"玄衡子";
+        title = L"太上玄衡观";
+        return g_taoistAntagonistImage;
+    }
+    return nullptr;
 }
 
 // ==================== 绘制函数 ====================
@@ -8523,65 +8711,28 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            Image* roleImage = nullptr;
-            wstring roleHeader;
-            wstring roleName;
-            wstring roleTitle;
-            if (IsFrostCrowEra() && g_frostCrowImage) {
-                roleImage = g_frostCrowImage;
-                roleHeader = L"道网留影";
-                roleName = L"霜鸦";
-                roleTitle = g_worldEraName == L"星穹道网纪" ? L"星穹道网纪 · 清算人" : L"灵机蒸汽纪 · 契约猎手";
-            } else if (IsLuoNingshuangEra() && g_luoNingshuangImage) {
-                roleImage = g_luoNingshuangImage;
-                roleHeader = L"情缘照影";
-                roleName = L"洛凝霜";
-                roleTitle = L"桃华剑脉 · 凝霜剑修";
-            } else {
-                roleImage = g_taoistAntagonistImage;
-                roleHeader = L"道影浮现";
-                roleName = L"玄衡子";
-                roleTitle = L"太上玄衡观 · 掌律真人";
-            }
-            if (roleImage) {
-                graphics.DrawString(roleHeader.c_str(), -1, &statFont,
-                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
-                    &leftFormat, &mutedBrush);
-
-                REAL imageAspect = (REAL)roleImage->GetWidth() /
-                    max<REAL>(1.0f, (REAL)roleImage->GetHeight());
-                REAL portraitH = min(280.0f, futureRoleRect.Height - 112.0f);
-                REAL portraitW = portraitH * imageAspect;
-                RectF portraitRect(
-                    futureRoleRect.X + (futureRoleRect.Width - portraitW) / 2.0f,
-                    futureRoleRect.Y + 38.0f,
-                    portraitW,
-                    portraitH);
-                SolidBrush portraitBg(Color(235, 238, 240, 244));
-                Pen portraitPen(Color(95, 228, 190, 76), 1);
-                graphics.FillRectangle(&portraitBg, portraitRect);
-                graphics.DrawImage(roleImage, portraitRect);
-                graphics.DrawRectangle(&portraitPen, portraitRect);
-
-                REAL labelY = portraitRect.GetBottom() + 8.0f;
-                graphics.DrawString(roleName.c_str(), -1, &statFont,
-                    RectF(futureRoleRect.X + 12, labelY, futureRoleRect.Width - 24, 24),
-                    &centerFormat, &goldBrush);
-                graphics.DrawString(roleTitle.c_str(), -1, &smallFont,
-                    RectF(futureRoleRect.X + 12, labelY + 24.0f, futureRoleRect.Width - 24, 22),
-                    &centerFormat, &softWhiteBrush);
-                wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 42);
-                graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
-                    RectF(futureRoleRect.X + 12, labelY + 52.0f, futureRoleRect.Width - 24, 38),
-                    &leftFormat, &mutedBrush);
-            } else {
-                graphics.DrawString(L"天机动向", -1, &statFont,
-                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
-                    &leftFormat, &mutedBrush);
-                graphics.DrawString(BuildAiStatusDigest().c_str(), -1, &smallFont,
-                    RectF(futureRoleRect.X + 12, futureRoleRect.Y + 42, futureRoleRect.Width - 24, futureRoleRect.Height - 54),
-                    &leftFormat, &softWhiteBrush);
-            }
+            graphics.DrawString(L"主角照影", -1, &statFont,
+                RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
+                &leftFormat, &mutedBrush);
+            RectF silhouetteRect(
+                futureRoleRect.X + 58,
+                futureRoleRect.Y + 46,
+                futureRoleRect.Width - 116,
+                min(260.0f, futureRoleRect.Height - 126.0f));
+            SolidBrush silhouetteBrush(Color(55, 232, 236, 230));
+            Pen silhouettePen(Color(85, 228, 190, 76), 1);
+            graphics.FillRectangle(&silhouetteBrush, silhouetteRect);
+            graphics.DrawRectangle(&silhouettePen, silhouetteRect);
+            graphics.DrawString(g_player.name.c_str(), -1, &statFont,
+                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 10.0f, futureRoleRect.Width - 24, 24),
+                &centerFormat, &goldBrush);
+            graphics.DrawString((GetRealmName(g_player.realm) + L" · " + g_player.GetRootQuality()).c_str(), -1, &smallFont,
+                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 36.0f, futureRoleRect.Width - 24, 24),
+                &centerFormat, &softWhiteBrush);
+            wstring aiBrief = NormalizeStoryNote(BuildAiStatusDigest(), 48);
+            graphics.DrawString(aiBrief.c_str(), -1, &smallFont,
+                RectF(futureRoleRect.X + 12, silhouetteRect.GetBottom() + 64.0f, futureRoleRect.Width - 24, 48),
+                &leftFormat, &mutedBrush);
 
             graphics.DrawString(L"修真界现状", -1, &sectionFont,
                 RectF(centerPanel.X + 22, centerPanel.Y + 20, centerPanel.Width - 44, 28), &leftFormat, &goldBrush);
@@ -8689,16 +8840,46 @@ void OnPaint(HDC hdc, RECT& rect) {
                 graphics.DrawString(g_currentEvent->title.c_str(), -1, &titleFont,
                     RectF(eventRect.X + 40, eventRect.Y + 35, eventRect.Width - 80, 48), &centerFormat, &goldBrush);
 
-                RectF descRect(eventRect.X + 52, eventRect.Y + 105, eventRect.Width - 104, 120);
+                wstring eventPortraitName;
+                wstring eventPortraitTitle;
+                Image* eventPortrait = GetEventPortraitImage(g_currentEvent, eventPortraitName, eventPortraitTitle);
+                REAL sideWidth = eventPortrait ? 250.0f : 0.0f;
+                RectF descRect(eventRect.X + 52, eventRect.Y + 105,
+                    eventRect.Width - 104 - sideWidth, 128);
                 graphics.DrawString(g_currentEvent->description.c_str(), -1, &textFont,
                     descRect, &leftFormat, &whiteBrush);
 
-                REAL yPos = eventRect.Y + 240;
+                if (eventPortrait) {
+                    RectF portraitPanel(eventRect.GetRight() - 282, eventRect.Y + 112, 214, 392);
+                    SolidBrush portraitBg(Color(38, 8, 10, 15));
+                    Pen portraitPen(Color(105, 228, 190, 76), 1);
+                    graphics.FillRectangle(&portraitBg, portraitPanel);
+                    graphics.DrawRectangle(&portraitPen, portraitPanel);
+
+                    REAL aspect = (REAL)eventPortrait->GetWidth() /
+                        max<REAL>(1.0f, (REAL)eventPortrait->GetHeight());
+                    REAL portraitH = 300.0f;
+                    REAL portraitW = min(178.0f, portraitH * aspect);
+                    RectF portraitRect(
+                        portraitPanel.X + (portraitPanel.Width - portraitW) / 2.0f,
+                        portraitPanel.Y + 18.0f,
+                        portraitW,
+                        portraitH);
+                    graphics.DrawImage(eventPortrait, portraitRect);
+                    graphics.DrawString(eventPortraitName.c_str(), -1, &smallFont,
+                        RectF(portraitPanel.X + 12, portraitPanel.Y + 328, portraitPanel.Width - 24, 24),
+                        &centerFormat, &goldBrush);
+                    graphics.DrawString(eventPortraitTitle.c_str(), -1, &smallFont,
+                        RectF(portraitPanel.X + 12, portraitPanel.Y + 354, portraitPanel.Width - 24, 24),
+                        &centerFormat, &mutedBrush);
+                }
+
+                REAL yPos = eventRect.Y + 258;
                 for (size_t i = 0; i < g_currentEvent->choices.size(); i++) {
                     wstring choiceText = L"[" + to_wstring(i + 1) + L"] " +
                         g_currentEvent->choices[i].description;
                     graphics.DrawString(choiceText.c_str(), -1, &textFont,
-                        RectF(eventRect.X + 90, yPos, eventRect.Width - 180, 32), &leftFormat, &whiteBrush);
+                        RectF(eventRect.X + 90, yPos, eventRect.Width - 180 - sideWidth, 32), &leftFormat, &whiteBrush);
                     yPos += 58;
                 }
             }
@@ -8730,6 +8911,74 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.FillRectangle(&backBrush, backRect);
             graphics.DrawRectangle(&backPen, backRect);
             graphics.DrawString(L"返回", -1, &smallFont, backRect, &centerFormat, &goldBrush);
+
+            if (g_characterCodexListPage) {
+                g_characterButtonRects.clear();
+                Font codexButtonFont(&fontFamily, 20, FontStyleBold, UnitPixel);
+                RectF contentClip(infoRect.X + 46, infoRect.Y + 96,
+                    infoRect.Width - 116, infoRect.Height - 150);
+                int estimatedContentHeight = max((int)contentClip.Height + 1,
+                    92 + (int)g_characterCodexNames.size() * 66);
+                g_infoScrollMax = max(0, estimatedContentHeight - (int)contentClip.Height);
+                g_infoScroll = max(0, min(g_infoScroll, g_infoScrollMax));
+
+                graphics.SetClip(contentClip);
+                RectF introRect(contentClip.X, contentClip.Y - (REAL)g_infoScroll,
+                    contentClip.Width, 64);
+                graphics.DrawString(g_infoText.c_str(), -1, &infoTextFont,
+                    introRect, &leftFormat, &softWhiteBrush);
+
+                REAL buttonY = contentClip.Y + 88.0f - (REAL)g_infoScroll;
+                for (size_t i = 0; i < g_characterCodexNames.size(); ++i) {
+                    const wstring& name = g_characterCodexNames[i];
+                    RectF buttonRect(contentClip.X, buttonY, contentClip.Width - 18, 52);
+                    RECT clickRect = {
+                        (LONG)buttonRect.X,
+                        (LONG)buttonRect.Y,
+                        (LONG)(buttonRect.X + buttonRect.Width),
+                        (LONG)(buttonRect.Y + buttonRect.Height)
+                    };
+                    g_characterButtonRects.push_back(clickRect);
+
+                    if (buttonRect.GetBottom() >= contentClip.Y && buttonRect.Y <= contentClip.GetBottom()) {
+                        SolidBrush buttonBrush(Color(120, 24, 25, 30));
+                        Pen buttonPen(Color(95, 228, 190, 76), 1);
+                        graphics.FillRectangle(&buttonBrush, buttonRect);
+                        graphics.DrawRectangle(&buttonPen, buttonRect);
+
+                        wstring indexText = L"[" + to_wstring(i + 1) + L"] " + name;
+                        graphics.DrawString(indexText.c_str(), -1, &codexButtonFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 8, buttonRect.Width - 36, 22),
+                            &leftFormat, &goldBrush);
+                        graphics.DrawString(GetCharacterRoleCaption(name).c_str(), -1, &smallFont,
+                            RectF(buttonRect.X + 18, buttonRect.Y + 30, buttonRect.Width - 36, 18),
+                            &leftFormat, &mutedBrush);
+                    }
+                    buttonY += 66.0f;
+                }
+                graphics.ResetClip();
+
+                RectF scrollTrack(infoRect.GetRight() - 58, contentClip.Y, 8, contentClip.Height);
+                g_infoScrollTrackRect = {
+                    (LONG)scrollTrack.X,
+                    (LONG)scrollTrack.Y,
+                    (LONG)(scrollTrack.X + scrollTrack.Width),
+                    (LONG)(scrollTrack.Y + scrollTrack.Height)
+                };
+                SolidBrush trackBrush(Color(120, 48, 48, 52));
+                SolidBrush thumbBrush(Color(210, 228, 190, 76));
+                if (g_infoScrollMax > 0) {
+                    graphics.FillRectangle(&trackBrush, scrollTrack);
+                    REAL thumbHeight = max(36.0f, contentClip.Height * contentClip.Height / (REAL)estimatedContentHeight);
+                    REAL thumbY = scrollTrack.Y + (contentClip.Height - thumbHeight) * ((REAL)g_infoScroll / (REAL)g_infoScrollMax);
+                    graphics.FillRectangle(&thumbBrush, RectF(scrollTrack.X, thumbY, scrollTrack.Width, thumbHeight));
+                }
+
+                graphics.DrawString(L"点击角色或按数字查看  |  ESC 返回  |  ↑↓/滚轮 滚动", -1, &smallFont,
+                    RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
+                    &leftFormat, &mutedBrush);
+                break;
+            }
 
             bool showItemAtlas = (g_infoTitle == L"灵物图录" && g_itemAtlasImage != nullptr);
             REAL contentWidth = showItemAtlas ? (infoRect.Width - 430) : (infoRect.Width - 116);
@@ -8775,7 +9024,10 @@ void OnPaint(HDC hdc, RECT& rect) {
                 graphics.FillRectangle(&thumbBrush, RectF(scrollTrack.X, thumbY, scrollTrack.Width, thumbHeight));
             }
 
-            graphics.DrawString(L"ESC 返回  |  ↑↓/滚轮 滚动  |  拖动右侧滑条", -1, &smallFont,
+            wstring footerText = g_characterCodexDetailPage
+                ? L"ESC/返回 回到角色列表  |  ↑↓/滚轮 滚动  |  拖动右侧滑条"
+                : L"ESC 返回  |  ↑↓/滚轮 滚动  |  拖动右侧滑条";
+            graphics.DrawString(footerText.c_str(), -1, &smallFont,
                 RectF(infoRect.X + 46, infoRect.GetBottom() - 40, infoRect.Width - 92, 24),
                 &leftFormat, &mutedBrush);
             break;
@@ -8922,6 +9174,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     y >= g_backButtonRect.top && y <= g_backButtonRect.bottom) {
                     ReturnFromInfoPage();
                     InvalidateRect(hWnd, NULL, FALSE);
+                } else if (g_characterCodexListPage) {
+                    bool clickedCharacter = false;
+                    for (size_t i = 0; i < g_characterButtonRects.size() && i < g_characterCodexNames.size(); ++i) {
+                        const RECT& rc = g_characterButtonRects[i];
+                        if (x >= rc.left && x <= rc.right && y >= rc.top && y <= rc.bottom) {
+                            OpenCharacterDetailPage(g_characterCodexNames[i]);
+                            InvalidateRect(hWnd, NULL, FALSE);
+                            clickedCharacter = true;
+                            break;
+                        }
+                    }
+                    if (!clickedCharacter &&
+                        x >= g_infoScrollTrackRect.left && x <= g_infoScrollTrackRect.right &&
+                        y >= g_infoScrollTrackRect.top && y <= g_infoScrollTrackRect.bottom &&
+                        g_infoScrollMax > 0) {
+                        int trackHeight = max(1, (int)(g_infoScrollTrackRect.bottom - g_infoScrollTrackRect.top));
+                        int relativeY = max(0, min(trackHeight, (int)(y - g_infoScrollTrackRect.top)));
+                        g_infoScroll = g_infoScrollMax * relativeY / trackHeight;
+                        g_infoScrollDragging = true;
+                        SetCapture(hWnd);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
                 } else if (x >= g_infoScrollTrackRect.left && x <= g_infoScrollTrackRect.right &&
                     y >= g_infoScrollTrackRect.top && y <= g_infoScrollTrackRect.bottom &&
                     g_infoScrollMax > 0) {
@@ -9303,7 +9577,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'C' || wParam == 'c') {
-                    OpenInfoPage(L"角色因果", BuildCharacterCodexText(), STATE_GAME);
+                    OpenCharacterCodexPage();
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'I' || wParam == 'i') {
@@ -9371,7 +9645,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
             }
             else if (g_gameState == STATE_INFO) {
-                if (wParam == VK_ESCAPE) {
+                if (g_characterCodexListPage && wParam >= '1' && wParam <= '9') {
+                    int index = (int)(wParam - '1');
+                    if (index >= 0 && index < (int)g_characterCodexNames.size()) {
+                        OpenCharacterDetailPage(g_characterCodexNames[index]);
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                } else if (wParam == VK_ESCAPE) {
                     ReturnFromInfoPage();
                     InvalidateRect(hWnd, NULL, FALSE);
                 } else if (wParam == VK_DOWN || wParam == VK_NEXT) {
