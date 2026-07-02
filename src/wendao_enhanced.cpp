@@ -1141,17 +1141,17 @@ void LayoutMenuControls() {
     int centerX = width / 2;
 
     int inputWidth = min(360, panelWidth - 120);
-    int inputFieldHeight = 38;
+    int inputFieldHeight = 42;
     int buttonWidth = 170;
     int buttonHeight = 42;
-    int inputFieldY = panelTop + 82;
+    int inputFieldY = panelTop + 86;
     int buttonY = panelTop + 142;
 
     SetWindowPos(g_nameInput, nullptr,
         centerX - inputWidth / 2 + 1, inputFieldY + 1, inputWidth - 2, inputFieldHeight - 2,
         SWP_NOZORDER | SWP_NOACTIVATE);
 
-    RECT editTextRect = {0, 6, inputWidth - 2, inputFieldHeight - 2};
+    RECT editTextRect = {0, 8, inputWidth - 2, inputFieldHeight - 2};
     SendMessageW(g_nameInput, EM_SETRECT, 0, (LPARAM)&editTextRect);
 
     SetWindowPos(g_btnStart, nullptr,
@@ -7823,7 +7823,7 @@ void OnPaint(HDC hdc, RECT& rect) {
 
             RectF titleBand(0, 108, (REAL)width, 100);
             DrawGlowText(graphics, L"问道长生", titleFamily, 78.0f, titleBand, centerFormat);
-            REAL subtitleY = 254.0f;
+            REAL subtitleY = 272.0f;
             REAL ornamentTop = subtitleY + 48.0f;
             REAL ornamentLineY = subtitleY + 68.0f;
             RectF subtitleBand(0, subtitleY, (REAL)width, 38);
@@ -7851,12 +7851,12 @@ void OnPaint(HDC hdc, RECT& rect) {
             graphics.FillPath(&panelBrush, &panelPath);
             graphics.DrawPath(&panelPen, &panelPath);
 
-            RectF promptRect((REAL)panelLeft, (REAL)panelTop + 25, (REAL)panelWidth, 32);
+            RectF promptRect((REAL)panelLeft, (REAL)panelTop + 29, (REAL)panelWidth, 32);
             graphics.DrawString(L"输入道号", -1, &menuSubFont,
                 promptRect, &centerFormat, &goldBrush);
 
             int inputWidth = min(360, panelWidth - 120);
-            RectF inputRect((REAL)(centerX - inputWidth / 2.0f), (REAL)panelTop + 82, (REAL)inputWidth, 38.0f);
+            RectF inputRect((REAL)(centerX - inputWidth / 2.0f), (REAL)panelTop + 86, (REAL)inputWidth, 42.0f);
             SolidBrush inputBrush(Color(255, 255, 255, 255));
             Pen inputPen(Color(210, 230, 230, 230), 1);
             graphics.FillRectangle(&inputBrush, inputRect);
@@ -8782,7 +8782,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (!g_hWnd) return FALSE;
     SetWindowTextA(g_hWnd, "The Immortal Path");
 
-    g_nameInput = CreateWindowW(L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_CENTER | ES_MULTILINE,
+    g_nameInput = CreateWindowW(L"EDIT", L"", WS_CHILD | WS_VISIBLE | ES_CENTER | ES_AUTOHSCROLL,
         362, 400, 300, 35, g_hWnd, (HMENU)ID_NAME_INPUT, hInstance, NULL);
     g_btnStart = CreateWindowW(L"BUTTON", L"开始游戏", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
         437, 450, 150, 40, g_hWnd, (HMENU)ID_BTN_START, hInstance, NULL);
