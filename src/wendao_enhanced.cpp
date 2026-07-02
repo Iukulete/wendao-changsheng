@@ -1049,7 +1049,9 @@ bool IsFrostCrowEra() {
 }
 
 bool IsLuoNingshuangEra() {
-    return g_worldEraName == L"灵气初盛纪" || g_worldEraName == L"仙朝鼎盛纪";
+    return g_worldEraName == L"灵气初盛纪" ||
+           g_worldEraName == L"仙朝鼎盛纪" ||
+           g_player.realm >= TRUE_IMMORTAL;
 }
 
 bool IsFirstLifeClassicalEra() {
@@ -5613,8 +5615,8 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"此世家世隐情：" + familySecret);
     }
 
-    if (g_lifeStoryHooks.size() > 5) {
-        g_lifeStoryHooks.resize(5);
+    if (g_lifeStoryHooks.size() > 7) {
+        g_lifeStoryHooks.resize(7);
     }
 }
 
@@ -5700,6 +5702,165 @@ Event BuildLifeStoryProgressEvent() {
         }, 4}
     };
     return evt;
+}
+
+bool HasAnchorCharacterThread(const wstring& name) {
+    for (const auto& thread : g_socialThreads) {
+        if (thread.name == name) return true;
+    }
+    return false;
+}
+
+bool ShouldTriggerAnchorCharacterEvent() {
+    bool firstLifeArc = IsFirstLifeClassicalEra() &&
+        (HasAnchorCharacterThread(L"清蘅真人") ||
+         HasAnchorCharacterThread(L"玄衡子") ||
+         HasAnchorCharacterThread(L"洛凝霜"));
+    bool immortalReunion = g_player.realm >= TRUE_IMMORTAL && HasAnchorCharacterThread(L"洛凝霜");
+    if (!firstLifeArc && !immortalReunion) return false;
+
+    int chance = firstLifeArc ? 24 : 14;
+    if (firstLifeArc && g_player.totalEvents <= 2) chance += 24;
+    else if (firstLifeArc && g_player.totalEvents <= 8) chance += 12;
+    if (immortalReunion) chance += 12;
+    if (g_lifeStoryProgressThisLife <= 1) chance += 4;
+    chance = max(12, min(58, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildMentorTrialEvent() {
+    Event evt;
+    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
+    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    int expGain = 82 + g_player.realm * 8;
+    int majorGain = expGain + (gifted ? 36 : 20);
+    int hpRisk = weak ? 24 : 16;
+
+    evt.title = L"【师承】清蘅试心";
+    evt.description =
+        L"清蘅真人在山门后崖设下一场入门试心。她没有问你想不想长生，只把一枚蒙尘剑符、一卷残缺门规和你的伴生旧玉并放在石案上。"
+        L"远处太上玄衡观的掌律弟子正在记录，玄衡子未必亲临，却已经把这场试炼写进了他的账。"
+        L"洛凝霜也在桃林边缘停了一瞬，像是想知道你会先守规矩，还是先保住自己。";
+    evt.choices = {
+        {L"守规受训", {
+            L"你按门规一步步解开剑符，没有贪快。清蘅真人没有夸你，只把残卷合上，说你至少懂得活着走长路。\n修为+" + to_wstring(majorGain) + L"，因果+8",
+            L"你守得太死，被门规反锁经脉。清蘅真人替你截下最重的一击，却说你若只会照本宣科，迟早死在玄衡子的规矩里。\n气血-" + to_wstring(hpRisk) + L"，因果-4"
+        }, 6},
+        {L"追问师尊隐情", {
+            L"你没有只盯眼前奖励，而是问清蘅真人为何被玄衡子盯上。她沉默很久，只提醒你：第一世有些人会护你，有些人会借护你之名杀你。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+6",
+            L"你问得太急，反让旁听者记下你对师承旧事的敏感。清蘅真人把话压回去，只留下一句“还不到时候”。\n气血-" + to_wstring(max(10, hpRisk - 6)) + L"，因果-6"
+        }, 3},
+        {L"独自破局", {
+            L"你绕开残卷上的表层规矩，用自己的判断解开剑符。洛凝霜远远笑了一下，玄衡子的记录却暂时找不到破绽。\n修为+" + to_wstring(expGain + 18) + L"，掌道+3，因果+5",
+            L"你想证明自己，却踩进玄衡子预留的门规夹层。清蘅真人及时出手，但掌律一脉已经有了审查你的理由。\n气血-" + to_wstring(hpRisk + 10) + L"，因果-9"
+        }, 4}
+    };
+    return evt;
+}
+
+Event BuildLuoNingshuangTrialEvent() {
+    Event evt;
+    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
+    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    int expGain = 76 + g_player.realm * 8;
+    int hpRisk = weak ? 22 : 14;
+
+    evt.title = L"【情缘】桃林试剑";
+    evt.description =
+        L"桃花落满试剑台，洛凝霜执粉色剑光立在风里。她不是来送机缘的，也不是来安慰人的。"
+        L"她天赋极好，宗门长辈私下说她若不夭折，将来仙界仍会听见这个名字。"
+        L"她看向你时，眼神里没有轻慢，却也没有无缘无故的偏爱。";
+    if (gifted) {
+        evt.description += L"你的根骨已经让旁人议论纷纷，她似乎想看你有没有配得上天资的剑心。";
+    } else if (weak) {
+        evt.description += L"你当前资质并不出众，她给你的机会很薄，更像是在看你会不会自己放弃。";
+    } else {
+        evt.description += L"你不算最耀眼，却也不是没有可能；这场试剑正好能让她重新估量你。";
+    }
+
+    evt.choices = {
+        {L"认真接剑", {
+            L"你没有把她的剑当成艳遇，也没有把自己的资质当成借口。洛凝霜收剑时多看了你一眼，像是终于把你的名字记进心里。\n修为+" + to_wstring(expGain + 32) + L"，因果+10",
+            L"你只顾撑住场面，剑心却乱了。洛凝霜没有嘲笑，只是收回几分笑意：她不是看不起弱者，只是不愿把好感押给只会认输的人。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+        }, gifted ? 8 : (weak ? 2 : 5)},
+        {L"坦言道心", {
+            L"你没有逞强，只说自己想走到足够远，远到有一天能在仙界再论这一剑。洛凝霜笑意很淡，却没有否认那一天。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+8",
+            L"你把话说得太满，反像借她抬高自己。洛凝霜听完只说了一句：先活过这一世再谈以后。\n因果-7"
+        }, 5},
+        {L"请她指破缺口", {
+            L"洛凝霜没有客气，连出三剑指破你根基里的浮躁。疼是真的，进步也是真的。\n修为+" + to_wstring(expGain + 12) + L"，掌道+2",
+            L"她指出的缺口太准，准到旁人也听见了。几名同代修士开始拿这处短板做文章。\n气血-" + to_wstring(hpRisk + 6) + L"，因果-4"
+        }, 4}
+    };
+    return evt;
+}
+
+Event BuildXuanhengTrapEvent() {
+    Event evt;
+    int expGain = 86 + g_player.realm * 8;
+    int hpRisk = 24 + g_player.realm * 2;
+    evt.title = L"【危机】玄衡设局";
+    evt.description =
+        L"玄衡子终于把审查写成了明面上的门规。他不急着杀你，只把你、清蘅真人和洛凝霜牵进同一场问律。"
+        L"石阶两侧挂满掌律玉简，每一枚都能把你的选择写成证词。"
+        L"他外显元婴气机，却让你隐约觉得那只是他愿意给你看的层次。";
+    evt.choices = {
+        {L"据理守规", {
+            L"你按门规逐条反问，既不狂妄也不退缩。玄衡子暂时拿不到罪名，清蘅真人的眼神终于松了一分。\n修为+" + to_wstring(expGain) + L"，因果+8",
+            L"你被他绕进条文死角，一句反驳反成越矩。掌律玉简亮起，玄衡子终于有了下一次设局的名义。\n气血-" + to_wstring(hpRisk) + L"，因果-10"
+        }, 4},
+        {L"暗查掌律玉简", {
+            L"你趁问律间隙看出玉简上有被改写过的痕迹。玄衡子不是单纯守规矩，他在借规矩养自己的局。\n修为+" + to_wstring(expGain - 8) + L"，掌道+4，因果+4",
+            L"玉简反锁神识，你险些被扣上窥探掌律秘卷的罪名。\n气血-" + to_wstring(hpRisk + 8) + L"，因果-8"
+        }, 5},
+        {L"请师尊作保", {
+            L"清蘅真人替你接下问律，但没有替你逃避后果。她当众说：此子若有罪，我亲自罚；若无罪，谁也别急着定他生死。\n寿命+3，修为+" + to_wstring(expGain - 12) + L"，因果+6",
+            L"你把压力全推给师尊，反让玄衡子看出你还不敢独自承担因果。清蘅真人护住你，却比先前更沉默。\n因果-7，气血-" + to_wstring(max(12, hpRisk - 10))
+        }, 2}
+    };
+    return evt;
+}
+
+Event BuildLuoNingshuangImmortalReunionEvent() {
+    Event evt;
+    int expGain = 130 + g_player.realm * 10;
+    int daoGain = max(5, min(16, 6 + g_player.realm / 2));
+    int hpRisk = 26 + g_player.realm * 2;
+    evt.title = L"【仙界】凝霜再会";
+    evt.description =
+        L"仙界道会上，洛凝霜的名字再次出现在你耳边。她已不是第一世试剑台上的少女，剑意里多了仙界风霜。"
+        L"旁人只说她上限极高，将来或许能碰到道祖门槛；你却知道，这份因果最早从古典修仙纪的桃林里开始。"
+        L"她看见你时没有立刻相认，只问：当年的那一剑，你如今还敢接吗？";
+    evt.choices = {
+        {L"以今身问剑", {
+            L"你没有拿旧情说事，只以今身道途接她一剑。洛凝霜终于确认，你不是靠回忆活着的人。\n修为+" + to_wstring(expGain + 40) + L"，掌道+" + to_wstring(daoGain) + L"，因果+10",
+            L"你急着证明自己，反被她一剑照出道心浮躁。仙界不吃旧情，只认当下。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+        }, 7},
+        {L"提起初世桃花", {
+            L"你提起第一世桃林试剑，没有求她回头，只承认那段因果曾推你走得更远。洛凝霜沉默良久，终于把旧名重新放回眼中。\n寿命+5，修为+" + to_wstring(expGain) + L"，因果+12",
+            L"旧事被你说得太重，像是在用回忆索要回应。洛凝霜没有翻脸，却把距离重新拉开。\n因果-8"
+        }, 5},
+        {L"并肩查道祖局", {
+            L"你没有停在重逢里，而是请她共查仙界暗处的道祖旧局。她答应得很轻，像早就等你能说出这句话。\n修为+" + to_wstring(expGain + 18) + L"，灵宝共鸣+4，掌道+" + to_wstring(max(4, daoGain - 2)),
+            L"道祖旧局不是重逢可解的事。你们刚碰到边缘，便有高处目光落下。\n气血-" + to_wstring(hpRisk + 10) + L"，因果-6"
+        }, 6}
+    };
+    return evt;
+}
+
+Event BuildAnchorCharacterEvent() {
+    if (g_player.realm >= TRUE_IMMORTAL && HasAnchorCharacterThread(L"洛凝霜") && Random(1, 100) <= 55) {
+        return BuildLuoNingshuangImmortalReunionEvent();
+    }
+    if (IsFirstLifeClassicalEra()) {
+        int step = g_player.totalEvents;
+        if (step <= 2 && HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
+        if (step <= 6 && HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
+        if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
+    }
+    if (HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
+    if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
+    return BuildMentorTrialEvent();
 }
 
 wstring BuildPlannedLegacyDigest(int limit) {
@@ -7419,6 +7580,22 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
             choice.description + L"后，上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
     }
 
+    if (TextContainsAny(text, {L"清蘅真人", L"师尊", L"护道人"})) {
+        add(wstring(successLike ? L"师尊线推进：" : L"师尊线压紧：") +
+            L"清蘅真人会记住你在「" + choice.description +
+            L"」中的表现，后续护道、责罚或传法都会从这里分岔。");
+    }
+
+    if (TextContainsAny(text, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+        add(wstring(successLike ? L"玄衡子线受挫：" : L"玄衡子线加深：") +
+            L"玄衡子的门规审查没有结束，他会继续寻找能名正言顺压住你的破绽。");
+    }
+
+    if (TextContainsAny(text, {L"洛凝霜", L"桃华剑脉", L"桃林试剑"})) {
+        add(wstring(successLike ? L"洛凝霜线升温：" : L"洛凝霜线降温：") +
+            L"洛凝霜不会无条件偏向你，她对你的好感会继续由胆色、心性和下一次试剑决定。");
+    }
+
     if (HasFactionTie() && TextContainsAny(text, {
         g_factionTie.name, L"本世势力", L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
     })) {
@@ -8713,6 +8890,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         g_currentEvent = &s_jadeOmenEvent;
                         g_jadeDreamOmenEventsThisLife++;
                         AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerAnchorCharacterEvent()) {
+                        static Event s_anchorCharacterEvent;
+                        s_anchorCharacterEvent = BuildAnchorCharacterEvent();
+                        g_currentEvent = &s_anchorCharacterEvent;
+                        AddMemory(L"关键人物入局",
+                            L"外出历练时，清蘅真人、玄衡子或洛凝霜相关因果主动浮到台前。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
