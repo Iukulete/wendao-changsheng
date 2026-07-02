@@ -2192,7 +2192,12 @@ wstring BuildEraRemnantsText(int limit = 6) {
     int count = 0;
     for (const auto& remnant : g_eraRemnants) {
         if (count++ >= limit) break;
-        ss << L"- " << remnant << L"\n";
+        wstring visible = remnant;
+        size_t anchorPos = visible.find(L"初世锚点：");
+        if (anchorPos != wstring::npos) {
+            visible.replace(anchorPos, wstring(L"初世锚点：").size(), L"初始道痕：");
+        }
+        ss << L"- " << visible << L"\n";
     }
     return ss.str();
 }
@@ -2526,6 +2531,9 @@ wstring SanitizePlayerFacingText(wstring text) {
         L"黑白伴生玉佩偶尔牵出梦兆；若梦境出现异样，也只是提醒你留意今生取舍。");
     replaceAll(L"这是第一世，尚无前世记忆；", L"");
     replaceAll(L"第一世没有前世记忆；", L"");
+    replaceAll(L"初世锚点：这一世尚无可考前代遗迹，所有宗门、秘境与人情债都在为后世埋下第一批痕迹。",
+        L"初始道痕：此地尚无前人定论，今日取舍也许会成为后来者追索的源头。");
+    replaceAll(L"初世锚点：", L"初始道痕：");
     return text;
 }
 
@@ -5104,27 +5112,40 @@ bool ShouldTriggerEraPulseEvent() {
 Event BuildEraPulseEvent() {
     Event evt;
     auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = CompactMemoryFragment(text);
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
             compact = compact.substr(0, limit) + L"...";
         }
         return compact;
     };
+    auto trimEndPunctuation = [](wstring text) {
+        while (!text.empty()) {
+            wchar_t ch = text.back();
+            if (ch == L'。' || ch == L'！' || ch == L'？' || ch == L'；' ||
+                ch == L'，' || ch == L'、' || ch == L'.' || ch == L'!' ||
+                ch == L'?' || ch == L';' || ch == L',' || iswspace(ch)) {
+                text.pop_back();
+            } else {
+                break;
+            }
+        }
+        return text;
+    };
 
     WorldEvent* activeEvent = g_dynamicWorld.GetActiveWorldEvent();
     vector<wstring> recentHistory = g_dynamicWorld.GetRecentHistoryEntries(4);
-    wstring activeText = activeEvent
-        ? L"当前修仙界大势是" + activeEvent->title + L"：" + compactLimit(activeEvent->description, 76) + L"。"
-        : L"此刻没有单一大事压顶，但时代本身仍在慢慢改写每个人的去路。";
-    wstring remnantText;
+    wstring pressureText = activeEvent
+        ? activeEvent->title + L"正在牵动各方，谁先立住脚，谁就能占到这场风波的第一步。"
+        : L"没有单一大事压顶，但诸宗都在等第一个立规矩的人。";
+    wstring hookText;
     if (!g_eraRemnants.empty()) {
-        remnantText = L"旧世残响也被卷入其中：" +
-            compactLimit(g_eraRemnants[Random(0, (int)g_eraRemnants.size() - 1)], 76) + L"。";
-    }
-    wstring historyText;
-    if (!recentHistory.empty()) {
-        historyText = L"近年大事还在发酵：" +
-            compactLimit(recentHistory[Random(0, (int)recentHistory.size() - 1)], 56) + L"。";
+        hookText = L"裂隙边缘还露出一条异痕：" +
+            trimEndPunctuation(compactLimit(g_eraRemnants[Random(0, (int)g_eraRemnants.size() - 1)], 72)) + L"。";
+    } else if (!recentHistory.empty()) {
+        hookText = L"近年风声也压到此处：" +
+            trimEndPunctuation(compactLimit(recentHistory[Random(0, (int)recentHistory.size() - 1)], 60)) + L"。";
+    } else {
+        hookText = L"此事未必惊天，却足以让你看清这一世的行事规矩。";
     }
 
     int expGain = 85 + g_player.realm * 6;
@@ -5241,10 +5262,10 @@ Event BuildEraPulseEvent() {
         };
     }
 
-    evt.description = L"你外出历练时，纪元大势主动压到眼前。" + scene +
-        L"此世法则是：" + compactLimit(g_worldEraRule, 72) + L"。" +
-        activeText + remnantText + historyText +
-        L"纪元转折因由仍在暗处发酵：" + compactLimit(g_eraShiftCause, 72) + L"。";
+    evt.description = scene + L"\n\n" +
+        L"这一世的规矩很明白：" + trimEndPunctuation(compactLimit(g_worldEraRule, 64)) + L"。\n" +
+        pressureText + L"\n" +
+        hookText;
     return evt;
 }
 
