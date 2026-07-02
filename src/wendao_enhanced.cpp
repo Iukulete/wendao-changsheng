@@ -1042,9 +1042,14 @@ Image* g_bgImage = nullptr;
 Image* g_itemAtlasImage = nullptr;
 Image* g_taoistAntagonistImage = nullptr;
 Image* g_frostCrowImage = nullptr;
+Image* g_luoNingshuangImage = nullptr;
 
 bool IsFrostCrowEra() {
     return g_worldEraName == L"星穹道网纪" || g_worldEraName == L"灵机蒸汽纪";
+}
+
+bool IsLuoNingshuangEra() {
+    return !IsFrostCrowEra();
 }
 
 enum GameState {
@@ -3956,6 +3961,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
     bool challenger = SocialThreadHas(thread, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
     bool gatekeeper = SocialThreadHas(thread, {L"资源把关者", L"配给", L"仙朝耳目", L"势力牵连"});
     bool legacyWatcher = SocialThreadHas(thread, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
+    bool heroineTie = SocialThreadHas(thread, {L"桃华剑脉", L"洛凝霜"});
     bool hidden = thread.hidesPower || !thread.hiddenHint.empty();
 
     if (thread.desire.empty()) {
@@ -3963,6 +3969,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (challenger) thread.desire = L"证明你没有资格压过自己";
         else if (gatekeeper) thread.desire = L"判断你值不值得分配资源";
         else if (legacyWatcher) thread.desire = L"弄清旧名、旧法或器痕的真假";
+        else if (heroineTie) thread.desire = L"确认你是否配得上并肩试剑";
         else thread.desire = L"看清你是哪种可结交的人";
     }
     if (thread.fear.empty()) {
@@ -3970,6 +3977,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (challenger) thread.fear = HasPriorLifeEcho() ? L"你的资质和旧名抢走自己的位置" : L"你的资质和家世抢走自己的位置";
         else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
         else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
+        else if (heroineTie) thread.fear = L"这份心动被宗门和旧债写成软肋";
         else thread.fear = hidden ? L"自己藏拙被你看穿" : L"站错队后被时代卷走";
     }
 
@@ -3989,6 +3997,10 @@ void RefreshSocialAgentState(SocialThread& thread) {
         thread.nextMove = thread.relation >= 18
             ? L"压低声音提醒旧法风险"
             : L"暗查你的旧名与器痕";
+    } else if (heroineTie) {
+        thread.nextMove = thread.relation >= 18
+            ? L"邀你去桃林试剑"
+            : L"隔着人群观察你的选择";
     } else if (hidden) {
         thread.nextMove = L"继续隐藏真实修为，看你是否识破";
     } else {
@@ -4044,6 +4056,7 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
     if (has(L"仙朝耳目") || has(L"势力牵连")) return L"礼貌审查";
     if (has(L"道网联系人")) return L"隔空围观";
     if (has(L"残宗向导")) return L"现实互利";
+    if (has(L"桃华剑脉") || has(L"洛凝霜")) return L"含笑试剑";
     if (thread.relation >= 35) return L"热切拉拢";
     if (thread.relation >= 18) return L"认可示好";
     if (thread.relation <= -35) return L"敌意带刺";
@@ -4103,6 +4116,11 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     }
     if (has(L"道网联系人")) {
         return L"「你这一步会被远方节点看见，别装成没人围观。」";
+    }
+    if (has(L"桃华剑脉") || has(L"洛凝霜")) {
+        return gifted
+            ? L"「他们都说你根骨极好，我倒想知道，你的剑心是不是也一样好看。」"
+            : L"「别急着把输赢写死。能接住我这一剑的人，才有资格谈以后。」";
     }
     if (thread.relation >= 18) {
         return L"「我愿意先信你一次，但你最好让我觉得这份押注值得。」";
@@ -4937,6 +4955,17 @@ void GenerateSocialThreads() {
             L"对方承认与你有血缘，却不肯说出父母名讳。", -4);
     }
 
+    if (IsLuoNingshuangEra()) {
+        AddSocialThread(L"洛凝霜", L"桃华剑脉剑修",
+            exceptionalRoot ? L"含笑押注" : (weakRoot ? L"护短旁观" : L"试剑结缘"),
+            exceptionalRoot
+                ? L"她在试剑台上多看了你一眼，笑说天资好看不稀奇，能不能守住道心才稀奇。"
+                : (weakRoot
+                    ? L"她见你被人轻慢时没有立刻出手，只在桃花剑气里替你留了一条退路。"
+                    : L"她以桃花剑气截住一场争执，像是在替你解围，也像是在试你的胆色。"),
+            exceptionalRoot ? 24 : (weakRoot ? 14 : 18), L"筑基期");
+    }
+
     const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
     if (techniqueLegacy && techniqueEcho >= 35) {
         wstring legendLabel = BuildTechniqueLegendLabel(*techniqueLegacy);
@@ -5048,8 +5077,10 @@ void GenerateSocialThreads() {
     if (g_socialThreads.size() > 5) {
         SocialThread factionThread;
         SocialThread frostCrowThread;
+        SocialThread luoNingshuangThread;
         bool hasFactionThread = false;
         bool hasFrostCrowThread = false;
+        bool hasLuoNingshuangThread = false;
         for (const auto& thread : g_socialThreads) {
             if (!hasFactionThread && thread.role == L"势力牵连") {
                 factionThread = thread;
@@ -5058,6 +5089,10 @@ void GenerateSocialThreads() {
             if (!hasFrostCrowThread && thread.name == L"霜鸦") {
                 frostCrowThread = thread;
                 hasFrostCrowThread = true;
+            }
+            if (!hasLuoNingshuangThread && thread.name == L"洛凝霜") {
+                luoNingshuangThread = thread;
+                hasLuoNingshuangThread = true;
             }
         }
         g_socialThreads.resize(5);
@@ -5073,13 +5108,36 @@ void GenerateSocialThreads() {
             }
             return false;
         };
-        if (hasFactionThread && !containsRole(L"势力牵连")) {
-            g_socialThreads[4] = factionThread;
-        }
-        if (hasFrostCrowThread && !containsName(L"霜鸦")) {
-            int slot = (hasFactionThread && g_socialThreads[4].role == L"势力牵连") ? 3 : 4;
-            g_socialThreads[slot] = frostCrowThread;
-        }
+        vector<wstring> protectedNames;
+        vector<wstring> protectedRoles;
+        auto isProtected = [&](const SocialThread& thread) {
+            for (const auto& name : protectedNames) {
+                if (thread.name == name) return true;
+            }
+            for (const auto& role : protectedRoles) {
+                if (thread.role == role) return true;
+            }
+            return false;
+        };
+        auto putPriority = [&](const SocialThread& thread, const wstring& nameKey, const wstring& roleKey) {
+            if ((!nameKey.empty() && containsName(nameKey)) || (!roleKey.empty() && containsRole(roleKey))) {
+                if (!nameKey.empty()) protectedNames.push_back(nameKey);
+                if (!roleKey.empty()) protectedRoles.push_back(roleKey);
+                return;
+            }
+            for (int i = 4; i >= 0; --i) {
+                if (!isProtected(g_socialThreads[i])) {
+                    g_socialThreads[i] = thread;
+                    break;
+                }
+            }
+            if (!nameKey.empty()) protectedNames.push_back(nameKey);
+            if (!roleKey.empty()) protectedRoles.push_back(roleKey);
+        };
+
+        if (hasFactionThread) putPriority(factionThread, L"", L"势力牵连");
+        if (hasLuoNingshuangThread) putPriority(luoNingshuangThread, L"洛凝霜", L"");
+        if (hasFrostCrowThread) putPriority(frostCrowThread, L"霜鸦", L"");
     }
 }
 
@@ -5134,6 +5192,10 @@ void GenerateSocialRumors() {
         g_socialRumors.push_back(L"有人因前世善名的余波提前向你示好，话说得客气，却明显带着押注意味。");
     } else if (reputationEcho <= -30) {
         g_socialRumors.push_back(L"一页旧册在暗处流转，有人怀疑你与某个前世恶名重新连上了因果。");
+    }
+
+    if (IsLuoNingshuangEra()) {
+        g_socialRumors.push_back(L"桃华剑脉的洛凝霜近日在试剑台露面，许多同辈都说她挑人的眼光比剑还锋利。");
     }
 
     if (g_worldEraName == L"灵机蒸汽纪") {
@@ -5413,6 +5475,10 @@ void GenerateLifeStoryHooks() {
         g_lifePremise = L"这是古典修仙秩序尚强的一世，宗门、秘境、天劫与家世旧债仍是道途主轴。";
         g_lifeStoryHooks.push_back(sectName + L"正在寻找能进入" + locName + L"的人，你的灵根与家世都可能被盯上。");
         g_lifeStoryHooks.push_back(L"一处古修遗府与" + familySecret + L"隐隐相连。");
+    }
+
+    if (IsLuoNingshuangEra()) {
+        g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人，她可能成为同路人，也可能成为一场牵动道心的劫。");
     }
 
     if (HasFactionTie()) {
@@ -7999,12 +8065,26 @@ void OnPaint(HDC hdc, RECT& rect) {
             RectF futureRoleRect(leftPanel.X + 18, leftPanel.Y + 430, leftPanel.Width - 36, leftPanel.Height - 455);
             Pen faintPen(Color(55, 228, 190, 76), 1);
             graphics.DrawRectangle(&faintPen, futureRoleRect);
-            Image* roleImage = (IsFrostCrowEra() && g_frostCrowImage) ? g_frostCrowImage : g_taoistAntagonistImage;
-            wstring roleHeader = (roleImage == g_frostCrowImage) ? L"道网留影" : L"道影浮现";
-            wstring roleName = (roleImage == g_frostCrowImage) ? L"霜鸦" : L"玄衡子";
-            wstring roleTitle = (roleImage == g_frostCrowImage)
-                ? (g_worldEraName == L"星穹道网纪" ? L"星穹道网纪 · 清算人" : L"灵机蒸汽纪 · 契约猎手")
-                : L"太上玄衡观 · 掌律真人";
+            Image* roleImage = nullptr;
+            wstring roleHeader;
+            wstring roleName;
+            wstring roleTitle;
+            if (IsFrostCrowEra() && g_frostCrowImage) {
+                roleImage = g_frostCrowImage;
+                roleHeader = L"道网留影";
+                roleName = L"霜鸦";
+                roleTitle = g_worldEraName == L"星穹道网纪" ? L"星穹道网纪 · 清算人" : L"灵机蒸汽纪 · 契约猎手";
+            } else if (IsLuoNingshuangEra() && g_luoNingshuangImage) {
+                roleImage = g_luoNingshuangImage;
+                roleHeader = L"情缘照影";
+                roleName = L"洛凝霜";
+                roleTitle = L"桃华剑脉 · 凝霜剑修";
+            } else {
+                roleImage = g_taoistAntagonistImage;
+                roleHeader = L"道影浮现";
+                roleName = L"玄衡子";
+                roleTitle = L"太上玄衡观 · 掌律真人";
+            }
             if (roleImage) {
                 graphics.DrawString(roleHeader.c_str(), -1, &statFont,
                     RectF(futureRoleRect.X + 12, futureRoleRect.Y + 12, futureRoleRect.Width - 24, 24),
@@ -8874,6 +8954,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (GetFileAttributesW(L"characters\\frost_crow.png") != INVALID_FILE_ATTRIBUTES) {
         g_frostCrowImage = Image::FromFile(L"characters\\frost_crow.png");
     }
+    if (GetFileAttributesW(L"characters\\luo_ningshuang.png") != INVALID_FILE_ATTRIBUTES) {
+        g_luoNingshuangImage = Image::FromFile(L"characters\\luo_ningshuang.png");
+    }
 
     WNDCLASSEXA wcex = {};
     wcex.cbSize = sizeof(WNDCLASSEXA);
@@ -8917,6 +9000,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (g_itemAtlasImage) delete g_itemAtlasImage;
     if (g_taoistAntagonistImage) delete g_taoistAntagonistImage;
     if (g_frostCrowImage) delete g_frostCrowImage;
+    if (g_luoNingshuangImage) delete g_luoNingshuangImage;
     GdiplusShutdown(gdiplusToken);
     return (int)msg.wParam;
 }
