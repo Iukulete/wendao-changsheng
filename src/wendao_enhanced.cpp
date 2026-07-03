@@ -385,7 +385,7 @@ public:
 
     int GetExpNeeded() const {
         if (realm == MORTAL) {
-            return 9 * level;
+            return 6 * level;
         }
 
         if (realm == QI_REFINING) {
@@ -432,9 +432,10 @@ public:
     int Meditate(int multiplier = 1, int percentModifier = 100) {
         int gain = Random(10, 20) + GetTotalRoot() / 5;
         if (realm == MORTAL) {
-            gain = Random(18, 28) + GetTotalRoot() / 2;
-            if (hasBalancedRoots) gain += 8;
-            else if (GetTotalRoot() >= 40) gain += 5;
+            gain = Random(32, 46) + GetTotalRoot();
+            if (hasBalancedRoots) gain += 16;
+            else if (GetTotalRoot() >= 40) gain += 12;
+            else if (GetTotalRoot() >= 35) gain += 8;
         } else if (realm == QI_REFINING) {
             gain = Random(78, 112) + GetTotalRoot() * 2;
             if (hasBalancedRoots) gain += 42;
@@ -451,7 +452,7 @@ public:
         }
         // 杂灵根修炼速度惩罚
         if (GetTotalRoot() < 30 && !hasBalancedRoots) {
-            gain = gain * (realm == MORTAL ? 75 : (realm <= QI_REFINING ? 82 : 70)) / 100;
+            gain = gain * (realm == MORTAL ? 92 : (realm <= QI_REFINING ? 82 : 70)) / 100;
         }
         gain *= max(1, multiplier);
         gain = gain * max(10, percentModifier) / 100;
@@ -496,6 +497,9 @@ public:
         if (hasBalancedRoots) {
             successRate += 15;
         }
+        if (realm == MORTAL) {
+            successRate += 20;
+        }
 
         // 仙界突破更难
         if (realm >= TRUE_IMMORTAL) {
@@ -505,7 +509,8 @@ public:
             successRate -= 35;
         }
 
-        if (successRate > 95) successRate = 95;
+        int cap = (realm == MORTAL) ? 99 : 95;
+        if (successRate > cap) successRate = cap;
         if (successRate < 10) successRate = 10;
 
         if (Random(1, 100) <= successRate) {
@@ -6660,9 +6665,11 @@ bool ShouldTriggerAnchorCharacterEvent() {
         (!HasAnchorCharacterThread(L"玄衡子") || !HasAnchorCharacterThread(L"洛凝霜"))) {
         return false;
     }
+    if (firstLifeArc) {
+        return false;
+    }
 
-    int chance = firstLifeArc ? 9 : 14;
-    if (firstLifeArc && g_player.totalEvents <= 8) chance += 4;
+    int chance = 14;
     if (immortalReunion) chance += 12;
     if (g_lifeStoryProgressThisLife <= 1) chance += 2;
     chance = max(8, min(firstLifeArc ? 24 : 38, chance));
@@ -6804,8 +6811,7 @@ Event BuildAnchorCharacterEvent() {
             (step >= 6 || g_player.age >= 24 || (g_player.realm >= QI_REFINING && g_player.level >= 5))) {
             return BuildLuoNingshuangTrialEvent();
         }
-        if (step <= 6 && HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
-        if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
+        return BuildLifeStoryProgressEvent();
     }
     if (HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
     if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
@@ -9306,6 +9312,16 @@ void StartNextLife() {
     TraceLifeStart(L"轮回转世");
 }
 
+int GetAdventureAgeAdvance() {
+    if (g_player.realm == MORTAL) {
+        return (g_player.totalEvents % 3 == 2) ? 1 : 0;
+    }
+    if (g_player.realm == QI_REFINING && g_player.level <= 3) {
+        return (g_player.totalEvents % 2 == 1) ? 1 : 0;
+    }
+    return 1;
+}
+
 // ==================== 事件处理（增强版） ====================
 void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     if (!g_currentEvent || choiceIndex < 0 || choiceIndex >= g_currentEvent->choices.size()) {
@@ -9364,7 +9380,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         g_currentEvent->title + L" " + g_currentEvent->description + L" " +
         choice.description + L" " + g_messageText);
 
-    g_player.age += 1;
+    g_player.age += GetAdventureAgeAdvance();
     g_player.totalEvents++;
     AdvanceDynamicWorld(L"历练抉择");
     if (eraRisk >= 10 && g_messageText.find(L"修为+") != wstring::npos) {
@@ -9402,6 +9418,9 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         return;
     }
 
+    if (g_player.realm == MORTAL && g_player.level >= 9) {
+        playerVisibleOutcome += L"\n\n肉身根基已足，下一步该按 [3] 引气入体，不必继续在凡人期拖年岁。";
+    }
     g_messageText = playerVisibleOutcome;
     ShowNotice(L"历练结果", g_messageText);
 }
