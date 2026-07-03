@@ -1150,6 +1150,8 @@ int g_infoScroll = 0;
 int g_infoScrollMax = 0;
 int g_mainScroll = 0;
 int g_mainScrollMax = 0;
+int g_lastRoutineEmotionFeedbackAge = -1000;
+int g_lastMeditationAdviceAge = -1000;
 
 #define ID_NAME_INPUT 1001
 #define ID_BTN_START 1002
@@ -5198,8 +5200,10 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
 }
 
 wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
-    if (TextContainsAny(action, {L"修炼", L"闭关", L"疗伤"}) && Random(1, 100) > 45) {
-        return L"";
+    bool routineAction = TextContainsAny(action, {L"修炼", L"闭关", L"疗伤"});
+    if (routineAction) {
+        if (g_player.age - g_lastRoutineEmotionFeedbackAge < 5) return L"";
+        if (Random(1, 100) > 20) return L"";
     }
 
     const SocialThread* picked = PickActionFeedbackThread(action);
@@ -5262,6 +5266,9 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
 
     if (!thread.nextMove.empty()) {
         ss << L" 接下来，" << thread.name << L"多半会" << thread.nextMove << L"。";
+    }
+    if (routineAction) {
+        g_lastRoutineEmotionFeedbackAge = g_player.age;
     }
     return ss.str();
 }
@@ -8442,6 +8449,8 @@ bool LoadGameFromPath(const wstring& path) {
     g_lastAiBackend = L"已读档";
     g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
     g_mainScroll = 0;
+    g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastMeditationAdviceAge = -1000;
     RefreshAiStatus();
 
     g_player.CheckRootBalance();
@@ -9021,6 +9030,8 @@ void StartNextLife() {
     g_lifeStoryProgressThisLife = 0;
     g_plannedLegacies.clear();
     g_mainScroll = 0;
+    g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastMeditationAdviceAge = -1000;
 
     g_player = Player();
     g_player.name = oldName;
@@ -10187,6 +10198,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 g_lifeStoryProgressThisLife = 0;
                 g_plannedLegacies.clear();
                 g_mainScroll = 0;
+                g_lastRoutineEmotionFeedbackAge = -1000;
+                g_lastMeditationAdviceAge = -1000;
                 ApplyCompanionJadeToBirth();
                 g_lastAiBackend = L"未触发";
                 g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -10411,6 +10424,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     int eraMeditation = GetEraMeditationModifierPercent();
                     int daoMeditation = GetDaoMeditationModifierPercent();
                     int totalMeditation = max(10, eraMeditation + daoMeditation);
+                    int oldLevel = g_player.level;
                     int gain = g_player.Meditate(multiplier, totalMeditation);
                     AdvanceDynamicWorld(L"闭关修行"); // 世界也在演化
                     if (g_player.IsDead()) {
@@ -10427,6 +10441,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else if (eraMeditation < 100) {
                             msg += L"\n" + g_worldEraName + L"天地法则晦涩，苦修收益被时代压低了。";
                         }
+                        if (g_player.level > oldLevel) {
+                            msg += L"\n修为水到渠成，踏入" + GetRealmName(g_player.realm) +
+                                   L" " + to_wstring(g_player.level) + L"层。";
+                        }
                         if (daoMeditation > 0) {
                             msg += L"\n" + g_legacySystem.GetRelic().daoName +
                                    L"反哺今生，修炼效率+" + to_wstring(daoMeditation) + L"%。";
@@ -10435,7 +10453,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             msg += L"\n天地异象加持，修炼收益翻倍。";
                             AddMemory(L"天地异象", L"借灵气暴动修炼，修为+" + to_wstring(gain));
                         }
-                        AddMemory(L"时代修行", L"在" + g_worldEraName + L"打坐一年，修为变化+" + to_wstring(gain));
+                        bool weakRoot = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+                        if (g_player.level > oldLevel) {
+                            AddMemory(L"修行进境",
+                                L"在" + g_worldEraName + L"打坐破入" +
+                                GetRealmName(g_player.realm) + L" " +
+                                to_wstring(g_player.level) + L"层，修为+" + to_wstring(gain));
+                        } else if (g_player.age % 5 == 0) {
+                            AddMemory(L"时代修行",
+                                L"在" + g_worldEraName + L"持续打坐，修为变化+" + to_wstring(gain));
+                        }
+                        if (weakRoot && g_player.level <= 3 &&
+                            g_player.age - g_lastMeditationAdviceAge >= 8) {
+                            msg += L"\n这副根骨单靠蒲团太慢。若想活过寿元追赶，师承、历练、机缘和闭关资源都比硬熬年月更要紧。";
+                            g_lastMeditationAdviceAge = g_player.age;
+                            AddMemory(L"根骨压力", L"杂灵根苦修迟缓，今生需要借师承、历练或机缘寻找活路。");
+                        }
                         int lifespanPressure = GetLifespanPressureLevel();
                         if (lifespanPressure >= 2 || (lifespanPressure == 1 && g_player.age % 10 == 0)) {
                             AddMemory(L"寿元压力", BuildLifespanPressureText());
