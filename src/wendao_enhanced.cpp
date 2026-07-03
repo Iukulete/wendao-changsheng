@@ -1144,6 +1144,7 @@ vector<wstring> g_discoveredItems;
 vector<LifeArtifact> g_lifeArtifacts;
 int g_jadeDreamOmenEventsThisLife = 0;
 int g_lifeStoryProgressThisLife = 0;
+int g_lastLifeStoryProgressEventCount = -1000;
 vector<LegacyItem> g_plannedLegacies;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
@@ -6557,6 +6558,7 @@ void GenerateLifeStoryHooks() {
 bool ShouldTriggerLifeStoryProgressEvent() {
     if (g_lifeStoryProgressThisLife >= 5) return false;
     if (g_lifeStoryHooks.empty()) return false;
+    if (g_player.totalEvents - g_lastLifeStoryProgressEventCount < 3) return false;
 
     static const int requiredEvents[] = {1, 4, 8, 12, 18};
     int stage = max(0, min(4, g_lifeStoryProgressThisLife));
@@ -7452,7 +7454,9 @@ void EnterAiEventFromContext(PlayerContext ctx) {
     wstring aiTitle;
     wstring aiDesc;
     vector<wstring> aiChoices;
+    bool loadedExternalEvent = false;
     if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
+        loadedExternalEvent = true;
         if (g_lastAiBackend.empty()) {
             g_lastAiBackend = L"天机推演";
         }
@@ -7551,18 +7555,26 @@ void EnterAiEventFromContext(PlayerContext ctx) {
 
     static Event s_aiEvent;
     s_aiEvent = tempEvent;
+    AppendTraceLog(loadedExternalEvent ? L"AI_EVENT_READY" : L"AI_TEMPLATE_READY",
+        L"backend=" + g_lastAiBackend + L"\nstatus=" + g_lastAiStatus +
+        L"\n事件: " + tempEvent.title);
     OpenEventPage(&s_aiEvent, L"AI动态历练");
 }
 
 void CompleteLocalModelGenerator(DWORD exitCode) {
     KillTimer(g_hWnd, IDT_AI_POLL);
     CloseAiProcessHandles();
+    wstring rawStatus = g_lastAiStatus;
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus.find(L"正在推演") != wstring::npos) {
         g_lastAiBackend = L"模板回退";
         g_lastAiStatus = L"天机一度不稳，已由既有因果继续牵动。";
     }
-    AppendTraceLog(L"AI_DONE", L"backend=" + g_lastAiBackend + L"\nstatus=" + g_lastAiStatus);
+    AppendTraceLog(L"AI_DONE",
+        L"exitCode=" + to_wstring((int)exitCode) +
+        L"\nbackend=" + g_lastAiBackend +
+        L"\nstatus=" + g_lastAiStatus +
+        L"\nprevious=" + rawStatus);
     EnterAiEventFromContext(g_pendingAiContext);
     InvalidateRect(g_hWnd, NULL, FALSE);
 }
@@ -8314,9 +8326,11 @@ bool LoadWorldEra(wifstream& file) {
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
             g_lifeStoryProgressThisLife = max(0, min(5, g_lifeStoryProgressThisLife));
             g_jadeDreamOmenEventsThisLife = max(0, min(1, g_jadeDreamOmenEventsThisLife));
+            g_lastLifeStoryProgressEventCount = -1000;
         } else {
             g_lifeStoryProgressThisLife = 0;
             g_jadeDreamOmenEventsThisLife = 0;
+            g_lastLifeStoryProgressEventCount = -1000;
         }
         g_plannedLegacies.clear();
         if (isV9 || isV10 || isV11) {
@@ -8428,6 +8442,7 @@ bool LoadWorldEra(wifstream& file) {
         g_eraChronicle.clear();
         g_factionTie = FactionTie();
         g_lifeStoryProgressThisLife = 0;
+        g_lastLifeStoryProgressEventCount = -1000;
         g_jadeDreamOmenEventsThisLife = 0;
         g_plannedLegacies.clear();
         g_eraShiftCause = L"旧存档没有记录纪元转折因由。";
@@ -9275,6 +9290,7 @@ void StartNextLife() {
     g_lastAiStatus = L"本世尚未触发动态事件。";
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
+    g_lastLifeStoryProgressEventCount = -1000;
     g_plannedLegacies.clear();
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
@@ -9436,9 +9452,21 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         int outcomeKarmaDelta = ExtractValue(g_messageText, L"因果+") -
                                 ExtractValue(g_messageText, L"因果-");
         int karmaDelta = g_player.karma - karmaBeforeChoice;
-        g_messageText += L"\n因果结算：事件" + FormatSignedInt(outcomeKarmaDelta) +
-            L"，取向" + FormatSignedInt(choice.karmaChange) +
-            L"，合计" + FormatSignedInt(karmaDelta);
+        wstring settlement = L"\n因果结算：";
+        bool hasPart = false;
+        if (outcomeKarmaDelta != 0) {
+            settlement += L"事件" + FormatSignedInt(outcomeKarmaDelta);
+            hasPart = true;
+        }
+        if (choice.karmaChange != 0) {
+            if (hasPart) settlement += L"，";
+            settlement += L"取向" + FormatSignedInt(choice.karmaChange);
+            hasPart = true;
+        }
+        if (hasPart) {
+            settlement += L"，合计" + FormatSignedInt(karmaDelta);
+            g_messageText += settlement;
+        }
     }
     RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
@@ -10444,6 +10472,7 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
     g_generation = 1;
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
+    g_lastLifeStoryProgressEventCount = -1000;
     g_plannedLegacies.clear();
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
@@ -10813,6 +10842,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     else if (ShouldTriggerLifeStoryProgressEvent()) {
                         static Event s_lifeStoryEvent;
                         s_lifeStoryEvent = BuildLifeStoryProgressEvent();
+                        g_lastLifeStoryProgressEventCount = g_player.totalEvents;
                         g_lifeStoryProgressThisLife++;
                         AddMemory(L"本世主线推进",
                             L"外出历练时，本世主线进入第" +
