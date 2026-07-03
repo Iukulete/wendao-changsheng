@@ -2944,7 +2944,10 @@ wstring BuildCompanionJadeDreamOmen() {
     auto unfinished = g_legacySystem.GetLatestUnfinishedKarmas(2);
     auto fragments = g_legacySystem.GetLatestMemoryFragments(3);
 
-    if (!unfinished.empty()) {
+    if (g_generation <= 1) {
+        anchor = L"梦中玉意只映出几道尚未发生的岔路：山门、桃林、亲缘与一场说不清的远天异象。";
+        pressure = L"它不像记忆，更像预感；今生仍要靠你自己把每一步走实。";
+    } else if (!unfinished.empty()) {
         anchor = L"梦中玉意反复照见一段未竟因果：" + CompactMemoryFragment(unfinished[0]);
         pressure = L"今生若遇旧名、旧债或相似局势，应先辨明它与当世家世、人脉、势力的关系。";
     } else if (!fragments.empty()) {
@@ -3900,20 +3903,21 @@ Event BuildCompanionJadeMemoryEvent(const vector<wstring>& memoryFragments) {
 
 bool ShouldTriggerCompanionJadeOmenEvent() {
     if (g_jadeDreamOmenEventsThisLife >= 1) return false;
+    bool firstLifeOmen = g_generation <= 1;
+    if (firstLifeOmen && g_player.totalEvents < 3) return false;
 
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(3);
     auto memoryFragments = g_legacySystem.GetLatestMemoryFragments(4);
-    int chance = 12;
-    if (g_generation <= 1) chance += 6;
+    int chance = firstLifeOmen ? 8 : 12;
     if (!unfinishedKarmas.empty()) chance += 14;
     if (!memoryFragments.empty()) chance += 8;
     if (!g_legacySystem.GetInheritedLegacies().empty()) chance += 6;
     if (HasFactionTie()) chance += 4;
     if (!g_socialThreads.empty()) chance += 4;
-    if (!g_eraRemnants.empty()) chance += 3;
-    if (g_player.totalEvents <= 3) chance += 6;
+    if (!firstLifeOmen && !g_eraRemnants.empty()) chance += 3;
+    if (!firstLifeOmen && g_player.totalEvents <= 3) chance += 6;
     if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") chance += 4;
-    chance = max(14, min(46, chance));
+    chance = firstLifeOmen ? max(8, min(24, chance)) : max(14, min(46, chance));
     return Random(1, 100) <= chance;
 }
 
@@ -3949,7 +3953,9 @@ Event BuildCompanionJadeOmenEvent() {
 
     bool hasUnfinished = !unfinishedKarmas.empty();
     bool hasMemory = !memoryFragments.empty();
-    if (hasUnfinished) {
+    if (g_generation <= 1 && !hasUnfinished && !hasMemory) {
+        evt.title = L"【奇遇】旧玉微温";
+    } else if (hasUnfinished) {
         evt.title = L"【因果】玉意照债";
     } else if (hasMemory) {
         evt.title = L"【因果】旧玉托梦";
@@ -9334,6 +9340,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     bool isAIEvent = (choice.outcomes[0] == L"成功" && choice.outcomes.size() == 2);
     int eraRisk = GetEraAdventureRiskModifier();
     bool aiSuccess = false;
+    int karmaBeforeChoice = g_player.karma;
 
     if (isAIEvent) {
         // AI事件：使用AI生成结果
@@ -9356,8 +9363,10 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     ApplyOutcomeEffects(g_messageText);
     if (!isAIEvent && choice.karmaChange != 0) {
-        g_messageText += L"\n抉择因果：" +
-            wstring(choice.karmaChange > 0 ? L"+" : L"") + to_wstring(choice.karmaChange);
+        int karmaDelta = g_player.karma - karmaBeforeChoice;
+        g_messageText += L"\n本次因果合计：" +
+            wstring(karmaDelta > 0 ? L"+" : L"") + to_wstring(karmaDelta) +
+            L"（含选项取向）";
     }
     RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
