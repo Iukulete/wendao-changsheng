@@ -557,12 +557,27 @@ public:
         return age >= lifespan;
     }
 
+    double GetCultivationProgressRatio() const {
+        return min(1.0, (double)exp / max(1, GetExpNeeded()));
+    }
+
+    wstring GetCultivationProgressLabel() const {
+        if (realm == MORTAL && level >= 9) {
+            return L"修为 瓶颈 · 可引气入体";
+        }
+        if (realm < HEAVENLY_DAO && level >= 9 && exp >= GetExpNeeded()) {
+            return L"修为 瓶颈 · 可突破";
+        }
+        return L"修为 " + to_wstring(min(exp, GetExpNeeded())) +
+            L" / " + to_wstring(GetExpNeeded());
+    }
+
     wstring GetStatusText() const {
         wstringstream ss;
         ss << L"【" << name << L"】 " << GetRootQuality() << L"\n\n";
         ss << L"境界: " << GetRealmName(realm) << L" " << level << L"层\n";
         ss << L"阶段: " << GetRealmPhase(realm) << L"\n";
-        ss << L"修为: " << exp << L" / " << GetExpNeeded() << L"\n";
+        ss << GetCultivationProgressLabel() << L"\n";
         if (realm == MORTAL && level >= 9) {
             ss << L"入道: 肉身已足，可尝试引气入体\n";
         }
@@ -1276,7 +1291,7 @@ wstring BuildTracePlayerLine() {
        << L" | " << g_worldEraName
        << L" | " << (g_player.name.empty() ? L"未命名" : g_player.name)
        << L" | " << GetRealmName(g_player.realm) << L" " << g_player.level << L"层"
-       << L" | 修为 " << g_player.exp << L"/" << g_player.GetExpNeeded()
+       << L" | " << g_player.GetCultivationProgressLabel()
        << L" | 气血 " << g_player.hp << L"/" << g_player.maxHp
        << L" | 年龄 " << g_player.age << L"/" << g_player.lifespan
        << L" | 因果 " << g_player.karma
@@ -4689,20 +4704,14 @@ bool IsCloseSocialTie(const SocialThread& thread) {
 
 vector<wstring> FindCharacterEchoes(const wstring& name, int limit);
 
-bool ShouldExposeSocialThreadToPlayer(const SocialThread& thread) {
-    if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) {
-        return false;
-    }
+bool HasSocialThreadEnteredPlayerNarrative(const SocialThread& thread) {
     if (IsCloseSocialTie(thread)) return true;
-    if (g_player.totalEvents <= 0) return false;
-    if (abs(thread.relation) >= 35) return true;
-
-    wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
-    if (g_player.totalEvents >= 2 &&
-        TextContainsAny(profile, {L"同代修士", L"欺压者", L"竞争者", L"资源把关者", L"势力牵连"})) {
-        return true;
-    }
+    if (IsAnchorCharacterName(thread.name)) return HasExplicitCharacterReveal(thread.name);
     return !FindCharacterEchoes(thread.name, 1).empty();
+}
+
+bool ShouldExposeSocialThreadToPlayer(const SocialThread& thread) {
+    return HasSocialThreadEnteredPlayerNarrative(thread);
 }
 
 wstring BuildSocialThreadDigest(int limit = 4, bool includeInternal = false) {
@@ -5045,12 +5054,13 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
         GetRelationLabel(thread.relation) + L"。";
 }
 
-const SocialThread* PickSocialAdventureThread() {
+const SocialThread* PickSocialAdventureThread(bool requireKnown = false) {
     if (g_socialThreads.empty()) return nullptr;
 
     vector<int> weighted;
     for (int i = 0; i < (int)g_socialThreads.size(); ++i) {
         const SocialThread& thread = g_socialThreads[i];
+        if (requireKnown && !HasSocialThreadEnteredPlayerNarrative(thread)) continue;
         int weight = 2 + min(6, abs(thread.relation) / 12);
         if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") weight += 2;
         if (thread.role == L"欺压者" || thread.role == L"竞争者") weight += 2;
@@ -5074,7 +5084,9 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
     for (const auto& thread : g_socialThreads) {
         int score = 0;
         wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
-        if (text.find(thread.name) != wstring::npos) score += 12;
+        bool directNameHit = text.find(thread.name) != wstring::npos;
+        if (!directNameHit && !HasSocialThreadEnteredPlayerNarrative(thread)) continue;
+        if (directNameHit) score += 12;
         if (text.find(thread.role) != wstring::npos) score += 7;
         if (!thread.attitude.empty() && text.find(thread.attitude) != wstring::npos) score += 4;
         if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"}) &&
@@ -5120,7 +5132,7 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
         L"本世人脉", L"人情", L"旁人", L"长辈", L"同辈", L"家世", L"旧名",
         L"势力", L"名册", L"试探", L"嫉妒", L"护短", L"资源", L"配给"
     }) || Random(1, 100) <= 42) {
-        return PickSocialAdventureThread();
+        return PickSocialAdventureThread(true);
     }
     return nullptr;
 }
@@ -5230,7 +5242,7 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
     vector<int> weighted;
     for (int i = 0; i < (int)g_socialThreads.size(); ++i) {
         const SocialThread& thread = g_socialThreads[i];
-        if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) continue;
+        if (!HasSocialThreadEnteredPlayerNarrative(thread)) continue;
 
         wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
         bool closeTie = TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世", L"护道人", L"师尊"});
@@ -5268,7 +5280,7 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
         }
     }
 
-    if (weighted.empty()) return &g_socialThreads[0];
+    if (weighted.empty()) return nullptr;
     return &g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
 }
 
@@ -9694,8 +9706,8 @@ void OnPaint(HDC hdc, RECT& rect) {
             REAL y = leftPanel.Y + 86;
             DrawBar(graphics, statFont, whiteBrush,
                 RectF(leftPanel.X + 18, y, leftPanel.Width - 36, 24),
-                (double)g_player.exp / max(1, g_player.GetExpNeeded()),
-                L"修为 " + to_wstring(g_player.exp) + L" / " + to_wstring(g_player.GetExpNeeded()),
+                g_player.GetCultivationProgressRatio(),
+                g_player.GetCultivationProgressLabel(),
                 Color(220, 200, 162, 62));
             y += 38;
             DrawBar(graphics, statFont, whiteBrush,
