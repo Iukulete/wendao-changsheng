@@ -244,10 +244,10 @@ public:
             ));
         } else {
             worldEvents.push_back(WorldEvent(
-                L"【天降异象】灵气暴动",
-                L"天地灵气异常活跃，修炼速度翻倍！",
+                L"【古修遗府】山门寻踪",
+                L"灵气初盛，诸宗正在追索新出世的古修遗府；机缘更容易现世，但仍要靠胆色、判断和根骨去接。",
                 10,
-                WorldEvent::HEAVENLY_VISION
+                WorldEvent::ANCIENT_RUIN
             ));
         }
     }
