@@ -5493,9 +5493,21 @@ Event BuildSocialAdventureEvent() {
         realmHint += L"。";
     }
 
-    evt.description = thread.name + L"以" + thread.role + L"身份在历练途中拦住你，态度是“" +
-        thread.attitude + L"”。" + BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
-        realmHint + BuildSocialNpcUtterance(thread) + L"牵连是：" + CompactMemoryFragment(thread.hook);
+    wstring actorName = thread.name;
+    size_t contactPos = actorName.find(L"联系人");
+    if (contactPos != wstring::npos) {
+        actorName.replace(contactPos, 3, L"来人");
+    }
+    wstring entrance = factionTie
+        ? L"递来一封带着势力印记的帖子，随后在历练途中拦住你。"
+        : (familyTie ? L"在你出门前拦下你。" : L"在历练途中拦住你。");
+    wstring attitudeLine = thread.attitude.empty()
+        ? L""
+        : L"话里带着" + thread.attitude + L"。";
+    evt.description = actorName + entrance + attitudeLine +
+        BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
+        realmHint + BuildSocialNpcUtterance(thread) +
+        L"这次牵动的是：" + CompactMemoryFragment(thread.hook);
 
     wstring hiddenLine = HasPriorLifeEcho()
         ? L"家世、势力或前世旧名"
@@ -6662,7 +6674,7 @@ bool ShouldTriggerAnchorCharacterEvent() {
                    (g_player.realm >= QI_REFINING && g_player.level >= 3);
         }
         if (!HasAnchorCharacterThread(L"洛凝霜")) {
-            return g_player.totalEvents >= 6 || g_player.age >= 24 ||
+            return g_player.totalEvents >= 2 || g_player.age >= 24 ||
                    (g_player.realm >= QI_REFINING && g_player.level >= 5);
         }
     }
@@ -6814,7 +6826,7 @@ Event BuildAnchorCharacterEvent() {
             return BuildXuanhengTrapEvent();
         }
         if (!HasAnchorCharacterThread(L"洛凝霜") &&
-            (step >= 6 || g_player.age >= 24 || (g_player.realm >= QI_REFINING && g_player.level >= 5))) {
+            (step >= 2 || g_player.age >= 24 || (g_player.realm >= QI_REFINING && g_player.level >= 5))) {
             return BuildLuoNingshuangTrialEvent();
         }
         return BuildLifeStoryProgressEvent();
@@ -6870,6 +6882,12 @@ void AddPlannedLegacy(LegacyType type, const wstring& name,
 bool ShouldTriggerIntentionalLegacyEvent() {
     if (g_plannedLegacies.size() >= 3) return false;
     if (g_player.realm < QI_REFINING && g_player.totalEvents < 3) return false;
+    if (IsFirstLifeClassicalEra() &&
+        (!HasAnchorCharacterThread(L"清蘅真人") ||
+         !HasAnchorCharacterThread(L"玄衡子") ||
+         !HasAnchorCharacterThread(L"洛凝霜"))) {
+        return false;
+    }
 
     int chance = 9 + g_player.realm / 2 + g_lifeStoryProgressThisLife * 3;
     if (g_player.totalEvents >= 5) chance += 4;
@@ -6885,6 +6903,7 @@ bool ShouldTriggerIntentionalLegacyEvent() {
 Event BuildIntentionalLegacyEvent() {
     Event evt;
     evt.title = L"【传承】立下道标";
+    bool firstLife = g_generation <= 1;
 
     wstring anchor;
     if (!g_lifeStoryHooks.empty()) {
@@ -6896,19 +6915,29 @@ Event BuildIntentionalLegacyEvent() {
         anchor += L"此前你已留下：" + BuildPlannedLegacyDigest(3) + L"。";
     }
 
-    evt.description = L"外出归来时，黑白旧玉和通天灵宝残印同时发温，像在问你：若此世忽然断掉，你愿意给下一世留下些什么？" +
-        anchor + L"普通器物不能跨世，能留下的只有记忆、行功脉络、器痕和因果判断。";
+    wstring question = firstLife
+        ? L"外出归来时，黑白旧玉微微发温，像在问你：若有一天此世走到尽头，你愿意把哪些判断刻成不会散尽的道标？"
+        : L"外出归来时，黑白旧玉和通天灵宝残印同时发温，像在问你：若此世忽然断掉，你愿意给下一世留下些什么？";
+    evt.description = question + anchor +
+        L"普通器物不能跨世，能留下的只有记忆、行功脉络、器痕和因果判断。";
 
     int hpRisk = 18 + g_player.realm * 2;
 
     evt.choices = {
         {L"刻下功法", {
-            L"你把最适合今生肉身的行功节奏刻成道标，不求本体跨世，只求下一世梦中能认出这一口气。\n修为+70，因果+6",
+            firstLife
+                ? L"你把最适合今生肉身的行功节奏刻成道标，不求本体跨世，只求未来某一刻还能认出这一口气。\n修为+70，因果+6"
+                : L"你把最适合今生肉身的行功节奏刻成道标，不求本体跨世，只求下一世梦中能认出这一口气。\n修为+70，因果+6",
             L"旧法与今生经脉纠缠太深，道标未稳便反噬神魂。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
         }, 6},
         {L"写因果札", {
-            L"你把本世主线、人情债和几处险局写成因果手札，留给下一世判断谁可信、何事不能急。\n修为+55，寿命+3，因果+8",
-            L"手札写得太满，前世执念反而盖过今生判断。\n气血-" + to_wstring(max(12, hpRisk - 6)) + L"，因果-4"
+            firstLife
+                ? L"你把本世主线、人情债和几处险局写成因果手札，提醒后来的自己谁可信、何事不能急。\n修为+55，寿命+3，因果+8"
+                : L"你把本世主线、人情债和几处险局写成因果手札，留给下一世判断谁可信、何事不能急。\n修为+55，寿命+3，因果+8",
+            (firstLife
+                ? L"手札写得太满，想替未来安排一切的执念反而盖过今生判断。\n气血-"
+                : L"手札写得太满，前世执念反而盖过今生判断。\n气血-") +
+                to_wstring(max(12, hpRisk - 6)) + L"，因果-4"
         }, 7},
         {L"封存器痕", {
             L"你没有奢望法宝本体跨世，只把一缕器痕或道痕封入通天灵宝残印。\n修为+50，灵宝共鸣+6",
@@ -8688,6 +8717,10 @@ int ExtractValue(const wstring& text, const wstring& marker, int fallback = 0) {
     return foundAny ? total : fallback;
 }
 
+wstring FormatSignedInt(int value) {
+    return wstring(value > 0 ? L"+" : L"") + to_wstring(value);
+}
+
 wstring BuildPlayerVisibleOutcomeText(wstring text) {
     wstring daoLabel = L"掌道+";
     if (g_player.realm < GOLDEN_CORE) {
@@ -9363,10 +9396,12 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     ApplyOutcomeEffects(g_messageText);
     if (!isAIEvent && choice.karmaChange != 0) {
+        int outcomeKarmaDelta = ExtractValue(g_messageText, L"因果+") -
+                                ExtractValue(g_messageText, L"因果-");
         int karmaDelta = g_player.karma - karmaBeforeChoice;
-        g_messageText += L"\n本次因果合计：" +
-            wstring(karmaDelta > 0 ? L"+" : L"") + to_wstring(karmaDelta) +
-            L"（含选项取向）";
+        g_messageText += L"\n因果结算：事件" + FormatSignedInt(outcomeKarmaDelta) +
+            L"，取向" + FormatSignedInt(choice.karmaChange) +
+            L"，合计" + FormatSignedInt(karmaDelta);
     }
     RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
@@ -10752,7 +10787,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         static Event s_intentionalLegacyEvent;
                         s_intentionalLegacyEvent = BuildIntentionalLegacyEvent();
                         AddMemory(L"主动传承牵动",
-                            L"黑白旧玉和通天灵宝残印提醒你：此世也该给下一世留下可辨认的道标。");
+                            g_generation <= 1
+                                ? L"黑白旧玉提醒你：此世经历也该留下可辨认的道标。"
+                                : L"黑白旧玉和通天灵宝残印提醒你：此世也该给下一世留下可辨认的道标。");
                         OpenEventPage(&s_intentionalLegacyEvent, L"主动传承历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
