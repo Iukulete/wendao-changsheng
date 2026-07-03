@@ -1191,6 +1191,7 @@ PlayerContext BuildPlayerContext();
 wstring BuildCompanionJadeVisibleText();
 wstring BuildCompanionJadeHiddenContext();
 wstring SanitizePlayerFacingText(wstring text);
+bool TextContainsAny(const wstring& text, const vector<wstring>& keys);
 void ApplyCompanionJadeToBirth();
 int CountHongmengInsightKinds();
 wstring BuildPlannedLegacyDigest(int limit = 4);
@@ -2915,7 +2916,15 @@ wstring BuildCompanionJadeDreamOmen() {
 void ApplyCompanionJadeToBirth() {
     FamilyBackground& family = g_player.family;
     if (g_generation <= 1) {
-        AppendFamilySecret(family, L"出生时随身带着一枚黑白伴生玉佩，来历无人说清");
+        if (TextContainsAny(family.secret, {L"玉佩", L"旧玉", L"玉"})) {
+            if (family.secret.find(L"黑白") == wstring::npos) {
+                family.secret += L"，玉色黑白相间，来历无人说清";
+            } else if (family.secret.find(L"来历") == wstring::npos) {
+                family.secret += L"，来历无人说清";
+            }
+        } else {
+            AppendFamilySecret(family, L"出生时随身带着一枚黑白伴生玉佩，来历无人说清");
+        }
     } else {
         AppendFamilySecret(family, L"幼年偶尔梦见黑白玉光，醒后仍记得不属于今生的片段");
     }
@@ -4545,7 +4554,12 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
         return L"「旁人看灵根，我看你能不能守住自己的心。」";
     }
     if (has(L"养育者")) {
-        return L"「有些事我现在不能说，但你别把那枚旧玉交给任何人看。」";
+        return PickOne({
+            L"「有些事我现在不能说，但你别把那枚旧玉交给任何人看。」",
+            L"「山门里会夸你的人很多，真替你挡刀的人未必会开口。」",
+            L"「别急着信谁的善意，先学会把自己的命握稳。」",
+            L"「你若真想查身世，就先活到旁人不敢随便遮你的时候。」"
+        });
     }
     if (has(L"欺压者")) {
         return weak
@@ -6367,7 +6381,7 @@ void GenerateLifeStoryHooks() {
     } else {
         g_lifePremise = L"这是古典修仙秩序尚强的一世，宗门、秘境、天劫与家世旧债仍是道途主轴。";
         g_lifeStoryHooks.push_back(sectName + L"正在寻找能进入" + locName + L"的人，你的灵根与家世都可能被盯上。");
-        g_lifeStoryHooks.push_back(L"一处古修遗府与" + familySecret + L"隐隐相连。");
+        g_lifeStoryHooks.push_back(L"一处古修遗府似乎牵着此世隐情：" + familySecret + L"。");
     }
 
     if (IsFirstLifeClassicalEra()) {
@@ -6442,6 +6456,18 @@ bool ShouldTriggerLifeStoryProgressEvent() {
 
 Event BuildLifeStoryProgressEvent() {
     Event evt;
+    auto trimEndPunctuation = [](wstring text) {
+        while (!text.empty()) {
+            wchar_t ch = text.back();
+            if (ch == L'。' || ch == L'；' || ch == L';' || ch == L'，' ||
+                ch == L',' || ch == L'.' || ch == L' ') {
+                text.pop_back();
+            } else {
+                break;
+            }
+        }
+        return text;
+    };
     auto compactLimit = [](const wstring& text, size_t limit) {
         wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
@@ -6463,6 +6489,9 @@ Event BuildLifeStoryProgressEvent() {
         if (!g_factionTie.hook.empty()) {
             focusText += L"；" + g_factionTie.hook;
         }
+    }
+    if (focusText.find(L"襁褓中留有半枚玉佩；出生时随身带着一枚黑白伴生玉佩") != wstring::npos) {
+        focusText = L"一处古修遗府似乎牵着此世隐情：襁褓中留有半枚黑白旧玉，来历无人说清";
     }
 
     wstring pressure;
@@ -6489,9 +6518,11 @@ Event BuildLifeStoryProgressEvent() {
         evt.title = L"【传承】主线收束";
     }
 
+    wstring premiseBrief = trimEndPunctuation(compactLimit(g_lifePremise, 84));
+    wstring focusBrief = trimEndPunctuation(compactLimit(focusText, 92));
     evt.description = L"这一世的主线忽然从背景里站到你面前。当前阶段是" + stageName + L"。" +
-        compactLimit(g_lifePremise, 84) + L"眼下最亮的线索是：" +
-        compactLimit(focusText, 92) + L"。" + pressure +
+        premiseBrief + L"。眼下最亮的线索是：" +
+        focusBrief + L"。" + pressure +
         L"你必须决定这条线如何进入今生。";
 
     int expGain = 75 + g_player.realm * 7 + stage * 20;
@@ -10219,6 +10250,66 @@ void OnPaint(HDC hdc, RECT& rect) {
 }
 
 // ==================== 窗口消息处理 ====================
+bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& traceReason) {
+    wstring cleanName = SanitizeDaoName(daoName);
+    if (cleanName.empty()) return false;
+
+    g_player = Player();
+    g_player.name = cleanName;
+    g_generation = 1;
+    g_jadeDreamOmenEventsThisLife = 0;
+    g_lifeStoryProgressThisLife = 0;
+    g_plannedLegacies.clear();
+    g_mainScroll = 0;
+    g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastMeditationAdviceAge = -1000;
+    ApplyCompanionJadeToBirth();
+    g_lastAiBackend = L"未触发";
+    g_lastAiStatus = L"本局尚未触发动态事件。";
+    g_memoryLog.clear();
+    g_discoveredItems.clear();
+    g_lifeArtifacts.clear();
+    g_eraChronicle.clear();
+    GenerateWorldEra();
+    GenerateHongmengOmen();
+    InitWorldData();
+    GenerateFactionTie();
+    GenerateLifeStoryHooks();
+    g_dynamicWorld.SetEraFlavor(g_worldEraName);
+    g_dynamicWorld.Reset();
+    GenerateSocialRumors();
+    wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
+    AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
+    InitializeStoryStateForLife();
+    AddMemory(L"初入道途", L"凡人之身踏上长生路。");
+    AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
+    AddMemory(L"玉意梦兆", jadeDreamOmen);
+    AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
+    AddMemory(L"时代变迁", g_eraTransitionNote);
+    AddMemory(L"纪元转折", g_eraShiftCause);
+    AddMemory(L"鸿蒙天象", BuildHongmengOmenBrief());
+    if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
+    AddMemory(L"本世主线", g_lifePremise);
+    if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
+    if (!g_eraRemnants.empty()) {
+        AddMemory(L"旧世残响", SanitizePlayerFacingText(CompactMemoryFragment(g_eraRemnants[0])));
+    }
+    AddMemory(L"此世出身", GetFamilySummary(g_player.family));
+    if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
+    if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
+    DiscoverItemsFromText(g_player.family.secret);
+    DiscoverItemsFromText(BuildFactionTieDigest());
+    DiscoverItemsFromText(BuildSocialThreadDigest(5));
+    DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
+    g_contextMgr.SetContext(BuildPlayerContext());
+    g_gameState = STATE_GAME;
+    TraceLifeStart(traceReason.empty() ? L"新开道途" : traceReason);
+    ShowWindow(g_nameInput, SW_HIDE);
+    ShowWindow(g_btnStart, SW_HIDE);
+    InvalidateRect(hWnd, NULL, FALSE);
+    return true;
+}
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_PAINT: {
@@ -10257,59 +10348,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     MessageBoxW(hWnd, L"请输入道号！", L"提示", MB_OK);
                     break;
                 }
-                g_player = Player();
-                g_player.name = daoName;
-                g_generation = 1;
-                g_jadeDreamOmenEventsThisLife = 0;
-                g_lifeStoryProgressThisLife = 0;
-                g_plannedLegacies.clear();
-                g_mainScroll = 0;
-                g_lastRoutineEmotionFeedbackAge = -1000;
-                g_lastMeditationAdviceAge = -1000;
-                ApplyCompanionJadeToBirth();
-                g_lastAiBackend = L"未触发";
-                g_lastAiStatus = L"本局尚未触发动态事件。";
-                g_memoryLog.clear();
-                g_discoveredItems.clear();
-                g_lifeArtifacts.clear();
-                g_eraChronicle.clear();
-                GenerateWorldEra();
-                GenerateHongmengOmen();
-                InitWorldData();
-                GenerateFactionTie();
-                GenerateLifeStoryHooks();
-                g_dynamicWorld.SetEraFlavor(g_worldEraName);
-                g_dynamicWorld.Reset();
-                GenerateSocialRumors();
-                wstring jadeDreamOmen = BuildCompanionJadeDreamOmen();
-                AddLifeStoryHook(L"玉意梦兆：" + jadeDreamOmen, false);
-                InitializeStoryStateForLife();
-                AddMemory(L"初入道途", L"凡人之身踏上长生路。");
-                AddMemory(L"伴生玉佩", BuildCompanionJadeVisibleText());
-                AddMemory(L"玉意梦兆", jadeDreamOmen);
-                AddMemory(L"时代更迭", L"此世正值" + g_worldEraName + L"，" + g_worldEraDescription);
-                AddMemory(L"时代变迁", g_eraTransitionNote);
-                AddMemory(L"纪元转折", g_eraShiftCause);
-                AddMemory(L"鸿蒙天象", BuildHongmengOmenBrief());
-                if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
-                AddMemory(L"本世主线", g_lifePremise);
-                if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
-                if (!g_eraRemnants.empty()) {
-                    AddMemory(L"旧世残响", SanitizePlayerFacingText(CompactMemoryFragment(g_eraRemnants[0])));
-                }
-                AddMemory(L"此世出身", GetFamilySummary(g_player.family));
-                if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
-                if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
-                DiscoverItemsFromText(g_player.family.secret);
-                DiscoverItemsFromText(BuildFactionTieDigest());
-                DiscoverItemsFromText(BuildSocialThreadDigest(5));
-                DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
-                g_contextMgr.SetContext(BuildPlayerContext());
-                g_gameState = STATE_GAME;
-                TraceLifeStart(L"新开道途");
-                ShowWindow(g_nameInput, SW_HIDE);
-                ShowWindow(g_btnStart, SW_HIDE);
-                InvalidateRect(hWnd, NULL, FALSE);
+                StartNewGameWithDaoName(hWnd, daoName, L"新开道途");
             }
             break;
         }
@@ -11003,6 +11042,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 
     ShowWindow(g_hWnd, nCmdShow);
     UpdateWindow(g_hWnd);
+    AppendTraceLog(L"APP_START", L"窗口已创建，等待输入道号。");
+    DWORD autoNameSize = GetEnvironmentVariableW(L"WENDAO_TRACE_AUTOSTART", nullptr, 0);
+    if (autoNameSize > 1 && !GetTraceLogPath().empty()) {
+        vector<wchar_t> autoNameBuffer(autoNameSize);
+        DWORD copied = GetEnvironmentVariableW(L"WENDAO_TRACE_AUTOSTART", autoNameBuffer.data(), autoNameSize);
+        if (copied > 0 && copied < autoNameSize) {
+            StartNewGameWithDaoName(g_hWnd, autoNameBuffer.data(), L"trace自动开局");
+        }
+    }
 
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0)) {
