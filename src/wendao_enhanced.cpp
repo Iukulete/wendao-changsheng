@@ -396,7 +396,7 @@ public:
         if (IsDualDominantRoot()) return L"双灵根";
         int active = GetActiveRootCount();
         if (active <= 1) return L"偏灵根";
-        if (active == 2) return L"双灵根";
+        if (active == 2) return GetTotalRoot() >= 30 ? L"双灵根" : L"双行杂灵根";
         if (active == 3) return L"三灵根";
         if (active == 4) return L"四灵根";
         return L"五灵根未均";
@@ -514,6 +514,11 @@ public:
             return scarce
                 ? L"多灵根在灵气匮乏时最怕摊薄资源，需要丹药、师承或机缘补足。"
                 : L"多灵根变化较多，若能补成均衡，后期反而有路可走。";
+        }
+        if (GetActiveRootCount() == 2 && GetTotalRoot() < 30) {
+            return scarce
+                ? L"双行有根，比多灵根省资源；只是根气尚浅，仍要靠机缘把路续长。"
+                : L"双行有根，盛世入门不算慢；只是根气尚浅，后续要靠师承与机缘补厚。";
         }
         return IsWeakRoot()
             ? L"根骨驳杂，单靠枯坐很慢，需要丹药、机缘和谨慎取舍追回差距。"
@@ -4601,7 +4606,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
     } else if (mentorTie) {
         thread.nextMove = thread.relation >= 18
             ? L"安排真正的护道试炼"
-            : L"先冷眼看你能不能自救";
+            : (thread.relation >= 10 ? L"安排一场自救试炼" : L"先冷眼看你能不能自救");
     } else if (hidden) {
         thread.nextMove = L"继续隐藏真实修为，看你是否识破";
     } else {
