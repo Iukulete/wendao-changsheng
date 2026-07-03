@@ -1184,6 +1184,145 @@ wstring BuildHongmengUsabilityText();
 wstring BuildHongmengProgressContext();
 wstring BuildNextLifeForeshadowText();
 
+wstring GetTraceLogPath() {
+    static bool initialized = false;
+    static wstring path;
+    if (!initialized) {
+        DWORD size = GetEnvironmentVariableW(L"WENDAO_TRACE_LOG", nullptr, 0);
+        if (size > 1) {
+            vector<wchar_t> buffer(size);
+            DWORD copied = GetEnvironmentVariableW(L"WENDAO_TRACE_LOG", buffer.data(), size);
+            if (copied > 0 && copied < size) {
+                path.assign(buffer.data(), copied);
+            }
+        }
+        initialized = true;
+    }
+    return path;
+}
+
+wstring FormatTraceTime() {
+    SYSTEMTIME now = {};
+    GetLocalTime(&now);
+    auto two = [](WORD value) {
+        return (value < 10 ? L"0" : L"") + to_wstring(value);
+    };
+    return to_wstring(now.wYear) + L"-" + two(now.wMonth) + L"-" + two(now.wDay) +
+        L" " + two(now.wHour) + L":" + two(now.wMinute) + L":" + two(now.wSecond);
+}
+
+wstring LimitTraceText(const wstring& text, size_t limit = 6000) {
+    if (text.size() <= limit) return text;
+    return text.substr(0, limit) + L"\n...【trace截断】";
+}
+
+wstring BuildTracePlayerLine() {
+    wstringstream ss;
+    ss << L"第" << g_generation << L"世"
+       << L" | " << g_worldEraName
+       << L" | " << (g_player.name.empty() ? L"未命名" : g_player.name)
+       << L" | " << GetRealmName(g_player.realm) << L" " << g_player.level << L"层"
+       << L" | 修为 " << g_player.exp << L"/" << g_player.GetExpNeeded()
+       << L" | 气血 " << g_player.hp << L"/" << g_player.maxHp
+       << L" | 年龄 " << g_player.age << L"/" << g_player.lifespan
+       << L" | 因果 " << g_player.karma
+       << L" | 灵石 " << g_player.spiritStones
+       << L" | 历练 " << g_player.totalEvents;
+    return ss.str();
+}
+
+void AppendTraceLog(const wstring& section, const wstring& text) {
+    wstring path = GetTraceLogPath();
+    if (path.empty()) return;
+
+    wofstream file(path.c_str(), ios::app);
+    UseUtf8Locale(file);
+    if (!file) return;
+
+    file << L"\n[" << FormatTraceTime() << L"] " << section << L"\n";
+    file << BuildTracePlayerLine() << L"\n";
+    file << LimitTraceText(text) << L"\n";
+}
+
+void TraceLifeStart(const wstring& reason) {
+    wstringstream ss;
+    ss << reason << L"\n";
+    ss << L"出身: " << GetFamilySummary(g_player.family) << L"\n\n";
+    ss << L"灵根: " << g_player.GetRootQuality() << L" / " << g_player.GetRootDetails() << L"\n";
+    ss << L"纪元: " << g_worldEraName << L"。" << g_worldEraDescription << L"\n";
+    ss << L"主线: " << g_lifePremise << L"\n";
+    ss << L"时代变迁: " << g_eraTransitionNote;
+    AppendTraceLog(L"LIFE_START", ss.str());
+}
+
+void TraceEventScreen(const Event& event, const wstring& source) {
+    wstringstream ss;
+    ss << source << L"\n";
+    ss << L"事件: " << event.title << L"\n";
+    ss << event.description << L"\n\n";
+    ss << L"选项:\n";
+    for (size_t i = 0; i < event.choices.size(); ++i) {
+        ss << L"[" << (i + 1) << L"] " << event.choices[i].description << L"\n";
+    }
+    AppendTraceLog(L"EVENT", ss.str());
+}
+
+void OpenEventPage(Event* event, const wstring& source) {
+    g_currentEvent = event;
+    g_gameState = STATE_EVENT;
+    if (event) {
+        TraceEventScreen(*event, source);
+    }
+}
+
+void TraceEventChoiceResult(const Event& event, const Choice& choice,
+                            int choiceIndex, int outcomeIndex,
+                            const wstring& result, bool isAIEvent) {
+    wstringstream ss;
+    ss << L"事件: " << event.title << L"\n";
+    ss << L"选择[" << (choiceIndex + 1) << L"]: " << choice.description << L"\n";
+    ss << L"判定: " << (isAIEvent ? L"动态事件" : L"规则事件")
+       << L" / 结果槽 " << (outcomeIndex + 1) << L"\n\n";
+    ss << result;
+    AppendTraceLog(L"CHOICE_RESULT", ss.str());
+}
+
+DWORD RunHiddenProcessAndWait(const wstring& command, DWORD timeoutMs = INFINITE) {
+    vector<wchar_t> commandBuffer(command.begin(), command.end());
+    commandBuffer.push_back(L'\0');
+
+    STARTUPINFOW startupInfo = {};
+    startupInfo.cb = sizeof(startupInfo);
+    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+    startupInfo.wShowWindow = SW_HIDE;
+
+    PROCESS_INFORMATION processInfo = {};
+    BOOL started = CreateProcessW(
+        nullptr,
+        commandBuffer.data(),
+        nullptr,
+        nullptr,
+        FALSE,
+        CREATE_NO_WINDOW,
+        nullptr,
+        nullptr,
+        &startupInfo,
+        &processInfo
+    );
+    if (!started) return (DWORD)-1;
+
+    DWORD waitResult = WaitForSingleObject(processInfo.hProcess, timeoutMs);
+    if (waitResult == WAIT_TIMEOUT) {
+        TerminateProcess(processInfo.hProcess, 1);
+    }
+
+    DWORD exitCode = 1;
+    GetExitCodeProcess(processInfo.hProcess, &exitCode);
+    CloseHandle(processInfo.hThread);
+    CloseHandle(processInfo.hProcess);
+    return exitCode;
+}
+
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
     GraphicsPath textPath;
@@ -4455,22 +4594,48 @@ wstring BuildSocialThreadLine(const SocialThread& thread, bool includeInternal =
     return ss.str();
 }
 
-wstring BuildSocialThreadDigest(int limit = 4, bool includeInternal = false) {
-    if (g_socialThreads.empty()) return L"";
-    wstringstream ss;
-    int count = 0;
-    for (const auto& thread : g_socialThreads) {
-        if (count++ >= limit) break;
-        ss << L"- " << BuildSocialThreadLine(thread, includeInternal) << L"\n";
-    }
-    return ss.str();
-}
-
 const SocialThread* FindSocialThreadByName(const wstring& name) {
     for (const auto& thread : g_socialThreads) {
         if (thread.name == name) return &thread;
     }
     return nullptr;
+}
+
+bool TextContainsAny(const wstring& text, const vector<wstring>& keys);
+
+bool IsCloseSocialTie(const SocialThread& thread) {
+    wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+    return TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世", L"护道人", L"师尊"});
+}
+
+vector<wstring> FindCharacterEchoes(const wstring& name, int limit);
+
+bool ShouldExposeSocialThreadToPlayer(const SocialThread& thread) {
+    if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) {
+        return false;
+    }
+    if (IsCloseSocialTie(thread)) return true;
+    if (g_player.totalEvents <= 0) return false;
+    if (abs(thread.relation) >= 35) return true;
+
+    wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+    if (g_player.totalEvents >= 2 &&
+        TextContainsAny(profile, {L"同代修士", L"欺压者", L"竞争者", L"资源把关者", L"势力牵连"})) {
+        return true;
+    }
+    return !FindCharacterEchoes(thread.name, 1).empty();
+}
+
+wstring BuildSocialThreadDigest(int limit = 4, bool includeInternal = false) {
+    if (g_socialThreads.empty()) return L"";
+    wstringstream ss;
+    int count = 0;
+    for (const auto& thread : g_socialThreads) {
+        if (!includeInternal && !ShouldExposeSocialThreadToPlayer(thread)) continue;
+        if (count++ >= limit) break;
+        ss << L"- " << BuildSocialThreadLine(thread, includeInternal) << L"\n";
+    }
+    return ss.str();
 }
 
 int GetStoryRelationForThread(const SocialThread& thread) {
@@ -4551,7 +4716,7 @@ wstring GetCharacterRoleCaption(const wstring& name) {
     if (name == g_player.family.father) return L"父亲";
     if (name == g_player.family.mother) return L"母亲";
     if (!g_player.family.guardian.empty() && name == g_player.family.guardian) return L"养育者";
-    if (name == L"清蘅真人") return L"第一世入门师尊";
+    if (name == L"清蘅真人") return L"古典修仙纪入门师尊";
     if (name == L"玄衡子") return L"太上玄衡观掌律真人";
     if (name == L"洛凝霜") return L"桃华剑脉剑修";
     if (name == L"霜鸦") return g_worldEraName == L"星穹道网纪" ? L"道网清算人" : L"灵机契约猎手";
@@ -4575,9 +4740,7 @@ vector<wstring> BuildVisibleCharacterNames() {
     }
 
     for (const auto& thread : g_socialThreads) {
-        if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) {
-            continue;
-        }
+        if (!ShouldExposeSocialThreadToPlayer(thread)) continue;
         AddVisibleCharacterName(names, thread.name);
     }
     for (const auto& keyName : {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"}) {
@@ -4633,8 +4796,8 @@ wstring BuildCharacterFallback(const wstring& name) {
     if (!g_player.family.guardian.empty() && name == g_player.family.guardian) {
         return L"此人知道你来历并不简单，却未必愿意把真相一次说尽。";
     }
-    if (name == L"清蘅真人") return L"第一世古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。";
-    if (name == L"玄衡子") return L"第一世古典修仙纪的掌律反派。他会借门规审查你身边正在成形的因果。";
+    if (name == L"清蘅真人") return L"古典修仙纪的师承因果。她重心性胜过天资，护你也会磨你。";
+    if (name == L"玄衡子") return L"古典修仙纪的掌律反派。他会借门规审查你身边正在成形的因果。";
     if (name == L"洛凝霜") return L"桃华剑脉剑修。她看人不只看天资，也看你在剑前如何取舍。";
     if (name == L"霜鸦") return L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。";
     return L"此人已经进入你的本世因果，态度会随你当下的选择变化。";
@@ -4981,6 +5144,12 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
         if (IsAnchorCharacterName(thread.name) && !HasExplicitCharacterReveal(thread.name)) continue;
 
         wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+        bool closeTie = TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世", L"护道人", L"师尊"});
+        if (g_player.totalEvents <= 0 && !closeTie) continue;
+        if (g_player.totalEvents < 2 && !closeTie &&
+            !TextContainsAny(profile, {L"同代修士", L"欺压者", L"竞争者"})) {
+            continue;
+        }
         int weight = 1 + min(4, abs(thread.relation) / 18);
 
         if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
@@ -5015,6 +5184,10 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
 }
 
 wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
+    if (TextContainsAny(action, {L"修炼", L"闭关", L"疗伤"}) && Random(1, 100) > 45) {
+        return L"";
+    }
+
     const SocialThread* picked = PickActionFeedbackThread(action);
     if (!picked) return L"";
 
@@ -5875,10 +6048,11 @@ wstring GetSocialRumorText(int limit = 6) {
         return ss.str();
     }
 
-    if (!g_socialThreads.empty()) {
+    wstring visibleThreadDigest = BuildSocialThreadDigest(6);
+    if (!visibleThreadDigest.empty()) {
         ss << L"【本世人脉】\n";
         ss << L"这些人会影响本世事件走向，也可能在后续风波里继续出手。\n";
-        ss << BuildSocialThreadDigest(6) << L"\n";
+        ss << visibleThreadDigest << L"\n";
     }
 
     if (g_socialRumors.empty()) {
@@ -5899,6 +6073,9 @@ wstring BuildCharacterCodexText() {
        << GetRealmName(g_player.realm) << L" " << g_player.level << L"层\n";
     ss << L"当前只列出你已经见过、听过或与此世家世直接相关的人。关键人物会随事件逐步显露，不会一开始全摊开。\n";
     ss << L"外显修为只是对方愿意露出的部分，不等于真实底牌。";
+    if (BuildVisibleCharacterNames().empty()) {
+        ss << L"\n\n暂时还没有可以单独查看的角色。先去历练，或等家世、人情与师承线浮出水面。";
+    }
     return ss.str();
 }
 
@@ -5921,8 +6098,9 @@ wstring BuildCharacterDetailText(const wstring& name) {
 wstring GetSocialDigest() {
     if (g_socialThreads.empty() && g_socialRumors.empty()) return L"暂无明显风波。";
     wstringstream ss;
-    if (!g_socialThreads.empty()) {
-        ss << L"本世人脉:\n" << BuildSocialThreadDigest(3);
+    wstring visibleThreadDigest = BuildSocialThreadDigest(3);
+    if (!visibleThreadDigest.empty()) {
+        ss << L"本世人脉:\n" << visibleThreadDigest;
     }
     if (!g_socialRumors.empty()) {
         ss << L"近日风声:\n";
@@ -6147,7 +6325,7 @@ void GenerateLifeStoryHooks() {
             L"山门入门试炼会先决定你有没有资格被真正的师长看见；人物要等你入局后才会落到耳边。",
             L"掌律一脉正在暗处记录新弟子的破绽，门规不只是规矩，也可能是杀局。",
             L"桃华剑脉有人在试剑台择人同行，她不会无缘无故偏向谁，只看剑前胆色与心性。",
-            L"第一世不会只是一段开局，它会留下师承、人情、仇怨与未竟之约，成为后世能否重逢的根。"
+            L"此世不会只是一段开局，它会留下师承、人情、仇怨与未竟之约，成为后世能否重逢的根。"
         };
         g_lifeStoryHooks.insert(g_lifeStoryHooks.begin(), firstLifeHooks.begin(), firstLifeHooks.end());
     }
@@ -6336,7 +6514,7 @@ Event BuildMentorTrialEvent() {
             L"你守得太死，被门规反锁经脉。清蘅真人替你截下最重的一击，却说你若只会照本宣科，迟早死在别人的规矩里。\n气血-" + to_wstring(hpRisk) + L"，因果-4"
         }, 6},
         {L"追问师尊隐情", {
-            L"你没有只盯眼前奖励，而是问清蘅真人为何总被掌律一脉盯上。她沉默很久，只提醒你：第一世有些人会护你，有些人会借护你之名杀你。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+6",
+            L"你没有只盯眼前奖励，而是问清蘅真人为何总被掌律一脉盯上。她沉默很久，只提醒你：此世初入道途，有些人会护你，有些人会借护你之名杀你。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+6",
             L"你问得太急，反让旁听者记下你对师承旧事的敏感。清蘅真人把话压回去，只留下一句“还不到时候”。\n气血-" + to_wstring(max(10, hpRisk - 6)) + L"，因果-6"
         }, 3},
         {L"独自破局", {
@@ -6949,7 +7127,9 @@ bool TryRunLocalModelGenerator() {
     DeleteFileW(L"ai_event.txt");
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
-    int exitCode = _wsystem(L"powershell -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"wendao-xiuxian\" > ai_model.log 2>&1");
+    DWORD exitCode = RunHiddenProcessAndWait(
+        L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"wendao-xiuxian\"",
+        100000);
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus == L"本局尚未触发动态事件。") {
         g_lastAiBackend = L"模板回退";
@@ -6960,8 +7140,8 @@ bool TryRunLocalModelGenerator() {
 
 void KillAiProcessTree() {
     if (!g_aiProcessInfo.hProcess || g_aiProcessInfo.dwProcessId == 0) return;
-    wstring command = L"taskkill /F /T /PID " + to_wstring(g_aiProcessInfo.dwProcessId) + L" > nul 2>&1";
-    _wsystem(command.c_str());
+    wstring command = L"taskkill.exe /F /T /PID " + to_wstring(g_aiProcessInfo.dwProcessId);
+    RunHiddenProcessAndWait(command, 5000);
 }
 
 void CloseAiProcessHandles() {
@@ -7028,6 +7208,7 @@ bool BeginLocalModelGeneratorAsync() {
     g_aiStartTick = GetTickCount();
     g_lastAiBackend = L"portable-llama.cpp";
     g_lastAiStatus = L"天机正在推演此世因果，完成后会自动显出事件。";
+    AppendTraceLog(L"AI_START", g_lastAiStatus);
     SetTimer(g_hWnd, IDT_AI_POLL, 500, nullptr);
     return true;
 }
@@ -7135,8 +7316,7 @@ void EnterAiEventFromContext(PlayerContext ctx) {
 
     static Event s_aiEvent;
     s_aiEvent = tempEvent;
-    g_currentEvent = &s_aiEvent;
-    g_gameState = STATE_EVENT;
+    OpenEventPage(&s_aiEvent, L"AI动态历练");
 }
 
 void CompleteLocalModelGenerator(DWORD exitCode) {
@@ -7147,6 +7327,7 @@ void CompleteLocalModelGenerator(DWORD exitCode) {
         g_lastAiBackend = L"模板回退";
         g_lastAiStatus = L"天机一度不稳，已由既有因果继续牵动。";
     }
+    AppendTraceLog(L"AI_DONE", L"backend=" + g_lastAiBackend + L"\nstatus=" + g_lastAiStatus);
     EnterAiEventFromContext(g_pendingAiContext);
     InvalidateRect(g_hWnd, NULL, FALSE);
 }
@@ -7247,6 +7428,7 @@ void OpenInfoPage(const wstring& title, const wstring& text, GameState returnSta
     g_saveSlotLoadMode = false;
     g_saveSlotButtonRects.clear();
     g_gameState = STATE_INFO;
+    AppendTraceLog(L"INFO: " + title, text);
 }
 
 void OpenInfoMenuPage(const wstring& title, const wstring& intro, const vector<InfoMenuItem>& items) {
@@ -8505,6 +8687,14 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
     }
 }
 
+void NormalizeCultivationProgress() {
+    while (g_player.level < 9 && g_player.exp >= g_player.GetExpNeeded()) {
+        int overflow = g_player.exp - g_player.GetExpNeeded();
+        g_player.LevelUp();
+        g_player.exp = max(0, overflow);
+    }
+}
+
 void ApplyOutcomeEffects(const wstring& outcome) {
     int expGain = ExtractValue(outcome, L"修为+");
     int expLoss = ExtractValue(outcome, L"修为-");
@@ -8581,6 +8771,7 @@ void ApplyOutcomeEffects(const wstring& outcome) {
     if (outcome.find(L"直接提升一个小境界") != wstring::npos && g_player.level < 9) {
         g_player.LevelUp();
     }
+    NormalizeCultivationProgress();
 }
 
 bool HasReincarnationLeverage() {
@@ -8907,6 +9098,7 @@ void StartNextLife() {
 
     g_gameState = STATE_GAME;
     g_messageText.clear();
+    TraceLifeStart(L"轮回转世");
 }
 
 // ==================== 事件处理（增强版） ====================
@@ -8977,6 +9169,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
     }
     g_contextMgr.SetContext(BuildPlayerContext());
+    TraceEventChoiceResult(*g_currentEvent, choice, choiceIndex, outcomeIndex, g_messageText, isAIEvent);
 
     if (g_player.IsDead()) {
         g_gameState = STATE_GAMEOVER;
@@ -8994,6 +9187,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         g_messageText += L"享年：" + to_wstring(g_player.age) + L"岁";
         FinishCurrentLife(cause);
         g_messageText += BuildNextLifeForeshadowText();
+        AppendTraceLog(L"GAMEOVER", g_messageText);
         return;
     }
 
@@ -9178,7 +9372,7 @@ Image* GetEventPortraitImage(const Event* event, wstring& name, wstring& title) 
          titleText.find(L"师承") != wstring::npos) &&
         g_qinghengImage) {
         name = L"清蘅真人";
-        title = L"第一世入门师尊";
+        title = L"古典修仙纪入门师尊";
         return g_qinghengImage;
     }
 
@@ -9201,7 +9395,7 @@ Image* GetEventPortraitImage(const Event* event, wstring& name, wstring& title) 
 
     if (pick == PICK_QING && g_qinghengImage) {
         name = L"清蘅真人";
-        title = L"第一世入门师尊";
+        title = L"古典修仙纪入门师尊";
         return g_qinghengImage;
     }
     if (pick == PICK_LUO && g_luoNingshuangImage) {
@@ -10012,6 +10206,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 DiscoverItemsFromText(g_socialRumors.empty() ? L"" : g_socialRumors[0]);
                 g_contextMgr.SetContext(BuildPlayerContext());
                 g_gameState = STATE_GAME;
+                TraceLifeStart(L"新开道途");
                 ShowWindow(g_nameInput, SW_HIDE);
                 ShowWindow(g_btnStart, SW_HIDE);
                 InvalidateRect(hWnd, NULL, FALSE);
@@ -10235,79 +10430,70 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     if (ShouldTriggerAnchorCharacterEvent()) {
                         static Event s_anchorCharacterEvent;
                         s_anchorCharacterEvent = BuildAnchorCharacterEvent();
-                        g_currentEvent = &s_anchorCharacterEvent;
                         AddMemory(L"关键人物入局",
                             L"外出历练时，本世关键人物的因果主动浮到台前。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_anchorCharacterEvent, L"关键人物历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerDaoTrialEvent()) {
                         static Event s_daoTrialEvent;
                         s_daoTrialEvent = BuildDaoTrialEvent();
-                        g_currentEvent = &s_daoTrialEvent;
                         AddMemory(L"大道问心", L"外出历练时，所掌大道主动显出一道缺口。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_daoTrialEvent, L"大道问心历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerCompanionJadeOmenEvent()) {
                         static Event s_jadeOmenEvent;
                         s_jadeOmenEvent = BuildCompanionJadeOmenEvent();
-                        g_currentEvent = &s_jadeOmenEvent;
                         g_jadeDreamOmenEventsThisLife++;
                         AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_jadeOmenEvent, L"伴生玉佩历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerLifeStoryProgressEvent()) {
                         static Event s_lifeStoryEvent;
                         s_lifeStoryEvent = BuildLifeStoryProgressEvent();
-                        g_currentEvent = &s_lifeStoryEvent;
                         g_lifeStoryProgressThisLife++;
                         AddMemory(L"本世主线推进",
                             L"外出历练时，本世主线进入第" +
                             to_wstring(g_lifeStoryProgressThisLife) + L"段。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_lifeStoryEvent, L"本世主线历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerIntentionalLegacyEvent()) {
                         static Event s_intentionalLegacyEvent;
                         s_intentionalLegacyEvent = BuildIntentionalLegacyEvent();
-                        g_currentEvent = &s_intentionalLegacyEvent;
                         AddMemory(L"主动传承牵动",
                             L"黑白旧玉和通天灵宝残印提醒你：此世也该给下一世留下可辨认的道标。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_intentionalLegacyEvent, L"主动传承历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerLegacyEchoEvent()) {
                         static Event s_legacyEchoEvent;
                         s_legacyEchoEvent = BuildLegacyEchoEvent();
-                        g_currentEvent = &s_legacyEchoEvent;
                         AddMemory(L"前世牵动", L"外出历练时触发了前世遗响。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_legacyEchoEvent, L"前世牵动历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerSocialAdventureEvent()) {
                         static Event s_socialAdventureEvent;
                         s_socialAdventureEvent = BuildSocialAdventureEvent();
-                        g_currentEvent = &s_socialAdventureEvent;
                         AddMemory(L"人情牵动", L"外出历练时本世人脉主动入局。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_socialAdventureEvent, L"人情牵动历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerLifeArtifactEvent()) {
                         static Event s_lifeArtifactEvent;
                         s_lifeArtifactEvent = BuildLifeArtifactEvent();
-                        g_currentEvent = &s_lifeArtifactEvent;
                         AddMemory(L"器物牵动", L"外出历练时，本世器物主动卷入凶局。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_lifeArtifactEvent, L"器物牵动历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerEraPulseEvent()) {
                         static Event s_eraPulseEvent;
                         s_eraPulseEvent = BuildEraPulseEvent();
-                        g_currentEvent = &s_eraPulseEvent;
                         AddMemory(L"纪元余波", L"外出历练时，当前时代的大势主动卷入此身。");
-                        g_gameState = STATE_EVENT;
+                        OpenEventPage(&s_eraPulseEvent, L"纪元余波历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     // 外出历练 - 不同时代AI事件活跃度不同
@@ -10328,7 +10514,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         bool needRoot = !g_player.hasBalancedRoots && g_player.realm >= SPIRIT_SEVERING;
                         g_currentEvent = g_eventMgr.GetRandomEvent(g_player.karma, needRoot);
                         if (g_currentEvent) {
-                            g_gameState = STATE_EVENT;
+                            OpenEventPage(g_currentEvent, L"常规历练");
                             InvalidateRect(hWnd, NULL, FALSE);
                         }
                     }
@@ -10447,6 +10633,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         gain += GetEraClosedDoorBonus();
                         gain = max(20, gain);
                         g_player.exp += gain;
+                        NormalizeCultivationProgress();
                         g_player.age++;
                         AdvanceDynamicWorld(L"灵石闭关");
                         AddMemory(L"灵石闭关", L"消耗灵石" + to_wstring(cost) + L"，修为+" + to_wstring(gain));
