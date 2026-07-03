@@ -385,7 +385,7 @@ public:
 
     int GetExpNeeded() const {
         if (realm == MORTAL) {
-            return 30 * level;
+            return 9 * level;
         }
         int base = 100 * level;
         int realmMultiplier = realm + 1;
@@ -415,9 +415,14 @@ public:
 
     int Meditate(int multiplier = 1, int percentModifier = 100) {
         int gain = Random(10, 20) + GetTotalRoot() / 5;
+        if (realm == MORTAL) {
+            gain = Random(18, 28) + GetTotalRoot() / 2;
+            if (hasBalancedRoots) gain += 8;
+            else if (GetTotalRoot() >= 40) gain += 5;
+        }
         // 杂灵根修炼速度惩罚
         if (GetTotalRoot() < 30 && !hasBalancedRoots) {
-            gain = gain * 7 / 10;
+            gain = gain * (realm == MORTAL ? 75 : 70) / 100;
         }
         gain *= max(1, multiplier);
         gain = gain * max(10, percentModifier) / 100;
@@ -8558,6 +8563,24 @@ int ExtractValue(const wstring& text, const wstring& marker, int fallback = 0) {
     return foundAny ? total : fallback;
 }
 
+wstring BuildPlayerVisibleOutcomeText(wstring text) {
+    wstring daoLabel = L"掌道+";
+    if (g_player.realm < GOLDEN_CORE) {
+        daoLabel = L"道心+";
+    } else if (g_player.realm < TRUE_IMMORTAL) {
+        daoLabel = L"道痕+";
+    } else if (g_player.realm < DAO_ANCESTOR) {
+        daoLabel = L"大道感悟+";
+    }
+
+    size_t pos = 0;
+    while ((pos = text.find(L"掌道+", pos)) != wstring::npos) {
+        text.replace(pos, 3, daoLabel);
+        pos += daoLabel.size();
+    }
+    return SanitizePlayerFacingText(text);
+}
+
 void ImproveRandomRoot(int amount) {
     int index = Random(0, 4);
     if (index == 0) g_player.ImproveRoot(g_player.rootFire, amount);
@@ -9215,6 +9238,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
             g_messageText += BuildOutcomeNpcReaction(*thread, successLike, *g_currentEvent, choice);
         }
     }
+    wstring playerVisibleOutcome = BuildPlayerVisibleOutcomeText(g_messageText);
     DiscoverItemsFromText(g_currentEvent->title);
     DiscoverItemsFromText(g_currentEvent->description);
     DiscoverItemsFromText(g_messageText);
@@ -9229,7 +9253,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     if (eraRisk >= 10 && g_messageText.find(L"修为+") != wstring::npos) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
-    AddMemory(g_currentEvent->title, choice.description + L" -> " + g_messageText);
+    AddMemory(g_currentEvent->title, choice.description + L" -> " + playerVisibleOutcome);
     RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
     TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
@@ -9237,7 +9261,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     ApplyNarrativeStoryPatch(*g_currentEvent, choice, g_messageText, isAIEvent);
     if (isAIEvent) {
         AddMemory(L"天机抉择",
-            g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(g_messageText));
+            g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(playerVisibleOutcome));
     }
     g_contextMgr.SetContext(BuildPlayerContext());
     TraceEventChoiceResult(*g_currentEvent, choice, choiceIndex, outcomeIndex, g_messageText, isAIEvent);
@@ -9262,6 +9286,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         return;
     }
 
+    g_messageText = playerVisibleOutcome;
     ShowNotice(L"历练结果", g_messageText);
 }
 
