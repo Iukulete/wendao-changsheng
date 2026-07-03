@@ -1429,7 +1429,7 @@ wstring SanitizeDaoName(const wstring& raw) {
 // ==================== 记忆系统 ====================
 void AddMemory(const wstring& title, const wstring& detail) {
     wstringstream ss;
-    ss << L"第" << g_player.age << L"年【" << title << L"】" << detail;
+    ss << L"第" << g_player.age << L"年【" << title << L"】" << SanitizePlayerFacingText(detail);
     g_memoryLog.push_back(ss.str());
     if (g_memoryLog.size() > 80) {
         g_memoryLog.erase(g_memoryLog.begin());
@@ -2361,11 +2361,7 @@ wstring BuildEraRemnantsText(int limit = 6) {
     int count = 0;
     for (const auto& remnant : g_eraRemnants) {
         if (count++ >= limit) break;
-        wstring visible = remnant;
-        size_t anchorPos = visible.find(L"初世锚点：");
-        if (anchorPos != wstring::npos) {
-            visible.replace(anchorPos, wstring(L"初世锚点：").size(), L"初始道痕：");
-        }
+        wstring visible = SanitizePlayerFacingText(remnant);
         ss << L"- " << visible << L"\n";
     }
     return ss.str();
@@ -2908,7 +2904,7 @@ wstring BuildCompanionJadeDreamOmen() {
         pressure = L"它像是在提醒你：今生仍要自己选择。";
     }
 
-    return anchor + L" " + pressure;
+    return SanitizePlayerFacingText(anchor + L" " + pressure);
 }
 
 void ApplyCompanionJadeToBirth() {
@@ -3740,7 +3736,7 @@ wstring BuildUnfinishedKarmaEraPressureText() {
 Event BuildUnfinishedKarmaEchoEvent(const vector<wstring>& unfinishedKarmas) {
     Event evt;
     auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = CompactMemoryFragment(text);
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
             compact = compact.substr(0, limit) + L"……";
         }
@@ -3790,7 +3786,7 @@ Event BuildUnfinishedKarmaEchoEvent(const vector<wstring>& unfinishedKarmas) {
 Event BuildCompanionJadeMemoryEvent(const vector<wstring>& memoryFragments) {
     Event evt;
     auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = CompactMemoryFragment(text);
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
             compact = compact.substr(0, limit) + L"……";
         }
@@ -3859,7 +3855,7 @@ bool ShouldTriggerCompanionJadeOmenEvent() {
 Event BuildCompanionJadeOmenEvent() {
     Event evt;
     auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = CompactMemoryFragment(text);
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
             compact = compact.substr(0, limit) + L"……";
         }
@@ -6442,7 +6438,7 @@ bool ShouldTriggerLifeStoryProgressEvent() {
 Event BuildLifeStoryProgressEvent() {
     Event evt;
     auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = CompactMemoryFragment(text);
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
         if (compact.size() > limit) {
             compact = compact.substr(0, limit) + L"……";
         }
@@ -9136,7 +9132,9 @@ void StartNextLife() {
     AddMemory(L"鸿蒙天象", BuildHongmengOmenBrief());
     if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
     AddMemory(L"本世主线", g_lifePremise);
-    if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
+    if (!g_eraRemnants.empty()) {
+        AddMemory(L"旧世残响", SanitizePlayerFacingText(CompactMemoryFragment(g_eraRemnants[0])));
+    }
     AddMemory(L"前世余烬", GetVisibleReincarnationEcho());
     if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
     auto rememberedFragments = g_legacySystem.GetLatestMemoryFragments(4);
@@ -10271,7 +10269,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 if (!g_eraChronicle.empty()) AddMemory(L"纪元年表", g_eraChronicle.back());
                 AddMemory(L"本世主线", g_lifePremise);
                 if (HasFactionTie()) AddMemory(L"本世势力", BuildFactionTieDigest());
-                if (!g_eraRemnants.empty()) AddMemory(L"旧世残响", BuildEraRemnantsText(3));
+                if (!g_eraRemnants.empty()) {
+                    AddMemory(L"旧世残响", SanitizePlayerFacingText(CompactMemoryFragment(g_eraRemnants[0])));
+                }
                 AddMemory(L"此世出身", GetFamilySummary(g_player.family));
                 if (!g_socialThreads.empty()) AddMemory(L"本世人脉", BuildSocialThreadDigest(3));
                 if (!g_socialRumors.empty()) AddMemory(L"人情风波", g_socialRumors[0]);
