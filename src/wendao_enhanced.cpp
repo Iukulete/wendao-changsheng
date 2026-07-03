@@ -6198,16 +6198,17 @@ bool ShouldTriggerLifeStoryProgressEvent() {
     if (g_lifeStoryProgressThisLife >= 5) return false;
     if (g_lifeStoryHooks.empty()) return false;
 
-    int chance = 14 + (int)g_lifeStoryHooks.size() * 2;
-    if (g_player.totalEvents <= 5) chance += 8;
-    if (HasFactionTie()) chance += 4;
-    if (!g_socialThreads.empty()) chance += 4;
-    if (!g_eraRemnants.empty()) chance += 3;
-    if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) chance += 5;
-    if (g_lifeStoryProgressThisLife == 1) chance += 3;
-    if (g_lifeStoryProgressThisLife == 2) chance += 5;
-    if (g_lifeStoryProgressThisLife >= 3) chance += 6;
-    chance = max(18, min(50, chance));
+    static const int requiredEvents[] = {1, 4, 8, 12, 18};
+    int stage = max(0, min(4, g_lifeStoryProgressThisLife));
+    if (g_player.totalEvents < requiredEvents[stage]) return false;
+
+    int chance = 10 + (int)g_lifeStoryHooks.size();
+    if (HasFactionTie()) chance += 2;
+    if (!g_socialThreads.empty()) chance += 2;
+    if (!g_eraRemnants.empty()) chance += 2;
+    if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) chance += 4;
+    if (g_player.totalEvents >= requiredEvents[stage] + 4) chance += 8;
+    chance = max(10, min(32, chance));
     return Random(1, 100) <= chance;
 }
 
@@ -6298,16 +6299,21 @@ bool ShouldTriggerAnchorCharacterEvent() {
 
     if (firstLifeArc) {
         if (!HasAnchorCharacterThread(L"清蘅真人")) return true;
-        if (g_player.totalEvents >= 1 && !HasAnchorCharacterThread(L"玄衡子")) return true;
-        if (g_player.totalEvents >= 2 && !HasAnchorCharacterThread(L"洛凝霜")) return true;
+        if (!HasAnchorCharacterThread(L"玄衡子")) {
+            return g_player.totalEvents >= 3 || g_player.age >= 20 ||
+                   (g_player.realm >= QI_REFINING && g_player.level >= 3);
+        }
+        if (!HasAnchorCharacterThread(L"洛凝霜")) {
+            return g_player.totalEvents >= 6 || g_player.age >= 24 ||
+                   (g_player.realm >= QI_REFINING && g_player.level >= 5);
+        }
     }
 
-    int chance = firstLifeArc ? 18 : 14;
-    if (firstLifeArc && !HasAnchorCharacterThread(L"清蘅真人")) chance += 14;
-    else if (firstLifeArc && g_player.totalEvents <= 8) chance += 8;
+    int chance = firstLifeArc ? 9 : 14;
+    if (firstLifeArc && g_player.totalEvents <= 8) chance += 4;
     if (immortalReunion) chance += 12;
-    if (g_lifeStoryProgressThisLife <= 1) chance += 4;
-    chance = max(12, min(46, chance));
+    if (g_lifeStoryProgressThisLife <= 1) chance += 2;
+    chance = max(8, min(firstLifeArc ? 24 : 38, chance));
     return Random(1, 100) <= chance;
 }
 
@@ -6438,8 +6444,14 @@ Event BuildAnchorCharacterEvent() {
     if (IsFirstLifeClassicalEra()) {
         int step = g_player.totalEvents;
         if (!HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
-        if (!HasAnchorCharacterThread(L"玄衡子") && step >= 1) return BuildXuanhengTrapEvent();
-        if (!HasAnchorCharacterThread(L"洛凝霜") && step >= 2) return BuildLuoNingshuangTrialEvent();
+        if (!HasAnchorCharacterThread(L"玄衡子") &&
+            (step >= 3 || g_player.age >= 20 || (g_player.realm >= QI_REFINING && g_player.level >= 3))) {
+            return BuildXuanhengTrapEvent();
+        }
+        if (!HasAnchorCharacterThread(L"洛凝霜") &&
+            (step >= 6 || g_player.age >= 24 || (g_player.realm >= QI_REFINING && g_player.level >= 5))) {
+            return BuildLuoNingshuangTrialEvent();
+        }
         if (step <= 6 && HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
         if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
     }
