@@ -5212,7 +5212,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
             ss << thread.name << L"因「" << trigger
-               << L"」收回几分笑意。她不是看不起弱者，只是不愿把好感押给只会认输的人。";
+               << L"」收回几分笑意。她不是看不起弱者，只是不愿把好感押给还没把话落成行动的人。";
         } else if (mentorLike) {
             ss << thread.name << L"因「" << trigger
                << L"」更加严厉，像是要先确认你有没有被护道的价值：" << BuildSocialNpcUtterance(thread);
