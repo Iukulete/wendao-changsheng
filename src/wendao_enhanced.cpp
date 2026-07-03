@@ -12,10 +12,20 @@
 #include <cwctype>
 #include <limits>
 #include <cstdlib>
+#include <locale>
+#include <codecvt>
 #pragma comment(lib, "gdiplus.lib")
 
 using namespace std;
 using namespace Gdiplus;
+
+void UseUtf8Locale(wofstream& file) {
+    file.imbue(locale(locale::classic(), new codecvt_utf8_utf16<wchar_t>));
+}
+
+void UseUtf8Locale(wifstream& file) {
+    file.imbue(locale(locale::classic(), new codecvt_utf8_utf16<wchar_t>));
+}
 
 // 引入创新模块
 #include "../ai_engine/ai_core.h"
@@ -6970,9 +6980,9 @@ bool BeginLocalModelGeneratorAsync() {
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
 
-    wstring command = L"cmd.exe /c powershell -NoProfile -ExecutionPolicy Bypass "
+    wstring command = L"powershell.exe -NoProfile -ExecutionPolicy Bypass "
         L"-File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" "
-        L"-Model \"wendao-xiuxian\" > ai_model.log 2>&1";
+        L"-Model \"wendao-xiuxian\"";
     vector<wchar_t> commandBuffer(command.begin(), command.end());
     commandBuffer.push_back(L'\0');
 
@@ -8047,6 +8057,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     }
 
     wifstream file(info.path.c_str());
+    UseUtf8Locale(file);
     if (!file) {
         info.title = L"无法读取";
         info.detail = info.path;
@@ -8114,6 +8125,7 @@ bool SaveGameToPath(const wstring& path) {
     if (!EnsureSaveDirectory()) return false;
 
     wofstream file(path.c_str());
+    UseUtf8Locale(file);
     if (!file) return false;
 
     file << L"SAVE_V4\n";
@@ -8158,6 +8170,7 @@ bool SaveGameToPath(const wstring& path) {
 
 bool LoadGameFromPath(const wstring& path) {
     wifstream file(path.c_str());
+    UseUtf8Locale(file);
     if (!file) return false;
 
     wstring firstLine;

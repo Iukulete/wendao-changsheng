@@ -159,63 +159,52 @@ function Invoke-PortableLlama {
         $args += @("--lora", $LoraPath)
     }
 
+    $stdoutTemp = [System.IO.Path]::GetFullPath((Join-Path $ReleaseDir ("ai_llama_stdout_" + [guid]::NewGuid().ToString("N") + ".tmp")))
     $stderrTemp = [System.IO.Path]::GetFullPath((Join-Path $ReleaseDir ("ai_llama_stderr_" + [guid]::NewGuid().ToString("N") + ".tmp")))
     $workingDir = Split-Path -Parent $LlamaCli
-    $job = Start-Job -ScriptBlock {
-        param(
-            [string]$ExePath,
-            [string[]]$ExeArgs,
-            [string]$ExeWorkingDir,
-            [string]$NativeStdErrPath
-        )
-
-        $ErrorActionPreference = "Continue"
-        $OutputEncoding = [System.Text.Encoding]::UTF8
-        [Console]::InputEncoding = [System.Text.Encoding]::UTF8
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        Set-Location -LiteralPath $ExeWorkingDir
-
-        $nativeOut = & $ExePath @ExeArgs 2> $NativeStdErrPath
-        $nativeExitCode = $LASTEXITCODE
-        $stdoutText = [string]::Join([Environment]::NewLine, @($nativeOut | ForEach-Object { [string]$_ }))
-        [pscustomobject]@{
-            ExitCode = $nativeExitCode
-            StdOut = $stdoutText
-        }
-    } -ArgumentList $LlamaCli, $args, $workingDir, $stderrTemp
 
     try {
-        $completedJob = Wait-Job -Job $job -Timeout $PortableTimeoutSec
-        if ($null -eq $completedJob) {
-            Stop-Job -Job $job -ErrorAction SilentlyContinue | Out-Null
-            $stderr = ""
-            if (Test-Path -LiteralPath $stderrTemp) {
-                $stderr = [System.IO.File]::ReadAllText($stderrTemp, [System.Text.Encoding]::UTF8)
-            }
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $LlamaCli
+        foreach ($arg in $args) {
+            [void]$startInfo.ArgumentList.Add($arg)
+        }
+        $startInfo.WorkingDirectory = $workingDir
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+        $startInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+
+        $process = [System.Diagnostics.Process]::new()
+        $process.StartInfo = $startInfo
+        [void]$process.Start()
+
+        if (-not $process.WaitForExit($PortableTimeoutSec * 1000)) {
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            $stderr = $process.StandardError.ReadToEnd()
             if ($stderr) {
                 [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
             }
             throw "llama.cpp timed out after ${PortableTimeoutSec}s"
         }
 
-        $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
-        $stderr = ""
-        if (Test-Path -LiteralPath $stderrTemp) {
-            $stderr = [System.IO.File]::ReadAllText($stderrTemp, [System.Text.Encoding]::UTF8)
-        }
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $stderr = $process.StandardError.ReadToEnd()
         if ($stderr) {
             [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
         }
-        if ($null -eq $result) {
-            throw "llama.cpp produced no process result"
-        }
-        if ($result.ExitCode -ne 0) {
-            throw "llama.cpp exited with code $($result.ExitCode)"
+        if ($process.ExitCode -ne 0) {
+            throw "llama.cpp exited with code $($process.ExitCode)"
         }
 
-        return [string]$result.StdOut
+        return $stdout
     } finally {
-        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue | Out-Null
+        if (Test-Path -LiteralPath $stdoutTemp) {
+            Remove-Item -LiteralPath $stdoutTemp -Force -ErrorAction SilentlyContinue
+        }
         if (Test-Path -LiteralPath $stderrTemp) {
             Remove-Item -LiteralPath $stderrTemp -Force -ErrorAction SilentlyContinue
         }
