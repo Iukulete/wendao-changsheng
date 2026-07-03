@@ -1213,6 +1213,8 @@ int g_infoScrollMax = 0;
 int g_mainScroll = 0;
 int g_mainScrollMax = 0;
 int g_lastRoutineEmotionFeedbackAge = -1000;
+int g_lastActionEmotionFeedbackAge = -1000;
+wstring g_lastActionEmotionFeedbackName;
 int g_lastMeditationAdviceAge = -1000;
 
 #define ID_NAME_INPUT 1001
@@ -5295,6 +5297,11 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     if (!picked) return L"";
 
     const SocialThread& thread = *picked;
+    if (thread.name == g_lastActionEmotionFeedbackName &&
+        g_player.age - g_lastActionEmotionFeedbackAge <= 2) {
+        return L"";
+    }
+
     wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
     wstringstream ss;
     ss << L"\n\n事后，";
@@ -5355,6 +5362,8 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     if (routineAction) {
         g_lastRoutineEmotionFeedbackAge = g_player.age;
     }
+    g_lastActionEmotionFeedbackAge = g_player.age;
+    g_lastActionEmotionFeedbackName = thread.name;
     return ss.str();
 }
 
@@ -8563,6 +8572,8 @@ bool LoadGameFromPath(const wstring& path) {
     g_lastAiStatus = L"已读取存档，可在下次历练时再次触发动态事件。";
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
     RefreshAiStatus();
 
@@ -9162,6 +9173,8 @@ void StartNextLife() {
     g_plannedLegacies.clear();
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
 
     g_player = Player();
@@ -10305,6 +10318,8 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
     g_plannedLegacies.clear();
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackAge = -1000;
+    g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
     ApplyCompanionJadeToBirth();
     g_lastAiBackend = L"未触发";
