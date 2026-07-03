@@ -1069,7 +1069,7 @@ public:
         if (context.history.size() > 50) {
             context.history.erase(context.history.begin());
         }
-        context.history.push_back(outcome.substr(0, 20) + L"...");
+        context.history.push_back(outcome.substr(0, 20) + L"……");
     }
 
     void AddPersonality(wstring trait) {
