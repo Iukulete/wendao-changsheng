@@ -4886,6 +4886,45 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     return L"「先别急着站队，我还想看看你到底是哪种人。」";
 }
 
+wstring BuildLuoNingshuangOutcomeUtterance(const Choice& choice, bool success) {
+    const wstring& text = choice.description;
+    if (success) {
+        if (TextContainsAny(text, {L"请她指破缺口", L"指破缺口"})) {
+            return L"「知道疼还肯听，至少比只会逞强的人聪明。把这个缺口补上，我再看你下一剑。」";
+        }
+        if (TextContainsAny(text, {L"坦言道心", L"道心"})) {
+            return L"「话说得远不算本事。若你真能走到仙界，再来同我论这一剑。」";
+        }
+        if (TextContainsAny(text, {L"认真接剑", L"接剑"})) {
+            return L"「别急着把输赢写死。能接住我这一剑的人，才有资格谈以后。」";
+        }
+        if (TextContainsAny(text, {L"今身问剑", L"以今身问剑"})) {
+            return L"「你终于没有站在旧事后面。好，这一剑我认的是现在的你。」";
+        }
+        if (TextContainsAny(text, {L"初世桃花", L"提起初世"})) {
+            return L"「旧事能记，不能拿来讨债。你能这样说，我便也记这一分。」";
+        }
+        return L"「我看见了。不是看见胜负，是看见你肯把选择落到剑上。」";
+    }
+
+    if (TextContainsAny(text, {L"请她指破缺口", L"指破缺口"})) {
+        return L"「求指点可以，怕疼不行。若只想听好话，就别来试剑台。」";
+    }
+    if (TextContainsAny(text, {L"坦言道心", L"道心"})) {
+        return L"「道心不是说给旁人听的，先把今日这一步站稳。」";
+    }
+    if (TextContainsAny(text, {L"认真接剑", L"接剑"})) {
+        return L"「剑没接住不丢人，丢人的是还没出剑就先替自己认输。」";
+    }
+    if (TextContainsAny(text, {L"今身问剑", L"以今身问剑"})) {
+        return L"「今身不是一句话，先把这一剑接稳，再谈你是谁。」";
+    }
+    if (TextContainsAny(text, {L"初世桃花", L"提起初世"})) {
+        return L"「旧事太重，会压弯现在的剑。你若真记得，就别只拿它求回应。」";
+    }
+    return L"「我不怕你输，只怕你把输赢当成全部。」";
+}
+
 wstring BuildSocialThreadLine(const SocialThread& thread, bool includeInternal = false) {
     wstringstream ss;
     ss << thread.name << L"（" << thread.role << L"）";
@@ -5396,7 +5435,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                << L"」后没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
             ss << thread.name << L"听闻「" << trigger
-               << L"」后没有当众夸你，只把桃花剑光压低半寸：" << BuildSocialNpcUtterance(thread);
+               << L"」后没有当众夸你，只把桃花剑光压低半寸：" << BuildLuoNingshuangOutcomeUtterance(choice, true);
         } else if (mentorLike) {
             ss << thread.name << L"把「" << trigger
                << L"」记作一次合格答卷，语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
@@ -5425,7 +5464,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
             ss << thread.name << L"因「" << trigger
-               << L"」收回几分笑意。她不是看不起弱者，只是不愿把好感押给还没把话落成行动的人。";
+               << L"」收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
         } else if (mentorLike) {
             ss << thread.name << L"因「" << trigger
                << L"」更加严厉，像是要先确认你有没有被护道的价值：" << BuildSocialNpcUtterance(thread);
@@ -5712,7 +5751,7 @@ Event BuildSocialAdventureEvent() {
     evt.description = actorName + entrance + attitudeLine +
         BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
         realmHint + BuildSocialNpcUtterance(thread) +
-        L"这次牵动的是：" + CompactMemoryFragment(thread.hook);
+        L"你很快意识到，这场试探还牵着" + CompactMemoryFragment(thread.hook);
 
     wstring hiddenLine = HasPriorLifeEcho()
         ? L"家世、势力或前世旧名"
@@ -5725,7 +5764,7 @@ Event BuildSocialAdventureEvent() {
         evt.choices = {
             {L"坦然受教", {
                 thread.name + L"见你没有自矜，终于当面认可你，并替你指明一条稳妥去处。\n修为+85，因果+8",
-                thread.name + L"觉得你把善意看得太轻，话虽温和，关系却淡了一层。\n因果-5"
+                thread.name + L"觉得你应得太快、回敬太浅，话虽温和，关系却淡了一层。\n因果-5"
             }, 6},
             {L"追问隐情", {
                 thread.name + L"被你问住，透露出一段与" + hiddenLine + L"有关的新线索。\n修为+70，灵石+12，因果+6",
