@@ -387,12 +387,28 @@ public:
         if (realm == MORTAL) {
             return 9 * level;
         }
-        int base = 100 * level;
-        int realmMultiplier = realm + 1;
-        if (realm >= HALF_IMMORTAL) {
-            realmMultiplier *= 3;
+
+        if (realm == QI_REFINING) {
+            return 36 * level;
         }
-        return base * realmMultiplier;
+        if (realm == FOUNDATION) {
+            return 78 * level;
+        }
+        if (realm == GOLDEN_CORE) {
+            return 125 * level;
+        }
+
+        int unit = 125 + (realm - GOLDEN_CORE) * 55;
+        if (realm >= HALF_IMMORTAL) {
+            unit += 180 + (realm - HALF_IMMORTAL) * 45;
+        }
+        if (realm >= TRUE_IMMORTAL) {
+            unit += 220 + (realm - TRUE_IMMORTAL) * 70;
+        }
+        if (realm >= DAO_ANCESTOR) {
+            unit += 520;
+        }
+        return unit * level;
     }
 
     bool CanBreakthrough() const {
@@ -419,10 +435,23 @@ public:
             gain = Random(18, 28) + GetTotalRoot() / 2;
             if (hasBalancedRoots) gain += 8;
             else if (GetTotalRoot() >= 40) gain += 5;
+        } else if (realm == QI_REFINING) {
+            gain = Random(78, 112) + GetTotalRoot() * 2;
+            if (hasBalancedRoots) gain += 42;
+            else if (GetTotalRoot() >= 40) gain += 28;
+            else if (GetTotalRoot() >= 35) gain += 16;
+        } else if (realm == FOUNDATION) {
+            gain = Random(70, 100) + GetTotalRoot() * 2 + 12;
+            if (hasBalancedRoots) gain += 34;
+            else if (GetTotalRoot() >= 40) gain += 22;
+        } else if (realm == GOLDEN_CORE) {
+            gain = Random(72, 106) + GetTotalRoot() * 2 + 22;
+            if (hasBalancedRoots) gain += 28;
+            else if (GetTotalRoot() >= 40) gain += 18;
         }
         // 杂灵根修炼速度惩罚
         if (GetTotalRoot() < 30 && !hasBalancedRoots) {
-            gain = gain * (realm == MORTAL ? 75 : 70) / 100;
+            gain = gain * (realm == MORTAL ? 75 : (realm <= QI_REFINING ? 82 : 70)) / 100;
         }
         gain *= max(1, multiplier);
         gain = gain * max(10, percentModifier) / 100;
@@ -4278,12 +4307,13 @@ bool HasPriorLifeEcho() {
 
 void RefreshSocialAgentState(SocialThread& thread) {
     bool familyTie = SocialThreadHas(thread, {L"父亲", L"母亲", L"养育者", L"身世"});
-    bool challenger = SocialThreadHas(thread, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
-    bool gatekeeper = SocialThreadHas(thread, {L"资源把关者", L"配给", L"仙朝耳目", L"势力牵连"});
-    bool legacyWatcher = SocialThreadHas(thread, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
     bool heroineTie = SocialThreadHas(thread, {L"桃华剑脉", L"洛凝霜"});
     bool mentorTie = SocialThreadHas(thread, {L"师尊", L"护道人", L"清蘅真人"});
     bool antagonistTie = SocialThreadHas(thread, {L"玄衡子", L"掌律真人", L"太上玄衡观"});
+    bool specialTie = familyTie || heroineTie || mentorTie || antagonistTie;
+    bool challenger = !specialTie && SocialThreadHas(thread, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
+    bool gatekeeper = !specialTie && SocialThreadHas(thread, {L"资源把关者", L"配给", L"仙朝耳目", L"势力牵连"});
+    bool legacyWatcher = !specialTie && SocialThreadHas(thread, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
     bool hidden = thread.hidesPower || !thread.hiddenHint.empty();
 
     if (thread.desire.empty()) {
@@ -9233,6 +9263,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     // 检测是否为AI事件（通过outcomes内容判断）
     bool isAIEvent = (choice.outcomes[0] == L"成功" && choice.outcomes.size() == 2);
     int eraRisk = GetEraAdventureRiskModifier();
+    bool aiSuccess = false;
 
     if (isAIEvent) {
         // AI事件：使用AI生成结果
@@ -9243,13 +9274,10 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         successRate += reincarnationModifier;
         successRate = max(20, min(90, successRate));
         bool success = (Random(1, 100) <= successRate);
+        aiSuccess = success;
         g_messageText = g_aiGen.GenerateOutcome(ctx, choiceIndex, success,
             g_currentEvent->title, g_currentEvent->description, choice.description);
         AppendReincarnationOutcomeText(g_messageText, success, *g_currentEvent, choice, reincarnationModifier);
-        AppendAiOutcomeSocialReaction(g_messageText, success, *g_currentEvent, choice);
-
-        // 更新AI上下文
-        g_contextMgr.UpdateFromChoice(choiceIndex, g_messageText);
     } else {
         // 传统事件：使用预设结果
         g_player.karma += choice.karmaChange;
@@ -9261,8 +9289,12 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         g_messageText += L"\n抉择因果：" +
             wstring(choice.karmaChange > 0 ? L"+" : L"") + to_wstring(choice.karmaChange);
     }
+    RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
-    if (!isAIEvent) {
+    if (isAIEvent) {
+        AppendAiOutcomeSocialReaction(g_messageText, aiSuccess, *g_currentEvent, choice);
+        g_contextMgr.UpdateFromChoice(choiceIndex, g_messageText);
+    } else {
         bool successLike = (outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText);
         const SocialThread* thread = PickOutcomeReactionThread(*g_currentEvent, choice, g_messageText);
         if (thread) {
@@ -9285,7 +9317,6 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         AddMemory(L"时代法则", L"此世处于" + g_worldEraName + L"，机缘与凶险总是并行而至。");
     }
     AddMemory(g_currentEvent->title, choice.description + L" -> " + playerVisibleOutcome);
-    RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
     TrackHongmengInsightFromEvent(*g_currentEvent, choice, g_messageText);
     TrackIntentionalLegacyEvent(*g_currentEvent, choice, g_messageText, outcomeIndex);
     ApplyStoryThreadEffects(*g_currentEvent, choice, g_messageText, isAIEvent);
@@ -10594,6 +10625,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             AddMemory(L"寿元压力", BuildLifespanPressureText());
                         }
                         msg += BuildActionEmotionFeedback(L"修炼", true);
+                        AppendTraceLog(L"MEDITATE", msg);
                         ShowNotice(L"打坐修炼", msg);
                     }
                     InvalidateRect(hWnd, NULL, FALSE);
@@ -10736,6 +10768,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         g_legacySystem.GetDaoContextText() +
                                         L"\n\n道祖-天道境仍在万道之上，需继续积累掌道深度与灵宝共鸣。";
                                     daoMsg += BuildActionEmotionFeedback(L"突破", true);
+                                    AppendTraceLog(L"BREAKTHROUGH_RESULT", daoMsg);
                                     ShowNotice(L"证道成祖", daoMsg);
                                 } else if (g_player.realm == HEAVENLY_DAO) {
                                     g_gameState = STATE_GAMEOVER;
@@ -10762,6 +10795,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                             L"为此番破境托住一线，破境助力+" + to_wstring(daoBreakthrough) + L"。";
                                     }
                                     successMsg += BuildActionEmotionFeedback(L"突破", true);
+                                    AppendTraceLog(L"BREAKTHROUGH_RESULT", successMsg);
                                     ShowNotice(L"突破成功", successMsg);
                                 }
                             } else {
@@ -10778,6 +10812,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         L"已替你削去部分反噬，但仍未能破关。";
                                 }
                                 failMsg += BuildActionEmotionFeedback(L"突破", false);
+                                AppendTraceLog(L"BREAKTHROUGH_RESULT", failMsg);
                                 ShowNotice(L"突破失败", failMsg);
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
@@ -10810,6 +10845,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     } else {
                         g_player.spiritStones -= cost;
                         int gain = 80 + g_player.realm * 20;
+                        if (g_player.realm == QI_REFINING) {
+                            gain = Random(150, 190) + g_player.GetTotalRoot();
+                            if (g_player.hasBalancedRoots) gain += 45;
+                            else if (g_player.GetTotalRoot() >= 40) gain += 28;
+                        } else if (g_player.realm == FOUNDATION) {
+                            gain = Random(170, 220) + g_player.GetTotalRoot();
+                            if (g_player.hasBalancedRoots) gain += 38;
+                            else if (g_player.GetTotalRoot() >= 40) gain += 24;
+                        } else if (g_player.realm == GOLDEN_CORE) {
+                            gain = Random(190, 245) + g_player.GetTotalRoot();
+                            if (g_player.hasBalancedRoots) gain += 32;
+                            else if (g_player.GetTotalRoot() >= 40) gain += 20;
+                        }
                         if (g_dynamicWorld.GetCultivationMultiplier() > 1) {
                             gain *= 2;
                         }
@@ -10828,6 +10876,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             closedDoorMsg += L"\n这一世天地不稳，哪怕借灵石闭关也难尽如人意。";
                         }
                         closedDoorMsg += BuildActionEmotionFeedback(L"闭关", true);
+                        AppendTraceLog(L"CLOSED_DOOR", closedDoorMsg);
                         ShowNotice(L"灵石闭关", closedDoorMsg);
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
