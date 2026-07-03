@@ -4339,8 +4339,8 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (gatekeeper) thread.desire = L"判断你值不值得分配资源";
         else if (legacyWatcher) thread.desire = L"弄清旧名、旧法或器痕的真假";
         else if (heroineTie) thread.desire = L"确认你是否配得上并肩试剑";
-        else if (mentorTie) thread.desire = L"把你磨成能活过第一世死局的人";
         else if (antagonistTie) thread.desire = L"用门规确认你是不是会破坏旧秩序的变数";
+        else if (mentorTie) thread.desire = L"把你磨成能活过第一世死局的人";
         else thread.desire = L"看清你是哪种可结交的人";
     }
     if (thread.fear.empty()) {
@@ -4349,15 +4349,26 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
         else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
         else if (heroineTie) thread.fear = L"这份心动被宗门和旧债写成软肋";
-        else if (mentorTie) thread.fear = L"你太早被玄衡子盯死，连成长的时间都没有";
         else if (antagonistTie) thread.fear = L"你与洛凝霜、清蘅真人的因果连成他看不透的局";
+        else if (mentorTie) thread.fear = L"你太早被玄衡子盯死，连成长的时间都没有";
         else thread.fear = hidden ? L"自己藏拙被你看穿" : L"站错队后被时代卷走";
     }
 
-    if (familyTie) {
-        thread.nextMove = thread.relation >= 18
-            ? L"私下护短，并试探你是否稳得住"
-            : L"收紧管束，先替你压下风声";
+    if (antagonistTie) {
+        thread.nextMove = thread.relation <= -18
+            ? L"借门规和试炼设局"
+            : L"继续以掌律名义审查你";
+    } else if (familyTie) {
+        bool bloodFamilyTie = SocialThreadHas(thread, {L"父亲", L"母亲", L"养育者"});
+        if (bloodFamilyTie) {
+            thread.nextMove = thread.relation >= 18
+                ? L"私下护短，并试探你是否稳得住"
+                : L"收紧管束，先替你压下风声";
+        } else {
+            thread.nextMove = thread.relation >= 18
+                ? L"递出一点身世线索，但仍不把话说尽"
+                : L"继续试探你的来历，暂不承认旧事";
+        }
     } else if (challenger) {
         thread.nextMove = thread.relation <= -18
             ? L"借下一场试炼设局"
@@ -4378,10 +4389,6 @@ void RefreshSocialAgentState(SocialThread& thread) {
         thread.nextMove = thread.relation >= 18
             ? L"安排真正的护道试炼"
             : L"先冷眼看你能不能自救";
-    } else if (antagonistTie) {
-        thread.nextMove = thread.relation <= -18
-            ? L"借门规和试炼设局"
-            : L"继续以掌律名义审查你";
     } else if (hidden) {
         thread.nextMove = L"继续隐藏真实修为，看你是否识破";
     } else {
@@ -4571,9 +4578,9 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
     if (has(L"仙朝耳目") || has(L"势力牵连")) return L"礼貌审查";
     if (has(L"道网联系人")) return L"隔空围观";
     if (has(L"残宗向导")) return L"现实互利";
+    if (has(L"玄衡子") || has(L"掌律真人")) return L"规矩杀机";
     if (has(L"桃华剑脉") || has(L"洛凝霜")) return L"含笑试剑";
     if (has(L"师尊") || has(L"清蘅真人")) return L"严中护道";
-    if (has(L"玄衡子") || has(L"掌律真人")) return L"规矩杀机";
     if (thread.relation >= 35) return L"热切拉拢";
     if (thread.relation >= 18) return L"认可示好";
     if (thread.relation <= -35) return L"敌意带刺";
@@ -4590,6 +4597,11 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
                thread.hook.find(needle) != wstring::npos;
     };
 
+    if (has(L"身世")) {
+        return HasPriorLifeEcho()
+            ? L"「有些旧事不是不能说，是你现在一问，就会有人知道你醒得太早。」"
+            : L"「你若真想知道父母是谁，就先活到能承受答案的时候。」";
+    }
     if (has(L"父亲")) {
         if (gifted) return L"「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」";
         if (weak) return L"「修不成最快的路也无妨，先把命和心气护住。」";
@@ -4639,6 +4651,9 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     if (has(L"道网联系人")) {
         return L"「你这一步会被远方节点看见，别装成没人围观。」";
     }
+    if (has(L"玄衡子") || has(L"掌律真人")) {
+        return L"「门规不杀人，违逆门规的人才会自己走到死处。」";
+    }
     if (has(L"桃华剑脉") || has(L"洛凝霜")) {
         return gifted
             ? L"「他们都说你根骨极好，我倒想知道，你的剑心是不是也一样好看。」"
@@ -4648,9 +4663,6 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
         return gifted
             ? L"「天资是借来的风，心性才是你自己的剑鞘。别急，我会亲手磨你。」"
             : L"「修行不是给旁人看的。你若还能站起来，我就继续教。」";
-    }
-    if (has(L"玄衡子") || has(L"掌律真人")) {
-        return L"「门规不杀人，违逆门规的人才会自己走到死处。」";
     }
     if (thread.relation >= 18) {
         return L"「我愿意先信你一次，但你最好让我觉得这份押注值得。」";
@@ -5143,6 +5155,8 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                                 const Event& event, const Choice& choice) {
     wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
     bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
+    bool bloodFamilyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者"});
+    bool ancestryLead = !bloodFamilyTie && TextContainsAny(thread.role, {L"身世"});
     bool challenger = TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者", L"资源把关者", L"轻慢", L"嫉妒"});
     bool factionLike = TextContainsAny(thread.role + thread.attitude, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"残宗向导"});
     bool legacyLike = TextContainsAny(thread.role + thread.attitude, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
@@ -5161,7 +5175,10 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
     }
 
     if (success) {
-        if (familyTie) {
+        if (ancestryLead) {
+            ss << thread.name << L"听闻「" << trigger
+               << L"」后没有承认旧事，只把一条身世线索留得更近：" << BuildSocialNpcUtterance(thread);
+        } else if (familyTie) {
             ss << thread.name << L"听闻「" << trigger
                << L"」后没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
@@ -5187,7 +5204,10 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                << L"」对你亲近一分，话说得不满，眼神却先承认了你的分量。";
         }
     } else {
-        if (familyTie) {
+        if (ancestryLead) {
+            ss << thread.name << L"听见「" << trigger
+               << L"」的风声后把话收回半句，像是仍不愿让你太早碰到旧事：" << BuildSocialNpcUtterance(thread);
+        } else if (familyTie) {
             ss << thread.name << L"听见「" << trigger
                << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
@@ -5303,14 +5323,29 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     }
 
     wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
+    bool bloodFamilyTie = TextContainsAny(profile, {L"父亲", L"母亲", L"养育者"});
+    bool ancestryLead = !bloodFamilyTie && TextContainsAny(profile, {L"身世"});
     wstringstream ss;
     ss << L"\n\n事后，";
 
-    if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
+    if (ancestryLead) {
+        if (positive) {
+            ss << thread.name << L"没有把话说透，只把身世线索压成一句提醒：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"听见你在" << action << L"上受阻，反而把旧事藏得更深。";
+        }
+    } else if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
         if (positive) {
             ss << thread.name << L"没有把话说满，只把担忧压成一句护短：" << BuildSocialNpcUtterance(thread);
         } else {
             ss << thread.name << L"听见你在" << action << L"上受阻，担忧更重，却仍给你留了一盏灯。";
+        }
+    } else if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+        if (positive) {
+            ss << thread.name << L"没能从你这次" << action
+               << L"里挑出可用罪名，只把掌律玉简合上得更慢：" << BuildSocialNpcUtterance(thread);
+        } else {
+            ss << thread.name << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
         }
     } else if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
         if (positive) {
@@ -5323,12 +5358,6 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
             ss << thread.name << L"听闻你这次" << action << L"，笑意很淡，却像终于把你的名字多记了一笔。";
         } else {
             ss << thread.name << L"没有嘲笑，只把距离收回半步，像在等你下一次自己站稳。";
-        }
-    } else if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
-        if (positive) {
-            ss << thread.name << L"暂时找不到可用破绽，掌律玉简合上得很慢。";
-        } else {
-            ss << thread.name << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
         }
     } else if (TextContainsAny(profile, {L"欺压者", L"竞争者", L"嫉妒", L"轻慢"})) {
         if (positive) {
