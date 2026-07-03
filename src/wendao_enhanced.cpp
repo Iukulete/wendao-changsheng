@@ -366,8 +366,60 @@ public:
         hasBalancedRoots = (maxRoot - minRoot <= 3) && (minRoot >= 5);
     }
 
+    vector<int> GetSortedRootValuesDesc() const {
+        vector<int> values = {rootFire, rootWater, rootWood, rootMetal, rootEarth};
+        sort(values.begin(), values.end(), [](int a, int b) { return a > b; });
+        return values;
+    }
+
+    int GetActiveRootCount(int threshold = 5) const {
+        int count = 0;
+        for (int value : {rootFire, rootWater, rootWood, rootMetal, rootEarth}) {
+            if (value >= threshold) count++;
+        }
+        return count;
+    }
+
+    bool IsSingleDominantRoot() const {
+        auto values = GetSortedRootValuesDesc();
+        return values[0] >= 8 && values[1] <= 4;
+    }
+
+    bool IsDualDominantRoot() const {
+        auto values = GetSortedRootValuesDesc();
+        return !hasBalancedRoots && values[0] >= 7 && values[1] >= 7 && values[2] <= 5;
+    }
+
+    wstring GetRootShapeLabel() const {
+        if (hasBalancedRoots) return L"五行均衡";
+        if (IsSingleDominantRoot()) return L"单灵根";
+        if (IsDualDominantRoot()) return L"双灵根";
+        int active = GetActiveRootCount();
+        if (active <= 1) return L"偏灵根";
+        if (active == 2) return L"双灵根";
+        if (active == 3) return L"三灵根";
+        if (active == 4) return L"四灵根";
+        return L"五灵根未均";
+    }
+
+    bool IsExceptionalRoot() const {
+        int total = GetTotalRoot();
+        return IsSingleDominantRoot() || IsDualDominantRoot() || total >= 42 ||
+               (hasBalancedRoots && total >= 35);
+    }
+
+    bool IsWeakRoot() const {
+        if (IsSingleDominantRoot() || IsDualDominantRoot()) return false;
+        return GetTotalRoot() < 30 && !hasBalancedRoots;
+    }
+
     wstring GetRootQuality() const {
         int total = GetTotalRoot();
+        if (IsSingleDominantRoot()) {
+            auto values = GetSortedRootValuesDesc();
+            return values[0] >= 9 ? L"天灵根（单行）" : L"单灵根";
+        }
+        if (IsDualDominantRoot()) return L"双灵根";
         if (hasBalancedRoots) {
             if (total >= 45) return L"五行天灵根★";
             if (total >= 40) return L"五行地灵根★";
@@ -375,20 +427,97 @@ public:
             if (total >= 30) return L"五行伪灵根";
             return L"五行杂灵根";
         }
-        if (total >= 45) return L"天灵根";
-        if (total >= 40) return L"地灵根";
-        if (total >= 35) return L"真灵根";
-        if (total >= 30) return L"伪灵根";
+        int active = GetActiveRootCount();
+        if (active >= 4) return total >= 35 ? L"多灵根（根基厚）" : L"多灵根";
+        if (active == 3) return total >= 32 ? L"上品三灵根" : L"三灵根";
+        if (active == 2) return total >= 30 ? L"双灵根" : L"杂灵根（双行）";
         return L"杂灵根（废灵根）";
     }
 
-    bool IsExceptionalRoot() const {
-        int total = GetTotalRoot();
-        return total >= 42 || (hasBalancedRoots && total >= 35);
+    int GetRootEraMeditationModifierPercent() const {
+        wstring era = GetCurrentWorldEraName();
+        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
+        bool engineered = (era == L"灵机蒸汽纪" || era == L"星穹道网纪");
+        bool early = realm <= GOLDEN_CORE;
+        bool mid = realm >= NASCENT_SOUL && realm <= MAHAYANA;
+        int modifier = 100;
+
+        if (IsSingleDominantRoot()) {
+            if (early) modifier += scarce ? 30 : (abundant ? 12 : 20);
+            else modifier += scarce ? 8 : 2;
+            if (mid && abundant) modifier -= 4;
+        } else if (IsDualDominantRoot()) {
+            if (early) modifier += scarce ? 18 : 10;
+            else if (mid) modifier += scarce ? 8 : 4;
+        } else if (hasBalancedRoots) {
+            if (early) modifier += abundant ? 18 : (scarce ? -12 : (engineered ? 4 : 8));
+            else if (mid) modifier += abundant ? 20 : (scarce ? 6 : 12);
+            else modifier += 12;
+        } else {
+            int active = GetActiveRootCount();
+            if (active >= 4) {
+                if (early) modifier += abundant ? 8 : (scarce ? -14 : -4);
+                else if (mid) modifier += 4;
+            } else if (GetTotalRoot() < 30) {
+                modifier -= scarce ? 8 : 4;
+            }
+        }
+
+        if (engineered && early && !hasBalancedRoots) modifier += 4;
+        return max(65, min(138, modifier));
     }
 
-    bool IsWeakRoot() const {
-        return GetTotalRoot() < 30 && !hasBalancedRoots;
+    int GetRootEraBreakthroughModifier() const {
+        wstring era = GetCurrentWorldEraName();
+        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
+        bool early = realm <= FOUNDATION;
+        int modifier = 0;
+
+        if (IsSingleDominantRoot()) {
+            modifier += early ? (scarce ? 16 : 10) : 4;
+        } else if (IsDualDominantRoot()) {
+            modifier += early ? (scarce ? 10 : 6) : 2;
+        } else if (hasBalancedRoots) {
+            if (realm >= SPIRIT_SEVERING) modifier += abundant ? 14 : 10;
+            else if (early) modifier += abundant ? 5 : (scarce ? -5 : 0);
+        } else if (GetActiveRootCount() >= 4 && scarce && early) {
+            modifier -= 6;
+        }
+
+        return modifier;
+    }
+
+    wstring GetRootEraTraitText() const {
+        wstring era = GetCurrentWorldEraName();
+        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
+        if (IsSingleDominantRoot()) {
+            return scarce
+                ? L"灵气稀薄，此类单灵根反而省力，早期吐纳与破境更顺。"
+                : L"单灵根行功路径纯粹，炼气筑基很快，但后期补全大道仍要另寻机缘。";
+        }
+        if (IsDualDominantRoot()) {
+            return scarce
+                ? L"双灵根比多灵根更省资源，在末法环境里容易先走出一步。"
+                : L"双灵根进境稳健，前期不拖，后期仍能兼顾变化。";
+        }
+        if (hasBalancedRoots) {
+            return abundant
+                ? L"灵气充足，五行俱全如大池纳水，前期与后劲都被时代托起。"
+                : (scarce
+                    ? L"五行俱全上限极高，但此世灵气不足，前期要喂饱五行会格外吃资源。"
+                    : L"五行均衡不是单纯快，而是后期飞升、渡劫与掌道时的根基。");
+        }
+        if (GetActiveRootCount() >= 4) {
+            return scarce
+                ? L"多灵根在灵气匮乏时最怕摊薄资源，需要丹药、师承或机缘补足。"
+                : L"多灵根变化较多，若能补成均衡，后期反而有路可走。";
+        }
+        return IsWeakRoot()
+            ? L"根骨驳杂，单靠枯坐很慢，需要丹药、机缘和谨慎取舍追回差距。"
+            : L"此类灵根不算惊世，也不至绝路，关键在资源与选择。";
     }
 
     wstring GetRootDetails() const {
@@ -464,9 +593,47 @@ public:
             gain = Random(72, 106) + GetTotalRoot() * 2 + 22;
             if (hasBalancedRoots) gain += 28;
             else if (GetTotalRoot() >= 40) gain += 18;
+        } else if (realm == NASCENT_SOUL) {
+            gain = Random(150, 210) + GetTotalRoot() * 2 + 40;
+            if (hasBalancedRoots) gain += 38;
+            else if (GetTotalRoot() >= 40) gain += 26;
+        } else if (realm == SPIRIT_SEVERING) {
+            gain = Random(165, 225) + GetTotalRoot() * 2 + 52;
+            if (hasBalancedRoots) gain += 42;
+            else if (GetTotalRoot() >= 40) gain += 28;
+        } else if (realm == VOID_REFINING) {
+            gain = Random(185, 250) + GetTotalRoot() * 2 + 64;
+            if (hasBalancedRoots) gain += 46;
+            else if (GetTotalRoot() >= 40) gain += 30;
+        } else if (realm == UNITY) {
+            gain = Random(210, 285) + GetTotalRoot() * 2 + 76;
+            if (hasBalancedRoots) gain += 50;
+            else if (GetTotalRoot() >= 40) gain += 34;
+        } else if (realm == TRIBULATION) {
+            gain = Random(235, 320) + GetTotalRoot() * 2 + 88;
+            if (hasBalancedRoots) gain += 56;
+            else if (GetTotalRoot() >= 40) gain += 38;
+        } else if (realm == MAHAYANA) {
+            gain = Random(260, 355) + GetTotalRoot() * 2 + 104;
+            if (hasBalancedRoots) gain += 64;
+            else if (GetTotalRoot() >= 40) gain += 42;
+        } else if (realm >= HALF_IMMORTAL && realm < TRUE_IMMORTAL) {
+            gain = Random(320, 450) + GetTotalRoot() * 3 + realm * 34;
+            if (hasBalancedRoots) gain += 70;
+            else if (GetTotalRoot() >= 40) gain += 46;
+        } else if (realm >= TRUE_IMMORTAL && realm < DAO_ANCESTOR) {
+            gain = Random(480, 690) + GetTotalRoot() * 4 + realm * 58;
+            if (hasBalancedRoots) gain += 92;
+            else if (GetTotalRoot() >= 40) gain += 62;
+        } else if (realm >= DAO_ANCESTOR) {
+            gain = Random(720, 980) + GetTotalRoot() * 5 + realm * 85;
+            if (hasBalancedRoots) gain += 120;
+            else if (GetTotalRoot() >= 40) gain += 80;
         }
-        // 杂灵根修炼速度惩罚
-        if (GetTotalRoot() < 30 && !hasBalancedRoots) {
+        gain = gain * GetRootEraMeditationModifierPercent() / 100;
+
+        // 真正驳杂的杂灵根修炼速度惩罚；单灵根在末法环境反而不该被总分误伤。
+        if (IsWeakRoot()) {
             int weakRootPenalty = 60;
             if (realm == MORTAL) {
                 weakRootPenalty = GetTotalRoot() < 22 ? 68 : 76;
@@ -514,7 +681,8 @@ public:
     bool TryBreakthrough(int rateModifier = 0) {
         if (!CanBreakthrough()) return false;
 
-        int successRate = 50 + GetTotalRoot() + karma / 2 + rateModifier;
+        int successRate = 50 + GetTotalRoot() + karma / 2 + rateModifier +
+                          GetRootEraBreakthroughModifier();
 
         // 五行均衡加成
         if (hasBalancedRoots) {
@@ -613,6 +781,8 @@ public:
         ss << L"灵力: " << mp << L" / " << maxMp << L"\n";
         ss << L"攻击: " << attackPower << L" | 防御: " << defense << L"\n";
         ss << L"\n五行: " << GetRootDetails() << L"\n";
+        ss << L"形态: " << GetRootShapeLabel() << L"\n";
+        ss << L"时代适性: " << GetRootEraTraitText() << L"\n";
 
         if (!hasBalancedRoots && realm >= SPIRIT_SEVERING) {
             ss << L"⚠ 五行不均，无法飞升！\n";
@@ -1356,6 +1526,7 @@ void TraceLifeStart(const wstring& reason) {
     ss << reason << L"\n";
     ss << L"出身: " << GetFamilySummary(g_player.family) << L"\n\n";
     ss << L"灵根: " << g_player.GetRootQuality() << L" / " << g_player.GetRootDetails() << L"\n";
+    ss << L"形态: " << g_player.GetRootShapeLabel() << L"；" << g_player.GetRootEraTraitText() << L"\n";
     ss << L"纪元: " << g_worldEraName << L"。" << g_worldEraDescription << L"\n";
     ss << L"主线: " << g_lifePremise << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote;
@@ -7818,7 +7989,9 @@ PlayerContext BuildPlayerContext() {
     ctx.realmName = GetRealmName(g_player.realm);
     ctx.karma = g_player.karma;
     ctx.age = g_player.age;
-    ctx.rootState = g_player.GetRootQuality() + L"；" + g_player.GetRootDetails();
+    ctx.rootState = g_player.GetRootQuality() + L"；" + g_player.GetRootDetails() +
+        L"；形态:" + g_player.GetRootShapeLabel() +
+        L"；时代适性:" + g_player.GetRootEraTraitText();
     ctx.familyState = GetFamilySummary(g_player.family);
     if (g_player.family.knowsParents) {
         ctx.familyState += L"；父亲:" + g_player.family.father + L"；母亲:" + g_player.family.mother;
@@ -9302,6 +9475,60 @@ wstring BuildNextLifeForeshadowText() {
     return ss.str();
 }
 
+wstring BuildNextLifeOpeningText(const wstring& birthEcho, const wstring& jadeDreamOmen) {
+    auto clip = [](const wstring& text, size_t limit) {
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
+        if (compact.size() > limit) compact = compact.substr(0, limit) + L"……";
+        return compact;
+    };
+
+    wstringstream ss;
+    ss << L"【第" << g_generation << L"世醒来】\n";
+    ss << L"轮回没有把你送回原处。你在" << g_worldEraName << L"降生，"
+       << clip(g_worldEraDescription, 86) << L"\n\n";
+    ss << L"此世出身: " << GetFamilySummary(g_player.family) << L"\n";
+    ss << L"灵根: " << g_player.GetRootQuality() << L" / " << g_player.GetRootDetails() << L"\n";
+    ss << L"时代适性: " << clip(g_player.GetRootEraTraitText(), 110) << L"\n";
+
+    if (HasFactionTie()) {
+        ss << L"入世牵连: " << clip(BuildFactionTieDigest(), 88) << L"\n";
+    }
+    ss << L"\n梦醒时，黑白伴生玉佩微微发温。\n";
+    ss << clip(jadeDreamOmen.empty() ? GetVisibleReincarnationEcho() : jadeDreamOmen, 150) << L"\n";
+
+    auto fragments = g_legacySystem.GetLatestMemoryFragments(2);
+    if (!fragments.empty()) {
+        ss << L"\n旧梦尚有回声:\n";
+        for (const auto& fragment : fragments) {
+            ss << L"- " << clip(fragment, 92) << L"\n";
+        }
+    }
+
+    auto karmas = g_legacySystem.GetLatestUnfinishedKarmas(1);
+    if (!karmas.empty()) {
+        ss << L"\n未竟因果: " << clip(karmas[0], 104) << L"\n";
+    }
+
+    auto& inherited = g_legacySystem.GetInheritedLegacies();
+    if (!inherited.empty()) {
+        ss << L"\n最先浮现的传承: ";
+        for (size_t i = 0; i < min<size_t>(inherited.size(), 3); ++i) {
+            if (i > 0) ss << L"、";
+            ss << inherited[i].name;
+        }
+        ss << L"\n";
+    }
+
+    if (!birthEcho.empty()) {
+        ss << L"\n出身异动: " << clip(birthEcho, 96) << L"\n";
+    } else if (!g_lifeStoryHooks.empty()) {
+        ss << L"\n本世线头: " << clip(g_lifeStoryHooks[0], 110) << L"\n";
+    }
+
+    ss << L"\n你可以先修炼稳住根基，也可以外出历练，让这一世的人情与旧债自己浮上来。";
+    return ss.str();
+}
+
 void StartNextLife() {
     wstring oldName = g_player.name;
     g_legacySystem.StartNewLife();
@@ -9414,8 +9641,9 @@ void StartNextLife() {
     g_contextMgr.SetContext(BuildPlayerContext());
 
     g_gameState = STATE_GAME;
-    g_messageText.clear();
+    g_messageText = BuildNextLifeOpeningText(birthEcho, jadeDreamOmen);
     TraceLifeStart(L"轮回转世");
+    AppendTraceLog(L"NEXT_LIFE_OPENING", g_messageText);
 }
 
 int GetAdventureAgeAdvance() {
@@ -9915,6 +10143,9 @@ void OnPaint(HDC hdc, RECT& rect) {
             y += 46;
             DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"五行",
                 g_player.GetRootDetails(), leftPanel.X + 18, y, leftPanel.Width - 36);
+            y += 28;
+            DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"形态",
+                ClampUiText(g_player.GetRootShapeLabel(), 18), leftPanel.X + 18, y, leftPanel.Width - 36);
             y += 28;
             DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"因果",
                 to_wstring(g_player.karma), leftPanel.X + 18, y, leftPanel.Width - 36);
@@ -10801,6 +11032,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             msg += L"\n修为水到渠成，踏入" + GetRealmName(g_player.realm) +
                                    L" " + to_wstring(g_player.level) + L"层。";
                         }
+                        if (g_player.level > oldLevel || g_player.age % 8 == 0) {
+                            msg += L"\n" + g_player.GetRootEraTraitText();
+                        }
                         if (daoMeditation > 0) {
                             msg += L"\n" + g_legacySystem.GetRelic().daoName +
                                    L"反哺今生，修炼效率+" + to_wstring(daoMeditation) + L"%。";
@@ -11078,6 +11312,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             gain *= 2;
                         }
                         gain += GetEraClosedDoorBonus();
+                        gain = gain * ((g_player.GetRootEraMeditationModifierPercent() + 100) / 2) / 100;
                         gain = max(20, gain);
                         g_player.exp += gain;
                         NormalizeCultivationProgress();
@@ -11091,6 +11326,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else if (GetEraClosedDoorBonus() < 0) {
                             closedDoorMsg += L"\n这一世天地不稳，哪怕借灵石闭关也难尽如人意。";
                         }
+                        closedDoorMsg += L"\n" + g_player.GetRootEraTraitText();
                         closedDoorMsg += BuildActionEmotionFeedback(L"闭关", true);
                         AppendTraceLog(L"CLOSED_DOOR", closedDoorMsg);
                         ShowNotice(L"灵石闭关", closedDoorMsg);
