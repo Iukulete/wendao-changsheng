@@ -368,12 +368,27 @@ public:
 
     wstring GetRootQuality() const {
         int total = GetTotalRoot();
-        if (hasBalancedRoots) return L"五行灵根★";
+        if (hasBalancedRoots) {
+            if (total >= 45) return L"五行天灵根★";
+            if (total >= 40) return L"五行地灵根★";
+            if (total >= 35) return L"五行真灵根★";
+            if (total >= 30) return L"五行伪灵根";
+            return L"五行杂灵根";
+        }
         if (total >= 45) return L"天灵根";
         if (total >= 40) return L"地灵根";
         if (total >= 35) return L"真灵根";
         if (total >= 30) return L"伪灵根";
         return L"杂灵根（废灵根）";
+    }
+
+    bool IsExceptionalRoot() const {
+        int total = GetTotalRoot();
+        return total >= 42 || (hasBalancedRoots && total >= 35);
+    }
+
+    bool IsWeakRoot() const {
+        return GetTotalRoot() < 30 && !hasBalancedRoots;
     }
 
     wstring GetRootDetails() const {
@@ -4497,8 +4512,8 @@ bool HasExplicitCharacterReveal(const wstring& name) {
 }
 
 void AddQinghengThread() {
-    bool exceptionalRoot = (g_player.GetTotalRoot() >= 42 || g_player.hasBalancedRoots);
-    bool weakRoot = (g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots);
+    bool exceptionalRoot = g_player.IsExceptionalRoot();
+    bool weakRoot = g_player.IsWeakRoot();
     AddSocialThread(L"清蘅真人", L"入门师尊",
         exceptionalRoot ? L"严中赞许" : (weakRoot ? L"冷眼护短" : L"耐心试炼"),
         exceptionalRoot
@@ -4516,8 +4531,8 @@ void AddXuanhengThread() {
 }
 
 void AddLuoNingshuangThread() {
-    bool exceptionalRoot = (g_player.GetTotalRoot() >= 42 || g_player.hasBalancedRoots);
-    bool weakRoot = (g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots);
+    bool exceptionalRoot = g_player.IsExceptionalRoot();
+    bool weakRoot = g_player.IsWeakRoot();
     AddSocialThread(L"洛凝霜", L"桃华剑脉剑修",
         exceptionalRoot ? L"含笑押注" : (weakRoot ? L"冷淡观望" : L"试剑结缘"),
         exceptionalRoot
@@ -4616,8 +4631,8 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
 }
 
 wstring BuildSocialNpcUtterance(const SocialThread& thread) {
-    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
-    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    bool gifted = g_player.IsExceptionalRoot();
+    bool weak = g_player.IsWeakRoot();
     auto has = [&](const wstring& needle) {
         return thread.role.find(needle) != wstring::npos ||
                thread.attitude.find(needle) != wstring::npos ||
@@ -5028,8 +5043,8 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
                                     const Event& event, const Choice& choice) {
     bool improved = delta > 0;
     bool worsened = delta < 0;
-    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
-    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    bool gifted = g_player.IsExceptionalRoot();
+    bool weak = g_player.IsWeakRoot();
     wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
 
     if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") {
@@ -5441,11 +5456,14 @@ bool ShouldTriggerSocialAdventureEvent() {
 
 wstring BuildSocialTalentPressureText() {
     int totalRoot = g_player.GetTotalRoot();
-    if (g_player.hasBalancedRoots || totalRoot >= 42) {
+    if (g_player.IsExceptionalRoot()) {
         return L"你资质出众后，赞许、押注和嫉妒都来得比灵气更快。";
     }
-    if (totalRoot < 30 && !g_player.hasBalancedRoots) {
+    if (g_player.IsWeakRoot()) {
         return L"测灵结果不算好，旁人的轻慢与少数善意都显得格外刺眼。";
+    }
+    if (g_player.hasBalancedRoots) {
+        return L"你的五行颇为均衡，却还谈不上惊世天资；有人觉得可塑，也有人等着看你后劲。";
     }
     return L"你的资质不上不下，正处在值得押注也容易被试探的位置。";
 }
@@ -5849,9 +5867,8 @@ bool PulseSocialEmotions(const wstring& reason) {
 
     SocialThread& thread = g_socialThreads[weighted[Random(0, (int)weighted.size() - 1)]];
     int oldRelation = thread.relation;
-    int totalRoot = g_player.GetTotalRoot();
-    bool gifted = g_player.hasBalancedRoots || totalRoot >= 42;
-    bool weak = totalRoot < 30 && !g_player.hasBalancedRoots;
+    bool gifted = g_player.IsExceptionalRoot();
+    bool weak = g_player.IsWeakRoot();
 
     int delta = Random(-1, 1);
     if (TextContainsAny(thread.role + thread.attitude, {L"父亲", L"母亲", L"养育者", L"长辈"})) {
@@ -5894,8 +5911,8 @@ void GenerateSocialThreads() {
     g_socialThreads.clear();
 
     int totalRoot = g_player.GetTotalRoot();
-    bool exceptionalRoot = (totalRoot >= 42 || g_player.hasBalancedRoots);
-    bool weakRoot = (totalRoot < 30 && !g_player.hasBalancedRoots);
+    bool exceptionalRoot = g_player.IsExceptionalRoot();
+    bool weakRoot = g_player.IsWeakRoot();
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
@@ -6148,9 +6165,12 @@ void GenerateSocialRumors() {
         }
     }
 
-    if (totalRoot >= 42 || g_player.hasBalancedRoots) {
+    if (g_player.IsExceptionalRoot()) {
         g_socialRumors.push_back(L"族中长辈看过你的灵根后，语气明显软了几分，说你日后可争内门名额。");
         g_socialRumors.push_back(L"有同辈暗中不服，觉得你不过是仗着天资与家世被人高看。");
+    } else if (g_player.hasBalancedRoots) {
+        g_socialRumors.push_back(L"测灵台认出你五行均衡，却也有人低声说总量未必足够惊人。");
+        g_socialRumors.push_back(L"执事让你先稳住根基：五行俱全的人，后劲常在前期看不分明。");
     } else if (totalRoot >= 32) {
         g_socialRumors.push_back(L"管事评价你资质尚可，愿意多给一次入门试炼的机会。");
         g_socialRumors.push_back(L"几个同龄修士把你当作可拉拢的人，却也在衡量你值不值得下注。");
@@ -6384,8 +6404,8 @@ void GenerateFactionTie() {
     wstring baseName = sect ? sect->name : L"无名山门";
     wstring baseKind = sect ? (sect->philosophy + L" / " + sect->specialty) : L"散修势力";
     int totalRoot = g_player.GetTotalRoot();
-    bool gifted = (totalRoot >= 40 || g_player.hasBalancedRoots);
-    bool weak = (totalRoot < 30 && !g_player.hasBalancedRoots);
+    bool gifted = (totalRoot >= 40 || (g_player.hasBalancedRoots && totalRoot >= 35));
+    bool weak = g_player.IsWeakRoot();
     bool hiddenBirth = !g_player.family.knowsParents || !g_player.family.secret.empty();
 
     int favor = g_player.family.fame / 3 + g_player.family.wealth / 4;
@@ -6718,8 +6738,8 @@ bool ShouldTriggerAnchorCharacterEvent() {
 
 Event BuildMentorTrialEvent() {
     Event evt;
-    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
-    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    bool gifted = g_player.IsExceptionalRoot();
+    bool weak = g_player.IsWeakRoot();
     int expGain = 82 + g_player.realm * 8;
     int majorGain = expGain + (gifted ? 36 : 20);
     int hpRisk = weak ? 24 : 16;
@@ -6748,8 +6768,8 @@ Event BuildMentorTrialEvent() {
 
 Event BuildLuoNingshuangTrialEvent() {
     Event evt;
-    bool gifted = g_player.hasBalancedRoots || g_player.GetTotalRoot() >= 42;
-    bool weak = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+    bool gifted = g_player.IsExceptionalRoot();
+    bool weak = g_player.IsWeakRoot();
     int expGain = 76 + g_player.realm * 8;
     int hpRisk = weak ? 22 : 14;
 
@@ -10789,7 +10809,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             msg += L"\n天地异象加持，修炼收益翻倍。";
                             AddMemory(L"天地异象", L"借灵气暴动修炼，修为+" + to_wstring(gain));
                         }
-                        bool weakRoot = g_player.GetTotalRoot() < 30 && !g_player.hasBalancedRoots;
+                        bool weakRoot = g_player.IsWeakRoot();
                         if (g_player.level > oldLevel) {
                             AddMemory(L"修行进境",
                                 L"在" + g_worldEraName + L"打坐破入" +

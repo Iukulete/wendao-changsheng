@@ -37,6 +37,21 @@ if not exist "%GAME%" (
     )
 )
 
+if exist "%GAME%" (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Item -LiteralPath '%ROOT%src\wendao_enhanced.cpp').LastWriteTime -gt (Get-Item -LiteralPath '%GAME%').LastWriteTime) { exit 2 } else { exit 0 }" >nul 2>nul
+    if errorlevel 2 (
+        echo Source changed after the last build. Rebuilding now...
+        echo.
+        call "%ROOT%build.bat"
+        if errorlevel 1 (
+            echo.
+            echo Build failed. Please install g++ / MinGW and check the error above.
+            pause
+            exit /b 1
+        )
+    )
+)
+
 echo Press any key to start...
 pause >nul
 start "" /D "%RUN_DIR%" "%GAME%"
