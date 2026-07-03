@@ -6580,8 +6580,14 @@ Event BuildLifeStoryProgressEvent() {
     };
 
     int stage = max(0, min(4, g_lifeStoryProgressThisLife));
-    vector<wstring> stageNames = {L"线索显露", L"人情入局", L"危机翻面", L"代价选择", L"此世收束"};
-    wstring stageName = stageNames[stage];
+    vector<wstring> stageIntros = {
+        L"一枚旧玉、一段身世、几道山门目光，终于在同一天碰到一起。",
+        L"先前散落的人情开始互相牵连，谁站在哪边不再只是闲谈。",
+        L"藏在暗处的手终于翻面，原本像线索的东西开始索价。",
+        L"这条路不再只给好处，也开始逼你承认每一次借势都有代价。",
+        L"此世几段最要紧的因果渐渐合拢，留下什么、放弃什么都该有个交代。"
+    };
+    wstring stageIntro = stageIntros[stage];
     wstring focusHook = g_lifeStoryHooks.empty()
         ? g_lifePremise
         : g_lifeStoryHooks[min((size_t)stage, g_lifeStoryHooks.size() - 1)];
@@ -6610,23 +6616,22 @@ Event BuildLifeStoryProgressEvent() {
     }
 
     if (stage == 0) {
-        evt.title = L"【因果】主线初显";
+        evt.title = L"【因果】线索初显";
     } else if (stage == 1) {
-        evt.title = L"【人情】主线入局";
+        evt.title = L"【人情】暗线入局";
     } else if (stage == 2) {
-        evt.title = L"【危机】主线转折";
+        evt.title = L"【危机】暗潮转折";
     } else if (stage == 3) {
-        evt.title = L"【代价】主线取舍";
+        evt.title = L"【代价】此世取舍";
     } else {
-        evt.title = L"【传承】主线收束";
+        evt.title = L"【传承】此世收束";
     }
 
     wstring premiseBrief = trimEndPunctuation(compactLimit(g_lifePremise, 84));
     wstring focusBrief = trimEndPunctuation(compactLimit(focusText, 92));
-    evt.description = L"这一世的主线忽然从背景里站到你面前。当前阶段是" + stageName + L"。" +
-        premiseBrief + L"。眼下最亮的线索是：" +
+    evt.description = stageIntro + premiseBrief + L"。眼下最亮的线索是：" +
         focusBrief + L"。" + pressure +
-        L"你必须决定这条线如何进入今生。";
+        L"你得决定，是顺着它追下去，还是先借此世的人与势把脚站稳。";
 
     int expGain = 75 + g_player.realm * 7 + stage * 20;
     int majorGain = expGain + 35;
@@ -10858,7 +10863,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else if (g_player.realm == MORTAL) {
                             msg += L"凡人期重在打熬肉身与感气，修至凡人9层即可尝试引气入体。";
                         } else {
-                            msg += L"需要达到当前境界9层且修为充足";
+                            if (g_player.level < 9) {
+                                msg += L"当前仍是" + GetRealmName(g_player.realm) + L" " +
+                                    to_wstring(g_player.level) + L"层，需先修至9层。";
+                            } else {
+                                msg += L"当前已到" + GetRealmName(g_player.realm) +
+                                    L"九层，但修为尚未圆满。\n";
+                                msg += L"还需修为：" +
+                                    to_wstring(max(0, g_player.GetExpNeeded() - g_player.exp));
+                            }
                         }
                         ShowNotice(L"突破条件", msg);
                     } else {
