@@ -1,11 +1,11 @@
 ﻿param(
     [string]$ReleaseDir = (Join-Path (Split-Path $PSScriptRoot -Parent) "release"),
-    [string]$Model = "wendao-xiuxian",
+    [string]$Model = "gpt-oss:120b-cloud",
     [string]$ModelPath = "",
     [string]$LoraPath = "",
     [string]$LlamaCli = (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-completion.exe"),
     [int]$PortableTimeoutSec = 75,
-    [int]$OllamaTimeoutSec = 20,
+    [int]$OllamaTimeoutSec = 90,
     [ValidateSet("auto", "portable", "ollama")]
     [string]$Backend = "auto"
 )
@@ -87,7 +87,57 @@ $backendPath = Join-Path $ReleaseDir "ai_backend.txt"
 $statusPath = Join-Path $ReleaseDir "ai_status.txt"
 $llamaLogPath = Join-Path $ReleaseDir "ai_llama.log"
 $ollamaLogPath = Join-Path $ReleaseDir "ai_ollama.log"
+$loraDisablePath = Join-Path $ReleaseDir "ai_lora_disabled.txt"
 $encoding = New-Object System.Text.UTF8Encoding($false)
+
+function Get-AdapterFingerprint {
+    param([string]$AdapterPath)
+
+    if ([string]::IsNullOrWhiteSpace($AdapterPath) -or -not (Test-Path -LiteralPath $AdapterPath)) {
+        return ""
+    }
+
+    $file = Get-Item -LiteralPath $AdapterPath -ErrorAction Stop
+    return ([System.IO.Path]::GetFullPath($file.FullName) + "|" + $file.Length + "|" + $file.LastWriteTimeUtc.Ticks)
+}
+
+function Test-AdapterDisabled {
+    param([string]$AdapterPath)
+
+    if (-not (Test-Path -LiteralPath $loraDisablePath)) {
+        return $false
+    }
+
+    $fingerprint = Get-AdapterFingerprint $AdapterPath
+    if ([string]::IsNullOrWhiteSpace($fingerprint)) {
+        return $false
+    }
+
+    try {
+        $record = [System.IO.File]::ReadAllText($loraDisablePath, [System.Text.Encoding]::UTF8)
+        return $record.Contains($fingerprint)
+    } catch {
+        return $false
+    }
+}
+
+function Disable-AdapterForCurrentRun {
+    param(
+        [string]$AdapterPath,
+        [string]$Reason
+    )
+
+    $fingerprint = Get-AdapterFingerprint $AdapterPath
+    if ([string]::IsNullOrWhiteSpace($fingerprint)) {
+        return
+    }
+
+    try {
+        $record = $fingerprint + "`n" + $Reason
+        [System.IO.File]::WriteAllText($loraDisablePath, $record, $encoding)
+    } catch {
+    }
+}
 
 function Write-StatusFile {
     param(
@@ -110,20 +160,196 @@ if (-not (Test-Path -LiteralPath $promptPath)) {
 $basePrompt = [System.IO.File]::ReadAllText($promptPath, [System.Text.Encoding]::UTF8)
 $basePrompt = $basePrompt + "`n严格只输出5行：标题、描述、选项一、选项二、选项三。不要解释。标题和描述合计至少写入两个上下文专有词。"
 
+function Add-ClippedPromptLine {
+    param(
+        [System.Collections.Generic.List[string]]$Lines,
+        [string]$Line,
+        [int]$MaxChars = 160
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Line)) { return }
+    if ($Line -match "隐藏设定|GenericAgent|provider|C\+\+|AI 可以") { return }
+    $clean = [regex]::Replace($Line.Trim(), "\s+", " ")
+    if ($clean.Length -gt $MaxChars) {
+        $clean = $clean.Substring(0, $MaxChars) + "……"
+    }
+    if (-not $Lines.Contains($clean)) {
+        [void]$Lines.Add($clean)
+    }
+}
+
+function Get-PromptSectionLines {
+    param(
+        [string[]]$Lines,
+        [string]$StartPattern,
+        [string[]]$StopPatterns,
+        [int]$MaxLines = 12,
+        [int]$MaxChars = 160
+    )
+
+    $out = New-Object System.Collections.Generic.List[string]
+    $inside = $false
+    foreach ($line in $Lines) {
+        if (-not $inside) {
+            if ($line -match $StartPattern) {
+                $inside = $true
+            } else {
+                continue
+            }
+        } else {
+            foreach ($stop in $StopPatterns) {
+                if ($line -match $stop) {
+                    return @($out)
+                }
+            }
+        }
+        Add-ClippedPromptLine $out $line $MaxChars
+        if ($out.Count -ge $MaxLines) { break }
+    }
+    return @($out)
+}
+
+function Build-PortablePrompt {
+    param([string]$PromptText)
+
+    $sourceLines = @($PromptText -split "`r?`n")
+    $out = New-Object System.Collections.Generic.List[string]
+    Add-ClippedPromptLine $out "你是修仙Roguelike事件模型。严格只输出5行：标题、描述、选项一、选项二、选项三。" 200
+    Add-ClippedPromptLine $out "标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头；描述45到90个中文字符；三个选项各2到8个字。" 200
+    Add-ClippedPromptLine $out "优先延续本世人脉、家世、最近记忆、当前世界和未收束线头；NPC要像活人一样有情绪、目标、试探和后续动作。" 220
+    Add-ClippedPromptLine $out "第一世只能写黑白旧玉、梦兆、早熟直觉和今生身世，不写明确前世记忆；低境界不能获得、装备或主动调用鸿蒙至宝。" 220
+    Add-ClippedPromptLine $out "不要写UI、系统说明、按钮、编号、请选择；不要暴露隐藏设定或模型规则。" 160
+    Add-ClippedPromptLine $out "" 1
+
+    foreach ($line in $sourceLines) {
+        if ($line -match "^(玩家|境界名称|因果|年龄|灵根|此世家世):") {
+            Add-ClippedPromptLine $out $line 220
+        }
+    }
+
+    foreach ($line in (Get-PromptSectionLines $sourceLines "^人情风波:" @("^轮回传承:","^通天灵宝:","^当前世界:") 18 190)) {
+        Add-ClippedPromptLine $out $line 190
+    }
+
+    $worldPatterns = @(
+        "当前世界:",
+        "^- 时代纪元:",
+        "^- 时代概况:",
+        "^- 时代法则:",
+        "^- 本世主线:",
+        "^- 本世势力牵连:",
+        "^\s*\* (伴生玉佩|玉意梦兆|师尊线推进|人情线推进|玉佩暗线推进|前世未竟推进|势力牵连|本世线索余波)",
+        "^- 天机底线:",
+        "^\s*\* (第一世|主角以今生选择|九大鸿蒙至宝)",
+        "^- 近期因果摘要:",
+        "^- 下一处因果钩子:",
+        "^- 未收束线头:",
+        "^- 人情压力:",
+        "^- NPC 近况:",
+        "^- 势力压力:",
+        "^- 寿元压力:"
+    )
+    $inWorld = $false
+    $worldCount = 0
+    foreach ($line in $sourceLines) {
+        if ($line -match "^当前世界:") { $inWorld = $true }
+        if ($inWorld -and $line -match "^最近记忆:") { break }
+        if (-not $inWorld) { continue }
+        foreach ($pattern in $worldPatterns) {
+            if ($line -match $pattern) {
+                Add-ClippedPromptLine $out $line 190
+                $worldCount++
+                break
+            }
+        }
+        if ($worldCount -ge 24) { break }
+    }
+
+    foreach ($line in (Get-PromptSectionLines $sourceLines "^最近记忆:" @("^严格只输出") 9 190)) {
+        Add-ClippedPromptLine $out $line 190
+    }
+
+    Add-ClippedPromptLine $out "输出格式示例：" 80
+    Add-ClippedPromptLine $out "【因果】桃枝问律" 80
+    Add-ClippedPromptLine $out "清蘅真人隔着雨帘递来一枚旧符，问你愿不愿为行脚医修挡下古修问道宗的审查。" 120
+    Add-ClippedPromptLine $out "接符应问" 40
+    Add-ClippedPromptLine $out "暂避风声" 40
+    Add-ClippedPromptLine $out "反查玉简" 40
+
+    $joined = ($out | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
+    if ($joined.Length -gt 3600) {
+        $joined = $joined.Substring(0, 3600) + "`n严格只输出5行。"
+    }
+    return $joined
+}
+
 function Format-RuntimePrompt {
     param([string]$PromptText)
 
     $modelFile = [System.IO.Path]::GetFileName($ModelPath).ToLowerInvariant()
     if ($modelFile -match "gemma-4") {
-        return "<bos><|turn>user`n" + $PromptText.Trim() + "`n<turn|>`n<|turn>model`n"
+        $portablePrompt = Build-PortablePrompt $PromptText
+        return "<bos><|turn>user`n" + $portablePrompt.Trim() + "`n<turn|>`n<|turn>model`n"
     }
     return $PromptText
 }
 
 $runtimePrompt = Format-RuntimePrompt $basePrompt
-$ollamaPrompt = $basePrompt
+if ($Model -match "gpt-oss|120b") {
+    $ollamaPrompt = Build-PortablePrompt $basePrompt
+} else {
+    $ollamaPrompt = $basePrompt
+}
+
+function ConvertTo-NativeArgument {
+    param([AllowNull()][object]$Argument)
+
+    if ($null -eq $Argument) { return '""' }
+    $text = [string]$Argument
+    if ($text.Length -eq 0) { return '""' }
+    if ($text -notmatch '[\s"]') { return $text }
+
+    $builder = New-Object System.Text.StringBuilder
+    [void]$builder.Append('"')
+    $backslashes = 0
+    foreach ($ch in $text.ToCharArray()) {
+        if ($ch -eq '\') {
+            $backslashes++
+            continue
+        }
+        if ($ch -eq '"') {
+            if ($backslashes -gt 0) {
+                [void]$builder.Append('\' * ($backslashes * 2))
+                $backslashes = 0
+            }
+            [void]$builder.Append('\"')
+            continue
+        }
+        if ($backslashes -gt 0) {
+            [void]$builder.Append('\' * $backslashes)
+            $backslashes = 0
+        }
+        [void]$builder.Append($ch)
+    }
+    if ($backslashes -gt 0) {
+        [void]$builder.Append('\' * ($backslashes * 2))
+    }
+    [void]$builder.Append('"')
+    return $builder.ToString()
+}
+
+function Join-NativeArguments {
+    param([object[]]$Arguments)
+
+    return (@($Arguments | ForEach-Object { ConvertTo-NativeArgument $_ }) -join " ")
+}
 
 function Invoke-PortableLlama {
+    param(
+        [AllowNull()][string]$AdapterPath = $LoraPath,
+        [int]$TimeoutSec = $PortableTimeoutSec
+    )
+
     if (-not (Test-Path -LiteralPath $LlamaCli)) {
         throw "Missing llama.cpp executable: $LlamaCli"
     }
@@ -152,11 +378,11 @@ function Invoke-PortableLlama {
         "--simple-io"
     )
 
-    if (-not [string]::IsNullOrWhiteSpace($LoraPath)) {
-        if (-not (Test-Path -LiteralPath $LoraPath)) {
-            throw "Configured LoRA adapter was not found: $LoraPath"
+    if (-not [string]::IsNullOrWhiteSpace($AdapterPath)) {
+        if (-not (Test-Path -LiteralPath $AdapterPath)) {
+            throw "Configured LoRA adapter was not found: $AdapterPath"
         }
-        $args += @("--lora", $LoraPath)
+        $args += @("--lora", $AdapterPath)
     }
 
     $stdoutTemp = [System.IO.Path]::GetFullPath((Join-Path $ReleaseDir ("ai_llama_stdout_" + [guid]::NewGuid().ToString("N") + ".tmp")))
@@ -166,8 +392,12 @@ function Invoke-PortableLlama {
     try {
         $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
         $startInfo.FileName = $LlamaCli
-        foreach ($arg in $args) {
-            [void]$startInfo.ArgumentList.Add($arg)
+        if ($null -ne $startInfo.ArgumentList) {
+            foreach ($arg in $args) {
+                [void]$startInfo.ArgumentList.Add($arg)
+            }
+        } else {
+            $startInfo.Arguments = Join-NativeArguments $args
         }
         $startInfo.WorkingDirectory = $workingDir
         $startInfo.UseShellExecute = $false
@@ -182,13 +412,13 @@ function Invoke-PortableLlama {
         $process.StartInfo = $startInfo
         [void]$process.Start()
 
-        if (-not $process.WaitForExit($PortableTimeoutSec * 1000)) {
+        if (-not $process.WaitForExit($TimeoutSec * 1000)) {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
             $stderr = $process.StandardError.ReadToEnd()
             if ($stderr) {
                 [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
             }
-            throw "llama.cpp timed out after ${PortableTimeoutSec}s"
+            throw "llama.cpp timed out after ${TimeoutSec}s"
         }
 
         $stdout = $process.StandardOutput.ReadToEnd()
@@ -212,62 +442,129 @@ function Invoke-PortableLlama {
 }
 
 function Invoke-Ollama {
+    function Repair-MojibakeText {
+        param([string]$Value)
+
+        if ([string]::IsNullOrWhiteSpace($Value)) {
+            return $Value
+        }
+        if ($Value -notmatch "[\u0080-\u00ff]") {
+            return $Value
+        }
+
+        try {
+            $latin1 = [System.Text.Encoding]::GetEncoding(28591)
+            $bytes = $latin1.GetBytes($Value)
+            $decoded = [System.Text.Encoding]::UTF8.GetString($bytes)
+            if (($decoded -match "[\u4e00-\u9fff]") -or ($decoded -match "【|】")) {
+                return $decoded
+            }
+        } catch {
+        }
+
+        return $Value
+    }
+
+    $numPredict = 220
+    $thinkSetting = $false
+    if ($Model -match "gpt-oss|120b") {
+        $numPredict = 1536
+        $thinkSetting = "low"
+    }
+
     $body = @{
         model = $Model
         prompt = $ollamaPrompt
         stream = $false
-        think = $false
+        think = $thinkSetting
         options = @{
             temperature = 0.65
             top_p = 0.85
             repeat_penalty = 1.08
-            num_predict = 180
+            num_predict = $numPredict
         }
     } | ConvertTo-Json -Depth 6
+    $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body)
 
     try {
         $response = Invoke-RestMethod `
             -Uri "http://127.0.0.1:11434/api/generate" `
             -Method Post `
-            -ContentType "application/json" `
-            -Body $body `
+            -ContentType "application/json; charset=utf-8" `
+            -Body $bodyBytes `
             -TimeoutSec $OllamaTimeoutSec
     } catch {
         [System.IO.File]::WriteAllText($ollamaLogPath, $_.Exception.ToString(), $encoding)
         throw
     }
 
-    return [string]$response.response
+    $responseText = [string]$response.response
+    if ([string]::IsNullOrWhiteSpace($responseText) -and $null -ne $response.message) {
+        $responseText = [string]$response.message.content
+    }
+    return Repair-MojibakeText $responseText
 }
 
 $text = ""
 $usedBackend = ""
 $errors = @()
 
-if ($Backend -eq "auto" -or $Backend -eq "portable") {
+if ($Backend -eq "auto" -or $Backend -eq "ollama") {
     try {
-        $text = Invoke-PortableLlama
-        $usedBackend = "portable-llama.cpp:" + [System.IO.Path]::GetFileName($ModelPath)
-        if (-not [string]::IsNullOrWhiteSpace($LoraPath)) {
-            $usedBackend += "+lora:" + [System.IO.Path]::GetFileName($LoraPath)
+        $text = Invoke-Ollama
+        if ([string]::IsNullOrWhiteSpace($text)) {
+            throw "Ollama returned empty text"
         }
-        Write-StatusFile -BackendLabel $usedBackend -StatusText "便携模型生成成功。"
+        $usedBackend = "ollama:$Model"
+        Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
     } catch {
-        $errors += "portable: $($_.Exception.Message)"
-        Write-StatusFile -BackendLabel "portable-llama.cpp" -StatusText "便携模型失败：$($_.Exception.Message)"
-        if ($Backend -eq "portable") { throw }
+        $errors += "ollama: $($_.Exception.Message)"
+        Write-StatusFile -BackendLabel "ollama:$Model" -StatusText "天机一度不稳，已由既有因果继续牵动。"
+        if ($Backend -eq "ollama") { throw }
     }
 }
 
-if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -eq "ollama")) {
+if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -eq "portable")) {
     try {
-        $text = Invoke-Ollama
-        $usedBackend = "ollama:$Model"
-        Write-StatusFile -BackendLabel $usedBackend -StatusText "Ollama 生成成功。"
+        $usedBackend = "portable-llama.cpp:" + [System.IO.Path]::GetFileName($ModelPath)
+        $activeLoraPath = $LoraPath
+        if (Test-AdapterDisabled $activeLoraPath) {
+            $errors += "portable-lora: disabled after previous failure"
+            $activeLoraPath = ""
+        }
+
+        if ([string]::IsNullOrWhiteSpace($activeLoraPath)) {
+            $text = Invoke-PortableLlama -AdapterPath "" -TimeoutSec $PortableTimeoutSec
+            if ([string]::IsNullOrWhiteSpace($text)) {
+                throw "llama.cpp returned empty text"
+            }
+            Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
+        } else {
+            try {
+                $loraTimeoutSec = [Math]::Min($PortableTimeoutSec, 25)
+                $text = Invoke-PortableLlama -AdapterPath $activeLoraPath -TimeoutSec $loraTimeoutSec
+                if ([string]::IsNullOrWhiteSpace($text)) {
+                    throw "llama.cpp returned empty text"
+                }
+                $usedBackend += "+lora:" + [System.IO.Path]::GetFileName($activeLoraPath)
+                Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
+            } catch {
+                $errors += "portable-lora: $($_.Exception.Message)"
+                Disable-AdapterForCurrentRun -AdapterPath $activeLoraPath -Reason $_.Exception.Message
+                Write-StatusFile -BackendLabel $usedBackend -StatusText "天机正在推演此世因果，完成后会自动显出事件。"
+
+                $text = Invoke-PortableLlama -AdapterPath "" -TimeoutSec $PortableTimeoutSec
+                if ([string]::IsNullOrWhiteSpace($text)) {
+                    throw "llama.cpp returned empty text after adapter fallback"
+                }
+                $usedBackend += "+base-fallback"
+                Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
+            }
+        }
     } catch {
-        $errors += "ollama: $($_.Exception.Message)"
-        Write-StatusFile -BackendLabel "ollama:$Model" -StatusText "Ollama 失败：$($_.Exception.Message)"
-        if ($Backend -eq "ollama") { throw }
+        $errors += "portable: $($_.Exception.Message)"
+        Write-StatusFile -BackendLabel "portable-llama.cpp" -StatusText "天机一度不稳，已由既有因果继续牵动。"
+        if ($Backend -eq "portable") { throw }
     }
 }
 
@@ -549,7 +846,8 @@ function Normalize-Title {
 function Test-GoodDescription {
     param(
         [string]$Line,
-        [string[]]$Keywords
+        [string[]]$Keywords,
+        [bool]$AllowWithoutKeyword = $false
     )
     $clean = Normalize-EventLine $Line
     if ([string]::IsNullOrWhiteSpace($clean)) { return $false }
@@ -558,9 +856,9 @@ function Test-GoodDescription {
     if (Test-MojibakeText $clean) { return $false }
     if (Test-BrokenEventText $clean) { return $false }
     if ($clean -match "^(请选择|选择|选项|标题|描述)") { return $false }
-    if ($clean.Length -lt 35 -or $clean.Length -gt 130) { return $false }
+    if ($clean.Length -lt 24 -or $clean.Length -gt 130) { return $false }
     if ($clean -notmatch "[。！？]$") { return $false }
-    if (-not (Test-ContainsAny $clean $Keywords)) { return $false }
+    if (-not $AllowWithoutKeyword -and -not (Test-ContainsAny $clean $Keywords)) { return $false }
     return $true
 }
 
@@ -731,8 +1029,16 @@ $rawHadNoise = Test-MojibakeText $text
 if ($rawHadNoise) {
     $repairNotes.Add("清理噪声")
 }
-if (Test-BrokenEventText $text) {
+$rawHadBrokenText = Test-BrokenEventText $text
+if ($rawHadBrokenText) {
     $repairNotes.Add("清理病句")
+}
+$strictContextRepair = $true
+if ($usedBackend -match "^ollama:.*(gpt-oss|120b)") {
+    $strictContextRepair = $false
+}
+if ($rawHadNoise -or $rawHadBrokenText) {
+    $strictContextRepair = $true
 }
 
 $structuredEvent = Convert-StructuredEvent $text
@@ -787,7 +1093,7 @@ $description = $null
 foreach ($line in $candidateLines) {
     $clean = Normalize-EventLine $line
     $clean = [regex]::Replace($clean, "\s*(请选择|选择)[:：]?.*$", "")
-    if (Test-GoodDescription $clean $keywords) {
+    if (Test-GoodDescription $clean $keywords (-not $strictContextRepair)) {
         $description = $clean
         break
     }
@@ -799,16 +1105,18 @@ if ([string]::IsNullOrWhiteSpace($description)) {
 } elseif ($description.Length -gt 120) {
     $description = $description.Substring(0, 120)
 }
-if ((Get-KeywordHitCount ($title + "`n" + $description) $keywords) -lt 2) {
+if ($strictContextRepair -and (Get-KeywordHitCount ($title + "`n" + $description) $keywords) -lt 2) {
     $description = $fallback.Description
     $usedFallbackDescription = $true
     $repairNotes.Add("描述贴合上下文")
 }
-$missingRequiredGroups = Get-MissingKeywordGroups ($title + "`n" + $description) $requiredGroups
-if ($missingRequiredGroups.Count -gt 0) {
-    $description = $fallback.Description
-    $usedFallbackDescription = $true
-    $repairNotes.Add("描述缺少" + ($missingRequiredGroups -join "/"))
+if ($strictContextRepair) {
+    $missingRequiredGroups = Get-MissingKeywordGroups ($title + "`n" + $description) $requiredGroups
+    if ($missingRequiredGroups.Count -gt 0) {
+        $description = $fallback.Description
+        $usedFallbackDescription = $true
+        $repairNotes.Add("描述缺少" + ($missingRequiredGroups -join "/"))
+    }
 }
 if ($usedFallbackDescription -and -not $usedFallbackTitle) {
     $title = $fallback.Title
@@ -821,7 +1129,7 @@ if (-not $usedFallbackDescription) {
         $choiceLine = Normalize-EventLine $line
         if ($choiceLine.Length -gt 16) { continue }
         if (Test-TitleLike $choiceLine) { continue }
-        if (Test-GoodDescription $choiceLine $keywords) { continue }
+        if (Test-GoodDescription $choiceLine $keywords (-not $strictContextRepair)) { continue }
         $choice = Convert-ToChoice $line
         if ($null -ne $choice -and -not $choices.Contains($choice) -and $choice -ne $title -and $choice -ne $description) {
             $choices += $choice

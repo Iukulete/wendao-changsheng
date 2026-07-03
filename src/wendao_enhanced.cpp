@@ -7600,8 +7600,8 @@ bool TryRunLocalModelGenerator() {
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
     DWORD exitCode = RunHiddenProcessAndWait(
-        L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"wendao-xiuxian\"",
-        100000);
+        L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"gpt-oss:120b-cloud\"",
+        150000);
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus == L"本局尚未触发动态事件。") {
         g_lastAiBackend = L"模板回退";
@@ -7646,7 +7646,7 @@ bool BeginLocalModelGeneratorAsync() {
 
     wstring command = L"powershell.exe -NoProfile -ExecutionPolicy Bypass "
         L"-File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" "
-        L"-Model \"wendao-xiuxian\"";
+        L"-Model \"gpt-oss:120b-cloud\"";
     vector<wchar_t> commandBuffer(command.begin(), command.end());
     commandBuffer.push_back(L'\0');
 
@@ -7678,7 +7678,7 @@ bool BeginLocalModelGeneratorAsync() {
     g_aiProcessInfo = processInfo;
     g_aiProcessRunning = true;
     g_aiStartTick = GetTickCount();
-    g_lastAiBackend = L"portable-llama.cpp";
+    g_lastAiBackend = L"天机推演";
     g_lastAiStatus = L"天机正在推演此世因果，完成后会自动显出事件。";
     AppendTraceLog(L"AI_START", g_lastAiStatus);
     SetTimer(g_hWnd, IDT_AI_POLL, 500, nullptr);
@@ -11011,7 +11011,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 if (GetExitCodeProcess(g_aiProcessInfo.hProcess, &exitCode)) {
                     if (exitCode != STILL_ACTIVE) {
                         CompleteLocalModelGenerator(exitCode);
-                    } else if (GetTickCount() - g_aiStartTick > 100000) {
+                    } else if (GetTickCount() - g_aiStartTick > 150000) {
                         KillAiProcessTree();
                         g_lastAiBackend = L"模板回退";
                         g_lastAiStatus = L"天机推演太久未显，已由既有因果继续牵动。";
