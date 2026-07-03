@@ -495,7 +495,7 @@ public:
         }
         if (focus == L"jade" && !jade.empty()) {
             wstringstream ss;
-            ss << L"夜半醒来，" << jade << L"在胸口微微发温，梦里残留几句前世旧语；你仍不知道它真正来历，只知道这不是寻常旧物。";
+            ss << L"夜半醒来，胸口那枚黑白旧玉微微发温，梦里残留几句旧世断语；你仍不知道它真正来历，只知道这不是寻常旧物。";
             return ss.str();
         }
         if (focus == L"world" && !worldEvent.empty()) {
