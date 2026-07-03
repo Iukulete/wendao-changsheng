@@ -1172,6 +1172,7 @@ void EnsureHongmengProgress();
 wstring BuildTreasureTierSystemText();
 wstring BuildHongmengUsabilityText();
 wstring BuildHongmengProgressContext();
+wstring BuildNextLifeForeshadowText();
 
 void DrawGlowText(Graphics& graphics, const wstring& text, FontFamily& fontFamily,
                   REAL fontSize, const RectF& rect, StringFormat& format) {
@@ -2662,7 +2663,7 @@ wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
-    ss << L"主线阶段: " << g_lifeStoryProgressThisLife << L" / 3\n\n";
+    ss << L"主线阶段: " << g_lifeStoryProgressThisLife << L" / 5\n\n";
     ss << L"【主动传承】\n";
     ss << BuildPlannedLegacyDigest(4) << L"\n\n";
     ss << L"【伴生玉佩】\n";
@@ -2683,7 +2684,7 @@ wstring BuildLifeStoryText() {
 wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
-    ss << L"本世主线阶段: " << g_lifeStoryProgressThisLife << L"/3\n";
+    ss << L"本世主线阶段: " << g_lifeStoryProgressThisLife << L"/5\n";
     ss << L"主动传承: " << BuildPlannedLegacyDigest(3) << L"\n";
     ss << L"伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     if (HasFactionTie()) {
@@ -4874,7 +4875,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
     bool antagonistLike = TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"});
 
     wstringstream ss;
-    ss << L"\n人情回响: ";
+    ss << L"\n事后，";
     if (!thread.visibleRealm.empty()) {
         ss << thread.name << L"外显" << thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
@@ -5010,7 +5011,7 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     const SocialThread& thread = *picked;
     wstring profile = thread.name + L" " + thread.role + L" " + thread.attitude + L" " + thread.hook;
     wstringstream ss;
-    ss << L"\n\n人情回响: ";
+    ss << L"\n\n事后，";
 
     if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
         if (positive) {
@@ -5453,7 +5454,7 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
             g_dynamicWorld.PlayerInteractWithNPC(thread.name, localDelta);
             wstring aftershock = BuildRelationAftershockText(thread, oldRelation, localDelta, event, choice);
             AddSocialRumor(aftershock);
-            AddMemory(L"人情回响",
+            AddMemory(L"人物余波",
                 thread.name + L"（" + thread.role + L"）对你的关系由" +
                 GetRelationLabel(oldRelation) + L"变为" + GetRelationLabel(thread.relation) +
                 L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
@@ -6132,7 +6133,13 @@ void GenerateLifeStoryHooks() {
     }
 
     if (IsFirstLifeClassicalEra()) {
-        g_lifeStoryHooks.push_back(L"山门入门试炼将牵出一位严厉师长与掌律一脉的审查；具体人名，要等你真正入局后才会落到耳边。");
+        vector<wstring> firstLifeHooks = {
+            L"山门入门试炼会先决定你有没有资格被真正的师长看见；人物要等你入局后才会落到耳边。",
+            L"掌律一脉正在暗处记录新弟子的破绽，门规不只是规矩，也可能是杀局。",
+            L"桃华剑脉有人在试剑台择人同行，她不会无缘无故偏向谁，只看剑前胆色与心性。",
+            L"第一世不会只是一段开局，它会留下师承、人情、仇怨与未竟之约，成为后世能否重逢的根。"
+        };
+        g_lifeStoryHooks.insert(g_lifeStoryHooks.begin(), firstLifeHooks.begin(), firstLifeHooks.end());
     }
 
     if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
@@ -6172,13 +6179,13 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"此世家世隐情：" + familySecret);
     }
 
-    if (g_lifeStoryHooks.size() > 7) {
-        g_lifeStoryHooks.resize(7);
+    if (g_lifeStoryHooks.size() > 9) {
+        g_lifeStoryHooks.resize(9);
     }
 }
 
 bool ShouldTriggerLifeStoryProgressEvent() {
-    if (g_lifeStoryProgressThisLife >= 3) return false;
+    if (g_lifeStoryProgressThisLife >= 5) return false;
     if (g_lifeStoryHooks.empty()) return false;
 
     int chance = 14 + (int)g_lifeStoryHooks.size() * 2;
@@ -6189,7 +6196,8 @@ bool ShouldTriggerLifeStoryProgressEvent() {
     if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) chance += 5;
     if (g_lifeStoryProgressThisLife == 1) chance += 3;
     if (g_lifeStoryProgressThisLife == 2) chance += 5;
-    chance = max(16, min(44, chance));
+    if (g_lifeStoryProgressThisLife >= 3) chance += 6;
+    chance = max(18, min(50, chance));
     return Random(1, 100) <= chance;
 }
 
@@ -6203,8 +6211,9 @@ Event BuildLifeStoryProgressEvent() {
         return compact;
     };
 
-    int stage = max(0, min(2, g_lifeStoryProgressThisLife));
-    wstring stageName = stage == 0 ? L"线索显露" : (stage == 1 ? L"局中转折" : L"此世取舍");
+    int stage = max(0, min(4, g_lifeStoryProgressThisLife));
+    vector<wstring> stageNames = {L"线索显露", L"人情入局", L"危机翻面", L"代价选择", L"此世收束"};
+    wstring stageName = stageNames[stage];
     wstring focusHook = g_lifeStoryHooks.empty()
         ? g_lifePremise
         : g_lifeStoryHooks[min((size_t)stage, g_lifeStoryHooks.size() - 1)];
@@ -6224,7 +6233,11 @@ Event BuildLifeStoryProgressEvent() {
     if (stage == 0) {
         evt.title = L"【因果】主线初显";
     } else if (stage == 1) {
+        evt.title = L"【人情】主线入局";
+    } else if (stage == 2) {
         evt.title = L"【危机】主线转折";
+    } else if (stage == 3) {
+        evt.title = L"【代价】主线取舍";
     } else {
         evt.title = L"【传承】主线收束";
     }
@@ -6273,6 +6286,12 @@ bool ShouldTriggerAnchorCharacterEvent() {
     bool immortalReunion = g_player.realm >= TRUE_IMMORTAL && HasAnchorCharacterThread(L"洛凝霜");
     if (!firstLifeArc && !immortalReunion) return false;
 
+    if (firstLifeArc) {
+        if (!HasAnchorCharacterThread(L"清蘅真人")) return true;
+        if (g_player.totalEvents >= 1 && !HasAnchorCharacterThread(L"玄衡子")) return true;
+        if (g_player.totalEvents >= 2 && !HasAnchorCharacterThread(L"洛凝霜")) return true;
+    }
+
     int chance = firstLifeArc ? 18 : 14;
     if (firstLifeArc && !HasAnchorCharacterThread(L"清蘅真人")) chance += 14;
     else if (firstLifeArc && g_player.totalEvents <= 8) chance += 8;
@@ -6293,20 +6312,20 @@ Event BuildMentorTrialEvent() {
     evt.title = L"【师承】清蘅试心";
     evt.description =
         L"清蘅真人在山门后崖设下一场入门试心。她没有问你想不想长生，只把一枚蒙尘剑符、一卷残缺门规和你的伴生旧玉并放在石案上。"
-        L"远处太上玄衡观的掌律弟子正在记录，玄衡子未必亲临，却已经把这场试炼写进了他的账。"
-        L"洛凝霜也在桃林边缘停了一瞬，像是想知道你会先守规矩，还是先保住自己。";
+        L"远处掌律一脉的弟子正在记录，却没人告诉你记录会被送到谁手里。"
+        L"桃林边缘似乎也有人停了一瞬，但风太轻，你还看不清那人的名字。";
     evt.choices = {
         {L"守规受训", {
             L"你按门规一步步解开剑符，没有贪快。清蘅真人没有夸你，只把残卷合上，说你至少懂得活着走长路。\n修为+" + to_wstring(majorGain) + L"，因果+8",
-            L"你守得太死，被门规反锁经脉。清蘅真人替你截下最重的一击，却说你若只会照本宣科，迟早死在玄衡子的规矩里。\n气血-" + to_wstring(hpRisk) + L"，因果-4"
+            L"你守得太死，被门规反锁经脉。清蘅真人替你截下最重的一击，却说你若只会照本宣科，迟早死在别人的规矩里。\n气血-" + to_wstring(hpRisk) + L"，因果-4"
         }, 6},
         {L"追问师尊隐情", {
-            L"你没有只盯眼前奖励，而是问清蘅真人为何被玄衡子盯上。她沉默很久，只提醒你：第一世有些人会护你，有些人会借护你之名杀你。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+6",
+            L"你没有只盯眼前奖励，而是问清蘅真人为何总被掌律一脉盯上。她沉默很久，只提醒你：第一世有些人会护你，有些人会借护你之名杀你。\n修为+" + to_wstring(expGain) + L"，寿命+3，因果+6",
             L"你问得太急，反让旁听者记下你对师承旧事的敏感。清蘅真人把话压回去，只留下一句“还不到时候”。\n气血-" + to_wstring(max(10, hpRisk - 6)) + L"，因果-6"
         }, 3},
         {L"独自破局", {
-            L"你绕开残卷上的表层规矩，用自己的判断解开剑符。洛凝霜远远笑了一下，玄衡子的记录却暂时找不到破绽。\n修为+" + to_wstring(expGain + 18) + L"，掌道+3，因果+5",
-            L"你想证明自己，却踩进玄衡子预留的门规夹层。清蘅真人及时出手，但掌律一脉已经有了审查你的理由。\n气血-" + to_wstring(hpRisk + 10) + L"，因果-9"
+            L"你绕开残卷上的表层规矩，用自己的判断解开剑符。桃林边缘那道目光像是轻轻笑了一下，掌律记录却暂时找不到破绽。\n修为+" + to_wstring(expGain + 18) + L"，掌道+3，因果+5",
+            L"你想证明自己，却踩进掌律一脉预留的门规夹层。清蘅真人及时出手，但对方已经有了审查你的理由。\n气血-" + to_wstring(hpRisk + 10) + L"，因果-9"
         }, 4}
     };
     return evt;
@@ -6355,7 +6374,7 @@ Event BuildXuanhengTrapEvent() {
     int hpRisk = 24 + g_player.realm * 2;
     evt.title = L"【危机】玄衡设局";
     evt.description =
-        L"玄衡子终于把审查写成了明面上的门规。他不急着杀你，只把你、清蘅真人和洛凝霜牵进同一场问律。"
+        L"玄衡子终于把审查写成了明面上的门规。他不急着杀你，只把你、清蘅真人和桃林剑脉那道目光牵进同一场问律。"
         L"石阶两侧挂满掌律玉简，每一枚都能把你的选择写成证词。"
         L"他外显元婴气机，却让你隐约觉得那只是他愿意给你看的层次。";
     evt.choices = {
@@ -6408,11 +6427,9 @@ Event BuildAnchorCharacterEvent() {
     }
     if (IsFirstLifeClassicalEra()) {
         int step = g_player.totalEvents;
-        if (!HasAnchorCharacterThread(L"清蘅真人") || step <= 2) return BuildMentorTrialEvent();
-        if (!HasAnchorCharacterThread(L"洛凝霜") && step >= 2 && Random(1, 100) <= 60) {
-            return BuildLuoNingshuangTrialEvent();
-        }
-        if (!HasAnchorCharacterThread(L"玄衡子") && step >= 2) return BuildXuanhengTrapEvent();
+        if (!HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
+        if (!HasAnchorCharacterThread(L"玄衡子") && step >= 1) return BuildXuanhengTrapEvent();
+        if (!HasAnchorCharacterThread(L"洛凝霜") && step >= 2) return BuildLuoNingshuangTrialEvent();
         if (step <= 6 && HasAnchorCharacterThread(L"洛凝霜")) return BuildLuoNingshuangTrialEvent();
         if (HasAnchorCharacterThread(L"玄衡子")) return BuildXuanhengTrapEvent();
     }
@@ -7853,7 +7870,7 @@ bool LoadWorldEra(wifstream& file) {
         if (isV8 || isV9 || isV10 || isV11) {
             file >> g_lifeStoryProgressThisLife >> g_jadeDreamOmenEventsThisLife;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
-            g_lifeStoryProgressThisLife = max(0, min(3, g_lifeStoryProgressThisLife));
+            g_lifeStoryProgressThisLife = max(0, min(5, g_lifeStoryProgressThisLife));
             g_jadeDreamOmenEventsThisLife = max(0, min(1, g_jadeDreamOmenEventsThisLife));
         } else {
             g_lifeStoryProgressThisLife = 0;
@@ -8722,6 +8739,43 @@ void FinishCurrentLife(const wstring& causeOfDeath) {
     g_achievementSystem.CheckAchievements(recorded, g_generation);
 }
 
+wstring BuildNextLifeForeshadowText() {
+    const auto& lives = g_legacySystem.GetPastLives();
+    if (lives.empty()) return L"";
+
+    const PastLife& last = lives.back();
+    wstringstream ss;
+    ss << L"\n\n【轮回将起】\n";
+    ss << L"黑白伴生玉佩在神魂深处合拢，像是要把这一世没有说完的话带进下一次醒来。\n";
+
+    if (!last.memoryFragments.empty()) {
+        ss << L"\n会被旧玉护住的片段:\n";
+        int count = min(3, (int)last.memoryFragments.size());
+        for (int i = 0; i < count; ++i) {
+            ss << L"- " << SanitizePlayerFacingText(CompactMemoryFragment(last.memoryFragments[i])) << L"\n";
+        }
+    }
+
+    if (!last.unfinishedKarmas.empty()) {
+        ss << L"\n不会轻易散去的因果:\n";
+        int count = min(3, (int)last.unfinishedKarmas.size());
+        for (int i = 0; i < count; ++i) {
+            ss << L"- " << SanitizePlayerFacingText(CompactMemoryFragment(last.unfinishedKarmas[i])) << L"\n";
+        }
+    }
+
+    if (!last.legacies.empty()) {
+        ss << L"\n你主动留下的传承:\n";
+        int count = min(3, (int)last.legacies.size());
+        for (int i = 0; i < count; ++i) {
+            ss << L"- " << last.legacies[i].name << L"\n";
+        }
+    }
+
+    ss << L"\n下一世不会从空白开始。师承、人情、旧债、器痕和梦兆，都会换一种方式回来找你。";
+    return ss.str();
+}
+
 void StartNextLife() {
     wstring oldName = g_player.name;
     g_legacySystem.StartNewLife();
@@ -8914,6 +8968,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         g_messageText += L"境界：" + GetRealmName(g_player.realm) + L" " + to_wstring(g_player.level) + L"层\n";
         g_messageText += L"享年：" + to_wstring(g_player.age) + L"岁";
         FinishCurrentLife(cause);
+        g_messageText += BuildNextLifeForeshadowText();
         return;
     }
 
@@ -10125,6 +10180,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             GetRealmName(g_player.realm) + L" " + to_wstring(g_player.level) + L"层\n享年：" +
                             to_wstring(g_player.age) + L"岁";
                         FinishCurrentLife(L"闭关坐化");
+                        g_messageText += BuildNextLifeForeshadowText();
                     } else {
                         wstring msg = L"打坐修炼，修为+" + to_wstring(gain);
                         if (eraMeditation > 100) {
@@ -10151,7 +10207,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '2') {
-                    if (ShouldTriggerDaoTrialEvent()) {
+                    if (ShouldTriggerAnchorCharacterEvent()) {
+                        static Event s_anchorCharacterEvent;
+                        s_anchorCharacterEvent = BuildAnchorCharacterEvent();
+                        g_currentEvent = &s_anchorCharacterEvent;
+                        AddMemory(L"关键人物入局",
+                            L"外出历练时，本世关键人物的因果主动浮到台前。");
+                        g_gameState = STATE_EVENT;
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerDaoTrialEvent()) {
                         static Event s_daoTrialEvent;
                         s_daoTrialEvent = BuildDaoTrialEvent();
                         g_currentEvent = &s_daoTrialEvent;
@@ -10165,15 +10230,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         g_currentEvent = &s_jadeOmenEvent;
                         g_jadeDreamOmenEventsThisLife++;
                         AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
-                        g_gameState = STATE_EVENT;
-                        InvalidateRect(hWnd, NULL, FALSE);
-                    }
-                    else if (ShouldTriggerAnchorCharacterEvent()) {
-                        static Event s_anchorCharacterEvent;
-                        s_anchorCharacterEvent = BuildAnchorCharacterEvent();
-                        g_currentEvent = &s_anchorCharacterEvent;
-                        AddMemory(L"关键人物入局",
-                            L"外出历练时，清蘅真人、玄衡子或洛凝霜相关因果主动浮到台前。");
                         g_gameState = STATE_EVENT;
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
