@@ -385,14 +385,14 @@ public:
 
     int GetExpNeeded() const {
         if (realm == MORTAL) {
-            return 6 * level;
+            return 4 * level;
         }
 
         if (realm == QI_REFINING) {
-            return 36 * level;
+            return 24 * level;
         }
         if (realm == FOUNDATION) {
-            return 78 * level;
+            return 62 * level;
         }
         if (realm == GOLDEN_CORE) {
             return 125 * level;
@@ -432,19 +432,19 @@ public:
     int Meditate(int multiplier = 1, int percentModifier = 100) {
         int gain = Random(10, 20) + GetTotalRoot() / 5;
         if (realm == MORTAL) {
-            gain = Random(32, 46) + GetTotalRoot();
-            if (hasBalancedRoots) gain += 16;
-            else if (GetTotalRoot() >= 40) gain += 12;
-            else if (GetTotalRoot() >= 35) gain += 8;
-        } else if (realm == QI_REFINING) {
-            gain = Random(78, 112) + GetTotalRoot() * 2;
-            if (hasBalancedRoots) gain += 42;
-            else if (GetTotalRoot() >= 40) gain += 28;
+            gain = Random(48, 68) + GetTotalRoot() * 2;
+            if (hasBalancedRoots) gain += 36;
+            else if (GetTotalRoot() >= 40) gain += 24;
             else if (GetTotalRoot() >= 35) gain += 16;
+        } else if (realm == QI_REFINING) {
+            gain = Random(118, 158) + GetTotalRoot() * 3;
+            if (hasBalancedRoots) gain += 72;
+            else if (GetTotalRoot() >= 40) gain += 46;
+            else if (GetTotalRoot() >= 35) gain += 28;
         } else if (realm == FOUNDATION) {
-            gain = Random(70, 100) + GetTotalRoot() * 2 + 12;
-            if (hasBalancedRoots) gain += 34;
-            else if (GetTotalRoot() >= 40) gain += 22;
+            gain = Random(92, 128) + GetTotalRoot() * 2 + 28;
+            if (hasBalancedRoots) gain += 46;
+            else if (GetTotalRoot() >= 40) gain += 32;
         } else if (realm == GOLDEN_CORE) {
             gain = Random(72, 106) + GetTotalRoot() * 2 + 22;
             if (hasBalancedRoots) gain += 28;
@@ -452,7 +452,15 @@ public:
         }
         // 杂灵根修炼速度惩罚
         if (GetTotalRoot() < 30 && !hasBalancedRoots) {
-            gain = gain * (realm == MORTAL ? 92 : (realm <= QI_REFINING ? 82 : 70)) / 100;
+            int weakRootPenalty = 60;
+            if (realm == MORTAL) {
+                weakRootPenalty = GetTotalRoot() < 22 ? 68 : 76;
+            } else if (realm <= QI_REFINING) {
+                weakRootPenalty = GetTotalRoot() < 22 ? 54 : 64;
+            } else {
+                weakRootPenalty = GetTotalRoot() < 22 ? 48 : 58;
+            }
+            gain = gain * weakRootPenalty / 100;
         }
         gain *= max(1, multiplier);
         gain = gain * max(10, percentModifier) / 100;
@@ -9358,9 +9366,15 @@ void StartNextLife() {
 
 int GetAdventureAgeAdvance() {
     if (g_player.realm == MORTAL) {
+        return (g_player.totalEvents % 5 == 4) ? 1 : 0;
+    }
+    if (g_player.realm == QI_REFINING) {
+        return (g_player.totalEvents % 4 == 3) ? 1 : 0;
+    }
+    if (g_player.realm == FOUNDATION) {
         return (g_player.totalEvents % 3 == 2) ? 1 : 0;
     }
-    if (g_player.realm == QI_REFINING && g_player.level <= 3) {
+    if (g_player.realm == GOLDEN_CORE) {
         return (g_player.totalEvents % 2 == 1) ? 1 : 0;
     }
     return 1;
