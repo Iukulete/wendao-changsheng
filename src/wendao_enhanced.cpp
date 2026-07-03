@@ -223,27 +223,28 @@ FamilyBackground GenerateFamilyBackground() {
     vector<wstring> surnames = {L"沈", L"陆", L"顾", L"林", L"秦", L"叶", L"苏", L"韩", L"楚", L"白", L"萧", L"许"};
     vector<wstring> maleNames = {L"玄舟", L"怀远", L"青岳", L"承渊", L"明河", L"守拙", L"云峤", L"景行"};
     vector<wstring> femaleNames = {L"清霜", L"若兰", L"明棠", L"听雪", L"素心", L"月凝", L"静姝", L"云蘅"};
+    wstring familySurname = PickOne(surnames);
 
     int roll = Random(1, 100);
     if (roll <= 22) {
         bg.origin = L"寒门农户";
-        bg.familyName = PickOne(surnames) + L"家";
+        bg.familyName = familySurname + L"家";
         bg.fame = Random(-5, 8);
         bg.wealth = Random(0, 4);
     } else if (roll <= 40) {
         bg.origin = L"坊市小族";
-        bg.familyName = PickOne(surnames) + L"氏小族";
+        bg.familyName = familySurname + L"氏小族";
         bg.fame = Random(5, 25);
         bg.wealth = Random(5, 14);
     } else if (roll <= 55) {
         bg.origin = L"没落修真世家";
-        bg.familyName = PickOne(surnames) + L"氏旧族";
+        bg.familyName = familySurname + L"氏旧族";
         bg.fame = Random(15, 45);
         bg.wealth = Random(6, 18);
         bg.secret = L"族中旧契牵连一处失落洞府";
     } else if (roll <= 70) {
         bg.origin = L"宗门附庸";
-        bg.familyName = PickOne(surnames) + L"家";
+        bg.familyName = familySurname + L"家";
         bg.fame = Random(20, 55);
         bg.wealth = Random(8, 22);
         bg.secret = L"家中长辈与附近宗门有旧";
@@ -259,7 +260,7 @@ FamilyBackground GenerateFamilyBackground() {
         return bg;
     } else if (roll <= 94) {
         bg.origin = L"隐秘血脉";
-        bg.familyName = PickOne(surnames) + L"氏";
+        bg.familyName = familySurname + L"氏";
         bg.knowsParents = false;
         bg.adopted = Random(0, 1) == 1;
         bg.guardian = bg.adopted ? PickOne({L"沉默剑修", L"药谷散人", L"旧仆", L"无名女冠"}) : L"族中旁支";
@@ -268,7 +269,7 @@ FamilyBackground GenerateFamilyBackground() {
         bg.secret = PickOne({L"父母疑似高阶修士", L"血脉被人刻意遮掩", L"有人暗中替你挡过灾"});
     } else {
         bg.origin = L"大能遗脉";
-        bg.familyName = PickOne(surnames) + L"氏";
+        bg.familyName = familySurname + L"氏";
         bg.knowsParents = Random(0, 1) == 1;
         bg.guardian = bg.knowsParents ? L"" : PickOne({L"闭关老祖", L"护道旧仆", L"宗门暗线"});
         bg.fame = Random(60, 100);
@@ -276,8 +277,9 @@ FamilyBackground GenerateFamilyBackground() {
         bg.secret = bg.knowsParents ? L"父母名声极盛，也牵来仇家注视" : L"父母名讳被封在旧玉简中";
     }
 
-    bg.father = PickOne(surnames) + PickOne(maleNames);
-    bg.mother = PickOne(surnames) + PickOne(femaleNames);
+    wstring motherSurname = (Random(1, 100) <= 60) ? familySurname : PickOne(surnames);
+    bg.father = familySurname + PickOne(maleNames);
+    bg.mother = motherSurname + PickOne(femaleNames);
     return bg;
 }
 
@@ -416,8 +418,10 @@ public:
         exp += gain;
         age += 1;
 
-        if (exp >= GetExpNeeded() && level < 9) {
+        while (exp >= GetExpNeeded() && level < 9) {
+            int overflow = exp - GetExpNeeded();
             LevelUp();
+            exp = max(0, overflow);
         }
         return gain;
     }
@@ -4661,6 +4665,16 @@ void AddCharacterEcho(vector<wstring>& echoes, const wstring& text, int limit) {
     }
 
     wstring compact = CompactMemoryFragment(text);
+    size_t memoryTitle = compact.find(L"年【");
+    if (memoryTitle != wstring::npos && memoryTitle < 8) {
+        size_t close = compact.find(L"】", memoryTitle);
+        if (close != wstring::npos) {
+            compact = compact.substr(close + 1);
+        }
+    }
+    while (!compact.empty() && (iswspace(compact.front()) || compact.front() == L'-')) {
+        compact.erase(compact.begin());
+    }
     if (compact.size() > 118) {
         compact = compact.substr(0, 118) + L"...";
     }
@@ -6478,13 +6492,18 @@ bool ShouldTriggerAnchorCharacterEvent() {
     if (firstLifeArc) {
         if (!HasAnchorCharacterThread(L"清蘅真人")) return true;
         if (!HasAnchorCharacterThread(L"玄衡子")) {
-            return g_player.totalEvents >= 3 || g_player.age >= 20 ||
+            return g_player.totalEvents >= 3 ||
                    (g_player.realm >= QI_REFINING && g_player.level >= 3);
         }
         if (!HasAnchorCharacterThread(L"洛凝霜")) {
             return g_player.totalEvents >= 6 || g_player.age >= 24 ||
                    (g_player.realm >= QI_REFINING && g_player.level >= 5);
         }
+    }
+
+    if (firstLifeArc &&
+        (!HasAnchorCharacterThread(L"玄衡子") || !HasAnchorCharacterThread(L"洛凝霜"))) {
+        return false;
     }
 
     int chance = firstLifeArc ? 9 : 14;
@@ -6623,7 +6642,7 @@ Event BuildAnchorCharacterEvent() {
         int step = g_player.totalEvents;
         if (!HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
         if (!HasAnchorCharacterThread(L"玄衡子") &&
-            (step >= 3 || g_player.age >= 20 || (g_player.realm >= QI_REFINING && g_player.level >= 3))) {
+            (step >= 3 || (g_player.realm >= QI_REFINING && g_player.level >= 3))) {
             return BuildXuanhengTrapEvent();
         }
         if (!HasAnchorCharacterThread(L"洛凝霜") &&
