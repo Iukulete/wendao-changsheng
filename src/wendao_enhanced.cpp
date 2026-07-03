@@ -9166,6 +9166,10 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     ApplyOutcomeEffects(g_messageText);
+    if (!isAIEvent && choice.karmaChange != 0) {
+        g_messageText += L"\n抉择因果：" +
+            wstring(choice.karmaChange > 0 ? L"+" : L"") + to_wstring(choice.karmaChange);
+    }
     ApplyNarrativeRelationshipEffects(*g_currentEvent, choice, g_messageText);
     if (!isAIEvent) {
         bool successLike = (outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText);
@@ -10592,8 +10596,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             InvalidateRect(hWnd, NULL, FALSE);
                             break;
                         }
+                        wstring breakthroughTarget = GetRealmName(static_cast<Realm>(g_player.realm + 1));
+                        AppendTraceLog(L"BREAKTHROUGH_PROMPT",
+                            L"是否突破至 " + breakthroughTarget + L"？");
                         int result = MessageBoxW(hWnd,
-                            (L"是否突破至 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L"？").c_str(),
+                            (L"是否突破至 " + breakthroughTarget + L"？").c_str(),
                             L"突破境界", MB_YESNO | MB_ICONQUESTION);
                         if (result == IDYES) {
                             int daoBreakthrough = GetDaoBreakthroughModifier();
@@ -10653,6 +10660,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 ShowNotice(L"突破失败", failMsg);
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
+                        } else {
+                            AppendTraceLog(L"BREAKTHROUGH_CANCELLED",
+                                L"暂缓突破至 " + breakthroughTarget + L"。");
                         }
                     }
                 }
