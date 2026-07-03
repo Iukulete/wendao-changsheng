@@ -9697,23 +9697,12 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
 
     ApplyOutcomeEffects(g_messageText);
     if (!isAIEvent && choice.karmaChange != 0) {
-        int outcomeKarmaDelta = ExtractValue(g_messageText, L"因果+") -
-                                ExtractValue(g_messageText, L"因果-");
         int karmaDelta = g_player.karma - karmaBeforeChoice;
-        wstring settlement = L"\n因果结算：";
-        bool hasPart = false;
-        if (outcomeKarmaDelta != 0) {
-            settlement += L"事件" + FormatSignedInt(outcomeKarmaDelta);
-            hasPart = true;
-        }
-        if (choice.karmaChange != 0) {
-            if (hasPart) settlement += L"，";
-            settlement += L"取向" + FormatSignedInt(choice.karmaChange);
-            hasPart = true;
-        }
-        if (hasPart) {
-            settlement += L"，合计" + FormatSignedInt(karmaDelta);
-            g_messageText += settlement;
+        if (karmaDelta != 0) {
+            wstring ripple = karmaDelta > 0
+                ? L"\n因果回响：此举让本世牵连更厚（" + FormatSignedInt(karmaDelta) + L"）。"
+                : L"\n因果回响：此举让本世牵连转冷（" + FormatSignedInt(karmaDelta) + L"）。";
+            g_messageText += ripple;
         }
     }
     RevealCharactersFromNarrative(*g_currentEvent, choice, g_messageText);
