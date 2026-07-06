@@ -8,9 +8,23 @@ TITLE_PREFIXES = ("【机缘】", "【危机】", "【奇遇】", "【因果】"
 EMOTION_WORDS = (
     "欣慰", "担心", "忧虑", "关切", "嫉妒", "酸涩", "不甘", "轻蔑", "傲慢",
     "护短", "认可", "惊疑", "震惊", "审视", "试探", "恭敬", "欺压", "讥讽",
-    "冷眼", "戒备", "敬畏", "贪念", "回避", "押注", "护短",
+    "冷眼", "戒备", "敬畏", "贪念", "回避", "押注", "护短", "温柔", "失望",
+    "沉默", "畏惧", "感激", "珍重", "轻信", "在意",
 )
 ACTION_BAD_WORDS = ("，", "。", "？", "！", "：", "“", "”", " ")
+PROMPT_LEAK_WORDS = (
+    "写作约束", "请严格", "玩家：", "NPC：", "当前世界", "PROMPT_KIND",
+    "模型", "系统提示", "提示词", "接口", "服务器", "前端", "后端", "GitHub",
+    "API", "Qwen", "qwen", "Unsloth", "LoRA",
+)
+SECRET_LEAK_WORDS = (
+    "鸿蒙至宝", "玄牝轮回玉", "轮回阴阳玉", "阴阳轮回玉", "排名第三",
+    "前世异常", "代理口吻", "伴生玉佩真相", "主角自带",
+)
+LOW_REALM_GRANT = re.compile(
+    r"(凡人|炼气|筑基|金丹|元婴|化神|合道|大乘|真仙|仙君|仙王|仙尊|仙帝).{0,16}"
+    r"(认主|装备|执掌|掌控|获得).{0,16}(古老权柄|至宝|权柄)"
+)
 
 
 class CaseScore:
@@ -24,6 +38,8 @@ class CaseScore:
         emotion_ok,
         no_prompt_leak,
         no_foreign_noise,
+        no_secret_leak,
+        no_low_realm_grant,
         description_len,
         lines,
     ):
@@ -35,6 +51,8 @@ class CaseScore:
         self.emotion_ok = emotion_ok
         self.no_prompt_leak = no_prompt_leak
         self.no_foreign_noise = no_foreign_noise
+        self.no_secret_leak = no_secret_leak
+        self.no_low_realm_grant = no_low_realm_grant
         self.description_len = description_len
         self.lines = lines
 
@@ -48,6 +66,8 @@ class CaseScore:
             self.emotion_ok,
             self.no_prompt_leak,
             self.no_foreign_noise,
+            self.no_secret_leak,
+            self.no_low_realm_grant,
         ])
 
 
@@ -75,10 +95,10 @@ def score_case(kind, lines):
         2 <= len(option) <= 8 and not any(mark in option for mark in ACTION_BAD_WORDS)
         for option in options
     )
-    leak_words = ("写作约束", "请严格", "玩家：", "NPC：", "当前世界", "PROMPT_KIND")
+    joined = "\n".join(lines)
     foreign_noise = re.search(
         r"[\u3040-\u30ff\uac00-\ud7af\u0400-\u04ff]|://|[A-Za-z]{3,}",
-        "\n".join(lines),
+        joined,
     )
     return CaseScore(
         kind=kind,
@@ -87,8 +107,10 @@ def score_case(kind, lines):
         desc_len_ok=45 <= desc_len <= 90,
         option_len_ok=option_len_ok,
         emotion_ok=any(word in description for word in EMOTION_WORDS),
-        no_prompt_leak=not any(word in "\n".join(lines) for word in leak_words),
+        no_prompt_leak=not any(word in joined for word in PROMPT_LEAK_WORDS),
         no_foreign_noise=foreign_noise is None,
+        no_secret_leak=not any(word in joined for word in SECRET_LEAK_WORDS),
+        no_low_realm_grant=LOW_REALM_GRANT.search(joined) is None,
         description_len=desc_len,
         lines=lines,
     )
@@ -120,6 +142,8 @@ def main():
                 "emotion_ok",
                 "no_prompt_leak",
                 "no_foreign_noise",
+                "no_secret_leak",
+                "no_low_realm_grant",
             ]:
                 if not getattr(score, name):
                     flags.append(name)

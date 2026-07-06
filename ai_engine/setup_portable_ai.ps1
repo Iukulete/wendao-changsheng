@@ -19,6 +19,7 @@ $Root = Split-Path -Parent $PSScriptRoot
 $ModelDir = Join-Path $PSScriptRoot "models"
 $RuntimeDir = Join-Path $PSScriptRoot "runtime"
 $LlamaDir = Join-Path $RuntimeDir "llama.cpp"
+$LoraDir = Join-Path $PSScriptRoot "lora"
 if ([string]::IsNullOrWhiteSpace($ModelPath)) {
     $ModelPath = Join-Path $ModelDir "gemma-4-E4B_q4_0-it.gguf"
 } elseif (-not [System.IO.Path]::IsPathRooted($ModelPath)) {
@@ -57,7 +58,7 @@ function Assert-Hash {
     if ($actual -ne $Expected.ToUpperInvariant()) {
         throw "$Label SHA256 mismatch. Expected $Expected, got $actual"
     }
-    Write-Host "$Label OK: $actual"
+    Write-Host "$Label hash OK: $actual"
 }
 
 function Download-File {
@@ -77,7 +78,7 @@ function Download-File {
         Remove-Item -LiteralPath $tempFile -Force
     }
 
-    Write-Host "Downloading $Label..."
+    Write-Host "Downloading: $Label"
     Write-Host $Url
 
     $request = [System.Net.HttpWebRequest]::Create($Url)
@@ -129,32 +130,43 @@ function Download-File {
 
 Write-Host "Wendao portable AI setup"
 Write-Host "Project: $Root"
+Write-Host "Existing files are reused. Use -Force to download again."
+Write-Host ""
 
-if ($Force -or -not (Test-Path -LiteralPath $ModelPath)) {
+$modelExists = Test-Path -LiteralPath $ModelPath
+if ($Force -or -not $modelExists) {
     Download-File -Url $ModelUrl -OutFile $ModelPath -Label "Gemma 4 E4B QAT Q4_0 GGUF model"
 } else {
-    Write-Host "Model exists: $ModelPath"
+    Write-Host "Model exists, skip download: $ModelPath"
 }
-if ($SkipModelHash -or [string]::IsNullOrWhiteSpace($ExpectedModelSha256)) {
+
+$skipModelHashCheck = [bool]$SkipModelHash
+if (-not $skipModelHashCheck) {
+    $skipModelHashCheck = [string]::IsNullOrWhiteSpace($ExpectedModelSha256)
+}
+if ($skipModelHashCheck) {
     Write-Host "Model hash check skipped. Use this only for trusted local model files."
-} else {
+}
+if (-not $skipModelHashCheck) {
     Assert-Hash -Path $ModelPath -Expected $ExpectedModelSha256 -Label "Model"
 }
 
 $runtimeReady = (Test-Path -LiteralPath $LlamaCli)
 $runtimeDownloaded = $false
 if (-not $Force -and $runtimeReady) {
-    Write-Host "llama.cpp runtime exists: $LlamaCli"
+    Write-Host "llama.cpp runtime exists, skip download: $LlamaCli"
 } else {
     if ($Force -or -not (Test-Path -LiteralPath $RuntimeZip)) {
         Download-File -Url $RuntimeUrl -OutFile $RuntimeZip -Label "llama.cpp Windows CPU runtime"
         $runtimeDownloaded = $true
     } else {
-        Write-Host "Runtime zip exists: $RuntimeZip"
+        Write-Host "Runtime zip exists, skip download: $RuntimeZip"
     }
-    if ([string]::IsNullOrWhiteSpace($ExpectedRuntimeZipSha256)) {
+    $skipRuntimeHashCheck = [string]::IsNullOrWhiteSpace($ExpectedRuntimeZipSha256)
+    if ($skipRuntimeHashCheck) {
         Write-Host "Runtime zip hash check skipped."
-    } else {
+    }
+    if (-not $skipRuntimeHashCheck) {
         Assert-Hash -Path $RuntimeZip -Expected $ExpectedRuntimeZipSha256 -Label "Runtime zip"
     }
 }
@@ -177,6 +189,19 @@ if (-not (Test-Path -LiteralPath $LlamaCli)) {
 }
 
 Write-Host ""
-Write-Host "Portable AI is ready."
+Write-Host "Portable AI base is ready."
 Write-Host "Model: $ModelPath"
 Write-Host "Runtime: $LlamaCli"
+
+$loraFiles = @()
+if (Test-Path -LiteralPath $LoraDir) {
+    $loraFiles = @(Get-ChildItem -LiteralPath $LoraDir -Filter "*.gguf" -File -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTimeUtc -Descending)
+}
+if ($loraFiles.Count -gt 0) {
+    Write-Host "Current LoRA: $($loraFiles[0].FullName)"
+}
+if ($loraFiles.Count -eq 0) {
+    Write-Host "No LoRA adapter found. The base model will be used first."
+    Write-Host "Put ai_engine\lora\*.gguf here later; the newest adapter is selected automatically."
+}

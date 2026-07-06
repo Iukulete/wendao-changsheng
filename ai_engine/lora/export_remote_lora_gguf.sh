@@ -42,7 +42,8 @@ fi
 
 "$CONTAINER_VENV/bin/python" /workspace/scripts/normalize_peft_adapter_for_llamacpp.py \
   --adapter-dir "$CONTAINER_ADAPTER_DIR" \
-  --out-dir "$CONTAINER_EXPORT_DIR"
+  --out-dir "$CONTAINER_EXPORT_DIR" \
+  --drop-gemma4-shared-kv
 
 "$CONTAINER_VENV/bin/python" /llama.cpp/convert_lora_to_gguf.py \
   "$CONTAINER_EXPORT_DIR" \

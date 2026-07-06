@@ -3,9 +3,9 @@ set -euo pipefail
 
 WORK_DIR="${WORK_DIR:-$HOME/wendao_lora}"
 MODEL_ID="${MODEL_ID:-google/gemma-4-E4B-it-qat-q4_0-unquantized}"
-CONTAINER_ADAPTER_DIR="${CONTAINER_ADAPTER_DIR-/workspace/out/wendao_gemma4_lora}"
-CONTAINER_OUT_FILE="${CONTAINER_OUT_FILE:-/workspace/out/wendao_gemma4_lora/peft_quality_eval.txt}"
-CONTAINER_VENV="${CONTAINER_VENV:-/workspace/.eval_venv}"
+CONTAINER_ADAPTER_DIR="${CONTAINER_ADAPTER_DIR:-/workspace/out/wendao_gemma4_lora_text_v7_codex_unsloth}"
+CONTAINER_OUT_FILE="${CONTAINER_OUT_FILE:-/workspace/out/wendao_gemma4_lora_text_v7_codex_unsloth/peft_quality_eval.txt}"
+CONTAINER_VENV="${CONTAINER_VENV:-/workspace/.unsloth_venv}"
 HOST_UID="$(id -u)"
 HOST_GID="$(id -g)"
 
@@ -54,9 +54,11 @@ if [ ! -x "$CONTAINER_VENV/bin/python" ]; then
   python3 -m venv "$CONTAINER_VENV"
 fi
 
-"$CONTAINER_VENV/bin/python" -m pip install --upgrade pip
-"$CONTAINER_VENV/bin/python" -m pip install --index-url https://download.pytorch.org/whl/cu124 torch
-"$CONTAINER_VENV/bin/python" -m pip install 'transformers>=4.56.0' accelerate peft bitsandbytes safetensors sentencepiece protobuf hf_transfer 'huggingface_hub[hf_xet]'
+if ! "$CONTAINER_VENV/bin/python" -c "import torch, transformers, peft, bitsandbytes, unsloth" >/dev/null 2>&1; then
+  "$CONTAINER_VENV/bin/python" -m pip install --upgrade pip
+  "$CONTAINER_VENV/bin/python" -m pip install --index-url https://download.pytorch.org/whl/cu124 torch
+  "$CONTAINER_VENV/bin/python" -m pip install -U unsloth trl datasets accelerate peft bitsandbytes safetensors sentencepiece protobuf hf_transfer 'huggingface_hub[hf_xet]'
+fi
 
 export LD_LIBRARY_PATH=/host-libs:/usr/local/cuda/lib64:${LD_LIBRARY_PATH:-}
 
@@ -69,6 +71,8 @@ fi
   --model-id "$MODEL_ID" \
   "${adapter_args[@]}" \
   --out-file "$CONTAINER_OUT_FILE" \
+  --loader unsloth \
+  --max-seq-length 2048 \
   --load-in-4bit
 
 chown -R "$HOST_UID:$HOST_GID" /workspace/out /workspace/logs || true

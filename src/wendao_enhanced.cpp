@@ -42,6 +42,10 @@ int Random(int min, int max) {
     return dis(g_gen);
 }
 
+bool IsClassicalEraName(const wstring& era) {
+    return era == L"古典修仙纪" || era == L"灵气初盛纪";
+}
+
 wstring GetCurrentWorldEraName();
 int GetEraMeditationModifierPercent();
 int GetEraBreakthroughModifier();
@@ -436,7 +440,7 @@ public:
 
     int GetRootEraMeditationModifierPercent() const {
         wstring era = GetCurrentWorldEraName();
-        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool abundant = (IsClassicalEraName(era) || era == L"仙朝鼎盛纪");
         bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
         bool engineered = (era == L"灵机蒸汽纪" || era == L"星穹道网纪");
         bool early = realm <= GOLDEN_CORE;
@@ -470,7 +474,7 @@ public:
 
     int GetRootEraBreakthroughModifier() const {
         wstring era = GetCurrentWorldEraName();
-        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool abundant = (IsClassicalEraName(era) || era == L"仙朝鼎盛纪");
         bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
         bool early = realm <= FOUNDATION;
         int modifier = 0;
@@ -491,7 +495,7 @@ public:
 
     wstring GetRootEraTraitText() const {
         wstring era = GetCurrentWorldEraName();
-        bool abundant = (era == L"灵气初盛纪" || era == L"仙朝鼎盛纪");
+        bool abundant = (IsClassicalEraName(era) || era == L"仙朝鼎盛纪");
         bool scarce = (era == L"末法裂变纪" || era == L"废土返道纪");
         if (IsSingleDominantRoot()) {
             return scarce
@@ -520,9 +524,14 @@ public:
                 ? L"双行有根，比多灵根省资源；只是根气尚浅，仍要靠机缘把路续长。"
                 : L"双行有根，盛世入门不算慢；只是根气尚浅，后续要靠师承与机缘补厚。";
         }
-        return IsWeakRoot()
-            ? L"根骨驳杂，单靠枯坐很慢，需要丹药、机缘和谨慎取舍追回差距。"
-            : L"此类灵根不算惊世，也不至绝路，关键在资源与选择。";
+        if (IsWeakRoot()) {
+            return abundant
+                ? L"这副灵根称不上惊世，但盛世灵气尚厚；若能借师承、丹药与历练补短，前路并未断绝。"
+                : (scarce
+                    ? L"这副灵根在末法里格外吃资源，硬熬枯坐很难出头，必须靠取舍与机缘续路。"
+                    : L"根骨驳杂，单靠枯坐很慢，需要丹药、机缘和谨慎取舍追回差距。");
+        }
+        return L"此类灵根不算惊世，也不至绝路，关键在资源与选择。";
     }
 
     wstring GetRootDetails() const {
@@ -917,7 +926,7 @@ public:
         }, THEME_CULTIVATION);
         AddEvent({
             L"【危机】猛虎妖袭击", L"山涧传来低吼，一头猛虎妖从雾里现身，背上旧伤未愈，凶性却被疼痛逼得更烈。",
-            {{L"抢占高处", {L"你引它扑上湿滑岩面，趁其失足一击破喉\n修为+50", L"虎妖强行跃上断岩，尾扫如鞭，将你砸进溪石\n气血-50"}, 0}}
+            {{L"抢占高处", {L"你引它扑上湿滑岩面，趁其失足一击破喉。\n修为+50", L"虎妖强行跃上断岩，尾扫如鞭，将你砸进溪石。\n气血-50"}, 0}}
         }, THEME_CULTIVATION);
         AddEvent({
             L"【危机】毒蛇妖袭击", L"草叶无风自伏，一条毒蛇妖盘在药圃边缘，蛇瞳里映着你的灵力流向。",
@@ -1097,8 +1106,8 @@ public:
             L"【机遇】秘境开启",
             L"附近秘境裂开一道青色门户，诸宗弟子、散修和暗线商会同时赶来，入口前已经有人开始结盟。",
             {
-                {L"抢先进门", {L"你趁各方还在试探时先进秘境，抢到一处未被标记的灵潭\n修为+80，灵石+25", L"秘境入口暗藏排斥阵，你刚进去便遭强敌堵截\n气血-45"}, 0},
-                {L"等乱局散去", {L"你避开第一轮争夺，从残局里捡到几件无人顾及的资源\n灵石+30", L"你等得太久，秘境门户已经重新闭合"}, 5},
+                {L"抢先进门", {L"你趁各方还在试探时先进秘境，抢到一处未被标记的灵潭。\n修为+80，灵石+25", L"秘境入口暗藏排斥阵，你刚进去便遭强敌堵截。\n气血-45"}, 0},
+                {L"等乱局散去", {L"你避开第一轮争夺，从残局里捡到几件无人顾及的资源。\n灵石+30", L"你等得太久，秘境门户已经重新闭合；临走前只记下入口方位，知道下一次不能再把谨慎拖成犹豫。"}, 5},
                 {L"暂不入局", {L"你没有被人潮裹挟，转身记下各宗来人的名号", L"机缘从你眼前合上，只剩入口余光渐冷"}, 0}
             }
         }, THEME_CULTIVATION);
@@ -1135,8 +1144,8 @@ public:
             L"你行功至紧要处，头顶劫云竟提前凝成。它未必是真正大劫，却足以试出你根基里最虚的一处。",
             {
                 {L"正面硬抗", {L"你硬接三道雷光，皮肉焦黑，道心却被劈得更亮\n修为+150", L"天雷直贯经脉，你被劈落在焦土里\n气血-60"}, 10},
-                {L"借助法宝", {L"你借镇狱小塔护住灵台，雷光散后瓶颈也随之松动\n修为+100", L"法宝承雷过重，当场裂出细纹，余雷仍伤了你\n气血-30"}, 5},
-                {L"避开劫云", {L"你暂时避过雷云，没有把未稳根基交给天威审判", L"劫云散前记住了你的气息，这笔账迟早会回来\n因果-30"}, -20}
+                {L"借助法宝", {L"你借师门护身符撑起小塔虚影护住灵台，雷光散后瓶颈也随之松动\n修为+100", L"护身符承雷过重，当场裂出细纹，余雷仍伤了你\n气血-30"}, 5},
+                {L"避开劫云", {L"你暂时避过雷云，没有把未稳根基交给天威审判。", L"劫云散前记住了你的气息，这笔账迟早会回来\n因果-30"}, -20}
             }
         }, THEME_CULTIVATION);
 
@@ -1339,7 +1348,7 @@ vector<LegacyItem> g_plannedLegacies;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
-wstring g_worldEraName = L"灵气初盛纪";
+wstring g_worldEraName = L"古典修仙纪";
 wstring g_worldEraDescription = L"诸宗并立，洞府初开，天下仍以修仙宗门为正统。";
 wstring g_worldEraRule = L"灵气丰沛，修士主宰秩序，凡俗仍仰望山门。";
 wstring g_reincarnationEcho = L"前世的残响尚浅，还不足以彻底改变这一世。";
@@ -1372,13 +1381,13 @@ bool IsFrostCrowEra() {
 }
 
 bool IsLuoNingshuangEra() {
-    return g_worldEraName == L"灵气初盛纪" ||
+    return IsClassicalEraName(g_worldEraName) ||
            g_worldEraName == L"仙朝鼎盛纪" ||
            g_player.realm >= TRUE_IMMORTAL;
 }
 
 bool IsFirstLifeClassicalEra() {
-    return g_generation <= 1 && g_worldEraName == L"灵气初盛纪";
+    return g_generation <= 1 && IsClassicalEraName(g_worldEraName);
 }
 
 enum GameState {
@@ -2300,7 +2309,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
     StoryStatePatch patch;
     wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
     wstring compactOutcome = NormalizeStoryNote(outcome, 96);
-    patch.synopsis = event.title + L"：" + choice.description + L"后，" + compactOutcome;
+    patch.synopsis = event.title + L"之后，" + compactOutcome;
     patch.nextHook = g_lifeStoryHooks.empty()
         ? event.title + L"尚未完全结束，后续可从此事余波继续。"
         : g_lifeStoryHooks.back();
@@ -2322,8 +2331,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
     int relationDelta = positive ? 4 : (negative ? -4 : 0);
 
     if (containsAnyLocal({L"本世主线", L"主线", L"线索", L"旧债", L"未竟", L"旧世残响"})) {
-        patch.openThreadsToAdd.push_back(L"本世线索余波：" + event.title + L"仍与「" +
-            choice.description + L"」有关。");
+        patch.openThreadsToAdd.push_back(L"本世线索余波：这件事尚未完结，后续仍会从人情与旧债里生出枝节。");
     }
     if (containsAnyLocal({L"玉佩", L"黑白旧玉", L"玉意", L"阴阳玉痕", L"轮回回响"})) {
         patch.openThreadsToAdd.push_back(HasPriorLifeEcho()
@@ -2344,8 +2352,8 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
         g_factionTie.name, L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
     })) {
         patch.factionPressureDelta = relationDelta == 0 ? (positive ? 2 : (negative ? -2 : 1)) : relationDelta;
-        patch.factionPressureNote = g_factionTie.name + L"因「" + choice.description +
-            L"」重新估量你，后续会影响审查、资源或旧债。";
+        patch.factionPressureNote = g_factionTie.name +
+            L"重新估量你，后续会影响审查、资源或旧债。";
     }
 
     int changed = 0;
@@ -2365,8 +2373,8 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
         if (delta.delta != 0) {
             patch.relationshipDeltas.push_back(delta);
         }
-        patch.npcMoodNotes.push_back(thread.name + L"因「" + choice.description +
-            L"」后的风声继续" + (positive ? L"靠近或押注" : (negative ? L"戒备或设局" : L"观望")) + L"。");
+        patch.npcMoodNotes.push_back(thread.name + L"听过后续风声，继续" +
+            (positive ? L"靠近或押注" : (negative ? L"戒备或设局" : L"观望")) + L"。");
         if (++changed >= 2) break;
     }
 
@@ -2655,7 +2663,7 @@ void GenerateEraRemnants(const wstring& previousEra) {
         AddEraRemnant(L"转折因由：" + g_eraShiftCause);
     }
 
-    if (previousEra == L"灵气初盛纪") {
+    if (IsClassicalEraName(previousEra)) {
         AddEraRemnant(L"古修石简：早期宗门刻下的修行注解仍埋在山腹里，后世修士常把它误认成普通碑文。");
     } else if (previousEra == L"仙朝鼎盛纪") {
         AddEraRemnant(L"旧朝金册：仙朝册封残卷仍能牵动气运，世家和宗门都想知道你的姓名是否曾被写入其中。");
@@ -2793,7 +2801,7 @@ wstring BuildEraShiftCauseText(const wstring& previousEra, const wstring& nextEr
 
     if (nextEra == previousEra) {
         ss << L"大时代没有彻底改道，但旧宗门、旧名册和旧债契已经被新人重新分配。";
-    } else if (nextEra == L"灵气初盛纪") {
+    } else if (IsClassicalEraName(nextEra)) {
         ss << L"旧秩序在轮回后被洗薄，幸存者重新把古法、山门和洞府当作文明根基。";
     } else if (nextEra == L"仙朝鼎盛纪") {
         ss << L"前世声名、战乱和未结清的人情债促使宗门拥立更强的名册与册封制度。";
@@ -2817,7 +2825,7 @@ void GenerateWorldEra() {
     };
 
     static const vector<EraProfile> eras = {
-        {L"灵气初盛纪", L"诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。", L"山门法统压过王朝法度，凡俗与修士之间仍隔着天堑。"},
+        {L"古典修仙纪", L"诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。", L"山门法统压过王朝法度，凡俗与修士之间仍隔着天堑。"},
         {L"仙朝鼎盛纪", L"仙门与皇朝合流，气运、血脉与册封制度开始左右修行上限。", L"想要更进一步，不仅要修为，也要站队、门第与气运。"},
         {L"末法裂变纪", L"灵气日渐稀薄，秘境争夺加剧，许多人开始研究阵械与替代性的修行体系。", L"单靠苦修越来越难，资源、机巧和掠夺变得同样重要。"},
         {L"灵机蒸汽纪", L"修真文明和机关术深度融合，灵石驱动的工坊、飞舟与阵列城邦开始扩张。", L"宗门仍在，但炼器、机巧、量产灵具正在改变旧秩序。"},
@@ -2879,7 +2887,7 @@ void GenerateWorldEra() {
             }
         }
 
-        if (previousEra == L"灵气初盛纪") {
+        if (IsClassicalEraName(previousEra)) {
             addPressure(1);
             addPressure(3);
         } else if (previousEra == L"仙朝鼎盛纪") {
@@ -2911,7 +2919,7 @@ void GenerateWorldEra() {
     g_eraShiftCause = BuildEraShiftCauseText(previousEra, g_worldEraName);
 
     if (g_generation <= 1) {
-        g_eraTransitionNote = L"这一世正值灵气初盛，山门、秘境与旧契仍是修士最先触到的天地秩序；更远的时代变化尚无人能看清。";
+        g_eraTransitionNote = L"这一世正值古典修仙纪，山门、秘境与旧契仍是修士最先触到的天地秩序；更远的时代变化尚无人能看清。";
     } else if (previousEra == g_worldEraName) {
         g_eraTransitionNote = L"轮回之后，时代大势仍延续为" + g_worldEraName + L"，但人事、宗门与机缘已经重新洗牌。";
     } else {
@@ -3000,7 +3008,7 @@ wstring GetCurrentWorldEraName() {
 }
 
 int GetEraMeditationModifierPercent() {
-    if (g_worldEraName == L"灵气初盛纪") return 120;
+    if (IsClassicalEraName(g_worldEraName)) return 120;
     if (g_worldEraName == L"仙朝鼎盛纪") return 105;
     if (g_worldEraName == L"末法裂变纪") return 82;
     if (g_worldEraName == L"灵机蒸汽纪") return 95;
@@ -3010,7 +3018,7 @@ int GetEraMeditationModifierPercent() {
 }
 
 int GetEraBreakthroughModifier() {
-    if (g_worldEraName == L"灵气初盛纪") return 8;
+    if (IsClassicalEraName(g_worldEraName)) return 8;
     if (g_worldEraName == L"仙朝鼎盛纪") return 3;
     if (g_worldEraName == L"末法裂变纪") return -12;
     if (g_worldEraName == L"灵机蒸汽纪") return 0;
@@ -3020,7 +3028,7 @@ int GetEraBreakthroughModifier() {
 }
 
 int GetEraAdventureRiskModifier() {
-    if (g_worldEraName == L"灵气初盛纪") return -6;
+    if (IsClassicalEraName(g_worldEraName)) return -6;
     if (g_worldEraName == L"仙朝鼎盛纪") return 2;
     if (g_worldEraName == L"末法裂变纪") return 12;
     if (g_worldEraName == L"灵机蒸汽纪") return -2;
@@ -3520,7 +3528,7 @@ void GenerateHongmengOmen() {
         for (int i = 0; i < max(1, weight); ++i) candidates.push_back(index);
     };
 
-    if (g_worldEraName == L"灵气初盛纪") {
+    if (IsClassicalEraName(g_worldEraName)) {
         addCandidate(0, 2); // 鸿蒙道印
         addCandidate(1, 2); // 造化青莲
         addCandidate(6, 1); // 开界神斧
@@ -3987,7 +3995,7 @@ bool ShouldTriggerLegacyEchoEvent() {
 }
 
 wstring BuildUnfinishedKarmaEraPressureText() {
-    if (g_worldEraName == L"灵气初盛纪") {
+    if (IsClassicalEraName(g_worldEraName)) {
         return L"如今山门初立，旧债常被伪装成古修遗训。";
     }
     if (g_worldEraName == L"仙朝鼎盛纪") {
@@ -4644,7 +4652,10 @@ void AddSocialThread(const wstring& name, const wstring& role, const wstring& at
 
 bool IsAnchorCharacterName(const wstring& name) {
     return name == L"清蘅真人" || name == L"玄衡子" ||
-           name == L"洛凝霜" || name == L"霜鸦";
+           name == L"洛凝霜" || name == L"霜鸦" ||
+           name == L"江照雪" || name == L"祁无咎" ||
+           name == L"沈听澜" || name == L"陆青鸢" ||
+           name == L"阿岑兄妹";
 }
 
 bool HasExplicitCharacterReveal(const wstring& name) {
@@ -4673,6 +4684,31 @@ bool HasExplicitCharacterReveal(const wstring& name) {
         if (name == L"霜鸦" &&
             (text.find(L"霜鸦") != wstring::npos &&
              (text.find(L"清算") != wstring::npos || text.find(L"契约猎手") != wstring::npos))) {
+            return true;
+        }
+        if (name == L"江照雪" &&
+            (text.find(L"照雪") != wstring::npos || text.find(L"江氏") != wstring::npos ||
+             text.find(L"约战") != wstring::npos || text.find(L"战帖") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"祁无咎" &&
+            (text.find(L"无咎") != wstring::npos || text.find(L"空帖") != wstring::npos ||
+             text.find(L"显境") != wstring::npos || text.find(L"藏拙") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"沈听澜" &&
+            (text.find(L"听澜") != wstring::npos || text.find(L"阵钥") != wstring::npos ||
+             text.find(L"灵机列车") != wstring::npos || text.find(L"道网密讯") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"陆青鸢" &&
+            (text.find(L"陆青鸢") != wstring::npos || text.find(L"青鸢") != wstring::npos ||
+             text.find(L"医道仙官") != wstring::npos)) {
+            return true;
+        }
+        if (name == L"阿岑兄妹" &&
+            (text.find(L"阿岑") != wstring::npos || text.find(L"枯井兄妹") != wstring::npos ||
+             text.find(L"枯井镇") != wstring::npos || text.find(L"干粮") != wstring::npos)) {
             return true;
         }
         return false;
@@ -4736,6 +4772,41 @@ void AddFrostCrowThread() {
     }
 }
 
+void AddJiangZhaoxueThread() {
+    bool prior = HasPriorLifeEcho();
+    bool gifted = g_player.IsExceptionalRoot();
+    AddSocialThread(L"江照雪", L"同代竞争者", gifted ? L"不服追赶" : L"冷硬较劲",
+        prior
+            ? L"江氏剑路与你旧梦里某段争胜气很像。她愿暂时合作，却不肯把旧争写成亲近。"
+            : L"她表面礼数周全，心里却不服你被长辈高看；若你真有本事，她会递战帖而不是暗箭。",
+        gifted ? -22 : -12, L"筑基期", false, L"争胜心重，未必是敌人");
+}
+
+void AddQiWujiuThread() {
+    AddSocialThread(L"祁无咎", L"藏拙活跃修士", L"含笑试探",
+        L"他在人前只露一截修为，递帖时却把灵压收放得极稳；这份人情像帮忙，也像在称量你值不值得知道真底细。",
+        8, L"金丹期", true, L"外显修为只是他愿意给你看的层次");
+}
+
+void AddShenTinglanThread() {
+    AddSocialThread(L"沈听澜", g_worldEraName == L"星穹道网纪" ? L"道网阵师" : L"灵机阵师",
+        L"明亮警惕",
+        L"她更在意失控阵纹背后的真相，不会因为你出手一次就全盘信任；合作可以推进，底牌仍要互相交换。",
+        14, L"元婴期", false, L"只在星穹道网纪与灵机蒸汽纪明显入局");
+}
+
+void AddLuQingyuanThread() {
+    AddSocialThread(L"陆青鸢", L"医道仙官", L"温和审慎",
+        L"她记住的不是你的名声，而是你是否先护住伤者与灵脉；她能救人，也会追问救人的代价。",
+        18, L"真仙境", false, L"医道温和，不等于没有自己的底线");
+}
+
+void AddAcanSiblingsThread() {
+    AddSocialThread(L"阿岑兄妹", L"枯井小人物", L"求生记恩",
+        L"阿岑把半袋干粮推给你，求你带妹妹离开枯井镇；这条线不惊天动地，却可能在后世长成一个愿意开门的小宗。",
+        10, L"", false, L"小人物因果，可能跨世变成善名或旧债");
+}
+
 void RevealCharacterThread(const wstring& name, const wstring& reason) {
     const SocialThread* existing = FindSocialThreadByName(name);
     if (!existing) {
@@ -4743,14 +4814,19 @@ void RevealCharacterThread(const wstring& name, const wstring& reason) {
         else if (name == L"玄衡子") AddXuanhengThread();
         else if (name == L"洛凝霜") AddLuoNingshuangThread();
         else if (name == L"霜鸦") AddFrostCrowThread();
+        else if (name == L"江照雪") AddJiangZhaoxueThread();
+        else if (name == L"祁无咎") AddQiWujiuThread();
+        else if (name == L"沈听澜") AddShenTinglanThread();
+        else if (name == L"陆青鸢") AddLuQingyuanThread();
+        else if (name == L"阿岑兄妹") AddAcanSiblingsThread();
         else return;
     }
 
     if (FindSocialThreadByName(name)) {
         if (!HasExplicitCharacterReveal(name)) {
-            AddMemory(L"人物入局", name + L"因「" + CompactMemoryFragment(reason) + L"」正式进入你的本世因果。");
+            AddMemory(L"人物入局", name + L"正式进入你的本世因果。");
         }
-        AddSocialRumor(name + L"因「" + CompactMemoryFragment(reason) + L"」正式进入你的本世因果。", true);
+        AddSocialRumor(name + L"正式进入你的本世因果。", true);
         g_storyState.relationships[name + L"（" + GetCharacterRoleCaption(name) + L"）"] =
             FindSocialThreadByName(name)->relation;
     }
@@ -4774,6 +4850,22 @@ void RevealCharactersFromNarrative(const Event& event, const Choice& choice, con
     if (text.find(L"霜鸦") != wstring::npos) {
         RevealCharacterThread(L"霜鸦", event.title);
     }
+    if (text.find(L"江照雪") != wstring::npos || text.find(L"江氏") != wstring::npos) {
+        RevealCharacterThread(L"江照雪", event.title);
+    }
+    if (text.find(L"祁无咎") != wstring::npos || text.find(L"无咎") != wstring::npos) {
+        RevealCharacterThread(L"祁无咎", event.title);
+    }
+    if (text.find(L"沈听澜") != wstring::npos || text.find(L"听澜") != wstring::npos) {
+        RevealCharacterThread(L"沈听澜", event.title);
+    }
+    if (text.find(L"陆青鸢") != wstring::npos || text.find(L"青鸢") != wstring::npos) {
+        RevealCharacterThread(L"陆青鸢", event.title);
+    }
+    if (text.find(L"阿岑") != wstring::npos || text.find(L"枯井兄妹") != wstring::npos ||
+        text.find(L"枯井镇") != wstring::npos) {
+        RevealCharacterThread(L"阿岑兄妹", event.title);
+    }
 }
 
 wstring BuildSocialEmotionTag(const SocialThread& thread) {
@@ -4796,6 +4888,11 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
     if (has(L"仙朝耳目") || has(L"势力牵连")) return L"礼貌审查";
     if (has(L"道网联系人")) return L"隔空围观";
     if (has(L"残宗向导")) return L"现实互利";
+    if (has(L"江照雪") || has(L"同代竞争者")) return L"不服追赶";
+    if (has(L"祁无咎") || has(L"藏拙活跃修士")) return L"含笑藏锋";
+    if (has(L"沈听澜") || has(L"道网阵师") || has(L"灵机阵师")) return L"明亮警惕";
+    if (has(L"陆青鸢") || has(L"医道仙官")) return L"温和问价";
+    if (has(L"阿岑") || has(L"枯井小人物")) return L"求生记恩";
     if (has(L"玄衡子") || has(L"掌律真人")) return L"规矩杀机";
     if (has(L"桃华剑脉") || has(L"洛凝霜")) return L"含笑试剑";
     if (has(L"师尊") || has(L"清蘅真人")) return L"严中护道";
@@ -4818,7 +4915,9 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     if (has(L"身世")) {
         return HasPriorLifeEcho()
             ? L"「有些旧事不是不能说，是你现在一问，就会有人知道你醒得太早。」"
-            : L"「你若真想知道父母是谁，就先活到能承受答案的时候。」";
+            : (thread.role == L"势力牵连"
+                ? L"「你若真想知道旧玉和家门旧事，就先活到能承受答案的时候。」"
+                : L"「你若真想知道父母是谁，就先活到能承受答案的时候。」");
     }
     if (has(L"父亲")) {
         if (gifted) return L"「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」";
@@ -4869,6 +4968,21 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     if (has(L"道网联系人")) {
         return L"「你这一步会被远方节点看见，别装成没人围观。」";
     }
+    if (has(L"江照雪") || has(L"同代竞争者")) {
+        return L"「我不服你，但也不会只在背后说酸话。下一场试炼，你我正面分个高低。」";
+    }
+    if (has(L"祁无咎") || has(L"藏拙活跃修士")) {
+        return L"「外显修为这种东西，本来就是给旁人看的。你若真想问，就先证明你看得住秘密。」";
+    }
+    if (has(L"沈听澜") || has(L"道网阵师") || has(L"灵机阵师")) {
+        return L"「我可以给你一半真相，也允许你留一半底牌。合作要紧，但别把信任说得太廉价。」";
+    }
+    if (has(L"陆青鸢") || has(L"医道仙官")) {
+        return L"「救人不是把命从天上抢回来就算完。你要想清楚，后面的代价谁来背。」";
+    }
+    if (has(L"阿岑") || has(L"枯井小人物")) {
+        return L"「仙长若不方便带我们走，就留张路引也成。我只求妹妹别死在这口枯井旁。」";
+    }
     if (has(L"玄衡子") || has(L"掌律真人")) {
         return L"「门规不杀人，违逆门规的人才会自己走到死处。」";
     }
@@ -4879,8 +4993,17 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     }
     if (has(L"师尊") || has(L"清蘅真人")) {
         return gifted
-            ? L"「天资是借来的风，心性才是你自己的剑鞘。别急，我会亲手磨你。」"
-            : L"「修行不是给旁人看的。你若还能站起来，我就继续教。」";
+            ? PickOne({
+                L"「天资是借来的风，心性才是你自己的剑鞘。别急，我会亲手磨你。」",
+                L"「走得快不是坏事，坏的是以为快就不用看路。」",
+                L"「这一步能站住，但别急着等人夸。下一步还要更稳。」"
+            })
+            : PickOne({
+                L"「修行不是给旁人看的。你若还能站起来，我就继续教。」",
+                L"「筑基、炼气，都只是门槛。你先学会别被门槛绊死。」",
+                L"「我不会替你把路走完，但你真肯走，我便不会让旁人轻易折了你。」",
+                L"「输了不丢人，输完还知道把剑捡起来，才算有点样子。」"
+            });
     }
     if (thread.relation >= 18) {
         return L"「我愿意先信你一次，但你最好让我觉得这份押注值得。」";
@@ -5089,6 +5212,11 @@ wstring GetCharacterRoleCaption(const wstring& name) {
     if (name == L"玄衡子") return L"太上玄衡观掌律真人";
     if (name == L"洛凝霜") return L"桃华剑脉剑修";
     if (name == L"霜鸦") return g_worldEraName == L"星穹道网纪" ? L"道网清算人" : L"灵机契约猎手";
+    if (name == L"江照雪") return L"同代竞争者";
+    if (name == L"祁无咎") return L"藏拙活跃修士";
+    if (name == L"沈听澜") return g_worldEraName == L"星穹道网纪" ? L"道网阵师" : L"灵机阵师";
+    if (name == L"陆青鸢") return L"医道仙官";
+    if (name == L"阿岑兄妹") return L"枯井小人物";
     return L"本世人脉";
 }
 
@@ -5112,7 +5240,8 @@ vector<wstring> BuildVisibleCharacterNames() {
         if (!ShouldExposeSocialThreadToPlayer(thread)) continue;
         AddVisibleCharacterName(names, thread.name);
     }
-    for (const auto& keyName : {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"}) {
+    for (const auto& keyName : {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦",
+                                L"江照雪", L"祁无咎", L"沈听澜", L"陆青鸢", L"阿岑兄妹"}) {
         if (HasCharacterTrace(keyName)) {
             AddVisibleCharacterName(names, keyName);
         }
@@ -5169,6 +5298,11 @@ wstring BuildCharacterFallback(const wstring& name) {
     if (name == L"玄衡子") return L"古典修仙纪的掌律反派。他会借门规审查你身边正在成形的因果。";
     if (name == L"洛凝霜") return L"桃华剑脉剑修。她看人不只看天资，也看你在剑前如何取舍。";
     if (name == L"霜鸦") return L"只在星穹道网纪与灵机蒸汽纪明显入局。她更像清算人或契约猎手，会追查记录里的空白。";
+    if (name == L"江照雪") return L"同代竞争者。她可以嫉妒、较劲，也可能在真正危局里成为可靠对手。";
+    if (name == L"祁无咎") return L"外显修为未必可信的活跃修士。他的人情常像善意，也像试探。";
+    if (name == L"沈听澜") return L"只在星穹道网纪与灵机蒸汽纪明显入局。她重真相与协作，不会廉价信任。";
+    if (name == L"陆青鸢") return L"医道仙官。她温和，但救人与修复灵脉都要问清代价。";
+    if (name == L"阿岑兄妹") return L"枯井镇的小人物因果。一袋干粮、一张路引，也可能在后世长成宗门善缘。";
     return L"此人已经进入你的本世因果，态度会随你当下的选择变化。";
 }
 
@@ -5260,68 +5394,80 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
     bool worsened = delta < 0;
     bool gifted = g_player.IsExceptionalRoot();
     bool weak = g_player.IsWeakRoot();
-    wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
 
     if (thread.role == L"父亲" || thread.role == L"母亲" || thread.role == L"养育者") {
         if (improved) {
-            return thread.name + L"听闻你在「" + trigger +
-                L"」中的取舍后，终于把担忧压成一句认可；这份长辈期许会继续护着你。";
+            return thread.name + L"终于把担忧压成一句认可；这份长辈期许会继续护着你。";
         }
         if (worsened) {
-            return thread.name + L"因「" + trigger +
-                L"」对你更不放心，嘴上不责怪，暗里却开始替你收拾可能爆开的因果。";
+            return thread.name + L"对你更不放心，嘴上不责怪，暗里却开始替你收拾可能爆开的因果。";
         }
     }
 
     if (thread.role == L"欺压者" || thread.role == L"竞争者" || thread.role == L"资源把关者") {
         if (improved) {
-            return thread.name + L"看见你在「" + trigger +
-                L"」里没有露怯，态度虽仍带刺，却开始承认你不是能随便欺负的人。";
+            return thread.name + L"看见你没有露怯，态度虽仍带刺，却开始承认你不是能随便欺负的人。";
         }
         if (worsened) {
-            return thread.name + L"把「" + trigger +
-                L"」当成新把柄，嫉妒与轻慢一起发酵，下一次很可能主动设局。";
+            return thread.name + L"抓住这次破绽当成新把柄，嫉妒与轻慢一起发酵，下一次很可能主动设局。";
         }
     }
 
     if (thread.role == L"同代修士" || thread.role == L"同路人" || thread.role == L"接引修士") {
         if (improved) {
-            return thread.name + L"因「" + trigger +
-                L"」更愿意与你同行；若你资质继续显眼，亲近里也会混着押注。";
+            return thread.name + L"更愿意与你同行；若你资质继续显眼，亲近里也会混着押注。";
         }
         if (worsened) {
-            return thread.name + L"因「" + trigger +
-                L"」重新衡量你，表面客气，背后已经把你当成需要防备的对手。";
+            return thread.name + L"重新衡量你，表面客气，背后已经把你当成需要防备的对手。";
         }
     }
 
     if (thread.role == L"势力牵连" || thread.role.find(L"联系人") != wstring::npos ||
         thread.role.find(L"耳目") != wstring::npos) {
         if (improved) {
-            return thread.name + L"把「" + trigger +
-                L"」写成一条正面评语，所在势力对你的押注开始加重。";
+            return thread.name + L"把这次结果写成一条正面评语，所在势力对你的押注开始加重。";
         }
         if (worsened) {
-            return thread.name + L"把「" + trigger +
-                L"」写进回报，所在势力对你的审查、试探和索取都会更重。";
+            return thread.name + L"把这次失手写进回报，所在势力对你的审查、试探和索取都会更重。";
+        }
+    }
+
+    if (TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"})) {
+        if (improved) {
+            return thread.name + L"记住了你能站稳的这一面，往后的护道会更敢压重担。";
+        }
+        if (worsened) {
+            return thread.name + L"没有替你遮掩受挫，只把这处缺口记成下一场护道试炼。";
+        }
+    }
+    if (TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"桃华剑脉"})) {
+        if (improved) {
+            return thread.name + L"把你的名字记得更清楚；这不是偏爱，只是你终于值得她多看一眼。";
+        }
+        if (worsened) {
+            return thread.name + L"收回几分笑意，像是在等你下一次自己把缺口补上。";
+        }
+    }
+    if (TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+        if (improved) {
+            return thread.name + L"暂时找不到能钉死你的罪名，门规却因此翻得更细。";
+        }
+        if (worsened) {
+            return thread.name + L"抓住这次破绽，把下一场审查写得更冷。";
         }
     }
 
     if (gifted && worsened) {
-        return thread.name + L"听过「" + trigger +
-            L"」后没有当面翻脸，却因你资质出众而更嫉妒，风声会越传越酸。";
+        return thread.name + L"没有当面翻脸，却因你资质出众而更嫉妒，风声会越传越酸。";
     }
     if (weak && worsened) {
-        return thread.name + L"借「" + trigger +
-            L"」确认你根基不稳，轻慢之声很快会传到下一场试炼。";
+        return thread.name + L"借这次失手确认你根基不稳，轻慢之声很快会传到下一场试炼。";
     }
     if (improved) {
-        return thread.name + L"记住了你在「" + trigger +
-            L"」里的表现，态度从" + GetRelationLabel(oldRelation) + L"往" +
+        return thread.name + L"记住了你的表现，态度从" + GetRelationLabel(oldRelation) + L"往" +
             GetRelationLabel(thread.relation) + L"偏了一步。";
     }
-    return thread.name + L"因「" + trigger +
-        L"」把你看得更复杂，关系从" + GetRelationLabel(oldRelation) + L"滑向" +
+    return thread.name + L"把你看得更复杂，关系从" + GetRelationLabel(oldRelation) + L"滑向" +
         GetRelationLabel(thread.relation) + L"。";
 }
 
@@ -5388,6 +5534,26 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
             TextContainsAny(text, {L"门规", L"掌律", L"审查", L"破绽", L"设局", L"反派"})) {
             score += 7;
         }
+        if (TextContainsAny(profile, {L"江照雪", L"同代竞争者"}) &&
+            TextContainsAny(text, {L"同代", L"试炼", L"约战", L"战帖", L"江氏", L"嫉妒", L"较劲"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"祁无咎", L"藏拙活跃修士"}) &&
+            TextContainsAny(text, {L"外显", L"隐藏", L"藏拙", L"修为", L"气机", L"空帖", L"人情"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"沈听澜", L"道网阵师", L"灵机阵师"}) &&
+            TextContainsAny(text, {L"道网", L"灵机", L"阵纹", L"阵钥", L"节点", L"工坊", L"底牌"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"陆青鸢", L"医道仙官"}) &&
+            TextContainsAny(text, {L"医道", L"伤者", L"救人", L"灵脉", L"施针", L"代价"})) {
+            score += 7;
+        }
+        if (TextContainsAny(profile, {L"阿岑", L"枯井小人物"}) &&
+            TextContainsAny(text, {L"枯井", L"小人物", L"凡人", L"干粮", L"妹妹", L"善缘"})) {
+            score += 7;
+        }
         if ((thread.hidesPower || !thread.hiddenHint.empty()) &&
             TextContainsAny(text, {L"外显", L"隐藏", L"藏拙", L"修为", L"气机", L"试探"})) {
             score += 4;
@@ -5408,23 +5574,30 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
     return nullptr;
 }
 
+wstring FormatSocialActorName(const SocialThread& thread);
+
 wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                                 const Event& event, const Choice& choice) {
-    wstring trigger = CompactMemoryFragment(event.title + L"·" + choice.description);
     bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
     bool bloodFamilyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者"});
     bool ancestryLead = !bloodFamilyTie && TextContainsAny(thread.role, {L"身世"});
-    bool challenger = TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者", L"资源把关者", L"轻慢", L"嫉妒"});
-    bool factionLike = TextContainsAny(thread.role + thread.attitude, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"残宗向导"});
+    bool factionLike = TextContainsAny(thread.role + thread.attitude, {L"势力牵连", L"资源把关者", L"仙朝耳目", L"道网联系人", L"工坊中人", L"残宗向导"});
+    bool challenger = !factionLike && TextContainsAny(thread.role + thread.attitude, {L"欺压者", L"竞争者", L"轻慢", L"嫉妒"});
     bool legacyLike = TextContainsAny(thread.role + thread.attitude, {L"功法见证者", L"旧名仰慕者", L"旧名追债人", L"器痕识别者", L"前世眼熟者"});
     bool heroineLike = TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"桃华剑脉"});
     bool mentorLike = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
     bool antagonistLike = TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"});
+    bool jiangLike = TextContainsAny(thread.name + thread.role, {L"江照雪", L"同代竞争者"});
+    bool qiLike = TextContainsAny(thread.name + thread.role, {L"祁无咎", L"藏拙活跃修士"});
+    bool shenLike = TextContainsAny(thread.name + thread.role, {L"沈听澜", L"道网阵师", L"灵机阵师"});
+    bool luLike = TextContainsAny(thread.name + thread.role, {L"陆青鸢", L"医道仙官"});
+    bool acanLike = TextContainsAny(thread.name + thread.role, {L"阿岑", L"枯井小人物"});
 
     wstringstream ss;
+    wstring actor = FormatSocialActorName(thread);
     ss << L"\n事后，";
     if (!thread.visibleRealm.empty()) {
-        ss << thread.name << L"外显" << thread.visibleRealm;
+        ss << actor << L"外显" << thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
             ss << L"，但" << (thread.hiddenHint.empty() ? L"气机未必可信" : thread.hiddenHint);
         }
@@ -5433,65 +5606,67 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
 
     if (success) {
         if (ancestryLead) {
-            ss << thread.name << L"听闻「" << trigger
-               << L"」后没有承认旧事，只把一条身世线索留得更近：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"没有承认旧事，只把一条身世线索留得更近：" << BuildSocialNpcUtterance(thread);
         } else if (familyTie) {
-            ss << thread.name << L"听闻「" << trigger
-               << L"」后没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
-            ss << thread.name << L"听闻「" << trigger
-               << L"」后没有当众夸你，只把桃花剑光压低半寸：" << BuildLuoNingshuangOutcomeUtterance(choice, true);
+            ss << actor << L"没有当众夸你，只把桃花剑光压低半寸：" << BuildLuoNingshuangOutcomeUtterance(choice, true);
         } else if (mentorLike) {
-            ss << thread.name << L"把「" << trigger
-               << L"」记作一次合格答卷，语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
         } else if (antagonistLike) {
-            ss << thread.name << L"因「" << trigger
-               << L"」暂时找不到可用破绽，掌律玉简合上得很慢：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"暂时找不到可用破绽，掌律玉简合上得很慢：" << BuildSocialNpcUtterance(thread);
+        } else if (jiangLike) {
+            ss << actor << L"把不服压回剑鞘，终于愿意把你当成正面越过的对手：" << BuildSocialNpcUtterance(thread);
+        } else if (qiLike) {
+            ss << actor << L"露出一点真正兴趣，外显气机仍浅，话却比先前真了半分：" << BuildSocialNpcUtterance(thread);
+        } else if (shenLike) {
+            ss << actor << L"愿意交换更多线索，但仍把最后一层底牌握在手里：" << BuildSocialNpcUtterance(thread);
+        } else if (luLike) {
+            ss << actor << L"对你的取舍多了一分认可，问的却仍是后续代价：" << BuildSocialNpcUtterance(thread);
+        } else if (acanLike) {
+            ss << actor << L"记下你的恩情；小人物没有重礼，却会把名字传给后人。";
         } else if (challenger) {
-            ss << thread.name << L"嘴上仍带酸意，却因「" << trigger
-               << L"」不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
+            ss << actor << L"嘴上仍带酸意，却不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
         } else if (legacyLike) {
-            ss << thread.name << L"把「" << trigger
-               << L"」记进旧法与旧名的账里，语气压低却多了几分认可：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把这次痕迹记进旧法与旧名的账里，语气压低却多了几分认可：" << BuildSocialNpcUtterance(thread);
         } else if (factionLike) {
-            ss << thread.name << L"把「" << trigger
-               << L"」递回身后势力，评语从观望变成值得押注：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把这次结果递回账册，评语从观望变成值得继续押注：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << thread.name << L"因「" << trigger
-               << L"」对你亲近一分，话说得不满，眼神却先承认了你的分量。";
+            ss << actor << L"对你亲近一分，话说得别扭，眼神却先承认了你的分量。";
         }
     } else {
         if (ancestryLead) {
-            ss << thread.name << L"听见「" << trigger
-               << L"」的风声后把话收回半句，像是仍不愿让你太早碰到旧事：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把话收回半句，像是仍不愿让你太早碰到旧事：" << BuildSocialNpcUtterance(thread);
         } else if (familyTie) {
-            ss << thread.name << L"听见「" << trigger
-               << L"」的风声后没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
-            ss << thread.name << L"因「" << trigger
-               << L"」收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
+            ss << actor << L"收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
         } else if (mentorLike) {
-            ss << thread.name << L"因「" << trigger
-               << L"」更加严厉，像是要先确认你有没有被护道的价值：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
         } else if (antagonistLike) {
-            ss << thread.name << L"把「" << trigger
-               << L"」写成新罪名的影子，下一次门规可能来得更冷：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把这次破绽写成新罪名的影子，下一次门规可能来得更冷：" << BuildSocialNpcUtterance(thread);
+        } else if (jiangLike) {
+            ss << actor << L"更不服你，战帖不会少，只是从明面较量变成带刺试探：" << BuildSocialNpcUtterance(thread);
+        } else if (qiLike) {
+            ss << actor << L"重新把笑意收深，像是暂时不打算给你看第二层真相：" << BuildSocialNpcUtterance(thread);
+        } else if (shenLike) {
+            ss << actor << L"收回一半资料，提醒你合作不是单方面索取：" << BuildSocialNpcUtterance(thread);
+        } else if (luLike) {
+            ss << actor << L"语气仍温和，施针却停得更谨慎：" << BuildSocialNpcUtterance(thread);
+        } else if (acanLike) {
+            ss << actor << L"沉默了很久；这不是大仇，却会变成后世一笔不好还的小债。";
         } else if (challenger) {
-            ss << thread.name << L"抓住「" << trigger
-               << L"」里的破绽继续轻慢你，下一次很可能借势设局。";
+            ss << actor << L"抓住这次破绽继续轻慢你，下一次很可能借势设局。";
         } else if (legacyLike) {
-            ss << thread.name << L"因「" << trigger
-               << L"」更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
         } else if (factionLike) {
-            ss << thread.name << L"把「" << trigger
-               << L"」写成审查理由，身后势力对你的试探会更重。";
+            ss << actor << L"把这次失手写成审查理由，身后势力对你的试探会更重。";
         } else {
-            ss << thread.name << L"因「" << trigger
-               << L"」把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
+            ss << actor << L"把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
         }
     }
     if (!thread.nextMove.empty()) {
-        ss << L" 接下来，" << thread.name << L"多半会" << thread.nextMove << L"。";
+        ss << L" 接下来，" << actor << L"多半会" << thread.nextMove << L"。";
     }
     return ss.str();
 }
@@ -5553,6 +5728,9 @@ const SocialThread* PickActionFeedbackThread(const wstring& action) {
         if (TextContainsAny(profile, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"资源把关者"})) {
             if (TextContainsAny(action, {L"闭关", L"铸器", L"突破", L"历练"})) weight += 3;
         }
+        if (TextContainsAny(profile, {L"江照雪", L"祁无咎", L"沈听澜", L"陆青鸢", L"阿岑"})) {
+            if (TextContainsAny(action, {L"历练", L"突破", L"疗伤", L"铸器", L"修炼"})) weight += 3;
+        }
 
         for (int j = 0; j < max(1, weight); ++j) {
             weighted.push_back(i);
@@ -5583,67 +5761,115 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     bool bloodFamilyTie = TextContainsAny(profile, {L"父亲", L"母亲", L"养育者"});
     bool ancestryLead = !bloodFamilyTie && TextContainsAny(profile, {L"身世"});
     wstringstream ss;
+    wstring actor = FormatSocialActorName(thread);
     ss << L"\n\n事后，";
 
     if (ancestryLead) {
         if (positive) {
-            ss << thread.name << L"没有把话说透，只把身世线索压成一句提醒：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"没有把话说透，只把身世线索压成一句提醒：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << thread.name << L"听见你在" << action << L"上受阻，反而把旧事藏得更深。";
+            ss << actor << L"听见你在" << action << L"上受阻，反而把旧事藏得更深。";
         }
     } else if (TextContainsAny(profile, {L"父亲", L"母亲", L"养育者", L"身世"})) {
         if (positive) {
-            ss << thread.name << L"没有把话说满，只把担忧压成一句护短：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"没有把话说满，只把担忧压成一句护短：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << thread.name << L"听见你在" << action << L"上受阻，担忧更重，却仍给你留了一盏灯。";
+            ss << actor << L"听见你在" << action << L"上受阻，担忧更重，却仍给你留了一盏灯。";
         }
     } else if (TextContainsAny(profile, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
         if (positive) {
-            ss << thread.name << L"没能从你这次" << action
+            ss << actor << L"没能从你这次" << action
                << L"里挑出可用罪名，只把掌律玉简合上得更慢：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << thread.name << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
+            ss << actor << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
         }
     } else if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
         if (positive) {
-            ss << thread.name << L"把你这次" << action << L"记作一次合格答卷，语气仍严：" << BuildSocialNpcUtterance(thread);
+            if (routineAction) {
+                if (action == L"修炼") {
+                    ss << actor << PickOne({
+                        L"看过你行功后的气息，只淡淡点头：「气走得稳，比嘴上懂规矩重要。」",
+                        L"把蒲团旁的残香掐灭：「今日不算快，但路走实了。」",
+                        L"没有多夸，只把一处行功岔路替你圈出：「这里若再贪快，迟早伤根。」"
+                    });
+                } else if (action == L"闭关") {
+                    ss << actor << PickOne({
+                        L"隔着静室看过阵灯余温：「闭关不是躲事，出来后还要接剑。」",
+                        L"把耗尽的灵石粉末扫到一旁：「资源用完了，就把这一年换成真本事。」"
+                    });
+                } else {
+                    ss << actor << L"看过你的伤势，只说：「知道疼，就记住是谁让你疼。」";
+                }
+            } else {
+                            ss << actor << L"看过你这次" << action << L"后的气息，语气仍严：" << BuildSocialNpcUtterance(thread);
+            }
         } else {
-            ss << thread.name << L"没有替你遮掩这次受挫，只说修行先学会认疼。";
+            ss << actor << L"没有替你遮掩这次受挫，只说修行先学会认疼。";
         }
     } else if (TextContainsAny(profile, {L"洛凝霜", L"桃华剑脉"})) {
         if (positive) {
-            ss << thread.name << L"听闻你这次" << action << L"，笑意很淡，却像终于把你的名字多记了一笔。";
+            ss << actor << L"听闻你这次" << action << L"，笑意很淡，却像终于把你的名字多记了一笔。";
         } else {
-            ss << thread.name << L"没有嘲笑，只把距离收回半步，像在等你下一次自己站稳。";
+            ss << actor << L"没有嘲笑，只把距离收回半步，像在等你下一次自己站稳。";
+        }
+    } else if (TextContainsAny(profile, {L"江照雪", L"同代竞争者"})) {
+        if (positive) {
+            ss << actor << L"听闻你这次" << action << L"，不服仍在，却把战帖写得更郑重。";
+        } else {
+            ss << actor << L"抓住你这次" << action << L"受阻的风声，嘴上更硬，剑却没有离手。";
+        }
+    } else if (TextContainsAny(profile, {L"祁无咎", L"藏拙活跃修士"})) {
+        if (positive) {
+            ss << actor << L"听过你这次" << action << L"后的风声，笑称外显修为果然不适合拿来识人。";
+        } else {
+            ss << actor << L"把你这次" << action << L"受阻记进空帖，像是暂时不打算多给线索。";
+        }
+    } else if (TextContainsAny(profile, {L"沈听澜", L"道网阵师", L"灵机阵师"})) {
+        if (positive) {
+            ss << actor << L"给你补来一段阵纹注脚，语气明亮，却仍只交出一半真相。";
+        } else {
+            ss << actor << L"收回远讯里的半段资料，提醒你底牌不是拿来逞强的。";
+        }
+    } else if (TextContainsAny(profile, {L"陆青鸢", L"医道仙官"})) {
+        if (positive) {
+            ss << actor << L"听闻你这次" << action << L"稳住气息，才肯把药针往深处多落一寸。";
+        } else {
+            ss << actor << L"替你压住一点反噬，却先问清楚下一次代价由谁承担。";
+        }
+    } else if (TextContainsAny(profile, {L"阿岑", L"枯井小人物"})) {
+        if (positive) {
+            ss << actor << L"把你的名字小心记下，说若后世有一条活路，也该给恩人留着。";
+        } else {
+            ss << actor << L"没有怨你，只把干粮收回怀里；这种沉默比责怪更难忘。";
         }
     } else if (TextContainsAny(profile, {L"欺压者", L"竞争者", L"嫉妒", L"轻慢"})) {
         if (positive) {
-            ss << thread.name << L"嘴上仍酸，却不得不承认你这次" << action << L"压住了场面。";
+            ss << actor << L"嘴上仍酸，却不得不承认你这次" << action << L"压住了场面。";
         } else {
-            ss << thread.name << L"抓住你这次" << action << L"受阻的风声，轻慢话已经传到同辈耳中。";
+            ss << actor << L"抓住你这次" << action << L"受阻的风声，轻慢话已经传到同辈耳中。";
         }
     } else if (TextContainsAny(profile, {L"器痕识别者", L"功法见证者", L"旧名", L"前世眼熟者"})) {
         if (positive) {
-            ss << thread.name << L"把这次" << action << L"和你身上的旧痕联系起来，语气压低：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把这次" << action << L"和你身上的旧痕联系起来，语气压低：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << thread.name << L"对你身上的旧痕更加起疑，像是在等下一次破绽。";
+            ss << actor << L"对你身上的旧痕更加起疑，像是在等下一次破绽。";
         }
     } else if (TextContainsAny(profile, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"资源把关者"})) {
         if (positive) {
-            ss << thread.name << L"把你这次" << action << L"写进身后势力的评语里：值得继续押注。";
+            ss << actor << L"把你这次" << action << L"写进身后势力的评语里：值得继续押注。";
         } else {
-            ss << thread.name << L"把你这次" << action << L"受阻写成审查理由，后续资源会更难松口。";
+            ss << actor << L"把你这次" << action << L"受阻写成审查理由，后续资源会更难松口。";
         }
     } else {
         if (positive) {
-            ss << thread.name << L"因你这次" << action << L"多看了你一眼，观望里添了一分认可。";
+            ss << actor << L"因你这次" << action << L"多看了你一眼，观望里添了一分认可。";
         } else {
-            ss << thread.name << L"因你这次" << action << L"暂时收回善意，观望变得更谨慎。";
+            ss << actor << L"因你这次" << action << L"暂时收回善意，观望变得更谨慎。";
         }
     }
 
-    if (!thread.nextMove.empty()) {
-        ss << L" 接下来，" << thread.name << L"多半会" << thread.nextMove << L"。";
+    if (!thread.nextMove.empty() && !routineAction) {
+        ss << L" 接下来，" << actor << L"多半会" << thread.nextMove << L"。";
     }
     if (routineAction) {
         g_lastRoutineEmotionFeedbackAge = g_player.age;
@@ -5702,6 +5928,13 @@ wstring BuildSocialEraPressureText() {
     return L"山门与坊市都在看人下菜，少年道途从来不只看灵根。";
 }
 
+wstring FormatSocialActorName(const SocialThread& thread) {
+    if (thread.role.empty() || IsAnchorCharacterName(thread.name)) {
+        return thread.name;
+    }
+    return thread.name + L"（" + thread.role + L"）";
+}
+
 Event BuildSocialAdventureEvent() {
     Event evt;
     const SocialThread* picked = PickSocialAdventureThread();
@@ -5718,9 +5951,9 @@ Event BuildSocialAdventureEvent() {
     bool positive = thread.relation >= 18;
     bool negative = thread.relation <= -18;
     bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
-    bool challenger = TextContainsAny(thread.role, {L"欺压者", L"竞争者", L"资源把关者"});
+    bool challenger = TextContainsAny(thread.role, {L"欺压者", L"竞争者"});
     bool factionTie = (thread.role == L"势力牵连") || TextContainsAny(thread.role + thread.attitude, {
-        L"册封", L"工坊", L"道网", L"残宗", L"仙朝", L"联系人"
+        L"资源把关者", L"册封", L"工坊", L"道网", L"残宗", L"仙朝", L"联系人"
     });
 
     if (familyTie) {
@@ -5753,10 +5986,15 @@ Event BuildSocialAdventureEvent() {
     wstring attitudeLine = thread.attitude.empty()
         ? L""
         : L"话里带着" + thread.attitude + L"。";
+    wstring hookLead = familyTie
+        ? L"你很快意识到，这份担忧背后还压着"
+        : (factionTie
+            ? L"你很快意识到，这封帖子背后还压着"
+            : L"你很快意识到，这场试探背后还牵着");
     evt.description = actorName + entrance + attitudeLine +
         BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
         realmHint + BuildSocialNpcUtterance(thread) +
-        L"你很快意识到，这场试探还牵着" + CompactMemoryFragment(thread.hook);
+        hookLead + CompactMemoryFragment(thread.hook);
 
     wstring hiddenLine = HasPriorLifeEcho()
         ? L"家世、势力或前世旧名"
@@ -5994,8 +6232,8 @@ int NarrativeRelationDelta(const wstring& text) {
     if (TextContainsAny(text, {L"善意", L"礼重", L"拉拢", L"给机会", L"新线索", L"重新衡量"})) delta += 5;
     if (TextContainsAny(text, {L"修为+", L"灵石+", L"寿命+", L"因果+", L"掌道+", L"灵宝共鸣+"})) delta += 3;
 
-    if (TextContainsAny(text, {L"怀疑", L"记恨", L"翻脸", L"轻慢", L"羞怒", L"看穿", L"反咬"})) delta -= 8;
-    if (TextContainsAny(text, {L"误判", L"旧债", L"反噬", L"恶名", L"压不住", L"设局"})) delta -= 4;
+    if (TextContainsAny(text, {L"怀疑", L"记恨", L"翻脸", L"羞怒", L"看穿", L"反咬"})) delta -= 8;
+    if (TextContainsAny(text, {L"误判", L"反噬", L"恶名", L"压不住", L"设局"})) delta -= 4;
     if (TextContainsAny(text, {L"气血-", L"因果-", L"寿命-"})) delta -= 3;
 
     return max(-18, min(18, delta));
@@ -6003,7 +6241,7 @@ int NarrativeRelationDelta(const wstring& text) {
 
 void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice, const wstring& outcome) {
     wstring text = event.title + L" " + event.description + L" " + choice.description + L" " + outcome;
-    int baseDelta = NarrativeRelationDelta(text);
+    int baseDelta = NarrativeRelationDelta(choice.description + L" " + outcome);
     if (baseDelta == 0) return;
 
     bool touchesFaction = HasFactionTie() && TextContainsAny(text, {
@@ -6019,8 +6257,7 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
         int oldFavor = g_factionTie.favor;
         g_factionTie.favor = ClampRelation(g_factionTie.favor + baseDelta);
         if (g_factionTie.favor != oldFavor) {
-            wstring factionRumor = g_factionTie.name + L"因「" +
-                CompactMemoryFragment(event.title + L"·" + choice.description) + L"」调整了对你的态度：";
+            wstring factionRumor = g_factionTie.name + L"重新调整了对你的态度：";
             if (baseDelta > 0) {
                 factionRumor += L"有人开始替你说话，也有人觉得你值得提前押注。";
             } else {
@@ -6031,7 +6268,7 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
                 g_factionTie.name + L"对你的牵连值由" +
                 (oldFavor >= 0 ? L"+" : L"") + to_wstring(oldFavor) + L"变为" +
                 (g_factionTie.favor >= 0 ? L"+" : L"") + to_wstring(g_factionTie.favor) +
-                L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+                L"。");
             AddMemory(L"势力余波", factionRumor);
         }
     }
@@ -6056,7 +6293,7 @@ void ApplyNarrativeRelationshipEffects(const Event& event, const Choice& choice,
             AddMemory(L"人物余波",
                 thread.name + L"（" + thread.role + L"）对你的关系由" +
                 GetRelationLabel(oldRelation) + L"变为" + GetRelationLabel(thread.relation) +
-                L"。起因：" + CompactMemoryFragment(event.title + L"·" + choice.description));
+                L"。");
             AddMemory(L"人情余波", aftershock);
             changed++;
         }
@@ -6107,12 +6344,18 @@ bool PulseSocialEmotions(const wstring& reason) {
     g_dynamicWorld.PlayerInteractWithNPC(thread.name, delta);
 
     wstring rumor = thread.name + L"（" + thread.role + L"）听过你" + reason + L"后的风声，";
+    wstring oldLabel = GetRelationLabel(oldRelation);
+    wstring newLabel = GetRelationLabel(thread.relation);
     if (delta > 0) {
-        rumor += L"情绪从" + GetRelationLabel(oldRelation) + L"往" +
-            GetRelationLabel(thread.relation) + L"松了一分；" + BuildSocialNpcUtterance(thread);
+        rumor += (oldLabel == newLabel
+            ? L"态度仍是" + newLabel + L"，但话里松了一分；"
+            : L"情绪从" + oldLabel + L"往" + newLabel + L"松了一分；") +
+            BuildSocialNpcUtterance(thread);
     } else {
-        rumor += L"情绪从" + GetRelationLabel(oldRelation) + L"往" +
-            GetRelationLabel(thread.relation) + L"冷了一分；" + BuildSocialNpcUtterance(thread);
+        rumor += (oldLabel == newLabel
+            ? L"态度仍是" + newLabel + L"，但话里冷了一分；"
+            : L"情绪从" + oldLabel + L"往" + newLabel + L"冷了一分；") +
+            BuildSocialNpcUtterance(thread);
     }
     AddSocialRumor(rumor);
     AddMemory(L"情绪脉动",
@@ -6182,6 +6425,11 @@ void GenerateSocialThreads() {
     if (HasCharacterTrace(L"清蘅真人")) AddQinghengThread();
     if (HasCharacterTrace(L"玄衡子")) AddXuanhengThread();
     if (HasCharacterTrace(L"洛凝霜")) AddLuoNingshuangThread();
+    if (HasCharacterTrace(L"江照雪")) AddJiangZhaoxueThread();
+    if (HasCharacterTrace(L"祁无咎")) AddQiWujiuThread();
+    if (HasCharacterTrace(L"沈听澜") && IsFrostCrowEra()) AddShenTinglanThread();
+    if (HasCharacterTrace(L"陆青鸢")) AddLuQingyuanThread();
+    if (HasCharacterTrace(L"阿岑兄妹")) AddAcanSiblingsThread();
 
     const LegacyItem* techniqueLegacy = findInherited(LEGACY_TECHNIQUE);
     if (techniqueLegacy && techniqueEcho >= 35) {
@@ -6289,11 +6537,21 @@ void GenerateSocialThreads() {
         SocialThread luoNingshuangThread;
         SocialThread mentorThread;
         SocialThread antagonistThread;
+        SocialThread jiangThread;
+        SocialThread qiThread;
+        SocialThread shenThread;
+        SocialThread luThread;
+        SocialThread acanThread;
         bool hasFactionThread = false;
         bool hasFrostCrowThread = false;
         bool hasLuoNingshuangThread = false;
         bool hasMentorThread = false;
         bool hasAntagonistThread = false;
+        bool hasJiangThread = false;
+        bool hasQiThread = false;
+        bool hasShenThread = false;
+        bool hasLuThread = false;
+        bool hasAcanThread = false;
         for (const auto& thread : g_socialThreads) {
             if (!hasFactionThread && thread.role == L"势力牵连") {
                 factionThread = thread;
@@ -6315,8 +6573,28 @@ void GenerateSocialThreads() {
                 antagonistThread = thread;
                 hasAntagonistThread = true;
             }
+            if (!hasJiangThread && thread.name == L"江照雪") {
+                jiangThread = thread;
+                hasJiangThread = true;
+            }
+            if (!hasQiThread && thread.name == L"祁无咎") {
+                qiThread = thread;
+                hasQiThread = true;
+            }
+            if (!hasShenThread && thread.name == L"沈听澜") {
+                shenThread = thread;
+                hasShenThread = true;
+            }
+            if (!hasLuThread && thread.name == L"陆青鸢") {
+                luThread = thread;
+                hasLuThread = true;
+            }
+            if (!hasAcanThread && thread.name == L"阿岑兄妹") {
+                acanThread = thread;
+                hasAcanThread = true;
+            }
         }
-        g_socialThreads.resize(7);
+        g_socialThreads.resize(min<size_t>(10, g_socialThreads.size()));
         auto containsRole = [&](const wstring& role) {
             for (const auto& thread : g_socialThreads) {
                 if (thread.role == role) return true;
@@ -6361,6 +6639,11 @@ void GenerateSocialThreads() {
         if (hasAntagonistThread) putPriority(antagonistThread, L"玄衡子", L"");
         if (hasLuoNingshuangThread) putPriority(luoNingshuangThread, L"洛凝霜", L"");
         if (hasFrostCrowThread) putPriority(frostCrowThread, L"霜鸦", L"");
+        if (hasJiangThread) putPriority(jiangThread, L"江照雪", L"");
+        if (hasQiThread) putPriority(qiThread, L"祁无咎", L"");
+        if (hasShenThread) putPriority(shenThread, L"沈听澜", L"");
+        if (hasLuThread) putPriority(luThread, L"陆青鸢", L"");
+        if (hasAcanThread) putPriority(acanThread, L"阿岑兄妹", L"");
     }
 }
 
@@ -6681,7 +6964,7 @@ void GenerateFactionTie() {
         g_factionTie.kind = L"古典宗门 / 入门试炼";
         g_factionTie.role = gifted ? L"内门种子" : (weak ? L"杂役试炼者" : L"外门候选");
         g_factionTie.stance = gifted ? L"长辈认可" : (weak ? L"轻慢考验" : L"愿给机会");
-        g_factionTie.hook = L"山门入门试炼会牵出你的家世旧债，也会决定第一批同辈是巴结你还是欺负你。";
+        g_factionTie.hook = L"这场山门试探会顺着你的身世旧债往下牵，也会决定第一批同辈是巴结你还是欺负你。";
     }
 }
 
@@ -6750,6 +7033,22 @@ void GenerateLifeStoryHooks() {
 
     if (IsLuoNingshuangEra() && HasCharacterTrace(L"洛凝霜")) {
         g_lifeStoryHooks.push_back(L"桃华剑脉的洛凝霜正在寻找能同赴试剑秘境的人；她不会无缘无故偏向谁，只看剑前的胆色与心性。");
+    }
+
+    if (HasCharacterTrace(L"江照雪")) {
+        g_lifeStoryHooks.push_back(L"江照雪线：争胜不等于死敌，她会记住你在试炼、名声和正面约战里的每一次取舍。");
+    }
+    if (HasCharacterTrace(L"祁无咎")) {
+        g_lifeStoryHooks.push_back(L"祁无咎线：他外显修为未必可信，帮你一次也未必等于投靠，后续仍要以人情和秘密交换。");
+    }
+    if (HasCharacterTrace(L"沈听澜") && IsFrostCrowEra()) {
+        g_lifeStoryHooks.push_back(L"沈听澜线：现代纪元的阵师更看重真相、协作和底牌边界，不会因为一次共事就全盘托付。");
+    }
+    if (HasCharacterTrace(L"陆青鸢")) {
+        g_lifeStoryHooks.push_back(L"陆青鸢线：医道仙官会救人，也会追问救人、修脉和续命之后由谁承担代价。");
+    }
+    if (HasCharacterTrace(L"阿岑兄妹")) {
+        g_lifeStoryHooks.push_back(L"阿岑兄妹线：枯井镇的小人物因果可能跨世变成善名、小宗暗路或未还旧债。");
     }
 
     if (HasFactionTie()) {
@@ -6926,13 +7225,13 @@ bool ShouldTriggerAnchorCharacterEvent() {
 
     if (firstLifeArc) {
         if (!HasAnchorCharacterThread(L"清蘅真人")) return true;
+        if (g_player.realm < QI_REFINING) return false;
         if (!HasAnchorCharacterThread(L"玄衡子")) {
-            return g_player.totalEvents >= 3 ||
-                   (g_player.realm >= QI_REFINING && g_player.level >= 3);
+            return g_player.totalEvents >= 4 || g_player.level >= 2;
         }
         if (!HasAnchorCharacterThread(L"洛凝霜")) {
-            return g_player.totalEvents >= 2 || g_player.age >= 24 ||
-                   (g_player.realm >= QI_REFINING && g_player.level >= 5);
+            return g_player.realm >= FOUNDATION || g_player.totalEvents >= 6 ||
+                   g_player.age >= 23 || g_player.level >= 4;
         }
     }
 
@@ -7003,7 +7302,7 @@ Event BuildLuoNingshuangTrialEvent() {
 
     evt.choices = {
         {L"认真接剑", {
-            L"你没有把她的剑当成艳遇，也没有把自己的资质当成借口。洛凝霜收剑时多看了你一眼，像是终于把你的名字记进心里。\n修为+" + to_wstring(expGain + 32) + L"，因果+10",
+            L"你没有把她的剑当成风月，也没有把自己的资质当成借口。洛凝霜收剑时多看了你一眼，像是终于把你的名字记进心里。\n修为+" + to_wstring(expGain + 32) + L"，因果+10",
             L"你只顾撑住场面，剑心却乱了。洛凝霜没有嘲笑，只是收回几分笑意：她不是看不起弱者，只是不愿把好感押给只会认输的人。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
         }, gifted ? 8 : (weak ? 2 : 5)},
         {L"坦言道心", {
@@ -7071,6 +7370,188 @@ Event BuildLuoNingshuangImmortalReunionEvent() {
     return evt;
 }
 
+Event BuildJiangZhaoxueEvent() {
+    Event evt;
+    int expGain = 72 + g_player.realm * 7;
+    int hpRisk = 16 + g_player.realm * 2;
+    bool prior = HasPriorLifeEcho();
+    evt.title = L"【因果】照雪战帖";
+    evt.description = prior
+        ? L"江照雪把阵图推到你面前，语气仍硬；旧梦里的争胜气隔世回响，她愿暂时同阵，却不肯把旧争写成亲近。"
+        : L"江照雪把酸话全收进剑鞘，只递来一封战帖；她仍不服你，却终于把你当成必须正面越过的山。";
+    evt.choices = {
+        {L"接下战帖", {
+            L"你没有把较劲当成仇怨，只按战帖赴约。江照雪输赢都记得清楚，却第一次承认你值得正面相争。\n修为+" + to_wstring(expGain + 28) + L"，因果+6",
+            L"你急着压她一头，反让战帖变成口舌之争。江照雪收剑时冷笑，往后更不会轻易服你。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+        }, 4},
+        {L"问明赌注", {
+            L"你先问赌注和后果，江照雪怔了一瞬，像没料到你把争胜看得这么清楚。\n修为+" + to_wstring(expGain) + L"，灵石+10",
+            L"你问得太细，旁人以为你怯战。江照雪没有附和，却也没替你解释。\n因果-4"
+        }, 2},
+        {L"暂避锋芒", {
+            L"你没有立刻接战，只把她剑路记在心里。胜负可以晚些说，道途却不能被一时意气牵走。\n寿命+2，修为+" + to_wstring(max(40, expGain - 25)),
+            L"避得太久，外门流言开始说你不敢应战，江照雪也把这笔记进心里。\n因果-6"
+        }, 0}
+    };
+    return evt;
+}
+
+Event BuildQiWujiuEvent() {
+    Event evt;
+    int expGain = 78 + g_player.realm * 7;
+    int hpRisk = 18 + g_player.realm * 2;
+    evt.title = L"【奇遇】无咎空帖";
+    evt.description =
+        L"祁无咎在人前只显金丹光影，递来一张空帖时却稳得过分；他像是在帮你，也像故意只给你看半扇门。";
+    evt.choices = {
+        {L"收下空帖", {
+            L"你收下帖子却没有立刻承情。祁无咎笑意更深，像终于确认你不是见人示好就急着欠债的人。\n修为+" + to_wstring(expGain) + L"，因果+5",
+            L"空帖里藏着试探阵纹，你一时大意，反被他看出气机破绽。\n气血-" + to_wstring(hpRisk) + L"，因果-4"
+        }, 4},
+        {L"暗观灵压", {
+            L"你顺着他外显修为反看回去，发现那层金丹气机像刻意留给旁人的影子。\n修为+" + to_wstring(expGain + 18) + L"，掌道+2",
+            L"你看得太直，祁无咎指尖一弹便散去线索，只留一句：好奇心也会害人。\n气血-" + to_wstring(hpRisk + 6)
+        }, 5},
+        {L"暂不欠情", {
+            L"你没有接他的好处，只以礼数退开。祁无咎并不恼，反像把这份克制也记进账里。\n寿命+2，修为+" + to_wstring(max(45, expGain - 18)),
+            L"你退得太干净，这条人情线暂时也失去继续追查的入口。\n因果-3"
+        }, 1}
+    };
+    return evt;
+}
+
+Event BuildShenTinglanEvent() {
+    Event evt;
+    int expGain = 80 + g_player.realm * 7;
+    int hpRisk = 20 + g_player.realm * 2;
+    bool networkEra = g_worldEraName == L"星穹道网纪";
+    evt.title = networkEra ? L"【机缘】听澜密讯" : L"【机缘】听澜阵钥";
+    evt.description = networkEra
+        ? L"沈听澜从道网节点发来密讯，直接指出你上次留下的匿名痕迹；她不问旧名，只问你敢不敢共查失控源头。"
+        : L"灵机列车阵纹忽然失控，沈听澜隔窗递来一枚阵钥；她眼神明亮却不轻信，要的不是英雄，是同谋。";
+    evt.choices = {
+        {L"接过阵钥", {
+            L"你接下阵钥，没有急着显摆本事。沈听澜把一半真相交给你，也允许你暂时留一半底牌。\n修为+" + to_wstring(expGain + 18) + L"，灵石+12，因果+6",
+            L"阵钥反锁神识，你险些被失控阵纹拖进核心回路。\n气血-" + to_wstring(hpRisk + 8)
+        }, 5},
+        {L"询问源头", {
+            L"你先问源头而非报酬，沈听澜终于露出一点认可；她说这局背后不只工坊一家。\n修为+" + to_wstring(expGain) + L"，掌道+2",
+            L"你追问太急，她反而收回一半资料，提醒你合作不是逼供。\n因果-4"
+        }, 3},
+        {L"保留底牌", {
+            L"你明说自己不会全盘交底。沈听澜没有生气，只说这样反而公平。\n寿命+2，修为+" + to_wstring(max(45, expGain - 15)),
+            L"底牌留得太重，双方都不敢把后背交出去，行动慢了一拍。\n气血-" + to_wstring(max(10, hpRisk - 6))
+        }, 1}
+    };
+    return evt;
+}
+
+Event BuildLuQingyuanEvent() {
+    Event evt;
+    int expGain = 90 + g_player.realm * 8;
+    int hpRisk = 18 + g_player.realm * 2;
+    evt.title = L"【机缘】青鸢施针";
+    evt.description =
+        L"陆青鸢替伤者落下最后一针，才抬眼看你；她记住的是你先护伤员，不是名声，也不是旧事。";
+    evt.choices = {
+        {L"谢过医官", {
+            L"你谢得很轻，没有把救治当成理所当然。陆青鸢收针时点头，愿意替你压下一处暗伤。\n气血+18，修为+" + to_wstring(expGain) + L"，因果+6",
+            L"你只顾谢她，却忽略伤者后续安置。陆青鸢语气仍温和，距离却拉开了。\n因果-5"
+        }, 5},
+        {L"询问伤情", {
+            L"你先问伤者还能不能活，她眼神终于柔了半分；医道看见的，往往是选择之后的代价。\n修为+" + to_wstring(expGain - 5) + L"，寿命+3",
+            L"伤情背后牵着灵脉旧账，你问得太近，反被残毒溅入经脉。\n气血-" + to_wstring(hpRisk)
+        }, 4},
+        {L"转问代价", {
+            L"你没有只求救人，先问代价谁背。陆青鸢说你终于不像只会热血逞强的人。\n掌道+3，修为+" + to_wstring(max(55, expGain - 20)),
+            L"代价问得太冷，旁人以为你薄情，风声一时不太好听。\n因果-6"
+        }, 2}
+    };
+    return evt;
+}
+
+Event BuildAcanSiblingsEvent() {
+    Event evt;
+    int expGain = 58 + g_player.realm * 6;
+    int hpRisk = 16 + g_player.realm * 2;
+    evt.title = L"【因果】枯井兄妹";
+    evt.description =
+        L"阿岑把半袋干粮推给你，求你带妹妹离开枯井镇；这事不惊天动地，却会决定两条小命今后记不记你的恩。";
+    evt.choices = {
+        {L"带她离镇", {
+            L"你把小女孩带出枯井镇，阿岑跪得很低，却把你的名字记得很重。小人物的善缘从来不是空的。\n修为+" + to_wstring(expGain + 18) + L"，因果+12",
+            L"追兵来得太快，你护住孩子却被枯井毒雾刮过经脉。\n气血-" + to_wstring(hpRisk + 8) + L"，因果+4"
+        }, 7},
+        {L"留下灵符", {
+            L"你留下灵符和路线，没有逞能包揽所有苦难。阿岑红着眼收下，知道这也是一条活路。\n修为+" + to_wstring(expGain) + L"，灵石-6，因果+8",
+            L"灵符被人半路截走，善意没有立刻到达该到的人手里。\n因果-4，灵石-6"
+        }, 4},
+        {L"拒绝牵连", {
+            L"你没有接下这份牵连，只把地形和危险记进心里。道途有时冷硬，却也不会因此轻松。\n寿命+2，修为+" + to_wstring(max(35, expGain - 20)),
+            L"阿岑没有骂你，只抱紧妹妹退回枯井边；这道沉默会在后世换一种方式回来。\n因果-10"
+        }, -6}
+    };
+    return evt;
+}
+
+bool ShouldTriggerLongCharacterEvent() {
+    if (g_player.totalEvents < 3) return false;
+
+    if (IsFirstLifeClassicalEra() && !HasCharacterTrace(L"江照雪") &&
+        (g_player.totalEvents >= 5 || g_player.realm >= FOUNDATION)) {
+        return Random(1, 100) <= 65;
+    }
+    if ((g_worldEraName == L"末法裂变纪" || g_worldEraName == L"废土返道纪") &&
+        !HasCharacterTrace(L"阿岑兄妹") && g_player.totalEvents >= 4) {
+        return Random(1, 100) <= 42;
+    }
+    if ((g_worldEraName == L"仙朝鼎盛纪" || IsFrostCrowEra() || g_player.realm >= GOLDEN_CORE) &&
+        !HasCharacterTrace(L"祁无咎") && g_player.totalEvents >= 5) {
+        return Random(1, 100) <= 32;
+    }
+    if (IsFrostCrowEra() && !HasCharacterTrace(L"沈听澜") && g_player.totalEvents >= 4) {
+        return Random(1, 100) <= 38;
+    }
+    if (g_player.realm >= TRUE_IMMORTAL && !HasCharacterTrace(L"陆青鸢") &&
+        g_player.totalEvents >= 4) {
+        return Random(1, 100) <= 34;
+    }
+
+    int chance = 5;
+    if (HasCharacterTrace(L"江照雪")) chance += 2;
+    if (HasCharacterTrace(L"祁无咎")) chance += 2;
+    if (HasCharacterTrace(L"沈听澜") && IsFrostCrowEra()) chance += 2;
+    if (HasCharacterTrace(L"陆青鸢")) chance += 2;
+    if (HasCharacterTrace(L"阿岑兄妹")) chance += 2;
+    chance = max(5, min(18, chance));
+    return Random(1, 100) <= chance;
+}
+
+Event BuildLongCharacterEvent() {
+    if (IsFirstLifeClassicalEra() && !HasCharacterTrace(L"江照雪")) return BuildJiangZhaoxueEvent();
+    if ((g_worldEraName == L"末法裂变纪" || g_worldEraName == L"废土返道纪") &&
+        !HasCharacterTrace(L"阿岑兄妹")) return BuildAcanSiblingsEvent();
+    if ((g_worldEraName == L"仙朝鼎盛纪" || IsFrostCrowEra() || g_player.realm >= GOLDEN_CORE) &&
+        !HasCharacterTrace(L"祁无咎")) return BuildQiWujiuEvent();
+    if (IsFrostCrowEra() && !HasCharacterTrace(L"沈听澜")) return BuildShenTinglanEvent();
+    if (g_player.realm >= TRUE_IMMORTAL && !HasCharacterTrace(L"陆青鸢")) return BuildLuQingyuanEvent();
+
+    vector<int> candidates;
+    if (HasCharacterTrace(L"江照雪")) candidates.push_back(0);
+    if (HasCharacterTrace(L"祁无咎")) candidates.push_back(1);
+    if (HasCharacterTrace(L"沈听澜") && IsFrostCrowEra()) candidates.push_back(2);
+    if (HasCharacterTrace(L"陆青鸢")) candidates.push_back(3);
+    if (HasCharacterTrace(L"阿岑兄妹")) candidates.push_back(4);
+    if (candidates.empty()) return BuildJiangZhaoxueEvent();
+
+    int picked = candidates[Random(0, (int)candidates.size() - 1)];
+    if (picked == 0) return BuildJiangZhaoxueEvent();
+    if (picked == 1) return BuildQiWujiuEvent();
+    if (picked == 2) return BuildShenTinglanEvent();
+    if (picked == 3) return BuildLuQingyuanEvent();
+    return BuildAcanSiblingsEvent();
+}
+
 Event BuildAnchorCharacterEvent() {
     if (g_player.realm >= TRUE_IMMORTAL && HasAnchorCharacterThread(L"洛凝霜") && Random(1, 100) <= 55) {
         return BuildLuoNingshuangImmortalReunionEvent();
@@ -7078,12 +7559,13 @@ Event BuildAnchorCharacterEvent() {
     if (IsFirstLifeClassicalEra()) {
         int step = g_player.totalEvents;
         if (!HasAnchorCharacterThread(L"清蘅真人")) return BuildMentorTrialEvent();
+        if (g_player.realm < QI_REFINING) return BuildLifeStoryProgressEvent();
         if (!HasAnchorCharacterThread(L"玄衡子") &&
-            (step >= 3 || (g_player.realm >= QI_REFINING && g_player.level >= 3))) {
+            (step >= 4 || g_player.level >= 2)) {
             return BuildXuanhengTrapEvent();
         }
         if (!HasAnchorCharacterThread(L"洛凝霜") &&
-            (step >= 2 || g_player.age >= 24 || (g_player.realm >= QI_REFINING && g_player.level >= 5))) {
+            (g_player.realm >= FOUNDATION || step >= 6 || g_player.age >= 23 || g_player.level >= 4)) {
             return BuildLuoNingshuangTrialEvent();
         }
         return BuildLifeStoryProgressEvent();
@@ -7600,7 +8082,7 @@ bool TryRunLocalModelGenerator() {
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
     DWORD exitCode = RunHiddenProcessAndWait(
-        L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Model \"gpt-oss:120b-cloud\"",
+        L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Backend \"portable\"",
         150000);
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus == L"本局尚未触发动态事件。") {
@@ -7646,7 +8128,7 @@ bool BeginLocalModelGeneratorAsync() {
 
     wstring command = L"powershell.exe -NoProfile -ExecutionPolicy Bypass "
         L"-File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" "
-        L"-Model \"gpt-oss:120b-cloud\"";
+        L"-Backend \"portable\"";
     vector<wchar_t> commandBuffer(command.begin(), command.end());
     commandBuffer.push_back(L'\0');
 
@@ -9151,14 +9633,13 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
     }
 
     if (TextContainsAny(text, {L"前世未竟", L"未竟因果", L"旧因", L"旧债", L"前世", L"旧名"})) {
-        add((successLike ? L"前世未竟推进：" : L"前世未竟加深：") +
-            choice.description + L"后，上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
+        add(wstring(successLike ? L"前世未竟推进：" : L"前世未竟加深：") +
+            L"上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
     }
 
     if (TextContainsAny(text, {L"清蘅真人", L"师尊", L"护道人"})) {
         add(wstring(successLike ? L"师尊线推进：" : L"师尊线压紧：") +
-            L"清蘅真人会记住你在「" + choice.description +
-            L"」中的表现，后续护道、责罚或传法都会从这里分岔。");
+            L"清蘅真人会记住你的表现，后续护道、责罚或传法都会从这里分岔。");
     }
 
     if (TextContainsAny(text, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
@@ -9171,12 +9652,36 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
             L"洛凝霜不会无条件偏向你，她对你的好感会继续由胆色、心性和下一次试剑决定。");
     }
 
+    if (TextContainsAny(text, {L"江照雪", L"江氏", L"战帖", L"约战"})) {
+        add(wstring(successLike ? L"江照雪线推进：" : L"江照雪线带刺：") +
+            L"这份争胜心不会立刻消失，后续可能变成正面约战、同阵合作或江氏后人的复杂态度。");
+    }
+
+    if (TextContainsAny(text, {L"祁无咎", L"无咎", L"空帖", L"外显修为", L"藏拙"})) {
+        add(wstring(successLike ? L"祁无咎线推进：" : L"祁无咎线转隐：") +
+            L"祁无咎仍只露一部分真实底细，他的人情、藏拙和空帖都可在后世继续发酵。");
+    }
+
+    if (TextContainsAny(text, {L"沈听澜", L"听澜", L"阵钥", L"灵机列车", L"道网密讯"})) {
+        add(wstring(successLike ? L"沈听澜线推进：" : L"沈听澜线保留：") +
+            L"沈听澜会继续以阵纹、道网和半真半假的情报入局，合作不等于无条件信任。");
+    }
+
+    if (TextContainsAny(text, {L"陆青鸢", L"青鸢", L"医道仙官"})) {
+        add(wstring(successLike ? L"陆青鸢线推进：" : L"陆青鸢线问价：") +
+            L"陆青鸢会记住你如何对待伤者、灵脉与代价；医道善意也有必须偿还的因果。");
+    }
+
+    if (TextContainsAny(text, {L"阿岑", L"枯井兄妹", L"枯井镇", L"干粮"})) {
+        add(wstring(successLike ? L"阿岑兄妹线成善：" : L"阿岑兄妹线成债：") +
+            L"枯井镇小人物会把这次选择传下去，后世可能变成善名、小宗暗路或沉默旧债。");
+    }
+
     if (HasFactionTie() && TextContainsAny(text, {
         g_factionTie.name, L"本世势力", L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
     })) {
         add((successLike ? L"势力线推进：" : L"势力线受阻：") +
-            g_factionTie.name + L"因「" + choice.description + L"」重新衡量你，牵连值为" +
-            (g_factionTie.favor >= 0 ? L"+" : L"") + to_wstring(g_factionTie.favor) + L"。");
+            g_factionTie.name + L"重新衡量你；审查、资源与旧债都会随之变化。");
     }
 
     for (const auto& thread : g_socialThreads) {
@@ -9187,8 +9692,8 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
             continue;
         }
         add((successLike ? L"人情线推进：" : L"人情线生隙：") +
-            thread.name + L"（" + thread.role + L"）会记住你在「" + choice.description +
-            L"」中的表现，后续态度是" + GetRelationLabel(thread.relation) + L"。");
+            thread.name + L"（" + thread.role + L"）会记住你的表现，后续态度是" +
+            GetRelationLabel(thread.relation) + L"。");
         break;
     }
 
@@ -9299,6 +9804,42 @@ void ApplyOutcomeEffects(const wstring& outcome) {
         g_player.LevelUp();
     }
     NormalizeCultivationProgress();
+}
+
+void AppendAdventureResourceSpoils(const Event& event, bool successLike, wstring& outcome) {
+    if (!successLike) return;
+    if (TextContainsAny(outcome, {L"灵石+", L"丹药+"})) return;
+
+    wstring eventText = event.title + L" " + event.description;
+    bool combatLike = TextContainsAny(eventText,
+        {L"妖", L"妖兽", L"袭击", L"伏击", L"对决", L"邪修", L"魔修", L"战帖"});
+    bool explorationLike = TextContainsAny(eventText,
+        {L"洞府", L"秘境", L"药圃", L"药园", L"遗府", L"传承", L"机遇", L"奇遇"});
+    if (!combatLike && !explorationLike) return;
+
+    int stoneGain = 0;
+    int pillGain = 0;
+    if (combatLike) {
+        stoneGain = Random(4, 8) + min(12, (int)g_player.realm * 2);
+        if (TextContainsAny(eventText, {L"毒蛇", L"药圃", L"狐妖", L"妖丹"}) && Random(1, 100) <= 35) {
+            pillGain = 1;
+        }
+        g_player.spiritStones += stoneGain;
+        g_player.pills += pillGain;
+        outcome += L"\n战后收起妖丹、残符和可用材料，折成灵石+" + to_wstring(stoneGain);
+        if (pillGain > 0) {
+            outcome += L"，丹药+" + to_wstring(pillGain);
+        }
+        outcome += L"。";
+        return;
+    }
+
+    if (explorationLike && Random(1, 100) <= 55) {
+        stoneGain = Random(5, 12) + min(10, (int)g_player.realm);
+        g_player.spiritStones += stoneGain;
+        outcome += L"\n临走前你没有贪多，只把边角灵材与可用碎玉收好，灵石+" +
+                   to_wstring(stoneGain) + L"。";
+    }
 }
 
 bool HasReincarnationLeverage() {
@@ -9718,7 +10259,6 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     bool isAIEvent = (choice.outcomes[0] == L"成功" && choice.outcomes.size() == 2);
     int eraRisk = GetEraAdventureRiskModifier();
     bool aiSuccess = false;
-    int karmaBeforeChoice = g_player.karma;
 
     if (isAIEvent) {
         // AI事件：使用AI生成结果
@@ -9740,12 +10280,17 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     ApplyOutcomeEffects(g_messageText);
+    bool successLike = isAIEvent
+        ? (aiSuccess && IsPositiveOutcomeText(g_messageText))
+        : ((outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText));
+    AppendAdventureResourceSpoils(*g_currentEvent, successLike, g_messageText);
     if (!isAIEvent && choice.karmaChange != 0) {
-        int karmaDelta = g_player.karma - karmaBeforeChoice;
-        if (karmaDelta != 0) {
-            wstring ripple = karmaDelta > 0
-                ? L"\n因果回响：此举让本世牵连更厚（" + FormatSignedInt(karmaDelta) + L"）。"
-                : L"\n因果回响：此举让本世牵连转冷（" + FormatSignedInt(karmaDelta) + L"）。";
+        int rippleDelta = choice.karmaChange;
+        if (rippleDelta != 0) {
+            g_messageText += L"\n因果牵动" + FormatSignedInt(rippleDelta);
+            wstring ripple = rippleDelta > 0
+                ? L"\n后续牵动：这件事会让相关人物与旧债更容易浮到台前。"
+                : L"\n后续牵动：部分人情暂时转冷，后面的试探可能更硬。";
             g_messageText += ripple;
         }
     }
@@ -9755,7 +10300,6 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         AppendAiOutcomeSocialReaction(g_messageText, aiSuccess, *g_currentEvent, choice);
         g_contextMgr.UpdateFromChoice(choiceIndex, g_messageText);
     } else {
-        bool successLike = (outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText);
         const SocialThread* thread = PickOutcomeReactionThread(*g_currentEvent, choice, g_messageText);
         if (thread) {
             g_messageText += BuildOutcomeNpcReaction(*thread, successLike, *g_currentEvent, choice);
@@ -9786,7 +10330,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
             g_currentEvent->title + L"；" + choice.description + L"；" + CompactMemoryFragment(playerVisibleOutcome));
     }
     g_contextMgr.SetContext(BuildPlayerContext());
-    TraceEventChoiceResult(*g_currentEvent, choice, choiceIndex, outcomeIndex, g_messageText, isAIEvent);
+    TraceEventChoiceResult(*g_currentEvent, choice, choiceIndex, outcomeIndex, playerVisibleOutcome, isAIEvent);
 
     if (g_player.IsDead()) {
         g_gameState = STATE_GAMEOVER;
@@ -9865,9 +10409,40 @@ void DrawLabelValue(Graphics& graphics, Font& labelFont, Font& valueFont,
     graphics.DrawString(value.c_str(), -1, &valueFont, valueRect, &leftFormat, &valueBrush);
 }
 
+wstring BuildImmediateGoalDigest() {
+    if (g_player.IsDead()) {
+        return L"当前要事: 此世已到尽头，等待下一世重新入局。";
+    }
+    if (g_player.CanBreakthrough()) {
+        if (g_player.realm == MORTAL) {
+            return L"当前要事: 肉身根基已足，按 [3] 引气入体，不必继续在凡人期拖年岁。";
+        }
+        if (g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao()) {
+            return L"当前要事: 道祖之上仍缺万道积累，先补掌道深度、因果与至宝共鸣。";
+        }
+        return L"当前要事: 境界已抵瓶颈，按 [3] 尝试突破，或先历练补足护道因果。";
+    }
+    if (g_player.realm != MORTAL && g_player.level >= 9) {
+        int need = max(0, g_player.GetExpNeeded() - g_player.exp);
+        return L"当前要事: 已到九层，修为还差 " + to_wstring(need) +
+               L" 才能圆满；先按 [1] 修炼或 [2] 历练补足，再 [3] 突破。";
+    }
+    if (g_player.hp < g_player.maxHp / 2 && g_player.pills > 0) {
+        return L"当前要事: 气血偏低，按 [4] 调息服药，别带伤硬闯机缘。";
+    }
+    if (g_player.realm == MORTAL) {
+        return L"当前要事: 先以 [1] 打熬肉身至凡人九层，[2] 历练可提前牵出师承与机缘。";
+    }
+    if (g_player.spiritStones >= 10 + g_player.realm * 2) {
+        return L"当前要事: 可在 [1] 修炼、[2] 历练与 [5] 灵石闭关之间取舍。";
+    }
+    return L"当前要事: 资源不足时多历练；资源充足时闭关推进，瓶颈再以突破收束。";
+}
+
 wstring BuildMainWorldDigest() {
     wstringstream ss;
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
+    ss << BuildImmediateGoalDigest() << L"\n\n";
     ss << g_worldEraName << L"\n";
     ss << g_eraTransitionNote << L"\n";
     ss << L"世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
@@ -11065,8 +11640,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             msg += L"\n修为水到渠成，踏入" + GetRealmName(g_player.realm) +
                                    L" " + to_wstring(g_player.level) + L"层。";
                         }
-                        if (g_player.level > oldLevel || g_player.age % 8 == 0) {
+                        bool rootTraitShown = false;
+                        bool milestoneLayer = (g_player.level == 9);
+                        if (g_player.level > oldLevel && milestoneLayer) {
                             msg += L"\n" + g_player.GetRootEraTraitText();
+                            rootTraitShown = true;
                         }
                         if (daoMeditation > 0) {
                             msg += L"\n" + g_legacySystem.GetRelic().daoName +
@@ -11086,9 +11664,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             AddMemory(L"时代修行",
                                 L"在" + g_worldEraName + L"持续打坐，修为变化+" + to_wstring(gain));
                         }
-                        if (weakRoot && g_player.level <= 3 &&
-                            g_player.age - g_lastMeditationAdviceAge >= 8) {
-                            msg += L"\n这副根骨单靠蒲团太慢。若想活过寿元追赶，师承、历练、机缘和闭关资源都比硬熬年月更要紧。";
+                        if (!rootTraitShown && weakRoot && g_player.level <= 3 &&
+                            g_player.age - g_lastMeditationAdviceAge >= 10) {
+                            wstring rootAdvice = (IsClassicalEraName(g_worldEraName) || g_worldEraName == L"仙朝鼎盛纪")
+                                ? L"这副根骨不适合只靠蒲团硬熬；好在此世灵气尚厚，师承、历练与丹药都能把短处补回来。"
+                                : L"这副根骨单靠蒲团太慢。若想活过寿元追赶，师承、历练、机缘和闭关资源都比硬熬年月更要紧。";
+                            msg += L"\n" + rootAdvice;
                             g_lastMeditationAdviceAge = g_player.age;
                             AddMemory(L"根骨压力", L"杂灵根苦修迟缓，今生需要借师承、历练或机缘寻找活路。");
                         }
@@ -11124,6 +11705,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         g_jadeDreamOmenEventsThisLife++;
                         AddMemory(L"玉意追兆", L"外出历练前，黑白旧玉把梦兆推到今生局势面前。");
                         OpenEventPage(&s_jadeOmenEvent, L"伴生玉佩历练");
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                    else if (ShouldTriggerLongCharacterEvent()) {
+                        static Event s_longCharacterEvent;
+                        s_longCharacterEvent = BuildLongCharacterEvent();
+                        AddMemory(L"人物支线入局",
+                            L"外出历练时，一条可延续到后世的人物因果浮到台前。");
+                        OpenEventPage(&s_longCharacterEvent, L"人物因果历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerLifeStoryProgressEvent()) {
@@ -11230,12 +11819,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             break;
                         }
                         wstring breakthroughTarget = GetRealmName(static_cast<Realm>(g_player.realm + 1));
-                        AppendTraceLog(L"BREAKTHROUGH_PROMPT",
-                            L"是否突破至 " + breakthroughTarget + L"？");
-                        int result = MessageBoxW(hWnd,
-                            (L"是否突破至 " + breakthroughTarget + L"？").c_str(),
-                            L"突破境界", MB_YESNO | MB_ICONQUESTION);
-                        if (result == IDYES) {
+                        AppendTraceLog(L"BREAKTHROUGH_ATTEMPT",
+                            L"尝试突破至 " + breakthroughTarget + L"。");
+                        {
                             int daoBreakthrough = GetDaoBreakthroughModifier();
                             bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier() + daoBreakthrough);
                             if (success) {
@@ -11299,9 +11885,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                 ShowNotice(L"突破失败", failMsg);
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
-                        } else {
-                            AppendTraceLog(L"BREAKTHROUGH_CANCELLED",
-                                L"暂缓突破至 " + breakthroughTarget + L"。");
                         }
                     }
                 }
@@ -11347,6 +11930,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         gain += GetEraClosedDoorBonus();
                         gain = gain * ((g_player.GetRootEraMeditationModifierPercent() + 100) / 2) / 100;
                         gain = max(20, gain);
+                        int oldClosedDoorLevel = g_player.level;
                         g_player.exp += gain;
                         NormalizeCultivationProgress();
                         g_player.age++;
@@ -11354,12 +11938,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         AddMemory(L"灵石闭关", L"消耗灵石" + to_wstring(cost) + L"，修为+" + to_wstring(gain));
                         wstring closedDoorMsg = L"闭关一年，消耗灵石" + to_wstring(cost) +
                             L"，修为+" + to_wstring(gain) + L"。";
+                        if (IsClassicalEraName(g_worldEraName) || g_worldEraName == L"仙朝鼎盛纪") {
+                            closedDoorMsg += L"\n静室聚灵灯一盏盏熄下去，灵石化成细白灵雾，沿周天把浮动的根基慢慢压实。";
+                        } else if (g_worldEraName == L"末法裂变纪" || g_worldEraName == L"废土返道纪") {
+                            closedDoorMsg += L"\n每一枚灵石都烧得很快，你只能把散乱灵气一缕缕扣进经脉，不敢浪费半息。";
+                        } else if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") {
+                            closedDoorMsg += L"\n阵列和灵机把灵石磨成稳定灵流，修行像接入一条安静却昂贵的河。";
+                        }
                         if (GetEraClosedDoorBonus() > 0) {
                             closedDoorMsg += L"\n这一世的灵机与阵械体系让闭关效率更高。";
                         } else if (GetEraClosedDoorBonus() < 0) {
                             closedDoorMsg += L"\n这一世天地不稳，哪怕借灵石闭关也难尽如人意。";
                         }
-                        closedDoorMsg += L"\n" + g_player.GetRootEraTraitText();
+                        bool closedDoorMilestone = (g_player.level > oldClosedDoorLevel) &&
+                            (g_player.level == 9);
+                        if (closedDoorMilestone) {
+                            closedDoorMsg += L"\n" + g_player.GetRootEraTraitText();
+                        }
                         closedDoorMsg += BuildActionEmotionFeedback(L"闭关", true);
                         AppendTraceLog(L"CLOSED_DOOR", closedDoorMsg);
                         ShowNotice(L"灵石闭关", closedDoorMsg);

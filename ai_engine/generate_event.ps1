@@ -1,13 +1,13 @@
 ﻿param(
     [string]$ReleaseDir = (Join-Path (Split-Path $PSScriptRoot -Parent) "release"),
-    [string]$Model = "gpt-oss:120b-cloud",
+    [string]$Model = "gemma3:4b",
     [string]$ModelPath = "",
     [string]$LoraPath = "",
     [string]$LlamaCli = (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-completion.exe"),
     [int]$PortableTimeoutSec = 75,
     [int]$OllamaTimeoutSec = 90,
     [ValidateSet("auto", "portable", "ollama")]
-    [string]$Backend = "auto"
+    [string]$Backend = "portable"
 )
 
 $ErrorActionPreference = "Stop"
@@ -76,6 +76,8 @@ $LoraPath = Resolve-ConfiguredPath `
     -DefaultPath ""
 if ([string]::IsNullOrWhiteSpace($LoraPath)) {
     $LoraPath = Resolve-AutoLoraPath
+} elseif (-not (Test-Path -LiteralPath $LoraPath)) {
+    $LoraPath = Resolve-AutoLoraPath
 }
 $LlamaCli = [System.IO.Path]::GetFullPath($LlamaCli)
 
@@ -89,6 +91,10 @@ $llamaLogPath = Join-Path $ReleaseDir "ai_llama.log"
 $ollamaLogPath = Join-Path $ReleaseDir "ai_ollama.log"
 $loraDisablePath = Join-Path $ReleaseDir "ai_lora_disabled.txt"
 $encoding = New-Object System.Text.UTF8Encoding($false)
+
+Get-ChildItem -LiteralPath $ReleaseDir -Filter "ai_llama_*.tmp" -File -ErrorAction SilentlyContinue |
+    Where-Object { $_.LastWriteTime -lt (Get-Date).AddMinutes(-5) } |
+    Remove-Item -Force -ErrorAction SilentlyContinue
 
 function Get-AdapterFingerprint {
     param([string]$AdapterPath)
@@ -178,6 +184,18 @@ function Add-ClippedPromptLine {
     }
 }
 
+function Test-FirstLifePrompt {
+    param([string]$PromptText)
+    if ([string]::IsNullOrWhiteSpace($PromptText)) { return $false }
+    return $PromptText -match "第一世|第1世|Life:\s*first life|first life|尚无前世记忆|no past-life memory"
+}
+
+function Test-FirstLifeMemoryLeak {
+    param([string]$Value)
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
+    return $Value -match "前世|轮回|转世|上一世|旧世|旧日因果|不该留下|今生抬头|旧梦归来|宿命回潮"
+}
+
 function Get-PromptSectionLines {
     param(
         [string[]]$Lines,
@@ -216,9 +234,13 @@ function Build-PortablePrompt {
     $out = New-Object System.Collections.Generic.List[string]
     Add-ClippedPromptLine $out "你是修仙Roguelike事件模型。严格只输出5行：标题、描述、选项一、选项二、选项三。" 200
     Add-ClippedPromptLine $out "标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头；描述45到90个中文字符；三个选项各2到8个字。" 200
+    Add-ClippedPromptLine $out "输出第5行后立刻停止；不要另起第二个事件，不要写model、assistant、解释、编号、项目符号或任何英文字母。" 220
     Add-ClippedPromptLine $out "优先延续本世人脉、家世、最近记忆、当前世界和未收束线头；NPC要像活人一样有情绪、目标、试探和后续动作。" 220
     Add-ClippedPromptLine $out "第一世只能写黑白旧玉、梦兆、早熟直觉和今生身世，不写明确前世记忆；低境界不能获得、装备或主动调用鸿蒙至宝。" 220
-    Add-ClippedPromptLine $out "不要写UI、系统说明、按钮、编号、请选择；不要暴露隐藏设定或模型规则。" 160
+    Add-ClippedPromptLine $out "不要写UI、系统说明、按钮、编号、请选择；不要暴露隐藏设定或模型规则。" 180
+    if (Test-FirstLifePrompt $PromptText) {
+        Add-ClippedPromptLine $out "当前是第一世：只能写今生身世、父母师门、资质与黑白旧玉异样；不得写前世、轮回、转世或旧日因果。" 220
+    }
     Add-ClippedPromptLine $out "" 1
 
     foreach ($line in $sourceLines) {
@@ -295,11 +317,7 @@ function Format-RuntimePrompt {
 }
 
 $runtimePrompt = Format-RuntimePrompt $basePrompt
-if ($Model -match "gpt-oss|120b") {
-    $ollamaPrompt = Build-PortablePrompt $basePrompt
-} else {
-    $ollamaPrompt = $basePrompt
-}
+$ollamaPrompt = $basePrompt
 
 function ConvertTo-NativeArgument {
     param([AllowNull()][object]$Argument)
@@ -411,18 +429,21 @@ function Invoke-PortableLlama {
         $process = [System.Diagnostics.Process]::new()
         $process.StartInfo = $startInfo
         [void]$process.Start()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
 
         if (-not $process.WaitForExit($TimeoutSec * 1000)) {
             Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-            $stderr = $process.StandardError.ReadToEnd()
+            $stderr = ""
+            try { $stderr = $stderrTask.GetAwaiter().GetResult() } catch {}
             if ($stderr) {
                 [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
             }
             throw "llama.cpp timed out after ${TimeoutSec}s"
         }
 
-        $stdout = $process.StandardOutput.ReadToEnd()
-        $stderr = $process.StandardError.ReadToEnd()
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
         if ($stderr) {
             [System.IO.File]::WriteAllText($llamaLogPath, $stderr, $encoding)
         }
@@ -467,10 +488,6 @@ function Invoke-Ollama {
 
     $numPredict = 220
     $thinkSetting = $false
-    if ($Model -match "gpt-oss|120b") {
-        $numPredict = 1536
-        $thinkSetting = "low"
-    }
 
     $body = @{
         model = $Model
@@ -509,21 +526,6 @@ $text = ""
 $usedBackend = ""
 $errors = @()
 
-if ($Backend -eq "auto" -or $Backend -eq "ollama") {
-    try {
-        $text = Invoke-Ollama
-        if ([string]::IsNullOrWhiteSpace($text)) {
-            throw "Ollama returned empty text"
-        }
-        $usedBackend = "ollama:$Model"
-        Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
-    } catch {
-        $errors += "ollama: $($_.Exception.Message)"
-        Write-StatusFile -BackendLabel "ollama:$Model" -StatusText "天机一度不稳，已由既有因果继续牵动。"
-        if ($Backend -eq "ollama") { throw }
-    }
-}
-
 if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -eq "portable")) {
     try {
         $usedBackend = "portable-llama.cpp:" + [System.IO.Path]::GetFileName($ModelPath)
@@ -541,7 +543,7 @@ if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -
             Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
         } else {
             try {
-                $loraTimeoutSec = [Math]::Min($PortableTimeoutSec, 25)
+                $loraTimeoutSec = $PortableTimeoutSec
                 $text = Invoke-PortableLlama -AdapterPath $activeLoraPath -TimeoutSec $loraTimeoutSec
                 if ([string]::IsNullOrWhiteSpace($text)) {
                     throw "llama.cpp returned empty text"
@@ -565,6 +567,21 @@ if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -
         $errors += "portable: $($_.Exception.Message)"
         Write-StatusFile -BackendLabel "portable-llama.cpp" -StatusText "天机一度不稳，已由既有因果继续牵动。"
         if ($Backend -eq "portable") { throw }
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -eq "ollama")) {
+    try {
+        $text = Invoke-Ollama
+        if ([string]::IsNullOrWhiteSpace($text)) {
+            throw "Ollama returned empty text"
+        }
+        $usedBackend = "ollama:$Model"
+        Write-StatusFile -BackendLabel $usedBackend -StatusText "已生成动态事件。"
+    } catch {
+        $errors += "ollama: $($_.Exception.Message)"
+        Write-StatusFile -BackendLabel "ollama:$Model" -StatusText "天机一度不稳，已由既有因果继续牵动。"
+        if ($Backend -eq "ollama") { throw }
     }
 }
 
@@ -622,7 +639,7 @@ function Test-BrokenEventText {
     if ($Value -match "\|") { return $true }
     if ($Value -match "\*") { return $true }
     if ($Value -match "-{2,}|_{2,}|~{2,}") { return $true }
-    if ($Value -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的") { return $true }
+    if ($Value -match "话说速|被人到|的的|藏着的|带着的|露出一丝的|漏出一丝的|神量|仙尊神识") { return $true }
     return $false
 }
 
@@ -651,6 +668,7 @@ function Test-ContextLabelLine {
 
 function Get-ContextKeywords {
     param([string]$PromptText)
+    $isFirstLife = Test-FirstLifePrompt $PromptText
     if ($PromptText -match "顾临渊|叶微澜|江照雪|测灵碑|资质出众") {
         return @("父亲", "母亲", "顾临渊", "叶微澜", "江照雪", "测灵")
     }
@@ -660,13 +678,34 @@ function Get-ContextKeywords {
     if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师") {
         return @("失传", "古法", "道网", "档案", "节点", "功法", "远方")
     }
+    if ($PromptText -match "本命至宝初生器灵|本命器物已有朦胧器灵|器灵只能") {
+        return @("本命", "器灵", "亲近", "畏惧", "神识", "温养", "器物")
+    }
+    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+        return @("灵机", "蒸汽", "工坊", "闻迟", "器痕", "残炉", "本命", "回路")
+    }
+    if ($PromptText -match "道祖-天道境|万道母鼎|万道本命至宝|多纪元因果归流") {
+        return @("万道", "母鼎", "本命至宝", "旧友", "器灵", "因果", "天道境", "鼎")
+    }
+    if ($PromptText -match "境界名称:\s*道祖|造化青莲|陆青鸢|有限调用古老权柄") {
+        return @("道祖", "青莲", "灵脉", "权柄", "代价", "陆青鸢", "反噬", "救")
+    }
+    if ($PromptText -match "后天通天灵宝|无人温养|威能流失|残钟") {
+        return @("后天", "通天灵宝", "残钟", "温养", "威能", "流失", "道火")
+    }
+    if ($PromptText -match "先天通天灵宝|先天一气") {
+        return @("先天", "通天灵宝", "先天一气", "观宝", "贪念", "器道")
+    }
+    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+        return @("鸿蒙", "投影", "见影", "拒绝", "权柄", "低境界", "道心")
+    }
     if ($PromptText -match "返道拾荒盟|霜裂短剑|废土返道纪|残宗向导|器阁执事|器痕归灵") {
         return @("废土", "器痕", "残宗", "法宝", "器物", "古机", "废墟", "残炉")
     }
     if ($PromptText -match "枯井守盟|灵井枯潮|末法裂变纪|配给执事|仙帝仍会寿尽") {
         return @("寿元", "仙帝", "道祖", "末法", "灵井", "配给", "破境", "闭关")
     }
-    if ($PromptText -match "天册仙朝册封吏|父母身份被隐去|黑白相间|仙朝鼎盛纪") {
+    if ($PromptText -match "天册仙朝册封吏|仙朝主簿|闻人策|仙朝.*(户籍|名册|册封)|父母身份被隐去|黑白相间") {
         return @("玉佩", "黑白", "玉痕", "名册", "册封", "家世", "养育", "旧名", "父母")
     }
     if ($PromptText -match "工坊契约反噬|灵机合约|旧债仍未清") {
@@ -675,8 +714,14 @@ function Get-ContextKeywords {
     if ($PromptText -match "当前当世鸿蒙天象|本世鸿蒙天象|鸿蒙参悟:|鸿蒙道印|造化青莲|归墟玄图|太初源炉|无量因果镜") {
         return @("鸿蒙", "至宝", "投影", "天象", "大道", "道祖")
     }
+    if ($isFirstLife -and $PromptText -match "伴生玉佩|黑白旧玉|阴阳玉痕|梦中玉意|black-white old jade") {
+        return @("玉佩", "黑白", "旧玉", "父母", "家世", "今生", "道途")
+    }
     if ($PromptText -match "伴生玉佩|黑白旧玉|阴阳玉痕|梦中玉意") {
         return @("玉佩", "黑白", "梦中", "轮回", "记忆", "父母", "旧名")
+    }
+    if ($isFirstLife) {
+        return @("人情", "宗门", "道途", "今生", "父母", "师门")
     }
     return @("因果", "旧日", "人情", "宗门", "道途")
 }
@@ -690,7 +735,7 @@ function Get-RequiredKeywordGroups {
             @{ Label = "失传古法"; Words = @("失传", "古法", "功法", "旧法") }
         )
     }
-    if ($PromptText -match "天册仙朝册封吏|父母身份被隐去|黑白相间|仙朝鼎盛纪") {
+    if ($PromptText -match "天册仙朝册封吏|仙朝主簿|闻人策|仙朝.*(户籍|名册|册封)|父母身份被隐去|黑白相间") {
         return @(
             @{ Label = "伴生旧玉"; Words = @("玉佩", "黑白", "玉痕", "旧玉") },
             @{ Label = "身世名册"; Words = @("名册", "册封", "家世", "养育", "旧名", "父母") }
@@ -700,6 +745,48 @@ function Get-RequiredKeywordGroups {
         return @(
             @{ Label = "玉意线索"; Words = @("玉意", "旧玉", "玉佩", "玉痕", "黑白") },
             @{ Label = "未竟旧契"; Words = @("未竟", "旧债", "工坊", "契约", "合约") }
+        )
+    }
+    if ($PromptText -match "本命至宝初生器灵|本命器物已有朦胧器灵|器灵只能") {
+        return @(
+            @{ Label = "本命器物"; Words = @("本命", "器物", "至宝") },
+            @{ Label = "器灵情绪"; Words = @("器灵", "亲近", "畏惧", "神识") }
+        )
+    }
+    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+        return @(
+            @{ Label = "灵机工坊"; Words = @("灵机", "蒸汽", "工坊", "闻迟", "回路") },
+            @{ Label = "本命器痕"; Words = @("器痕", "残炉", "本命", "器灵") }
+        )
+    }
+    if ($PromptText -match "道祖-天道境|万道母鼎|万道本命至宝|多纪元因果归流") {
+        return @(
+            @{ Label = "万道终局"; Words = @("万道", "母鼎", "天道境", "本命至宝", "鼎") },
+            @{ Label = "众生回声"; Words = @("旧友", "器灵", "愿望", "众声", "因果") }
+        )
+    }
+    if ($PromptText -match "境界名称:\s*道祖|造化青莲|陆青鸢|有限调用古老权柄") {
+        return @(
+            @{ Label = "道祖权柄"; Words = @("道祖", "权柄", "代价") },
+            @{ Label = "青莲灵脉"; Words = @("青莲", "灵脉", "陆青鸢", "救") }
+        )
+    }
+    if ($PromptText -match "后天通天灵宝|无人温养|威能流失|残钟") {
+        return @(
+            @{ Label = "后天通天"; Words = @("后天", "通天灵宝", "残钟") },
+            @{ Label = "温养衰退"; Words = @("温养", "威能", "流失", "道火") }
+        )
+    }
+    if ($PromptText -match "先天通天灵宝|先天一气") {
+        return @(
+            @{ Label = "先天通天"; Words = @("先天", "通天灵宝") },
+            @{ Label = "先天一气"; Words = @("先天一气", "贪念", "观宝") }
+        )
+    }
+    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+        return @(
+            @{ Label = "鸿蒙边界"; Words = @("鸿蒙", "投影", "见影") },
+            @{ Label = "低境界拒绝"; Words = @("拒绝", "权柄", "低境界", "道心") }
         )
     }
     return @()
@@ -738,6 +825,26 @@ function Test-ContainsAny {
     return $false
 }
 
+function Test-UnintroducedCanonName {
+    param(
+        [string]$Value,
+        [string]$PromptText
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Value)) { return $false }
+    $names = @(
+        "洛凝霜", "清蘅真人", "玄衡子", "沈听澜", "陆青鸢", "闻人策",
+        "赵临", "闻迟", "周玄岐", "祁无咎", "江照雪",
+        "顾临渊", "叶微澜", "沈怀舟", "林青棠", "陆守拙", "宋晚照"
+    )
+    foreach ($name in $names) {
+        if ($Value.Contains($name) -and -not $PromptText.Contains($name)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Get-KeywordHitCount {
     param(
         [string]$Value,
@@ -754,10 +861,16 @@ function Get-KeywordHitCount {
 function New-ContextFallbackEvent {
     param([string]$PromptText)
 
+    $isFirstLife = Test-FirstLifePrompt $PromptText
+
     if ($PromptText -match "顾临渊|叶微澜|江照雪|测灵碑|资质出众") {
+        $peerName = "同代弟子"
+        if ($PromptText -match "江照雪") {
+            $peerName = "江照雪"
+        }
         return @{
             Title = "【因果】测灵余声"
-            Description = "测灵碑亮起后，父亲压住夸赞，母亲暗中护短，同代江照雪却因你资质出众生出嫉妒。"
+            Description = "测灵碑亮起后，父亲压住夸赞，母亲暗中护短，${peerName}却因你资质出众生出嫉妒。"
             Choices = @("谢过长辈", "稳住锋芒", "正面应试")
         }
     }
@@ -768,11 +881,67 @@ function New-ContextFallbackEvent {
             Choices = @("顺势试探", "暗记气机", "暂留余地")
         }
     }
+    if ($PromptText -match "道祖-天道境|万道母鼎|万道本命至宝|多纪元因果归流") {
+        return @{
+            Title = "【因果】鼎前众声"
+            Description = "万道母鼎将开，旧友与器灵的愿望一并涌来；万道本命至宝映照诸道，却仍等你给众生一个答案。"
+            Choices = @("先听众声", "安放旧友", "观入万道")
+        }
+    }
+    if ($PromptText -match "境界名称:\s*道祖|造化青莲|陆青鸢|有限调用古老权柄") {
+        return @{
+            Title = "【因果】青莲问价"
+            Description = "陆青鸢按住造化青莲的余光，不让你轻易救下灵脉；她敬你为道祖，却更想先听清代价。"
+            Choices = @("说清代价", "暂缓出手", "护住灵脉")
+        }
+    }
+    if ($PromptText -match "本命至宝初生器灵|本命器物已有朦胧器灵|器灵只能") {
+        return @{
+            Title = "【传承】器灵初醒"
+            Description = "本命至宝在掌心轻轻一颤，器灵像幼童怕生又认得你；亲近与畏惧一并贴上神识。"
+            Choices = @("安抚器灵", "温养本命", "暂缓驱使")
+        }
+    }
+    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+        return @{
+            Title = "【传承】炉心器痕"
+            Description = "闻迟在灵机工坊残炉前收起轻慢，惊疑地听见本命器痕回应你；他劝你别让旧法被拆成回路。"
+            Choices = @("请教闻迟", "封住器痕", "重查残炉")
+        }
+    }
+    if ($PromptText -match "后天通天灵宝|无人温养|威能流失|残钟") {
+        return @{
+            Title = "【传承】残钟余威"
+            Description = "残钟曾是后天通天灵宝，如今钟纹黯淡仍令群修失声；它不认新主，只问你能否续一口道火。"
+            Choices = @("温养残钟", "询问旧主", "暂不触碰")
+        }
+    }
+    if ($PromptText -match "先天通天灵宝|先天一气") {
+        return @{
+            Title = "【传承】先天一气"
+            Description = "先天通天灵宝残影一现，满阁炉火都向内收声；那缕先天一气压住众人贪念，也照出你的敬畏。"
+            Choices = @("守礼观宝", "请教器道", "制止争夺")
+        }
+    }
+    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+        return @{
+            Title = "【因果】鸿蒙见影"
+            Description = "鸿蒙投影压过识海，又在你伸手前自行退去；低境界承不住权柄，只能把拒绝化作一线悟痕。"
+            Choices = @("守住道心", "静观投影", "记下悟痕")
+        }
+    }
     if ($PromptText -match "星穹远讯院|青灯登仙经|道网档案师|星穹道网纪") {
         return @{
             Title = "【传承】道网旧法"
             Description = "藏经长老认出你的起手式，低声把失传古法与道网档案相连，远方节点正悄悄复核你的影子。"
             Choices = @("压下旧法", "借网查档", "请教长老")
+        }
+    }
+    if ($PromptText -match "枯井小宗|守门人|干粮旧记|一袋干粮") {
+        return @{
+            Title = "【因果】干粮旧记"
+            Description = "枯井小宗守门人不识你今身，却认出祖上传下的干粮旧记；敬畏压住贪念，只轻声问你来意。"
+            Choices = @("接过旧记", "问其祖上", "低调入宗")
         }
     }
     if ($PromptText -match "返道拾荒盟|霜裂短剑|废土返道纪|残宗向导|器阁执事|器痕归灵") {
@@ -784,19 +953,26 @@ function New-ContextFallbackEvent {
     }
     if ($PromptText -match "枯井守盟|灵井枯潮|末法裂变纪|配给执事|仙帝仍会寿尽") {
         return @{
-            Title = "【危机】灵井寿限"
-            Description = "灵井枯潮逼近，配给执事扣住破境名额；你虽号仙帝，仍能听见寿元在闭关石门外一点点迫近。"
-            Choices = @("争取配给", "闭关压寿", "问道祖路")
+            Title = "【危机】灵井卡名"
+            Description = "赵临借灵井配给卡住试炼名额，笑你五行灵根太慢；旁人等着看笑话，只有账册露出涂改痕迹。"
+            Choices = @("据理争名", "暂忍记账", "请人作证")
         }
     }
-    if ($PromptText -match "天册仙朝册封吏|父母身份被隐去|黑白相间|仙朝鼎盛纪") {
+    if ($PromptText -match "天册仙朝册封吏|仙朝主簿|闻人策|仙朝.*(户籍|名册|册封)|父母身份被隐去|黑白相间") {
         return @{
             Title = "【因果】玉痕名册"
-            Description = "册封吏核验名册时，你胸前黑白玉佩忽然发温，养育者避开你的目光，似乎仍在替父母守着旧名。"
+            Description = "仙朝册封吏核验名册时，你胸前黑白玉佩忽然发温，养育者避开目光，似乎仍替父母守着旧名。"
             Choices = @("追问旧名", "握玉静听", "暂避册封")
         }
     }
     if ($PromptText -match "玉意梦兆|工坊契约反噬|温凉玉意|灵机合约") {
+        if ($isFirstLife) {
+            return @{
+                Title = "【因果】旧玉微温"
+                Description = "黑白旧玉在工坊齿轮声里发温，你只觉契纸有些刺眼；养育者护短沉默，示意你先别急着落印。"
+                Choices = @("握玉辨契", "问询养者", "暂避工坊")
+            }
+        }
         return @{
             Title = "【因果】玉意旧契"
             Description = "黑白旧玉在工坊齿轮声里发温，梦兆照见前世契约旧债；养育者护短沉默，只怕你又被合约套住。"
@@ -811,10 +987,24 @@ function New-ContextFallbackEvent {
         }
     }
     if ($PromptText -match "伴生玉佩|黑白旧玉|阴阳玉痕|梦中玉意") {
+        if ($isFirstLife) {
+            return @{
+                Title = "【因果】旧玉微温"
+                Description = "夜色压下时，黑白旧玉在衣襟里微微发温；你只觉心神安定，便想起今生父母临别时的叮嘱。"
+                Choices = @("握玉静听", "稳住心神", "写信归家")
+            }
+        }
         return @{
             Title = "【因果】旧玉微温"
             Description = "夜色压下时，黑白旧玉在衣襟里微微发温，几段不该留下的轮回记忆又贴着神魂浮上来。"
             Choices = @("握玉静听", "压下梦痕", "循忆追因")
+        }
+    }
+    if ($isFirstLife) {
+        return @{
+            Title = "【奇遇】雾径闻钟"
+            Description = "你走入雾气遮蔽的山径，只听见远处山门钟声回荡；胸前旧玉微温，让你把心神重新稳住。"
+            Choices = @("循钟前行", "原地观望", "稳住心神")
         }
     }
     return @{
@@ -1024,6 +1214,7 @@ function Convert-StructuredEvent {
 $fallback = New-ContextFallbackEvent $basePrompt
 $keywords = Get-ContextKeywords $basePrompt
 $requiredGroups = Get-RequiredKeywordGroups $basePrompt
+$isFirstLifePrompt = Test-FirstLifePrompt $basePrompt
 $repairNotes = New-Object System.Collections.Generic.List[string]
 $rawHadNoise = Test-MojibakeText $text
 if ($rawHadNoise) {
@@ -1034,9 +1225,6 @@ if ($rawHadBrokenText) {
     $repairNotes.Add("清理病句")
 }
 $strictContextRepair = $true
-if ($usedBackend -match "^ollama:.*(gpt-oss|120b)") {
-    $strictContextRepair = $false
-}
 if ($rawHadNoise -or $rawHadBrokenText) {
     $strictContextRepair = $true
 }
@@ -1093,6 +1281,8 @@ $description = $null
 foreach ($line in $candidateLines) {
     $clean = Normalize-EventLine $line
     $clean = [regex]::Replace($clean, "\s*(请选择|选择)[:：]?.*$", "")
+    if ($isFirstLifePrompt -and (Test-FirstLifeMemoryLeak $clean)) { continue }
+    if (Test-UnintroducedCanonName $clean $basePrompt) { continue }
     if (Test-GoodDescription $clean $keywords (-not $strictContextRepair)) {
         $description = $clean
         break
@@ -1109,6 +1299,16 @@ if ($strictContextRepair -and (Get-KeywordHitCount ($title + "`n" + $description
     $description = $fallback.Description
     $usedFallbackDescription = $true
     $repairNotes.Add("描述贴合上下文")
+}
+if ($isFirstLifePrompt -and (Test-FirstLifeMemoryLeak $description)) {
+    $description = $fallback.Description
+    $usedFallbackDescription = $true
+    $repairNotes.Add("第一世记忆边界")
+}
+if (Test-UnintroducedCanonName $description $basePrompt) {
+    $description = $fallback.Description
+    $usedFallbackDescription = $true
+    $repairNotes.Add("未引入角色")
 }
 if ($strictContextRepair) {
     $missingRequiredGroups = Get-MissingKeywordGroups ($title + "`n" + $description) $requiredGroups

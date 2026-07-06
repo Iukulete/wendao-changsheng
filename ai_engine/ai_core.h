@@ -367,9 +367,9 @@ public:
 
         // 物品
         templates.items = {
-            L"古修玉简", L"养灵葫芦", L"镇魂铜镜", L"镇狱小塔", L"青冥阵盘",
+            L"古修玉简", L"养灵葫芦", L"镇魂铜镜", L"师门护符", L"青冥阵盘",
             L"翠灵丹瓶", L"瞬影符", L"灵石", L"月华草", L"玄铁矿",
-            L"当世飞剑", L"残破器纹", L"旧主魂印", L"通天灵宝残印", L"大道真名"
+            L"当世飞剑", L"残破器纹", L"旧契木牌", L"旧玉温痕", L"行功残页"
         };
 
         // 行动
@@ -420,7 +420,7 @@ public:
             return L"【奇遇】人情暗流";
         }
         if (focus == L"dao") {
-            return L"【传承】道痕回声";
+            return player.realm >= 11 ? L"【传承】道痕回声" : L"【修行】心火微澜";
         }
 
         uniform_int_distribution<> dis(0, templates.locations.size() - 1);
@@ -542,7 +542,11 @@ public:
         }
         if (focus == L"dao") {
             wstringstream ss;
-            ss << L"你行至灵气回旋处，心底大道旧痕微微发热；这不是境界压人，而是所掌之道在提醒你取舍。";
+            if (player.realm >= 11) {
+                ss << L"你行至灵气回旋处，心底大道旧痕微微发热；这不是境界压人，而是所掌之道在提醒你取舍。";
+            } else {
+                ss << L"你行至灵气回旋处，胸口旧玉微温，行功气息忽然分成两条路；你还看不清来历，只知道此刻的取舍会影响今生心性。";
+            }
             return ss.str();
         }
 
@@ -563,13 +567,15 @@ public:
         }
 
         wstring legacyHint = L"";
-        if (player.legacyState.find(L"通天灵宝") != wstring::npos ||
-            player.daoState.find(L"通天灵宝") != wstring::npos ||
-            player.legacyState.find(L"法宝") != wstring::npos ||
-            player.legacyState.find(L"灵宝") != wstring::npos) {
+        if (player.realm >= 11 &&
+            (player.legacyState.find(L"通天灵宝") != wstring::npos ||
+             player.daoState.find(L"通天灵宝") != wstring::npos ||
+             player.legacyState.find(L"法宝") != wstring::npos ||
+             player.legacyState.find(L"灵宝") != wstring::npos)) {
             legacyHint = L"识海深处忽有器鸣一闪而过，仿佛前世祭炼过的重宝也在注视这场相遇。";
-        } else if (player.daoState.find(L"掌道深度") != wstring::npos ||
-                   player.daoState.find(L"大道") != wstring::npos) {
+        } else if (player.realm >= 11 &&
+                   (player.daoState.find(L"掌道深度") != wstring::npos ||
+                    player.daoState.find(L"大道") != wstring::npos)) {
             legacyHint = L"你心底有一缕大道旧痕微微发热，提醒你这不是偶然。";
         } else if (player.legacyState.find(L"战斗") != wstring::npos ||
                    player.legacyState.find(L"斗法") != wstring::npos) {
@@ -870,16 +876,18 @@ public:
             L"旧世", L"上一纪元", L"残响", L"断代", L"遗址", L"遗物",
             L"旧朝", L"金册", L"断网", L"残频", L"废炉", L"枯井", L"黑匣", L"古修"
         });
-        bool touchesTreasure = eventText.find(L"通天灵宝") != wstring::npos ||
-                               eventText.find(L"灵宝") != wstring::npos ||
-                               eventText.find(L"道痕") != wstring::npos ||
-                               eventText.find(L"器纹") != wstring::npos;
+        bool deepLegacyVisible = player.realm >= 11;
+        bool touchesTreasure = deepLegacyVisible &&
+                               (eventText.find(L"通天灵宝") != wstring::npos ||
+                                eventText.find(L"灵宝") != wstring::npos ||
+                                eventText.find(L"道痕") != wstring::npos ||
+                                eventText.find(L"器纹") != wstring::npos);
         bool touchesHongmeng = containsAny(eventText, {
             L"鸿蒙", L"创世级", L"天象", L"至宝", L"投影", L"显化",
             L"鸿蒙道印", L"造化青莲", L"玄牝轮回玉", L"太初源炉", L"归墟玄图",
             L"无量天书", L"开界神斧", L"太虚照世镜", L"万道母鼎"
         });
-        bool touchesDao = containsAny(eventText, {
+        bool touchesDao = deepLegacyVisible && containsAny(eventText, {
             L"大道", L"道祖", L"证道", L"掌道", L"天道", L"道音", L"道痕"
         });
         bool touchesFaction = containsAny(eventText, {
@@ -937,7 +945,7 @@ public:
         if (success) {
             ss << L"你选择「" << action << L"」，";
             if (touchesJade) {
-                ss << L"没有强求答案，只借玉佩温意稳住几段前世碎片，让今生仍由自己作主。";
+                ss << L"没有强求答案，只借玉佩温意稳住几段梦中碎光，让今生仍由自己作主。";
             } else if (touchesUnfinished) {
                 ss << L"没有把前世旧债当成梦兆，而是替今生争回了主动权。";
             } else if (touchesLostTechnique) {
