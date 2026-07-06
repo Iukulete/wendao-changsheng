@@ -5651,6 +5651,17 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
 
 wstring FormatSocialActorName(const SocialThread& thread);
 
+wstring GetSocialActorFollowName(const SocialThread& thread) {
+    wstring profile = thread.name + L" " + thread.role;
+    if (TextContainsAny(profile, {L"母亲", L"洛凝霜", L"江照雪", L"沈听澜", L"陆青鸢", L"清蘅真人", L"师尊", L"霜鸦"})) {
+        return L"她";
+    }
+    if (TextContainsAny(profile, {L"父亲", L"玄衡子", L"祁无咎", L"掌律真人"})) {
+        return L"他";
+    }
+    return L"对方";
+}
+
 wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                                 const Event& event, const Choice& choice) {
     bool familyTie = TextContainsAny(thread.role, {L"父亲", L"母亲", L"养育者", L"身世"});
@@ -5670,6 +5681,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
 
     wstringstream ss;
     wstring actor = FormatSocialActorName(thread);
+    wstring leadActor = actor;
     ss << L"\n事后，";
     if (!thread.visibleRealm.empty()) {
         ss << actor << L"外显" << thread.visibleRealm;
@@ -5677,77 +5689,78 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
             ss << L"，但" << BuildPlayerVisiblePowerHint(thread);
         }
         ss << L"。";
+        leadActor = GetSocialActorFollowName(thread);
     }
 
     if (success) {
         if (ancestryLead) {
-            ss << actor << L"没有承认旧事，只把一条身世线索留得更近：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"没有承认旧事，只把一条身世线索留得更近：" << BuildSocialNpcUtterance(thread);
         } else if (familyTie) {
-            ss << actor << L"没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"没有当众夸耀，只把护短压成一句认可：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
-            ss << actor << L"没有当众夸你，只把桃花剑光压低半寸：" << BuildLuoNingshuangOutcomeUtterance(choice, true);
+            ss << leadActor << L"没有当众夸你，只把桃花剑光压低半寸：" << BuildLuoNingshuangOutcomeUtterance(choice, true);
         } else if (mentorLike) {
-            ss << actor << L"语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"语气仍严，却开始给你留更高的路：" << BuildSocialNpcUtterance(thread);
         } else if (antagonistLike) {
-            ss << actor << L"暂时找不到可用破绽，掌律玉简合上得很慢：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"暂时找不到可用破绽，掌律玉简合上得很慢：" << BuildSocialNpcUtterance(thread);
         } else if (jiangLike) {
-            ss << actor << L"把不服压回剑鞘，终于愿意把你当成正面越过的对手：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"把不服压回剑鞘，终于愿意把你当成正面越过的对手：" << BuildSocialNpcUtterance(thread);
         } else if (qiLike) {
-            ss << actor << L"露出一点真正兴趣，外显气机仍浅，话却比先前真了半分：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"露出一点真正兴趣，外显气机仍浅，话却比先前真了半分：" << BuildSocialNpcUtterance(thread);
         } else if (shenLike) {
-            ss << actor << L"愿意交换更多线索，但仍把最后一层底牌握在手里：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"愿意交换更多线索，但仍把最后一层底牌握在手里：" << BuildSocialNpcUtterance(thread);
         } else if (luLike) {
-            ss << actor << L"对你的取舍多了一分认可，问的却仍是后续代价：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"对你的取舍多了一分认可，问的却仍是后续代价：" << BuildSocialNpcUtterance(thread);
         } else if (acanLike) {
-            ss << actor << L"记下你的恩情；小人物没有重礼，却会把名字传给后人。";
+            ss << leadActor << L"记下你的恩情；小人物没有重礼，却会把名字传给后人。";
         } else if (challenger) {
-            ss << actor << L"嘴上仍带酸意，却不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
+            ss << leadActor << L"嘴上仍带酸意，却不得不重新衡量你；嫉妒没有散，只是被迫收成戒备。";
         } else if (legacyLike) {
-            ss << actor << L"把这次痕迹记进旧法与旧名的账里，语气压低却多了几分认可：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"把这次痕迹记进旧法与旧名的账里，语气压低却多了几分认可：" << BuildSocialNpcUtterance(thread);
         } else if (factionLike) {
-            ss << actor << L"把这次结果递回账册，评语从观望变成值得继续押注：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"把这次结果递回账册，评语从观望变成值得继续押注：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << actor << L"对你亲近一分，话说得别扭，眼神却先承认了你的分量。";
+            ss << leadActor << L"对你亲近一分，话说得别扭，眼神却先承认了你的分量。";
         }
     } else {
         if (ancestryLead) {
-            ss << actor << L"把话收回半句，像是仍不愿让你太早碰到旧事：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"把话收回半句，像是仍不愿让你太早碰到旧事：" << BuildSocialNpcUtterance(thread);
         } else if (familyTie) {
-            ss << actor << L"没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"没有责怪，只是担忧更重：" << BuildSocialNpcUtterance(thread);
         } else if (heroineLike) {
-            ss << actor << L"收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
+            ss << leadActor << L"收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
         } else if (mentorLike) {
             if (choice.description.find(L"追问") != wstring::npos) {
-                ss << actor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
+                ss << leadActor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
             } else if (TextContainsAny(choice.description, {L"坦然受教", L"受教"})) {
-                ss << actor << L"没有夸你，只把语气压低：「肯听话是好事，但修行不是点头给我看。把话里的刀也听进去。」";
+                ss << leadActor << L"没有夸你，只把语气压低：「肯听话是好事，但修行不是点头给我看。把话里的刀也听进去。」";
             } else if (TextContainsAny(choice.description, {L"婉拒", L"拒"})) {
-                ss << actor << L"没有强留，只把剑符扣回石案：「能不贪好意是本事，但别把所有善意都当成枷锁。」";
+                ss << leadActor << L"没有强留，只把剑符扣回石案：「能不贪好意是本事，但别把所有善意都当成枷锁。」";
             } else if (choice.description.find(L"守规") != wstring::npos) {
-                ss << actor << L"没有替你遮掩这次受挫：「规矩能护人，也能锁人。你若只会照本宣科，迟早死在别人写好的字里。」";
+                ss << leadActor << L"没有替你遮掩这次受挫：「规矩能护人，也能锁人。你若只会照本宣科，迟早死在别人写好的字里。」";
             } else {
-                ss << actor << L"没有多训，只把剑符压回你掌心：「孤勇不是破局。真要独行，先学会看清局在哪里。」";
+                ss << leadActor << L"没有多训，只把剑符压回你掌心：「孤勇不是破局。真要独行，先学会看清局在哪里。」";
             }
         } else if (antagonistLike) {
-            ss << actor << L"把这次破绽写成新罪名的影子，掌律玉简上的寒意更重：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"把这次破绽写成新罪名的影子，掌律玉简上的寒意更重：" << BuildSocialNpcUtterance(thread);
         } else if (jiangLike) {
-            ss << actor << L"更不服你，战帖不会少，只是从明面较量变成带刺试探：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"更不服你，战帖不会少，只是从明面较量变成带刺试探：" << BuildSocialNpcUtterance(thread);
         } else if (qiLike) {
-            ss << actor << L"重新把笑意收深，像是暂时不打算给你看第二层真相：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"重新把笑意收深，像是暂时不打算给你看第二层真相：" << BuildSocialNpcUtterance(thread);
         } else if (shenLike) {
-            ss << actor << L"收回一半资料，提醒你合作不是单方面索取：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"收回一半资料，提醒你合作不是单方面索取：" << BuildSocialNpcUtterance(thread);
         } else if (luLike) {
-            ss << actor << L"语气仍温和，施针却停得更谨慎：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"语气仍温和，施针却停得更谨慎：" << BuildSocialNpcUtterance(thread);
         } else if (acanLike) {
-            ss << actor << L"沉默了很久；这不是大仇，却会变成后世一笔不好还的小债。";
+            ss << leadActor << L"沉默了很久；这不是大仇，却会变成后世一笔不好还的小债。";
         } else if (challenger) {
-            ss << actor << L"抓住这次破绽继续轻慢你，话里已经带出设局的冷意。";
+            ss << leadActor << L"抓住这次破绽继续轻慢你，话里已经带出设局的冷意。";
         } else if (legacyLike) {
-            ss << actor << L"更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
+            ss << leadActor << L"更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
         } else if (factionLike) {
-            ss << actor << L"把这次失手写成审查理由，身后势力对你的试探会更重。";
+            ss << leadActor << L"把这次失手写成审查理由，身后势力对你的试探会更重。";
         } else {
-            ss << actor << L"把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
+            ss << leadActor << L"把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
         }
     }
     return ss.str();
@@ -7376,7 +7389,7 @@ Event BuildLuoNingshuangTrialEvent() {
     evt.title = L"【情缘】桃林试剑";
     evt.description =
         L"桃花落满试剑台，洛凝霜执粉色剑光立在风里。她不是来送机缘的，也不是来安慰人的。"
-        L"她天赋极好，宗门长辈私下说她若不夭折，将来仙界仍会听见这个名字。"
+        L"她天赋极好，宗门长辈私下议论她的剑心比同龄人更冷，也更稳。"
         L"她看向你时，眼神里没有轻慢，却也没有无缘无故的偏爱。";
     if (gifted) {
         evt.description += L"你的根骨已经让旁人议论纷纷，她似乎想看你有没有配得上天资的剑心。";
