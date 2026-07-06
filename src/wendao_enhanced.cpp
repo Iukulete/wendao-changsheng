@@ -2247,7 +2247,7 @@ void InitializeStoryStateForLife() {
         g_storyState.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
         AddUniqueLimited(g_storyState.npcMoods,
             thread.name + L"：" + thread.attitude +
-            (thread.nextMove.empty() ? L"" : L"，下一步" + thread.nextMove), 8);
+            (thread.nextMove.empty() ? L"" : L"，动机" + thread.nextMove), 8);
     }
 }
 
@@ -5014,6 +5014,20 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     return L"「先别急着站队，我还想看看你到底是哪种人。」";
 }
 
+wstring BuildPlayerVisiblePowerHint(const SocialThread& thread) {
+    if (!(thread.hidesPower || !thread.hiddenHint.empty())) return L"";
+    if (TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"})) {
+        return L"气机收得很深";
+    }
+    if (TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
+        return L"气机像隔着一层法箓";
+    }
+    if (TextContainsAny(thread.name + thread.role, {L"祁无咎", L"藏拙活跃修士"})) {
+        return L"底牌未明";
+    }
+    return L"气机未明";
+}
+
 wstring BuildLuoNingshuangOutcomeUtterance(const Choice& choice, bool success) {
     const wstring& text = choice.description;
     if (success) {
@@ -5062,7 +5076,9 @@ wstring BuildSocialThreadLine(const SocialThread& thread, bool includeInternal =
         ss << L" · 外显" << thread.visibleRealm;
     }
     if (thread.hidesPower || !thread.hiddenHint.empty()) {
-        ss << L" · " << (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint);
+        ss << L" · " << (includeInternal
+            ? (thread.hiddenHint.empty() ? L"可能隐藏实力" : thread.hiddenHint)
+            : BuildPlayerVisiblePowerHint(thread));
     }
     if (includeInternal) {
         if (!thread.desire.empty()) {
@@ -5264,14 +5280,11 @@ void AppendCharacterProfile(wstringstream& ss, const wstring& name, const wstrin
         if (!thread->visibleRealm.empty()) {
             ss << L"- 外显修为: " << thread->visibleRealm;
             if (thread->hidesPower || !thread->hiddenHint.empty()) {
-                ss << L"；" << (thread->hiddenHint.empty() ? L"气机未必可信" : thread->hiddenHint);
+                ss << L"；" << BuildPlayerVisiblePowerHint(*thread);
             }
             ss << L"\n";
         }
         ss << L"- 近况: " << thread->hook << L"\n";
-        if (!thread->nextMove.empty()) {
-            ss << L"- 下一步可能: " << thread->nextMove << L"\n";
-        }
         ss << L"- 你能听见的态度: " << BuildSocialNpcUtterance(*thread) << L"\n";
     } else {
         ss << L"- 近况: " << fallback << L"\n";
@@ -5599,7 +5612,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
     if (!thread.visibleRealm.empty()) {
         ss << actor << L"外显" << thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
-            ss << L"，但" << (thread.hiddenHint.empty() ? L"气机未必可信" : thread.hiddenHint);
+            ss << L"，但" << BuildPlayerVisiblePowerHint(thread);
         }
         ss << L"。";
     }
@@ -5642,7 +5655,13 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         } else if (heroineLike) {
             ss << actor << L"收回几分笑意：" << BuildLuoNingshuangOutcomeUtterance(choice, false);
         } else if (mentorLike) {
-            ss << actor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
+            if (choice.description.find(L"追问") != wstring::npos) {
+                ss << actor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
+            } else if (choice.description.find(L"守规") != wstring::npos) {
+                ss << actor << L"没有替你遮掩这次受挫：「规矩能护人，也能锁人。你若只会照本宣科，迟早死在别人写好的字里。」";
+            } else {
+                ss << actor << L"没有多训，只把剑符压回你掌心：「孤勇不是破局。真要独行，先学会看清局在哪里。」";
+            }
         } else if (antagonistLike) {
             ss << actor << L"把这次破绽写成新罪名的影子，下一次门规可能来得更冷：" << BuildSocialNpcUtterance(thread);
         } else if (jiangLike) {
@@ -5664,9 +5683,6 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         } else {
             ss << actor << L"把你看得更复杂，亲近暂退，戒备和怀疑浮了上来。";
         }
-    }
-    if (!thread.nextMove.empty()) {
-        ss << L" 接下来，" << actor << L"多半会" << thread.nextMove << L"。";
     }
     return ss.str();
 }
@@ -5868,9 +5884,6 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
         }
     }
 
-    if (!thread.nextMove.empty() && !routineAction) {
-        ss << L" 接下来，" << actor << L"多半会" << thread.nextMove << L"。";
-    }
     if (routineAction) {
         g_lastRoutineEmotionFeedbackAge = g_player.age;
     }
@@ -6029,7 +6042,7 @@ Event BuildSocialAdventureEvent() {
                 L"旁人以为你怯弱，轻慢之声比先前更多。\n因果-7"
             }, 0},
             {L"暗查底细", {
-                thread.name + L"的外显修为和真实气机并不完全相合，你记下了这个真实破绽。\n修为+65，灵石+10",
+                thread.name + L"的外显修为与气机流转并不完全相合，你记下了这个破绽。\n修为+65，灵石+10",
                 L"你查得太近，被对方反向看穿行迹。\n气血-25"
             }, 2}
         };
@@ -9386,7 +9399,7 @@ bool LoadGameFromPath(const wstring& path) {
         }
         AddUniqueLimited(g_storyState.npcMoods,
             thread.name + L"：" + thread.attitude +
-            (thread.nextMove.empty() ? L"" : L"，下一步" + thread.nextMove), 8);
+            (thread.nextMove.empty() ? L"" : L"，动机" + thread.nextMove), 8);
     }
     if (!g_factionTie.name.empty() && g_storyState.factionPressure == 0) {
         g_storyState.factionPressure = g_factionTie.favor;
@@ -10289,8 +10302,8 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         if (rippleDelta != 0) {
             g_messageText += L"\n因果牵动" + FormatSignedInt(rippleDelta);
             wstring ripple = rippleDelta > 0
-                ? L"\n后续牵动：这件事会让相关人物与旧债更容易浮到台前。"
-                : L"\n后续牵动：部分人情暂时转冷，后面的试探可能更硬。";
+                ? L"\n这件事没有当场结束，山门里看你的眼神多了几分分量。"
+                : L"\n这件事没有当场结束，有些人情在沉默里冷了半寸。";
             g_messageText += ripple;
         }
     }
@@ -10644,6 +10657,9 @@ void OnPaint(HDC hdc, RECT& rect) {
 
     StringFormat centerFormat;
     centerFormat.SetAlignment(StringAlignmentCenter);
+    StringFormat buttonCenterFormat;
+    buttonCenterFormat.SetAlignment(StringAlignmentCenter);
+    buttonCenterFormat.SetLineAlignment(StringAlignmentCenter);
     StringFormat leftFormat;
     leftFormat.SetAlignment(StringAlignmentNear);
     g_backButtonVisible = false;
@@ -11011,7 +11027,7 @@ void OnPaint(HDC hdc, RECT& rect) {
             Pen backPen(Color(170, 228, 190, 76), 1);
             graphics.FillRectangle(&backBrush, backRect);
             graphics.DrawRectangle(&backPen, backRect);
-            graphics.DrawString(L"返回", -1, &smallFont, backRect, &centerFormat, &goldBrush);
+            graphics.DrawString(L"返回", -1, &smallFont, backRect, &buttonCenterFormat, &goldBrush);
 
             if (g_saveSlotPage) {
                 g_saveSlotButtonRects.clear();
