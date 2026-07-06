@@ -1468,6 +1468,7 @@ wstring BuildStoryStateContext();
 void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent);
 const SocialThread* FindSocialThreadByName(const wstring& name);
 void AddSocialRumor(const wstring& rumor, bool front);
+wstring GetRelationLabel(int relation);
 wstring GetCharacterRoleCaption(const wstring& name);
 void EnsureHongmengProgress();
 wstring BuildTreasureTierSystemText();
@@ -1959,7 +1960,7 @@ wstring ForgeLifeArtifact() {
     if (resonant) {
         ss << L"\n铸成一瞬，器纹与通天灵宝残印轻轻相触；它已有本命至宝道胚的苗头，若继续温养，未来可能后天入通天。";
     } else {
-        ss << L"\n它暂时只是今生器物，未达通天层次前，多半会随死亡、转世或时代更替而失散。";
+        ss << L"\n它暂时只是今生器物，未达通天层次前，容易随死亡、转世或时代更替而失散。";
     }
     return ss.str();
 }
@@ -2246,8 +2247,7 @@ void InitializeStoryStateForLife() {
     for (const auto& thread : g_socialThreads) {
         g_storyState.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
         AddUniqueLimited(g_storyState.npcMoods,
-            thread.name + L"：" + thread.attitude +
-            (thread.nextMove.empty() ? L"" : L"，动机" + thread.nextMove), 8);
+            thread.name + L"：" + thread.attitude + L"，关系" + GetRelationLabel(thread.relation), 8);
     }
 }
 
@@ -2311,7 +2311,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
     wstring compactOutcome = NormalizeStoryNote(outcome, 96);
     patch.synopsis = event.title + L"之后，" + compactOutcome;
     patch.nextHook = g_lifeStoryHooks.empty()
-        ? event.title + L"尚未完全结束，后续可从此事余波继续。"
+        ? event.title + L"尚未完全结束，余波仍在人情与旧债里发热。"
         : g_lifeStoryHooks.back();
 
     auto containsAnyLocal = [&](const vector<wstring>& keys) {
@@ -2331,7 +2331,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
     int relationDelta = positive ? 4 : (negative ? -4 : 0);
 
     if (containsAnyLocal({L"本世主线", L"主线", L"线索", L"旧债", L"未竟", L"旧世残响"})) {
-        patch.openThreadsToAdd.push_back(L"本世线索余波：这件事尚未完结，后续仍会从人情与旧债里生出枝节。");
+        patch.openThreadsToAdd.push_back(L"本世线索余波：这件事尚未完结，人情与旧债里已经生出枝节。");
     }
     if (containsAnyLocal({L"玉佩", L"黑白旧玉", L"玉意", L"阴阳玉痕", L"轮回回响"})) {
         patch.openThreadsToAdd.push_back(HasPriorLifeEcho()
@@ -2339,7 +2339,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
             : L"旧玉余波：第一世只留下梦兆与异样直觉，不能写成前世记忆。");
     }
     if (containsAnyLocal({L"失传古法", L"旧法", L"功法", L"藏经", L"道网档案"})) {
-        patch.openThreadsToAdd.push_back(L"失传古法线：懂行者已注意到旧法骨架，后续应带来认可、审查或争夺。");
+        patch.openThreadsToAdd.push_back(L"失传古法余波：懂行者已注意到旧法骨架，认可、审查与争夺都压在暗处。");
     }
     if (containsAnyLocal({L"器痕", L"法宝", L"当世器物", L"本世器物", L"通天灵宝"})) {
         patch.openThreadsToAdd.push_back(L"器痕线：普通器物本体不跨世，余响只可沉入记忆、器痕或通天灵宝残印。");
@@ -2353,7 +2353,7 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
     })) {
         patch.factionPressureDelta = relationDelta == 0 ? (positive ? 2 : (negative ? -2 : 1)) : relationDelta;
         patch.factionPressureNote = g_factionTie.name +
-            L"重新估量你，后续会影响审查、资源或旧债。";
+            L"重新估量你，审查、资源或旧债的分量随之变化。";
     }
 
     int changed = 0;
@@ -2373,14 +2373,14 @@ StoryStatePatch BuildStoryPatchFromNarrative(const Event& event, const Choice& c
         if (delta.delta != 0) {
             patch.relationshipDeltas.push_back(delta);
         }
-        patch.npcMoodNotes.push_back(thread.name + L"听过后续风声，继续" +
+        patch.npcMoodNotes.push_back(thread.name + L"听过这阵风声，仍显得" +
             (positive ? L"靠近或押注" : (negative ? L"戒备或设局" : L"观望")) + L"。");
         if (++changed >= 2) break;
     }
 
     if (isAIEvent) {
-        patch.openThreadsToAdd.push_back(L"天机事件后续：" + event.title +
-            L"已经进入本世持续因果，不应下次完全重置。");
+        patch.openThreadsToAdd.push_back(L"天机生痕：" + event.title +
+            L"已经进入本世持续因果，不再像无根偶遇。");
     }
     return patch;
 }
@@ -2399,17 +2399,21 @@ wstring BuildStoryStateContext() {
     ss << L"  * " << g_storyState.companionJadeRule << L"\n";
     ss << L"  * " << g_storyState.protagonistDestiny << L"\n";
     if (!g_storyState.synopsis.empty()) {
-        ss << L"- 近期因果摘要: " << g_storyState.synopsis << L"\n";
+        wstring visibleSynopsis = SanitizePlayerFacingText(g_storyState.synopsis);
+        if (!visibleSynopsis.empty()) ss << L"- 近期因果摘要: " << visibleSynopsis << L"\n";
     }
     if (!g_storyState.nextHook.empty()) {
-        ss << L"- 下一处因果钩子: " << g_storyState.nextHook << L"\n";
+        wstring visibleNextHook = SanitizePlayerFacingText(g_storyState.nextHook);
+        if (!visibleNextHook.empty()) ss << L"- 可延续因果: " << visibleNextHook << L"\n";
     }
     if (!g_storyState.openThreads.empty()) {
         ss << L"- 未收束线头:\n";
         int count = 0;
         for (const auto& thread : g_storyState.openThreads) {
             if (count++ >= 6) break;
-            ss << L"  * " << thread << L"\n";
+            wstring visibleThread = SanitizePlayerFacingText(thread);
+            if (visibleThread.empty()) continue;
+            ss << L"  * " << visibleThread << L"\n";
         }
     }
     if (!g_storyState.relationships.empty()) {
@@ -2422,11 +2426,13 @@ wstring BuildStoryStateContext() {
         }
     }
     if (!g_storyState.npcMoods.empty()) {
-        ss << L"- NPC 近况:\n";
+        ss << L"- 人物风声:\n";
         int count = 0;
         for (const auto& mood : g_storyState.npcMoods) {
             if (count++ >= 5) break;
-            ss << L"  * " << mood << L"\n";
+            wstring visibleMood = SanitizePlayerFacingText(mood);
+            if (visibleMood.empty()) continue;
+            ss << L"  * " << visibleMood << L"\n";
         }
     }
     if (!g_factionTie.name.empty()) {
@@ -2971,6 +2977,59 @@ wstring SanitizePlayerFacingText(wstring text) {
     replaceAll(L"初世锚点：这一世尚无可考前代遗迹，所有宗门、秘境与人情债都在为后世埋下第一批痕迹。",
         L"初始道痕：此地尚无前人定论，今日取舍也许会成为后来者追索的源头。");
     replaceAll(L"初世锚点：", L"初始道痕：");
+    replaceAll(L"真实修为和来历都不愿明说", L"气机收得很深");
+    replaceAll(L"知道下一步该补哪一道因果", L"隐约看见自身大道仍缺一道因果");
+    replaceAll(L"照见下一步缺口", L"照见眼前缺口");
+    replaceAll(L"下一步该按 [3] 引气入体", L"此时可按 [3] 引气入体");
+    replaceAll(L"「这一步能站住，但别急着等人夸。下一步还要更稳。」",
+        L"「这一步能站住，但别急着等人夸。把眼前的路走稳。」");
+
+    auto removePlanningSentence = [&](const vector<wstring>& keys) {
+        bool removed = true;
+        const wstring endMarks = L"\n。！？；";
+        const wstring startMarks = L"\n。！？；|";
+        while (removed) {
+            removed = false;
+            size_t hit = wstring::npos;
+            for (const auto& key : keys) {
+                size_t pos = text.find(key);
+                if (pos != wstring::npos && (hit == wstring::npos || pos < hit)) {
+                    hit = pos;
+                }
+            }
+            if (hit == wstring::npos) break;
+
+            size_t start = text.find_last_of(startMarks, hit);
+            if (start == wstring::npos) {
+                start = 0;
+            } else if (text[start] == L'|') {
+                // Keep the previous sentence, remove the separator and the planning aside.
+            } else {
+                start += 1;
+            }
+
+            while (start > 0 && (text[start - 1] == L' ' || text[start - 1] == L'\t')) {
+                --start;
+            }
+
+            size_t end = text.find_first_of(endMarks, hit);
+            if (end == wstring::npos) {
+                end = text.size();
+            } else {
+                end += 1;
+            }
+            while (end < text.size() && (text[end] == L' ' || text[end] == L'\t')) {
+                ++end;
+            }
+            text.erase(start, end - start);
+            removed = true;
+        }
+    };
+
+    removePlanningSentence({
+        L"接下来，", L"多半会", L"人物动机参考", L"台词参考",
+        L"NPC 近况", L"NPC近况", L"下一步", L"隐藏设定"
+    });
     return text;
 }
 
@@ -3215,7 +3274,7 @@ const vector<HongmengTreasure>& GetHongmengTreasures() {
             L"可映照一切大道的真名，见印者会知道自己离道祖还有多远。",
             L"识海浮现无字印玺，照出自身大道的真名与缺口。",
             L"妄称自己已尽掌万道，会被道印压回未证之初。",
-            L"你看清自身大道的缺字，知道下一步该补哪一道因果。"
+            L"你看清自身大道的缺字，隐约看见仍需补上的因果。"
         },
         {
             L"造化青莲", L"生灭造化",
@@ -4415,7 +4474,7 @@ Event BuildLegacyEchoEvent() {
                     wstring(L"因果尚未完全稳住，") + treasure.taboo + L"\n气血-45，因果-10"
                 }, 12},
                 {L"只借余光", {
-                    wstring(L"你借") + treasureDao + L"余光照见下一步缺口。" + treasure.insight + L"\n修为+120，掌道+12，灵宝共鸣+8",
+                    wstring(L"你借") + treasureDao + L"余光照见眼前缺口。" + treasure.insight + L"\n修为+120，掌道+12，灵宝共鸣+8",
                     L"余光过盛，神魂短暂失衡。\n气血-25"
                 }, 8},
                 {L"谨慎参悟", {
@@ -4616,7 +4675,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
             ? L"安排真正的护道试炼"
             : (thread.relation >= 10 ? L"安排一场自救试炼" : L"先冷眼看你能不能自救");
     } else if (hidden) {
-        thread.nextMove = L"继续隐藏真实修为，看你是否识破";
+        thread.nextMove = L"继续收敛气机，观察你是否看得出破绽";
     } else {
         thread.nextMove = thread.relation >= 18
             ? L"试着拉近关系"
@@ -4733,7 +4792,7 @@ void AddQinghengThread() {
             : (weakRoot
                 ? L"她没有替你挡下所有轻慢，只在你快被逼到绝路时留下一句能保命的指点。"
                 : L"她愿意收你入门，却先要看你在秘境、门规和人情之间能不能守住心性。"),
-        exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"真实修为和来历都不愿明说");
+        exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"气机收得很深，来历不愿明说");
 }
 
 void AddXuanhengThread() {
@@ -4996,7 +5055,7 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
             ? PickOne({
                 L"「天资是借来的风，心性才是你自己的剑鞘。别急，我会亲手磨你。」",
                 L"「走得快不是坏事，坏的是以为快就不用看路。」",
-                L"「这一步能站住，但别急着等人夸。下一步还要更稳。」"
+                L"「这一步能站住，但别急着等人夸。把眼前的路走稳。」"
             })
             : PickOne({
                 L"「修行不是给旁人看的。你若还能站起来，我就继续教。」",
@@ -5422,7 +5481,7 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
             return thread.name + L"看见你没有露怯，态度虽仍带刺，却开始承认你不是能随便欺负的人。";
         }
         if (worsened) {
-            return thread.name + L"抓住这次破绽当成新把柄，嫉妒与轻慢一起发酵，下一次很可能主动设局。";
+            return thread.name + L"抓住这次破绽当成新把柄，嫉妒与轻慢一起发酵，话里已经带出设局的冷意。";
         }
     }
 
@@ -5450,7 +5509,7 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
             return thread.name + L"记住了你能站稳的这一面，往后的护道会更敢压重担。";
         }
         if (worsened) {
-            return thread.name + L"没有替你遮掩受挫，只把这处缺口记成下一场护道试炼。";
+            return thread.name + L"没有替你遮掩受挫，只把这处缺口压进更重的护道目光里。";
         }
     }
     if (TextContainsAny(thread.name + thread.role, {L"洛凝霜", L"桃华剑脉"})) {
@@ -5458,7 +5517,7 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
             return thread.name + L"把你的名字记得更清楚；这不是偏爱，只是你终于值得她多看一眼。";
         }
         if (worsened) {
-            return thread.name + L"收回几分笑意，像是在等你下一次自己把缺口补上。";
+            return thread.name + L"收回几分笑意，像是已经看见你尚未补上的缺口。";
         }
     }
     if (TextContainsAny(thread.name + thread.role, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
@@ -5466,7 +5525,7 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
             return thread.name + L"暂时找不到能钉死你的罪名，门规却因此翻得更细。";
         }
         if (worsened) {
-            return thread.name + L"抓住这次破绽，把下一场审查写得更冷。";
+            return thread.name + L"抓住这次破绽，掌律玉简上的寒意更重了。";
         }
     }
 
@@ -5474,7 +5533,7 @@ wstring BuildRelationAftershockText(const SocialThread& thread, int oldRelation,
         return thread.name + L"没有当面翻脸，却因你资质出众而更嫉妒，风声会越传越酸。";
     }
     if (weak && worsened) {
-        return thread.name + L"借这次失手确认你根基不稳，轻慢之声很快会传到下一场试炼。";
+        return thread.name + L"借这次失手确认你根基不稳，轻慢之声已经在同辈间散开。";
     }
     if (improved) {
         return thread.name + L"记住了你的表现，态度从" + GetRelationLabel(oldRelation) + L"往" +
@@ -5663,7 +5722,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
                 ss << actor << L"没有多训，只把剑符压回你掌心：「孤勇不是破局。真要独行，先学会看清局在哪里。」";
             }
         } else if (antagonistLike) {
-            ss << actor << L"把这次破绽写成新罪名的影子，下一次门规可能来得更冷：" << BuildSocialNpcUtterance(thread);
+            ss << actor << L"把这次破绽写成新罪名的影子，掌律玉简上的寒意更重：" << BuildSocialNpcUtterance(thread);
         } else if (jiangLike) {
             ss << actor << L"更不服你，战帖不会少，只是从明面较量变成带刺试探：" << BuildSocialNpcUtterance(thread);
         } else if (qiLike) {
@@ -5675,7 +5734,7 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         } else if (acanLike) {
             ss << actor << L"沉默了很久；这不是大仇，却会变成后世一笔不好还的小债。";
         } else if (challenger) {
-            ss << actor << L"抓住这次破绽继续轻慢你，下一次很可能借势设局。";
+            ss << actor << L"抓住这次破绽继续轻慢你，话里已经带出设局的冷意。";
         } else if (legacyLike) {
             ss << actor << L"更加怀疑你的旧名、旧法或器痕来历，语气里开始带刺：" << BuildSocialNpcUtterance(thread);
         } else if (factionLike) {
@@ -5797,7 +5856,7 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
             ss << actor << L"没能从你这次" << action
                << L"里挑出可用罪名，只把掌律玉简合上得更慢：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << actor << L"把这次受挫记成可审之处，下一次门规可能来得更冷。";
+            ss << actor << L"把这次受挫记成可审之处，掌律玉简上的寒意更重。";
         }
     } else if (TextContainsAny(profile, {L"清蘅真人", L"师尊", L"护道人"})) {
         if (positive) {
@@ -5826,7 +5885,7 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
         if (positive) {
             ss << actor << L"听闻你这次" << action << L"，笑意很淡，却像终于把你的名字多记了一笔。";
         } else {
-            ss << actor << L"没有嘲笑，只把距离收回半步，像在等你下一次自己站稳。";
+            ss << actor << L"没有嘲笑，只把距离收回半步，像是已经看见你脚下尚未站稳。";
         }
     } else if (TextContainsAny(profile, {L"江照雪", L"同代竞争者"})) {
         if (positive) {
@@ -5850,7 +5909,7 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
         if (positive) {
             ss << actor << L"听闻你这次" << action << L"稳住气息，才肯把药针往深处多落一寸。";
         } else {
-            ss << actor << L"替你压住一点反噬，却先问清楚下一次代价由谁承担。";
+            ss << actor << L"替你压住一点反噬，却先问清楚这份代价究竟由谁承担。";
         }
     } else if (TextContainsAny(profile, {L"阿岑", L"枯井小人物"})) {
         if (positive) {
@@ -5868,13 +5927,13 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
         if (positive) {
             ss << actor << L"把这次" << action << L"和你身上的旧痕联系起来，语气压低：" << BuildSocialNpcUtterance(thread);
         } else {
-            ss << actor << L"对你身上的旧痕更加起疑，像是在等下一次破绽。";
+            ss << actor << L"对你身上的旧痕更加起疑，目光落在你尚未遮住的破绽上。";
         }
     } else if (TextContainsAny(profile, {L"势力牵连", L"仙朝耳目", L"道网联系人", L"工坊中人", L"资源把关者"})) {
         if (positive) {
             ss << actor << L"把你这次" << action << L"写进身后势力的评语里：值得继续押注。";
         } else {
-            ss << actor << L"把你这次" << action << L"受阻写成审查理由，后续资源会更难松口。";
+            ss << actor << L"把你这次" << action << L"受阻写成审查理由，资源口子随之收紧。";
         }
     } else {
         if (positive) {
@@ -8549,7 +8608,7 @@ PlayerContext BuildPlayerContext() {
     }
     ctx.socialState = GetSocialDigest();
     if (!g_socialThreads.empty()) {
-        ctx.socialState += L"\n人物动机参考:\n" + BuildSocialThreadDigest(5, true);
+        ctx.socialState += L"\n人物表面状态:\n" + BuildSocialThreadDigest(5);
     }
     for (const auto& thread : g_socialThreads) {
         ctx.relationships[thread.name + L"（" + thread.role + L"）"] = thread.relation;
@@ -9398,8 +9457,7 @@ bool LoadGameFromPath(const wstring& path) {
             g_storyState.relationships[key] = thread.relation;
         }
         AddUniqueLimited(g_storyState.npcMoods,
-            thread.name + L"：" + thread.attitude +
-            (thread.nextMove.empty() ? L"" : L"，动机" + thread.nextMove), 8);
+            thread.name + L"：" + thread.attitude + L"，关系" + GetRelationLabel(thread.relation), 8);
     }
     if (!g_factionTie.name.empty() && g_storyState.factionPressure == 0) {
         g_storyState.factionPressure = g_factionTie.favor;
@@ -9635,66 +9693,66 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
     };
 
     if (const HongmengTreasure* treasure = FindHongmengTreasureInText(text)) {
-        add((successLike ? L"鸿蒙参悟后续：" : L"鸿蒙警戒后续：") +
-            wstring(treasure->name) + L"投影仍在识海边缘回响，下一次涉及" +
-            treasure->dao + L"的抉择会更容易牵动它。");
+        add((successLike ? L"鸿蒙余光：" : L"鸿蒙余震：") +
+            wstring(treasure->name) + L"投影仍在识海边缘回响，" +
+            treasure->dao + L"的痕迹变得更清晰。");
     }
 
     if (TextContainsAny(text, {L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕"})) {
-        add(wstring(successLike ? L"玉佩暗线推进：" : L"玉佩暗线受扰：") +
+        add(wstring(successLike ? L"旧玉微温：" : L"旧玉受扰：") +
             L"那枚黑白旧玉仍未显露真名，却继续把前世记忆、今生选择和轮回回响牵在一起。");
     }
 
     if (TextContainsAny(text, {L"前世未竟", L"未竟因果", L"旧因", L"旧债", L"前世", L"旧名"})) {
-        add(wstring(successLike ? L"前世未竟推进：" : L"前世未竟加深：") +
+        add(wstring(successLike ? L"旧因回响：" : L"旧债压身：") +
             L"上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
     }
 
     if (TextContainsAny(text, {L"清蘅真人", L"师尊", L"护道人"})) {
-        add(wstring(successLike ? L"师尊线推进：" : L"师尊线压紧：") +
-            L"清蘅真人会记住你的表现，后续护道、责罚或传法都会从这里分岔。");
+        add(wstring(successLike ? L"师尊余波：" : L"师尊压目：") +
+            L"清蘅真人记住了你的表现，护道、责罚与传法的分量都被这一事压重。");
     }
 
     if (TextContainsAny(text, {L"玄衡子", L"掌律真人", L"太上玄衡观"})) {
-        add(wstring(successLike ? L"玄衡子线受挫：" : L"玄衡子线加深：") +
-            L"玄衡子的门规审查没有结束，他会继续寻找能名正言顺压住你的破绽。");
+        add(wstring(successLike ? L"掌律受挫：" : L"掌律压身：") +
+            L"玄衡子的门规审查没有散去，掌律玉简上的寒意仍压在此事之后。");
     }
 
     if (TextContainsAny(text, {L"洛凝霜", L"桃华剑脉", L"桃林试剑"})) {
-        add(wstring(successLike ? L"洛凝霜线升温：" : L"洛凝霜线降温：") +
-            L"洛凝霜不会无条件偏向你，她对你的好感会继续由胆色、心性和下一次试剑决定。");
+        add(wstring(successLike ? L"桃林余温：" : L"桃林冷意：") +
+            L"洛凝霜没有无条件偏向你，她记下的是此刻的胆色、心性与剑意。");
     }
 
     if (TextContainsAny(text, {L"江照雪", L"江氏", L"战帖", L"约战"})) {
-        add(wstring(successLike ? L"江照雪线推进：" : L"江照雪线带刺：") +
-            L"这份争胜心不会立刻消失，后续可能变成正面约战、同阵合作或江氏后人的复杂态度。");
+        add(wstring(successLike ? L"照雪战意：" : L"照雪带刺：") +
+            L"这份争胜心没有散去，战帖、同阵与江氏目光都因此多了一层分量。");
     }
 
     if (TextContainsAny(text, {L"祁无咎", L"无咎", L"空帖", L"外显修为", L"藏拙"})) {
-        add(wstring(successLike ? L"祁无咎线推进：" : L"祁无咎线转隐：") +
-            L"祁无咎仍只露一部分真实底细，他的人情、藏拙和空帖都可在后世继续发酵。");
+        add(wstring(successLike ? L"无咎留帖：" : L"无咎转隐：") +
+            L"祁无咎仍只露一部分底细，人情、藏拙和空帖都没有说尽。");
     }
 
     if (TextContainsAny(text, {L"沈听澜", L"听澜", L"阵钥", L"灵机列车", L"道网密讯"})) {
-        add(wstring(successLike ? L"沈听澜线推进：" : L"沈听澜线保留：") +
-            L"沈听澜会继续以阵纹、道网和半真半假的情报入局，合作不等于无条件信任。");
+        add(wstring(successLike ? L"听澜阵讯：" : L"听澜留半：") +
+            L"沈听澜留下阵纹、道网和半真半假的情报，合作仍不等于无条件信任。");
     }
 
     if (TextContainsAny(text, {L"陆青鸢", L"青鸢", L"医道仙官"})) {
-        add(wstring(successLike ? L"陆青鸢线推进：" : L"陆青鸢线问价：") +
-            L"陆青鸢会记住你如何对待伤者、灵脉与代价；医道善意也有必须偿还的因果。");
+        add(wstring(successLike ? L"青鸢问价：" : L"青鸢停针：") +
+            L"陆青鸢记下你如何对待伤者、灵脉与代价；医道善意也有必须偿还的因果。");
     }
 
     if (TextContainsAny(text, {L"阿岑", L"枯井兄妹", L"枯井镇", L"干粮"})) {
-        add(wstring(successLike ? L"阿岑兄妹线成善：" : L"阿岑兄妹线成债：") +
-            L"枯井镇小人物会把这次选择传下去，后世可能变成善名、小宗暗路或沉默旧债。");
+        add(wstring(successLike ? L"枯井成善：" : L"枯井成债：") +
+            L"枯井镇小人物把这次选择记进心里，善名、暗路或沉默旧债都从此有了源头。");
     }
 
     if (HasFactionTie() && TextContainsAny(text, {
         g_factionTie.name, L"本世势力", L"势力", L"宗门", L"仙朝", L"工坊", L"道网", L"残宗", L"名册"
     })) {
-        add((successLike ? L"势力线推进：" : L"势力线受阻：") +
-            g_factionTie.name + L"重新衡量你；审查、资源与旧债都会随之变化。");
+        add((successLike ? L"势力松动：" : L"势力收紧：") +
+            g_factionTie.name + L"重新衡量你；审查、资源与旧债的分量随之变化。");
     }
 
     for (const auto& thread : g_socialThreads) {
@@ -9704,31 +9762,31 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
         if (!directHit && !TextContainsAny(text, {L"本世人脉", L"长辈", L"同辈", L"父亲", L"母亲", L"养育者", L"欺压者", L"旁人"})) {
             continue;
         }
-        add((successLike ? L"人情线推进：" : L"人情线生隙：") +
-            thread.name + L"（" + thread.role + L"）会记住你的表现，后续态度是" +
+        add((successLike ? L"人情生温：" : L"人情生隙：") +
+            thread.name + L"（" + thread.role + L"）记住了你的表现，眼下态度是" +
             GetRelationLabel(thread.relation) + L"。");
         break;
     }
 
     if (TextContainsAny(text, {L"旧世残响", L"上一纪元", L"旧世", L"遗址", L"断代", L"废墟", L"残响"})) {
-        add(wstring(successLike ? L"旧世残响推进：" : L"旧世残响反噬：") +
-            L"这次选择让上一纪元留下的物证继续影响今生，下一次遇到遗址、制度或旧器时应追查同一条线。");
+        add(wstring(successLike ? L"旧世回响：" : L"旧世反噬：") +
+            L"上一纪元留下的物证仍在影响今生，遗址、制度与旧器之间多了一道可追的暗纹。");
     }
 
     if (TextContainsAny(text, {L"本世器物", L"当世兵刃", L"当世法宝", L"器痕", L"器纹", L"法宝", L"兵刃"})) {
-        add(wstring(successLike ? L"器物线推进：" : L"器物线裂痕：") +
+        add(wstring(successLike ? L"器物留痕：" : L"器物裂痕：") +
             L"今生器物本体终会失散，但这次取舍可能留下器痕，供通天灵宝残印在轮回中辨认。");
     }
 
     if (TextContainsAny(text, {L"大道", L"掌道", L"道祖", L"天道", L"道音"}) ||
         ExtractValue(outcome, L"掌道+") > 0) {
-        add(wstring(successLike ? L"大道线推进：" : L"大道线受压：") +
-            L"这次抉择让你的道心更清楚自身缺口，后续事件可继续考验同一条大道。");
+        add(wstring(successLike ? L"大道明痕：" : L"大道受压：") +
+            L"这次抉择让你的道心更清楚自身缺口，同一条大道也因此留下回声。");
     }
 
     if (isAIEvent && added == 0) {
-        add(wstring(setbackLike ? L"动态事件余波：" : L"动态事件后续：") +
-            L"「" + event.title + L"」没有当场结束，相关人和事会在今生继续发酵。");
+        add(wstring(setbackLike ? L"天机余波：" : L"天机生痕：") +
+            L"「" + event.title + L"」没有当场结束，相关人和事已经在今生留下余温。");
     }
 }
 
@@ -10373,7 +10431,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     if (g_player.realm == MORTAL && g_player.level >= 9) {
-        playerVisibleOutcome += L"\n\n肉身根基已足，下一步该按 [3] 引气入体，不必继续在凡人期拖年岁。";
+        playerVisibleOutcome += L"\n\n肉身根基已足，此时可按 [3] 引气入体，不必继续在凡人期拖年岁。";
     }
     g_messageText = playerVisibleOutcome;
     ShowNotice(L"历练结果", g_messageText);
