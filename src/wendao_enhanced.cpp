@@ -1406,6 +1406,9 @@ PlayerContext g_pendingAiContext;
 PROCESS_INFORMATION g_aiProcessInfo = {};
 bool g_aiProcessRunning = false;
 DWORD g_aiStartTick = 0;
+DWORD g_aiEventFileReadyTick = 0;
+ULONGLONG g_aiEventFileReadySize = 0;
+FILETIME g_aiEventFileReadyWriteTime = {};
 wstring g_infoTitle;
 wstring g_infoText;
 GameState g_infoReturnState = STATE_GAME;
@@ -2987,7 +2990,7 @@ wstring SanitizePlayerFacingText(wstring text) {
     auto removePlanningSentence = [&](const vector<wstring>& keys) {
         bool removed = true;
         const wstring endMarks = L"\n。！？；";
-        const wstring startMarks = L"\n。！？；|";
+        const wstring startMarks = L"\n。！？；|｜";
         while (removed) {
             removed = false;
             size_t hit = wstring::npos;
@@ -3027,7 +3030,7 @@ wstring SanitizePlayerFacingText(wstring text) {
     };
 
     removePlanningSentence({
-        L"接下来，", L"多半会", L"人物动机参考", L"台词参考",
+        L"接下来", L"多半会", L"多半", L"人物动机参考", L"台词参考",
         L"NPC 近况", L"NPC近况", L"下一步", L"隐藏设定"
     });
     return text;
@@ -5952,7 +5955,7 @@ wstring BuildActionEmotionFeedback(const wstring& action, bool positive) {
     }
     g_lastActionEmotionFeedbackAge = g_player.age;
     g_lastActionEmotionFeedbackName = thread.name;
-    return ss.str();
+    return SanitizePlayerFacingText(ss.str());
 }
 
 bool ShouldTriggerSocialAdventureEvent() {
@@ -8154,6 +8157,40 @@ void RefreshAiStatus() {
     }
 }
 
+void ResetAiEventFileReadyWatch() {
+    g_aiEventFileReadyTick = 0;
+    g_aiEventFileReadySize = 0;
+    g_aiEventFileReadyWriteTime = {};
+}
+
+bool IsAiEventFileStable(DWORD nowTick) {
+    WIN32_FILE_ATTRIBUTE_DATA data = {};
+    if (!GetFileAttributesExW(L"ai_event.txt", GetFileExInfoStandard, &data)) {
+        ResetAiEventFileReadyWatch();
+        return false;
+    }
+
+    ULARGE_INTEGER size = {};
+    size.LowPart = data.nFileSizeLow;
+    size.HighPart = data.nFileSizeHigh;
+    if (size.QuadPart == 0) {
+        ResetAiEventFileReadyWatch();
+        return false;
+    }
+
+    bool changed = g_aiEventFileReadyTick == 0 ||
+                   g_aiEventFileReadySize != size.QuadPart ||
+                   CompareFileTime(&g_aiEventFileReadyWriteTime, &data.ftLastWriteTime) != 0;
+    if (changed) {
+        g_aiEventFileReadyTick = nowTick;
+        g_aiEventFileReadySize = size.QuadPart;
+        g_aiEventFileReadyWriteTime = data.ftLastWriteTime;
+        return false;
+    }
+
+    return nowTick - g_aiEventFileReadyTick >= 1000;
+}
+
 bool TryRunLocalModelGenerator() {
     if (GetFileAttributesW(L"..\\ai_engine\\generate_event.ps1") == INVALID_FILE_ATTRIBUTES) {
         g_lastAiBackend = L"模板回退";
@@ -8164,6 +8201,7 @@ bool TryRunLocalModelGenerator() {
     DeleteFileW(L"ai_event.txt");
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
+    ResetAiEventFileReadyWatch();
     DWORD exitCode = RunHiddenProcessAndWait(
         L"powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" -Backend \"portable\"",
         150000);
@@ -8208,6 +8246,7 @@ bool BeginLocalModelGeneratorAsync() {
     DeleteFileW(L"ai_event.txt");
     DeleteFileW(L"ai_status.txt");
     DeleteFileW(L"ai_backend.txt");
+    ResetAiEventFileReadyWatch();
 
     wstring command = L"powershell.exe -NoProfile -ExecutionPolicy Bypass "
         L"-File \"..\\ai_engine\\generate_event.ps1\" -ReleaseDir \".\" "
@@ -8364,6 +8403,7 @@ void EnterAiEventFromContext(PlayerContext ctx) {
 void CompleteLocalModelGenerator(DWORD exitCode) {
     KillTimer(g_hWnd, IDT_AI_POLL);
     CloseAiProcessHandles();
+    ResetAiEventFileReadyWatch();
     wstring rawStatus = g_lastAiStatus;
     RefreshAiStatus();
     if (exitCode != 0 && g_lastAiStatus.find(L"正在推演") != wstring::npos) {
@@ -8385,6 +8425,7 @@ void CancelLocalModelGenerator() {
         KillTimer(g_hWnd, IDT_AI_POLL);
         CloseAiProcessHandles();
     }
+    ResetAiEventFileReadyWatch();
     g_lastAiBackend = L"模板回退";
     g_lastAiStatus = L"本次天机推演已被你压下。";
 }
@@ -11684,10 +11725,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case WM_TIMER: {
             if (wParam == IDT_AI_POLL && g_aiProcessRunning) {
                 DWORD exitCode = STILL_ACTIVE;
+                DWORD nowTick = GetTickCount();
                 if (GetExitCodeProcess(g_aiProcessInfo.hProcess, &exitCode)) {
                     if (exitCode != STILL_ACTIVE) {
                         CompleteLocalModelGenerator(exitCode);
-                    } else if (GetTickCount() - g_aiStartTick > 150000) {
+                    } else if (IsAiEventFileStable(nowTick)) {
+                        RefreshAiStatus();
+                        AppendTraceLog(L"AI_FILE_READY",
+                            L"事件文件已生成，但推演进程仍未退出；已收束进程并进入事件。");
+                        KillAiProcessTree();
+                        CompleteLocalModelGenerator(0);
+                    } else if (nowTick - g_aiStartTick > 150000) {
                         KillAiProcessTree();
                         g_lastAiBackend = L"模板回退";
                         g_lastAiStatus = L"天机推演太久未显，已由既有因果继续牵动。";
