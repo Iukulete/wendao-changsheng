@@ -1439,6 +1439,9 @@ int g_lastRoutineEmotionFeedbackAge = -1000;
 int g_lastActionEmotionFeedbackAge = -1000;
 wstring g_lastActionEmotionFeedbackName;
 int g_lastMeditationAdviceAge = -1000;
+int g_lastBottleneckNoticeGeneration = -1;
+Realm g_lastBottleneckNoticeRealm = MORTAL;
+int g_lastBottleneckNoticeLevel = -1;
 
 #define ID_NAME_INPUT 1001
 #define ID_BTN_START 1002
@@ -8626,6 +8629,24 @@ void ShowNotice(const wstring& title, const wstring& text) {
     OpenInfoPage(title, text, STATE_GAME);
 }
 
+void ResetBottleneckNoticeState() {
+    g_lastBottleneckNoticeGeneration = -1;
+    g_lastBottleneckNoticeRealm = MORTAL;
+    g_lastBottleneckNoticeLevel = -1;
+}
+
+bool ShouldShowFullBottleneckNotice() {
+    if (g_lastBottleneckNoticeGeneration == g_generation &&
+        g_lastBottleneckNoticeRealm == g_player.realm &&
+        g_lastBottleneckNoticeLevel == g_player.level) {
+        return false;
+    }
+    g_lastBottleneckNoticeGeneration = g_generation;
+    g_lastBottleneckNoticeRealm = g_player.realm;
+    g_lastBottleneckNoticeLevel = g_player.level;
+    return true;
+}
+
 void ReturnFromInfoPage() {
     if (g_characterCodexDetailPage) {
         OpenCharacterCodexPage();
@@ -9535,6 +9556,7 @@ bool LoadGameFromPath(const wstring& path) {
     g_lastActionEmotionFeedbackAge = -1000;
     g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
+    ResetBottleneckNoticeState();
     RefreshAiStatus();
 
     g_player.CheckRootBalance();
@@ -10270,6 +10292,7 @@ void StartNextLife() {
     g_lastActionEmotionFeedbackAge = -1000;
     g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
+    ResetBottleneckNoticeState();
 
     g_player = Player();
     g_player.name = oldName;
@@ -11493,6 +11516,7 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
     g_lastActionEmotionFeedbackAge = -1000;
     g_lastActionEmotionFeedbackName.clear();
     g_lastMeditationAdviceAge = -1000;
+    ResetBottleneckNoticeState();
     ApplyCompanionJadeToBirth();
     g_lastAiBackend = L"未触发";
     g_lastAiStatus = L"本局尚未触发动态事件。";
@@ -11772,7 +11796,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else {
                             msg = L"当前境界已经抵住瓶颈，再枯坐难有进益。\n按 [3] 尝试突破下一境界。";
                         }
-                        ShowNotice(L"瓶颈已至", msg);
+                        if (ShouldShowFullBottleneckNotice()) {
+                            ShowNotice(L"瓶颈已至", msg);
+                        } else {
+                            g_messageText = L"【瓶颈已至】\n" + msg;
+                        }
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                     }
@@ -11980,6 +12008,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             InvalidateRect(hWnd, NULL, FALSE);
                             break;
                         }
+                        ResetBottleneckNoticeState();
                         wstring breakthroughTarget = GetRealmName(static_cast<Realm>(g_player.realm + 1));
                         AppendTraceLog(L"BREAKTHROUGH_ATTEMPT",
                             L"尝试突破至 " + breakthroughTarget + L"。");
