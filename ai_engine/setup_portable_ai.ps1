@@ -5,6 +5,10 @@ param(
     [string]$ModelUrl = "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/main/gemma-4-E4B_q4_0-it.gguf?download=true",
     [string]$ExpectedModelSha256 = "E8B6A059BA86947A44ACE84D6E5679795BC41862C25C30513142588F0E9DBA1D",
     [switch]$SkipModelHash,
+    [string]$LoraPath = "",
+    [string]$LoraUrl = "https://github.com/Iukulete/wendao-changsheng/releases/download/lora-v7/wendao_gemma4_lora_text_v7_codex_filtered.gguf",
+    [string]$ExpectedLoraSha256 = "36D286CFEC617F33325B60F378C7478414CDBE884D30188708D8A2F0B0A9F3FF",
+    [switch]$SkipLoraHash,
     [string]$RuntimeUrl = "https://github.com/ggml-org/llama.cpp/releases/download/b9843/llama-b9843-bin-win-cpu-x64.zip",
     [string]$ExpectedRuntimeZipSha256 = "8EBF156B4543FC8B0A4C3D1FC5CBD952516646AF0CFABB74D1E53BD86321F1E0"
 )
@@ -20,12 +24,22 @@ $ModelDir = Join-Path $PSScriptRoot "models"
 $RuntimeDir = Join-Path $PSScriptRoot "runtime"
 $LlamaDir = Join-Path $RuntimeDir "llama.cpp"
 $LoraDir = Join-Path $PSScriptRoot "lora"
+$DefaultLoraName = "wendao_gemma4_lora_text_v7_codex_filtered.gguf"
 if ([string]::IsNullOrWhiteSpace($ModelPath)) {
     $ModelPath = Join-Path $ModelDir "gemma-4-E4B_q4_0-it.gguf"
 } elseif (-not [System.IO.Path]::IsPathRooted($ModelPath)) {
     $ModelPath = Join-Path $PSScriptRoot $ModelPath
 }
 $ModelPath = [System.IO.Path]::GetFullPath($ModelPath)
+if ([string]::IsNullOrWhiteSpace($LoraPath)) {
+    $LoraPath = Join-Path $LoraDir $DefaultLoraName
+} elseif (-not [System.IO.Path]::IsPathRooted($LoraPath)) {
+    $LoraPath = Join-Path $PSScriptRoot $LoraPath
+}
+$LoraPath = [System.IO.Path]::GetFullPath($LoraPath)
+if ([string]::IsNullOrWhiteSpace($LoraUrl)) {
+    $LoraUrl = [Environment]::GetEnvironmentVariable("WENDAO_LORA_URL")
+}
 $RuntimeZip = Join-Path $RuntimeDir "llama-b9843-bin-win-cpu-x64.zip"
 $LlamaCli = Join-Path $LlamaDir "llama-completion.exe"
 
@@ -151,6 +165,44 @@ if (-not $skipModelHashCheck) {
     Assert-Hash -Path $ModelPath -Expected $ExpectedModelSha256 -Label "Model"
 }
 
+$existingLoraFiles = @()
+if (Test-Path -LiteralPath $LoraDir) {
+    $existingLoraFiles = @(Get-ChildItem -LiteralPath $LoraDir -Filter "*.gguf" -File -ErrorAction SilentlyContinue |
+        Where-Object { $_.Length -gt 4096 } |
+        Sort-Object LastWriteTimeUtc -Descending)
+}
+$targetLoraExists = Test-Path -LiteralPath $LoraPath
+$fallbackLora = $null
+if (-not $targetLoraExists -and $existingLoraFiles.Count -gt 0) {
+    $fallbackLora = $existingLoraFiles[0]
+}
+$loraExists = $targetLoraExists -or ([string]::IsNullOrWhiteSpace($LoraUrl) -and $null -ne $fallbackLora)
+if ($Force -or -not $loraExists) {
+    if ([string]::IsNullOrWhiteSpace($LoraUrl)) {
+        if ($CheckOnly) {
+            throw "LoRA adapter missing and CheckOnly was set: $LoraPath"
+        }
+        Write-Host "No LoRA download URL configured. The base model will be used first."
+        Write-Host "Set WENDAO_LORA_URL or pass -LoraUrl to download an adapter automatically."
+    } else {
+        Download-File -Url $LoraUrl -OutFile $LoraPath -Label "Wendao LoRA adapter"
+    }
+} elseif ($targetLoraExists) {
+    Write-Host "LoRA adapter exists, skip download: $LoraPath"
+} else {
+    Write-Host "LoRA adapter exists, skip download: $($fallbackLora.FullName)"
+}
+
+$skipLoraHashCheck = [bool]$SkipLoraHash
+if (-not $skipLoraHashCheck) {
+    $skipLoraHashCheck = [string]::IsNullOrWhiteSpace($ExpectedLoraSha256)
+}
+if ($skipLoraHashCheck) {
+    Write-Host "LoRA hash check skipped."
+} elseif (Test-Path -LiteralPath $LoraPath) {
+    Assert-Hash -Path $LoraPath -Expected $ExpectedLoraSha256 -Label "LoRA"
+}
+
 $runtimeReady = (Test-Path -LiteralPath $LlamaCli)
 $runtimeDownloaded = $false
 if (-not $Force -and $runtimeReady) {
@@ -198,7 +250,9 @@ if (Test-Path -LiteralPath $LoraDir) {
     $loraFiles = @(Get-ChildItem -LiteralPath $LoraDir -Filter "*.gguf" -File -ErrorAction SilentlyContinue |
         Sort-Object LastWriteTimeUtc -Descending)
 }
-if ($loraFiles.Count -gt 0) {
+if (Test-Path -LiteralPath $LoraPath) {
+    Write-Host "Current LoRA: $LoraPath"
+} elseif ($loraFiles.Count -gt 0) {
     Write-Host "Current LoRA: $($loraFiles[0].FullName)"
 }
 if ($loraFiles.Count -eq 0) {
