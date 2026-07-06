@@ -5716,6 +5716,10 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
         } else if (mentorLike) {
             if (choice.description.find(L"追问") != wstring::npos) {
                 ss << actor << L"更加严厉，像是怕你把自己送进别人的局里：「急着问不该问的事，只会替旁人递刀。先把脚下站稳。」";
+            } else if (TextContainsAny(choice.description, {L"坦然受教", L"受教"})) {
+                ss << actor << L"没有夸你，只把语气压低：「肯听话是好事，但修行不是点头给我看。把话里的刀也听进去。」";
+            } else if (TextContainsAny(choice.description, {L"婉拒", L"拒"})) {
+                ss << actor << L"没有强留，只把剑符扣回石案：「能不贪好意是本事，但别把所有善意都当成枷锁。」";
             } else if (choice.description.find(L"守规") != wstring::npos) {
                 ss << actor << L"没有替你遮掩这次受挫：「规矩能护人，也能锁人。你若只会照本宣科，迟早死在别人写好的字里。」";
             } else {
@@ -6058,15 +6062,22 @@ Event BuildSocialAdventureEvent() {
     wstring attitudeLine = thread.attitude.empty()
         ? L""
         : L"话里带着" + thread.attitude + L"。";
+    bool mentorTie = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
+    wstring visibleHook = CompactMemoryFragment(thread.hook);
+    if (mentorTie) {
+        visibleHook = L"她看得出你根骨出众，却不许旁人把你捧得太高。";
+    }
     wstring hookLead = familyTie
-        ? L"你很快意识到，这份担忧背后还压着"
+        ? L"这份担忧背后还压着"
         : (factionTie
-            ? L"你很快意识到，这封帖子背后还压着"
-            : L"你很快意识到，这场试探背后还牵着");
+            ? L"这封帖子背后还压着"
+            : (mentorTie
+                ? L"她没有把话说透，只把剑符压在你掌心："
+                : L"这场试探背后还牵着"));
     evt.description = actorName + entrance + attitudeLine +
         BuildSocialTalentPressureText() + BuildSocialEraPressureText() +
         realmHint + BuildSocialNpcUtterance(thread) +
-        hookLead + CompactMemoryFragment(thread.hook);
+        hookLead + visibleHook;
 
     wstring hiddenLine = HasPriorLifeEcho()
         ? L"家世、势力或前世旧名"
@@ -6079,7 +6090,7 @@ Event BuildSocialAdventureEvent() {
         evt.choices = {
             {L"坦然受教", {
                 thread.name + L"见你没有自矜，终于当面认可你，并替你指明一条稳妥去处。\n修为+85，因果+8",
-                thread.name + L"觉得你应得太快、回敬太浅，话虽温和，关系却淡了一层。\n因果-5"
+                thread.name + L"看出你答得太顺，像是只学会点头，还没有真正听懂话里的锋芒。\n因果-5"
             }, 6},
             {L"追问隐情", {
                 thread.name + L"被你问住，透露出一段与" + hiddenLine + L"有关的新线索。\n修为+70，灵石+12，因果+6",
@@ -9548,8 +9559,10 @@ wstring FormatSignedInt(int value) {
 
 wstring BuildPlayerVisibleOutcomeText(wstring text) {
     wstring daoLabel = L"掌道+";
+    bool lowRealmDaoGain = false;
     if (g_player.realm < GOLDEN_CORE) {
-        daoLabel = L"道心+";
+        daoLabel = L"道心沉淀+";
+        lowRealmDaoGain = text.find(L"掌道+") != wstring::npos;
     } else if (g_player.realm < TRUE_IMMORTAL) {
         daoLabel = L"道痕+";
     } else if (g_player.realm < DAO_ANCESTOR) {
@@ -9571,6 +9584,9 @@ wstring BuildPlayerVisibleOutcomeText(wstring text) {
     while ((pos = text.find(L"灵宝共鸣+", pos)) != wstring::npos) {
         text.replace(pos, 5, relicLabel);
         pos += relicLabel.size();
+    }
+    if (lowRealmDaoGain && text.find(L"道心沉淀会在更高境界化作道痕。") == wstring::npos) {
+        text += L"\n道心沉淀会在更高境界化作道痕。";
     }
     return SanitizePlayerFacingText(text);
 }
@@ -10360,15 +10376,19 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         if (rippleDelta != 0) {
             int explicitKarmaDelta = ExtractValue(g_messageText, L"因果+") -
                                      ExtractValue(g_messageText, L"因果-");
+            int totalKarmaDelta = explicitKarmaDelta + rippleDelta;
             if (explicitKarmaDelta != 0) {
                 g_messageText += L"\n抉择余波" + FormatSignedInt(rippleDelta) +
-                    L"（本次因果合计" + FormatSignedInt(explicitKarmaDelta + rippleDelta) + L"）";
+                    L"（本次因果合计" + FormatSignedInt(totalKarmaDelta) + L"）";
             } else {
                 g_messageText += L"\n因果变化" + FormatSignedInt(rippleDelta);
             }
-            wstring ripple = rippleDelta > 0
+            int visibleKarmaDelta = explicitKarmaDelta != 0 ? totalKarmaDelta : rippleDelta;
+            wstring ripple = visibleKarmaDelta > 0
                 ? L"\n这件事没有当场结束，暗处看你的眼神多了几分分量。"
-                : L"\n这件事没有当场结束，有些人情在沉默里冷了半寸。";
+                : (visibleKarmaDelta < 0
+                    ? L"\n这件事没有当场结束，有些人情在沉默里冷了半寸。"
+                    : L"\n这件事没有当场结束，暗处的目光暂时没有偏向任何一边。");
             g_messageText += ripple;
         }
     }
