@@ -10300,7 +10300,14 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     if (!isAIEvent && choice.karmaChange != 0) {
         int rippleDelta = choice.karmaChange;
         if (rippleDelta != 0) {
-            g_messageText += L"\n因果牵动" + FormatSignedInt(rippleDelta);
+            int explicitKarmaDelta = ExtractValue(g_messageText, L"因果+") -
+                                     ExtractValue(g_messageText, L"因果-");
+            if (explicitKarmaDelta != 0) {
+                g_messageText += L"\n抉择余波" + FormatSignedInt(rippleDelta) +
+                    L"（本次因果合计" + FormatSignedInt(explicitKarmaDelta + rippleDelta) + L"）";
+            } else {
+                g_messageText += L"\n因果变化" + FormatSignedInt(rippleDelta);
+            }
             wstring ripple = rippleDelta > 0
                 ? L"\n这件事没有当场结束，暗处看你的眼神多了几分分量。"
                 : L"\n这件事没有当场结束，有些人情在沉默里冷了半寸。";
