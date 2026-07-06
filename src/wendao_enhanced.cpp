@@ -10302,7 +10302,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         if (rippleDelta != 0) {
             g_messageText += L"\n因果牵动" + FormatSignedInt(rippleDelta);
             wstring ripple = rippleDelta > 0
-                ? L"\n这件事没有当场结束，山门里看你的眼神多了几分分量。"
+                ? L"\n这件事没有当场结束，暗处看你的眼神多了几分分量。"
                 : L"\n这件事没有当场结束，有些人情在沉默里冷了半寸。";
             g_messageText += ripple;
         }
