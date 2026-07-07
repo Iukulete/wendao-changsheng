@@ -8832,6 +8832,9 @@ bool ShouldShowFullAdventureResultPage(const wstring& source, bool isAIEvent) {
     if (source.empty()) return true;
     if (source.find(L"常规历练") != wstring::npos) return false;
     if (source.find(L"人情牵动历练") != wstring::npos) return false;
+    if (source.find(L"人物因果历练") != wstring::npos) return false;
+    if (source.find(L"因果历练") != wstring::npos &&
+        source.find(L"关键人物历练") == wstring::npos) return false;
     if (source.find(L"器物牵动历练") != wstring::npos) return false;
     if (source.find(L"主动传承历练") != wstring::npos) return false;
     if (source.find(L"纪元余波历练") != wstring::npos) return false;
