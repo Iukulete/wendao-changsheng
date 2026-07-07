@@ -1401,6 +1401,7 @@ enum GameState {
 
 GameState g_gameState = STATE_MENU;
 Event* g_currentEvent = nullptr;
+wstring g_currentEventSource;
 wstring g_messageText;
 PlayerContext g_pendingAiContext;
 PROCESS_INFORMATION g_aiProcessInfo = {};
@@ -1667,12 +1668,12 @@ WPARAM PickTraceAutoplayGameKey() {
         return '5';
     }
     if (g_player.realm == MORTAL) {
-        return (g_player.totalEvents % 3 == 2) ? '2' : '1';
+        return (g_traceAutoplaySteps % 3 == 1) ? '2' : '1';
     }
     if (g_player.level >= 8) {
-        return (g_player.totalEvents % 2 == 0) ? '1' : '2';
+        return (g_traceAutoplaySteps % 2 == 0) ? '2' : '1';
     }
-    return (g_player.totalEvents % 3 == 0) ? '2' : '1';
+    return (g_traceAutoplaySteps % 3 == 0) ? '2' : '1';
 }
 
 void QueueTraceAutoplayKey(HWND hWnd, WPARAM key, const wstring& reason) {
@@ -1741,6 +1742,7 @@ void TraceEventScreen(const Event& event, const wstring& source) {
 
 void OpenEventPage(Event* event, const wstring& source) {
     g_currentEvent = event;
+    g_currentEventSource = source;
     g_gameState = STATE_EVENT;
     if (event) {
         TraceEventScreen(*event, source);
@@ -8825,6 +8827,29 @@ void SetInlineGameFeedback(const wstring& title, const wstring& text, const wstr
     }
 }
 
+bool ShouldShowFullAdventureResultPage(const wstring& source, bool isAIEvent) {
+    if (isAIEvent) return true;
+    if (source.empty()) return true;
+    if (source.find(L"常规历练") != wstring::npos) return false;
+    if (source.find(L"人情牵动历练") != wstring::npos) return false;
+    if (source.find(L"器物牵动历练") != wstring::npos) return false;
+    if (source.find(L"主动传承历练") != wstring::npos) return false;
+    if (source.find(L"纪元余波历练") != wstring::npos) return false;
+    return true;
+}
+
+void PresentAdventureResult(const wstring& source, const wstring& text, bool isAIEvent) {
+    wstring visibleSource = source.empty() ? L"未标明历练来源" : source;
+    if (ShouldShowFullAdventureResultPage(source, isAIEvent)) {
+        AppendTraceLog(L"ADVENTURE_RESULT_PAGE", visibleSource + L"\n" + text);
+        ShowNotice(L"历练结果", text);
+    } else {
+        AppendTraceLog(L"ADVENTURE_RESULT_INLINE", visibleSource + L"\n" + text);
+        g_gameState = STATE_GAME;
+        SetInlineGameFeedback(L"历练余波", text);
+    }
+}
+
 void ResetBottleneckNoticeState() {
     g_lastBottleneckNoticeGeneration = -1;
     g_lastBottleneckNoticeRealm = MORTAL;
@@ -10739,6 +10764,8 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         FinishCurrentLife(cause);
         g_messageText += BuildNextLifeForeshadowText();
         AppendTraceLog(L"GAMEOVER", g_messageText);
+        g_currentEvent = nullptr;
+        g_currentEventSource.clear();
         return;
     }
 
@@ -10746,7 +10773,9 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
         playerVisibleOutcome += L"\n\n肉身根基已足，此时可以引气入体，不必继续在凡人期拖年岁。";
     }
     g_messageText = playerVisibleOutcome;
-    ShowNotice(L"历练结果", g_messageText);
+    PresentAdventureResult(g_currentEventSource, g_messageText, isAIEvent);
+    g_currentEvent = nullptr;
+    g_currentEventSource.clear();
 }
 
 void DrawPanel(Graphics& graphics, const RectF& rect, int alpha = 210) {
@@ -12215,12 +12244,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         // AI动态事件
                         PlayerContext ctx = BuildPlayerContext();
 
-                        g_aiGen.WritePromptFile(ctx);
-                        g_pendingAiContext = ctx;
-                        if (BeginLocalModelGeneratorAsync()) {
-                            g_gameState = STATE_AI_WAIT;
-                        } else {
+                        if (IsTraceAutoplayEnabled()) {
+                            g_lastAiBackend = L"后台推演";
+                            g_lastAiStatus = L"后台推演直接以既有因果显出动态事件。";
                             EnterAiEventFromContext(ctx);
+                        } else {
+                            g_aiGen.WritePromptFile(ctx);
+                            g_pendingAiContext = ctx;
+                            if (BeginLocalModelGeneratorAsync()) {
+                                g_gameState = STATE_AI_WAIT;
+                            } else {
+                                EnterAiEventFromContext(ctx);
+                            }
                         }
                         InvalidateRect(hWnd, NULL, FALSE);
                     } else {
@@ -12490,6 +12525,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     }
                 }
                 else if (wParam == VK_ESCAPE) {
+                    g_currentEvent = nullptr;
+                    g_currentEventSource.clear();
                     g_gameState = STATE_GAME;
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
