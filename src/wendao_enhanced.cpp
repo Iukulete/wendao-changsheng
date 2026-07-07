@@ -9597,7 +9597,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     info.exists = FileExists(info.path);
     if (!info.exists) {
         info.title = L"空槽位";
-        info.detail = L"尚未写入；保存后生成 " + info.path + L"。";
+        info.detail = L"尚未封存这一段道途。";
         return info;
     }
 
@@ -9605,7 +9605,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     UseUtf8Locale(file);
     if (!file) {
         info.title = L"无法读取";
-        info.detail = info.path;
+        info.detail = L"这段旧录暂时无法翻开。";
         return info;
     }
 
@@ -9613,7 +9613,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     getline(file, marker);
     if (marker != L"SAVE_V4") {
         info.title = L"旧档或损坏";
-        info.detail = info.path + L" · " + FormatFileTimeBrief(info.path);
+        info.detail = L"旧录残缺 · " + FormatFileTimeBrief(info.path);
         return info;
     }
 
@@ -9790,23 +9790,22 @@ void ActivateSaveSlot(int slot) {
     wstring path = GetSaveSlotPath(slot);
     if (g_saveSlotLoadMode) {
         if (!FileExists(path)) {
-            ShowNotice(L"读档", L"这个槽位还没有存档。");
+            ShowNotice(L"读档", L"这道旧录还是空白。");
             return;
         }
         if (LoadGameFromPath(path)) {
-            ShowNotice(L"读档", L"已读取第" + to_wstring(slot) + L"号槽位。");
+            ShowNotice(L"读档", L"已接续第" + to_wstring(slot) + L"号旧录。");
             InvalidateRect(g_hWnd, NULL, FALSE);
         } else {
-            ShowNotice(L"读档", L"这个槽位无法读取，可能是旧格式或文件损坏。");
+            ShowNotice(L"读档", L"这道旧录暂时无法接续，像是残缺得太厉害。");
         }
         return;
     }
 
     if (SaveGameToPath(path)) {
-        ShowNotice(L"存档", L"已保存到第" + to_wstring(slot) + L"号槽位。\n\n" +
-            L"文件: " + path);
+        ShowNotice(L"存档", L"已把当前道途封入第" + to_wstring(slot) + L"号旧录。");
     } else {
-        ShowNotice(L"存档", L"存档失败，无法写入这个槽位。");
+        ShowNotice(L"存档", L"封存失败，这道旧录暂时没能落笔。");
     }
 }
 
@@ -9814,9 +9813,9 @@ wstring BuildSaveSlotIntroText(bool loadMode) {
     wstringstream ss;
     ss << L"【" << (loadMode ? L"读取存档" : L"保存存档") << L"】\n\n";
     ss << (loadMode
-        ? L"选择一个已有槽位读取。空槽位不会覆盖当前进度。"
-        : L"选择一个槽位写入当前道途。已有槽位会被覆盖。");
-    ss << L"\n存档统一写入 save 文件夹，每个槽位对应一个 slot 文件。";
+        ? L"从已有旧录里续上这一世。空槽位不会动到当前道途。"
+        : L"把当前这一世封入一份旧录。若槽位已有内容，会以这次道途覆写。");
+    ss << L"\n每个槽位都对应一段可反复回望的旧录。";
     return ss.str();
 }
 
@@ -10858,22 +10857,108 @@ wstring BuildImmediateGoalDigest() {
     return L"当前要事: 资源不足时多历练；资源充足时闭关推进，瓶颈再以突破收束。";
 }
 
+wstring BuildNearFutureDigest() {
+    vector<wstring> hints;
+    auto clip = [](const wstring& text, size_t limit) {
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
+        if (compact.size() > limit) compact = compact.substr(0, limit) + L"……";
+        return compact;
+    };
+    auto addHint = [&](const wstring& text) {
+        wstring visible = clip(text, 88);
+        if (visible.empty()) return;
+        if (find(hints.begin(), hints.end(), visible) == hints.end()) {
+            hints.push_back(visible);
+        }
+    };
+
+    if (g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao()) {
+        const LegacyRelic& relic = g_legacySystem.GetRelic();
+        addHint(L"道祖之上的门槛仍在：通天灵宝共鸣" + to_wstring(relic.resonance) +
+            L"、掌道深度" + to_wstring(relic.daoDepth) + L"，鸿蒙参悟" +
+            to_wstring(CountHongmengInsightKinds()) + L"/9，还得继续补万道归一。");
+    } else if (g_player.CanBreakthrough()) {
+        if (g_player.realm == MORTAL) {
+            addHint(L"第一道真正的门已经近了：只要你肯引气入体，今生凡骨就要开始脱壳。");
+        } else {
+            addHint(L"瓶颈已经贴脸，下一次叩关若成，这一世的护道人、仇家与势力都会重新估量你。");
+        }
+    } else if (g_player.realm != MORTAL && g_player.level >= 7) {
+        addHint(L"这一境的火候已经近圆，后面几次修炼或一场像样历练，就可能把你推到下一道门前。");
+    }
+
+    if (!g_lifeStoryHooks.empty()) {
+        size_t index = min((size_t)max(0, g_lifeStoryProgressThisLife), g_lifeStoryHooks.size() - 1);
+        addHint(L"本世暗线：" + g_lifeStoryHooks[index]);
+    }
+    if (HasFactionTie()) {
+        addHint(L"势力风向：" + BuildFactionTieDigest());
+    } else {
+        const SocialThread* focusThread = nullptr;
+        int bestScore = -1;
+        for (const auto& thread : g_socialThreads) {
+            if (!ShouldExposeSocialThreadToPlayer(thread)) continue;
+            int score = abs(thread.relation);
+            if (IsAnchorCharacterName(thread.name)) score += 20;
+            if (score > bestScore) {
+                bestScore = score;
+                focusThread = &thread;
+            }
+        }
+        if (focusThread) {
+            addHint(L"人情余波：" + BuildSocialThreadLine(*focusThread));
+        }
+    }
+
+    auto unfinished = g_legacySystem.GetLatestUnfinishedKarmas(1);
+    if (!unfinished.empty()) {
+        addHint(L"旧债未散：" + unfinished[0]);
+    } else if (HasPriorLifeEcho()) {
+        auto fragments = g_legacySystem.GetLatestMemoryFragments(1);
+        if (!fragments.empty()) {
+            addHint(L"旧梦回潮：" + fragments[0]);
+        }
+    }
+
+    if (GetHongmengAccessTier() > 0 || CountHongmengInsightKinds() > 0) {
+        addHint(L"至宝余意：" + BuildHongmengProgressContext());
+    }
+
+    if (hints.empty()) {
+        addHint(L"天下暂静，但山门、秘境、旧玉梦兆和人情欠账都不会让这一世一直平着走。");
+    }
+
+    wstringstream ss;
+    int keep = min(3, (int)hints.size());
+    for (int i = 0; i < keep; ++i) {
+        ss << L"- " << hints[i];
+        if (i + 1 < keep) ss << L"\n";
+    }
+    return ss.str();
+}
+
 wstring BuildMainWorldDigest() {
     wstringstream ss;
     auto activeEvent = g_dynamicWorld.GetActiveWorldEvent();
+    auto clip = [](const wstring& text, size_t limit) {
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
+        if (compact.size() > limit) compact = compact.substr(0, limit) + L"……";
+        return compact;
+    };
     ss << BuildImmediateGoalDigest() << L"\n\n";
-    ss << g_worldEraName << L"\n";
-    ss << g_eraTransitionNote << L"\n";
-    ss << L"世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
+    ss << L"天下风向:\n";
+    ss << g_worldEraName << L" · 世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
+    ss << clip(g_eraTransitionNote, 86) << L"\n";
     ss << L"鸿蒙天象: " << g_hongmengOmenTreasureName << L"映" << g_hongmengOmenDao << L"\n";
     if (activeEvent) {
-        ss << activeEvent->title << L"\n";
-        ss << activeEvent->description << L"\n";
+        ss << L"眼前风波: " << activeEvent->title << L" · " << clip(activeEvent->description, 86) << L"\n";
     } else {
-        ss << L"天下暂静，暗流仍在山门之间潜行。\n";
+        ss << L"眼前风波: 天下暂静，暗流仍在山门之间潜行。\n";
     }
 
-    ss << L"\n" << GetVisibleReincarnationEcho() << L"\n";
+    ss << L"\n近日可期:\n" << BuildNearFutureDigest() << L"\n";
+    ss << L"\n" << (HasPriorLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
+       << clip(GetVisibleReincarnationEcho(), 104) << L"\n";
     if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") {
         ss << L"此世奇遇更偏向灵机、工坊、远讯与技术化道统。\n";
     } else if (g_worldEraName == L"废土返道纪" || g_worldEraName == L"末法裂变纪") {
@@ -10906,11 +10991,15 @@ wstring BuildAiStatusDigest() {
     if (g_lastAiStatus.find(L"修复") != wstring::npos) {
         return L"新的因果已经校准。\n事件会按当前家世、人情与时代继续发酵。";
     }
+    if (g_lastAiStatus.find(L"后台") != wstring::npos ||
+        g_lastAiStatus.find(L"动态事件") != wstring::npos) {
+        return L"新的因果已经显形。\n这一世的人情、旧债与天下风声很快会顺着它发酵。";
+    }
     if (g_lastAiStatus.find(L"已生成") != wstring::npos ||
         g_lastAiStatus.find(L"写入") != wstring::npos) {
         return L"新的因果已经显现。\n本世人情和天下大势会记住这次选择。";
     }
-    return g_lastAiStatus;
+    return SanitizePlayerFacingText(g_lastAiStatus);
 }
 
 wstring BuildProtagonistPortraitBrief() {
