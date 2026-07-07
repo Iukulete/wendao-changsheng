@@ -12,6 +12,7 @@
 #include <cwctype>
 #include <limits>
 #include <cstdlib>
+#include <cstdio>
 #include <locale>
 #include <codecvt>
 #pragma comment(lib, "gdiplus.lib")
@@ -799,7 +800,13 @@ public:
         ss << L"时代适性: " << GetRootEraTraitText() << L"\n";
 
         if (!hasBalancedRoots && realm >= SPIRIT_SEVERING) {
-            ss << L"⚠ 五行不均，无法飞升！\n";
+            if (realm == MAHAYANA) {
+                ss << L"⚠ 五行不均，无法飞升！\n";
+            } else if (realm < HALF_IMMORTAL) {
+                ss << L"⚠ 五行不均，冲仙门前需补齐短板。\n";
+            } else {
+                ss << L"⚠ 五行不均，掌道根基仍有缺口。\n";
+            }
         }
 
         ss << L"因果: " << karma << L"\n";
@@ -1448,10 +1455,13 @@ int g_lastBottleneckNoticeLevel = -1;
 #define ID_BTN_START 1002
 #define IDT_AI_POLL 2001
 #define IDT_TRACE_AUTOPLAY 2002
+#define IDT_AGENT_BRIDGE 2003
 
 HWND g_nameInput;
 HWND g_btnStart;
 int g_traceAutoplaySteps = 0;
+int g_agentStateSequence = 0;
+wstring g_agentLastCommand;
 
 void ShowNotice(const wstring& title, const wstring& text);
 void SetInlineGameFeedback(const wstring& title, const wstring& text, const wstring& traceTag = L"");
@@ -1473,6 +1483,7 @@ int CountHongmengInsightKinds();
 wstring BuildPlannedLegacyDigest(int limit = 4);
 bool AddLifeStoryHook(const wstring& hook, bool recordMemory);
 bool HasPriorLifeEcho();
+bool HasActualPastLifeEcho();
 void InitializeStoryStateForLife();
 wstring BuildStoryStateContext();
 void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent);
@@ -1487,6 +1498,7 @@ wstring BuildHongmengProgressContext();
 wstring BuildNextLifeForeshadowText();
 bool CanAttainHeavenlyDao();
 void ReturnFromInfoPage();
+bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& traceReason);
 
 wstring GetTraceLogPath() {
     static bool initialized = false;
@@ -1496,6 +1508,40 @@ wstring GetTraceLogPath() {
         if (size > 1) {
             vector<wchar_t> buffer(size);
             DWORD copied = GetEnvironmentVariableW(L"WENDAO_TRACE_LOG", buffer.data(), size);
+            if (copied > 0 && copied < size) {
+                path.assign(buffer.data(), copied);
+            }
+        }
+        initialized = true;
+    }
+    return path;
+}
+
+wstring GetAgentStatePath() {
+    static bool initialized = false;
+    static wstring path;
+    if (!initialized) {
+        DWORD size = GetEnvironmentVariableW(L"WENDAO_AGENT_STATE", nullptr, 0);
+        if (size > 1) {
+            vector<wchar_t> buffer(size);
+            DWORD copied = GetEnvironmentVariableW(L"WENDAO_AGENT_STATE", buffer.data(), size);
+            if (copied > 0 && copied < size) {
+                path.assign(buffer.data(), copied);
+            }
+        }
+        initialized = true;
+    }
+    return path;
+}
+
+wstring GetAgentCommandPath() {
+    static bool initialized = false;
+    static wstring path;
+    if (!initialized) {
+        DWORD size = GetEnvironmentVariableW(L"WENDAO_AGENT_COMMAND", nullptr, 0);
+        if (size > 1) {
+            vector<wchar_t> buffer(size);
+            DWORD copied = GetEnvironmentVariableW(L"WENDAO_AGENT_COMMAND", buffer.data(), size);
             if (copied > 0 && copied < size) {
                 path.assign(buffer.data(), copied);
             }
@@ -1521,6 +1567,16 @@ bool IsTruthyEnvValue(const wstring& value) {
     return lowered != L"0" && lowered != L"false" && lowered != L"off" && lowered != L"no";
 }
 
+bool IsAgentBridgeEnabled() {
+    static bool initialized = false;
+    static bool enabled = false;
+    if (!initialized) {
+        enabled = !GetAgentStatePath().empty() && !GetAgentCommandPath().empty();
+        initialized = true;
+    }
+    return enabled;
+}
+
 bool IsTraceAutoplayEnabled() {
     static bool initialized = false;
     static bool enabled = false;
@@ -1535,8 +1591,9 @@ bool ShouldHideTraceWindow() {
     static bool initialized = false;
     static bool hidden = false;
     if (!initialized) {
-        hidden = !GetTraceLogPath().empty() &&
-            (IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_TRACE_HIDE")) || IsTraceAutoplayEnabled());
+        hidden = (!GetTraceLogPath().empty() &&
+            (IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_TRACE_HIDE")) || IsTraceAutoplayEnabled())) ||
+            (IsAgentBridgeEnabled() && IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_AGENT_HIDE")));
         initialized = true;
     }
     return hidden;
@@ -2944,14 +3001,56 @@ wstring BuildFactionTieDigest() {
         if (favor <= -18) return L"疏离";
         return L"观望";
     };
+    auto highRealmStance = [](int favor) {
+        if (favor >= 45) return L"敬畏倚重";
+        if (favor >= 18) return L"愿结仙缘";
+        if (favor <= -45) return L"畏惧避让";
+        if (favor <= -18) return L"旧怨未平";
+        return L"观望旧因";
+    };
+    wstring kind = g_factionTie.kind;
+    wstring role = g_factionTie.role;
+    wstring stance = g_factionTie.stance;
+    wstring obligation = g_factionTie.obligation;
+    wstring hook = g_factionTie.hook;
+
+    bool earlySectLabel = TextContainsAny(kind + L" " + role + L" " + hook,
+        {L"入门", L"内门", L"外门", L"杂役", L"山门试探"});
+    if (g_player.realm >= HALF_IMMORTAL && earlySectLabel) {
+        kind = L"古典宗门 / 飞升旧契";
+        if (g_player.realm >= DAO_ANCESTOR) {
+            role = L"旧山门因果见证者";
+        } else if (g_player.realm >= TRUE_IMMORTAL) {
+            role = L"飞升旧人";
+        } else {
+            role = L"仙门旧契承接者";
+        }
+        stance = highRealmStance(g_factionTie.favor);
+        if (TextContainsAny(obligation, {L"身世", L"旧物"})) {
+            obligation = L"身世与伴生旧玉的线索仍有未说尽之处。";
+        } else if (TextContainsAny(obligation, {L"轻慢", L"杂役", L"低阶"})) {
+            obligation = L"昔年轻慢已成因果，旧账日后会以名声、人情或宗门抉择偿还。";
+        } else {
+            obligation = L"当年的入局机会已转作仙路旧契，是否回护旧宗仍由你定。";
+        }
+        hook = L"这条线已不再是入门试炼，而是旧宗、师承与飞升后重逢能否站在同一边。";
+    } else if (g_player.realm >= TRUE_IMMORTAL &&
+               TextContainsAny(kind + L" " + role, {L"低阶", L"候选", L"名额", L"学徒", L"边缘"})) {
+        role = L"飞升后旧契牵连者";
+        stance = highRealmStance(g_factionTie.favor);
+        hook = hook.empty()
+            ? L"昔日势力已跟不上你的境界，但旧契、人情和资源账仍可能在仙路上回响。"
+            : hook;
+    }
+
     wstringstream ss;
-    ss << g_factionTie.name << L"（" << g_factionTie.kind << L"）"
-       << L" · " << g_factionTie.role
-       << L" · " << g_factionTie.stance
+    ss << g_factionTie.name << L"（" << kind << L"）"
+       << L" · " << role
+       << L" · " << stance
        << L" · " << favorLabel(g_factionTie.favor);
     if (g_factionTie.binding) ss << L" · 已有契约";
-    if (!g_factionTie.obligation.empty()) ss << L" · " << g_factionTie.obligation;
-    if (!g_factionTie.hook.empty()) ss << L" · " << g_factionTie.hook;
+    if (!obligation.empty()) ss << L" · " << obligation;
+    if (!hook.empty()) ss << L" · " << hook;
     return ss.str();
 }
 
@@ -2960,6 +3059,14 @@ wstring BuildFactionTieText() {
     ss << L"【本世势力牵连】\n\n";
     if (!HasFactionTie()) {
         ss << L"这一世尚未被明确势力记录，但只要踏入道途，宗门、世家、仙朝或工坊迟早会注意到你。";
+        return ss.str();
+    }
+
+    if (g_player.realm >= HALF_IMMORTAL &&
+        TextContainsAny(g_factionTie.kind + L" " + g_factionTie.role + L" " + g_factionTie.hook,
+            {L"入门", L"内门", L"外门", L"杂役", L"山门试探"})) {
+        ss << L"势力概览: " << BuildFactionTieDigest() << L"\n";
+        ss << L"说明: 早年的入门身份已经不是你此刻的身份；这里记录的是旧宗、师承与飞升后仍未散尽的因果。";
         return ss.str();
     }
 
@@ -3139,6 +3246,9 @@ void GenerateWorldEra() {
 }
 
 wstring GetVisibleReincarnationEcho() {
+    if (!HasActualPastLifeEcho() && g_reincarnationEcho.find(L"前世") != wstring::npos) {
+        return L"黑白伴生玉佩偶尔带来模糊梦兆、早熟直觉和来历不明的温凉玉意。";
+    }
     if (g_reincarnationEcho.find(L"这是第一世") != wstring::npos ||
         g_reincarnationEcho.find(L"尚无前世记忆") != wstring::npos ||
         g_reincarnationEcho.find(L"第一世没有前世记忆") != wstring::npos) {
@@ -3158,6 +3268,12 @@ wstring SanitizePlayerFacingText(wstring text) {
     };
 
     replaceAll(L"本地 AI 会优先把这个势力当成本世持续存在的组织来续写，而不是每次凭空换一个宗门。", L"");
+    if (!HasActualPastLifeEcho()) {
+        replaceAll(L"前世记忆、今生选择和轮回回响", L"今生选择、生死梦兆和轮回微光");
+        replaceAll(L"前世残响", L"旧玉梦兆");
+        replaceAll(L"前世记忆", L"旧玉梦兆");
+        replaceAll(L"上一世留下的因果", L"今生牵出的因果");
+    }
     replaceAll(L"第一世没有前世记忆；若梦境出现异样，也只是伴生旧玉在暗示未来取舍。",
         L"黑白伴生玉佩偶尔牵出梦兆；若梦境出现异样，也只是提醒你留意今生取舍。");
     replaceAll(L"这是第一世，尚无前世记忆；", L"");
@@ -3233,7 +3349,7 @@ wstring GetEraSummaryText() {
     ss << L"时代法则: " << g_worldEraRule << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"转折因由: " << g_eraShiftCause << L"\n";
-    ss << (HasPriorLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
+    ss << (HasActualPastLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
        << GetVisibleReincarnationEcho() << L"\n";
     ss << L"鸿蒙天象: " << BuildHongmengOmenBrief() << L"\n";
     if (!g_eraChronicle.empty()) {
@@ -4804,6 +4920,10 @@ bool HasPriorLifeEcho() {
            g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) > 0;
 }
 
+bool HasActualPastLifeEcho() {
+    return g_generation > 1 || !g_legacySystem.GetPastLives().empty();
+}
+
 void RefreshSocialAgentState(SocialThread& thread) {
     bool familyTie = SocialThreadHas(thread, {L"父亲", L"母亲", L"养育者", L"身世"});
     bool heroineTie = SocialThreadHas(thread, {L"桃华剑脉", L"洛凝霜"});
@@ -5162,6 +5282,7 @@ wstring BuildSocialEmotionTag(const SocialThread& thread) {
 wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     bool gifted = g_player.IsExceptionalRoot();
     bool weak = g_player.IsWeakRoot();
+    bool latePath = g_player.realm >= NASCENT_SOUL;
     auto has = [&](const wstring& needle) {
         return thread.role.find(needle) != wstring::npos ||
                thread.attitude.find(needle) != wstring::npos ||
@@ -5172,17 +5293,22 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
         return HasPriorLifeEcho()
             ? L"「有些旧事不是不能说，是你现在一问，就会有人知道你醒得太早。」"
             : (thread.role == L"势力牵连"
-                ? L"「你若真想知道旧玉和家门旧事，就先活到能承受答案的时候。」"
+                ? (latePath
+                    ? L"「你已走到能听答案的时候，可答案背后的人，也终于有资格看见你了。」"
+                    : L"「你若真想知道旧玉和家门旧事，就先活到能承受答案的时候。」")
                 : L"「你若真想知道父母是谁，就先活到能承受答案的时候。」");
     }
     if (has(L"父亲")) {
         if (gifted) return L"「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」";
         if (weak) return L"「修不成最快的路也无妨，先把命和心气护住。」";
+        if (latePath) return L"「你走到今日，已不是给谁证明；越近天门，越要记得自己为何入道。」";
         return L"「入道不是给别人看的，别急着把自己押进大局。」";
     }
     if (has(L"母亲")) {
         if (gifted) return L"「他们夸你，是想提前押注；我护你，是怕你太早被看穿。」";
-        if (weak) return L"「测灵碑冷，娘不冷，你慢慢走也有人给你留灯。」";
+        if (weak) return latePath
+            ? L"「走到这一步仍会疼，就别装作没人替你心疼。」"
+            : L"「测灵碑冷，娘不冷，你慢慢走也有人给你留灯。」";
         return L"「旁人看灵根，我看你能不能守住自己的心。」";
     }
     if (has(L"养育者")) {
@@ -5195,16 +5321,22 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
     }
     if (has(L"欺压者")) {
         return weak
-            ? L"「测灵碑都替你把话说完了，还想跟我们争名额？」"
+            ? (latePath
+                ? L"「走到这一步还敢露怯？高处的风更会挑软处割。」"
+                : L"「测灵碑都替你把话说完了，还想跟我们争名额？」")
             : L"「有点根骨就敢抬头？山门里会教你什么叫规矩。」";
     }
     if (has(L"竞争者")) {
         return gifted
             ? L"「资质好又怎样，谁知道你家世里藏着什么债？」"
-            : L"「你我都没稳进内门，少摆出已经赢了的样子。」";
+            : (latePath
+                ? L"「你我都走到这一步了，少拿一时高低当成终局。」"
+                : L"「你我都没稳进内门，少摆出已经赢了的样子。」");
     }
     if (has(L"资源把关者")) {
-        return L"「灵井不是给热血少年的，拿得出筹码再谈破境。」";
+        return latePath
+            ? L"「越近天门，资源越不是赏赐；拿得出代价，再谈破境。」"
+            : L"「灵井不是给热血少年的，拿得出筹码再谈破境。」";
     }
     if (has(L"功法见证者")) {
         return L"「这一式别在外头乱用，懂行的人会认出失传古法的骨头。」";
@@ -6183,6 +6315,18 @@ bool ShouldTriggerSocialAdventureEvent() {
 
 wstring BuildSocialTalentPressureText() {
     int totalRoot = g_player.GetTotalRoot();
+    if (g_player.realm >= NASCENT_SOUL) {
+        if (g_player.IsExceptionalRoot()) {
+            return L"你这些年锋芒已成气候，赞许、押注和嫉妒都不再停在灵根上，而是落到你能否撑住大道压力。";
+        }
+        if (g_player.IsWeakRoot()) {
+            return L"早年根骨短处仍有人记得，但你能走到此境，本身已经让轻慢者不得不重新估量。";
+        }
+        if (g_player.hasBalancedRoots) {
+            return L"五行根基的后劲开始显出分量，有人把你当成可押的大道种子，也有人等着看你破绽。";
+        }
+        return L"你走到如今，资质评价已不是唯一筹码；人情、战绩、道心和旧债都在重新给你定价。";
+    }
     if (g_player.IsExceptionalRoot()) {
         return L"你资质出众后，赞许、押注和嫉妒都来得比灵气更快。";
     }
@@ -6210,6 +6354,9 @@ wstring BuildSocialEraPressureText() {
     }
     if (g_worldEraName == L"废土返道纪") {
         return L"废土路远，能信谁、欠谁，都可能决定下一次能否活着回来。";
+    }
+    if (g_player.realm >= GOLDEN_CORE) {
+        return L"山门与坊市仍会看人下菜，只是如今看的不止灵根，还有你背后的战绩、旧债与护道人。";
     }
     return L"山门与坊市都在看人下菜，少年道途从来不只看灵根。";
 }
@@ -6241,6 +6388,8 @@ Event BuildSocialAdventureEvent() {
     bool factionTie = (thread.role == L"势力牵连") || TextContainsAny(thread.role + thread.attitude, {
         L"资源把关者", L"册封", L"工坊", L"道网", L"残宗", L"仙朝", L"联系人"
     });
+    bool mentorTie = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
+    bool intimateTie = familyTie || mentorTie;
 
     if (familyTie) {
         evt.title = L"【因果】家门问心";
@@ -6253,7 +6402,7 @@ Event BuildSocialAdventureEvent() {
     }
 
     wstring realmHint;
-    if (!thread.visibleRealm.empty()) {
+    if (!thread.visibleRealm.empty() && !(intimateTie && g_player.realm >= NASCENT_SOUL)) {
         realmHint = L"对方外显" + thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
             realmHint += L"，但气机未必可信";
@@ -6272,7 +6421,6 @@ Event BuildSocialAdventureEvent() {
     wstring attitudeLine = thread.attitude.empty()
         ? L""
         : L"话里带着" + thread.attitude + L"。";
-    bool mentorTie = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
     wstring visibleHook = CompactMemoryFragment(thread.hook);
     if (mentorTie) {
         visibleHook = L"她看得出你根骨出众，却不许旁人把你捧得太高。";
@@ -6668,7 +6816,7 @@ void GenerateSocialThreads() {
     int techniqueEcho = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
     int treasureEcho = g_legacySystem.GetLegacyBonus(LEGACY_TREASURE);
     int reputationEcho = g_legacySystem.GetLegacyBonus(LEGACY_REPUTATION);
-    bool priorLife = HasPriorLifeEcho();
+    bool priorLife = HasActualPastLifeEcho();
     auto& inherited = g_legacySystem.GetInheritedLegacies();
     auto npcs = g_dynamicWorld.GetAliveNPCs();
     wstring sectName = g_worldData.sects.empty() ? L"附近宗门" : g_worldData.sects[0].name;
@@ -7078,7 +7226,7 @@ wstring BuildCharacterDetailText(const wstring& name) {
 
     wstringstream ss;
     ss << L"【角色因果】\n\n";
-    if (HasPriorLifeEcho()) {
+    if (HasActualPastLifeEcho()) {
         ss << L"黑白旧玉会托起一些前世碎片，但旧忆只能帮你校准判断，不能替今生选择。\n\n";
     } else {
         ss << L"此世因果尚浅，你更多依靠今生见闻、早熟直觉与伴生旧玉偶尔浮起的梦兆。\n\n";
@@ -7270,7 +7418,7 @@ void GenerateLifeStoryHooks() {
     auto pastFragments = g_legacySystem.GetLatestMemoryFragments(2);
     auto unfinishedKarmas = g_legacySystem.GetLatestUnfinishedKarmas(2);
     const LegacyRelic& relic = g_legacySystem.GetRelic();
-    bool priorLife = HasPriorLifeEcho();
+    bool priorLife = HasActualPastLifeEcho();
 
     if (g_worldEraName == L"灵机蒸汽纪") {
         g_lifePremise = priorLife
@@ -7359,11 +7507,11 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"旧世残响：" + g_eraRemnants[0]);
     }
 
-    if (!unfinishedKarmas.empty()) {
+    if (HasActualPastLifeEcho() && !unfinishedKarmas.empty()) {
         g_lifeStoryHooks.push_back(L"前世未竟因果：" + unfinishedKarmas[0]);
     }
 
-    if (!pastFragments.empty()) {
+    if (HasActualPastLifeEcho() && !pastFragments.empty()) {
         g_lifeStoryHooks.push_back(L"前世碎片反复浮现：" + pastFragments[0]);
     } else if (!priorLife) {
         g_lifeStoryHooks.push_back(L"黑白伴生玉佩偶尔牵出梦兆；若梦境出现异样，也只是提醒你留意今生取舍。");
@@ -7443,13 +7591,21 @@ Event BuildLifeStoryProgressEvent() {
             focusText += L"；" + g_factionTie.hook;
         }
     }
+    if (g_player.realm >= HALF_IMMORTAL &&
+        TextContainsAny(focusText, {L"入门", L"内门", L"外门", L"杂役", L"山门试探"})) {
+        focusText = HasFactionTie()
+            ? BuildFactionTieDigest()
+            : L"早年的山门试炼已经化为旧宗因果，此刻真正牵动你的，是师承、人情和飞升后的站位。";
+    }
     if (focusText.find(L"襁褓中留有半枚玉佩；出生时随身带着一枚黑白伴生玉佩") != wstring::npos) {
         focusText = L"一处古修遗府似乎牵着此世隐情：襁褓中留有半枚黑白旧玉，来历无人说清";
     }
 
     wstring pressure;
     if (HasFactionTie()) {
-        pressure = L"牵动此事的是" + g_factionTie.name + L"，他们仍在衡量你值不值得真正下注。";
+        pressure = (g_player.realm >= HALF_IMMORTAL)
+            ? L"牵动此事的是" + g_factionTie.name + L"留下的旧宗因果；昔日轻重已经成账，飞升后只看谁敢站在你身侧。"
+            : L"牵动此事的是" + g_factionTie.name + L"，他们仍在衡量你值不值得真正下注。";
     } else if (!g_socialThreads.empty()) {
         const SocialThread& thread = g_socialThreads[min((size_t)stage, g_socialThreads.size() - 1)];
         pressure = L"牵动此事的人是" + thread.name + L"（" + thread.role + L"，" + thread.attitude + L"）。";
@@ -8496,12 +8652,43 @@ bool BeginLocalModelGeneratorAsync() {
     return true;
 }
 
+bool IsStageMismatchedAiEvent(const wstring& title, const wstring& description, const vector<wstring>& choices) {
+    if (g_player.realm < GOLDEN_CORE) return false;
+
+    wstring combined = title + L" " + description;
+    for (const auto& choice : choices) {
+        combined += L" " + choice;
+    }
+
+    vector<wstring> earlyOnly = {
+        L"测灵", L"测灵碑", L"测灵台", L"入门试炼", L"入门信物",
+        L"内门名额", L"稳进内门", L"必入内门", L"外门少年", L"杂役牌",
+        L"外门候选", L"杂役试炼", L"没稳进内门"
+    };
+    if (TextContainsAny(combined, earlyOnly)) return true;
+
+    if (g_player.realm >= NASCENT_SOUL &&
+        TextContainsAny(combined, {L"少年道途", L"热血少年", L"同龄人", L"初入山门"})) {
+        return true;
+    }
+
+    return false;
+}
+
 void EnterAiEventFromContext(PlayerContext ctx) {
     wstring aiTitle;
     wstring aiDesc;
     vector<wstring> aiChoices;
     bool loadedExternalEvent = false;
-    if (g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices)) {
+    bool loadedFromModel = g_aiGen.TryLoadExternalEvent(aiTitle, aiDesc, aiChoices);
+    if (loadedFromModel && IsStageMismatchedAiEvent(aiTitle, aiDesc, aiChoices)) {
+        loadedFromModel = false;
+        g_lastAiBackend = L"模板校准";
+        g_lastAiStatus = L"动态事件阶段错位，已由规则模板接管。";
+        AppendTraceLog(L"AI_STAGE_FILTER",
+            L"discarded=" + aiTitle + L"\n" + aiDesc);
+    }
+    if (loadedFromModel) {
         loadedExternalEvent = true;
         if (g_lastAiBackend.empty()) {
             g_lastAiBackend = L"天机推演";
@@ -8914,7 +9101,7 @@ PlayerContext BuildPlayerContext() {
     }
     ctx.familyState += L"；伴生玉佩:" + BuildCompanionJadeVisibleText();
     if (HasFactionTie()) {
-        ctx.familyState += L"；本世势力:" + g_factionTie.name + L"(" + g_factionTie.role + L")";
+        ctx.familyState += L"；本世势力:" + BuildFactionTieDigest();
     }
     ctx.socialState = GetSocialDigest();
     if (!g_socialThreads.empty()) {
@@ -10015,12 +10202,19 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
 
     if (TextContainsAny(text, {L"伴生玉佩", L"黑白旧玉", L"玉佩", L"梦中玉意", L"阴阳玉痕"})) {
         add(wstring(successLike ? L"旧玉微温：" : L"旧玉受扰：") +
-            L"那枚黑白旧玉仍未显露真名，却继续把前世记忆、今生选择和轮回回响牵在一起。");
+            (HasActualPastLifeEcho()
+                ? L"那枚黑白旧玉仍未显露真名，却继续把前世记忆、今生选择和轮回回响牵在一起。"
+                : L"那枚黑白旧玉仍未显露真名，只把今生选择、生死梦兆和轮回微光牵在一起。"));
     }
 
     if (TextContainsAny(text, {L"前世未竟", L"未竟因果", L"旧因", L"旧债", L"前世", L"旧名"})) {
-        add(wstring(successLike ? L"旧因回响：" : L"旧债压身：") +
-            L"上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
+        if (HasActualPastLifeEcho()) {
+            add(wstring(successLike ? L"旧因回响：" : L"旧债压身：") +
+                L"上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
+        } else {
+            add(wstring(successLike ? L"今生旧债：" : L"旧债压身：") +
+                L"这不是前世异常，而是此世家世、宗门与旧物牵出的第一层因果。");
+        }
     }
 
     if (TextContainsAny(text, {L"清蘅真人", L"师尊", L"护道人"})) {
@@ -10843,6 +11037,10 @@ wstring BuildImmediateGoalDigest() {
         }
         return L"当前要事: 境界已抵瓶颈，可以尝试突破，也可先历练补足护道因果。";
     }
+    if (g_player.realm == MAHAYANA && g_player.level >= 9 &&
+        g_player.exp >= g_player.GetExpNeeded() && !g_player.hasBalancedRoots) {
+        return L"当前要事: 修为已足，但五行未均；先历练寻找五行秘境、五行老祖或洗髓机缘，补齐短板再冲仙门。";
+    }
     if (g_player.realm != MORTAL && g_player.level >= 9) {
         int need = max(0, g_player.GetExpNeeded() - g_player.exp);
         return L"当前要事: 已到九层，修为还差 " + to_wstring(need) +
@@ -10892,7 +11090,14 @@ wstring BuildNearFutureDigest() {
 
     if (!g_lifeStoryHooks.empty()) {
         size_t index = min((size_t)max(0, g_lifeStoryProgressThisLife), g_lifeStoryHooks.size() - 1);
-        addHint(L"本世暗线：" + g_lifeStoryHooks[index]);
+        wstring hook = g_lifeStoryHooks[index];
+        if (g_player.realm >= HALF_IMMORTAL &&
+            TextContainsAny(hook, {L"入门", L"内门", L"外门", L"杂役", L"山门试探"})) {
+            hook = HasFactionTie()
+                ? L"旧宗因果：" + BuildFactionTieDigest()
+                : L"早年山门试炼已化成旧宗因果，后续看的是师承、人情与飞升后的站位。";
+        }
+        addHint(L"本世暗线：" + hook);
     }
     if (HasFactionTie()) {
         addHint(L"势力风向：" + BuildFactionTieDigest());
@@ -10913,18 +11118,23 @@ wstring BuildNearFutureDigest() {
         }
     }
 
-    auto unfinished = g_legacySystem.GetLatestUnfinishedKarmas(1);
-    if (!unfinished.empty()) {
-        addHint(L"旧债未散：" + unfinished[0]);
-    } else if (HasPriorLifeEcho()) {
+    if (HasActualPastLifeEcho()) {
+        auto unfinished = g_legacySystem.GetLatestUnfinishedKarmas(1);
+        if (!unfinished.empty()) {
+            addHint(L"旧债未散：" + unfinished[0]);
+        }
         auto fragments = g_legacySystem.GetLatestMemoryFragments(1);
-        if (!fragments.empty()) {
+        if (unfinished.empty() && !fragments.empty()) {
             addHint(L"旧梦回潮：" + fragments[0]);
         }
     }
 
     if (GetHongmengAccessTier() > 0 || CountHongmengInsightKinds() > 0) {
-        addHint(L"至宝余意：" + BuildHongmengProgressContext());
+        if (g_player.realm >= DAO_ANCESTOR) {
+            addHint(L"至宝余意：" + BuildHongmengProgressContext());
+        } else if (g_player.realm >= TRUE_IMMORTAL || CountHongmengInsightKinds() >= 3) {
+            addHint(L"古老天象：" + BuildHongmengOmenBrief());
+        }
     }
 
     if (hints.empty()) {
@@ -10960,7 +11170,7 @@ wstring BuildMainWorldDigest() {
     }
 
     ss << L"\n近日可期:\n" << BuildNearFutureDigest() << L"\n";
-    ss << L"\n" << (HasPriorLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
+    ss << L"\n" << (HasActualPastLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
        << clip(GetVisibleReincarnationEcho(), 104) << L"\n";
     if (g_worldEraName == L"灵机蒸汽纪" || g_worldEraName == L"星穹道网纪") {
         ss << L"此世奇遇更偏向灵机、工坊、远讯与技术化道统。\n";
@@ -10981,7 +11191,9 @@ wstring BuildAiStatusDigest() {
         return L"暂未起波澜。\n外出历练时，旧玉、家世和天下大势可能牵出新的机缘。";
     }
     if (g_lastAiStatus.find(L"正在推演") != wstring::npos) {
-        return L"天机正在推演。\n前世残响、此世人情与近年大事正在交汇。";
+        return HasActualPastLifeEcho()
+            ? L"天机正在推演。\n前世残响、此世人情与近年大事正在交汇。"
+            : L"天机正在推演。\n旧玉梦兆、此世人情与近年大事正在交汇。";
     }
     if (g_lastAiStatus.find(L"回退") != wstring::npos ||
         g_lastAiStatus.find(L"失败") != wstring::npos ||
@@ -11056,6 +11268,195 @@ wstring BuildGameFeedbackDigest() {
     }
     wstring digest = out.str();
     return digest.empty() ? L"暂无新的回响。" : digest;
+}
+
+wstring JsonEscape(const wstring& text) {
+    wstringstream ss;
+    for (wchar_t ch : text) {
+        switch (ch) {
+            case L'\\': ss << L"\\\\"; break;
+            case L'"': ss << L"\\\""; break;
+            case L'\n': ss << L"\\n"; break;
+            case L'\r': break;
+            case L'\t': ss << L"\\t"; break;
+            default:
+                if (ch >= 32) ss << ch;
+                break;
+        }
+    }
+    return ss.str();
+}
+
+wstring AgentGameStateName() {
+    switch (g_gameState) {
+        case STATE_MENU: return L"MENU";
+        case STATE_GAME: return L"GAME";
+        case STATE_EVENT: return L"EVENT";
+        case STATE_GAMEOVER: return L"GAMEOVER";
+        case STATE_INFO: return L"INFO";
+        case STATE_AI_WAIT: return L"AI_WAIT";
+        default: return L"UNKNOWN";
+    }
+}
+
+void WriteJsonField(wstringstream& ss, const wstring& name, const wstring& value, bool comma = true) {
+    ss << L"\"" << name << L"\":\"" << JsonEscape(value) << L"\"";
+    if (comma) ss << L",";
+    ss << L"\n";
+}
+
+void WriteAgentState() {
+    wstring path = GetAgentStatePath();
+    if (path.empty()) return;
+
+    wstringstream ss;
+    ss << L"{\n";
+    ss << L"\"sequence\":" << ++g_agentStateSequence << L",\n";
+    WriteJsonField(ss, L"state", AgentGameStateName());
+    ss << L"\"generation\":" << g_generation << L",\n";
+    ss << L"\"canBreakthrough\":" << (g_player.CanBreakthrough() ? L"true" : L"false") << L",\n";
+    ss << L"\"heavenlyDaoReady\":" << (CanAttainHeavenlyDao() ? L"true" : L"false") << L",\n";
+
+    ss << L"\"player\":{\n";
+    WriteJsonField(ss, L"name", g_player.name);
+    WriteJsonField(ss, L"era", g_worldEraName);
+    WriteJsonField(ss, L"realm", GetRealmName(g_player.realm));
+    ss << L"\"realmIndex\":" << (int)g_player.realm << L",\n";
+    ss << L"\"level\":" << g_player.level << L",\n";
+    ss << L"\"exp\":" << g_player.exp << L",\n";
+    ss << L"\"needExp\":" << g_player.GetExpNeeded() << L",\n";
+    ss << L"\"hp\":" << g_player.hp << L",\n";
+    ss << L"\"maxHp\":" << g_player.maxHp << L",\n";
+    ss << L"\"age\":" << g_player.age << L",\n";
+    ss << L"\"lifespan\":" << g_player.lifespan << L",\n";
+    ss << L"\"karma\":" << g_player.karma << L",\n";
+    ss << L"\"spiritStones\":" << g_player.spiritStones << L",\n";
+    ss << L"\"pills\":" << g_player.pills << L",\n";
+    ss << L"\"totalEvents\":" << g_player.totalEvents << L",\n";
+    WriteJsonField(ss, L"rootQuality", g_player.GetRootQuality());
+    WriteJsonField(ss, L"rootShape", g_player.GetRootShapeLabel());
+    WriteJsonField(ss, L"roots", g_player.GetRootDetails(), false);
+    ss << L"},\n";
+
+    WriteJsonField(ss, L"goal", BuildImmediateGoalDigest());
+    WriteJsonField(ss, L"nearFuture", BuildNearFutureDigest());
+    WriteJsonField(ss, L"feedback", BuildGameFeedbackDigest());
+    WriteJsonField(ss, L"recentMemory", BuildRecentMemoryDigest());
+    WriteJsonField(ss, L"aiStatus", BuildAiStatusDigest());
+
+    ss << L"\"event\":";
+    if (g_gameState == STATE_EVENT && g_currentEvent) {
+        ss << L"{\n";
+        WriteJsonField(ss, L"source", g_currentEventSource);
+        WriteJsonField(ss, L"title", g_currentEvent->title);
+        WriteJsonField(ss, L"description", g_currentEvent->description);
+        ss << L"\"choices\":[";
+        for (size_t i = 0; i < g_currentEvent->choices.size(); ++i) {
+            if (i > 0) ss << L",";
+            ss << L"{\"index\":" << (i + 1) << L",\"text\":\""
+               << JsonEscape(g_currentEvent->choices[i].description) << L"\"}";
+        }
+        ss << L"]\n}";
+    } else {
+        ss << L"null";
+    }
+    ss << L",\n";
+
+    ss << L"\"actions\":[";
+    if (g_gameState == STATE_MENU) {
+        ss << L"\"START <道号>\"";
+    } else if (g_gameState == STATE_GAME) {
+        ss << L"\"KEY 1 修炼\",\"KEY 2 历练\",\"KEY 3 突破\",\"KEY 4 疗伤服药\","
+           << L"\"KEY 5 灵石闭关\",\"KEY 6 铸炼器物\",\"KEY S 保存\",\"KEY L 读取\"";
+    } else if (g_gameState == STATE_EVENT && g_currentEvent) {
+        for (size_t i = 0; i < g_currentEvent->choices.size(); ++i) {
+            if (i > 0) ss << L",";
+            ss << L"\"KEY " << (i + 1) << L"\"";
+        }
+    } else if (g_gameState == STATE_GAMEOVER) {
+        ss << L"\"KEY N 下一世\",\"KEY ESC 退出\"";
+    } else if (g_gameState == STATE_INFO) {
+        ss << L"\"KEY ESC 返回\"";
+    } else if (g_gameState == STATE_AI_WAIT) {
+        ss << L"\"WAIT\",\"KEY ESC 放弃本次推演\"";
+    }
+    ss << L"]\n";
+    ss << L"}\n";
+
+    wofstream file(path.c_str(), ios::trunc);
+    UseUtf8Locale(file);
+    if (file) {
+        file << ss.str();
+    }
+}
+
+WPARAM AgentKeyFromToken(wstring token) {
+    transform(token.begin(), token.end(), token.begin(), towupper);
+    if (token == L"ESC" || token == L"ESCAPE") return VK_ESCAPE;
+    if (token == L"DOWN") return VK_DOWN;
+    if (token == L"UP") return VK_UP;
+    if (token == L"PGDN" || token == L"PAGEDOWN") return VK_NEXT;
+    if (token == L"PGUP" || token == L"PAGEUP") return VK_PRIOR;
+    if (token.size() == 1) return (WPARAM)token[0];
+    return 0;
+}
+
+void ExecuteAgentCommand(HWND hWnd, const wstring& rawCommand) {
+    wistringstream in(rawCommand);
+    wstring sequence;
+    wstring op;
+    in >> sequence >> op;
+    if (op.empty()) {
+        op = sequence;
+        sequence.clear();
+    }
+    transform(op.begin(), op.end(), op.begin(), towupper);
+
+    if (op == L"START") {
+        wstring daoName;
+        getline(in, daoName);
+        while (!daoName.empty() && iswspace(daoName.front())) daoName.erase(daoName.begin());
+        if (daoName.empty()) daoName = L"玄微";
+        if (g_gameState == STATE_MENU) {
+            StartNewGameWithDaoName(hWnd, daoName, L"后台代理开局");
+        }
+    } else if (op == L"KEY" || op == L"ACTION" || op == L"CHOICE") {
+        wstring keyToken;
+        in >> keyToken;
+        WPARAM key = AgentKeyFromToken(keyToken);
+        if (key != 0) {
+            PostMessageW(hWnd, WM_KEYDOWN, key, 0);
+        }
+    } else if (op == L"WAIT") {
+        // no-op; useful for external drivers that want a fresh state tick.
+    } else if (op == L"QUIT") {
+        PostQuitMessage(0);
+    }
+}
+
+void HandleAgentBridgeTick(HWND hWnd) {
+    if (!IsAgentBridgeEnabled()) return;
+
+    wstring commandPath = GetAgentCommandPath();
+    if (!commandPath.empty()) {
+        wifstream file(commandPath.c_str());
+        UseUtf8Locale(file);
+        if (file) {
+            wstringstream buffer;
+            buffer << file.rdbuf();
+            wstring command = buffer.str();
+            while (!command.empty() && (command.back() == L'\n' || command.back() == L'\r' || iswspace(command.back()))) {
+                command.pop_back();
+            }
+            if (!command.empty() && command != g_agentLastCommand) {
+                g_agentLastCommand = command;
+                AppendTraceLog(L"AGENT_ACTION", command);
+                ExecuteAgentCommand(hWnd, command);
+            }
+        }
+    }
+
+    WriteAgentState();
 }
 
 int CountTextLines(const wstring& text) {
@@ -11842,7 +12243,7 @@ void OnPaint(HDC hdc, RECT& rect) {
                 RectF(waitRect.X + 40, waitRect.Y + 44, waitRect.Width - 80, 54), &centerFormat, &goldBrush);
 
             wstring waitText =
-                HasPriorLifeEcho()
+                HasActualPastLifeEcho()
                     ? L"黑白旧玉微微发温，前世残响、此世家世与近年大事正在交汇。\n\n这次历练会从这些因果里显出新的变数。\n\n按 [ESC] 可放弃本次推演，回到当前道途。"
                     : L"黑白旧玉微微发温，此世家世、人情风波与近年大事正在交汇。\n\n这次历练会从这些因果里显出新的变数。\n\n按 [ESC] 可放弃本次推演，回到当前道途。";
             graphics.DrawString(waitText.c_str(), -1, &textFont,
@@ -12159,6 +12560,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
             } else if (wParam == IDT_TRACE_AUTOPLAY) {
                 HandleTraceAutoplayTick(hWnd);
+            } else if (wParam == IDT_AGENT_BRIDGE) {
+                HandleAgentBridgeTick(hWnd);
             }
             break;
         }
@@ -12745,12 +13148,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     if (IsTraceAutoplayEnabled()) {
         SetTimer(g_hWnd, IDT_TRACE_AUTOPLAY, 180, nullptr);
     }
+    if (IsAgentBridgeEnabled()) {
+        SetTimer(g_hWnd, IDT_AGENT_BRIDGE, 180, nullptr);
+        WriteAgentState();
+    }
     DWORD autoNameSize = GetEnvironmentVariableW(L"WENDAO_TRACE_AUTOSTART", nullptr, 0);
     if (autoNameSize > 1 && !GetTraceLogPath().empty()) {
         vector<wchar_t> autoNameBuffer(autoNameSize);
         DWORD copied = GetEnvironmentVariableW(L"WENDAO_TRACE_AUTOSTART", autoNameBuffer.data(), autoNameSize);
         if (copied > 0 && copied < autoNameSize) {
             StartNewGameWithDaoName(g_hWnd, autoNameBuffer.data(), L"trace自动开局");
+            WriteAgentState();
         }
     }
 
