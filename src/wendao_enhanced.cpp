@@ -1446,11 +1446,14 @@ int g_lastBottleneckNoticeLevel = -1;
 #define ID_NAME_INPUT 1001
 #define ID_BTN_START 1002
 #define IDT_AI_POLL 2001
+#define IDT_TRACE_AUTOPLAY 2002
 
 HWND g_nameInput;
 HWND g_btnStart;
+int g_traceAutoplaySteps = 0;
 
 void ShowNotice(const wstring& title, const wstring& text);
+void SetInlineGameFeedback(const wstring& title, const wstring& text, const wstring& traceTag = L"");
 void OpenCharacterCodexPage();
 void OpenCharacterDetailPage(const wstring& name);
 void OpenSaveSlotPage(bool loadMode);
@@ -1481,6 +1484,8 @@ wstring BuildTreasureTierSystemText();
 wstring BuildHongmengUsabilityText();
 wstring BuildHongmengProgressContext();
 wstring BuildNextLifeForeshadowText();
+bool CanAttainHeavenlyDao();
+void ReturnFromInfoPage();
 
 wstring GetTraceLogPath() {
     static bool initialized = false;
@@ -1497,6 +1502,69 @@ wstring GetTraceLogPath() {
         initialized = true;
     }
     return path;
+}
+
+wstring GetEnvironmentText(const wchar_t* name) {
+    DWORD size = GetEnvironmentVariableW(name, nullptr, 0);
+    if (size <= 1) return L"";
+    vector<wchar_t> buffer(size);
+    DWORD copied = GetEnvironmentVariableW(name, buffer.data(), size);
+    if (copied == 0 || copied >= size) return L"";
+    return wstring(buffer.data(), copied);
+}
+
+bool IsTruthyEnvValue(const wstring& value) {
+    if (value.empty()) return false;
+    wstring lowered = value;
+    transform(lowered.begin(), lowered.end(), lowered.begin(), towlower);
+    return lowered != L"0" && lowered != L"false" && lowered != L"off" && lowered != L"no";
+}
+
+bool IsTraceAutoplayEnabled() {
+    static bool initialized = false;
+    static bool enabled = false;
+    if (!initialized) {
+        enabled = !GetTraceLogPath().empty() && IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_TRACE_AUTOPLAY"));
+        initialized = true;
+    }
+    return enabled;
+}
+
+bool ShouldHideTraceWindow() {
+    static bool initialized = false;
+    static bool hidden = false;
+    if (!initialized) {
+        hidden = !GetTraceLogPath().empty() &&
+            (IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_TRACE_HIDE")) || IsTraceAutoplayEnabled());
+        initialized = true;
+    }
+    return hidden;
+}
+
+int GetTraceAutoplayActionLimit() {
+    static bool initialized = false;
+    static int limit = 120;
+    if (!initialized) {
+        wstring raw = GetEnvironmentText(L"WENDAO_TRACE_MAX_ACTIONS");
+        if (!raw.empty()) {
+            limit = max(12, _wtoi(raw.c_str()));
+        }
+        initialized = true;
+    }
+    return limit;
+}
+
+int GetTraceAutoplayLifeLimit() {
+    static bool initialized = false;
+    static int limit = 4;
+    if (!initialized) {
+        wstring raw = GetEnvironmentText(L"WENDAO_TRACE_MAX_LIVES");
+        if (!raw.empty()) {
+            limit = max(1, _wtoi(raw.c_str()));
+        }
+        initialized = true;
+    }
+    return limit;
 }
 
 wstring FormatTraceTime() {
@@ -1552,6 +1620,111 @@ void TraceLifeStart(const wstring& reason) {
     ss << L"主线: " << g_lifePremise << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote;
     AppendTraceLog(L"LIFE_START", ss.str());
+}
+
+int ScoreTraceChoiceText(const wstring& text) {
+    int score = 0;
+    if (TextContainsAny(text, {L"稳", L"守", L"问", L"查", L"听", L"观", L"护", L"谢", L"应",
+                               L"补", L"救", L"避", L"缓", L"静", L"明", L"共", L"证"})) score += 2;
+    if (TextContainsAny(text, {L"暗", L"探", L"试", L"访", L"照", L"辨", L"悟", L"询"})) score += 1;
+    if (TextContainsAny(text, {L"赌", L"抢", L"夺", L"硬", L"闯", L"签", L"强", L"逼", L"压"})) score -= 2;
+    if (TextContainsAny(text, {L"退", L"避", L"忍"})) score -= 1;
+    return score;
+}
+
+int PickTraceAutoplayChoice(const Event& event) {
+    if (event.choices.empty()) return 0;
+    int bestScore = numeric_limits<int>::min();
+    vector<int> best;
+    for (int i = 0; i < (int)event.choices.size(); ++i) {
+        const wstring& desc = event.choices[i].description;
+        int score = ScoreTraceChoiceText(desc);
+        if (g_player.hp < g_player.maxHp / 3 && TextContainsAny(desc, {L"护", L"避", L"稳", L"缓"})) score += 2;
+        if (g_player.karma >= 35 && TextContainsAny(desc, {L"救", L"护", L"问", L"听"})) score += 1;
+        if (g_player.realm == MORTAL && TextContainsAny(desc, {L"问", L"查", L"听"})) score += 1;
+        if (score > bestScore) {
+            bestScore = score;
+            best.clear();
+            best.push_back(i);
+        } else if (score == bestScore) {
+            best.push_back(i);
+        }
+    }
+    return best.empty() ? 0 : best[Random(0, (int)best.size() - 1)];
+}
+
+WPARAM PickTraceAutoplayGameKey() {
+    if (g_player.CanBreakthrough() &&
+        !(g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao())) {
+        return '3';
+    }
+    if (g_player.hp < g_player.maxHp / 2 && g_player.pills > 0) {
+        return '4';
+    }
+    int closedDoorCost = 10 + g_player.realm * 2;
+    if (g_player.spiritStones >= closedDoorCost + 10 && g_player.totalEvents > 0 &&
+        g_player.totalEvents % 4 == 0) {
+        return '5';
+    }
+    if (g_player.realm == MORTAL) {
+        return (g_player.totalEvents % 3 == 2) ? '2' : '1';
+    }
+    if (g_player.level >= 8) {
+        return (g_player.totalEvents % 2 == 0) ? '1' : '2';
+    }
+    return (g_player.totalEvents % 3 == 0) ? '2' : '1';
+}
+
+void QueueTraceAutoplayKey(HWND hWnd, WPARAM key, const wstring& reason) {
+    if (!IsTraceAutoplayEnabled()) return;
+    g_traceAutoplaySteps++;
+    AppendTraceLog(L"AUTO_ACTION", reason + L"\n按键: " + wstring(1, (wchar_t)key));
+    PostMessageW(hWnd, WM_KEYDOWN, key, 0);
+}
+
+void HandleTraceAutoplayTick(HWND hWnd) {
+    if (!IsTraceAutoplayEnabled()) return;
+    if (g_traceAutoplaySteps >= GetTraceAutoplayActionLimit()) {
+        AppendTraceLog(L"AUTO_STOP", L"已达到自动试玩步数上限，结束本次后台推演。");
+        PostQuitMessage(0);
+        return;
+    }
+    if (g_generation > GetTraceAutoplayLifeLimit()) {
+        AppendTraceLog(L"AUTO_STOP", L"已达到自动试玩世数上限，结束本次后台推演。");
+        PostQuitMessage(0);
+        return;
+    }
+
+    switch (g_gameState) {
+        case STATE_GAME:
+            QueueTraceAutoplayKey(hWnd, PickTraceAutoplayGameKey(), L"后台自动推进当前道途");
+            break;
+        case STATE_EVENT: {
+            if (!g_currentEvent) break;
+            int choice = PickTraceAutoplayChoice(*g_currentEvent);
+            QueueTraceAutoplayKey(hWnd, (WPARAM)('1' + choice),
+                L"后台自动选择事件选项：" + g_currentEvent->choices[choice].description);
+            break;
+        }
+        case STATE_INFO:
+            g_traceAutoplaySteps++;
+            AppendTraceLog(L"AUTO_ACTION", L"关闭信息页，继续后台推演。");
+            ReturnFromInfoPage();
+            InvalidateRect(hWnd, NULL, FALSE);
+            break;
+        case STATE_GAMEOVER:
+            if (g_generation >= GetTraceAutoplayLifeLimit()) {
+                AppendTraceLog(L"AUTO_STOP", L"达到轮回世数上限，结束本次后台推演。");
+                PostQuitMessage(0);
+            } else {
+                QueueTraceAutoplayKey(hWnd, 'N', L"进入下一世继续后台推演");
+            }
+            break;
+        case STATE_AI_WAIT:
+            break;
+        default:
+            break;
+    }
 }
 
 void TraceEventScreen(const Event& event, const wstring& source) {
@@ -8645,6 +8818,13 @@ void ShowNotice(const wstring& title, const wstring& text) {
     OpenInfoPage(title, text, STATE_GAME);
 }
 
+void SetInlineGameFeedback(const wstring& title, const wstring& text, const wstring& traceTag) {
+    g_messageText = L"【" + title + L"】\n" + SanitizePlayerFacingText(text);
+    if (!traceTag.empty()) {
+        AppendTraceLog(traceTag, text);
+    }
+}
+
 void ResetBottleneckNoticeState() {
     g_lastBottleneckNoticeGeneration = -1;
     g_lastBottleneckNoticeRealm = MORTAL;
@@ -10739,6 +10919,24 @@ wstring BuildRecentMemoryDigest() {
     return ss.str();
 }
 
+wstring BuildGameFeedbackDigest() {
+    if (g_messageText.empty()) return L"暂无新的回响。";
+    wstring text = SanitizePlayerFacingText(g_messageText);
+    wstringstream out;
+    wistringstream in(text);
+    wstring line;
+    int kept = 0;
+    while (getline(in, line)) {
+        line = CompactMemoryFragment(line);
+        if (line.empty()) continue;
+        if (kept++ >= 4) break;
+        if (out.tellp() > 0) out << L"\n";
+        out << ClampUiText(line, 66);
+    }
+    wstring digest = out.str();
+    return digest.empty() ? L"暂无新的回响。" : digest;
+}
+
 int CountTextLines(const wstring& text) {
     if (text.empty()) return 1;
     int lines = 1;
@@ -11143,6 +11341,23 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[L] 读取",
                 L"[ESC] 退出"
             }, cmdY);
+
+            RectF feedbackRect(rightPanel.X + 18, cmdY + 6.0f, rightPanel.Width - 36,
+                max<REAL>(150.0f, rightPanel.GetBottom() - cmdY - 24.0f));
+            SolidBrush feedbackBg(Color(52, 10, 12, 18));
+            Pen feedbackPen(Color(70, 228, 190, 76), 1);
+            graphics.FillRectangle(&feedbackBg, feedbackRect);
+            graphics.DrawRectangle(&feedbackPen, feedbackRect);
+            graphics.DrawString(L"当前回响", -1, &sectionFont,
+                RectF(feedbackRect.X + 12, feedbackRect.Y + 10, feedbackRect.Width - 24, 24),
+                &leftFormat, &goldBrush);
+            StringFormat feedbackFormat;
+            feedbackFormat.SetTrimming(StringTrimmingEllipsisCharacter);
+            feedbackFormat.SetFormatFlags(StringFormatFlagsLineLimit);
+            wstring feedbackDigest = BuildGameFeedbackDigest();
+            graphics.DrawString(feedbackDigest.c_str(), -1, &smallFont,
+                RectF(feedbackRect.X + 12, feedbackRect.Y + 40, feedbackRect.Width - 24, feedbackRect.Height - 52),
+                &feedbackFormat, &softWhiteBrush);
             break;
         }
 
@@ -11541,6 +11756,9 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
     wstring cleanName = SanitizeDaoName(daoName);
     if (cleanName.empty()) return false;
 
+    if (IsTraceAutoplayEnabled()) {
+        g_traceAutoplaySteps = 0;
+    }
     g_player = Player();
     g_player.name = cleanName;
     g_generation = 1;
@@ -11818,6 +12036,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                 }
+            } else if (wParam == IDT_TRACE_AUTOPLAY) {
+                HandleTraceAutoplayTick(hWnd);
             }
             break;
         }
@@ -11905,8 +12125,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             AddMemory(L"寿元压力", BuildLifespanPressureText());
                         }
                         msg += BuildActionEmotionFeedback(L"修炼", true);
-                        AppendTraceLog(L"MEDITATE", msg);
-                        ShowNotice(L"打坐修炼", msg);
+                        SetInlineGameFeedback(L"打坐修炼", msg, L"MEDITATE");
                     }
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
@@ -12038,10 +12257,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                     to_wstring(max(0, g_player.GetExpNeeded() - g_player.exp));
                             }
                         }
-                        ShowNotice(L"突破条件", msg);
+                        SetInlineGameFeedback(L"突破条件", msg, L"BREAKTHROUGH_BLOCKED");
+                        InvalidateRect(hWnd, NULL, FALSE);
                     } else {
                         if (g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao()) {
-                            ShowNotice(L"天道未合", GetHeavenlyDaoRequirementText());
+                            SetInlineGameFeedback(L"天道未合", GetHeavenlyDaoRequirementText(), L"BREAKTHROUGH_BLOCKED");
                             InvalidateRect(hWnd, NULL, FALSE);
                             break;
                         }
@@ -12092,8 +12312,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                             L"为此番破境托住一线，破境助力+" + to_wstring(daoBreakthrough) + L"。";
                                     }
                                     successMsg += BuildActionEmotionFeedback(L"突破", true);
-                                    AppendTraceLog(L"BREAKTHROUGH_RESULT", successMsg);
-                                    ShowNotice(L"突破成功", successMsg);
+                                    SetInlineGameFeedback(L"突破成功", successMsg, L"BREAKTHROUGH_RESULT");
                                 }
                             } else {
                                 AddMemory(L"突破失败", L"冲击 " + GetRealmName(static_cast<Realm>(g_player.realm + 1)) + L" 遭到反噬");
@@ -12109,8 +12328,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                                         L"已替你削去部分反噬，但仍未能破关。";
                                 }
                                 failMsg += BuildActionEmotionFeedback(L"突破", false);
-                                AppendTraceLog(L"BREAKTHROUGH_RESULT", failMsg);
-                                ShowNotice(L"突破失败", failMsg);
+                                SetInlineGameFeedback(L"突破失败", failMsg, L"BREAKTHROUGH_RESULT");
                             }
                             InvalidateRect(hWnd, NULL, FALSE);
                         }
@@ -12118,9 +12336,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 }
                 else if (wParam == '4') {
                     if (g_player.pills <= 0) {
-                        ShowNotice(L"丹药", L"你没有丹药。");
+                        SetInlineGameFeedback(L"丹药", L"你没有丹药。", L"PILL");
                     } else if (g_player.hp >= g_player.maxHp) {
-                        ShowNotice(L"丹药", L"气血充盈，无需服丹。");
+                        SetInlineGameFeedback(L"丹药", L"气血充盈，无需服丹。", L"PILL");
                     } else {
                         g_player.pills--;
                         int heal = 80 + g_player.realm * 20;
@@ -12128,14 +12346,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         AddMemory(L"服用丹药", L"调息疗伤，气血恢复" + to_wstring(heal));
                         wstring healMsg = L"服下丹药，气血恢复" + to_wstring(heal) + L"。";
                         healMsg += BuildActionEmotionFeedback(L"疗伤", true);
-                        ShowNotice(L"服用丹药", healMsg);
-                        InvalidateRect(hWnd, NULL, FALSE);
+                        SetInlineGameFeedback(L"服用丹药", healMsg, L"PILL");
                     }
+                    InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '5') {
                     int cost = 10 + g_player.realm * 2;
                     if (g_player.spiritStones < cost) {
-                        ShowNotice(L"灵石闭关", L"灵石不足，需要 " + to_wstring(cost) + L"。");
+                        SetInlineGameFeedback(L"灵石闭关", L"灵石不足，需要 " + to_wstring(cost) + L"。", L"CLOSED_DOOR");
                     } else {
                         g_player.spiritStones -= cost;
                         int gain = 80 + g_player.realm * 20;
@@ -12184,10 +12402,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             closedDoorMsg += L"\n" + g_player.GetRootEraTraitText();
                         }
                         closedDoorMsg += BuildActionEmotionFeedback(L"闭关", true);
-                        AppendTraceLog(L"CLOSED_DOOR", closedDoorMsg);
-                        ShowNotice(L"灵石闭关", closedDoorMsg);
-                        InvalidateRect(hWnd, NULL, FALSE);
+                        SetInlineGameFeedback(L"灵石闭关", closedDoorMsg, L"CLOSED_DOOR");
                     }
+                    InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '6') {
                     wstring forgeMsg = ForgeLifeArtifact();
@@ -12397,9 +12614,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     SendMessage(g_btnStart, WM_SETFONT, (WPARAM)hFont, TRUE);
     LayoutMenuControls();
 
-    ShowWindow(g_hWnd, nCmdShow);
+    ShowWindow(g_hWnd, ShouldHideTraceWindow() ? SW_HIDE : nCmdShow);
     UpdateWindow(g_hWnd);
     AppendTraceLog(L"APP_START", L"窗口已创建，等待输入道号。");
+    if (IsTraceAutoplayEnabled()) {
+        SetTimer(g_hWnd, IDT_TRACE_AUTOPLAY, 180, nullptr);
+    }
     DWORD autoNameSize = GetEnvironmentVariableW(L"WENDAO_TRACE_AUTOSTART", nullptr, 0);
     if (autoNameSize > 1 && !GetTraceLogPath().empty()) {
         vector<wchar_t> autoNameBuffer(autoNameSize);
