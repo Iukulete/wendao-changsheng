@@ -1861,7 +1861,7 @@ wstring BuildTreasureTierSystemText() {
     ss << L"- 后天通天灵宝: 顶尖仙帝或道祖以大道祭炼而成，可长存并跨纪元流传，但缺少先天一气，久无人温养会衰退。\n";
     ss << L"- 先天通天灵宝: 仙界先天孕育，自带先天一气，格位极高，不是鸿蒙至宝低配；在绝大多数修士眼中，这已经是器物顶点。\n";
     ss << L"- 鸿蒙至宝: 天地初开最古老的权柄至宝，知者极少。低境界只能见影、留印、参悟或被拒绝；道祖以上可尝试认主、装备、调用权柄，道祖-天道境可执掌或映照其权柄。\n";
-    ss << L"- 万道本命至宝: 天道境道祖以自身本命至宝融万道而成，属于玩家自身道途的终极产物，可后天抵达鸿蒙至宝水平。";
+    ss << L"- 万道本命至宝: 天道境道祖以自身本命至宝融万道而成，属于自身道途的终极产物，可后天抵达鸿蒙至宝水平。";
     return ss.str();
 }
 
@@ -2983,6 +2983,10 @@ wstring SanitizePlayerFacingText(wstring text) {
     replaceAll(L"初世锚点：这一世尚无可考前代遗迹，所有宗门、秘境与人情债都在为后世埋下第一批痕迹。",
         L"初始道痕：此地尚无前人定论，今日取舍也许会成为后来者追索的源头。");
     replaceAll(L"初世锚点：", L"初始道痕：");
+    replaceAll(L"本世主线未尽", L"此世余愿");
+    replaceAll(L"未追完的线索", L"未竟旧约");
+    replaceAll(L"未收束线头", L"未了旧线");
+    replaceAll(L"让玩家决定", L"让此事");
     replaceAll(L"真实修为和来历都不愿明说", L"气机收得很深");
     replaceAll(L"知道下一步该补哪一道因果", L"隐约看见自身大道仍缺一道因果");
     replaceAll(L"照见下一步缺口", L"照见眼前缺口");
@@ -3164,7 +3168,11 @@ wstring BuildLifeStoryText() {
     wstringstream ss;
     ss << L"【本世主线】\n\n";
     ss << g_lifePremise << L"\n\n";
-    ss << L"主线阶段: " << g_lifeStoryProgressThisLife << L" / 5\n\n";
+    static const vector<wstring> stageLabels = {
+        L"初入此世", L"因果初牵", L"暗潮渐起", L"诸线交汇", L"临门取舍", L"此世定局"
+    };
+    int stage = max(0, min((int)stageLabels.size() - 1, g_lifeStoryProgressThisLife));
+    ss << L"此世火候: " << stageLabels[stage] << L"\n\n";
     ss << L"【主动传承】\n";
     ss << BuildPlannedLegacyDigest(4) << L"\n\n";
     ss << L"【伴生玉佩】\n";
@@ -6854,7 +6862,7 @@ wstring GetSocialRumorText(int limit = 6) {
     wstring visibleThreadDigest = BuildSocialThreadDigest(6);
     if (!visibleThreadDigest.empty()) {
         ss << L"【本世人脉】\n";
-        ss << L"这些人会影响本世事件走向，也可能在后续风波里继续出手。\n";
+        ss << L"这些名字已在你此世因果里留下痕迹，恩怨未必会当场了结。\n";
         ss << visibleThreadDigest << L"\n";
     }
 
@@ -6874,7 +6882,7 @@ wstring BuildCharacterCodexText() {
     ss << L"【角色因果】\n\n";
     ss << L"第" << g_generation << L"世 · " << g_worldEraName << L" · "
        << GetRealmName(g_player.realm) << L" " << g_player.level << L"层\n";
-    ss << L"当前只列出你已经见过、听过或与此世家世直接相关的人。关键人物会随事件逐步显露，不会一开始全摊开。\n";
+    ss << L"名册只录已见、已闻或与此世家世直接相关之人；更多姓名仍藏在风声与因果里。\n";
     ss << L"外显修为只是对方愿意露出的部分，不等于真实底牌。";
     if (BuildVisibleCharacterNames().empty()) {
         ss << L"\n\n暂时还没有可以单独查看的角色。先去历练，或等家世、人情与师承线浮出水面。";
@@ -7453,7 +7461,7 @@ Event BuildLuoNingshuangImmortalReunionEvent() {
     evt.title = L"【仙界】凝霜再会";
     evt.description =
         L"仙界道会上，洛凝霜的名字再次出现在你耳边。她已不是第一世试剑台上的少女，剑意里多了仙界风霜。"
-        L"旁人只说她上限极高，将来或许能碰到道祖门槛；你却知道，这份因果最早从古典修仙纪的桃林里开始。"
+        L"旁人只说她剑意冷到能惊动仙界道席；你却知道，这份因果最早从古典修仙纪的桃林里开始。"
         L"她看见你时没有立刻相认，只问：当年的那一剑，你如今还敢接吗？";
     evt.choices = {
         {L"以今身问剑", {
@@ -10100,7 +10108,7 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 8
     };
 
     add(L"死因未了：" + causeOfDeath);
-    add(L"本世主线未尽：" + g_lifePremise);
+    add(L"此世余愿：" + g_lifePremise);
     for (const auto& thread : g_socialThreads) {
         if (!TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"玄衡子", L"洛凝霜", L"霜鸦"})) {
             continue;
@@ -10108,7 +10116,7 @@ vector<wstring> BuildUnfinishedKarmas(const wstring& causeOfDeath, int limit = 8
         add(L"未结清的人物因果：" + BuildSocialThreadLine(thread));
     }
     for (const auto& hook : g_lifeStoryHooks) {
-        add(L"未追完的线索：" + hook);
+        add(L"未竟旧约：" + hook);
     }
     if (!g_socialThreads.empty()) {
         const SocialThread* thread = nullptr;
@@ -10270,10 +10278,10 @@ wstring BuildNextLifeOpeningText(const wstring& birthEcho, const wstring& jadeDr
     if (!birthEcho.empty()) {
         ss << L"\n出身异动: " << clip(birthEcho, 96) << L"\n";
     } else if (!g_lifeStoryHooks.empty()) {
-        ss << L"\n本世线头: " << clip(g_lifeStoryHooks[0], 110) << L"\n";
+        ss << L"\n入世牵连: " << clip(g_lifeStoryHooks[0], 110) << L"\n";
     }
 
-    ss << L"\n你可以先修炼稳住根基，也可以外出历练，让这一世的人情与旧债自己浮上来。";
+    ss << L"\n此世尚浅，根基、人情与旧债都会从第一步里慢慢浮上来。";
     return ss.str();
 }
 
@@ -11187,9 +11195,11 @@ void OnPaint(HDC hdc, RECT& rect) {
                 (REAL)(g_backButtonRect.bottom - g_backButtonRect.top));
             SolidBrush backBrush(Color(230, 38, 38, 44));
             Pen backPen(Color(170, 228, 190, 76), 1);
+            Font backButtonFont(&fontFamily, 17, FontStyleRegular, UnitPixel);
             graphics.FillRectangle(&backBrush, backRect);
             graphics.DrawRectangle(&backPen, backRect);
-            graphics.DrawString(L"返回", -1, &smallFont, backRect, &buttonCenterFormat, &goldBrush);
+            RectF backTextRect(backRect.X, backRect.Y + 2.0f, backRect.Width, backRect.Height);
+            graphics.DrawString(L"返回", -1, &backButtonFont, backTextRect, &buttonCenterFormat, &goldBrush);
 
             if (g_saveSlotPage) {
                 g_saveSlotButtonRects.clear();
