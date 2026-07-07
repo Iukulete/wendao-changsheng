@@ -49,8 +49,17 @@ struct DynamicNPC {
     bool isAlive;
     bool hasAscended;
 
+    static int BaseLifespanForRealm(int r) {
+        static const int table[] = {
+            82, 180, 280, 420, 650, 900, 1150, 1400, 1700, 2100,
+            2500, 3000, 3500, 4100, 4800, 5600, 6500, 7600, 9000, 12000
+        };
+        int index = max(0, min(r, (int)(sizeof(table) / sizeof(table[0])) - 1));
+        return table[index];
+    }
+
     DynamicNPC(wstring n, int r) : name(n), realm(r), shownRealm(r), level(1), age(20),
-                                   lifespan(100), karma(0), playerRelation(0),
+                                   lifespan(BaseLifespanForRealm(r) + rand() % 80), karma(0), playerRelation(0),
                                    isAlive(true), hasAscended(false) {
         goal = static_cast<Goal>(rand() % 5);
         personality = static_cast<Personality>(rand() % 5);
@@ -264,6 +273,8 @@ public:
             CheckNPCDeath(npc);
         }
 
+        EnsureActivePopulation();
+
         // 更新世界事件
         UpdateWorldEvents();
 
@@ -285,6 +296,7 @@ public:
                     if (npc.level >= 10) {
                         npc.level = 1;
                         npc.realm++;
+                        npc.lifespan = max(npc.lifespan, DynamicNPC::BaseLifespanForRealm(npc.realm) + rand() % 120);
                         if (npc.shownRealm < npc.realm && rand() % 100 < 35) {
                             npc.shownRealm++;
                         } else if (npc.shownRealm > npc.realm) {
@@ -426,6 +438,52 @@ public:
         ));
 
         AddHistory(chosen.first);
+    }
+
+    int EstimateNewcomerRealm() const {
+        int realm = 1 + rand() % 5;
+        if (worldTime >= 120) realm = max(realm, 3 + rand() % 4);
+        if (worldTime >= 300) realm = max(realm, 6 + rand() % 5);
+        if (worldTime >= 600) realm = max(realm, 9 + rand() % 5);
+        if (worldTime >= 1000) realm = max(realm, 11 + rand() % 6);
+        if (worldTime >= 1600) realm = max(realm, 13 + rand() % 6);
+        return min(realm, 18);
+    }
+
+    wstring BuildFreshNpcName(int salt) {
+        vector<wstring> names = GetEraNpcNames();
+        if (names.empty()) names = npcNames;
+        int start = (int)((npcs.size() + salt) % max<size_t>(1, names.size()));
+        for (int offset = 0; offset < (int)names.size(); ++offset) {
+            wstring candidate = names[(start + offset) % names.size()];
+            if (!FindNPC(candidate)) return candidate;
+        }
+        return names[start] + L"·后起" + to_wstring((int)npcs.size() + salt + 1);
+    }
+
+    void EnsureActivePopulation() {
+        int aliveCount = 0;
+        for (auto& npc : npcs) {
+            if (npc.isAlive) aliveCount++;
+        }
+
+        int target = 8;
+        if (worldTime >= 300) target = 10;
+        if (worldTime >= 800) target = 12;
+
+        int toAdd = max(0, target - aliveCount);
+        for (int i = 0; i < toAdd; ++i) {
+            DynamicNPC npc(BuildFreshNpcName(i), EstimateNewcomerRealm());
+            npc.goal = PickEraGoal((int)npcs.size() + i);
+            npc.age = 20 + rand() % max(30, max(1, npc.lifespan / 5));
+            npc.age = min(npc.age, max(20, npc.lifespan - 50));
+            npc.karma += worldTime / 25 + rand() % 30;
+            if (worldTime >= 450 && npc.shownRealm > 1 && rand() % 100 < 30) {
+                npc.shownRealm = max(1, npc.shownRealm - 1);
+            }
+            AddHistory(L"新近崛起的 " + npc.name + L" 开始被各方议论");
+            npcs.push_back(npc);
+        }
     }
 
     wstring GetGoalText(DynamicNPC::Goal goal) const {

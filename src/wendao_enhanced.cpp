@@ -1082,11 +1082,11 @@ public:
             L"【大机遇】五行秘境",
             L"你踏入一座残缺五行秘境。赤火、寒泉、青木、白金与厚土分立五方，每一处都能补根骨，也都可能反噬经脉。",
             {
-                {L"取赤火气", {L"你以心火引赤火入脉，火行根骨被秘境重新点亮\n火灵根+2，修为+50", L"赤火入体太急，灼伤经脉\n气血-20"}, 5},
-                {L"引寒泉气", {L"你守住呼吸，让寒泉洗过灵台，水行根骨因此更清\n水灵根+2，修为+50", L"寒气反锁丹田，你花了许久才压住颤意\n气血-20"}, 5},
-                {L"纳青木气", {L"青木生机沿掌心入体，木行根骨多了一线回春之意\n木灵根+2，修为+50", L"藤影误认你为盗取生机之人，将你困在阵根里\n气血-20"}, 5},
-                {L"炼白金气", {L"你让白金锐气磨过经络，金行根骨被淬得更纯\n金灵根+2，修为+50", L"金气太锐，反割护体灵力\n气血-20"}, 5},
-                {L"承厚土气", {L"你盘坐地脉中央，厚土之气沉入骨髓\n土灵根+2，修为+50", L"地脉忽然翻涌，把你的气血震得一乱\n气血-20"}, 5}
+                {L"取赤火气", {L"你以心火引赤火入脉，火行根骨被秘境重新点亮\n火灵根+3，修为+80", L"赤火入体太急，灼伤经脉\n气血-20"}, 5},
+                {L"引寒泉气", {L"你守住呼吸，让寒泉洗过灵台，水行根骨因此更清\n水灵根+3，修为+80", L"寒气反锁丹田，你花了许久才压住颤意\n气血-20"}, 5},
+                {L"纳青木气", {L"青木生机沿掌心入体，木行根骨多了一线回春之意\n木灵根+3，修为+80", L"藤影误认你为盗取生机之人，将你困在阵根里\n气血-20"}, 5},
+                {L"炼白金气", {L"你让白金锐气磨过经络，金行根骨被淬得更纯\n金灵根+3，修为+80", L"金气太锐，反割护体灵力\n气血-20"}, 5},
+                {L"承厚土气", {L"你盘坐地脉中央，厚土之气沉入骨髓\n土灵根+3，修为+80", L"地脉忽然翻涌，把你的气血震得一乱\n气血-20"}, 5}
             }
         }, THEME_CULTIVATION);
 
@@ -1095,7 +1095,7 @@ public:
             L"一座无字石像在秘境尽头睁开眼。自称五行老祖的残念没有许诺成仙，只问你敢不敢用寿元和因果补齐短板。",
             {
                 {L"承五行印", {L"你承下五行印，五脏如被重新锻过，短板被强行补齐\n五行均衡，所有灵根提升至7以上\n寿命-30年", L"残念判你心性不稳，五行印反震经脉\n气血-40"}, 20},
-                {L"只求指点", {L"你没有贪全，老祖残念反而点出你行功里最缺的一环\n修为+100", L"老祖嫌你临门退缩，只留下一句“求稳也要付代价”\n修为-50"}, 0},
+                {L"只求指点", {L"你没有贪全，老祖残念反而点出你行功里最缺的一环\n灵根+3，修为+140", L"老祖嫌你临门退缩，只留下一句“求稳也要付代价”\n修为-50"}, 0},
                 {L"叩首离开", {L"你记住了石像眼中的五色流转，却没有把今生寿元押上去", L"机缘闭合，石像重新归于沉寂"}, 0}
             }
         }, THEME_CULTIVATION);
@@ -1138,11 +1138,38 @@ public:
         }, THEME_CULTIVATION);
 
         AddEvent({
+            L"【仙界】道庭论衡",
+            L"仙界道庭临时开坛，数位上境修士各执一理，争的不是胜负，而是谁能让大道多让半步。",
+            {
+                {L"登坛论道", {L"你没有炫示境界，只把自身道理压成一句能落地的真言\n修为+220，掌道+8，灵宝共鸣+5", L"道庭旧辩锋利如刀，你一时被问住根脚\n气血-45"}, 8},
+                {L"旁听取意", {L"你在诸道争鸣里听出自身缺口，回去后闭关少走许多弯路\n修为+180，灵宝共鸣+4", L"诸道杂音太重，反扰心神\n气血-25"}, 4}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【大道】天外道痕",
+            L"天外有一道旧痕横过星河，像某位古老道祖斩落的余笔；靠近它时，连本命至宝都轻轻震了一下。",
+            {
+                {L"照见缺口", {L"你顺着旧痕照见自身大道缺口，没有贪图旧人余威\n修为+200，掌道+10，灵宝共鸣+6", L"旧痕反照太深，几乎把你的道心拖进别人的路里\n气血-50"}, 8},
+                {L"封入器痕", {L"你只取一线道痕封入本命至宝道胚，留待日后温养\n修为+150，灵宝共鸣+8", L"器痕不稳，震裂一段经脉\n气血-35"}, 5}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【鸿蒙】创世余光",
+            L"极远处有一缕创世余光掠过，并未显出真名，却让诸道一瞬失声；你知道这不是可以强夺的机缘。",
+            {
+                {L"参悟余光", {L"你只参悟余光边缘，反而更清楚高位权柄与自身大道的距离\n修为+190，掌道+9，灵宝共鸣+6", L"你看得太深，识海被余光压得发白\n气血-45"}, 8},
+                {L"稳住本我", {L"你没有追逐创世名号，只以本我大道承住那一瞬震动\n修为+160，寿命+8，灵宝共鸣+4", L"余光散得太快，只剩心湖余震"}, 4}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
             L"【奇遇】灵根洗髓丹",
             L"坊市角落有人低声兜售洗髓丹，丹瓶封得很严，药香却像刻意露给懂行的人闻。",
             {
-                {L"买下试药", {L"你连同翠灵丹一并服下，药力虽杂，却真洗出一线根骨余地\n灵根+1，灵石-20", L"丹丸入口后药气浑浊，显然是假药\n灵石-20"}, 0},
-                {L"压价探底", {L"你从卖家的迟疑里看出底价，半价买到丹药，还捎上一株月华草\n灵根+1，灵石-10", L"卖家看出你不够笃定，收起丹瓶转身就走"}, 0}
+                {L"买下试药", {L"你连同翠灵丹一并服下，药力虽杂，却真洗出一线根骨余地\n灵根+2，灵石-20", L"丹丸入口后药气浑浊，显然是假药\n灵石-20"}, 0},
+                {L"压价探底", {L"你从卖家的迟疑里看出底价，半价买到丹药，还捎上一株月华草\n灵根+2，灵石-10", L"卖家看出你不够笃定，收起丹瓶转身就走"}, 0}
             }
         }, THEME_GENERAL);
 
@@ -1277,22 +1304,46 @@ public:
         }, THEME_IMPERIAL);
     }
 
-    Event* GetRandomEvent(int playerKarma, bool needRootBalance) {
+    Event* GetRootBalanceEvent() {
+        if (events.empty()) return nullptr;
+
+        vector<int> rootCandidates;
+        for (int i = 0; i < (int)events.size(); ++i) {
+            if (events[i].event.title.find(L"五行") != wstring::npos ||
+                events[i].event.description.find(L"灵根") != wstring::npos) {
+                rootCandidates.push_back(i);
+            }
+        }
+        if (!rootCandidates.empty()) {
+            int rootEventIndex = rootCandidates[Random(0, (int)rootCandidates.size() - 1)];
+            return &events[rootEventIndex].event;
+        }
+        return nullptr;
+    }
+
+    bool IsLowTierEventForRealm(const Event& event, int currentRealm) const {
+        if (currentRealm < TRUE_IMMORTAL) return false;
+        wstring text = event.title + L" " + event.description;
+        vector<wstring> lowTier = {
+            L"野狼妖", L"猛虎妖", L"毒蛇妖", L"巨蟒妖", L"狐妖",
+            L"妖兽袭击", L"炼气期妖兽", L"邪修", L"散修", L"魔修", L"魔修伏击",
+            L"负伤修士", L"神秘洞府", L"宗门招收", L"问心台",
+            L"天材地宝", L"千年灵芝", L"前辈传承", L"坐化枯骨",
+            L"五行秘境", L"五行老祖", L"灵根洗髓丹", L"坊市角落",
+            L"秘境开启", L"渡劫修士", L"仙药园", L"神秘商人", L"夜市"
+        };
+        for (const auto& word : lowTier) {
+            if (text.find(word) != wstring::npos) return true;
+        }
+        return false;
+    }
+
+    Event* GetRandomEvent(int playerKarma, bool needRootBalance, int currentRealm = MORTAL) {
         if (events.empty()) return nullptr;
 
         // 五行不均衡且境界高，更容易遇到五行相关事件
-        if (needRootBalance && Random(1, 100) <= 40) {
-            vector<int> rootCandidates;
-            for (int i = 0; i < (int)events.size(); ++i) {
-                if (events[i].event.title.find(L"五行") != wstring::npos ||
-                    events[i].event.description.find(L"灵根") != wstring::npos) {
-                    rootCandidates.push_back(i);
-                }
-            }
-            if (!rootCandidates.empty()) {
-                int rootEventIndex = rootCandidates[Random(0, (int)rootCandidates.size() - 1)];
-                return &events[rootEventIndex].event;
-            }
+        if (needRootBalance && Random(1, 100) <= 75) {
+            if (Event* rootEvent = GetRootBalanceEvent()) return rootEvent;
         }
 
         vector<int> preferred;
@@ -1313,6 +1364,7 @@ public:
         }
 
         for (int i = 0; i < (int)events.size(); i++) {
+            if (IsLowTierEventForRealm(events[i].event, currentRealm)) continue;
             if (events[i].theme == preferredTheme) preferred.push_back(i);
             if (events[i].theme == THEME_GENERAL || events[i].theme == THEME_CULTIVATION) fallback.push_back(i);
         }
@@ -1355,6 +1407,7 @@ vector<LegacyItem> g_plannedLegacies;
 int g_generation = 1;
 wstring g_lastAiBackend = L"未触发";
 wstring g_lastAiStatus = L"本局尚未触发动态事件。";
+int g_lastAiEventTotalEvents = -1000;
 wstring g_worldEraName = L"古典修仙纪";
 wstring g_worldEraDescription = L"诸宗并立，洞府初开，天下仍以修仙宗门为正统。";
 wstring g_worldEraRule = L"灵气丰沛，修士主宰秩序，凡俗仍仰望山门。";
@@ -3016,14 +3069,23 @@ wstring BuildFactionTieDigest() {
 
     bool earlySectLabel = TextContainsAny(kind + L" " + role + L" " + hook,
         {L"入门", L"内门", L"外门", L"杂役", L"山门试探"});
-    if (g_player.realm >= HALF_IMMORTAL && earlySectLabel) {
+    if (g_player.realm >= GOLDEN_CORE && earlySectLabel) {
         kind = L"古典宗门 / 飞升旧契";
         if (g_player.realm >= DAO_ANCESTOR) {
             role = L"旧山门因果见证者";
         } else if (g_player.realm >= TRUE_IMMORTAL) {
             role = L"飞升旧人";
-        } else {
+        } else if (g_player.realm >= HALF_IMMORTAL) {
             role = L"仙门旧契承接者";
+        } else if (g_player.realm >= VOID_REFINING) {
+            kind = L"古典宗门 / 高阶护道";
+            role = L"真传护道人";
+        } else if (g_player.realm >= NASCENT_SOUL) {
+            kind = L"古典宗门 / 真传旧契";
+            role = L"真传道子";
+        } else {
+            kind = L"古典宗门 / 内门旧契";
+            role = L"内门核心";
         }
         stance = highRealmStance(g_factionTie.favor);
         if (TextContainsAny(obligation, {L"身世", L"旧物"})) {
@@ -3031,9 +3093,13 @@ wstring BuildFactionTieDigest() {
         } else if (TextContainsAny(obligation, {L"轻慢", L"杂役", L"低阶"})) {
             obligation = L"昔年轻慢已成因果，旧账日后会以名声、人情或宗门抉择偿还。";
         } else {
-            obligation = L"当年的入局机会已转作仙路旧契，是否回护旧宗仍由你定。";
+            obligation = g_player.realm >= HALF_IMMORTAL
+                ? L"当年的入局机会已转作仙路旧契，是否回护旧宗仍由你定。"
+                : L"早年的山门机会已转作师承旧契，宗门仍在衡量你的护道分量。";
         }
-        hook = L"这条线已不再是入门试炼，而是旧宗、师承与飞升后重逢能否站在同一边。";
+        hook = g_player.realm >= HALF_IMMORTAL
+            ? L"这条线已不再是山门初试，而是旧宗、师承与飞升后重逢能否站在同一边。"
+            : L"这条线已越过山门初试，变成师承、人情、旧债与宗门护道的取舍。";
     } else if (g_player.realm >= TRUE_IMMORTAL &&
                TextContainsAny(kind + L" " + role, {L"低阶", L"候选", L"名额", L"学徒", L"边缘"})) {
         role = L"飞升后旧契牵连者";
@@ -3062,11 +3128,11 @@ wstring BuildFactionTieText() {
         return ss.str();
     }
 
-    if (g_player.realm >= HALF_IMMORTAL &&
+    if (g_player.realm >= GOLDEN_CORE &&
         TextContainsAny(g_factionTie.kind + L" " + g_factionTie.role + L" " + g_factionTie.hook,
             {L"入门", L"内门", L"外门", L"杂役", L"山门试探"})) {
         ss << L"势力概览: " << BuildFactionTieDigest() << L"\n";
-        ss << L"说明: 早年的入门身份已经不是你此刻的身份；这里记录的是旧宗、师承与飞升后仍未散尽的因果。";
+        ss << L"说明: 早年的山门身份已经不是你此刻的身份；这里记录的是旧宗、师承与仍未散尽的因果。";
         return ss.str();
     }
 
@@ -3268,10 +3334,23 @@ wstring SanitizePlayerFacingText(wstring text) {
     };
 
     replaceAll(L"本地 AI 会优先把这个势力当成本世持续存在的组织来续写，而不是每次凭空换一个宗门。", L"");
+    replaceAll(L"动态事件", L"天机异象");
+    replaceAll(L"NPC 近况", L"人物近况");
+    replaceAll(L"NPC近况", L"人物近况");
+    replaceAll(L"NPC", L"人物");
+    replaceAll(L"AI", L"天机");
+    replaceAll(L"Agent", L"天机");
+    replaceAll(L"玩家", L"你");
     if (!HasActualPastLifeEcho()) {
         replaceAll(L"前世记忆、今生选择和轮回回响", L"今生选择、生死梦兆和轮回微光");
         replaceAll(L"前世残响", L"旧玉梦兆");
         replaceAll(L"前世记忆", L"旧玉梦兆");
+        replaceAll(L"这不是前世异常，而是此世家世、宗门与旧物牵出的第一层因果。",
+            L"这是此世家世、宗门与旧物牵出的第一层因果。");
+        replaceAll(L"前世异常", L"旧玉异动");
+        replaceAll(L"前世旧影", L"旧梦影子");
+        replaceAll(L"前世执念", L"旧梦执念");
+        replaceAll(L"前世", L"旧梦");
         replaceAll(L"上一世留下的因果", L"今生牵出的因果");
     }
     replaceAll(L"第一世没有前世记忆；若梦境出现异样，也只是伴生旧玉在暗示未来取舍。",
@@ -3414,16 +3493,21 @@ int GetEraClosedDoorBonus() {
 }
 
 int GetEraAiEventChance() {
-    int chance = 30;
-    if (g_worldEraName == L"星穹道网纪") chance = 42;
-    else if (g_worldEraName == L"灵机蒸汽纪") chance = 36;
-    else if (g_worldEraName == L"末法裂变纪") chance = 26;
-    else if (g_worldEraName == L"废土返道纪") chance = 24;
+    if (g_player.totalEvents - g_lastAiEventTotalEvents < 10) return 0;
+
+    int chance = 8;
+    if (g_worldEraName == L"星穹道网纪") chance = 16;
+    else if (g_worldEraName == L"灵机蒸汽纪") chance = 14;
+    else if (g_worldEraName == L"末法裂变纪") chance = 9;
+    else if (g_worldEraName == L"废土返道纪") chance = 9;
+    if (g_player.realm >= VOID_REFINING) chance -= 3;
+    if (g_player.realm >= TRUE_IMMORTAL) chance -= 2;
+    if (g_player.realm >= DAO_ANCESTOR) chance += 4;
 
     int echoWeight = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY) / 35 +
                      g_legacySystem.GetLegacyBonus(LEGACY_TREASURE) / 45 +
                      g_legacySystem.GetRelicResonanceBonus() / 8;
-    return max(18, min(55, chance + echoWeight));
+    return max(3, min(22, chance + echoWeight));
 }
 
 int GetLifespanPressureLevel() {
@@ -4333,7 +4417,11 @@ wstring GetHeavenlyDaoRequirementText() {
     if (!relic.daoLinked) {
         ss << L"你还没有真正把今生大道刻入通天灵宝残印。先证成道祖，让自身大道稳定下来。\n";
     } else if (progress < 360) {
-        ss << L"你已经是道祖，但仍未能统摄万道。继续历练、触发前世回响、加深通天灵宝共鸣，才可能触及道祖-天道境。\n";
+        if (HasActualPastLifeEcho()) {
+            ss << L"你已经是道祖，但仍未能统摄万道。继续历练、触发前世回响、加深通天灵宝共鸣，才可能触及道祖-天道境。\n";
+        } else {
+            ss << L"你已经是道祖，但仍未能统摄万道。继续历练、触发旧玉梦兆、参悟鸿蒙余光并加深通天灵宝共鸣，才可能触及道祖-天道境。\n";
+        }
     } else {
         ss << L"你已具备叩问道祖-天道境的资格。若成功，九大鸿蒙至宝亦是可毁之物。\n";
     }
@@ -5105,10 +5193,10 @@ void AddQinghengThread() {
     AddSocialThread(L"清蘅真人", L"入门师尊",
         exceptionalRoot ? L"严中赞许" : (weakRoot ? L"冷眼护短" : L"耐心试炼"),
         exceptionalRoot
-            ? L"她看出你根骨出众，却不许旁人把你捧得太高，只亲自安排更重的入门试炼。"
+            ? L"她看出你根骨出众，却不许旁人把你捧得太高，只亲自安排更重的护道试炼。"
             : (weakRoot
                 ? L"她没有替你挡下所有轻慢，只在你快被逼到绝路时留下一句能保命的指点。"
-                : L"她愿意收你入门，却先要看你在秘境、门规和人情之间能不能守住心性。"),
+                : L"她愿意引你入道，却先要看你在秘境、门规和人情之间能不能守住心性。"),
         exceptionalRoot ? 32 : (weakRoot ? 10 : 22), L"金丹期", true, L"气机收得很深，来历不愿明说");
 }
 
@@ -5320,18 +5408,20 @@ wstring BuildSocialNpcUtterance(const SocialThread& thread) {
         });
     }
     if (has(L"欺压者")) {
+        if (latePath) {
+            return L"「走到这一步，旧日轻慢早该碎了。可越近天门，越有人想证明你心里还留着破绽。」";
+        }
         return weak
-            ? (latePath
-                ? L"「走到这一步还敢露怯？高处的风更会挑软处割。」"
-                : L"「测灵碑都替你把话说完了，还想跟我们争名额？」")
+            ? L"「测灵碑都替你把话说完了，还想跟我们争名额？」"
             : L"「有点根骨就敢抬头？山门里会教你什么叫规矩。」";
     }
     if (has(L"竞争者")) {
+        if (latePath) {
+            return L"「你我都走到这一步了，少拿一时高低当成终局。真正要争的，是谁能把道走到最后。」";
+        }
         return gifted
             ? L"「资质好又怎样，谁知道你家世里藏着什么债？」"
-            : (latePath
-                ? L"「你我都走到这一步了，少拿一时高低当成终局。」"
-                : L"「你我都没稳进内门，少摆出已经赢了的样子。」");
+            : L"「你我都没稳进内门，少摆出已经赢了的样子。」";
     }
     if (has(L"资源把关者")) {
         return latePath
@@ -5976,6 +6066,7 @@ const SocialThread* PickOutcomeReactionThread(const Event& event, const Choice& 
 }
 
 wstring FormatSocialActorName(const SocialThread& thread);
+bool IsHighRealmLowTierSocialThread(const SocialThread& thread);
 
 wstring GetSocialActorFollowName(const SocialThread& thread) {
     wstring profile = thread.name + L" " + thread.role;
@@ -6004,12 +6095,17 @@ wstring BuildOutcomeNpcReaction(const SocialThread& thread, bool success,
     bool shenLike = TextContainsAny(thread.name + thread.role, {L"沈听澜", L"道网阵师", L"灵机阵师"});
     bool luLike = TextContainsAny(thread.name + thread.role, {L"陆青鸢", L"医道仙官"});
     bool acanLike = TextContainsAny(thread.name + thread.role, {L"阿岑", L"枯井小人物"});
+    bool highRealmChallenger = (challenger && g_player.realm >= TRUE_IMMORTAL) ||
+        IsHighRealmLowTierSocialThread(thread);
 
     wstringstream ss;
     wstring actor = FormatSocialActorName(thread);
     wstring leadActor = actor;
     ss << L"\n事后，";
-    if (!thread.visibleRealm.empty()) {
+    if (highRealmChallenger) {
+        ss << actor << L"旧日外显修为已不足为凭。";
+        leadActor = GetSocialActorFollowName(thread);
+    } else if (!thread.visibleRealm.empty()) {
         ss << actor << L"外显" << thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
             ss << L"，但" << BuildPlayerVisiblePowerHint(thread);
@@ -6355,10 +6451,27 @@ wstring BuildSocialEraPressureText() {
     if (g_worldEraName == L"废土返道纪") {
         return L"废土路远，能信谁、欠谁，都可能决定下一次能否活着回来。";
     }
+    if (g_player.realm >= TRUE_IMMORTAL) {
+        return L"仙界道庭、旧宗飞升脉与暗处耳目都在重新衡量你，旧日人情会被改写成更高处的因果账。";
+    }
     if (g_player.realm >= GOLDEN_CORE) {
         return L"山门与坊市仍会看人下菜，只是如今看的不止灵根，还有你背后的战绩、旧债与护道人。";
     }
     return L"山门与坊市都在看人下菜，少年道途从来不只看灵根。";
+}
+
+bool IsHighRealmLowTierSocialThread(const SocialThread& thread) {
+    if (g_player.realm < TRUE_IMMORTAL) return false;
+    if (thread.hidesPower || !thread.hiddenHint.empty() ||
+        TextContainsAny(thread.name + thread.role, {L"祁无咎", L"藏拙活跃修士"})) {
+        return false;
+    }
+    wstring profile = thread.role + L" " + thread.attitude + L" " + thread.hook + L" " + thread.visibleRealm;
+    return TextContainsAny(profile, {
+        L"炼气期", L"筑基期", L"金丹期", L"元婴期", L"化神期",
+        L"入门", L"内门", L"外门", L"杂役", L"名额", L"山门试探",
+        L"少年", L"测灵"
+    });
 }
 
 wstring FormatSocialActorName(const SocialThread& thread) {
@@ -6390,6 +6503,7 @@ Event BuildSocialAdventureEvent() {
     });
     bool mentorTie = TextContainsAny(thread.name + thread.role, {L"清蘅真人", L"师尊", L"护道人"});
     bool intimateTie = familyTie || mentorTie;
+    bool highRealmLowTierSocial = IsHighRealmLowTierSocialThread(thread);
 
     if (familyTie) {
         evt.title = L"【因果】家门问心";
@@ -6402,12 +6516,15 @@ Event BuildSocialAdventureEvent() {
     }
 
     wstring realmHint;
-    if (!thread.visibleRealm.empty() && !(intimateTie && g_player.realm >= NASCENT_SOUL)) {
+    bool highRealmChallenger = (challenger && g_player.realm >= TRUE_IMMORTAL) || highRealmLowTierSocial;
+    if (!thread.visibleRealm.empty() && !(intimateTie && g_player.realm >= NASCENT_SOUL) && !highRealmChallenger) {
         realmHint = L"对方外显" + thread.visibleRealm;
         if (thread.hidesPower || !thread.hiddenHint.empty()) {
             realmHint += L"，但气机未必可信";
         }
         realmHint += L"。";
+    } else if (highRealmChallenger) {
+        realmHint = L"对方旧日外显修为早已不足为凭，如今牵来的不是山门名额，而是旧账、人情与高处审视。";
     }
 
     wstring actorName = thread.name;
@@ -6424,6 +6541,10 @@ Event BuildSocialAdventureEvent() {
     wstring visibleHook = CompactMemoryFragment(thread.hook);
     if (mentorTie) {
         visibleHook = L"她看得出你根骨出众，却不许旁人把你捧得太高。";
+    } else if (highRealmLowTierSocial) {
+        visibleHook = L"当年的山门押注、轻慢与名额早已不足以定义你，如今只剩旧账、人情和仙界目光重新落下。";
+    } else if (highRealmChallenger) {
+        visibleHook = L"当年那点轻慢早已压不住你，如今有人借旧怨试探你是否仍会被名位、胜负和旧账牵动。";
     }
     wstring hookLead = familyTie
         ? L"这份担忧背后还压着"
@@ -8791,7 +8912,7 @@ void EnterAiEventFromContext(PlayerContext ctx) {
     AppendTraceLog(loadedExternalEvent ? L"AI_EVENT_READY" : L"AI_TEMPLATE_READY",
         L"backend=" + g_lastAiBackend + L"\nstatus=" + g_lastAiStatus +
         L"\n事件: " + tempEvent.title);
-    OpenEventPage(&s_aiEvent, L"AI动态历练");
+    OpenEventPage(&s_aiEvent, L"天机生波历练");
 }
 
 void CompleteLocalModelGenerator(DWORD exitCode) {
@@ -10078,7 +10199,20 @@ wstring BuildPlayerVisibleOutcomeText(wstring text) {
 }
 
 void ImproveRandomRoot(int amount) {
-    int index = Random(0, 4);
+    vector<pair<int*, int>> roots = {
+        {&g_player.rootFire, 0},
+        {&g_player.rootWater, 1},
+        {&g_player.rootWood, 2},
+        {&g_player.rootMetal, 3},
+        {&g_player.rootEarth, 4}
+    };
+    int minValue = min({g_player.rootFire, g_player.rootWater, g_player.rootWood,
+                        g_player.rootMetal, g_player.rootEarth});
+    vector<int> candidates;
+    for (auto& root : roots) {
+        if (*root.first == minValue) candidates.push_back(root.second);
+    }
+    int index = candidates.empty() ? Random(0, 4) : candidates[Random(0, (int)candidates.size() - 1)];
     if (index == 0) g_player.ImproveRoot(g_player.rootFire, amount);
     else if (index == 1) g_player.ImproveRoot(g_player.rootWater, amount);
     else if (index == 2) g_player.ImproveRoot(g_player.rootWood, amount);
@@ -10213,7 +10347,7 @@ void ApplyStoryThreadEffects(const Event& event, const Choice& choice, const wst
                 L"上一世留下的因果没有散去，反而成了今生必须继续追的线头。");
         } else {
             add(wstring(successLike ? L"今生旧债：" : L"旧债压身：") +
-                L"这不是前世异常，而是此世家世、宗门与旧物牵出的第一层因果。");
+                L"这是此世家世、宗门与旧物牵出的第一层因果。");
         }
     }
 
@@ -12537,10 +12671,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         }
 
         case WM_TIMER: {
-            if (wParam == IDT_AI_POLL && g_aiProcessRunning) {
+            if (wParam == IDT_AI_POLL) {
                 DWORD exitCode = STILL_ACTIVE;
                 DWORD nowTick = GetTickCount();
-                if (GetExitCodeProcess(g_aiProcessInfo.hProcess, &exitCode)) {
+                if (g_aiProcessRunning && GetExitCodeProcess(g_aiProcessInfo.hProcess, &exitCode)) {
                     if (exitCode != STILL_ACTIVE) {
                         CompleteLocalModelGenerator(exitCode);
                     } else if (IsAiEventFileStable(nowTick)) {
@@ -12549,7 +12683,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             L"事件文件已生成，但推演进程仍未退出；已收束进程并进入事件。");
                         KillAiProcessTree();
                         CompleteLocalModelGenerator(0);
-                    } else if (nowTick - g_aiStartTick > 150000) {
+                    } else if (nowTick - g_aiStartTick > 55000) {
                         KillAiProcessTree();
                         g_lastAiBackend = L"模板回退";
                         g_lastAiStatus = L"天机推演太久未显，已由既有因果继续牵动。";
@@ -12557,6 +12691,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     } else {
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
+                } else if (g_gameState == STATE_AI_WAIT) {
+                    if (IsAiEventFileStable(nowTick)) {
+                        RefreshAiStatus();
+                        AppendTraceLog(L"AI_FILE_READY_ORPHAN",
+                            L"事件文件已生成，但推演进程状态已丢失；已进入事件。");
+                        CompleteLocalModelGenerator(0);
+                    } else if (g_aiStartTick != 0 && nowTick - g_aiStartTick > 55000) {
+                        g_lastAiBackend = L"模板回退";
+                        g_lastAiStatus = L"天机推演太久未显，已由既有因果继续牵动。";
+                        AppendTraceLog(L"AI_WAIT_RECOVERED",
+                            L"推演进程状态已丢失或提前退出，等待页自动转为规则事件。");
+                        CompleteLocalModelGenerator(1);
+                    } else {
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
+                } else {
+                    KillTimer(g_hWnd, IDT_AI_POLL);
                 }
             } else if (wParam == IDT_TRACE_AUTOPLAY) {
                 HandleTraceAutoplayTick(hWnd);
@@ -12650,7 +12801,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == '2') {
-                    if (ShouldTriggerAnchorCharacterEvent()) {
+                    bool forcedRootBalance =
+                        g_player.realm == MAHAYANA &&
+                        g_player.level >= 9 &&
+                        g_player.exp >= g_player.GetExpNeeded() &&
+                        !g_player.hasBalancedRoots;
+                    if (forcedRootBalance) {
+                        g_currentEvent = g_eventMgr.GetRootBalanceEvent();
+                        if (!g_currentEvent) {
+                            g_currentEvent = g_eventMgr.GetRandomEvent(g_player.karma, true, (int)g_player.realm);
+                        }
+                        if (g_currentEvent) {
+                            AddMemory(L"五行补缺",
+                                L"大乘瓶颈已至，外出历练优先寻找五行秘境、五行老祖或洗髓机缘。");
+                            OpenEventPage(g_currentEvent, L"五行补缺历练");
+                            InvalidateRect(hWnd, NULL, FALSE);
+                        }
+                    }
+                    else if (ShouldTriggerAnchorCharacterEvent()) {
                         static Event s_anchorCharacterEvent;
                         s_anchorCharacterEvent = BuildAnchorCharacterEvent();
                         AddMemory(L"关键人物入局",
@@ -12705,8 +12873,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     else if (ShouldTriggerLegacyEchoEvent()) {
                         static Event s_legacyEchoEvent;
                         s_legacyEchoEvent = BuildLegacyEchoEvent();
-                        AddMemory(L"前世牵动", L"外出历练时触发了前世遗响。");
-                        OpenEventPage(&s_legacyEchoEvent, L"前世牵动历练");
+                        if (HasActualPastLifeEcho()) {
+                            AddMemory(L"旧痕牵动", L"外出历练时，旧玉、通天灵宝残印或前世遗响主动显化。");
+                        } else {
+                            AddMemory(L"旧痕牵动", L"外出历练时，旧玉与通天灵宝残印主动显化。");
+                        }
+                        OpenEventPage(&s_legacyEchoEvent, L"旧痕牵动历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
                     else if (ShouldTriggerSocialAdventureEvent()) {
@@ -12733,6 +12905,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     // 外出历练 - 不同时代AI事件活跃度不同
                     else if (Random(1, 100) <= GetEraAiEventChance()) {
                         // AI动态事件
+                        g_lastAiEventTotalEvents = g_player.totalEvents;
                         PlayerContext ctx = BuildPlayerContext();
 
                         if (IsTraceAutoplayEnabled()) {
@@ -12752,7 +12925,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     } else {
                         // 传统事件
                         bool needRoot = !g_player.hasBalancedRoots && g_player.realm >= SPIRIT_SEVERING;
-                        g_currentEvent = g_eventMgr.GetRandomEvent(g_player.karma, needRoot);
+                        g_currentEvent = g_eventMgr.GetRandomEvent(g_player.karma, needRoot, (int)g_player.realm);
                         if (g_currentEvent) {
                             OpenEventPage(g_currentEvent, L"常规历练");
                             InvalidateRect(hWnd, NULL, FALSE);
