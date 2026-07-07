@@ -511,7 +511,7 @@ public:
             return abundant
                 ? L"灵气充足，五行俱全如大池纳水，前期与后劲都被时代托起。"
                 : (scarce
-                    ? L"五行俱全上限极高，但此世灵气不足，前期要喂饱五行会格外吃资源。"
+                    ? L"五行俱全潜力极深，但此世灵气不足，前期要喂饱五行会格外吃资源。"
                     : L"五行均衡不是单纯快，而是后期飞升、渡劫与掌道时的根基。");
         }
         if (GetActiveRootCount() >= 4) {
@@ -1352,7 +1352,7 @@ wstring g_worldEraName = L"古典修仙纪";
 wstring g_worldEraDescription = L"诸宗并立，洞府初开，天下仍以修仙宗门为正统。";
 wstring g_worldEraRule = L"灵气丰沛，修士主宰秩序，凡俗仍仰望山门。";
 wstring g_reincarnationEcho = L"前世的残响尚浅，还不足以彻底改变这一世。";
-wstring g_eraTransitionNote = L"这是本局第一段完整时代，后续转世可能迎来完全不同的天地秩序。";
+wstring g_eraTransitionNote = L"这一纪元的山门、秘境与旧契仍未定型，天地大势正等第一道因果落笔。";
 wstring g_eraShiftCause = L"初世尚无前因，天地大势仍在等待你的选择留下第一道痕迹。";
 wstring g_hongmengOmenTreasureName = L"鸿蒙道印";
 wstring g_hongmengOmenDao = L"万道源流";
@@ -1962,9 +1962,9 @@ wstring ForgeLifeArtifact() {
     if (cols.size() >= 9 && !cols[8].empty()) {
         ss << cols[8] << L"\n\n";
     }
-    ss << L"它会进入本世器物，后续历练和动态事件可以围绕它续写。";
+    ss << L"它已记入本世器物，往后历练若遇相合因果，或会再起回应。";
     if (resonant) {
-        ss << L"\n铸成一瞬，器纹与通天灵宝残印轻轻相触；它已有本命至宝道胚的苗头，若继续温养，未来可能后天入通天。";
+        ss << L"\n铸成一瞬，器纹与通天灵宝残印轻轻相触；它已有本命至宝道胚的苗头，若继续温养，日后或可后天入通天。";
     } else {
         ss << L"\n它暂时只是今生器物，未达通天层次前，容易随死亡、转世或时代更替而失散。";
     }
@@ -2762,11 +2762,18 @@ bool HasFactionTie() {
 
 wstring BuildFactionTieDigest() {
     if (!HasFactionTie()) return L"暂无明确势力牵连。";
+    auto favorLabel = [](int favor) {
+        if (favor >= 45) return L"倚重";
+        if (favor >= 18) return L"亲近";
+        if (favor <= -45) return L"敌视";
+        if (favor <= -18) return L"疏离";
+        return L"观望";
+    };
     wstringstream ss;
     ss << g_factionTie.name << L"（" << g_factionTie.kind << L"）"
        << L" · " << g_factionTie.role
        << L" · " << g_factionTie.stance
-       << L" · 牵连值" << (g_factionTie.favor >= 0 ? L"+" : L"") << g_factionTie.favor;
+       << L" · " << favorLabel(g_factionTie.favor);
     if (g_factionTie.binding) ss << L" · 已有契约";
     if (!g_factionTie.obligation.empty()) ss << L" · " << g_factionTie.obligation;
     if (!g_factionTie.hook.empty()) ss << L" · " << g_factionTie.hook;
@@ -2791,7 +2798,7 @@ wstring BuildFactionTieText() {
         ss << L"旧债/条件: " << g_factionTie.obligation << L"\n";
     }
     if (!g_factionTie.hook.empty()) {
-        ss << L"后续线索: " << g_factionTie.hook << L"\n";
+        ss << L"暗线牵连: " << g_factionTie.hook << L"\n";
     }
     return ss.str();
 }
@@ -2838,7 +2845,7 @@ void GenerateWorldEra() {
 
     static const vector<EraProfile> eras = {
         {L"古典修仙纪", L"诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。", L"山门法统压过王朝法度，凡俗与修士之间仍隔着天堑。"},
-        {L"仙朝鼎盛纪", L"仙门与皇朝合流，气运、血脉与册封制度开始左右修行上限。", L"想要更进一步，不仅要修为，也要站队、门第与气运。"},
+        {L"仙朝鼎盛纪", L"仙门与皇朝合流，气运、血脉与册封制度开始左右修行去路。", L"想要更进一步，不仅要修为，也要站队、门第与气运。"},
         {L"末法裂变纪", L"灵气日渐稀薄，秘境争夺加剧，许多人开始研究阵械与替代性的修行体系。", L"单靠苦修越来越难，资源、机巧和掠夺变得同样重要。"},
         {L"灵机蒸汽纪", L"修真文明和机关术深度融合，灵石驱动的工坊、飞舟与阵列城邦开始扩张。", L"宗门仍在，但炼器、机巧、量产灵具正在改变旧秩序。"},
         {L"星穹道网纪", L"灵网覆盖大域，神识终端、远程阵列和跨洲飞舟让道统传播前所未有地迅捷。", L"信息与道法同样重要，闭门苦修者也可能被时代抛下。"},
@@ -3051,7 +3058,8 @@ wstring GetEraSummaryText() {
     ss << L"时代法则: " << g_worldEraRule << L"\n";
     ss << L"时代变迁: " << g_eraTransitionNote << L"\n";
     ss << L"转折因由: " << g_eraShiftCause << L"\n";
-    ss << L"轮回余烬: " << GetVisibleReincarnationEcho() << L"\n";
+    ss << (HasPriorLifeEcho() ? L"轮回余烬: " : L"旧玉梦兆: ")
+       << GetVisibleReincarnationEcho() << L"\n";
     ss << L"鸿蒙天象: " << BuildHongmengOmenBrief() << L"\n";
     if (!g_eraChronicle.empty()) {
         ss << BuildEraChronicleText(6) << L"\n";
@@ -3193,7 +3201,7 @@ wstring BuildLifeStoryText() {
 wstring BuildLifeStoryContext() {
     wstringstream ss;
     ss << L"本世主线: " << g_lifePremise << L"\n";
-    ss << L"本世主线阶段: " << g_lifeStoryProgressThisLife << L"/5\n";
+    ss << L"本世火候: " << g_lifeStoryProgressThisLife << L"/5\n";
     ss << L"主动传承: " << BuildPlannedLegacyDigest(3) << L"\n";
     ss << L"伴生玉佩: " << BuildCompanionJadeVisibleText() << L"\n";
     if (HasFactionTie()) {
@@ -4643,7 +4651,7 @@ void RefreshSocialAgentState(SocialThread& thread) {
         else thread.desire = L"看清你是哪种可结交的人";
     }
     if (thread.fear.empty()) {
-        if (familyTie) thread.fear = HasPriorLifeEcho() ? L"你太早暴露前世异常" : L"你太早暴露旧玉异样";
+        if (familyTie) thread.fear = HasPriorLifeEcho() ? L"你太早暴露旧名疑点" : L"你太早暴露旧玉异样";
         else if (challenger) thread.fear = HasPriorLifeEcho() ? L"你的资质和旧名抢走自己的位置" : L"你的资质和家世抢走自己的位置";
         else if (gatekeeper) thread.fear = L"把资源投给一个会反噬势力的人";
         else if (legacyWatcher) thread.fear = L"认错因果后被旧债牵连";
@@ -4835,13 +4843,13 @@ void AddFrostCrowThread() {
             HasPriorLifeEcho()
                 ? L"她在工坊契约和非法灵机改造之间追索旧债，尤其在意你身上解释不清的轮回空白。"
                 : L"她在工坊契约和非法灵机改造之间追索旧债，偶尔会盯着你的伴生旧玉多看一眼。",
-            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+            -12, L"金丹期", true, L"道网权限与气机都收得很深");
     } else {
         AddSocialThread(L"霜鸦", L"道网清算人", L"冷静审查",
             HasPriorLifeEcho()
                 ? L"她负责追查道网档案里的因果空白，尤其在意旧名重复、转世记忆异常和无法解释的功法来源。"
                 : L"她负责追查道网档案里的异常旧契，尤其在意你的家世记录与伴生旧玉来历。",
-            -12, L"金丹期", true, L"后台权限和真实实力都不透明");
+            -12, L"金丹期", true, L"道网权限与气机都收得很深");
     }
 }
 
@@ -6906,17 +6914,17 @@ wstring BuildCharacterDetailText(const wstring& name) {
     return ss.str();
 }
 
-wstring GetSocialDigest() {
+wstring GetSocialDigest(int threadLimit = 3, int rumorLimit = 2) {
     if (g_socialThreads.empty() && g_socialRumors.empty()) return L"暂无明显风波。";
     wstringstream ss;
-    wstring visibleThreadDigest = BuildSocialThreadDigest(3);
+    wstring visibleThreadDigest = BuildSocialThreadDigest(threadLimit);
     if (!visibleThreadDigest.empty()) {
         ss << L"本世人脉:\n" << visibleThreadDigest;
     }
     if (!g_socialRumors.empty()) {
         ss << L"近日风声:\n";
     }
-    for (size_t i = 0; i < min<size_t>(g_socialRumors.size(), 2); i++) {
+    for (size_t i = 0; i < min<size_t>(g_socialRumors.size(), (size_t)rumorLimit); i++) {
         ss << L"- " << g_socialRumors[i] << L"\n";
     }
     return ss.str();
@@ -7049,8 +7057,8 @@ void GenerateFactionTie() {
         g_factionTie.role = gifted ? L"远程试炼种子" : (weak ? L"榜单边缘记录者" : L"道网背调对象");
         g_factionTie.stance = gifted ? L"隔空下注" : (weak ? L"冷淡记录" : L"持续观察");
         g_factionTie.hook = HasPriorLifeEcho()
-            ? L"对方已经把你的灵根、家世和前世异常录入道网，后续机缘会以远讯坐标出现。"
-            : L"对方已经把你的灵根、家世和伴生旧玉异样录入道网，后续机缘会以远讯坐标出现。";
+            ? L"对方已经把你的灵根、家世和旧名疑点录入道网，远讯坐标也许会在风波里亮起。"
+            : L"对方已经把你的灵根、家世和伴生旧玉异样录入道网，远讯坐标也许会在风波里亮起。";
     } else if (g_worldEraName == L"末法裂变纪") {
         g_factionTie.kind = L"灵井配给 / 替道试验";
         g_factionTie.role = gifted ? L"灵井优先名额" : (weak ? L"配给末席" : L"阵械破境观察者");
@@ -7149,7 +7157,7 @@ void GenerateLifeStoryHooks() {
         g_lifeStoryHooks.push_back(L"江照雪线：争胜不等于死敌，她会记住你在试炼、名声和正面约战里的每一次取舍。");
     }
     if (HasCharacterTrace(L"祁无咎")) {
-        g_lifeStoryHooks.push_back(L"祁无咎线：他外显修为未必可信，帮你一次也未必等于投靠，后续仍要以人情和秘密交换。");
+        g_lifeStoryHooks.push_back(L"祁无咎：他外显修为未必可信，帮你一次也未必等于投靠，往后仍要以人情和秘密交换。");
     }
     if (HasCharacterTrace(L"沈听澜") && IsFrostCrowEra()) {
         g_lifeStoryHooks.push_back(L"沈听澜线：现代纪元的阵师更看重真相、协作和底牌边界，不会因为一次共事就全盘托付。");
@@ -10199,6 +10207,11 @@ wstring BuildNextLifeForeshadowText() {
     if (lives.empty()) return L"";
 
     const PastLife& last = lives.back();
+    auto clipForeshadow = [](const wstring& text, size_t limit) {
+        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
+        if (compact.size() > limit) compact = compact.substr(0, limit) + L"……";
+        return compact;
+    };
     wstringstream ss;
     ss << L"\n\n【轮回将起】\n";
     ss << L"黑白伴生玉佩在神魂深处合拢，像是要把这一世没有说完的话带进下一次醒来。\n";
@@ -10215,8 +10228,22 @@ wstring BuildNextLifeForeshadowText() {
         ss << L"\n不会轻易散去的因果:\n";
         int count = min(3, (int)last.unfinishedKarmas.size());
         for (int i = 0; i < count; ++i) {
-            ss << L"- " << SanitizePlayerFacingText(CompactMemoryFragment(last.unfinishedKarmas[i])) << L"\n";
+            ss << L"- " << clipForeshadow(last.unfinishedKarmas[i], 96) << L"\n";
         }
+    }
+
+    int socialEchoes = 0;
+    for (const auto& thread : g_socialThreads) {
+        if (socialEchoes >= 2) break;
+        if (!ShouldExposeSocialThreadToPlayer(thread)) continue;
+        if (abs(thread.relation) < 12 && !IsAnchorCharacterName(thread.name)) continue;
+        if (socialEchoes == 0) ss << L"\n仍有温度的人名:\n";
+        ss << L"- " << thread.name << L"：" << GetRelationLabel(thread.relation)
+           << L"未散，" << clipForeshadow(thread.hook, 62) << L"\n";
+        ++socialEchoes;
+    }
+    if (socialEchoes > 0) {
+        ss << L"这些名字未必仍在原处，但旧玉会记住你曾怎样待他们。\n";
     }
 
     if (!last.legacies.empty()) {
@@ -10536,7 +10563,7 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     }
 
     if (g_player.realm == MORTAL && g_player.level >= 9) {
-        playerVisibleOutcome += L"\n\n肉身根基已足，此时可按 [3] 引气入体，不必继续在凡人期拖年岁。";
+        playerVisibleOutcome += L"\n\n肉身根基已足，此时可以引气入体，不必继续在凡人期拖年岁。";
     }
     g_messageText = playerVisibleOutcome;
     ShowNotice(L"历练结果", g_messageText);
@@ -10598,26 +10625,26 @@ wstring BuildImmediateGoalDigest() {
     }
     if (g_player.CanBreakthrough()) {
         if (g_player.realm == MORTAL) {
-            return L"当前要事: 肉身根基已足，按 [3] 引气入体，不必继续在凡人期拖年岁。";
+            return L"当前要事: 肉身根基已足，可以引气入体，不必继续在凡人期拖年岁。";
         }
         if (g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao()) {
             return L"当前要事: 道祖之上仍缺万道积累，先补掌道深度、因果与至宝共鸣。";
         }
-        return L"当前要事: 境界已抵瓶颈，按 [3] 尝试突破，或先历练补足护道因果。";
+        return L"当前要事: 境界已抵瓶颈，可以尝试突破，也可先历练补足护道因果。";
     }
     if (g_player.realm != MORTAL && g_player.level >= 9) {
         int need = max(0, g_player.GetExpNeeded() - g_player.exp);
         return L"当前要事: 已到九层，修为还差 " + to_wstring(need) +
-               L" 才能圆满；先按 [1] 修炼或 [2] 历练补足，再 [3] 突破。";
+               L" 才能圆满；先补足修为，再考虑突破。";
     }
     if (g_player.hp < g_player.maxHp / 2 && g_player.pills > 0) {
-        return L"当前要事: 气血偏低，按 [4] 调息服药，别带伤硬闯机缘。";
+        return L"当前要事: 气血偏低，先调息服药，别带伤硬闯机缘。";
     }
     if (g_player.realm == MORTAL) {
-        return L"当前要事: 先以 [1] 打熬肉身至凡人九层，[2] 历练可提前牵出师承与机缘。";
+        return L"当前要事: 先打熬肉身至凡人九层；外出历练也可能提前牵出师承与机缘。";
     }
     if (g_player.spiritStones >= 10 + g_player.realm * 2) {
-        return L"当前要事: 可在 [1] 修炼、[2] 历练与 [5] 灵石闭关之间取舍。";
+        return L"当前要事: 可在日常修炼、外出历练与灵石闭关之间取舍。";
     }
     return L"当前要事: 资源不足时多历练；资源充足时闭关推进，瓶颈再以突破收束。";
 }
@@ -11030,7 +11057,7 @@ void OnPaint(HDC hdc, RECT& rect) {
 
             wstring worldDigest = BuildMainWorldDigest();
             wstring memoryDigest = BuildRecentMemoryDigest();
-            wstring socialDigest = GetSocialDigest();
+            wstring socialDigest = GetSocialDigest(2, 1);
             auto measureTextHeight = [&](const wstring& text, Font& font, REAL width) -> REAL {
                 RectF measureRect(0, 0, width, 100000.0f);
                 RectF measuredBounds;
@@ -11802,9 +11829,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         !(g_player.realm == DAO_ANCESTOR && !CanAttainHeavenlyDao())) {
                         wstring msg;
                         if (g_player.realm == MORTAL) {
-                            msg = L"肉身已打熬到凡人九层，再枯坐只会空耗寿元。\n按 [3] 尝试引气入体，成则踏入炼气期。";
+                            msg = L"肉身已打熬到凡人九层，再枯坐只会空耗寿元。\n此时可以尝试引气入体，成则踏入炼气期。";
                         } else {
-                            msg = L"当前境界已经抵住瓶颈，再枯坐难有进益。\n按 [3] 尝试突破下一境界。";
+                            msg = L"当前境界已经抵住瓶颈，再枯坐难有进益。\n此时可以尝试突破下一境界。";
                         }
                         if (ShouldShowFullBottleneckNotice()) {
                             ShowNotice(L"瓶颈已至", msg);
