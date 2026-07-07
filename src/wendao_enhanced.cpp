@@ -12174,11 +12174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         } else {
                             msg = L"当前境界已经抵住瓶颈，再枯坐难有进益。\n此时可以尝试突破下一境界。";
                         }
-                        if (ShouldShowFullBottleneckNotice()) {
-                            ShowNotice(L"瓶颈已至", msg);
-                        } else {
-                            g_messageText = L"【瓶颈已至】\n" + msg;
-                        }
+                        SetInlineGameFeedback(L"瓶颈已至", msg, L"BOTTLENECK");
                         InvalidateRect(hWnd, NULL, FALSE);
                         break;
                     }
@@ -12536,7 +12532,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 else if (wParam == '6') {
                     wstring forgeMsg = ForgeLifeArtifact();
                     forgeMsg += BuildActionEmotionFeedback(L"铸器", IsPositiveOutcomeText(forgeMsg));
-                    ShowNotice(L"铸炼器物", forgeMsg);
+                    SetInlineGameFeedback(L"铸炼器物", forgeMsg, L"FORGE");
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
                 else if (wParam == 'W' || wParam == 'w') {
