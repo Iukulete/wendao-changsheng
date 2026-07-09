@@ -40,12 +40,30 @@ jobs:
           type build.log
           exit /b %BUILD_EXIT%
 
+      - name: Daozu progression smoke test
+        shell: cmd
+        run: |
+          cd release
+          set WENDAO_DAOZU_SMOKE=1
+          wendao_enhanced.exe
+          set SMOKE_EXIT=%ERRORLEVEL%
+          if exist dao_smoke_result.txt type dao_smoke_result.txt
+          exit /b %SMOKE_EXIT%
+
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wendao-build-log
           path: build.log
+          if-no-files-found: warn
+
+      - name: Upload Daozu smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-daozu-smoke-report
+          path: release/dao_smoke_result.txt
           if-no-files-found: warn
 
       - name: Upload executable
