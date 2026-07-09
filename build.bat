@@ -49,18 +49,35 @@ if exist "%ROOT%tools\apply_v02_content_patch.ps1" (
     echo.
 )
 
+where python >nul 2>nul
+set "HAS_PYTHON=%ERRORLEVEL%"
+
 if exist "%ROOT%tools\apply_v03_event_expansion.py" (
     echo Applying v0.3 event expansion patch...
-    where python >nul 2>nul
-    if errorlevel 1 (
-        echo Python was not found. Skipping v0.3 event expansion.
-    ) else (
+    if "%HAS_PYTHON%"=="0" (
         python "%ROOT%tools\apply_v03_event_expansion.py"
         if errorlevel 1 (
             echo.
             echo v0.3 event expansion patch failed.
             exit /b 1
         )
+    ) else (
+        echo Python was not found. Skipping v0.3 event expansion.
+    )
+    echo.
+)
+
+if exist "%ROOT%tools\repair_v03_event_expansion.py" (
+    echo Repairing v0.3 event expansion insertion...
+    if "%HAS_PYTHON%"=="0" (
+        python "%ROOT%tools\repair_v03_event_expansion.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.3 event expansion repair failed.
+            exit /b 1
+        )
+    ) else (
+        echo Python was not found. Skipping v0.3 event expansion repair.
     )
     echo.
 )
