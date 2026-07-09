@@ -25,8 +25,8 @@ except Exception:
 
 HEAVENLY_DAO_INDEX = 20
 DAO_ANCESTOR_INDEX = 19
-MAX_STEPS = int(os.environ.get("WENDAO_AGENT_MAX_STEPS", "1800"))
-MAX_SECONDS = int(os.environ.get("WENDAO_AGENT_MAX_SECONDS", "720"))
+MAX_STEPS = int(os.environ.get("WENDAO_AGENT_MAX_STEPS", "5000"))
+MAX_SECONDS = int(os.environ.get("WENDAO_AGENT_MAX_SECONDS", "1800"))
 POLL_SECONDS = float(os.environ.get("WENDAO_AGENT_POLL_SECONDS", "0.20"))
 
 
@@ -198,17 +198,21 @@ class AgentDriver:
                 return "KEY 2"
             return "KEY 3"
 
+        closed_door_cost = 10 + realm_index * 2
+        can_closed_door = stones >= closed_door_cost + 10
+
+        # 上一轮 720 秒只到玄仙八层，主要慢在高层长期历练；这里把灵石闭关提前，
+        # 保留每三步一次历练用于触发剧情条件，其余尽量走闭关/修炼加速推进。
+        if can_closed_door and step % 3 != 1 and (level < 9 or exp < need_exp):
+            return "KEY 5"
+
         # 大乘九层满修为但五行不均时，游戏自身会把历练导向五行补缺事件。
         if level >= 9 and exp >= need_exp:
             return "KEY 2"
 
-        # 高层接近瓶颈时多历练，避免只闭关导致缺主线条件。
-        if level >= 8 and step % 2 == 0:
+        # 高层仍保留一定历练比例，避免完全闭关导致主线条件不足。
+        if level >= 8 and step % 4 == 0:
             return "KEY 2"
-
-        closed_door_cost = 10 + realm_index * 2
-        if stones >= closed_door_cost + 10 and step % 5 == 0:
-            return "KEY 5"
 
         if step % 4 == 1:
             return "KEY 2"
@@ -278,11 +282,11 @@ class AgentDriver:
                     self.send(f"KEY {key}")
                 elif game_state == "INFO":
                     title_or_feedback = str(state.get("feedback") or "")
-                    if self.heavenly_reached and not self.saved_at_heavenly and "存档" in title_or_feedback:
+                    if self.heavenly_reached and not self.saved_at_heavenly:
                         self.saved_at_heavenly = True
                         self.log("天道境存档页已出现，选择 1 号槽位保存。")
                         self.send("KEY 1")
-                    elif self.heavenly_reached and self.saved_at_heavenly and not self.loaded_after_heavenly and "读取" in title_or_feedback:
+                    elif self.heavenly_reached and self.saved_at_heavenly and not self.loaded_after_heavenly:
                         self.loaded_after_heavenly = True
                         self.log("天道境读档页已出现，选择 1 号槽位读取。")
                         self.send("KEY 1")
