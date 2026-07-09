@@ -115,9 +115,158 @@ if ($content -notmatch 'V0_2_OPENING_EVENTS_BEGIN') {
     $changed = $true
 }
 
+# v0.2 主菜单：补继续游戏、读取存档、存档管理、设定、退出键位与返回菜单控制。
+if ($content -notmatch 'V0_2_MENU_HELPERS_BEGIN') {
+    $marker = 'LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {'
+    $helpers = @'
+// V0_2_MENU_HELPERS_BEGIN
+void ShowMenuControls(bool visible) {
+    if (g_nameInput) ShowWindow(g_nameInput, visible ? SW_SHOW : SW_HIDE);
+    if (g_btnStart) ShowWindow(g_btnStart, visible ? SW_SHOW : SW_HIDE);
+    if (visible) LayoutMenuControls();
+}
+
+bool LoadLatestSaveFromMenu(HWND hWnd) {
+    EnsureSaveDirectory();
+    int bestSlot = -1;
+    FILETIME bestTime = {};
+    bool hasBest = false;
+    for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
+        wstring path = GetSaveSlotPath(slot);
+        WIN32_FILE_ATTRIBUTE_DATA data = {};
+        if (!GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &data)) continue;
+        if (!hasBest || CompareFileTime(&data.ftLastWriteTime, &bestTime) > 0) {
+            bestSlot = slot;
+            bestTime = data.ftLastWriteTime;
+            hasBest = true;
+        }
+    }
+    if (bestSlot < 0) return false;
+    if (!LoadGameFromPath(GetSaveSlotPath(bestSlot))) return false;
+    g_gameState = STATE_GAME;
+    g_messageText = L"【继续游戏】\n已接续最近一份旧录：第" + to_wstring(bestSlot) + L"号存档。";
+    ShowMenuControls(false);
+    InvalidateRect(hWnd, NULL, FALSE);
+    return true;
+}
+
+void OpenMenuNotice(const wstring& title, const wstring& text) {
+    ShowMenuControls(false);
+    OpenInfoPage(title, text, STATE_MENU);
+}
+
+void HandleMenuKey(HWND hWnd, WPARAM key) {
+    if (key == '1') {
+        SetFocus(g_nameInput);
+        return;
+    }
+    if (key == '2') {
+        if (!LoadLatestSaveFromMenu(hWnd)) {
+            OpenMenuNotice(L"继续游戏", L"没有找到可接续的旧录。\n\n可以按 [1] 输入道号开始新生，或按 [3] 查看存档槽。\n\n[ESC] 返回主菜单");
+            InvalidateRect(hWnd, NULL, FALSE);
+        }
+        return;
+    }
+    if (key == '3') {
+        ShowMenuControls(false);
+        OpenSaveSlotPage(true);
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == '4') {
+        ShowMenuControls(false);
+        OpenSaveSlotPage(true);
+        g_infoTitle = L"存档管理";
+        g_infoText = L"当前版本先提供读取旧录入口。\n\n后续会在这里补：复制存档、删除存档、查看详细旧录、导出存档。\n\n请选择已有槽位读取，或按 [ESC] 返回主菜单。";
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == '5') {
+        OpenMenuNotice(L"设定", L"当前版本使用默认设定。\n\n后续会补充：文字速度、音量、美术资源包、窗口比例、本地 AI 开关。\n\n[ESC] 返回主菜单");
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == VK_ESCAPE) {
+        PostQuitMessage(0);
+    }
+}
+// V0_2_MENU_HELPERS_END
+
+'@
+    if (!$content.Contains($marker)) {
+        throw 'Unable to find WndProc marker.'
+    }
+    $content = $content.Replace($marker, $helpers + $marker)
+    $changed = $true
+}
+
+if ($content -notmatch 'V0_2_MENU_KEYDOWN_BEGIN') {
+    $needle = '        case WM_KEYDOWN: {'
+    $insert = @'
+        case WM_KEYDOWN: {
+            // V0_2_MENU_KEYDOWN_BEGIN
+            if (g_gameState == STATE_MENU) {
+                HandleMenuKey(hWnd, wParam);
+                break;
+            }
+            // V0_2_MENU_KEYDOWN_END
+'@
+    if (!$content.Contains($needle)) {
+        throw 'Unable to find WM_KEYDOWN marker.'
+    }
+    $content = $content.Replace($needle, $insert)
+    $changed = $true
+}
+
+if ($content -notmatch 'V0_2_MENU_RETURN_CONTROLS') {
+    $needle = '    g_gameState = g_infoReturnState;'
+    $replace = "    g_gameState = g_infoReturnState;`r`n    // V0_2_MENU_RETURN_CONTROLS`r`n    if (g_gameState == STATE_MENU) {`r`n        ShowMenuControls(true);`r`n    }"
+    if (!$content.Contains($needle)) {
+        throw 'Unable to patch ReturnFromInfoPage.'
+    }
+    $content = $content.Replace($needle, $replace)
+    $changed = $true
+}
+
+if ($content -notmatch 'V0_2_SAVE_LOAD_HIDE_MENU') {
+    $needle = '        if (LoadGameFromPath(path)) {'
+    $replace = "        if (LoadGameFromPath(path)) {`r`n            // V0_2_SAVE_LOAD_HIDE_MENU`r`n            g_gameState = STATE_GAME;`r`n            ShowMenuControls(false);"
+    if (!$content.Contains($needle)) {
+        throw 'Unable to patch save slot load state.'
+    }
+    $content = $content.Replace($needle, $replace)
+    $changed = $true
+}
+
+if ($content -notmatch 'V0_2_SAVE_RETURN_STATE') {
+    $needle = '    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), STATE_GAME);'
+    $replace = '    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), (g_gameState == STATE_MENU ? STATE_MENU : STATE_GAME)); // V0_2_SAVE_RETURN_STATE'
+    if (!$content.Contains($needle)) {
+        throw 'Unable to patch save slot return state.'
+    }
+    $content = $content.Replace($needle, $replace)
+    $changed = $true
+}
+
+if ($content -notmatch 'V0_2_MENU_PAINT_OPTIONS') {
+    $content = $content.Replace('int panelHeight = 210;', 'int panelHeight = 335; // V0_2_MENU_PAINT_OPTIONS')
+    $needle = '            graphics.DrawRectangle(&inputPen, inputRect);'
+    $replace = @'
+            graphics.DrawRectangle(&inputPen, inputRect);
+            Font menuHintFont(&fontFamily, 18, FontStyleRegular, UnitPixel);
+            RectF menuHintRect((REAL)panelLeft + 38, (REAL)panelTop + 140, (REAL)panelWidth - 76, 142);
+            graphics.DrawString(L"[1] 开始新生 / 输入道号\n[2] 继续游戏（最近旧录）\n[3] 读取存档\n[4] 存档管理\n[5] 设定\n[ESC] 退出游戏", -1, &menuHintFont, menuHintRect, &leftFormat, &softWhiteBrush);
+'@
+    if (!$content.Contains($needle)) {
+        throw 'Unable to patch menu paint options.'
+    }
+    $content = $content.Replace($needle, $replace)
+    $changed = $true
+}
+
 if ($changed) {
     Set-Content -LiteralPath $src -Value $content -Encoding UTF8
-    Write-Host 'v0.2 opening content patch applied.'
+    Write-Host 'v0.2 opening/menu/content patch applied.'
 } else {
-    Write-Host 'v0.2 opening content patch already applied.'
+    Write-Host 'v0.2 opening/menu/content patch already applied.'
 }
