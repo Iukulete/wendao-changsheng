@@ -43,6 +43,17 @@ if exist "%ROOT%tools\apply_v02_content_patch.ps1" (
     echo.
 )
 
+if exist "%ROOT%tools\apply_daozu_smoke_patch.ps1" (
+    echo Applying Daozu smoke-test patch...
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_daozu_smoke_patch.ps1"
+    if errorlevel 1 (
+        echo.
+        echo Daozu smoke-test patch failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" (
     mkdir "%OUT_DIR%"
 )
