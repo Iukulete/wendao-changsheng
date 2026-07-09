@@ -34,7 +34,19 @@ jobs:
 
       - name: Build game
         shell: cmd
-        run: build.bat
+        run: |
+          build.bat > build.log 2>&1
+          set BUILD_EXIT=%ERRORLEVEL%
+          type build.log
+          exit /b %BUILD_EXIT%
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-build-log
+          path: build.log
+          if-no-files-found: warn
 
       - name: Upload executable
         uses: actions/upload-artifact@v4
