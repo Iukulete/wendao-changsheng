@@ -4,19 +4,20 @@
 The first v0.3 patch appended the new AddEvent calls after the closing brace of
 AddOpeningLocalEvents(), which makes C++ parse them as invalid member
 declarations. This repair script is intentionally small and idempotent: it
-removes the v0.3 block wherever it is and reinserts it just before the closing
-brace followed by the v0.2 end marker.
+removes the v0.3 block wherever it is and reinserts it immediately before the
+closing brace of AddOpeningLocalEvents().
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "wendao_enhanced.cpp"
 BEGIN = "        // V0_3_EVENT_EXPANSION_BEGIN"
 END = "        // V0_3_EVENT_EXPANSION_END"
-TAIL = "    }\n    // V0_2_OPENING_EVENTS_END"
+MARKER = "    // V0_2_OPENING_EVENTS_END"
 
 
 def main() -> int:
@@ -43,14 +44,18 @@ def main() -> int:
     block = content[start:end].strip("\r\n")
     without = content[:start] + content[end:]
 
-    # Clean up extra blank lines left by the removal.
-    while "\n\n\n    // V0_2_OPENING_EVENTS_END" in without:
-        without = without.replace("\n\n\n    // V0_2_OPENING_EVENTS_END", "\n\n    // V0_2_OPENING_EVENTS_END")
+    marker_pos = without.find(MARKER)
+    if marker_pos < 0:
+        raise RuntimeError("Unable to find v0.2 opening events end marker.")
 
-    if TAIL not in without:
+    # Find the last line that is exactly the function closing brace before the
+    # v0.2 end marker. This works with both CRLF and LF layouts.
+    closing_matches = list(re.finditer(r"(?m)^    \}\s*$", without[:marker_pos]))
+    if not closing_matches:
         raise RuntimeError("Unable to find AddOpeningLocalEvents closing brace before v0.2 end marker.")
+    insert_pos = closing_matches[-1].start()
 
-    repaired = without.replace(TAIL, block + "\n" + TAIL, 1)
+    repaired = without[:insert_pos] + block + "\n" + without[insert_pos:]
     SRC.write_text(repaired, encoding="utf-8")
     print("Repaired v0.3 event expansion insertion location.")
     return 0
