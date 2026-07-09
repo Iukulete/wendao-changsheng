@@ -249,14 +249,14 @@ if ($content -notmatch 'V0_2_SAVE_LOAD_HIDE_MENU') {
 }
 
 if ($content -notmatch 'V0_2_SAVE_RETURN_STATE') {
-    $needle = '    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), STATE_GAME);'
-    $needle = $needle.Replace('\"', '"')
+    $pattern = '    OpenInfoPage\(loadMode \? L"[^"]+" : L"[^"]+", BuildSaveSlotIntroText\(loadMode\), STATE_GAME\);'
     $replace = '    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), (g_gameState == STATE_MENU ? STATE_MENU : STATE_GAME)); // V0_2_SAVE_RETURN_STATE'
     $replace = $replace.Replace('\"', '"')
-    if (!$content.Contains($needle)) {
+    $next = [regex]::Replace($content, $pattern, $replace, 1)
+    if ($next -eq $content) {
         throw 'Unable to patch save slot return state.'
     }
-    $content = $content.Replace($needle, $replace)
+    $content = $next
     $changed = $true
 }
 
