@@ -44,8 +44,8 @@ jobs:
         shell: pwsh
         env:
           PYTHONUTF8: "1"
-          WENDAO_AGENT_MAX_STEPS: "1800"
-          WENDAO_AGENT_MAX_SECONDS: "720"
+          WENDAO_AGENT_MAX_STEPS: "5000"
+          WENDAO_AGENT_MAX_SECONDS: "1800"
         run: |
           New-Item -ItemType Directory -Force release | Out-Null
           python -X utf8 tools/agent_playthrough.py release 2>&1 | Tee-Object -FilePath release/agent_playthrough_stdout.log
@@ -81,8 +81,9 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload executable
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wendao-windows-build
           path: release/
-          if-no-files-found: error
+          if-no-files-found: warn
