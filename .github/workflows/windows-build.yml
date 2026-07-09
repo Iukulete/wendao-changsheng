@@ -40,15 +40,13 @@ jobs:
           type build.log
           exit /b %BUILD_EXIT%
 
-      - name: Daozu progression smoke test
-        shell: cmd
+      - name: Agent bridge playthrough
+        shell: pwsh
+        env:
+          WENDAO_AGENT_MAX_STEPS: "1800"
+          WENDAO_AGENT_MAX_SECONDS: "720"
         run: |
-          cd release
-          set WENDAO_DAOZU_SMOKE=1
-          wendao_enhanced.exe
-          set SMOKE_EXIT=%ERRORLEVEL%
-          if exist dao_smoke_result.txt type dao_smoke_result.txt
-          exit /b %SMOKE_EXIT%
+          python tools/agent_playthrough.py release
 
       - name: Upload build log
         if: always()
@@ -56,6 +54,18 @@ jobs:
         with:
           name: wendao-build-log
           path: build.log
+          if-no-files-found: warn
+
+      - name: Upload agent playthrough report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-agent-playthrough-report
+          path: |
+            release/agent_playthrough_report.txt
+            release/agent_trace.log
+            release/agent_state.json
+            release/agent_command.txt
           if-no-files-found: warn
 
       - name: Upload Daozu smoke report
