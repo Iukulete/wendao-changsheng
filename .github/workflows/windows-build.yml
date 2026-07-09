@@ -43,10 +43,13 @@ jobs:
       - name: Agent bridge playthrough
         shell: pwsh
         env:
+          PYTHONUTF8: "1"
           WENDAO_AGENT_MAX_STEPS: "1800"
           WENDAO_AGENT_MAX_SECONDS: "720"
         run: |
-          python tools/agent_playthrough.py release
+          New-Item -ItemType Directory -Force release | Out-Null
+          python -X utf8 tools/agent_playthrough.py release 2>&1 | Tee-Object -FilePath release/agent_playthrough_stdout.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Upload build log
         if: always()
@@ -62,6 +65,7 @@ jobs:
         with:
           name: wendao-agent-playthrough-report
           path: |
+            release/agent_playthrough_stdout.log
             release/agent_playthrough_report.txt
             release/agent_trace.log
             release/agent_state.json
