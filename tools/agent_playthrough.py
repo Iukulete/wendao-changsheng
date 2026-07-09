@@ -179,6 +179,8 @@ class AgentDriver:
         pills = int(player.get("pills") or 0)
         can_break = bool(state.get("canBreakthrough"))
         heavenly_ready = bool(state.get("heavenlyDaoReady"))
+        closed_door_cost = 10 + realm_index * 2
+        can_closed_door = stones >= closed_door_cost + 10
 
         if realm_index >= HEAVENLY_DAO_INDEX:
             if not self.saved_at_heavenly:
@@ -192,14 +194,15 @@ class AgentDriver:
         if hp < max_hp * 0.35 and pills > 0:
             return "KEY 4"
 
-        # 道祖后期需要天道条件，不满足时优先走历练，逼出大道/鸿蒙/天道相关事件。
+        # 道祖门槛解锁后，仍需要把道祖修到九层并蓄满修为；上一轮在道祖一层反复按突破卡住。
         if realm_index >= DAO_ANCESTOR_INDEX:
             if not heavenly_ready:
                 return "KEY 2"
-            return "KEY 3"
-
-        closed_door_cost = 10 + realm_index * 2
-        can_closed_door = stones >= closed_door_cost + 10
+            if can_closed_door and (level < 9 or exp < need_exp) and step % 4 != 1:
+                return "KEY 5"
+            if level >= 8 and step % 5 == 0:
+                return "KEY 2"
+            return "KEY 1"
 
         # 上一轮 720 秒只到玄仙八层，主要慢在高层长期历练；这里把灵石闭关提前，
         # 保留每三步一次历练用于触发剧情条件，其余尽量走闭关/修炼加速推进。
@@ -281,7 +284,6 @@ class AgentDriver:
                     self.log(f"EVENT {event.get('title', '')} -> 选择 {key}")
                     self.send(f"KEY {key}")
                 elif game_state == "INFO":
-                    title_or_feedback = str(state.get("feedback") or "")
                     if self.heavenly_reached and not self.saved_at_heavenly:
                         self.saved_at_heavenly = True
                         self.log("天道境存档页已出现，选择 1 号槽位保存。")
