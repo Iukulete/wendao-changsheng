@@ -17,6 +17,12 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 HEAVENLY_DAO_INDEX = 20
 DAO_ANCESTOR_INDEX = 19
 MAX_STEPS = int(os.environ.get("WENDAO_AGENT_MAX_STEPS", "1800"))
@@ -49,12 +55,17 @@ class AgentDriver:
 
     def log(self, line: str) -> None:
         msg = f"[{now()}] {line}"
-        print(msg, flush=True)
         self.lines.append(msg)
         try:
+            self.report_path.parent.mkdir(parents=True, exist_ok=True)
             self.report_path.write_text("\n".join(self.lines) + "\n", encoding="utf-8")
         except OSError:
             pass
+        try:
+            print(msg, flush=True)
+        except UnicodeEncodeError:
+            safe = msg.encode("utf-8", errors="replace").decode("utf-8", errors="replace")
+            print(safe, flush=True)
 
     def start(self) -> None:
         if not self.exe.exists():
@@ -72,6 +83,7 @@ class AgentDriver:
         env["WENDAO_AGENT_HIDE"] = "1"
         env["WENDAO_TRACE_LOG"] = str(self.trace_path)
         env["WENDAO_TRACE_HIDE"] = "1"
+        env["PYTHONUTF8"] = "1"
         # 明确关闭旧的全自动 trace，避免与 agent 驱动抢按键。
         env.pop("WENDAO_TRACE_AUTOPLAY", None)
         env.pop("WENDAO_DAOZU_SMOKE", None)
