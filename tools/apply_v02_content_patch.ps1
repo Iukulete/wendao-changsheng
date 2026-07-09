@@ -11,6 +11,16 @@ if (!(Test-Path -LiteralPath $src)) {
 $content = Get-Content -LiteralPath $src -Raw -Encoding UTF8
 $changed = $false
 
+# v0.2 菜单辅助函数需要被 ReturnFromInfoPage 提前引用，因此先补前置声明。
+if ($content -notmatch 'V0_2_MENU_HELPER_DECL') {
+    $proto = 'bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& traceReason);'
+    if (!$content.Contains($proto)) {
+        throw 'Unable to find StartNewGameWithDaoName prototype.'
+    }
+    $content = $content.Replace($proto, $proto + "`r`nvoid ShowMenuControls(bool visible); // V0_2_MENU_HELPER_DECL")
+    $changed = $true
+}
+
 # 将原创开局事件接入 EventManager 构造流程。脚本保持幂等，多次执行不会重复插入。
 if ($content -notmatch 'V0_2_OPENING_EVENTS_BEGIN') {
     $ctorPattern = '    EventManager\(\) \{\r?\n        InitEvents\(\);\r?\n    \}'
