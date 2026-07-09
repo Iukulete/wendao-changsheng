@@ -6,6 +6,7 @@ set "SRC=%ROOT%src\wendao_enhanced.cpp"
 set "OUT_DIR=%ROOT%release"
 set "OUT=%OUT_DIR%\wendao_enhanced.exe"
 
+
 echo Building The Immortal Path...
 echo.
 
@@ -34,11 +35,32 @@ if not exist "%SRC%" (
 
 if exist "%ROOT%tools\apply_v02_content_patch.ps1" (
     echo Applying v0.2 opening/content patch...
-    powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_v02_content_patch.ps1"
+    where pwsh >nul 2>nul
+    if errorlevel 1 (
+        powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_v02_content_patch.ps1"
+    ) else (
+        pwsh -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_v02_content_patch.ps1"
+    )
     if errorlevel 1 (
         echo.
         echo v0.2 content patch failed.
         exit /b 1
+    )
+    echo.
+)
+
+if exist "%ROOT%tools\apply_v03_event_expansion.py" (
+    echo Applying v0.3 event expansion patch...
+    where python >nul 2>nul
+    if errorlevel 1 (
+        echo Python was not found. Skipping v0.3 event expansion.
+    ) else (
+        python "%ROOT%tools\apply_v03_event_expansion.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.3 event expansion patch failed.
+            exit /b 1
+        )
     )
     echo.
 )
