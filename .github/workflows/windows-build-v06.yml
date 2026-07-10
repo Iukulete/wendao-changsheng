@@ -1,4 +1,4 @@
-name: Windows Build v0.7
+name: Windows Build v0.8
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and verify narrative arcs
+    name: Build and verify persistent arc outcomes
     runs-on: windows-latest
 
     steps:
@@ -46,18 +46,20 @@ jobs:
           @(
             "V0_6_PATH_DIMENSIONS",
             "V0_7_NARRATIVE_ARCS",
+            "V0_8_ARC_LEGACIES",
             "SAVE_V5",
-            "STORY_STATE_V2",
+            "STORY_STATE_V3",
             "NarrativeArcState",
+            "ArcLegacyState",
             "BuildNarrativeArcDigest",
-            "| 分线 ",
-            "【旧玉·一】夜半微温",
-            "【旧玉·终】不借旧我",
-            "【山门·终】自择道统",
-            "【家世·终】认或不认",
-            "【战帖·终】敌友由我"
+            "BuildArcLegacyDigest",
+            "ARC_LEGACY_SET",
+            "【轮回定局】照雪旧约",
+            "旧我为证",
+            "自立道统",
+            "照雪盟友"
           ) | ForEach-Object {
-            if (-not $source.Contains($_)) { throw "Missing v0.7 marker: $_" }
+            if (-not $source.Contains($_)) { throw "Missing v0.8 marker: $_" }
           }
           if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
 
@@ -68,16 +70,17 @@ jobs:
           python tools/repair_v06_path_digest.py
           python tools/apply_v07_story_arcs.py
           python tools/repair_v07_trace_digest.py
+          python tools/apply_v08_arc_legacies.py
           if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v07_agent_state.json"
-          $commandPath = Join-Path $release "v07_agent_command.txt"
-          $stdoutPath = Join-Path $release "v07_runtime_stdout.log"
-          $stderrPath = Join-Path $release "v07_runtime_stderr.log"
+          $statePath = Join-Path $release "v08_agent_state.json"
+          $commandPath = Join-Path $release "v08_agent_command.txt"
+          $stdoutPath = Join-Path $release "v08_runtime_stdout.log"
+          $stderrPath = Join-Path $release "v08_runtime_stderr.log"
           Remove-Item $statePath,$commandPath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
           $env:WENDAO_AGENT_STATE = $statePath
@@ -105,7 +108,7 @@ jobs:
             }
             if (-not $state.player) { throw "Agent state JSON was not readable" }
 
-            @("daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs") | ForEach-Object {
+            @("daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs", "arcLegacies") | ForEach-Object {
               if ($null -eq $state.player.PSObject.Properties[$_]) {
                 throw "Runtime Agent JSON missing player.$_"
               }
@@ -116,18 +119,18 @@ jobs:
                 $state.player.storyArcs -notmatch "战帖0/4") {
               throw "Unexpected initial story arc digest: $($state.player.storyArcs)"
             }
+            if ($state.player.arcLegacies -notmatch "暂无跨世定局") {
+              throw "Fresh game should not start with arc legacies: $($state.player.arcLegacies)"
+            }
             if ($state.state -ne "MENU") { throw "Expected MENU state, got $($state.state)" }
 
-            "00001 START v07-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v08-smoke" | Set-Content $commandPath -Encoding UTF8
             $startDeadline = (Get-Date).AddSeconds(12)
             do {
               Start-Sleep -Milliseconds 300
               try { $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
             } while ((Get-Date) -lt $startDeadline -and $state.state -eq "MENU")
             if ($state.state -eq "MENU") { throw "Agent START command was not consumed" }
-            if ([string]::IsNullOrWhiteSpace($state.player.storyArcs)) {
-              throw "Story arc digest disappeared after starting game"
-            }
 
             $summary = [ordered]@{
               state = $state.state
@@ -137,8 +140,9 @@ jobs:
               karma = $state.player.karma
               effectiveKarma = $state.player.effectiveKarma
               storyArcs = $state.player.storyArcs
+              arcLegacies = $state.player.arcLegacies
             }
-            $summary | ConvertTo-Json | Set-Content (Join-Path $release "v07_runtime_summary.json") -Encoding UTF8
+            $summary | ConvertTo-Json | Set-Content (Join-Path $release "v08_runtime_summary.json") -Encoding UTF8
             "00002 QUIT" | Set-Content $commandPath -Encoding UTF8
           }
           finally {
@@ -146,15 +150,15 @@ jobs:
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
-      - name: Long-form narrative arc smoke
+      - name: Long-form terminal outcome smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v07_arc_state.json"
-          $commandPath = Join-Path $release "v07_arc_command.txt"
-          $tracePath = Join-Path $release "v07_arc_trace.log"
-          $stdoutPath = Join-Path $release "v07_arc_stdout.log"
-          $stderrPath = Join-Path $release "v07_arc_stderr.log"
+          $statePath = Join-Path $release "v08_arc_state.json"
+          $commandPath = Join-Path $release "v08_arc_command.txt"
+          $tracePath = Join-Path $release "v08_arc_trace.log"
+          $stdoutPath = Join-Path $release "v08_arc_stdout.log"
+          $stderrPath = Join-Path $release "v08_arc_stderr.log"
           Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
           $env:WENDAO_AGENT_STATE = $statePath
@@ -163,7 +167,7 @@ jobs:
           $env:WENDAO_TRACE_LOG = $tracePath
           $env:WENDAO_TRACE_AUTOPLAY = "1"
           $env:WENDAO_TRACE_HIDE = "1"
-          $env:WENDAO_TRACE_MAX_ACTIONS = "150"
+          $env:WENDAO_TRACE_MAX_ACTIONS = "230"
           $env:WENDAO_TRACE_MAX_LIVES = "1"
 
           $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
@@ -175,9 +179,9 @@ jobs:
               Start-Sleep -Milliseconds 250
             }
             if (-not (Test-Path $statePath)) { throw "Arc smoke Agent state was not created" }
-            "00001 START v07-arc-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v08-arc-smoke" | Set-Content $commandPath -Encoding UTF8
 
-            $runDeadline = (Get-Date).AddSeconds(150)
+            $runDeadline = (Get-Date).AddSeconds(210)
             while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) {
               Start-Sleep -Seconds 1
               $proc.Refresh()
@@ -191,22 +195,24 @@ jobs:
             $trace = Get-Content $tracePath -Raw -Encoding UTF8
             $arcMatches = [regex]::Matches($trace, "【(旧玉|山门|家世|战帖)·")
             $arcNames = @($arcMatches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
-            if ($arcMatches.Count -lt 2) {
+            if ($arcMatches.Count -lt 8) {
               throw "Too few staged narrative events were executed: $($arcMatches.Count)"
             }
-            if ($arcNames.Count -lt 2) {
-              throw "Narrative smoke did not rotate between arc families: $($arcNames -join ', ')"
+            if ($arcNames.Count -lt 3) {
+              throw "Narrative smoke did not rotate through enough arc families: $($arcNames -join ', ')"
             }
-            if ($trace -notmatch "分线 .*([1-4]/4)") {
-              throw "Trace never recorded advanced narrative arc progress"
+            if ($trace -notmatch "ARC_LEGACY_SET") {
+              throw "No terminal arc choice produced a persistent legacy tag"
             }
-
+            $legacyLines = @([regex]::Matches($trace, "ARC_LEGACY_SET[\s\S]{0,260}") | Select-Object -Last 4 | ForEach-Object { $_.Value })
             $arcSummary = [ordered]@{
               stagedEventCount = $arcMatches.Count
               distinctArcs = $arcNames
+              legacySetCount = ([regex]::Matches($trace, "ARC_LEGACY_SET")).Count
+              legacyLines = $legacyLines
               finalProgressLines = @([regex]::Matches($trace, "分线 [^\r\n]+") | Select-Object -Last 5 | ForEach-Object { $_.Value })
             }
-            $arcSummary | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v07_arc_summary.json") -Encoding UTF8
+            $arcSummary | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v08_arc_summary.json") -Encoding UTF8
           }
           finally {
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
@@ -216,7 +222,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wendao-v07-windows-build
+          name: wendao-v08-windows-build
           path: |
             build.log
             release/
