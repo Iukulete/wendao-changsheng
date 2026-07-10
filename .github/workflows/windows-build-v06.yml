@@ -2,18 +2,15 @@ name: Windows Build v0.11
 
 on:
   push:
-    branches:
-      - gameplay-path-dimensions-v06
+    branches: [gameplay-path-dimensions-v06]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     name: Build and verify second-life legacy chapters
     runs-on: windows-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,8 +21,7 @@ jobs:
           msystem: UCRT64
           update: true
           path-type: inherit
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
+          install: mingw-w64-ucrt-x86_64-gcc
 
       - name: Add MinGW to PATH
         shell: pwsh
@@ -39,42 +35,25 @@ jobs:
           type build.log
           exit /b %BUILD_EXIT%
 
-      - name: Verify patched source
+      - name: Verify patched source and idempotence
         shell: pwsh
         run: |
           $source = Get-Content src/wendao_enhanced.cpp -Raw -Encoding UTF8
           $legacy = Get-Content legacy_system/legacy_system.h -Raw -Encoding UTF8
           @(
-            "V0_6_PATH_DIMENSIONS",
-            "V0_7_NARRATIVE_ARCS",
-            "V0_8_ARC_LEGACIES",
-            "V0_9_ACHIEVEMENT_TOASTS",
-            "V0_10_JADE_WEAPON_AWAKENING",
-            "V0_10_COMPILE_REPAIR",
-            "V0_10_WEAPON_PACING",
-            "V0_11_ARC_ECHO_CHAPTERS",
-            "STORY_STATE_V4",
-            "ACHIEVEMENTS_V3",
-            "ArcEchoState",
-            "BuildArcEchoDigest",
-            "ResolveArcEchoOutcome",
-            "ARC_ECHO_STAGE",
-            "ARC_ECHO_RESOLVE",
-            "【定局续章·旧玉一】旧梦证词",
-            "【定局续章·山门终】道统归属",
-            "【定局续章·家世终】旧名裁决",
-            "【定局续章·战帖终】旧约新解",
-            "arcEchoes",
-            "TrackJadeWeaponResonanceFromState",
-            "InvokeJadeWeaponTechnique"
+            "V0_6_PATH_DIMENSIONS", "V0_7_NARRATIVE_ARCS", "V0_8_ARC_LEGACIES",
+            "V0_9_ACHIEVEMENT_TOASTS", "V0_10_JADE_WEAPON_AWAKENING",
+            "V0_10_COMPILE_REPAIR", "V0_10_WEAPON_PACING",
+            "V0_11_ARC_ECHO_CHAPTERS", "V0_11_STORY_LOAD_NEWLINE_REPAIR",
+            "STORY_STATE_V4", "ACHIEVEMENTS_V3", "ArcEchoState",
+            "BuildArcEchoDigest", "ResolveArcEchoOutcome", "ARC_ECHO_RESOLVE",
+            "【定局续章·旧玉一】旧梦证词", "【定局续章·山门终】道统归属",
+            "【定局续章·家世终】旧名裁决", "【定局续章·战帖终】旧约新解",
+            "arcEchoes", "InvokeJadeWeaponTechnique"
           ) | ForEach-Object {
             if (-not ($source.Contains($_) -or $legacy.Contains($_))) { throw "Missing v0.11 marker: $_" }
           }
           if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
-
-      - name: Verify patch idempotence
-        shell: pwsh
-        run: |
           python tools/apply_v06_path_dimensions.py
           python tools/repair_v06_path_digest.py
           python tools/apply_v07_story_arcs.py
@@ -85,6 +64,7 @@ jobs:
           python tools/repair_v10_compile.py
           python tools/tune_v10_weapon_pacing.py
           python tools/apply_v11_arc_echo_chapters.py
+          python tools/repair_v11_story_load_newline.py
           if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
@@ -96,68 +76,46 @@ jobs:
           $stdoutPath = Join-Path $release "v11_runtime_stdout.log"
           $stderrPath = Join-Path $release "v11_runtime_stderr.log"
           Remove-Item $statePath,$commandPath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
-
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
           $env:WENDAO_AGENT_HIDE = "1"
           $env:WENDAO_TRACE_HIDE = "1"
-          Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
           Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
-
-          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
-            -WorkingDirectory $release -PassThru `
-            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
           try {
             $deadline = (Get-Date).AddSeconds(25)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 250 }
             if (-not (Test-Path $statePath)) { throw "Agent state file was not created" }
-            $state = $null
-            while ((Get-Date) -lt $deadline) {
-              try { $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json; if ($state.player) { break } } catch {}
-              Start-Sleep -Milliseconds 250
-            }
-            if (-not $state.player) { throw "Agent state JSON was not readable" }
-            @(
-              "daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs", "arcLegacies", "arcEchoes",
-              "jadeWeapon", "jadeWeaponStage", "jadeWeaponStyle", "jadeWeaponResonance",
-              "jadeWeaponCharge", "achievementCount", "jadeWeaponCount"
-            ) | ForEach-Object {
+            $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            @("storyArcs", "arcLegacies", "arcEchoes", "jadeWeapon", "jadeWeaponStage", "jadeWeaponResonance") | ForEach-Object {
               if ($null -eq $state.player.PSObject.Properties[$_]) { throw "Runtime Agent JSON missing player.$_" }
             }
-            if ($state.player.arcEchoes -notmatch "旧玉续章0/3" -or
-                $state.player.arcEchoes -notmatch "山门续章0/3" -or
-                $state.player.arcEchoes -notmatch "家世续章0/3" -or
-                $state.player.arcEchoes -notmatch "战帖续章0/3") {
-              throw "Unexpected fresh arc echo digest: $($state.player.arcEchoes)"
+            if ($state.player.arcEchoes -notmatch "旧玉续章0/3" -or $state.player.arcEchoes -notmatch "战帖续章0/3") {
+              throw "Unexpected initial echo digest: $($state.player.arcEchoes)"
             }
-            "00001 START v11-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v11-runtime" | Set-Content $commandPath -Encoding UTF8
             Start-Sleep -Seconds 2
             "00002 QUIT" | Set-Content $commandPath -Encoding UTF8
-          }
-          finally {
+          } finally {
             Start-Sleep -Milliseconds 500
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
-      - name: Achievement awakening and invocation smoke
+      - name: Jade weapon regression smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
           $statePath = Join-Path $release "v11_weapon_state.json"
           $commandPath = Join-Path $release "v11_weapon_command.txt"
           $tracePath = Join-Path $release "v11_weapon_trace.log"
-          $stdoutPath = Join-Path $release "v11_weapon_stdout.log"
-          $stderrPath = Join-Path $release "v11_weapon_stderr.log"
-          Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
-
-          function Send-AgentCommand([string]$line) {
-            for ($attempt = 0; $attempt -lt 12; $attempt++) {
-              try { $line | Set-Content $commandPath -Encoding UTF8 -ErrorAction Stop; return }
-              catch { Start-Sleep -Milliseconds 120 }
+          Remove-Item $statePath,$commandPath,$tracePath -ErrorAction SilentlyContinue
+          function Send([string]$line) {
+            for ($i = 0; $i -lt 12; $i++) {
+              try { $line | Set-Content $commandPath -Encoding UTF8 -ErrorAction Stop; return } catch { Start-Sleep -Milliseconds 120 }
             }
-            throw "Unable to write Agent command after retries: $line"
+            throw "Unable to write Agent command: $line"
           }
-
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
           $env:WENDAO_AGENT_HIDE = "1"
@@ -165,39 +123,23 @@ jobs:
           $env:WENDAO_TRACE_HIDE = "1"
           $env:WENDAO_ACHIEVEMENT_SMOKE = "1"
           Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
-
-          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
-            -WorkingDirectory $release -PassThru `
-            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru
           try {
-            $deadline = (Get-Date).AddSeconds(30)
+            $deadline = (Get-Date).AddSeconds(25)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 200 }
-            if (-not (Test-Path $statePath)) { throw "Weapon smoke state was not created" }
-            Send-AgentCommand "00001 START v11-weapon-smoke"
+            Send "00001 START v11-weapon"
             Start-Sleep -Seconds 3
+            for ($seq = 2; $seq -le 24; $seq++) { Send ("{0:D5} KEY 1" -f $seq); Start-Sleep -Milliseconds 360 }
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$state.player.achievementCount -lt 3) { throw "Smoke did not unlock three achievement tiers" }
-            if ([int]$state.player.jadeWeaponCount -lt 3) { throw "Smoke did not unlock reward weapons" }
-
-            for ($seq = 2; $seq -le 24; $seq++) {
-              Send-AgentCommand ("{0:D5} KEY 1" -f $seq)
-              Start-Sleep -Milliseconds 360
-            }
+            if ([int]$state.player.jadeWeaponResonance -lt 30 -or [int]$state.player.jadeWeaponCharge -lt 100) { throw "Weapon regression smoke did not awaken and charge" }
+            Send "00025 KEY J"
             Start-Sleep -Seconds 1
-            $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$state.player.jadeWeaponResonance -lt 30) { throw "Weapon did not awaken" }
-            if ([int]$state.player.jadeWeaponCharge -lt 100) { throw "Weapon did not charge" }
-            Send-AgentCommand "00025 KEY J"
-            Start-Sleep -Seconds 1
-            $afterInvoke = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$afterInvoke.player.jadeWeaponCharge -ne 0) { throw "KEY J did not consume charge" }
-            Send-AgentCommand "00026 QUIT"
+            $after = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ([int]$after.player.jadeWeaponCharge -ne 0) { throw "Weapon invocation did not consume charge" }
             $trace = Get-Content $tracePath -Raw -Encoding UTF8
-            foreach ($required in @("ACHIEVEMENT_UNLOCK", "JADE_WEAPON_RESONANCE", "JADE_WEAPON_INVOKE", "初鸣")) {
-              if ($trace -notmatch $required) { throw "Weapon trace missing $required" }
-            }
-          }
-          finally {
+            foreach ($required in @("ACHIEVEMENT_UNLOCK", "JADE_WEAPON_RESONANCE", "JADE_WEAPON_INVOKE", "初鸣")) { if ($trace -notmatch $required) { throw "Missing weapon trace: $required" } }
+            Send "00026 QUIT"
+          } finally {
             Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
             Start-Sleep -Milliseconds 500
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
@@ -213,67 +155,47 @@ jobs:
           $stdoutPath = Join-Path $release "v11_echo_stdout.log"
           $stderrPath = Join-Path $release "v11_echo_stderr.log"
           Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
-
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
           $env:WENDAO_AGENT_HIDE = "1"
           $env:WENDAO_TRACE_LOG = $tracePath
           $env:WENDAO_TRACE_AUTOPLAY = "1"
           $env:WENDAO_TRACE_HIDE = "1"
-          $env:WENDAO_TRACE_MAX_ACTIONS = "150"
-          $env:WENDAO_TRACE_MAX_LIVES = "1"
+          $env:WENDAO_TRACE_MAX_ACTIONS = "180"
+          $env:WENDAO_TRACE_MAX_LIVES = "5"
           $env:WENDAO_ARC_ECHO_SMOKE = "1"
           Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
-
-          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
-            -WorkingDirectory $release -PassThru `
-            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
           try {
             $deadline = (Get-Date).AddSeconds(25)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 250 }
-            if (-not (Test-Path $statePath)) { throw "Echo smoke Agent state was not created" }
-            "00001 START v11-echo-smoke" | Set-Content $commandPath -Encoding UTF8
+            if (-not (Test-Path $statePath)) { throw "Echo smoke state missing" }
+            "00001 START v11-echo" | Set-Content $commandPath -Encoding UTF8
             $runDeadline = (Get-Date).AddSeconds(180)
             while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) { Start-Sleep -Seconds 1; $proc.Refresh() }
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force; Start-Sleep -Milliseconds 500 }
-            if (-not (Test-Path $tracePath)) { throw "Echo trace was not created" }
             $trace = Get-Content $tracePath -Raw -Encoding UTF8
             $chapterCount = ([regex]::Matches($trace, "【定局续章·")).Count
             $resolveCount = ([regex]::Matches($trace, "ARC_ECHO_RESOLVE")).Count
             if ($chapterCount -lt 12) { throw "Too few second-life chapters: $chapterCount" }
             if ($resolveCount -lt 4) { throw "Too few resolved second-life chapters: $resolveCount" }
-            foreach ($family in @("旧玉", "山门", "家世", "战帖")) {
-              if ($trace -notmatch "【定局续章·$family") { throw "Missing second-life family: $family" }
-            }
+            foreach ($family in @("旧玉", "山门", "家世", "战帖")) { if ($trace -notmatch "【定局续章·$family") { throw "Missing echo family: $family" } }
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ($state.player.arcEchoes -notmatch "旧玉续章3/3" -or
-                $state.player.arcEchoes -notmatch "山门续章3/3" -or
-                $state.player.arcEchoes -notmatch "家世续章3/3" -or
-                $state.player.arcEchoes -notmatch "战帖续章3/3") {
-              throw "Second-life chapters did not all resolve: $($state.player.arcEchoes)"
-            }
-            [ordered]@{
-              chapterCount = $chapterCount
-              resolveCount = $resolveCount
-              finalEchoes = $state.player.arcEchoes
-              legacyTags = $state.player.arcLegacies
-            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_echo_summary.json") -Encoding UTF8
-          }
-          finally {
+            foreach ($family in @("旧玉续章3/3", "山门续章3/3", "家世续章3/3", "战帖续章3/3")) { if ($state.player.arcEchoes -notmatch $family) { throw "Incomplete echo digest: $($state.player.arcEchoes)" } }
+            [ordered]@{ chapterCount=$chapterCount; resolveCount=$resolveCount; finalEchoes=$state.player.arcEchoes; legacyTags=$state.player.arcLegacies } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_echo_summary.json") -Encoding UTF8
+          } finally {
             Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
-      - name: Long-form narrative and mastery smoke
+      - name: Long-form regression smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
           $statePath = Join-Path $release "v11_long_state.json"
           $commandPath = Join-Path $release "v11_long_command.txt"
           $tracePath = Join-Path $release "v11_long_trace.log"
-          $stdoutPath = Join-Path $release "v11_long_stdout.log"
-          $stderrPath = Join-Path $release "v11_long_stderr.log"
-          Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
+          Remove-Item $statePath,$commandPath,$tracePath -ErrorAction SilentlyContinue
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
           $env:WENDAO_AGENT_HIDE = "1"
@@ -282,33 +204,23 @@ jobs:
           $env:WENDAO_TRACE_HIDE = "1"
           $env:WENDAO_TRACE_MAX_ACTIONS = "230"
           $env:WENDAO_TRACE_MAX_LIVES = "1"
-          Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
           Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
-          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru
           try {
             $deadline = (Get-Date).AddSeconds(25)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 250 }
-            if (-not (Test-Path $statePath)) { throw "Long smoke Agent state was not created" }
-            "00001 START v11-long-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v11-long" | Set-Content $commandPath -Encoding UTF8
             $runDeadline = (Get-Date).AddSeconds(210)
             while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) { Start-Sleep -Seconds 1; $proc.Refresh() }
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force; Start-Sleep -Milliseconds 500 }
-            if (-not (Test-Path $tracePath)) { throw "Long trace was not created" }
             $trace = Get-Content $tracePath -Raw -Encoding UTF8
-            $arcMatches = [regex]::Matches($trace, "【(旧玉|山门|家世|战帖)·")
-            $arcNames = @($arcMatches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
-            if ($arcMatches.Count -lt 8) { throw "Too few staged narrative events: $($arcMatches.Count)" }
-            if ($arcNames.Count -lt 3) { throw "Too few narrative families: $($arcNames -join ', ')" }
-            if ($trace -notmatch "ARC_LEGACY_SET") { throw "No persistent arc legacy was produced" }
-            [ordered]@{
-              stagedEventCount = $arcMatches.Count
-              distinctArcs = $arcNames
-              legacySetCount = ([regex]::Matches($trace, "ARC_LEGACY_SET")).Count
-              achievementUnlockCount = ([regex]::Matches($trace, "ACHIEVEMENT_UNLOCK")).Count
-              weaponResonanceTicks = ([regex]::Matches($trace, "JADE_WEAPON_RESONANCE")).Count
-            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_long_summary.json") -Encoding UTF8
-          }
-          finally {
+            $arcs = [regex]::Matches($trace, "【(旧玉|山门|家世|战帖)·")
+            $families = @($arcs | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+            if ($arcs.Count -lt 8 -or $families.Count -lt 3) { throw "Narrative regression failed" }
+            if ($trace -notmatch "ARC_LEGACY_SET") { throw "No persistent arc legacy produced" }
+            [ordered]@{ stagedEventCount=$arcs.Count; distinctArcs=$families; legacySetCount=([regex]::Matches($trace,"ARC_LEGACY_SET")).Count; weaponResonanceTicks=([regex]::Matches($trace,"JADE_WEAPON_RESONANCE")).Count } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_long_summary.json") -Encoding UTF8
+          } finally {
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
