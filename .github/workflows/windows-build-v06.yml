@@ -50,6 +50,8 @@ jobs:
             "V0_8_ARC_LEGACIES",
             "V0_9_ACHIEVEMENT_TOASTS",
             "V0_10_JADE_WEAPON_AWAKENING",
+            "V0_10_COMPILE_REPAIR",
+            "V0_10_WEAPON_PACING",
             "STORY_STATE_V3",
             "ACHIEVEMENTS_V3",
             "DrawAchievementToastOverlay",
@@ -80,6 +82,8 @@ jobs:
           python tools/apply_v08_arc_legacies.py
           python tools/apply_v09_achievement_toasts.py
           python tools/apply_v10_jade_weapon_awakening.py
+          python tools/repair_v10_compile.py
+          python tools/tune_v10_weapon_pacing.py
           if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
@@ -152,6 +156,18 @@ jobs:
           $stderrPath = Join-Path $release "v10_weapon_stderr.log"
           Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
+          function Send-AgentCommand([string]$line) {
+            for ($attempt = 0; $attempt -lt 12; $attempt++) {
+              try {
+                $line | Set-Content $commandPath -Encoding UTF8 -ErrorAction Stop
+                return
+              } catch {
+                Start-Sleep -Milliseconds 120
+              }
+            }
+            throw "Unable to write Agent command after retries: $line"
+          }
+
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
           $env:WENDAO_AGENT_HIDE = "1"
@@ -166,33 +182,32 @@ jobs:
             $deadline = (Get-Date).AddSeconds(30)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 200 }
             if (-not (Test-Path $statePath)) { throw "Weapon smoke state was not created" }
-            "00001 START v10-weapon-smoke" | Set-Content $commandPath -Encoding UTF8
+            Send-AgentCommand "00001 START v10-weapon-smoke"
             Start-Sleep -Seconds 3
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ([int]$state.player.achievementCount -lt 3) { throw "Smoke did not unlock three achievement tiers" }
             if ([int]$state.player.jadeWeaponCount -lt 3) { throw "Smoke did not unlock reward weapons" }
             if ($state.player.jadeWeapon -eq "尚无玉兵") { throw "No jade weapon equipped" }
 
-            for ($seq = 2; $seq -le 58; $seq++) {
-              ("{0:D5} KEY 1" -f $seq) | Set-Content $commandPath -Encoding UTF8
-              Start-Sleep -Milliseconds 170
+            for ($seq = 2; $seq -le 24; $seq++) {
+              Send-AgentCommand ("{0:D5} KEY 1" -f $seq)
+              Start-Sleep -Milliseconds 360
             }
             Start-Sleep -Seconds 1
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$state.player.jadeWeaponResonance -lt 45) {
+            if ([int]$state.player.jadeWeaponResonance -lt 30) {
               throw "Weapon did not reach first awakening: $($state.player.jadeWeaponResonance)"
             }
             if ($state.player.jadeWeaponStage -eq "沉眠") { throw "Weapon remained dormant" }
             if ([int]$state.player.jadeWeaponCharge -lt 100) { throw "Weapon technique did not charge" }
 
-            $invokeSeq = 59
-            ("{0:D5} KEY J" -f $invokeSeq) | Set-Content $commandPath -Encoding UTF8
+            Send-AgentCommand "00025 KEY J"
             Start-Sleep -Seconds 1
             $afterInvoke = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ([int]$afterInvoke.player.jadeWeaponCharge -ne 0) { throw "KEY J did not consume weapon charge" }
 
             $beforeWeapon = [string]$afterInvoke.player.jadeWeapon
-            "00060 KEY Y" | Set-Content $commandPath -Encoding UTF8
+            Send-AgentCommand "00026 KEY Y"
             Start-Sleep -Seconds 1
             $afterSwitch = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ([string]$afterSwitch.player.jadeWeapon -eq $beforeWeapon) { throw "KEY Y did not rotate the jade weapon" }
@@ -215,7 +230,7 @@ jobs:
               switchedWeapon = $afterSwitch.player.jadeWeapon
               style = $state.player.jadeWeaponStyle
             } | ConvertTo-Json | Set-Content (Join-Path $release "v10_weapon_summary.json") -Encoding UTF8
-            "00061 QUIT" | Set-Content $commandPath -Encoding UTF8
+            Send-AgentCommand "00027 QUIT"
           }
           finally {
             Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
