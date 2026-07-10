@@ -34,7 +34,7 @@ if not exist "%SRC%" (
 
 where python >nul 2>nul
 if errorlevel 1 (
-    echo Python was not found. v0.6 gameplay patch cannot be applied.
+    echo Python was not found. Gameplay patches cannot be applied.
     exit /b 1
 )
 
@@ -55,6 +55,17 @@ if exist "%ROOT%tools\repair_v06_path_digest.py" (
     if errorlevel 1 (
         echo.
         echo v0.6 declaration-order repair failed.
+        exit /b 1
+    )
+    echo.
+)
+
+if exist "%ROOT%tools\apply_v07_story_arcs.py" (
+    echo Applying v0.7 narrative arc progression...
+    python "%ROOT%tools\apply_v07_story_arcs.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.7 narrative arc patch failed.
         exit /b 1
     )
     echo.
