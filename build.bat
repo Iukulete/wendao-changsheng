@@ -94,6 +94,17 @@ if exist "%ROOT%tools\repair_v10_compile.py" (
     echo.
 )
 
+if exist "%ROOT%tools\tune_v10_weapon_pacing.py" (
+    echo Tuning v0.10 weapon awakening pacing...
+    python "%ROOT%tools\tune_v10_weapon_pacing.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.10 weapon pacing tune failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 "%SRC%" -o "%OUT%" -lgdiplus -lgdi32 -mwindows -static-libgcc -static-libstdc++ -I"%ROOT%"
