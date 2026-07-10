@@ -55,6 +55,72 @@ jobs:
           }
           if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
 
+      - name: Runtime Agent JSON smoke
+        shell: pwsh
+        run: |
+          $release = (Resolve-Path release).Path
+          $statePath = Join-Path $release "v06_agent_state.json"
+          $commandPath = Join-Path $release "v06_agent_command.txt"
+          $stdoutPath = Join-Path $release "v06_runtime_stdout.log"
+          $stderrPath = Join-Path $release "v06_runtime_stderr.log"
+          Remove-Item $statePath,$commandPath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
+
+          $env:WENDAO_AGENT_STATE = $statePath
+          $env:WENDAO_AGENT_COMMAND = $commandPath
+          $env:WENDAO_AGENT_HIDE = "1"
+          $env:WENDAO_TRACE_HIDE = "1"
+
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
+            -WorkingDirectory $release -PassThru `
+            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          try {
+            $deadline = (Get-Date).AddSeconds(25)
+            while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) {
+              Start-Sleep -Milliseconds 250
+            }
+            if (-not (Test-Path $statePath)) { throw "Agent state file was not created" }
+
+            $state = $null
+            while ((Get-Date) -lt $deadline) {
+              try {
+                $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+                if ($state.player) { break }
+              } catch {}
+              Start-Sleep -Milliseconds 250
+            }
+            if (-not $state.player) { throw "Agent state JSON was not readable" }
+
+            @("daoHeart", "reputation", "enmity", "effectiveKarma") | ForEach-Object {
+              if ($null -eq $state.player.PSObject.Properties[$_]) {
+                throw "Runtime Agent JSON missing player.$_"
+              }
+            }
+            if ($state.state -ne "MENU") { throw "Expected MENU state, got $($state.state)" }
+
+            "00001 START v06-smoke" | Set-Content $commandPath -Encoding UTF8
+            $startDeadline = (Get-Date).AddSeconds(12)
+            do {
+              Start-Sleep -Milliseconds 300
+              try { $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
+            } while ((Get-Date) -lt $startDeadline -and $state.state -eq "MENU")
+            if ($state.state -eq "MENU") { throw "Agent START command was not consumed" }
+
+            $summary = [ordered]@{
+              state = $state.state
+              daoHeart = $state.player.daoHeart
+              reputation = $state.player.reputation
+              enmity = $state.player.enmity
+              karma = $state.player.karma
+              effectiveKarma = $state.player.effectiveKarma
+            }
+            $summary | ConvertTo-Json | Set-Content (Join-Path $release "v06_runtime_summary.json") -Encoding UTF8
+            "00002 QUIT" | Set-Content $commandPath -Encoding UTF8
+          }
+          finally {
+            Start-Sleep -Milliseconds 500
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          }
+
       - name: Upload build output
         if: always()
         uses: actions/upload-artifact@v4
