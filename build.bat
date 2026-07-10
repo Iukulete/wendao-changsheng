@@ -82,6 +82,21 @@ if exist "%ROOT%tools\repair_v03_event_expansion.py" (
     echo.
 )
 
+if exist "%ROOT%tools\apply_v04_event_cooldown.py" (
+    echo Applying v0.4 event repetition cooldown...
+    if "%HAS_PYTHON%"=="0" (
+        python "%ROOT%tools\apply_v04_event_cooldown.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.4 event cooldown patch failed.
+            exit /b 1
+        )
+    ) else (
+        echo Python was not found. Skipping v0.4 event cooldown.
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" (
     mkdir "%OUT_DIR%"
 )
