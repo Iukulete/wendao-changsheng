@@ -71,6 +71,17 @@ if exist "%ROOT%tools\apply_v07_story_arcs.py" (
     echo.
 )
 
+if exist "%ROOT%tools\repair_v07_trace_digest.py" (
+    echo Exposing v0.7 narrative arcs in trace logs...
+    python "%ROOT%tools\repair_v07_trace_digest.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.7 trace digest repair failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" (
     mkdir "%OUT_DIR%"
 )
