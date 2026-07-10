@@ -116,6 +116,17 @@ if exist "%ROOT%tools\apply_v11_arc_echo_chapters.py" (
     echo.
 )
 
+if exist "%ROOT%tools\repair_v11_story_load_newline.py" (
+    echo Repairing v0.11 story-state loader literal...
+    python "%ROOT%tools\repair_v11_story_load_newline.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.11 story-load repair failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 "%SRC%" -o "%OUT%" -lgdiplus -lgdi32 -mwindows -static-libgcc -static-libstdc++ -I"%ROOT%"
