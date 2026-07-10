@@ -1,0 +1,63 @@
+name: Windows Build v0.6
+
+on:
+  push:
+    branches:
+      - gameplay-path-dimensions-v06
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and verify path dimensions
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up MSYS2 MinGW
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+
+      - name: Add MinGW to PATH
+        shell: pwsh
+        run: echo "C:\msys64\ucrt64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build game
+        shell: cmd
+        run: |
+          build.bat > build.log 2>&1
+          set BUILD_EXIT=%ERRORLEVEL%
+          type build.log
+          exit /b %BUILD_EXIT%
+
+      - name: Verify patched source
+        shell: pwsh
+        run: |
+          $source = Get-Content src/wendao_enhanced.cpp -Raw -Encoding UTF8
+          @(
+            "V0_6_PATH_DIMENSIONS",
+            "SAVE_V5",
+            "daoHeart",
+            "reputation",
+            "enmity",
+            "GetEffectiveKarmaScore"
+          ) | ForEach-Object {
+            if (-not $source.Contains($_)) { throw "Missing v0.6 marker: $_" }
+          }
+          if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
+
+      - name: Upload build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-v06-windows-build
+          path: |
+            build.log
+            release/
+          if-no-files-found: warn
