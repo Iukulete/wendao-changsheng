@@ -51,6 +51,10 @@ class AgentDriver:
         self.heavenly_reached = False
         self.saved_at_heavenly = False
         self.loaded_after_heavenly = False
+        self.pre_heaven_save_started = False
+        self.pre_heaven_save_done = False
+        self.pre_heaven_load_started = False
+        self.pre_heaven_load_done = False
         self.lines: List[str] = []
 
     def log(self, line: str) -> None:
@@ -183,11 +187,17 @@ class AgentDriver:
         can_closed_door = stones >= closed_door_cost + 10
 
         if realm_index >= HEAVENLY_DAO_INDEX:
-            if not self.saved_at_heavenly:
-                return "KEY S"
-            if self.saved_at_heavenly and not self.loaded_after_heavenly:
-                return "KEY L"
             return "QUIT"
+
+        # 天道突破会直接进入结局/轮回页；因此在最后突破前先做一次存档和读档验收。
+        if realm_index >= DAO_ANCESTOR_INDEX and heavenly_ready and can_break:
+            if not self.pre_heaven_save_done:
+                self.pre_heaven_save_started = True
+                return "KEY S"
+            if self.pre_heaven_save_done and not self.pre_heaven_load_done:
+                self.pre_heaven_load_started = True
+                return "KEY L"
+            return "KEY 3"
 
         if can_break:
             return "KEY 3"
@@ -274,7 +284,7 @@ class AgentDriver:
                 elif game_state == "GAME":
                     cmd = self.game_action(state, step)
                     if cmd == "QUIT":
-                        self.log("已完成天道境存读档流程，退出。")
+                        self.log("已抵达道祖-天道境，Agent Bridge 验收完成。")
                         self.send("QUIT")
                         return 0
                     self.send(cmd)
@@ -284,17 +294,25 @@ class AgentDriver:
                     self.log(f"EVENT {event.get('title', '')} -> 选择 {key}")
                     self.send(f"KEY {key}")
                 elif game_state == "INFO":
-                    if self.heavenly_reached and not self.saved_at_heavenly:
-                        self.saved_at_heavenly = True
-                        self.log("天道境存档页已出现，选择 1 号槽位保存。")
+                    if self.pre_heaven_save_started and not self.pre_heaven_save_done:
+                        self.pre_heaven_save_done = True
+                        self.log("天道突破前存档页已出现，选择 1 号槽位保存。")
                         self.send("KEY 1")
-                    elif self.heavenly_reached and self.saved_at_heavenly and not self.loaded_after_heavenly:
-                        self.loaded_after_heavenly = True
-                        self.log("天道境读档页已出现，选择 1 号槽位读取。")
+                    elif self.pre_heaven_load_started and not self.pre_heaven_load_done:
+                        self.pre_heaven_load_done = True
+                        self.log("天道突破前读档页已出现，选择 1 号槽位读取。")
                         self.send("KEY 1")
+                    elif self.heavenly_reached:
+                        self.log("已抵达道祖-天道境，当前处于结局信息页，验收完成。")
+                        self.send("QUIT")
+                        return 0
                     else:
                         self.send("KEY ESC")
                 elif game_state == "GAMEOVER":
+                    if self.heavenly_reached:
+                        self.log("已抵达道祖-天道境并进入结局/轮回页，Agent Bridge 验收完成。")
+                        self.send("QUIT")
+                        return 0
                     generation = int(state.get("generation") or 1)
                     if generation >= 8:
                         self.log("FAIL 多世轮回后仍未抵达天道境。")
