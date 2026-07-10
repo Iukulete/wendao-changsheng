@@ -6,6 +6,7 @@ set "SRC=%ROOT%src\wendao_enhanced.cpp"
 set "OUT_DIR=%ROOT%release"
 set "OUT=%OUT_DIR%\wendao_enhanced.exe"
 
+
 echo Building The Immortal Path...
 echo.
 
@@ -30,6 +31,70 @@ if errorlevel 1 (
 if not exist "%SRC%" (
     echo Source file not found: %SRC%
     exit /b 1
+)
+
+if exist "%ROOT%tools\apply_v02_content_patch.ps1" (
+    echo Applying v0.2 opening/content patch...
+    where pwsh >nul 2>nul
+    if errorlevel 1 (
+        powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_v02_content_patch.ps1"
+    ) else (
+        pwsh -NoProfile -ExecutionPolicy Bypass -File "%ROOT%tools\apply_v02_content_patch.ps1"
+    )
+    if errorlevel 1 (
+        echo.
+        echo v0.2 content patch failed.
+        exit /b 1
+    )
+    echo.
+)
+
+where python >nul 2>nul
+set "HAS_PYTHON=%ERRORLEVEL%"
+
+if exist "%ROOT%tools\apply_v03_event_expansion.py" (
+    echo Applying v0.3 event expansion patch...
+    if "%HAS_PYTHON%"=="0" (
+        python "%ROOT%tools\apply_v03_event_expansion.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.3 event expansion patch failed.
+            exit /b 1
+        )
+    ) else (
+        echo Python was not found. Skipping v0.3 event expansion.
+    )
+    echo.
+)
+
+if exist "%ROOT%tools\repair_v03_event_expansion.py" (
+    echo Repairing v0.3 event expansion insertion...
+    if "%HAS_PYTHON%"=="0" (
+        python "%ROOT%tools\repair_v03_event_expansion.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.3 event expansion repair failed.
+            exit /b 1
+        )
+    ) else (
+        echo Python was not found. Skipping v0.3 event expansion repair.
+    )
+    echo.
+)
+
+if exist "%ROOT%tools\apply_v04_event_cooldown.py" (
+    echo Applying v0.4 event repetition cooldown...
+    if "%HAS_PYTHON%"=="0" (
+        python "%ROOT%tools\apply_v04_event_cooldown.py"
+        if errorlevel 1 (
+            echo.
+            echo v0.4 event cooldown patch failed.
+            exit /b 1
+        )
+    ) else (
+        echo Python was not found. Skipping v0.4 event cooldown.
+    )
+    echo.
 )
 
 if not exist "%OUT_DIR%" (
