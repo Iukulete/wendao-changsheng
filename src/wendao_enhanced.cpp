@@ -1,4 +1,4 @@
-// 问道长生 - AI增强版（集成AI叙事+动态世界）
+﻿// 问道长生 - AI增强版（集成AI叙事+动态世界）
 #include <windows.h>
 #include <windowsx.h>
 #include <gdiplus.h>
@@ -9,6 +9,8 @@
 #include <fstream>
 #include <algorithm>
 #include <map>
+#include <deque>
+#include <cmath>
 #include <cwctype>
 #include <limits>
 #include <cstdlib>
@@ -218,6 +220,37 @@ struct InfoMenuItem {
         : action(action), title(title), detail(detail) {}
 };
 
+
+struct AchievementToastRuntime { // V0_9_ACHIEVEMENT_TOASTS
+    AchievementUnlockNotice notice;
+    DWORD startedAt;
+    bool active;
+    AchievementToastRuntime() : startedAt(0), active(false) {}
+};
+
+deque<AchievementUnlockNotice> g_achievementToastQueue;
+AchievementToastRuntime g_achievementToast;
+const UINT_PTR IDT_ACHIEVEMENT_TOAST_V09 = 0xA903;
+int g_appliedJadeWeaponAttack = 0;
+int g_appliedJadeWeaponDefense = 0;
+int g_appliedJadeWeaponMaxHp = 0;
+int g_appliedJadeWeaponDaoHeart = 0;
+bool g_jadeWeaponTrackInitialized = false; // V0_10_JADE_WEAPON_AWAKENING
+int g_jadeWeaponTrackGeneration = 0;
+int g_jadeWeaponTrackRealm = 0;
+int g_jadeWeaponTrackLevel = 0;
+int g_jadeWeaponTrackEvents = 0;
+int g_jadeWeaponTrackBattles = 0;
+int g_jadeWeaponTrackExp = 0;
+
+int GetJadeWeaponBreakthroughBonus(); // V0_10_COMPILE_REPAIR
+int GetJadeWeaponAdventureSuccessBonus();
+void ResetJadeWeaponAppliedBonuses();
+void SyncJadeWeaponBonuses();
+void RestoreJadeWeaponStateAfterLoad();
+void TickAchievementSystem(HWND hWnd);
+void DrawAchievementToastOverlay(HDC hdc, const RECT& rect);
+
 wstring PickOne(const vector<wstring>& items) {
     if (items.empty()) return L"";
     return items[Random(0, (int)items.size() - 1)];
@@ -320,6 +353,8 @@ wstring GetFamilyDetailText(const FamilyBackground& bg) {
 }
 
 // ==================== 玩家类（增强五行系统） ====================
+int GetEffectiveKarmaScore(int karma); // V0_6_PATH_DIMENSIONS
+
 class Player {
 public:
     wstring name;
@@ -329,6 +364,7 @@ public:
     int rootFire, rootWater, rootWood, rootMetal, rootEarth;
     int age, lifespan, spiritStones, pills;
     int attackPower, defense;
+    int daoHeart, reputation, enmity; // V0_6_PATH_DIMENSIONS
     int totalEvents, battlesWon, npcsMet;
 
     // 五行均衡判定（飞升关键）
@@ -336,11 +372,13 @@ public:
 
     Player() : realm(MORTAL), level(1), exp(0), karma(0),
                age(16), spiritStones(10), pills(0),
-               attackPower(0), defense(0), totalEvents(0), battlesWon(0), npcsMet(0),
+               attackPower(0), defense(0), daoHeart(0), reputation(0), enmity(0),
+               totalEvents(0), battlesWon(0), npcsMet(0),
                hasBalancedRoots(false) {
         family = GenerateFamilyBackground();
         spiritStones += family.wealth / 3;
         karma += family.fame / 20;
+        reputation = max(-20, min(20, family.fame / 2));
 
         rootFire = Random(1, 10);
         rootWater = Random(1, 10);
@@ -809,7 +847,9 @@ public:
             }
         }
 
-        ss << L"因果: " << karma << L"\n";
+        ss << L"因果: " << karma << L"（判定有效值 " << GetEffectiveKarmaScore(karma) << L"）\n";
+        ss << L"道心: " << daoHeart << L" | 名望: " << reputation
+           << L" | 仇怨: " << enmity << L"\n";
         if (realm >= DAO_ANCESTOR) {
             ss << L"年龄: " << age << L" / 与道共生\n";
         } else {
@@ -820,6 +860,15 @@ public:
         return ss.str();
     }
 };
+
+
+int GetEffectiveKarmaScore(int karma) { // V0_6_PATH_DIMENSIONS
+    int sign = karma < 0 ? -1 : 1;
+    int value = abs(karma);
+    int effective = min(value, 40);
+    if (value > 40) effective += (value - 40) / 8;
+    return sign * min(120, effective);
+}
 
 // ==================== 事件系统 ====================
 struct Choice {
@@ -892,6 +941,47 @@ struct StoryState {
     StoryState() : factionPressure(0) {}
 };
 
+
+enum NarrativeArcKind {
+    ARC_JADE = 0,
+    ARC_SECT = 1,
+    ARC_FAMILY = 2,
+    ARC_RIVAL = 3
+};
+
+struct NarrativeArcState { // V0_7_NARRATIVE_ARCS
+    int jadeStage;
+    int sectStage;
+    int familyStage;
+    int rivalStage;
+    int lastArc;
+
+    NarrativeArcState()
+        : jadeStage(0), sectStage(0), familyStage(0), rivalStage(0), lastArc(-1) {}
+};
+
+
+struct ArcLegacyState { // V0_8_ARC_LEGACIES
+    wstring jade;
+    wstring sect;
+    wstring family;
+    wstring rival;
+};
+
+struct ArcEchoState { // V0_11_ARC_ECHO_CHAPTERS
+    int jadeStage;
+    int sectStage;
+    int familyStage;
+    int rivalStage;
+    int lastArc;
+    wstring jadeResolution;
+    wstring sectResolution;
+    wstring familyResolution;
+    wstring rivalResolution;
+
+    ArcEchoState() : jadeStage(0), sectStage(0), familyStage(0), rivalStage(0), lastArc(-1) {}
+};
+
 enum EventTheme {
     THEME_GENERAL = 0,
     THEME_CULTIVATION = 1,
@@ -910,10 +1000,37 @@ struct TaggedEvent {
 class EventManager {
 private:
     vector<TaggedEvent> events;
+    vector<wstring> recentEventTitles; // V0_4_EVENT_COOLDOWN
+
+    bool WasEventRecent(const wstring& title) const {
+        return find(recentEventTitles.begin(), recentEventTitles.end(), title) != recentEventTitles.end();
+    }
+
+    void RememberEvent(const wstring& title) {
+        recentEventTitles.push_back(title);
+        const size_t cooldownWindow = 8;
+        if (recentEventTitles.size() > cooldownWindow) {
+            recentEventTitles.erase(recentEventTitles.begin());
+        }
+    }
+
+    Event* PickCandidateWithCooldown(const vector<int>& candidates) {
+        if (candidates.empty()) return nullptr;
+        vector<int> fresh;
+        for (int index : candidates) {
+            if (index < 0 || index >= (int)events.size()) continue;
+            if (!WasEventRecent(events[index].event.title)) fresh.push_back(index);
+        }
+        const vector<int>& pool = fresh.empty() ? candidates : fresh;
+        int index = pool[Random(0, (int)pool.size() - 1)];
+        RememberEvent(events[index].event.title);
+        return &events[index].event;
+    }
 
 public:
     EventManager() {
         InitEvents();
+        AddOpeningLocalEvents();
     }
 
     void AddEvent(const Event& event, EventTheme theme = THEME_GENERAL) {
@@ -1304,6 +1421,342 @@ public:
         }, THEME_IMPERIAL);
     }
 
+    // V0_2_OPENING_EVENTS_BEGIN
+    void AddOpeningLocalEvents() {
+        AddEvent({
+            L"【开局】测灵台余温",
+            L"外院测灵台在人群面前亮了一瞬，又很快暗下去。记录执事只写下“根骨不稳”，可你袖中的黑白旧玉却在同一刻微微发烫。",
+            {
+                {L"压下异样", {L"你没有当众露出破绽，只把旧玉贴近心口。嘲笑声仍在，识海深处却多了一道空阙轮廓\n修为+45，因果+3", L"你强行压住旧玉，反被余温扰得心神发乱\n气血-18"}, 2},
+                {L"追问执事", {L"执事没有回答，只让你秋试前再来复测；他把你的名字在册上圈了一笔\n修为+30，因果+6", L"你问得太急，引来更多旁观者注意\n因果-4"}, 0},
+                {L"冷眼离场", {L"你转身离开，把今日所有目光都记进心里。旧玉的余温没有消失\n修为+35", L"你走得太快，错过执事与旁人低声提到的旧台裂纹"}, -1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【开局】演武场失手",
+            L"同院少年故意在演武场点你的名，说根骨不稳的人也该让大家看看斤两。木剑递到你手里，四周已经围满看热闹的人。",
+            {
+                {L"正面接战", {L"你不拼蛮力，只借步法拆开对方三招，虽未取胜，却让几名旁观者收起笑意\n修为+55，因果+4", L"对方突然加重力道，木剑震裂，你被逼退到场边\n气血-25"}, 3},
+                {L"只守不攻", {L"你守得很稳，把他的急躁逼了出来。有人看出你并非全无章法\n修为+40", L"守得太久，旁人只记住你没有还手\n因果-3"}, 0},
+                {L"当众认输", {L"你没有把无谓胜负看得太重，保住气血，也记住了对方出招习惯\n寿命+2", L"认输传得很快，轻慢你的人更多了\n因果-6"}, -3}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【旧物】黑白旧玉入梦",
+            L"夜半时，旧玉贴着心口发凉。你梦见一扇没有门环的石门，门后有人翻动旧册，却始终不肯念出你的名字。",
+            {
+                {L"叩问石门", {L"石门没有开启，却落下一粒微光。醒来后，你对自身灵气流向多了一分把握\n修为+70，灵宝共鸣+3", L"门后传来笑声，像是在提醒你此刻还不够资格\n气血-20"}, 5},
+                {L"记下梦纹", {L"你把梦里的纹路画在纸上，发现它与测灵台裂纹有几分相似\n修为+45，因果+5", L"梦纹天亮后散去大半，只剩模糊残线"}, 3},
+                {L"封起旧玉", {L"你没有被梦兆牵着走，先稳住日常修行\n修为+35", L"旧玉沉寂，短时间不再回应"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【家世】旧账房翻册",
+            L"家中旧账房忽然请你去后院，说最近有人在打听你家欠下的旧契。账册边角发霉，却有几页被新近翻动过。",
+            {
+                {L"细查账册", {L"你查到一笔被人刻意挪过的灵石去向，旧账房看你的眼神多了几分认可\n灵石+12，因果+6", L"账册暗格里藏着追债符，刚碰到就烧了起来\n气血-18"}, 4},
+                {L"询问旧账房", {L"旧账房低声提醒：秋试前别轻易接受外人资助\n修为+25，因果+8", L"他只肯说半句，像是仍怕牵连太深"}, 3},
+                {L"暂不理会", {L"你把心思压回修炼，没有让旧账扰乱节奏\n修为+30", L"几日后，旧契的风声传到外院，味道已经变了"}, -1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【人情】清冷师姐旁观",
+            L"演武场边，一位很少开口的内院师姐看完你的失手，没有嘲笑，只问你是否知道自己真正输在哪里。",
+            {
+                {L"请她指点", {L"她只点出三处破绽，却句句落在要害。你按她所言调息，根基稳了半寸\n修为+65，因果+6", L"她的指点太快，你急着照做反而岔了一口气\n气血-16"}, 5},
+                {L"坦言不知道", {L"她看了你很久，说不知道不可耻，不敢问才可耻\n修为+40，因果+4", L"旁人听见后，又添了几句难听闲话\n因果-2"}, 2},
+                {L"婉拒好意", {L"你不想欠人情，只把她的话记在心里\n修为+25", L"她没有再说，转身时似乎有些失望"}, 0}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【外院】名额风波",
+            L"秋试名册贴出时，你的名字被排在最末。几名同院少年围着榜单低笑，说有人已经准备把你的试炼牌换走。",
+            {
+                {L"当场核验", {L"你当众核验名册，逼得执事重新盖印。名额保住了，暗处的人也记住了你\n因果+8，修为+25", L"执事敷衍拖延，你只拿到一句等候复查\n因果-4"}, 4},
+                {L"暗查换牌者", {L"你顺着试炼牌编号查到一名中间人，暂时没有惊动真正的幕后者\n灵石+8，因果+6", L"中间人早有准备，反手把线索断在坊市\n气血-12"}, 2},
+                {L"暂且忍下", {L"你没有在榜前争吵，而是把时间留给修炼\n修为+45", L"忍让让对方以为你软弱，下一次会更直接"}, -2}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【坊市】残卷摊主",
+            L"坊市角落有个摊主卖一堆残卷。他看见你袖中旧玉露出的黑白边角，忽然把最破的一卷推到你面前。",
+            {
+                {L"买下残卷", {L"残卷文字残缺，却有一段行气法正好能绕开你灵根滞涩处\n修为+80，灵石-8", L"残卷多处误刻，照着修行险些逆行经脉\n气血-22，灵石-8"}, 3},
+                {L"追问来历", {L"摊主说这卷不是功法，是某个旧族用来遮掩根骨异象的办法\n因果+8，修为+30", L"摊主忽然收摊，人群一挤便没了踪影"}, 4},
+                {L"转身离开", {L"你没有被古怪摊主牵住脚步，省下灵石\n灵石+2", L"旧玉微冷，像是错过了一次敲门声"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【空阙】识海裂光",
+            L"修炼到半夜时，灵气本该归入五行，却有一缕偏偏沉向识海深处。那里没有灵根，只有一座安静的空阙。",
+            {
+                {L"引气入阙", {L"你小心送入一缕灵气，空阙没有吞噬，反而替你洗去杂念\n修为+90，灵宝共鸣+4", L"空阙忽然一震，像拒绝过早触碰\n气血-28"}, 6},
+                {L"只作旁观", {L"你没有强行探索，只把空阙变化记入心神。谨慎本身也是修行\n修为+50，因果+3", L"机会很快沉寂，短时间难以再现"}, 2},
+                {L"用旧玉镇压", {L"黑白旧玉贴住眉心，空阙轮廓稳了下来\n修为+60", L"旧玉过冷，醒来后指尖微微发麻\n气血-12"}, 3}
+            }
+        }, THEME_CULTIVATION);
+        // V0_3_EVENT_EXPANSION_BEGIN
+        AddEvent({
+            L"【开局】旧碑错字",
+            L"测灵台旁的旧碑缺了一角，碑文里你的姓氏被人用新墨补过。旁人只当执事写错，你却看见黑白旧玉在袖中轻轻转了一面。",
+            {
+                {L"记下错字", {L"你把错字临摹下来，夜里再看时，发现笔画像一段断开的家传行气路数\n修为+45，因果+5", L"字迹被雨水冲淡，只剩一片晕痕\n因果-2"}, 3},
+                {L"问守碑人", {L"守碑老人没有正面答你，只提醒测灵结果不止看石台，也看谁替你写名\n因果+7，修为+25", L"守碑人闭门不见，反让几名同院少年多了闲话"}, 2},
+                {L"先离开", {L"你没有当众追究，只把碑前每个人的位置记住\n修为+30", L"有些线索一旦错过，就只能等下一次裂缝自己露出来"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【开局】药庐欠账",
+            L"药庐小童拦住你，说你家旧年曾赊过一炉养脉散，如今账册忽然被翻了出来。药香很淡，账页却新得不合常理。",
+            {
+                {L"核对药账", {L"你发现账页上的火印与旧玉梦纹相合，药庐管事神色微变\n灵石+6，因果+6", L"账页突然自燃，你只护下一角\n气血-10"}, 4},
+                {L"暂还小账", {L"你用不多的灵石压住风声，换来药庐一次私下通融\n气血+20，因果+3，灵石-4", L"对方见你肯还，反而试探得更深\n灵石-4"}, 1},
+                {L"拒不认账", {L"你没有被假账牵走，逼得对方拿不出原契\n因果+2", L"药庐风评被人带偏，你之后买药更难\n因果-4"}, -1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【开局】山门夜巡",
+            L"入夜后，山门巡铃忽然漏响三声。你被临时点去补巡，石阶尽头却有一盏本不该亮的青灯。",
+            {
+                {L"查青灯", {L"灯芯里藏着一缕残念，指向测灵台底下的旧裂纹\n修为+50，因果+5", L"青灯忽灭，寒意钻入经脉\n气血-14"}, 3},
+                {L"按规巡山", {L"你照规矩补完夜巡，第二天执事没有理由扣你的名额\n修为+35，因果+2", L"规矩之外的青灯线索暂时断了"}, 0},
+                {L"叫醒同院", {L"你没有独自逞强，几名平日冷眼的人也不得不承认你谨慎\n因果+4", L"动静太大，真正放灯的人早走了"}, 1}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【开局】试炼牌裂纹",
+            L"秋试前一日，你领到的试炼牌背面多了一道细裂。裂纹像是旧伤，不像刚摔出来的痕迹。",
+            {
+                {L"当场换牌", {L"你逼执事重验牌号，换牌人藏在队伍里，呼吸乱了一瞬\n因果+8，修为+20", L"执事推说库存不足，只让你先用旧牌\n因果-3"}, 4},
+                {L"暗中留牌", {L"你没有打草惊蛇，把裂纹拓下，日后可反查源头\n因果+5，灵石+4", L"裂牌在袖中割破掌心\n气血-8"}, 3},
+                {L"借玉压纹", {L"黑白旧玉贴近试炼牌，裂纹暂时合拢，像在替你遮一次风雨\n修为+45，灵宝共鸣+2", L"旧玉过冷，试炼牌表面凝出白霜"}, 2}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【外院】讲经堂空席",
+            L"讲经堂里偏偏少了一张蒲团，执事说座次已满，让你站在门边听。门外风很冷，屋内却有人故意笑出声。",
+            {
+                {L"站着听完", {L"你一字不漏记完整堂讲经，连讲师也多看了你一眼\n修为+70，因果+3", L"久站让气血浮动，回去后调息了半夜\n气血-12"}, 4},
+                {L"询问座次", {L"你问得平稳，逼执事拿出座册，空席原本并不该消失\n因果+7，修为+20", L"执事只说下次再排，暂时不肯承认"}, 2},
+                {L"转去窗外", {L"你绕到窗外听课，反而听见几句堂内不敢明说的私语\n因果+4", L"风声盖过半堂经义\n修为+10"}, 0}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【外院】藏经阁扫尘",
+            L"你被分去藏经阁扫尘。最底层的旧架常年无人翻动，偏有一本无名薄册在你经过时落了下来。",
+            {
+                {L"拾册归位", {L"你没有私藏薄册，却趁归位时看清一段调息残句\n修为+60，因果+4", L"薄册上的灰尘呛得你经脉发涩\n气血-8"}, 3},
+                {L"请示阁守", {L"阁守老人收走薄册，只留下一句：能等的人，才配读旧书\n因果+6，寿命+1", L"阁守像是没听见，仍旧闭目打盹"}, 2},
+                {L"暗记页角", {L"你只记页角残图，没有越过藏经阁规矩\n修为+35，因果+2", L"残图太碎，暂时拼不出意思"}, 1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【外院】灵田雨夜",
+            L"暴雨夜里，外院灵田阵脚松动。若不管，明日少不了有人把损失推到你头上。",
+            {
+                {L"冒雨补阵", {L"你把三处松动阵脚补稳，雨水冲得狼狈，灵田却保住了\n修为+55，因果+6", L"阵脚反噬，雨水里有细小雷意\n气血-18"}, 4},
+                {L"叫人作证", {L"你先叫来值夜弟子，再动手补阵，堵住了后续栽赃的口\n因果+8，灵石+5", L"人来得太慢，灵田仍坏了一角"}, 3},
+                {L"只护己田", {L"你保住自己负责的一畦，至少没有被罚\n修为+25", L"旁边几畦坏得厉害，人情账更乱了\n因果-3"}, -1}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【家世】白契归还",
+            L"一个陌生中年人把半张白契塞进你手里，说这是你家当年不该签下的东西。话没说完，他便混入人群。",
+            {
+                {L"追上问清", {L"你追到坊市桥边，只问出一个旧姓和一处废宅\n因果+8，修为+25", L"人群太乱，对方像早有脱身法\n因果+1"}, 3},
+                {L"藏好白契", {L"你把白契夹入旧玉梦纹旁，发现两者边角能拼上一线\n灵宝共鸣+3，因果+5", L"白契过薄，被汗水洇开一小块"}, 4},
+                {L"交给执事", {L"你选择走明路，执事不敢扣下，只能登记在册\n因果+4", L"登记后，知道此事的人也多了\n因果-2"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【家世】旧仆送伞",
+            L"山门外落雨，一个自称旧仆的老人递来一把油纸伞。伞骨刻着旧宅方位，却有两根伞骨被新近换过。",
+            {
+                {L"收伞问路", {L"老人低声说出旧宅后门的位置，又立刻改口说自己认错了人\n因果+6，寿命+1", L"伞面藏着追踪香，你及时用雨水洗掉\n气血-6"}, 3},
+                {L"只借不收", {L"你借伞走过雨路，没有立刻接下旧仆人情\n修为+20，因果+3", L"老人眼里失望一闪而过"}, 1},
+                {L"拆看伞骨", {L"伞骨里藏着一截旧族暗记，和账册缺页能互相印证\n因果+9", L"拆伞太急，惊动了暗处盯梢的人\n因果-3"}, 4}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【家世】祠堂无名位",
+            L"梦里你回到一座空祠堂，供案上有一块没有刻名的牌位。香灰没落地，而是倒着悬在半空。",
+            {
+                {L"点一炷香", {L"香火没有燃尽，却在旧玉里留下一点温光\n灵宝共鸣+4，因果+4", L"香烟倒灌入喉，醒来后胸口发闷\n气血-10"}, 3},
+                {L"擦净牌位", {L"你没有强求名字，只擦去尘灰。牌位背面露出一枚缺笔符号\n修为+35，因果+6", L"符号太残，暂时无法辨认"}, 2},
+                {L"退后三步", {L"你意识到这不是普通梦境，先保住心神不被拉走\n修为+30", L"祠堂门在身后合上前，你只听见半声叹息"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【旧玉】照影生尘",
+            L"黑白旧玉映出一道与你相似的背影。那人也站在测灵台前，却没有回头，只在掌心按着一道血痕。",
+            {
+                {L"追看背影", {L"你没有把背影当成前世答案，只借它校准今生岔路\n修为+75，因果+4", L"背影忽然碎开，血痕冷意反噬\n气血-18"}, 4},
+                {L"比对血痕", {L"血痕走势与空阙边缘暗合，你对识海变化多了一分把握\n灵宝共鸣+3，修为+45", L"血痕太浅，只留下疼痛感"}, 3},
+                {L"合上旧玉", {L"你没有沉迷照影，先把当前修行稳住\n修为+35", L"旧玉沉寂，像是在等你下次更有资格再看"}, 0}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【空阙】潮声入定",
+            L"入定时，识海空阙里传来极远的潮声。潮声不属于五行，却能把杂乱灵气一层层洗净。",
+            {
+                {L"顺潮行气", {L"你顺着潮声缓缓行气，灵气不再互相冲撞\n修为+95，灵宝共鸣+3", L"潮声忽高，你险些被带偏经脉\n气血-20"}, 5},
+                {L"标出潮位", {L"你把潮声高低记成三段，日后可当成空阙入门图\n因果+5，修为+40", L"潮位变化太快，只记住开头"}, 2},
+                {L"守心不入", {L"你守住本心，任潮声自来去，反而让识海安定许多\n修为+50", L"潮声远去，短时间不会再响"}, 1}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【旧玉】梦册逆页",
+            L"旧玉梦中，那本无名旧册忽然倒着翻页。每翻一页，你都会忘掉一个无关紧要的小事，却记住一个陌生判断。",
+            {
+                {L"看完一页", {L"你只看一页便停下，得到一条关于取舍的旧判断\n因果+7，修为+35", L"旧判断太沉，醒来后头痛半日\n气血-10"}, 3},
+                {L"按住书脊", {L"你没有任它乱翻，书脊上浮出两个残字：旧债\n灵宝共鸣+4，因果+4", L"残字很快散去，只剩一点墨香"}, 4},
+                {L"撕下空白页", {L"你撕下的空白页醒来还在袖中，可上面仍没有字\n因果+2，寿命+1", L"空白页遇风化灰"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【坊市】烂铜铃",
+            L"坊市旧器摊上，一枚烂铜铃无风自响。摊主说它只响给欠过旧债的人听。",
+            {
+                {L"买铃试音", {L"铜铃声里夹着一段残缺地名，与你家白契暗合\n因果+6，灵石-5", L"铃声刺耳，惊得周围人都看了过来\n因果-2，灵石-5"}, 3},
+                {L"问价压声", {L"你压低声音问价，摊主反而确认你不是寻常买客\n修为+20，因果+5", L"摊主临时抬价，你只好作罢"}, 2},
+                {L"借铃不买", {L"你只借铃听了一息，记住声纹便还回去\n灵宝共鸣+2，修为+25", L"摊主看穿你的打算，之后不再搭话"}, 1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【坊市】假丹方",
+            L"有人在坊市兜售所谓补灵根丹方，偏偏丹方末尾夹着一句不像骗人的旧族暗语。",
+            {
+                {L"拆假留真", {L"你识破大半假药材，却留下末尾暗语。它像是在指向某处旧药庐\n修为+45，因果+6", L"假方里的毒性标注故意写反，差点误导你\n气血-12"}, 4},
+                {L"举报药贩", {L"你让药贩当众露馅，少了几个外院弟子受骗\n因果+7，灵石+3", L"药贩逃走前记住了你的脸"}, 2},
+                {L"直接走开", {L"你没有被便宜机缘诱惑，省下心力修行\n修为+30", L"暗语也随药贩一起消失在人群里"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【坊市】风雪客栈",
+            L"风雪封路，你在山脚客栈避了一夜。隔壁桌修士谈到一座废宅，声音压得很低。",
+            {
+                {L"静听全局", {L"你没有插话，只把废宅方位、同行人数和暗号都记下来\n因果+8，修为+20", L"风雪声太重，只听清一半"}, 3},
+                {L"借酒搭话", {L"你用一壶薄酒换来半句提醒：别从正门进旧宅\n因果+5，灵石-2", L"对方酒意是假，试探是真\n灵石-2"}, 2},
+                {L"早早歇息", {L"你没有卷入陌生修士的局，养足精神赶回山门\n气血+25，修为+15", L"隔壁桌后半夜悄然离开"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【同辈】冷席分茶",
+            L"同辈小宴上，茶席只剩最冷的一盏。递茶的人笑得客气，旁边几人却等着看你如何接。",
+            {
+                {L"冷茶照饮", {L"你没有被冷待激怒，饮完后反问一句修行疑难，反让席间安静下来\n修为+40，因果+5", L"冷茶里藏着轻微寒气\n气血-8"}, 3},
+                {L"换盏回敬", {L"你把冷盏换回主桌，动作不重，却让递茶的人脸色僵住\n因果+6，灵石+2", L"回敬太直，日后少不得又生口舌"}, 2},
+                {L"推说闭关", {L"你没有在小宴上耗心，转身回去修炼\n修为+55", L"旁人只当你怯场\n因果-2"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【同辈】借剑一试",
+            L"有人递来一柄练习木剑，说只是借你一试。剑柄却被人动过手脚，握上去时灵气会偏半寸。",
+            {
+                {L"先验剑柄", {L"你当众验出剑柄偏气，借剑的人再也笑不出来\n因果+7，修为+25", L"机关很细，你只看出一半\n气血-6"}, 4},
+                {L"借势反试", {L"你顺着偏气反带一招，虽不锋利，却让对方露了底\n修为+60，因果+3", L"偏气仍震得虎口发麻\n气血-10"}, 3},
+                {L"不用此剑", {L"你拒绝来路不明的剑，保住了手上稳定\n修为+20", L"旁人借题笑你多疑"}, 0}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【师承】半夜补课",
+            L"清蘅真人半夜传你到后崖，只讲三句行气法。她说白日人多，有些东西不适合写进门规。",
+            {
+                {L"逐句请教", {L"你没有装懂，把三句行气法问到能落进经脉里\n修为+85，因果+5", L"问得太细，她罚你多站了一炷香\n气血-6"}, 5},
+                {L"默记不问", {L"你把三句法诀默记下来，等回去后慢慢拆解\n修为+55，因果+2", L"有一处关窍你暂时没悟透"}, 2},
+                {L"提及旧玉", {L"她没有追问旧玉，只说：能藏住的秘密，不要轻易交给善意\n因果+8，修为+20", L"她沉默太久，夜风也跟着冷了"}, 4}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【宗门】掌律旁听",
+            L"掌律堂审一桩小案，却忽然点你旁听。案情不大，背后试探的味道却很重。",
+            {
+                {L"只听不判", {L"你没有急着表态，先听完两边证词，避开了预设陷阱\n因果+6，修为+25", L"旁听太久，掌律弟子记住了你的沉默"}, 3},
+                {L"指出疑点", {L"你指出供词里一处时辰错漏，堂上短暂安静\n因果+9，灵石+4", L"疑点牵出另一个麻烦人情"}, 4},
+                {L"按门规答", {L"你按门规答得稳妥，没有给人抓口实\n修为+35", L"稳妥也意味着暂时没有额外线索"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【宗门】外差文书",
+            L"你被派去送一封外差文书。封泥完好，纸背却被人用极淡的灵墨写过一行字。",
+            {
+                {L"照送文书", {L"你先完成外差，再把纸背灵墨记下，既不误事也不失线索\n修为+40，因果+5", L"路上有人试探文书去向\n气血-6"}, 3},
+                {L"查灵墨", {L"你借日光照出那行字：旧宅不空\n因果+8，修为+20", L"灵墨见光即散，只剩你一人记得"}, 4},
+                {L"请人同行", {L"你叫上同院作证，外差路上少了许多暗手\n因果+3，气血+10", L"同行者也听见了不该听的话"}, 1}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【道途】石阶九问",
+            L"山门后有九级旧石阶，据说每一步都会问修士一个不愿回答的问题。今日无人值守，石阶却自己亮了。",
+            {
+                {L"踏上一级", {L"你只走一级便停下，不贪多问。第一问落在道心上，反而让你更稳\n修为+70，道心沉淀+4", L"第一问太尖锐，刺得识海生痛\n气血-12"}, 4},
+                {L"绕阶观纹", {L"你绕着石阶观察纹路，发现它与空阙潮声有相似节律\n灵宝共鸣+3，修为+35", L"纹路在日落时全暗了"}, 3},
+                {L"暂不登阶", {L"你知道自己还没准备好，能忍住也是修行\n寿命+1，修为+20", L"旧石阶的光只亮这一次"}, 0}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【灵宝】夜半低鸣",
+            L"夜深时，本命灵宝残印忽然低鸣，像在回应远处一件不知名旧器。旧玉没有发热，反而安静得过分。",
+            {
+                {L"循鸣而去", {L"你追到废井边，只见井水倒映出一枚陌生器纹\n灵宝共鸣+6，因果+3", L"井底寒气上涌，险些封住气脉\n气血-16"}, 4},
+                {L"以玉镇鸣", {L"黑白旧玉压住低鸣，残印没有暴走，反多了一丝清明\n修为+45，灵宝共鸣+3", L"旧玉与残印短暂相斥，掌心微痛"}, 3},
+                {L"记录声律", {L"你把低鸣节律记成小谱，日后或可辨认旧器来历\n因果+4，修为+25", L"声律太短，只记住三拍"}, 1}
+            }
+        }, THEME_CULTIVATION);
+
+        AddEvent({
+            L"【仙闻】道庭旁听",
+            L"你在一卷旧闻中读到道庭论衡的残篇。残篇不讲胜负，只讲一个人在拥有力量后还愿不愿意听证词。",
+            {
+                {L"细读残篇", {L"残篇让你对权柄多了一点敬畏，不再把力量只当破局捷径\n道心沉淀+6，修为+45", L"残篇文字太重，读完后心神疲惫\n气血-10"}, 4},
+                {L"批注疑点", {L"你在旁边写下三处疑问，旧闻残页竟留下淡淡回纹\n因果+5，灵宝共鸣+2", L"回纹一闪即逝"}, 3},
+                {L"合卷静坐", {L"你没有被宏大旧闻扰乱，回到自己的当下\n修为+35", L"旧闻里的道庭钟声仍在耳边绕了很久"}, 0}
+            }
+        }, THEME_GENERAL);
+
+        AddEvent({
+            L"【鸿蒙】碎梦一线",
+            L"梦境尽头有一线极淡的鸿蒙碎光。它不像机缘，更像一道提醒：现在看到，不代表现在能拿。",
+            {
+                {L"只观不取", {L"你克制住伸手的念头，只观其纹理，反得一分清明\n鸿蒙参悟+1，道心沉淀+4", L"碎光太远，醒来后只剩余温"}, 5},
+                {L"以玉映光", {L"旧玉映住碎光一息，空阙边缘多出一道细线\n灵宝共鸣+4，修为+40", L"旧玉随即沉寂，像是嫌你太早"}, 3},
+                {L"退回本心", {L"你知道鸿蒙之物不可贪，退回本心后经脉反而更顺\n修为+55", L"碎梦散得很快"}, 1}
+            }
+        }, THEME_CULTIVATION);
+        // V0_3_EVENT_EXPANSION_END
+    }
+
+
+    // V0_2_OPENING_EVENTS_END
     Event* GetRootBalanceEvent() {
         if (events.empty()) return nullptr;
 
@@ -1315,8 +1768,7 @@ public:
             }
         }
         if (!rootCandidates.empty()) {
-            int rootEventIndex = rootCandidates[Random(0, (int)rootCandidates.size() - 1)];
-            return &events[rootEventIndex].event;
+            return PickCandidateWithCooldown(rootCandidates);
         }
         return nullptr;
     }
@@ -1370,22 +1822,31 @@ public:
         }
 
         if (!preferred.empty() && Random(1, 100) <= 65) {
-            int index = preferred[Random(0, (int)preferred.size() - 1)];
-            return &events[index].event;
+            return PickCandidateWithCooldown(preferred);
         }
         if (!fallback.empty()) {
-            int index = fallback[Random(0, (int)fallback.size() - 1)];
-            return &events[index].event;
+            return PickCandidateWithCooldown(fallback);
         }
 
-        int index = Random(0, (int)events.size() - 1);
-        return &events[index].event;
+        vector<int> allCandidates;
+        allCandidates.reserve(events.size());
+        for (int i = 0; i < (int)events.size(); ++i) allCandidates.push_back(i);
+        return PickCandidateWithCooldown(allCandidates);
     }
 };
 
 // ==================== 全局变量 ====================
 Player g_player;
 EventManager g_eventMgr;
+
+wstring GetPathDimensionDigest() {
+    wstringstream ss;
+    ss << L"道心" << g_player.daoHeart
+       << L" · 名望" << g_player.reputation
+       << L" · 仇怨" << g_player.enmity
+       << L" · 因果有效值" << GetEffectiveKarmaScore(g_player.karma);
+    return ss.str();
+}
 
 // AI和世界系统
 AIGenerator g_aiGen;
@@ -1424,6 +1885,15 @@ vector<wstring> g_eraRemnants;
 vector<wstring> g_eraChronicle;
 FactionTie g_factionTie;
 StoryState g_storyState;
+NarrativeArcState g_narrativeArcs;
+ArcLegacyState g_arcLegacy;
+ArcEchoState g_arcEcho;
+int g_pendingArc = -1;
+int g_pendingArcStage = -1;
+int g_pendingArcEcho = -1;
+int g_pendingArcEchoStage = -1;
+int g_lastArcEchoEvent = -1000;
+int g_lastArcEchoKind = -1;
 vector<HongmengTreasureProgress> g_hongmengProgress;
 wstring g_equippedHongmengTreasure;
 
@@ -1448,6 +1918,93 @@ bool IsLuoNingshuangEra() {
 
 bool IsFirstLifeClassicalEra() {
     return g_generation <= 1 && IsClassicalEraName(g_worldEraName);
+}
+
+
+int& GetNarrativeArcStageRef(int arc) {
+    if (arc == ARC_SECT) return g_narrativeArcs.sectStage;
+    if (arc == ARC_FAMILY) return g_narrativeArcs.familyStage;
+    if (arc == ARC_RIVAL) return g_narrativeArcs.rivalStage;
+    return g_narrativeArcs.jadeStage;
+}
+
+int GetNarrativeArcTotalProgress() {
+    return g_narrativeArcs.jadeStage + g_narrativeArcs.sectStage +
+           g_narrativeArcs.familyStage + g_narrativeArcs.rivalStage;
+}
+
+wstring GetNarrativeArcStageLabel(int stage) {
+    static const vector<wstring> labels = {
+        L"未起", L"初显", L"入局", L"转折", L"收束"
+    };
+    return labels[max(0, min(4, stage))];
+}
+
+wstring BuildNarrativeArcDigest() {
+    wstringstream ss;
+    ss << L"旧玉" << g_narrativeArcs.jadeStage << L"/4·"
+       << GetNarrativeArcStageLabel(g_narrativeArcs.jadeStage)
+       << L"｜山门" << g_narrativeArcs.sectStage << L"/4·"
+       << GetNarrativeArcStageLabel(g_narrativeArcs.sectStage)
+       << L"｜家世" << g_narrativeArcs.familyStage << L"/4·"
+       << GetNarrativeArcStageLabel(g_narrativeArcs.familyStage)
+       << L"｜战帖" << g_narrativeArcs.rivalStage << L"/4·"
+       << GetNarrativeArcStageLabel(g_narrativeArcs.rivalStage);
+    return ss.str();
+}
+
+void InitializeNarrativeArcsFromLegacyProgress() {
+    int legacyProgress = max(0, min(16, g_lifeStoryProgressThisLife));
+    g_narrativeArcs = NarrativeArcState();
+    for (int i = 0; i < legacyProgress; ++i) {
+        int arc = i % 4;
+        int& stage = GetNarrativeArcStageRef(arc);
+        stage = min(4, stage + 1);
+        g_narrativeArcs.lastArc = arc;
+    }
+    g_lifeStoryProgressThisLife = GetNarrativeArcTotalProgress();
+}
+
+bool IsNarrativeArcAvailable(int arc) {
+    if (GetNarrativeArcStageRef(arc) >= 4) return false;
+    if (arc == ARC_JADE) return true;
+    if (arc == ARC_SECT) {
+        return IsClassicalEraName(g_worldEraName) ||
+               !g_factionTie.name.empty() || !g_socialThreads.empty();
+    }
+    if (arc == ARC_FAMILY) return true;
+    if (arc == ARC_RIVAL) {
+        return g_player.totalEvents >= 3 || g_player.realm >= FOUNDATION;
+    }
+    return false;
+}
+
+int PickNarrativeArc() {
+    vector<int> weighted;
+    int minimumStage = 4;
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) {
+        if (IsNarrativeArcAvailable(arc)) {
+            minimumStage = min(minimumStage, GetNarrativeArcStageRef(arc));
+        }
+    }
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) {
+        if (!IsNarrativeArcAvailable(arc)) continue;
+        int stage = GetNarrativeArcStageRef(arc);
+        int weight = 2 + (4 - stage) * 2;
+        if (stage == minimumStage) weight += 4;
+        if (arc == g_narrativeArcs.lastArc) weight = max(1, weight / 3);
+        for (int i = 0; i < weight; ++i) weighted.push_back(arc);
+    }
+    if (weighted.empty()) return -1;
+    return weighted[Random(0, (int)weighted.size() - 1)];
+}
+
+void AdvanceNarrativeArc(int arc) {
+    if (arc < ARC_JADE || arc > ARC_RIVAL) return;
+    int& stage = GetNarrativeArcStageRef(arc);
+    stage = min(4, stage + 1);
+    g_narrativeArcs.lastArc = arc;
+    g_lifeStoryProgressThisLife = GetNarrativeArcTotalProgress();
 }
 
 enum GameState {
@@ -1539,6 +2096,7 @@ bool HasPriorLifeEcho();
 bool HasActualPastLifeEcho();
 void InitializeStoryStateForLife();
 wstring BuildStoryStateContext();
+wstring BuildNarrativeArcDigest();
 void ApplyNarrativeStoryPatch(const Event& event, const Choice& choice, const wstring& outcome, bool isAIEvent);
 const SocialThread* FindSocialThreadByName(const wstring& name);
 void AddSocialRumor(const wstring& rumor, bool front);
@@ -1552,6 +2110,7 @@ wstring BuildNextLifeForeshadowText();
 bool CanAttainHeavenlyDao();
 void ReturnFromInfoPage();
 bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& traceReason);
+void ShowMenuControls(bool visible); // V0_2_MENU_HELPER_DECL
 
 wstring GetTraceLogPath() {
     static bool initialized = false;
@@ -1704,7 +2263,11 @@ wstring BuildTracePlayerLine() {
        << L" | 年龄 " << g_player.age << L"/" << g_player.lifespan
        << L" | 因果 " << g_player.karma
        << L" | 灵石 " << g_player.spiritStones
-       << L" | 历练 " << g_player.totalEvents;
+       << L" | 历练 " << g_player.totalEvents
+       << L" | 分线 " << BuildNarrativeArcDigest()
+       << L" | 玉兵 " << g_achievementSystem.GetEquippedWeaponName()
+       << L"·" << g_achievementSystem.GetEquippedWeaponStageName()
+       << L" 共鸣" << g_achievementSystem.GetEquippedWeaponResonance();
     return ss.str();
 }
 
@@ -1945,7 +2508,7 @@ void LayoutMenuControls() {
     int height = max(520, (int)(rect.bottom - rect.top));
 
     int panelWidth = min(520, max(380, width - 180));
-    int panelHeight = 210;
+    int panelHeight = 335; // V0_2_MENU_PAINT_OPTIONS
     int panelTop = max(250, (height - panelHeight) / 2 + 70);
     int centerX = width / 2;
 
@@ -7651,133 +8214,483 @@ void GenerateLifeStoryHooks() {
     }
 }
 
+
+wstring& ArcLegacyRef(int arc) {
+    if (arc == ARC_SECT) return g_arcLegacy.sect;
+    if (arc == ARC_FAMILY) return g_arcLegacy.family;
+    if (arc == ARC_RIVAL) return g_arcLegacy.rival;
+    return g_arcLegacy.jade;
+}
+
+bool HasArcLegacy() {
+    return !g_arcLegacy.jade.empty() || !g_arcLegacy.sect.empty() ||
+           !g_arcLegacy.family.empty() || !g_arcLegacy.rival.empty();
+}
+
+wstring BuildArcLegacyDigest() {
+    vector<wstring> out;
+    auto add = [&](const wstring& n, const wstring& v) { if (!v.empty()) out.push_back(n + L"·" + v); };
+    add(L"旧玉", g_arcLegacy.jade); add(L"山门", g_arcLegacy.sect);
+    add(L"家世", g_arcLegacy.family); add(L"战帖", g_arcLegacy.rival);
+    if (out.empty()) return L"暂无跨世定局";
+    wstringstream ss;
+    for (size_t i = 0; i < out.size(); ++i) { if (i) ss << L"｜"; ss << out[i]; }
+    return ss.str();
+}
+
+wstring ArcLegacyTag(int arc, const wstring& choice) {
+    if (arc == ARC_JADE) return choice == L"握玉静听" ? L"旧我为证" : (choice == L"以今证旧" ? L"今生校旧" : L"封梦自持");
+    if (arc == ARC_SECT) return choice == L"据理受验" ? L"守律立道" : (choice == L"借师承入局" ? L"师承共担" : L"自立道统");
+    if (arc == ARC_FAMILY) return choice == L"追查旧账" ? L"承认旧脉" : (choice == L"问养育者" ? L"护亲问源" : L"断名自立");
+    return choice == L"正面接帖" ? L"照雪宿敌" : (choice == L"同阵合作" ? L"照雪盟友" : L"清醒对手");
+}
+
+void ResolveArcOutcome(const Event& event, const Choice& choice, wstring& outcome, bool success) {
+    if (g_pendingArc < ARC_JADE || g_pendingArc > ARC_RIVAL || g_pendingArcStage < 0) return;
+    if (!TextContainsAny(event.title, {L"【旧玉·", L"【山门·", L"【家世·", L"【战帖·"})) return;
+    int arc = g_pendingArc, stage = g_pendingArcStage;
+    g_pendingArc = g_pendingArcStage = -1;
+    if (stage < 3) { AdvanceNarrativeArc(arc); return; }
+    if (!success) {
+        outcome += L"\n\n【终局未定】这次取舍没有站稳，分线仍停在终局门前，后续还会再次落笔。";
+        AppendTraceLog(L"ARC_LEGACY_RETRY", event.title + L"终局失败，保留3/4进度。");
+        return;
+    }
+    wstring tag = ArcLegacyTag(arc, choice.description);
+    ArcLegacyRef(arc) = tag;
+    AdvanceNarrativeArc(arc);
+    if (arc == ARC_JADE) g_player.daoHeart += 5;
+    else if (arc == ARC_SECT) g_player.reputation += 5;
+    else if (arc == ARC_FAMILY) { g_player.reputation += 3; g_player.daoHeart += 2; }
+    else if (tag == L"照雪宿敌") g_player.enmity += 4;
+    else if (tag == L"照雪盟友") g_player.reputation += 4;
+    else g_player.daoHeart += 3;
+    outcome += L"\n\n【跨世定局】此世终局被写入轮回。永久标签：" + tag;
+    AddMemory(L"跨世定局", event.title + L"以“" + tag + L"”收束。此后轮回会记住这次取舍。");
+    AppendTraceLog(L"ARC_LEGACY_SET", event.title + L" -> " + choice.description + L" -> " + tag + L"\n" + BuildArcLegacyDigest());
+}
+
+wstring ApplyArcLegacyBirth() {
+    if (!HasArcLegacy()) return L"";
+    vector<wstring> notes;
+    auto secret = [&](const wstring& s) {
+        if (g_player.family.secret.find(s) != wstring::npos) return;
+        if (!g_player.family.secret.empty()) g_player.family.secret += L"；";
+        g_player.family.secret += s;
+    };
+    if (g_arcLegacy.jade == L"旧我为证") { g_player.daoHeart += 3; g_player.exp += 18; notes.push_back(L"旧梦更容易被验证"); }
+    else if (g_arcLegacy.jade == L"今生校旧") { g_player.daoHeart += 5; notes.push_back(L"今生判断能校准旧忆"); }
+    else if (g_arcLegacy.jade == L"封梦自持") { g_player.daoHeart += 7; notes.push_back(L"危险旧梦被心印隔开"); }
+    if (g_arcLegacy.sect == L"守律立道") { g_player.reputation += 5; secret(L"旧宗名册仍记得前世守律之名"); }
+    else if (g_arcLegacy.sect == L"师承共担") { g_player.reputation += 3; g_player.daoHeart += 2; secret(L"跨世师承旧约仍有回音"); }
+    else if (g_arcLegacy.sect == L"自立道统") { g_player.daoHeart += 4; g_player.enmity += 2; secret(L"前世自立道统之名尚未散尽"); }
+    if (g_arcLegacy.family == L"承认旧脉") { g_player.family.fame += 10; g_player.family.wealth += 3; secret(L"祖脉旧契连同旧债一并承认你"); }
+    else if (g_arcLegacy.family == L"护亲问源") { g_player.reputation += 3; g_player.family.wealth += 2; secret(L"轮回优先记住养育之恩"); }
+    else if (g_arcLegacy.family == L"断名自立") { g_player.daoHeart += 3; secret(L"祖名可查却不能替你定命"); }
+    if (g_arcLegacy.rival == L"照雪宿敌") { g_player.attackPower += 3; g_player.enmity += 4; }
+    else if (g_arcLegacy.rival == L"照雪盟友") { g_player.defense += 2; g_player.reputation += 4; }
+    else if (g_arcLegacy.rival == L"清醒对手") { g_player.attackPower += 1; g_player.defense += 1; g_player.daoHeart += 3; }
+    if (g_arcEcho.jadeResolution == L"守证旧我") { g_player.exp += 15; notes.push_back(L"两世证词可互相核验"); }
+    else if (g_arcEcho.jadeResolution == L"今身定锚") { g_player.daoHeart += 2; notes.push_back(L"今生判断成为旧忆锚点"); }
+    else if (g_arcEcho.jadeResolution == L"断梦留痕") { g_player.daoHeart += 3; notes.push_back(L"旧梦只能留痕，不能夺舍判断"); }
+    if (g_arcEcho.sectResolution == L"旧律新章") g_player.reputation += 2;
+    else if (g_arcEcho.sectResolution == L"两代同门") { g_player.reputation += 1; g_player.daoHeart += 1; }
+    else if (g_arcEcho.sectResolution == L"今世开宗") g_player.daoHeart += 2;
+    if (g_arcEcho.familyResolution == L"祖脉共担") g_player.family.wealth += 1;
+    else if (g_arcEcho.familyResolution == L"养恩为先") g_player.reputation += 2;
+    else if (g_arcEcho.familyResolution == L"去名留义") g_player.daoHeart += 2;
+    if (g_arcEcho.rivalResolution == L"再续宿敌") g_player.attackPower += 1;
+    else if (g_arcEcho.rivalResolution == L"并肩照雪") g_player.defense += 1;
+    else if (g_arcEcho.rivalResolution == L"相争不相害") g_player.daoHeart += 1;
+    g_player.daoHeart = max(-999, min(999, g_player.daoHeart));
+    g_player.reputation = max(-999, min(999, g_player.reputation));
+    g_player.enmity = max(0, min(999, g_player.enmity));
+    g_player.family.fame = max(-100, min(100, g_player.family.fame));
+    g_player.family.wealth = max(0, min(60, g_player.family.wealth));
+    return L"跨世定局回到今生：" + BuildArcLegacyDigest() + L"。";
+}
+
+void ApplyArcLegacyWorld() {
+    if (!HasArcLegacy()) return;
+    if (g_arcLegacy.sect == L"守律立道") { g_factionTie.favor = min(90, g_factionTie.favor + 10); g_factionTie.hook += L" 旧宗不敢只用空话约束你。"; }
+    else if (g_arcLegacy.sect == L"师承共担") { g_factionTie.favor = min(90, g_factionTie.favor + 7); g_factionTie.binding = true; g_factionTie.hook += L" 跨世师承旧约仍在接引。"; }
+    else if (g_arcLegacy.sect == L"自立道统") { g_factionTie.favor = max(-80, g_factionTie.favor - 5); g_factionTie.binding = true; g_factionTie.hook += L" 此势力既想招揽，也防你再次自立。"; }
+    if (!g_arcLegacy.rival.empty()) {
+        int relation = g_arcLegacy.rival == L"照雪宿敌" ? -22 : (g_arcLegacy.rival == L"照雪盟友" ? 24 : 8);
+        AddSocialThread(L"江照雪", L"跨世战帖旧约", g_arcLegacy.rival,
+            L"她不让旧情替今生作数，却会按旧约决定是并肩、争胜还是互相校准。",
+            relation, L"外显修为不定", true, L"轮回后的真实境界仍不可知");
+    }
+    wstring hook = L"跨世定局：" + BuildArcLegacyDigest();
+    if (find(g_lifeStoryHooks.begin(), g_lifeStoryHooks.end(), hook) == g_lifeStoryHooks.end()) g_lifeStoryHooks.insert(g_lifeStoryHooks.begin(), hook);
+    if (g_lifeStoryHooks.size() > 10) g_lifeStoryHooks.resize(10);
+    AddMemory(L"跨世定局入世", BuildArcLegacyDigest());
+    AppendTraceLog(L"ARC_LEGACY_BIRTH", BuildArcLegacyDigest());
+}
+
+int& ArcEchoStageRef(int arc) { // V0_11_ARC_ECHO_CHAPTERS
+    if (arc == ARC_SECT) return g_arcEcho.sectStage;
+    if (arc == ARC_FAMILY) return g_arcEcho.familyStage;
+    if (arc == ARC_RIVAL) return g_arcEcho.rivalStage;
+    return g_arcEcho.jadeStage;
+}
+
+wstring& ArcEchoResolutionRef(int arc) {
+    if (arc == ARC_SECT) return g_arcEcho.sectResolution;
+    if (arc == ARC_FAMILY) return g_arcEcho.familyResolution;
+    if (arc == ARC_RIVAL) return g_arcEcho.rivalResolution;
+    return g_arcEcho.jadeResolution;
+}
+
+wstring ArcEchoStageLabel(int stage) {
+    static const vector<wstring> labels = {L"待续", L"再逢", L"转折", L"定章"};
+    return labels[max(0, min(3, stage))];
+}
+
+wstring BuildArcEchoDigest() {
+    auto one = [](const wchar_t* name, int stage, const wstring& resolution) {
+        wstringstream ss;
+        ss << name << stage << L"/3·" << ArcEchoStageLabel(stage);
+        if (!resolution.empty()) ss << L"·" << resolution;
+        return ss.str();
+    };
+    return one(L"旧玉续章", g_arcEcho.jadeStage, g_arcEcho.jadeResolution) + L"｜" +
+           one(L"山门续章", g_arcEcho.sectStage, g_arcEcho.sectResolution) + L"｜" +
+           one(L"家世续章", g_arcEcho.familyStage, g_arcEcho.familyResolution) + L"｜" +
+           one(L"战帖续章", g_arcEcho.rivalStage, g_arcEcho.rivalResolution);
+}
+
+bool IsArcEchoSmokeMode() {
+    wchar_t value[16] = {};
+    DWORD len = GetEnvironmentVariableW(L"WENDAO_ARC_ECHO_SMOKE", value, 16);
+    return len > 0 && value[0] != L'0';
+}
+
+void PrimeArcEchoSmoke() {
+    static bool primed = false;
+    if (primed || !IsArcEchoSmokeMode()) return;
+    primed = true;
+    g_generation = max(2, g_generation);
+    if (g_arcLegacy.jade.empty()) g_arcLegacy.jade = L"今生校旧";
+    if (g_arcLegacy.sect.empty()) g_arcLegacy.sect = L"自立道统";
+    if (g_arcLegacy.family.empty()) g_arcLegacy.family = L"护亲问源";
+    if (g_arcLegacy.rival.empty()) g_arcLegacy.rival = L"照雪盟友";
+    g_arcEcho = ArcEchoState();
+    g_lastArcEchoEvent = -1000;
+    AppendTraceLog(L"ARC_ECHO_SMOKE_PRIME", BuildArcLegacyDigest());
+}
+
+bool IsArcEchoAvailable(int arc) {
+    return !ArcLegacyRef(arc).empty() && ArcEchoStageRef(arc) < 3;
+}
+
+int PickArcEcho() {
+    vector<int> weighted;
+    int minimumStage = 3;
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) {
+        if (IsArcEchoAvailable(arc)) minimumStage = min(minimumStage, ArcEchoStageRef(arc));
+    }
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) {
+        if (!IsArcEchoAvailable(arc)) continue;
+        int stage = ArcEchoStageRef(arc);
+        int weight = 3 + (3 - stage) * 3;
+        if (stage == minimumStage) weight += 5;
+        if (arc == g_arcEcho.lastArc) weight = max(1, weight / 3);
+        for (int i = 0; i < weight; ++i) weighted.push_back(arc);
+    }
+    if (weighted.empty()) return -1;
+    return weighted[Random(0, (int)weighted.size() - 1)];
+}
+
+wstring ResolveArcEchoTag(int arc, const wstring& choice) {
+    if (arc == ARC_JADE) {
+        if (choice == L"承认旧证") return L"守证旧我";
+        if (choice == L"以今校旧") return L"今身定锚";
+        return L"断梦留痕";
+    }
+    if (arc == ARC_SECT) {
+        if (choice == L"续写旧律") return L"旧律新章";
+        if (choice == L"与今门共议") return L"两代同门";
+        return L"今世开宗";
+    }
+    if (arc == ARC_FAMILY) {
+        if (choice == L"承脉也承债") return L"祖脉共担";
+        if (choice == L"先护养育之恩") return L"养恩为先";
+        return L"去名留义";
+    }
+    if (choice == L"再接照雪战帖") return L"再续宿敌";
+    if (choice == L"先并肩破局") return L"并肩照雪";
+    return L"相争不相害";
+}
+
+void ResolveArcEchoOutcome(const Event& event, const Choice& choice, wstring& outcome, bool success) {
+    if (g_pendingArcEcho < ARC_JADE || g_pendingArcEcho > ARC_RIVAL || g_pendingArcEchoStage < 0) return;
+    if (event.title.find(L"【定局续章·") == wstring::npos) return;
+    int arc = g_pendingArcEcho;
+    int stage = g_pendingArcEchoStage;
+    g_pendingArcEcho = g_pendingArcEchoStage = -1;
+    if (IsArcEchoSmokeMode()) success = true;
+
+    if (stage < 2) {
+        ArcEchoStageRef(arc) = min(3, stage + 1);
+        g_arcEcho.lastArc = arc;
+        if (!success) outcome += L"\n\n【续章带伤】这一步虽然付出代价，但旧约与今生的冲突已经无法退回原处。";
+        AppendTraceLog(L"ARC_ECHO_STAGE", event.title + L" -> " +
+            to_wstring(ArcEchoStageRef(arc)) + L"/3 | " + BuildArcEchoDigest());
+        return;
+    }
+
+    if (!success) {
+        outcome += L"\n\n【续章未定】最终判断尚未站稳，本章仍停在定章之前。";
+        AppendTraceLog(L"ARC_ECHO_RETRY", event.title + L"保留2/3进度。");
+        return;
+    }
+
+    wstring resolution = ResolveArcEchoTag(arc, choice.description);
+    ArcEchoResolutionRef(arc) = resolution;
+    ArcEchoStageRef(arc) = 3;
+    g_arcEcho.lastArc = arc;
+    if (arc == ARC_JADE) g_player.daoHeart += 4;
+    else if (arc == ARC_SECT) g_player.reputation += 4;
+    else if (arc == ARC_FAMILY) { g_player.daoHeart += 2; g_player.reputation += 2; }
+    else if (resolution == L"再续宿敌") g_player.enmity += 3;
+    else if (resolution == L"并肩照雪") g_player.reputation += 3;
+    else g_player.daoHeart += 3;
+    g_player.daoHeart = max(-999, min(999, g_player.daoHeart));
+    g_player.reputation = max(-999, min(999, g_player.reputation));
+    g_player.enmity = max(0, min(999, g_player.enmity));
+    outcome += L"\n\n【续章定局】前世旧约经过今生检验，形成新的跨世结论：" + resolution + L"。";
+    AddMemory(L"定局续章", event.title + L"以“" + resolution + L"”定章。它不是照搬前世，而是两世共同完成的判断。");
+    AppendTraceLog(L"ARC_ECHO_RESOLVE", event.title + L" -> " + choice.description +
+        L" -> " + resolution + L"\n" + BuildArcEchoDigest());
+}
+
+bool ShouldTriggerArcLegacyEvent() {
+    PrimeArcEchoSmoke();
+    bool smoke = IsArcEchoSmokeMode();
+    if ((!smoke && g_generation <= 1) || !HasArcLegacy()) return false;
+    int available = 0;
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) if (IsArcEchoAvailable(arc)) available++;
+    if (available <= 0) return false;
+    int cooldown = smoke ? 1 : 4;
+    if (g_player.totalEvents - g_lastArcEchoEvent < cooldown) return false;
+    if (smoke) return true;
+    if (g_player.totalEvents < 2) return false;
+    int progress = g_arcEcho.jadeStage + g_arcEcho.sectStage + g_arcEcho.familyStage + g_arcEcho.rivalStage;
+    int chance = 18 + available * 5 + min(16, (g_generation - 1) * 2);
+    if (g_player.totalEvents >= 8 + progress * 2) chance += 18;
+    return Random(1, 100) <= max(28, min(78, chance));
+}
+
+Event BuildArcLegacyEvent() {
+    int arc = PickArcEcho();
+    if (arc < 0) arc = ARC_JADE;
+    int stage = max(0, min(2, ArcEchoStageRef(arc)));
+    g_pendingArcEcho = arc;
+    g_pendingArcEchoStage = stage;
+    g_arcEcho.lastArc = arc;
+
+    static const vector<vector<wstring>> titles = {
+        {L"【定局续章·旧玉一】旧梦证词", L"【定局续章·旧玉二】伪忆歧路", L"【定局续章·旧玉终】玉中自证"},
+        {L"【定局续章·山门一】旧宗来使", L"【定局续章·山门二】两代门规", L"【定局续章·山门终】道统归属"},
+        {L"【定局续章·家世一】祖契来人", L"【定局续章·家世二】养恩与血脉", L"【定局续章·家世终】旧名裁决"},
+        {L"【定局续章·战帖一】照雪再逢", L"【定局续章·战帖二】共同危局", L"【定局续章·战帖终】旧约新解"}
+    };
+    static const vector<vector<wstring>> descriptions = {
+        {
+            L"轮回玉吐出一段可被现实核验的旧梦。梦里的人认得你，今生的人却说那段往事根本不存在。",
+            L"两段互相矛盾的记忆同时显真。真正危险的不是忘记过去，而是把一段伪忆当成自己的意志。",
+            L"旧玉终于把前世证词与今生经历并列放在面前。你必须决定谁能作证，谁只能留下痕迹。"
+        },
+        {
+            L"前世山门派来一名今生从未见过的使者，手里却有只属于旧约的印记。",
+            L"旧门规与今世山门的制度发生冲突。两边都声称是在保护你，也都想借你证明自己更正统。",
+            L"两代山门同时要求一个明确归属。真正的问题不是选哪块牌匾，而是谁有权替你解释道统。"
+        },
+        {
+            L"祖契中的人循着前世定局找到今生。他们带来资源，也带来一份必须有人承担的旧债。",
+            L"血脉证据与养育之恩被摆到同一张案上。任何一方被轻易抹去，都会让另一方变成新的枷锁。",
+            L"旧名、祖脉和养育者终于共同到场。你要留下的不只是姓氏，而是一套今后仍能承担后果的关系。"
+        },
+        {
+            L"江照雪在另一世再次递帖。她记不得全部旧事，却准确写出了只有你们才懂的落款。",
+            L"一场更大的危局迫使你们先并肩。旧约究竟是宿敌、盟友还是清醒对手，将在真正危险中接受检验。",
+            L"危局已解，最后一帖重新落到手中。两世争胜之后，你们必须给这段关系一个不靠旁人定义的名字。"
+        }
+    };
+
+    Event evt;
+    evt.title = titles[arc][stage];
+    evt.description = descriptions[arc][stage] + L"前世定局：“" + ArcLegacyRef(arc) +
+        L"”。当前续章：" + BuildArcEchoDigest() + L"。";
+    int exp = 92 + (int)g_player.realm * 9 + stage * 28;
+    int risk = 22 + (int)g_player.realm * 2 + stage * 6;
+    int dao = 4 + stage * 2;
+
+    if (arc == ARC_JADE) {
+        evt.choices = {
+            {L"承认旧证", {L"你允许旧梦作证，却要求它接受今生事实的核验。\n修为+" + to_wstring(exp + 30) + L"，掌道+" + to_wstring(dao) + L"，因果+6", L"旧梦趁你松动时反客为主。\n气血-" + to_wstring(risk) + L"，因果-6"}, 4},
+            {L"以今校旧", {L"你逐条比对两世经历，只保留能解释现实的部分。\n修为+" + to_wstring(exp) + L"，掌道+" + to_wstring(dao + 1) + L"，寿命+2", L"你把所有旧忆都当成错误，错过了一条真正的警告。\n气血-" + to_wstring(max(10, risk - 5))}, 3},
+            {L"留痕断梦", {L"你不销毁过去，只切断它替今生发号施令的权力。\n修为+" + to_wstring(max(60, exp - 18)) + L"，掌道+" + to_wstring(dao + 2), L"封梦过急，识海留下裂隙。\n气血-" + to_wstring(risk + 6)}, 2}
+        };
+    } else if (arc == ARC_SECT) {
+        evt.choices = {
+            {L"续写旧律", {L"你保留旧律中真正能护人的部分，并把旧宗也纳入问责。\n修为+" + to_wstring(exp + 25) + L"，因果+7，掌道+" + to_wstring(dao), L"旧宗只想借守律之名恢复控制。\n气血-" + to_wstring(risk) + L"，因果-7"}, 4},
+            {L"与今门共议", {L"你让两代山门公开核对权利与代价。\n修为+" + to_wstring(exp) + L"，灵石+16，因果+5", L"两边把协商拖成争夺，你被夹在中间。\n灵石-8，气血-" + to_wstring(max(10, risk - 6))}, 3},
+            {L"另立新章", {L"你拒绝继承任何一方的完整答案，只承认自己愿意承担的道统。\n修为+" + to_wstring(max(65, exp - 12)) + L"，掌道+" + to_wstring(dao + 2), L"自立之名引来试探与围堵。\n气血-" + to_wstring(risk + 5) + L"，因果-4"}, 2}
+        };
+    } else if (arc == ARC_FAMILY) {
+        evt.choices = {
+            {L"承脉也承债", {L"你接受祖脉能给的资源，也把旧债写进自己可见的账册。\n修为+" + to_wstring(exp + 22) + L"，灵石+18，因果+8", L"祖契只谈血脉，不肯交代旧债。\n气血-" + to_wstring(risk) + L"，因果-8"}, 5},
+            {L"先护养育之恩", {L"你先保证养育者不会因血脉真相再次受伤。\n修为+" + to_wstring(exp) + L"，寿命+3，因果+7", L"你保护得太急，反让幕后人摸到软处。\n气血-" + to_wstring(max(12, risk - 4))}, 5},
+            {L"去祖名留证据", {L"你留下可查的证据，却拒绝用祖名兑换现成位置。\n修为+" + to_wstring(max(65, exp - 15)) + L"，掌道+" + to_wstring(dao + 2), L"断名时也切断了一条保护线。\n灵石-10，因果-4"}, 2}
+        };
+    } else {
+        evt.choices = {
+            {L"再接照雪战帖", {L"你们把两世未尽的胜负放到明面，不让家族旧账代替出剑。\n修为+" + to_wstring(exp + 30) + L"，因果+6", L"争胜心压过判断，旧伤再次重演。\n气血-" + to_wstring(risk + 4) + L"，因果-5"}, 4},
+            {L"先并肩破局", {L"你们先斩断真正操纵战帖的人，再回来计算胜负。\n修为+" + to_wstring(exp) + L"，灵石+20，因果+7", L"彼此都留着后手，阵势在关键处断裂。\n气血-" + to_wstring(risk) + L"，灵石-7"}, 5},
+            {L"约定只争道途", {L"你们承认竞争，也共同拒绝把仇怨传给下一世。\n修为+" + to_wstring(max(70, exp - 8)) + L"，掌道+" + to_wstring(dao + 2) + L"，寿命+2", L"这份约定说得太早，真正的旧手仍未现身。\n因果-4，气血-" + to_wstring(max(10, risk - 7))}, 3}
+        };
+    }
+    return evt;
+}
+
 bool ShouldTriggerLifeStoryProgressEvent() {
-    if (g_lifeStoryProgressThisLife >= 5) return false;
-    if (g_lifeStoryHooks.empty()) return false;
-    if (g_player.totalEvents - g_lastLifeStoryProgressEventCount < 3) return false;
+    if (GetNarrativeArcTotalProgress() >= 16) return false;
+    if (g_player.totalEvents - g_lastLifeStoryProgressEventCount < 2) return false;
 
-    static const int requiredEvents[] = {1, 4, 8, 12, 18};
-    int stage = max(0, min(4, g_lifeStoryProgressThisLife));
-    if (g_player.totalEvents < requiredEvents[stage]) return false;
+    int incomplete = 0;
+    for (int arc = ARC_JADE; arc <= ARC_RIVAL; ++arc) {
+        if (IsNarrativeArcAvailable(arc)) incomplete++;
+    }
+    if (incomplete <= 0) return false;
 
-    int chance = 10 + (int)g_lifeStoryHooks.size();
-    if (HasFactionTie()) chance += 2;
-    if (!g_socialThreads.empty()) chance += 2;
-    if (!g_eraRemnants.empty()) chance += 2;
-    if (!g_legacySystem.GetLatestUnfinishedKarmas(2).empty()) chance += 4;
-    if (g_player.totalEvents >= requiredEvents[stage] + 4) chance += 8;
-    chance = max(10, min(32, chance));
-    return Random(1, 100) <= chance;
+    static const int requiredEvents[] = {
+        1, 3, 5, 7, 9, 12, 15, 18,
+        22, 26, 30, 35, 40, 46, 52, 58
+    };
+    int progress = max(0, min(15, GetNarrativeArcTotalProgress()));
+    if (g_player.totalEvents < requiredEvents[progress]) return false;
+
+    int chance = 22 + incomplete * 4;
+    if (progress < 4) chance += 12;
+    if (g_player.totalEvents >= requiredEvents[progress] + 4) chance += 18;
+    if (!g_lifeStoryHooks.empty()) chance += 4;
+    return Random(1, 100) <= max(24, min(72, chance));
 }
 
 Event BuildLifeStoryProgressEvent() {
     Event evt;
-    auto trimEndPunctuation = [](wstring text) {
-        while (!text.empty()) {
-            wchar_t ch = text.back();
-            if (ch == L'。' || ch == L'；' || ch == L';' || ch == L'，' ||
-                ch == L',' || ch == L'.' || ch == L' ') {
-                text.pop_back();
-            } else {
-                break;
-            }
-        }
-        return text;
+    int arc = PickNarrativeArc();
+    if (arc < 0) arc = ARC_JADE;
+    int stage = max(0, min(3, GetNarrativeArcStageRef(arc)));
+
+    static const vector<vector<wstring>> titles = {
+        {L"【旧玉·一】夜半微温", L"【旧玉·二】镜中旧名", L"【旧玉·三】生死回响", L"【旧玉·终】不借旧我"},
+        {L"【山门·一】测灵余波", L"【山门·二】外院名额", L"【山门·三】掌律问心", L"【山门·终】自择道统"},
+        {L"【家世·一】旧仆来信", L"【家世·二】封名玉简", L"【家世·三】旧宅暗门", L"【家世·终】认或不认"},
+        {L"【战帖·一】照雪初帖", L"【战帖·二】同阵争先", L"【战帖·三】江氏旧账", L"【战帖·终】敌友由我"}
     };
-    auto compactLimit = [](const wstring& text, size_t limit) {
-        wstring compact = SanitizePlayerFacingText(CompactMemoryFragment(text));
-        if (compact.size() > limit) {
-            compact = compact.substr(0, limit) + L"……";
+    static const vector<vector<wstring>> descriptions = {
+        {
+            L"夜半醒来，黑白伴生玉佩第一次在无人触碰时自行发温。窗纸上映出两道互不相容的影子：一道像今生，一道像尚未发生的死局。",
+            L"旧玉把你的脸映成一个陌生旧名。那名字没有记忆，只有近乎本能的警惕，像有人曾用它欠下无法结清的因果。",
+            L"一次险境之后，旧玉没有替你挡灾，只把生死之间那一瞬完整留住。它保存的不是答案，而是每次取舍留下的轮廓。",
+            L"旧玉终于托起足够多的回响，像要让过去替你决定今生。真正的终局，是决定哪些旧意可以留下，哪些必须止于此世。"
+        },
+        {
+            L"测灵台上的结果已经传遍山门。有人把你当成值得下注的苗子，也有人认为你的家世、旧玉与灵根都该先被审查。",
+            L"外院名额忽然少了一席，执事说是资源不足，几名同辈却知道有人在用名额试你的软硬。",
+            L"掌律玉简把早年的每次选择串成一份问心案卷。玄衡一脉要证明你只是靠师承庇护才走到今天。",
+            L"山门愿意给你更高的位置，代价是让某一脉替你定义道途。走到这一步，你必须决定自己属于谁，又不属于谁。"
+        },
+        {
+            L"一封没有署名的旧信送到手中，字迹像家中长辈，又像多年不曾露面的旧仆。信里只写：不要让旁人先替你认祖。",
+            L"家中封存的玉简被人送来，里面记着一个被抹去的名字，也记着父母或养育者曾替你挡下的第一场灾。",
+            L"旧宅地基下露出一扇暗门。门后不是宝库，而是家族曾经选错边、欠下债、又拼命藏住你的证据。",
+            L"身世真相终于足以改变名望、资源和仇家。可血脉只能解释你从哪里来，不能替你决定要成为谁。"
+        },
+        {
+            L"江照雪递来第一封正式战帖。她没有暗算，也没有客套，只写明地点、时辰和一句：别让长辈替你接剑。",
+            L"秘境阵门将你与江照雪锁进同一支队伍。谁都想先拿机缘，可真正危险逼近时，胜负与活命必须重新排序。",
+            L"江氏旧账被人翻出，战帖背后多了一层家族压力。她可以借此踩下你，也可能先斩断自家递来的暗箭。",
+            L"数次争胜之后，你们都知道对方不是可以轻易抹去的人。最后一帖不只问谁赢，而是问往后做敌、做友，还是做彼此最清醒的对手。"
         }
-        return compact;
     };
 
-    int stage = max(0, min(4, g_lifeStoryProgressThisLife));
-    vector<wstring> stageIntros = {
-        L"一枚旧玉、一段身世、几道山门目光，终于在同一天碰到一起。",
-        L"先前散落的人情开始互相牵连，谁站在哪边不再只是闲谈。",
-        L"藏在暗处的手终于翻面，原本像线索的东西开始索价。",
-        L"这条路不再只给好处，也开始逼你承认每一次借势都有代价。",
-        L"此世几段最要紧的因果渐渐合拢，留下什么、放弃什么都该有个交代。"
-    };
-    wstring stageIntro = stageIntros[stage];
-    wstring focusHook = g_lifeStoryHooks.empty()
-        ? g_lifePremise
-        : g_lifeStoryHooks[min((size_t)stage, g_lifeStoryHooks.size() - 1)];
-    wstring focusText = focusHook;
-    if (HasFactionTie() && focusHook.find(L"本世势力牵连") != wstring::npos) {
-        focusText = g_factionTie.name + L"把你列作" + g_factionTie.role +
-            L"，态度是“" + g_factionTie.stance + L"”";
-        if (!g_factionTie.hook.empty()) {
-            focusText += L"；" + g_factionTie.hook;
-        }
-    }
-    if (g_player.realm >= HALF_IMMORTAL &&
-        TextContainsAny(focusText, {L"入门", L"内门", L"外门", L"杂役", L"山门试探"})) {
-        focusText = HasFactionTie()
-            ? BuildFactionTieDigest()
-            : L"早年的山门试炼已经化为旧宗因果，此刻真正牵动你的，是师承、人情和飞升后的站位。";
-    }
-    if (focusText.find(L"襁褓中留有半枚玉佩；出生时随身带着一枚黑白伴生玉佩") != wstring::npos) {
-        focusText = L"一处古修遗府似乎牵着此世隐情：襁褓中留有半枚黑白旧玉，来历无人说清";
-    }
+    evt.title = titles[arc][stage];
+    evt.description = descriptions[arc][stage] + L"当前分线：" + BuildNarrativeArcDigest() + L"。";
 
-    wstring pressure;
-    if (HasFactionTie()) {
-        pressure = (g_player.realm >= HALF_IMMORTAL)
-            ? L"牵动此事的是" + g_factionTie.name + L"留下的旧宗因果；昔日轻重已经成账，飞升后只看谁敢站在你身侧。"
-            : L"牵动此事的是" + g_factionTie.name + L"，他们仍在衡量你值不值得真正下注。";
-    } else if (!g_socialThreads.empty()) {
-        const SocialThread& thread = g_socialThreads[min((size_t)stage, g_socialThreads.size() - 1)];
-        pressure = L"牵动此事的人是" + thread.name + L"（" + thread.role + L"，" + thread.attitude + L"）。";
-    } else if (!g_eraRemnants.empty()) {
-        pressure = L"旧世残响也压在这条线上：" + compactLimit(g_eraRemnants[0], 72) + L"。";
+    int baseExp = 78 + g_player.realm * 8 + stage * 24;
+    int majorExp = baseExp + 38;
+    int hpRisk = 20 + g_player.realm * 2 + stage * 5;
+    int daoGain = max(2, min(12, 3 + stage * 2 + g_player.realm / 4));
+
+    if (arc == ARC_JADE) {
+        evt.choices = {
+            {L"握玉静听", {
+                L"你没有急着认领旧名，只把梦兆里可验证的细节记下。旧玉回声更清晰，却仍不能替你做决定。\n修为+" + to_wstring(majorExp) + L"，灵宝共鸣+" + to_wstring(3 + stage) + L"，掌道+" + to_wstring(daoGain),
+                L"旧梦层层压来，你一时把不属于今生的恐惧当成事实。\n气血-" + to_wstring(hpRisk) + L"，因果-5"
+            }, 6},
+            {L"以今证旧", {
+                L"你拿今生见闻逐条核对梦兆，只留下能被现实印证的部分。\n修为+" + to_wstring(baseExp) + L"，寿命+3，因果+7",
+                L"你试图一次查清所有旧因，反被真假线索拖进同一团雾里。\n气血-" + to_wstring(max(12, hpRisk - 5)) + L"，因果-6"
+            }, 5},
+            {L"封住梦兆", {
+                L"你暂时封住最危险的回响。能被你压住的过去，才有资格成为今生的工具。\n修为+" + to_wstring(max(50, baseExp - 18)) + L"，掌道+" + to_wstring(max(2, daoGain - 1)),
+                L"梦兆被强压回去，却从别处渗出，连日行功都带着陌生节奏。\n气血-" + to_wstring(max(10, hpRisk - 8))
+            }, 3}
+        };
+    } else if (arc == ARC_SECT) {
+        evt.choices = {
+            {L"据理受验", {
+                L"你逐条回应质疑，不借天资压人，也不让门规替旁人定罪。\n修为+" + to_wstring(majorExp) + L"，因果+8，掌道+" + to_wstring(max(2, daoGain - 1)),
+                L"你被绕进条文夹层，一句急辩反成新的审查理由。\n气血-" + to_wstring(hpRisk) + L"，因果-8"
+            }, 5},
+            {L"借师承入局", {
+                L"你承认师承给过机会，却没有把全部责任推给长辈。师承成了立足之处，而不是遮罪的盾。\n修为+" + to_wstring(baseExp) + L"，灵石+16，因果+6",
+                L"借来的名义太重，旁人开始把每次失误都记到师承头上。\n灵石-8，因果-6"
+            }, 4},
+            {L"拒绝被定价", {
+                L"你要求把规则与代价写明。有人觉得你不识抬举，也有人第一次把你当成能自己立道的人。\n修为+" + to_wstring(max(55, baseExp - 15)) + L"，寿命+2，掌道+" + to_wstring(daoGain),
+                L"你拒绝得太硬，资源与人情同时收紧。\n气血-" + to_wstring(max(10, hpRisk - 8)) + L"，灵石-6"
+            }, 3}
+        };
+    } else if (arc == ARC_FAMILY) {
+        evt.description += L"此世已知家世：" + (g_player.family.secret.empty() ? GetFamilySummary(g_player.family) : g_player.family.secret) + L"。";
+        evt.choices = {
+            {L"追查旧账", {
+                L"你把信、玉简与旧宅线索逐一对上，查清一部分真相，也把一部分债正式记到自己名下。\n修为+" + to_wstring(majorExp) + L"，灵石+12，因果+10",
+                L"旧账背后的人先一步察觉你在追查，家中留下的保护反成指路标。\n气血-" + to_wstring(hpRisk) + L"，因果-9"
+            }, 6},
+            {L"问养育者", {
+                L"你没有越过真正养大你的人。对方终于说出一段此前不敢说的旧事。\n修为+" + to_wstring(baseExp) + L"，寿命+4，因果+7",
+                L"你逼问得太急，对方只把旧事藏得更深。\n气血-" + to_wstring(max(10, hpRisk - 7)) + L"，因果-5"
+            }, 5},
+            {L"不让血脉定命", {
+                L"你保留真相，却拒绝拿祖名换取现成位置。家世从枷锁变成证据。\n修为+" + to_wstring(max(55, baseExp - 12)) + L"，掌道+" + to_wstring(daoGain),
+                L"你切断得太急，也失去了一条能保护家人的线索。\n灵石-8，因果-4"
+            }, 3}
+        };
     } else {
-        pressure = L"这条线暂时还没有明面上的主使，只像时代自己递来的试卷。";
+        evt.choices = {
+            {L"正面接帖", {
+                L"你不借旁人造势，也不把旧怨藏进暗手。江照雪收剑时仍不服，却承认这一战值得记住。\n修为+" + to_wstring(majorExp) + L"，因果+8",
+                L"你只想压过她，反被争胜心带乱节奏。\n气血-" + to_wstring(hpRisk) + L"，因果-6"
+            }, 5},
+            {L"同阵合作", {
+                L"你们先拆开真正的危局，再回头算谁多走半步。合作没有抹掉竞争，却让彼此都欠下一次正面交代。\n修为+" + to_wstring(baseExp) + L"，灵石+18，因果+7",
+                L"你们都留着一手，阵势在最要紧时断开。\n气血-" + to_wstring(max(12, hpRisk - 3)) + L"，灵石-6"
+            }, 5},
+            {L"不以胜负定敌友", {
+                L"你承认争胜，也拒绝让旁人的旧账替你们决定关系。\n修为+" + to_wstring(max(60, baseExp - 10)) + L"，掌道+" + to_wstring(daoGain) + L"，寿命+2",
+                L"你的话说得太轻，像在回避一场必须正面承担的冲突。\n因果-5，气血-" + to_wstring(max(8, hpRisk - 10))
+            }, 4}
+        };
     }
 
-    if (stage == 0) {
-        evt.title = L"【因果】线索初显";
-    } else if (stage == 1) {
-        evt.title = L"【人情】暗线入局";
-    } else if (stage == 2) {
-        evt.title = L"【危机】暗潮转折";
-    } else if (stage == 3) {
-        evt.title = L"【代价】此世取舍";
-    } else {
-        evt.title = L"【传承】此世收束";
-    }
-
-    wstring premiseBrief = trimEndPunctuation(compactLimit(g_lifePremise, 84));
-    wstring focusBrief = trimEndPunctuation(compactLimit(focusText, 92));
-    evt.description = stageIntro + premiseBrief + L"。眼下最亮的线索是：" +
-        focusBrief + L"。" + pressure +
-        L"你得决定，是顺着它追下去，还是先借此世的人与势把脚站稳。";
-
-    int expGain = 75 + g_player.realm * 7 + stage * 20;
-    int majorGain = expGain + 35;
-    int minorGain = max(45, expGain - 20);
-    int hpRisk = 22 + g_player.realm * 2 + stage * 4;
-    int daoGain = max(2, min(10, 3 + stage + g_player.realm / 3));
-    bool touchesLegacy = focusHook.find(L"前世") != wstring::npos ||
-                         focusHook.find(L"旧") != wstring::npos ||
-                         focusHook.find(L"玉") != wstring::npos ||
-                         focusHook.find(L"通天灵宝") != wstring::npos;
-
-    evt.choices = {
-        {L"顺线追查", {
-            L"你沿着最亮的线索追下去，把传闻、眼神和旧物异动一一对上。它没有立刻给你答案，却终于承认你已经入局。\n修为+" + to_wstring(majorGain) + L"，因果+10" + (touchesLegacy ? L"，灵宝共鸣+3" : L""),
-            L"你追得太深，线索背后的旧账先一步咬住你，像有人隔着暗处替你合上了门。\n气血-" + to_wstring(hpRisk) + L"，因果-6"
-        }, 8},
-        {L"借势入局", {
-            L"你没有独自硬闯，而是把家世、人脉与势力名义都压到合适的位置。局中人开始给你让路，也开始重新估量你。\n修为+" + to_wstring(expGain) + L"，灵石+18，因果+6",
-            L"借来的势不会白白替你挡风。你刚站稳脚跟，旁人便开始计算你能被怎样利用。\n灵石-10，因果-8"
-        }, 5},
-        {L"定下今生", {
-            L"你承认时代、人情和旧玉异动都会拉扯自己，却没有把命交给任何一种说法。今生这一笔，仍由你亲手落下。\n修为+" + to_wstring(minorGain) + L"，寿命+3，掌道+" + to_wstring(daoGain),
-            L"你想把这条线暂时压下去，暗潮却没有散，只是换了个更难看见的方向靠近。\n气血-" + to_wstring(max(12, hpRisk - 8))
-        }, 4}
-    };
+    g_pendingArc = arc;
+    g_pendingArcStage = stage;
     return evt;
 }
 
@@ -9185,6 +10098,10 @@ void ReturnFromInfoPage() {
         return;
     }
     g_gameState = g_infoReturnState;
+    // V0_2_MENU_RETURN_CONTROLS
+    if (g_gameState == STATE_MENU) {
+        ShowMenuControls(true);
+    }
     g_infoTitle.clear();
     g_infoText.clear();
     g_characterCodexListPage = false;
@@ -9203,11 +10120,12 @@ PlayerContext BuildPlayerContext() {
     ctx.name = g_player.name;
     ctx.realm = g_player.realm;
     ctx.realmName = GetRealmName(g_player.realm);
-    ctx.karma = g_player.karma;
+    ctx.karma = GetEffectiveKarmaScore(g_player.karma);
     ctx.age = g_player.age;
     ctx.rootState = g_player.GetRootQuality() + L"；" + g_player.GetRootDetails() +
         L"；形态:" + g_player.GetRootShapeLabel() +
-        L"；时代适性:" + g_player.GetRootEraTraitText();
+        L"；时代适性:" + g_player.GetRootEraTraitText() +
+        L"；道途维度:" + GetPathDimensionDigest();
     ctx.familyState = GetFamilySummary(g_player.family);
     if (g_player.family.knowsParents) {
         ctx.familyState += L"；父亲:" + g_player.family.father + L"；母亲:" + g_player.family.mother;
@@ -9342,6 +10260,9 @@ PlayerContext BuildPlayerContext() {
         }
     }
     world << L"- 本世主线: " << g_lifePremise << L"\n";
+    world << L"- 分线进度: " << BuildNarrativeArcDigest() << L"\n";
+    world << L"- 跨世定局: " << BuildArcLegacyDigest() << L"\n";
+    world << L"- 定局续章: " << BuildArcEchoDigest() << L"\n";
     if (HasFactionTie()) {
         world << L"- 本世势力牵连: " << BuildFactionTieDigest() << L"\n";
     }
@@ -9540,7 +10461,7 @@ bool LoadFamily(wifstream& file, FamilyBackground& bg) {
 }
 
 void SaveStoryState(wofstream& file) {
-    file << L"STORY_STATE_V1\n";
+    file << L"STORY_STATE_V4\n";
     file << EscapeSaveField(g_storyState.worldLaw) << L"\n";
     file << EscapeSaveField(g_storyState.hongmengRule) << L"\n";
     file << EscapeSaveField(g_storyState.companionJadeRule) << L"\n";
@@ -9561,13 +10482,32 @@ void SaveStoryState(wofstream& file) {
     for (const auto& item : g_storyState.npcMoods) {
         file << EscapeSaveField(item) << L"\n";
     }
+    file << g_narrativeArcs.jadeStage << L" "
+         << g_narrativeArcs.sectStage << L" "
+         << g_narrativeArcs.familyStage << L" "
+         << g_narrativeArcs.rivalStage << L" "
+         << g_narrativeArcs.lastArc << L"\n";    file << EscapeSaveField(g_arcLegacy.jade) << L"\n";
+    file << EscapeSaveField(g_arcLegacy.sect) << L"\n";
+    file << EscapeSaveField(g_arcLegacy.family) << L"\n";
+    file << EscapeSaveField(g_arcLegacy.rival) << L"\n";
+    file << g_arcEcho.jadeStage << L" " << g_arcEcho.sectStage << L" "
+         << g_arcEcho.familyStage << L" " << g_arcEcho.rivalStage << L" "
+         << g_arcEcho.lastArc << L"\n";
+    file << EscapeSaveField(g_arcEcho.jadeResolution) << L"\n";
+    file << EscapeSaveField(g_arcEcho.sectResolution) << L"\n";
+    file << EscapeSaveField(g_arcEcho.familyResolution) << L"\n";
+    file << EscapeSaveField(g_arcEcho.rivalResolution) << L"\n";
 }
 
 bool LoadStoryState(wifstream& file) {
     wstring marker;
     getline(file, marker);
     if (marker.empty()) getline(file, marker);
-    if (marker != L"STORY_STATE_V1") return false;
+    bool isStoryV4 = (marker == L"STORY_STATE_V4");
+    bool isStoryV3 = (marker == L"STORY_STATE_V3");
+    bool isStoryV2 = (marker == L"STORY_STATE_V2");
+    bool isStoryV1 = (marker == L"STORY_STATE_V1");
+    if (!isStoryV1 && !isStoryV2 && !isStoryV3 && !isStoryV4) return false;
 
     getline(file, g_storyState.worldLaw);
     getline(file, g_storyState.hongmengRule);
@@ -9613,6 +10553,46 @@ bool LoadStoryState(wifstream& file) {
         wstring item;
         getline(file, item);
         g_storyState.npcMoods.push_back(UnescapeSaveField(item));
+    }
+    if (isStoryV2 || isStoryV3 || isStoryV4) {
+        file >> g_narrativeArcs.jadeStage >> g_narrativeArcs.sectStage
+             >> g_narrativeArcs.familyStage >> g_narrativeArcs.rivalStage
+             >> g_narrativeArcs.lastArc;
+        file.ignore(numeric_limits<streamsize>::max(), L'\n');
+        g_narrativeArcs.jadeStage = max(0, min(4, g_narrativeArcs.jadeStage));
+        g_narrativeArcs.sectStage = max(0, min(4, g_narrativeArcs.sectStage));
+        g_narrativeArcs.familyStage = max(0, min(4, g_narrativeArcs.familyStage));
+        g_narrativeArcs.rivalStage = max(0, min(4, g_narrativeArcs.rivalStage));
+        g_narrativeArcs.lastArc = max(-1, min(3, g_narrativeArcs.lastArc));
+        g_lifeStoryProgressThisLife = GetNarrativeArcTotalProgress();
+        if (isStoryV3 || isStoryV4) {
+            getline(file, g_arcLegacy.jade); getline(file, g_arcLegacy.sect);
+            getline(file, g_arcLegacy.family); getline(file, g_arcLegacy.rival);
+            g_arcLegacy.jade = UnescapeSaveField(g_arcLegacy.jade);
+            g_arcLegacy.sect = UnescapeSaveField(g_arcLegacy.sect);
+            g_arcLegacy.family = UnescapeSaveField(g_arcLegacy.family);
+            g_arcLegacy.rival = UnescapeSaveField(g_arcLegacy.rival);
+            if (isStoryV4) {
+                file >> g_arcEcho.jadeStage >> g_arcEcho.sectStage
+                     >> g_arcEcho.familyStage >> g_arcEcho.rivalStage >> g_arcEcho.lastArc;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n'); // V0_11_STORY_LOAD_NEWLINE_REPAIR
+                getline(file, g_arcEcho.jadeResolution); getline(file, g_arcEcho.sectResolution);
+                getline(file, g_arcEcho.familyResolution); getline(file, g_arcEcho.rivalResolution);
+                g_arcEcho.jadeResolution = UnescapeSaveField(g_arcEcho.jadeResolution);
+                g_arcEcho.sectResolution = UnescapeSaveField(g_arcEcho.sectResolution);
+                g_arcEcho.familyResolution = UnescapeSaveField(g_arcEcho.familyResolution);
+                g_arcEcho.rivalResolution = UnescapeSaveField(g_arcEcho.rivalResolution);
+                g_arcEcho.jadeStage = max(0, min(3, g_arcEcho.jadeStage));
+                g_arcEcho.sectStage = max(0, min(3, g_arcEcho.sectStage));
+                g_arcEcho.familyStage = max(0, min(3, g_arcEcho.familyStage));
+                g_arcEcho.rivalStage = max(0, min(3, g_arcEcho.rivalStage));
+                g_arcEcho.lastArc = max(-1, min(3, g_arcEcho.lastArc));
+            } else g_arcEcho = ArcEchoState();
+        } else { g_arcLegacy = ArcLegacyState(); g_arcEcho = ArcEchoState(); }
+    } else {
+        g_arcLegacy = ArcLegacyState();
+        g_arcEcho = ArcEchoState();
+        InitializeNarrativeArcsFromLegacyProgress();
     }
     RefreshStoryStateStableFields();
     return true;
@@ -9738,6 +10718,7 @@ bool LoadWorldEra(wifstream& file) {
             g_lastLifeStoryProgressEventCount = -1000;
         } else {
             g_lifeStoryProgressThisLife = 0;
+    g_narrativeArcs = NarrativeArcState();
             g_jadeDreamOmenEventsThisLife = 0;
             g_lastLifeStoryProgressEventCount = -1000;
         }
@@ -9851,6 +10832,7 @@ bool LoadWorldEra(wifstream& file) {
         g_eraChronicle.clear();
         g_factionTie = FactionTie();
         g_lifeStoryProgressThisLife = 0;
+    g_narrativeArcs = NarrativeArcState();
         g_lastLifeStoryProgressEventCount = -1000;
         g_jadeDreamOmenEventsThisLife = 0;
         g_plannedLegacies.clear();
@@ -9922,7 +10904,9 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
 
     wstring marker;
     getline(file, marker);
-    if (marker != L"SAVE_V4") {
+    bool isV5 = (marker == L"SAVE_V5");
+    bool isV4 = (marker == L"SAVE_V4");
+    if (!isV4 && !isV5) {
         info.title = L"旧档或损坏";
         info.detail = L"旧录残缺 · " + FormatFileTimeBrief(info.path);
         return info;
@@ -9937,6 +10921,9 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
     int mp = 0;
     int maxMp = 0;
     int karma = 0;
+    int daoHeart = 0;
+    int reputation = 0;
+    int enmity = 0;
     int age = 0;
     int lifespan = 0;
     int spiritStones = 0;
@@ -9954,7 +10941,10 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
 
     getline(file, name);
     file >> realm >> level >> exp >> hp >> maxHp >> mp >> maxMp;
-    file >> karma >> age >> lifespan >> spiritStones >> pills;
+    file >> karma;
+    if (isV5) file >> daoHeart >> reputation >> enmity;
+    else reputation = max(-20, min(20, karma / 2));
+    file >> age >> lifespan >> spiritStones >> pills;
     file >> attack >> defense;
     file >> rootFire >> rootWater >> rootWood >> rootMetal >> rootEarth;
     file >> totalEvents >> battlesWon >> npcsMet;
@@ -9964,6 +10954,7 @@ SaveSlotInfo ReadSaveSlotInfo(int slot) {
         GetRealmName(shownRealm) + L" " + to_wstring(max(1, level)) + L"层";
     info.detail = L"第" + to_wstring(max(0, age)) + L"年 · 因果" +
         (karma >= 0 ? L"+" : L"") + to_wstring(karma) +
+        L" · 道心" + to_wstring(daoHeart) + L" 名望" + to_wstring(reputation) +
         L" · 历练" + to_wstring(max(0, totalEvents)) +
         L" · " + FormatFileTimeBrief(info.path);
     return info;
@@ -9984,7 +10975,7 @@ bool SaveGameToPath(const wstring& path) {
     UseUtf8Locale(file);
     if (!file) return false;
 
-    file << L"SAVE_V4\n";
+    file << L"SAVE_V5\n";
     file << g_player.name << L"\n";
     file << g_player.realm << L"\n";
     file << g_player.level << L"\n";
@@ -9994,6 +10985,9 @@ bool SaveGameToPath(const wstring& path) {
     file << g_player.mp << L"\n";
     file << g_player.maxMp << L"\n";
     file << g_player.karma << L"\n";
+    file << g_player.daoHeart << L"\n";
+    file << g_player.reputation << L"\n";
+    file << g_player.enmity << L"\n";
     file << g_player.age << L"\n";
     file << g_player.lifespan << L"\n";
     file << g_player.spiritStones << L"\n";
@@ -10031,8 +11025,9 @@ bool LoadGameFromPath(const wstring& path) {
 
     wstring firstLine;
     getline(file, firstLine);
+    bool isV5 = (firstLine == L"SAVE_V5");
     bool isV4 = (firstLine == L"SAVE_V4");
-    if (!isV4) return false;
+    if (!isV4 && !isV5) return false;
 
     getline(file, g_player.name);
 
@@ -10042,7 +11037,15 @@ bool LoadGameFromPath(const wstring& path) {
     file >> g_player.level >> g_player.exp;
     file >> g_player.hp >> g_player.maxHp;
     file >> g_player.mp >> g_player.maxMp;
-    file >> g_player.karma >> g_player.age >> g_player.lifespan;
+    file >> g_player.karma;
+    if (isV5) {
+        file >> g_player.daoHeart >> g_player.reputation >> g_player.enmity;
+    } else {
+        g_player.daoHeart = 0;
+        g_player.reputation = max(-20, min(20, g_player.karma / 2));
+        g_player.enmity = max(0, -g_player.karma / 5);
+    }
+    file >> g_player.age >> g_player.lifespan;
     file >> g_player.spiritStones >> g_player.pills;
     file >> g_player.attackPower >> g_player.defense;
     file >> g_player.rootFire >> g_player.rootWater >> g_player.rootWood;
@@ -10064,6 +11067,7 @@ bool LoadGameFromPath(const wstring& path) {
     g_legacySystem.Load(file);
     EnsureHongmengProgress();
     g_achievementSystem.Load(file);
+    RestoreJadeWeaponStateAfterLoad();
     if (g_storyState.synopsis.empty() && g_storyState.openThreads.empty()) {
         InitializeStoryStateForLife();
     } else {
@@ -10105,6 +11109,9 @@ void ActivateSaveSlot(int slot) {
             return;
         }
         if (LoadGameFromPath(path)) {
+            // V0_2_SAVE_LOAD_HIDE_MENU
+            g_gameState = STATE_GAME;
+            ShowMenuControls(false);
             ShowNotice(L"读档", L"已接续第" + to_wstring(slot) + L"号旧录。");
             InvalidateRect(g_hWnd, NULL, FALSE);
         } else {
@@ -10131,7 +11138,7 @@ wstring BuildSaveSlotIntroText(bool loadMode) {
 }
 
 void OpenSaveSlotPage(bool loadMode) {
-    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), STATE_GAME);
+    OpenInfoPage(loadMode ? L"读取存档" : L"保存存档", BuildSaveSlotIntroText(loadMode), (g_gameState == STATE_MENU ? STATE_MENU : STATE_GAME)); // V0_2_SAVE_RETURN_STATE
     g_saveSlotInfos = BuildSaveSlotInfos();
     g_saveSlotPage = true;
     g_saveSlotLoadMode = loadMode;
@@ -10162,6 +11169,77 @@ int ExtractValue(const wstring& text, const wstring& marker, int fallback = 0) {
 
 wstring FormatSignedInt(int value) {
     return wstring(value > 0 ? L"+" : L"") + to_wstring(value);
+}
+
+
+void ApplyPathDimensionEffects(const Event& event, const Choice& choice,
+                               wstring& outcome, bool successLike) { // V0_6_PATH_DIMENSIONS
+    auto containsAny = [](const wstring& text, initializer_list<const wchar_t*> words) {
+        for (const wchar_t* word : words) {
+            if (text.find(word) != wstring::npos) return true;
+        }
+        return false;
+    };
+    auto clampStat = [](int value, int low, int high) {
+        return max(low, min(high, value));
+    };
+
+    const wstring allText = event.title + L" " + event.description + L" " +
+                            choice.description + L" " + outcome;
+    const int explicitKarma = ExtractValue(outcome, L"因果+") -
+                              ExtractValue(outcome, L"因果-");
+    const int totalKarma = explicitKarma + choice.karmaChange;
+
+    int daoDelta = min(8, ExtractValue(outcome, L"掌道+") / 2);
+    int reputationDelta = totalKarma / 6;
+    int enmityDelta = 0;
+
+    if (containsAny(choice.description,
+        {L"稳", L"守", L"问", L"听", L"观", L"护", L"救", L"克制", L"不贪", L"拒绝强取"})) {
+        daoDelta += successLike ? 2 : 1;
+    }
+    if (!successLike && containsAny(choice.description,
+        {L"强夺", L"硬闯", L"抢先", L"赌", L"逼", L"杀"})) {
+        daoDelta -= 1;
+    }
+
+    if (successLike && containsAny(allText,
+        {L"宗门", L"道庭", L"掌律", L"仙朝", L"名册", L"坊市", L"救下", L"护送", L"作证"})) {
+        reputationDelta += 2;
+    }
+    if (containsAny(allText,
+        {L"记恨", L"追杀", L"围杀", L"仇家", L"报复", L"盯上", L"暗杀", L"通缉"})) {
+        enmityDelta += successLike ? 1 : 3;
+    }
+    if (containsAny(choice.description,
+        {L"强夺", L"威逼", L"抢先", L"拒不", L"反杀", L"拆穿"})) {
+        enmityDelta += 1;
+    }
+    if (successLike && containsAny(choice.description,
+        {L"护送", L"救", L"调解", L"作证", L"分润", L"留情"})) {
+        enmityDelta -= 1;
+    }
+
+    daoDelta = max(-3, min(10, daoDelta));
+    reputationDelta = max(-8, min(8, reputationDelta));
+    enmityDelta = max(-3, min(8, enmityDelta));
+
+    int oldDao = g_player.daoHeart;
+    int oldReputation = g_player.reputation;
+    int oldEnmity = g_player.enmity;
+    g_player.daoHeart = clampStat(g_player.daoHeart + daoDelta, -100, 500);
+    g_player.reputation = clampStat(g_player.reputation + reputationDelta, -200, 500);
+    g_player.enmity = clampStat(g_player.enmity + enmityDelta, 0, 500);
+
+    int actualDao = g_player.daoHeart - oldDao;
+    int actualReputation = g_player.reputation - oldReputation;
+    int actualEnmity = g_player.enmity - oldEnmity;
+    if (actualDao || actualReputation || actualEnmity) {
+        outcome += L"\n道途余波:";
+        if (actualDao) outcome += L" 道心" + FormatSignedInt(actualDao);
+        if (actualReputation) outcome += L" 名望" + FormatSignedInt(actualReputation);
+        if (actualEnmity) outcome += L" 仇怨" + FormatSignedInt(actualEnmity);
+    }
 }
 
 wstring BuildPlayerVisibleOutcomeText(wstring text) {
@@ -10586,6 +11664,9 @@ int ComputeReincarnationEventModifier(const Event& event, const Choice& choice) 
     if (!directChoice && !relevantEvent) return 0;
 
     int modifier = directChoice ? 10 : 5;
+    if (g_arcLegacy.jade == L"旧我为证") modifier += 4;
+    else if (g_arcLegacy.jade == L"今生校旧") modifier += 3;
+    else if (g_arcLegacy.jade == L"封梦自持") modifier += 2;
     modifier += min(6, (int)g_legacySystem.GetLatestMemoryFragments(4).size() * 2);
     modifier += min(4, (int)g_legacySystem.GetInheritedLegacies().size());
     if (!g_legacySystem.GetLatestUnfinishedKarmas(1).empty()) modifier += 2;
@@ -10843,6 +11924,9 @@ wstring BuildNextLifeOpeningText(const wstring& birthEcho, const wstring& jadeDr
         ss << L"\n入世牵连: " << clip(g_lifeStoryHooks[0], 110) << L"\n";
     }
 
+    if (HasArcLegacy()) ss << L"\n跨世定局: " << BuildArcLegacyDigest() << L"\n";
+    if (g_arcEcho.jadeStage + g_arcEcho.sectStage + g_arcEcho.familyStage + g_arcEcho.rivalStage > 0)
+        ss << L"定局续章: " << BuildArcEchoDigest() << L"\n";
     ss << L"\n此世尚浅，根基、人情与旧债都会从第一步里慢慢浮上来。";
     return ss.str();
 }
@@ -10855,7 +11939,13 @@ void StartNextLife() {
     g_lastAiStatus = L"本世尚未触发动态事件。";
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
+    g_narrativeArcs = NarrativeArcState();
     g_lastLifeStoryProgressEventCount = -1000;
+    g_lastArcEchoEvent = -1000;
+    g_lastArcEchoKind = -1;
+    g_pendingArc = g_pendingArcStage = -1;
+    g_pendingArcEcho = g_pendingArcEchoStage = -1;
+    g_arcEcho.lastArc = -1;
     g_plannedLegacies.clear();
     g_mainScroll = 0;
     g_lastRoutineEmotionFeedbackAge = -1000;
@@ -10865,9 +11955,13 @@ void StartNextLife() {
     ResetBottleneckNoticeState();
 
     g_player = Player();
+    ResetJadeWeaponAppliedBonuses();
+    SyncJadeWeaponBonuses();
     g_player.name = oldName;
     ApplyCompanionJadeToBirth();
     wstring birthEcho = ApplyInheritedLegacyToBirth();
+    wstring arcEcho = ApplyArcLegacyBirth();
+    if (!arcEcho.empty()) { if (!birthEcho.empty()) birthEcho += L" "; birthEcho += arcEcho; }
 
     int memoryBonus = g_legacySystem.GetLegacyBonus(LEGACY_MEMORY);
     int techniqueBonus = g_legacySystem.GetLegacyBonus(LEGACY_TECHNIQUE);
@@ -10881,6 +11975,8 @@ void StartNextLife() {
     g_player.attackPower += knowledgeBonus / 5 + relicBonus / 2;
     g_player.defense += treasureBonus / 12;
     g_player.karma += reputationBonus;
+    g_player.reputation = max(-200, min(500, g_player.reputation + reputationBonus));
+    g_player.daoHeart = max(-100, min(500, g_player.daoHeart + max(0, memoryBonus / 6)));
 
     GenerateWorldEra();
     GenerateHongmengOmen();
@@ -10893,6 +11989,7 @@ void StartNextLife() {
     g_discoveredItems.clear();
     g_lifeArtifacts.clear();
     GenerateSocialRumors();
+    ApplyArcLegacyWorld();
     if (!birthEcho.empty()) {
         AddLifeStoryHook(wstring(L"传承扰动出身：") + birthEcho, false);
     }
@@ -10997,7 +12094,9 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     if (isAIEvent) {
         // AI事件：使用AI生成结果
         PlayerContext& ctx = g_contextMgr.GetContext();
-        int successRate = 60 + g_player.karma / 5 + GetDaoAdventureSuccessModifier()
+        int successRate = 60 + GetEffectiveKarmaScore(g_player.karma) / 5
+            + g_player.daoHeart / 20 + g_player.reputation / 35 - g_player.enmity / 30
+            + GetDaoAdventureSuccessModifier() + GetJadeWeaponAdventureSuccessBonus()
             - g_dynamicWorld.GetAdventureRiskBonus() - eraRisk;
         int reincarnationModifier = ComputeReincarnationEventModifier(*g_currentEvent, choice);
         successRate += reincarnationModifier;
@@ -11017,6 +12116,9 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     bool successLike = isAIEvent
         ? (aiSuccess && IsPositiveOutcomeText(g_messageText))
         : ((outcomeIndex == 0) && IsPositiveOutcomeText(g_messageText));
+    ApplyPathDimensionEffects(*g_currentEvent, choice, g_messageText, successLike);
+    ResolveArcOutcome(*g_currentEvent, choice, g_messageText, successLike);
+    ResolveArcEchoOutcome(*g_currentEvent, choice, g_messageText, successLike);
     AppendAdventureResourceSpoils(*g_currentEvent, successLike, g_messageText);
     if (!isAIEvent && choice.karmaChange != 0) {
         int rippleDelta = choice.karmaChange;
@@ -11106,6 +12208,327 @@ void ProcessEventChoice(int choiceIndex, int outcomeIndex) {
     PresentAdventureResult(g_currentEventSource, g_messageText, isAIEvent);
     g_currentEvent = nullptr;
     g_currentEventSource.clear();
+}
+
+
+int CountArcLegacyTagsForAchievements() {
+    int count = 0;
+    if (!g_arcLegacy.jade.empty()) count++;
+    if (!g_arcLegacy.sect.empty()) count++;
+    if (!g_arcLegacy.family.empty()) count++;
+    if (!g_arcLegacy.rival.empty()) count++;
+    return count;
+}
+
+void ResetJadeWeaponAppliedBonuses() {
+    g_appliedJadeWeaponAttack = 0;
+    g_appliedJadeWeaponDefense = 0;
+    g_appliedJadeWeaponMaxHp = 0;
+    g_appliedJadeWeaponDaoHeart = 0;
+}
+
+void SyncJadeWeaponBonuses() {
+    const EternalWeapon* weapon = g_achievementSystem.GetEquippedWeapon();
+    int attack = 0, defense = 0, maxHp = 0, daoHeart = 0;
+    g_achievementSystem.GetEquippedWeaponEffectiveBonuses(attack, defense, maxHp, daoHeart);
+
+    g_player.attackPower += attack - g_appliedJadeWeaponAttack;
+    g_player.defense += defense - g_appliedJadeWeaponDefense;
+    int hpDelta = maxHp - g_appliedJadeWeaponMaxHp;
+    g_player.maxHp = max(1, g_player.maxHp + hpDelta);
+    g_player.hp = min(g_player.maxHp, max(1, g_player.hp + hpDelta));
+    g_player.daoHeart += daoHeart - g_appliedJadeWeaponDaoHeart;
+    g_player.daoHeart = max(-999, min(999, g_player.daoHeart));
+
+    bool changed = attack != g_appliedJadeWeaponAttack || defense != g_appliedJadeWeaponDefense ||
+                   maxHp != g_appliedJadeWeaponMaxHp || daoHeart != g_appliedJadeWeaponDaoHeart;
+    g_appliedJadeWeaponAttack = attack;
+    g_appliedJadeWeaponDefense = defense;
+    g_appliedJadeWeaponMaxHp = maxHp;
+    g_appliedJadeWeaponDaoHeart = daoHeart;
+    if (changed) {
+        AppendTraceLog(L"JADE_WEAPON_SYNC", g_achievementSystem.GetEquippedWeaponName());
+    }
+}
+
+void RestoreJadeWeaponStateAfterLoad() {
+    if (g_achievementSystem.NeedsLegacyWeaponMigrationApply()) {
+        ResetJadeWeaponAppliedBonuses();
+        SyncJadeWeaponBonuses();
+        g_achievementSystem.ClearLegacyWeaponMigrationFlag();
+        AppendTraceLog(L"JADE_WEAPON_MIGRATION", L"旧成就存档已补发对应轮回玉兵。当前：" + g_achievementSystem.GetEquippedWeaponName());
+        return;
+    }
+    int attack = 0, defense = 0, maxHp = 0, daoHeart = 0;
+    g_achievementSystem.GetEquippedWeaponEffectiveBonuses(attack, defense, maxHp, daoHeart);
+    g_appliedJadeWeaponAttack = attack;
+    g_appliedJadeWeaponDefense = defense;
+    g_appliedJadeWeaponMaxHp = maxHp;
+    g_appliedJadeWeaponDaoHeart = daoHeart;
+}
+
+void QueueAchievementToast(const AchievementUnlockNotice& notice) {
+    g_achievementToastQueue.push_back(notice);
+    AppendTraceLog(L"ACHIEVEMENT_UNLOCK",
+        L"[" + GetAchievementTierName(notice.tier) + L"] " + notice.name +
+        L"\n奖励玉兵：" + notice.rewardWeapon + L"\n" + notice.rewardText);
+}
+
+
+void ResetJadeWeaponProgressTracker() { // V0_10_JADE_WEAPON_AWAKENING
+    g_jadeWeaponTrackInitialized = false;
+}
+
+void TrackJadeWeaponResonanceFromState() {
+    if (g_gameState == STATE_MENU || !g_achievementSystem.GetEquippedWeapon()) {
+        g_jadeWeaponTrackInitialized = false;
+        return;
+    }
+    if (!g_jadeWeaponTrackInitialized || g_jadeWeaponTrackGeneration != g_generation) {
+        g_jadeWeaponTrackInitialized = true;
+        g_jadeWeaponTrackGeneration = g_generation;
+        g_jadeWeaponTrackRealm = (int)g_player.realm;
+        g_jadeWeaponTrackLevel = g_player.level;
+        g_jadeWeaponTrackEvents = g_player.totalEvents;
+        g_jadeWeaponTrackBattles = g_player.battlesWon;
+        g_jadeWeaponTrackExp = g_player.exp;
+        return;
+    }
+
+    int realmDelta = max(0, (int)g_player.realm - g_jadeWeaponTrackRealm);
+    int levelDelta = max(0, g_player.level - g_jadeWeaponTrackLevel);
+    int eventDelta = max(0, g_player.totalEvents - g_jadeWeaponTrackEvents);
+    int battleDelta = max(0, g_player.battlesWon - g_jadeWeaponTrackBattles);
+    bool cultivated = g_player.exp > g_jadeWeaponTrackExp && realmDelta == 0 && levelDelta == 0 && eventDelta == 0;
+    int amount = realmDelta * 18 + levelDelta * 4 + eventDelta * 5 + battleDelta * 3 + (cultivated ? 1 : 0);
+    wstring reason = realmDelta > 0 ? L"破境" : (eventDelta > 0 ? L"历练" : (battleDelta > 0 ? L"胜战" : L"修炼"));
+    if (amount > 0) {
+        int oldStage = g_achievementSystem.GetEquippedWeaponStage();
+        bool awakened = g_achievementSystem.AddEquippedWeaponResonance(amount, reason);
+        int newStage = g_achievementSystem.GetEquippedWeaponStage();
+        AppendTraceLog(L"JADE_WEAPON_RESONANCE",
+            g_achievementSystem.GetEquippedWeaponName() + L" +" + to_wstring(amount) +
+            L"，共鸣" + to_wstring(g_achievementSystem.GetEquippedWeaponResonance()) +
+            L"，蓄能" + to_wstring(g_achievementSystem.GetEquippedWeaponCharge()) + L"/100");
+        if (awakened || newStage != oldStage) SyncJadeWeaponBonuses();
+    }
+
+    g_jadeWeaponTrackRealm = (int)g_player.realm;
+    g_jadeWeaponTrackLevel = g_player.level;
+    g_jadeWeaponTrackEvents = g_player.totalEvents;
+    g_jadeWeaponTrackBattles = g_player.battlesWon;
+    g_jadeWeaponTrackExp = g_player.exp;
+}
+
+int GetJadeWeaponBreakthroughBonus() {
+    return g_achievementSystem.GetEquippedWeaponBreakthroughBonus();
+}
+
+int GetJadeWeaponAdventureSuccessBonus() {
+    return g_achievementSystem.GetEquippedWeaponAdventureSuccessBonus();
+}
+
+wstring InvokeJadeWeaponTechnique() {
+    const EternalWeapon* weapon = g_achievementSystem.GetEquippedWeapon();
+    if (!weapon) return L"轮回玉中尚无可显圣的兵器。";
+    if (!g_achievementSystem.CanInvokeEquippedWeapon()) {
+        return weapon->name + L"尚未蓄满显圣之力，当前" +
+            to_wstring(g_achievementSystem.GetEquippedWeaponCharge()) + L"/100。修炼、历练、胜战与破境都会积累。";
+    }
+
+    wstring style = g_achievementSystem.GetEquippedWeaponStyleName();
+    int stage = max(1, g_achievementSystem.GetEquippedWeaponStage());
+    int expGain = 40 + (int)g_player.realm * 10 + stage * 28;
+    wstring result;
+    if (style == L"杀伐") {
+        g_player.exp += expGain * 2;
+        g_player.spiritStones += 3 + stage * 2;
+        result = L"杀伐道影斩开眼前瓶颈，修为+" + to_wstring(expGain * 2) +
+            L"，灵石+" + to_wstring(3 + stage * 2) + L"。";
+    } else if (style == L"护生") {
+        int heal = max(80, g_player.maxHp * (18 + stage * 4) / 100);
+        g_player.hp = min(g_player.maxHp, g_player.hp + heal);
+        g_player.pills += stage >= 2 ? 1 : 0;
+        result = L"护生道影镇住伤势，气血恢复" + to_wstring(heal) +
+            (stage >= 2 ? L"，并凝成丹药1枚。" : L"。 ");
+    } else if (style == L"问心") {
+        g_player.exp += expGain;
+        g_player.daoHeart = min(999, g_player.daoHeart + stage);
+        result = L"心锋照见当前道途，修为+" + to_wstring(expGain) +
+            L"，道心+" + to_wstring(stage) + L"。";
+    } else {
+        int heal = max(50, g_player.maxHp * (8 + stage * 3) / 100);
+        g_player.exp += expGain + stage * 20;
+        g_player.hp = min(g_player.maxHp, g_player.hp + heal);
+        g_player.daoHeart = min(999, g_player.daoHeart + max(1, stage - 1));
+        result = L"万道兵影同时稳住形神，修为+" + to_wstring(expGain + stage * 20) +
+            L"，气血恢复" + to_wstring(heal) + L"。";
+    }
+    NormalizeCultivationProgress();
+    g_achievementSystem.ConsumeEquippedWeaponCharge();
+    AddMemory(L"轮回玉兵显圣", weapon->name + L"以" + style + L"道法回应今生。" + result);
+    AppendTraceLog(L"JADE_WEAPON_INVOKE", weapon->name + L"·" +
+        g_achievementSystem.GetEquippedWeaponStageName() + L" | " + result);
+    ResetJadeWeaponProgressTracker();
+    return weapon->name + L"显圣。" + result;
+}
+
+void EvaluateLiveAchievements() {
+    static bool smokeTriggered = false;
+    bool smoke = IsTruthyEnvValue(GetEnvironmentText(L"WENDAO_ACHIEVEMENT_SMOKE"));
+    if (smoke && !smokeTriggered) {
+        g_achievementSystem.UnlockForTestingTier(ACHIEVEMENT_TIER_JADE);
+        g_achievementSystem.UnlockForTestingTier(ACHIEVEMENT_TIER_MYSTIC);
+        g_achievementSystem.UnlockForTestingTier(ACHIEVEMENT_TIER_HEAVEN);
+        smokeTriggered = true;
+    }
+
+    if (g_gameState != STATE_MENU) {
+        g_achievementSystem.CheckLiveProgress(
+            (int)g_player.realm, g_player.age, g_player.karma,
+            g_player.totalEvents, g_player.battlesWon, g_generation,
+            g_player.daoHeart, g_player.reputation,
+            (int)g_legacySystem.GetInheritedLegacies().size(),
+            GetNarrativeArcTotalProgress(), CountArcLegacyTagsForAchievements(),
+            g_legacySystem.GetRelic().awakenings);
+    }
+
+    TrackJadeWeaponResonanceFromState();
+
+    vector<AchievementUnlockNotice> notices = g_achievementSystem.ConsumeUnlockNotices();
+    for (const auto& notice : notices) QueueAchievementToast(notice);
+    if (!notices.empty()) SyncJadeWeaponBonuses();
+}
+
+DWORD GetAchievementToastDuration(int tier) {
+    if (tier >= ACHIEVEMENT_TIER_HEAVEN) return 6500;
+    if (tier >= ACHIEVEMENT_TIER_MYSTIC) return 5600;
+    return 4800;
+}
+
+void TickAchievementSystem(HWND hWnd) {
+    EvaluateLiveAchievements();
+    DWORD now = GetTickCount();
+    if (!g_achievementToast.active && !g_achievementToastQueue.empty()) {
+        g_achievementToast.notice = g_achievementToastQueue.front();
+        g_achievementToastQueue.pop_front();
+        g_achievementToast.startedAt = now;
+        g_achievementToast.active = true;
+        AppendTraceLog(L"ACHIEVEMENT_TOAST_START",
+            L"[" + GetAchievementTierName(g_achievementToast.notice.tier) + L"] " +
+            g_achievementToast.notice.name);
+    }
+    if (g_achievementToast.active) {
+        DWORD elapsed = now - g_achievementToast.startedAt;
+        if (elapsed >= GetAchievementToastDuration(g_achievementToast.notice.tier)) {
+            AppendTraceLog(L"ACHIEVEMENT_TOAST_END", g_achievementToast.notice.name);
+            g_achievementToast.active = false;
+        }
+        InvalidateRect(hWnd, NULL, FALSE);
+    }
+}
+
+float EaseOutCubicV09(float value) {
+    value = max(0.0f, min(1.0f, value));
+    float inv = 1.0f - value;
+    return 1.0f - inv * inv * inv;
+}
+
+void DrawAchievementToastOverlay(HDC hdc, const RECT& rect) {
+    if (!g_achievementToast.active) return;
+    DWORD elapsed = GetTickCount() - g_achievementToast.startedAt;
+    DWORD duration = GetAchievementToastDuration(g_achievementToast.notice.tier);
+    if (elapsed >= duration) return;
+
+    const float enterMs = 520.0f;
+    const float exitMs = g_achievementToast.notice.tier >= ACHIEVEMENT_TIER_HEAVEN ? 1050.0f : 850.0f;
+    float opacity = 1.0f;
+    float slide = 1.0f;
+    if (elapsed < enterMs) {
+        float p = EaseOutCubicV09((float)elapsed / enterMs);
+        slide = p;
+        opacity = p;
+    } else if ((float)elapsed > (float)duration - exitMs) {
+        float p = ((float)elapsed - ((float)duration - exitMs)) / exitMs;
+        opacity = 1.0f - p;
+        slide = 1.0f - p * 0.35f;
+    }
+
+    int tier = g_achievementToast.notice.tier;
+    float pulse = 0.5f + 0.5f * (float)sin((double)elapsed / 180.0);
+    int alpha = max(0, min(255, (int)(255.0f * opacity)));
+    REAL width = min<REAL>(720.0f, max<REAL>(480.0f, (REAL)(rect.right - rect.left) * 0.56f));
+    REAL height = tier >= ACHIEVEMENT_TIER_HEAVEN ? 154.0f : (tier >= ACHIEVEMENT_TIER_MYSTIC ? 140.0f : 128.0f);
+    REAL targetY = (REAL)rect.bottom - height - 34.0f;
+    REAL y = (REAL)rect.bottom + 16.0f + (targetY - ((REAL)rect.bottom + 16.0f)) * slide;
+    REAL x = ((REAL)rect.right - width) / 2.0f;
+    RectF panel(x, y, width, height);
+
+    Graphics graphics(hdc);
+    graphics.SetSmoothingMode(SmoothingModeAntiAlias);
+    Color accent = tier >= ACHIEVEMENT_TIER_HEAVEN
+        ? Color(alpha, 255, 198, 54)
+        : (tier >= ACHIEVEMENT_TIER_MYSTIC ? Color(alpha, 188, 116, 255) : Color(alpha, 80, 218, 238));
+    Color accent2 = tier >= ACHIEVEMENT_TIER_HEAVEN
+        ? Color(alpha, 255, 82, 38)
+        : (tier >= ACHIEVEMENT_TIER_MYSTIC ? Color(alpha, 255, 196, 76) : Color(alpha, 126, 244, 255));
+
+    SolidBrush shadow(Color((BYTE)(alpha * 0.52f), 0, 0, 0));
+    graphics.FillRectangle(&shadow, RectF(panel.X + 8, panel.Y + 10, panel.Width, panel.Height));
+    if (tier >= ACHIEVEMENT_TIER_HEAVEN) {
+        for (int i = 4; i >= 1; --i) {
+            Pen glow(Color((BYTE)(alpha * (0.05f + 0.03f * pulse)), 255, 128, 32), (REAL)(i * 4));
+            graphics.DrawRectangle(&glow, RectF(panel.X - i, panel.Y - i, panel.Width + i * 2, panel.Height + i * 2));
+        }
+    }
+
+    SolidBrush background(Color((BYTE)(alpha * 0.94f), tier >= 2 ? 28 : 13, 11, tier >= 1 ? 32 : 26));
+    graphics.FillRectangle(&background, panel);
+    Pen outer(accent, tier >= 2 ? 3.0f : 2.0f);
+    graphics.DrawRectangle(&outer, panel);
+    if (tier >= ACHIEVEMENT_TIER_MYSTIC) {
+        Pen inner(accent2, 1.0f);
+        graphics.DrawRectangle(&inner, RectF(panel.X + 7, panel.Y + 7, panel.Width - 14, panel.Height - 14));
+    }
+    if (tier >= ACHIEVEMENT_TIER_HEAVEN) {
+        Pen crown(accent2, 2.0f);
+        REAL cx = panel.X + panel.Width / 2.0f;
+        graphics.DrawLine(&crown, cx - 42, panel.Y, cx - 18, panel.Y - 13);
+        graphics.DrawLine(&crown, cx - 18, panel.Y - 13, cx, panel.Y - 3);
+        graphics.DrawLine(&crown, cx, panel.Y - 3, cx + 18, panel.Y - 13);
+        graphics.DrawLine(&crown, cx + 18, panel.Y - 13, cx + 42, panel.Y);
+    }
+
+    int particles = tier >= 2 ? 18 : (tier >= 1 ? 11 : 6);
+    SolidBrush particle(accent2);
+    for (int i = 0; i < particles; ++i) {
+        double phase = (double)elapsed / (210.0 + i * 9.0) + i * 1.83;
+        REAL px = panel.X + 18.0f + (REAL)(fmod(i * 97.0 + elapsed * (0.025 + tier * 0.008), max(40.0, (double)panel.Width - 36.0)));
+        REAL py = panel.Y + panel.Height - 14.0f - (REAL)(fmod(elapsed * (0.018 + (i % 3) * 0.005) + i * 23.0, max(30.0, (double)panel.Height - 28.0)));
+        REAL radius = (REAL)(1.6 + tier * 0.7 + (sin(phase) + 1.0) * 0.7);
+        graphics.FillEllipse(&particle, px - radius, py - radius, radius * 2, radius * 2);
+    }
+
+    Font tierFont(L"Microsoft YaHei", 16, FontStyleBold, UnitPixel);
+    Font titleFont(L"Microsoft YaHei", tier >= 2 ? 27.0f : 24.0f, FontStyleBold, UnitPixel);
+    Font bodyFont(L"Microsoft YaHei", 15, FontStyleRegular, UnitPixel);
+    Font rewardFont(L"Microsoft YaHei", 16, FontStyleBold, UnitPixel);
+    SolidBrush accentBrush(accent);
+    SolidBrush white(Color(alpha, 248, 246, 239));
+    SolidBrush soft(Color((BYTE)(alpha * 0.9f), 210, 211, 220));
+    StringFormat left;
+    left.SetAlignment(StringAlignmentNear);
+    left.SetTrimming(StringTrimmingEllipsisCharacter);
+    left.SetFormatFlags(StringFormatFlagsLineLimit);
+
+    graphics.DrawString((L"成就达成 · " + GetAchievementTierName(tier)).c_str(), -1, &tierFont,
+        RectF(panel.X + 24, panel.Y + 14, panel.Width - 48, 24), &left, &accentBrush);
+    graphics.DrawString(g_achievementToast.notice.name.c_str(), -1, &titleFont,
+        RectF(panel.X + 24, panel.Y + 38, panel.Width - 48, 34), &left, &white);
+    graphics.DrawString(g_achievementToast.notice.description.c_str(), -1, &bodyFont,
+        RectF(panel.X + 24, panel.Y + 75, panel.Width - 48, 25), &left, &soft);
+    graphics.DrawString((L"轮回玉藏兵 · " + g_achievementToast.notice.rewardWeapon).c_str(), -1, &rewardFont,
+        RectF(panel.X + 24, panel.Y + panel.Height - 36, panel.Width - 48, 26), &left, &accentBrush);
 }
 
 void DrawPanel(Graphics& graphics, const RectF& rect, int alpha = 210) {
@@ -11292,7 +12715,10 @@ wstring BuildMainWorldDigest() {
         if (compact.size() > limit) compact = compact.substr(0, limit) + L"……";
         return compact;
     };
-    ss << BuildImmediateGoalDigest() << L"\n\n";
+    ss << BuildImmediateGoalDigest() << L"\n";
+    ss << L"主线分线: " << BuildNarrativeArcDigest() << L"\n";
+    ss << L"跨世定局: " << BuildArcLegacyDigest() << L"\n";
+    ss << L"定局续章: " << BuildArcEchoDigest() << L"\n\n";
     ss << L"天下风向:\n";
     ss << g_worldEraName << L" · 世界第 " << g_dynamicWorld.GetWorldTime() << L" 年\n";
     ss << clip(g_eraTransitionNote, 86) << L"\n";
@@ -11469,7 +12895,21 @@ void WriteAgentState() {
     ss << L"\"totalEvents\":" << g_player.totalEvents << L",\n";
     WriteJsonField(ss, L"rootQuality", g_player.GetRootQuality());
     WriteJsonField(ss, L"rootShape", g_player.GetRootShapeLabel());
-    WriteJsonField(ss, L"roots", g_player.GetRootDetails(), false);
+    WriteJsonField(ss, L"roots", g_player.GetRootDetails());
+    ss << L"\"daoHeart\":" << g_player.daoHeart << L",\n";
+    ss << L"\"reputation\":" << g_player.reputation << L",\n";
+    ss << L"\"enmity\":" << g_player.enmity << L",\n";
+    WriteJsonField(ss, L"storyArcs", BuildNarrativeArcDigest());
+    WriteJsonField(ss, L"arcLegacies", BuildArcLegacyDigest());
+    WriteJsonField(ss, L"arcEchoes", BuildArcEchoDigest());
+    WriteJsonField(ss, L"jadeWeapon", g_achievementSystem.GetEquippedWeaponName());
+    WriteJsonField(ss, L"jadeWeaponStage", g_achievementSystem.GetEquippedWeaponStageName());
+    WriteJsonField(ss, L"jadeWeaponStyle", g_achievementSystem.GetEquippedWeaponStyleName());
+    ss << L"\"jadeWeaponResonance\":" << g_achievementSystem.GetEquippedWeaponResonance() << L",\n";
+    ss << L"\"jadeWeaponCharge\":" << g_achievementSystem.GetEquippedWeaponCharge() << L",\n";
+    ss << L"\"achievementCount\":" << g_achievementSystem.GetUnlockedCount() << L",\n";
+    ss << L"\"jadeWeaponCount\":" << g_achievementSystem.GetUnlockedWeaponCount() << L",\n";
+    ss << L"\"effectiveKarma\":" << GetEffectiveKarmaScore(g_player.karma) << L"\n";
     ss << L"},\n";
 
     WriteJsonField(ss, L"goal", BuildImmediateGoalDigest());
@@ -11721,7 +13161,7 @@ void OnPaint(HDC hdc, RECT& rect) {
             int height = max(520, (int)rect.bottom);
             float centerX = width / 2.0f;
             int panelWidth = min(520, max(380, width - 180));
-            int panelHeight = 210;
+            int panelHeight = 335; // V0_2_MENU_PAINT_OPTIONS
             int panelLeft = (width - panelWidth) / 2;
             int panelTop = max(250, (height - panelHeight) / 2 + 70);
 
@@ -11765,6 +13205,9 @@ void OnPaint(HDC hdc, RECT& rect) {
             Pen inputPen(Color(210, 230, 230, 230), 1);
             graphics.FillRectangle(&inputBrush, inputRect);
             graphics.DrawRectangle(&inputPen, inputRect);
+            Font menuHintFont(&fontFamily, 18, FontStyleRegular, UnitPixel);
+            RectF menuHintRect((REAL)panelLeft + 38, (REAL)panelTop + 140, (REAL)panelWidth - 76, 142);
+            graphics.DrawString(L"[1] 开始新生 / 输入道号\n[2] 继续游戏（最近旧录）\n[3] 读取存档\n[4] 存档管理\n[5] 设定\n[ESC] 退出游戏", -1, &menuHintFont, menuHintRect, &leftFormat, &softWhiteBrush);
 
             break;
         }
@@ -11823,7 +13266,12 @@ void OnPaint(HDC hdc, RECT& rect) {
                 ClampUiText(g_player.GetRootShapeLabel(), 18), leftPanel.X + 18, y, leftPanel.Width - 36);
             y += 28;
             DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"因果",
-                to_wstring(g_player.karma), leftPanel.X + 18, y, leftPanel.Width - 36);
+                to_wstring(g_player.karma) + L" / 有效" + to_wstring(GetEffectiveKarmaScore(g_player.karma)),
+                leftPanel.X + 18, y, leftPanel.Width - 36);
+            y += 28;
+            DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"道途",
+                L"心" + to_wstring(g_player.daoHeart) + L" 名" + to_wstring(g_player.reputation) +
+                L" 仇" + to_wstring(g_player.enmity), leftPanel.X + 18, y, leftPanel.Width - 36);
             y += 28;
             DrawLabelValue(graphics, statFont, statFont, mutedBrush, whiteBrush, leftFormat, L"寿元",
                 to_wstring(g_player.age) + L" / " + to_wstring(g_player.lifespan), leftPanel.X + 18, y, leftPanel.Width - 36);
@@ -11990,7 +13438,10 @@ void OnPaint(HDC hdc, RECT& rect) {
                 L"[W] 世界",
                 L"[Q] 本世",
                 L"[E] 传承",
-                L"[T] 至宝"
+                L"[T] 至宝",
+                L"[A] 成就玉兵",
+                L"[Y] 切换玉兵",
+                L"[J] 玉兵显圣"
             }, cmdY);
             drawCommandGroup(L"系统", {
                 L"[S] 保存",
@@ -12416,10 +13867,13 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
         g_traceAutoplaySteps = 0;
     }
     g_player = Player();
+    ResetJadeWeaponAppliedBonuses();
+    SyncJadeWeaponBonuses();
     g_player.name = cleanName;
     g_generation = 1;
     g_jadeDreamOmenEventsThisLife = 0;
     g_lifeStoryProgressThisLife = 0;
+    g_narrativeArcs = NarrativeArcState();
     g_lastLifeStoryProgressEventCount = -1000;
     g_plannedLegacies.clear();
     g_mainScroll = 0;
@@ -12475,6 +13929,78 @@ bool StartNewGameWithDaoName(HWND hWnd, const wstring& daoName, const wstring& t
     return true;
 }
 
+// V0_2_MENU_HELPERS_BEGIN
+void ShowMenuControls(bool visible) {
+    if (g_nameInput) ShowWindow(g_nameInput, visible ? SW_SHOW : SW_HIDE);
+    if (g_btnStart) ShowWindow(g_btnStart, visible ? SW_SHOW : SW_HIDE);
+    if (visible) LayoutMenuControls();
+}
+
+bool LoadLatestSaveFromMenu(HWND hWnd) {
+    EnsureSaveDirectory();
+    int bestSlot = -1;
+    FILETIME bestTime = {};
+    bool hasBest = false;
+    for (int slot = 1; slot <= SAVE_SLOT_COUNT; ++slot) {
+        wstring path = GetSaveSlotPath(slot);
+        WIN32_FILE_ATTRIBUTE_DATA data = {};
+        if (!GetFileAttributesExW(path.c_str(), GetFileExInfoStandard, &data)) continue;
+        if (!hasBest || CompareFileTime(&data.ftLastWriteTime, &bestTime) > 0) {
+            bestSlot = slot;
+            bestTime = data.ftLastWriteTime;
+            hasBest = true;
+        }
+    }
+    if (bestSlot < 0) return false;
+    if (!LoadGameFromPath(GetSaveSlotPath(bestSlot))) return false;
+    g_gameState = STATE_GAME;
+    g_messageText = L"【继续游戏】\n已接续最近一份旧录：第" + to_wstring(bestSlot) + L"号存档。";
+    ShowMenuControls(false);
+    InvalidateRect(hWnd, NULL, FALSE);
+    return true;
+}
+
+void OpenMenuNotice(const wstring& title, const wstring& text) {
+    ShowMenuControls(false);
+    OpenInfoPage(title, text, STATE_MENU);
+}
+
+void HandleMenuKey(HWND hWnd, WPARAM key) {
+    if (key == '1') {
+        SetFocus(g_nameInput);
+        return;
+    }
+    if (key == '2') {
+        if (!LoadLatestSaveFromMenu(hWnd)) {
+            OpenMenuNotice(L"继续游戏", L"没有找到可接续的旧录。\n\n可以按 [1] 输入道号开始新生，或按 [3] 查看存档槽。\n\n[ESC] 返回主菜单");
+            InvalidateRect(hWnd, NULL, FALSE);
+        }
+        return;
+    }
+    if (key == '3') {
+        ShowMenuControls(false);
+        OpenSaveSlotPage(true);
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == '4') {
+        ShowMenuControls(false);
+        OpenSaveSlotPage(true);
+        g_infoTitle = L"存档管理";
+        g_infoText = L"当前版本先提供读取旧录入口。\n\n后续会在这里补：复制存档、删除存档、查看详细旧录、导出存档。\n\n请选择已有槽位读取，或按 [ESC] 返回主菜单。";
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == '5') {
+        OpenMenuNotice(L"设定", L"当前版本使用默认设定。\n\n后续会补充：文字速度、音量、美术资源包、窗口比例、本地 AI 开关。\n\n[ESC] 返回主菜单");
+        InvalidateRect(hWnd, NULL, FALSE);
+        return;
+    }
+    if (key == VK_ESCAPE) {
+        PostQuitMessage(0);
+    }
+}
+// V0_2_MENU_HELPERS_END
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_PAINT: {
@@ -12488,6 +14014,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             SelectObject(memDC, memBitmap);
 
             OnPaint(memDC, rect);
+            DrawAchievementToastOverlay(memDC, rect);
 
             BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
             DeleteObject(memBitmap);
@@ -12713,11 +14240,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 HandleTraceAutoplayTick(hWnd);
             } else if (wParam == IDT_AGENT_BRIDGE) {
                 HandleAgentBridgeTick(hWnd);
+            } else if (wParam == IDT_ACHIEVEMENT_TOAST_V09) {
+                TickAchievementSystem(hWnd);
             }
             break;
         }
 
         case WM_KEYDOWN: {
+            // V0_2_MENU_KEYDOWN_BEGIN
+            if (g_gameState == STATE_MENU) {
+                HandleMenuKey(hWnd, wParam);
+                break;
+            }
+            // V0_2_MENU_KEYDOWN_END
             if (g_gameState == STATE_GAME) {
                 if (wParam == '1') {
                     if (g_player.CanBreakthrough() &&
@@ -12841,6 +14376,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         OpenEventPage(&s_jadeOmenEvent, L"伴生玉佩历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
+                    else if (ShouldTriggerArcLegacyEvent()) {
+                        static Event s_arcLegacyEvent;
+                        s_arcLegacyEvent = BuildArcLegacyEvent();
+                        g_lastArcEchoEvent = g_player.totalEvents;
+                        OpenEventPage(&s_arcLegacyEvent, L"跨世定局历练");
+                        InvalidateRect(hWnd, NULL, FALSE);
+                    }
                     else if (ShouldTriggerLongCharacterEvent()) {
                         static Event s_longCharacterEvent;
                         s_longCharacterEvent = BuildLongCharacterEvent();
@@ -12853,10 +14395,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         static Event s_lifeStoryEvent;
                         s_lifeStoryEvent = BuildLifeStoryProgressEvent();
                         g_lastLifeStoryProgressEventCount = g_player.totalEvents;
-                        g_lifeStoryProgressThisLife++;
-                        AddMemory(L"本世主线推进",
-                            L"外出历练时，本世主线进入第" +
-                            to_wstring(g_lifeStoryProgressThisLife) + L"段。");
+                        AddMemory(L"本世分线推进",
+                            L"外出历练时，一条本世分线继续推进。当前：" +
+                            BuildNarrativeArcDigest());
                         OpenEventPage(&s_lifeStoryEvent, L"本世主线历练");
                         InvalidateRect(hWnd, NULL, FALSE);
                     }
@@ -12970,7 +14511,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                             L"尝试突破至 " + breakthroughTarget + L"。");
                         {
                             int daoBreakthrough = GetDaoBreakthroughModifier();
-                            bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier() + daoBreakthrough);
+                            bool success = g_player.TryBreakthrough(GetEraBreakthroughModifier() + daoBreakthrough +
+                                GetJadeWeaponBreakthroughBonus());
                             if (success) {
                                 AddMemory(L"境界突破", L"踏入 " + GetRealmName(g_player.realm));
                                 AddMemory(L"时代法则", L"在" + g_worldEraName + L"中破境成功，说明此世大道仍愿意为你开门。");
@@ -13111,6 +14653,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                     SetInlineGameFeedback(L"铸炼器物", forgeMsg, L"FORGE");
                     InvalidateRect(hWnd, NULL, FALSE);
                 }
+                else if (wParam == 'A' || wParam == 'a') {
+                    OpenInfoPage(L"成就与轮回玉兵", g_achievementSystem.GetAchievementsText(), STATE_GAME);
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'Y' || wParam == 'y') {
+                    if (g_achievementSystem.EquipNextUnlockedWeapon()) {
+                        SyncJadeWeaponBonuses();
+                        SetInlineGameFeedback(L"轮回玉换兵", L"当前共鸣玉兵：" + g_achievementSystem.GetEquippedWeaponName() + L"。玉中真形不受天地侵扰。", L"JADE_WEAPON_EQUIP");
+                    } else {
+                        SetInlineGameFeedback(L"轮回玉藏兵", L"尚未通过成就唤醒任何永久玉兵。", L"JADE_WEAPON_EQUIP");
+                    }
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                else if (wParam == 'J' || wParam == 'j') {
+                    SetInlineGameFeedback(L"玉兵显圣", InvokeJadeWeaponTechnique(), L"JADE_WEAPON_INVOKE");
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
                 else if (wParam == 'W' || wParam == 'w') {
                     OpenInfoPage(L"修真界现状", GetWorldInfoText(), STATE_GAME);
                     InvalidateRect(hWnd, NULL, FALSE);
@@ -13178,7 +14737,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                         if (outcomeCount > 1) {
                             int failChance = 45 + g_dynamicWorld.GetAdventureRiskBonus() +
                                 GetEraAdventureRiskModifier() - GetDaoAdventureSuccessModifier() -
-                                g_player.karma / 10;
+                                GetJadeWeaponAdventureSuccessBonus() - g_player.karma / 10;
                             failChance = max(10, min(85, failChance));
                             if (Random(1, 100) <= failChance) {
                                 outcome = Random(1, outcomeCount - 1);
@@ -13318,6 +14877,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     ShowWindow(g_hWnd, ShouldHideTraceWindow() ? SW_HIDE : nCmdShow);
     UpdateWindow(g_hWnd);
     AppendTraceLog(L"APP_START", L"窗口已创建，等待输入道号。");
+    SetTimer(g_hWnd, IDT_ACHIEVEMENT_TOAST_V09, 33, nullptr);
     if (IsTraceAutoplayEnabled()) {
         SetTimer(g_hWnd, IDT_TRACE_AUTOPLAY, 180, nullptr);
     }
