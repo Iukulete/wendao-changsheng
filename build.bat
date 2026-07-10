@@ -32,6 +32,23 @@ if not exist "%SRC%" (
     exit /b 1
 )
 
+where python >nul 2>nul
+if errorlevel 1 (
+    echo Python was not found. v0.6 gameplay patch cannot be applied.
+    exit /b 1
+)
+
+if exist "%ROOT%tools\apply_v06_path_dimensions.py" (
+    echo Applying v0.6 path dimensions and karma rebalance...
+    python "%ROOT%tools\apply_v06_path_dimensions.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.6 path dimension patch failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" (
     mkdir "%OUT_DIR%"
 )
