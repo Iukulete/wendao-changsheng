@@ -50,6 +50,7 @@ jobs:
             "STORY_STATE_V2",
             "NarrativeArcState",
             "BuildNarrativeArcDigest",
+            "| 分线 ",
             "【旧玉·一】夜半微温",
             "【旧玉·终】不借旧我",
             "【山门·终】自择道统",
@@ -66,6 +67,7 @@ jobs:
           python tools/apply_v06_path_dimensions.py
           python tools/repair_v06_path_digest.py
           python tools/apply_v07_story_arcs.py
+          python tools/repair_v07_trace_digest.py
           if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
@@ -141,6 +143,72 @@ jobs:
           }
           finally {
             Start-Sleep -Milliseconds 500
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          }
+
+      - name: Long-form narrative arc smoke
+        shell: pwsh
+        run: |
+          $release = (Resolve-Path release).Path
+          $statePath = Join-Path $release "v07_arc_state.json"
+          $commandPath = Join-Path $release "v07_arc_command.txt"
+          $tracePath = Join-Path $release "v07_arc_trace.log"
+          $stdoutPath = Join-Path $release "v07_arc_stdout.log"
+          $stderrPath = Join-Path $release "v07_arc_stderr.log"
+          Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
+
+          $env:WENDAO_AGENT_STATE = $statePath
+          $env:WENDAO_AGENT_COMMAND = $commandPath
+          $env:WENDAO_AGENT_HIDE = "1"
+          $env:WENDAO_TRACE_LOG = $tracePath
+          $env:WENDAO_TRACE_AUTOPLAY = "1"
+          $env:WENDAO_TRACE_HIDE = "1"
+          $env:WENDAO_TRACE_MAX_ACTIONS = "150"
+          $env:WENDAO_TRACE_MAX_LIVES = "1"
+
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
+            -WorkingDirectory $release -PassThru `
+            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          try {
+            $deadline = (Get-Date).AddSeconds(25)
+            while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) {
+              Start-Sleep -Milliseconds 250
+            }
+            if (-not (Test-Path $statePath)) { throw "Arc smoke Agent state was not created" }
+            "00001 START v07-arc-smoke" | Set-Content $commandPath -Encoding UTF8
+
+            $runDeadline = (Get-Date).AddSeconds(150)
+            while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) {
+              Start-Sleep -Seconds 1
+              $proc.Refresh()
+            }
+            if (-not $proc.HasExited) {
+              Stop-Process -Id $proc.Id -Force
+              Start-Sleep -Milliseconds 500
+            }
+
+            if (-not (Test-Path $tracePath)) { throw "Narrative arc trace was not created" }
+            $trace = Get-Content $tracePath -Raw -Encoding UTF8
+            $arcMatches = [regex]::Matches($trace, "【(旧玉|山门|家世|战帖)·")
+            $arcNames = @($arcMatches | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+            if ($arcMatches.Count -lt 2) {
+              throw "Too few staged narrative events were executed: $($arcMatches.Count)"
+            }
+            if ($arcNames.Count -lt 2) {
+              throw "Narrative smoke did not rotate between arc families: $($arcNames -join ', ')"
+            }
+            if ($trace -notmatch "分线 .*([1-4]/4)") {
+              throw "Trace never recorded advanced narrative arc progress"
+            }
+
+            $arcSummary = [ordered]@{
+              stagedEventCount = $arcMatches.Count
+              distinctArcs = $arcNames
+              finalProgressLines = @([regex]::Matches($trace, "分线 [^\r\n]+") | Select-Object -Last 5 | ForEach-Object { $_.Value })
+            }
+            $arcSummary | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v07_arc_summary.json") -Encoding UTF8
+          }
+          finally {
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
