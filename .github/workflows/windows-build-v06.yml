@@ -1,4 +1,4 @@
-name: Windows Build v0.6
+name: Windows Build v0.7
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and verify path dimensions
+    name: Build and verify narrative arcs
     runs-on: windows-latest
 
     steps:
@@ -45,24 +45,37 @@ jobs:
           $source = Get-Content src/wendao_enhanced.cpp -Raw -Encoding UTF8
           @(
             "V0_6_PATH_DIMENSIONS",
+            "V0_7_NARRATIVE_ARCS",
             "SAVE_V5",
-            "daoHeart",
-            "reputation",
-            "enmity",
-            "GetEffectiveKarmaScore"
+            "STORY_STATE_V2",
+            "NarrativeArcState",
+            "BuildNarrativeArcDigest",
+            "【旧玉·一】夜半微温",
+            "【旧玉·终】不借旧我",
+            "【山门·终】自择道统",
+            "【家世·终】认或不认",
+            "【战帖·终】敌友由我"
           ) | ForEach-Object {
-            if (-not $source.Contains($_)) { throw "Missing v0.6 marker: $_" }
+            if (-not $source.Contains($_)) { throw "Missing v0.7 marker: $_" }
           }
           if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
+
+      - name: Verify patch idempotence
+        shell: pwsh
+        run: |
+          python tools/apply_v06_path_dimensions.py
+          python tools/repair_v06_path_digest.py
+          python tools/apply_v07_story_arcs.py
+          if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v06_agent_state.json"
-          $commandPath = Join-Path $release "v06_agent_command.txt"
-          $stdoutPath = Join-Path $release "v06_runtime_stdout.log"
-          $stderrPath = Join-Path $release "v06_runtime_stderr.log"
+          $statePath = Join-Path $release "v07_agent_state.json"
+          $commandPath = Join-Path $release "v07_agent_command.txt"
+          $stdoutPath = Join-Path $release "v07_runtime_stdout.log"
+          $stderrPath = Join-Path $release "v07_runtime_stderr.log"
           Remove-Item $statePath,$commandPath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
           $env:WENDAO_AGENT_STATE = $statePath
@@ -90,20 +103,29 @@ jobs:
             }
             if (-not $state.player) { throw "Agent state JSON was not readable" }
 
-            @("daoHeart", "reputation", "enmity", "effectiveKarma") | ForEach-Object {
+            @("daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs") | ForEach-Object {
               if ($null -eq $state.player.PSObject.Properties[$_]) {
                 throw "Runtime Agent JSON missing player.$_"
               }
             }
+            if ($state.player.storyArcs -notmatch "旧玉0/4" -or
+                $state.player.storyArcs -notmatch "山门0/4" -or
+                $state.player.storyArcs -notmatch "家世0/4" -or
+                $state.player.storyArcs -notmatch "战帖0/4") {
+              throw "Unexpected initial story arc digest: $($state.player.storyArcs)"
+            }
             if ($state.state -ne "MENU") { throw "Expected MENU state, got $($state.state)" }
 
-            "00001 START v06-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v07-smoke" | Set-Content $commandPath -Encoding UTF8
             $startDeadline = (Get-Date).AddSeconds(12)
             do {
               Start-Sleep -Milliseconds 300
               try { $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
             } while ((Get-Date) -lt $startDeadline -and $state.state -eq "MENU")
             if ($state.state -eq "MENU") { throw "Agent START command was not consumed" }
+            if ([string]::IsNullOrWhiteSpace($state.player.storyArcs)) {
+              throw "Story arc digest disappeared after starting game"
+            }
 
             $summary = [ordered]@{
               state = $state.state
@@ -112,8 +134,9 @@ jobs:
               enmity = $state.player.enmity
               karma = $state.player.karma
               effectiveKarma = $state.player.effectiveKarma
+              storyArcs = $state.player.storyArcs
             }
-            $summary | ConvertTo-Json | Set-Content (Join-Path $release "v06_runtime_summary.json") -Encoding UTF8
+            $summary | ConvertTo-Json | Set-Content (Join-Path $release "v07_runtime_summary.json") -Encoding UTF8
             "00002 QUIT" | Set-Content $commandPath -Encoding UTF8
           }
           finally {
@@ -125,7 +148,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wendao-v06-windows-build
+          name: wendao-v07-windows-build
           path: |
             build.log
             release/
