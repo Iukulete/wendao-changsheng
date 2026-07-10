@@ -49,6 +49,17 @@ if exist "%ROOT%tools\apply_v06_path_dimensions.py" (
     echo.
 )
 
+if exist "%ROOT%tools\repair_v06_path_digest.py" (
+    echo Repairing v0.6 path digest declaration order...
+    python "%ROOT%tools\repair_v06_path_digest.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.6 declaration-order repair failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" (
     mkdir "%OUT_DIR%"
 )
