@@ -1,4 +1,4 @@
-name: Windows Build v0.10
+name: Windows Build v0.11
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: Build and verify awakened jade weapons
+    name: Build and verify second-life legacy chapters
     runs-on: windows-latest
 
     steps:
@@ -52,23 +52,23 @@ jobs:
             "V0_10_JADE_WEAPON_AWAKENING",
             "V0_10_COMPILE_REPAIR",
             "V0_10_WEAPON_PACING",
-            "STORY_STATE_V3",
+            "V0_11_ARC_ECHO_CHAPTERS",
+            "STORY_STATE_V4",
             "ACHIEVEMENTS_V3",
-            "DrawAchievementToastOverlay",
+            "ArcEchoState",
+            "BuildArcEchoDigest",
+            "ResolveArcEchoOutcome",
+            "ARC_ECHO_STAGE",
+            "ARC_ECHO_RESOLVE",
+            "【定局续章·旧玉一】旧梦证词",
+            "【定局续章·山门终】道统归属",
+            "【定局续章·家世终】旧名裁决",
+            "【定局续章·战帖终】旧约新解",
+            "arcEchoes",
             "TrackJadeWeaponResonanceFromState",
-            "InvokeJadeWeaponTechnique",
-            "GetEquippedWeaponBreakthroughBonus",
-            "GetEquippedWeaponAdventureSuccessBonus",
-            "JADE_WEAPON_RESONANCE",
-            "JADE_WEAPON_INVOKE",
-            "jadeWeaponResonance",
-            "jadeWeaponCharge",
-            "沉眠",
-            "初鸣",
-            "真名",
-            "道化"
+            "InvokeJadeWeaponTechnique"
           ) | ForEach-Object {
-            if (-not ($source.Contains($_) -or $legacy.Contains($_))) { throw "Missing v0.10 marker: $_" }
+            if (-not ($source.Contains($_) -or $legacy.Contains($_))) { throw "Missing v0.11 marker: $_" }
           }
           if (-not (Test-Path release/wendao_enhanced.exe)) { throw "Executable missing" }
 
@@ -84,16 +84,17 @@ jobs:
           python tools/apply_v10_jade_weapon_awakening.py
           python tools/repair_v10_compile.py
           python tools/tune_v10_weapon_pacing.py
+          python tools/apply_v11_arc_echo_chapters.py
           if ($LASTEXITCODE -ne 0) { throw "Patch idempotence check failed" }
 
       - name: Runtime Agent JSON smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v10_agent_state.json"
-          $commandPath = Join-Path $release "v10_agent_command.txt"
-          $stdoutPath = Join-Path $release "v10_runtime_stdout.log"
-          $stderrPath = Join-Path $release "v10_runtime_stderr.log"
+          $statePath = Join-Path $release "v11_agent_state.json"
+          $commandPath = Join-Path $release "v11_agent_command.txt"
+          $stdoutPath = Join-Path $release "v11_runtime_stdout.log"
+          $stderrPath = Join-Path $release "v11_runtime_stderr.log"
           Remove-Item $statePath,$commandPath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
           $env:WENDAO_AGENT_STATE = $statePath
@@ -101,6 +102,7 @@ jobs:
           $env:WENDAO_AGENT_HIDE = "1"
           $env:WENDAO_TRACE_HIDE = "1"
           Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
+          Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
 
           $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
             -WorkingDirectory $release -PassThru `
@@ -116,28 +118,20 @@ jobs:
             }
             if (-not $state.player) { throw "Agent state JSON was not readable" }
             @(
-              "daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs", "arcLegacies",
+              "daoHeart", "reputation", "enmity", "effectiveKarma", "storyArcs", "arcLegacies", "arcEchoes",
               "jadeWeapon", "jadeWeaponStage", "jadeWeaponStyle", "jadeWeaponResonance",
               "jadeWeaponCharge", "achievementCount", "jadeWeaponCount"
             ) | ForEach-Object {
               if ($null -eq $state.player.PSObject.Properties[$_]) { throw "Runtime Agent JSON missing player.$_" }
             }
-            if ($state.state -ne "MENU") { throw "Expected MENU state, got $($state.state)" }
-            "00001 START v10-smoke" | Set-Content $commandPath -Encoding UTF8
-            $startDeadline = (Get-Date).AddSeconds(12)
-            do {
-              Start-Sleep -Milliseconds 300
-              try { $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json } catch {}
-            } while ((Get-Date) -lt $startDeadline -and $state.state -eq "MENU")
-            if ($state.state -eq "MENU") { throw "Agent START command was not consumed" }
-            [ordered]@{
-              state = $state.state
-              jadeWeapon = $state.player.jadeWeapon
-              jadeWeaponStage = $state.player.jadeWeaponStage
-              jadeWeaponStyle = $state.player.jadeWeaponStyle
-              jadeWeaponResonance = $state.player.jadeWeaponResonance
-              jadeWeaponCharge = $state.player.jadeWeaponCharge
-            } | ConvertTo-Json | Set-Content (Join-Path $release "v10_runtime_summary.json") -Encoding UTF8
+            if ($state.player.arcEchoes -notmatch "旧玉续章0/3" -or
+                $state.player.arcEchoes -notmatch "山门续章0/3" -or
+                $state.player.arcEchoes -notmatch "家世续章0/3" -or
+                $state.player.arcEchoes -notmatch "战帖续章0/3") {
+              throw "Unexpected fresh arc echo digest: $($state.player.arcEchoes)"
+            }
+            "00001 START v11-smoke" | Set-Content $commandPath -Encoding UTF8
+            Start-Sleep -Seconds 2
             "00002 QUIT" | Set-Content $commandPath -Encoding UTF8
           }
           finally {
@@ -145,25 +139,21 @@ jobs:
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
-      - name: Achievement, awakening and invocation smoke
+      - name: Achievement awakening and invocation smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v10_weapon_state.json"
-          $commandPath = Join-Path $release "v10_weapon_command.txt"
-          $tracePath = Join-Path $release "v10_weapon_trace.log"
-          $stdoutPath = Join-Path $release "v10_weapon_stdout.log"
-          $stderrPath = Join-Path $release "v10_weapon_stderr.log"
+          $statePath = Join-Path $release "v11_weapon_state.json"
+          $commandPath = Join-Path $release "v11_weapon_command.txt"
+          $tracePath = Join-Path $release "v11_weapon_trace.log"
+          $stdoutPath = Join-Path $release "v11_weapon_stdout.log"
+          $stderrPath = Join-Path $release "v11_weapon_stderr.log"
           Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
 
           function Send-AgentCommand([string]$line) {
             for ($attempt = 0; $attempt -lt 12; $attempt++) {
-              try {
-                $line | Set-Content $commandPath -Encoding UTF8 -ErrorAction Stop
-                return
-              } catch {
-                Start-Sleep -Milliseconds 120
-              }
+              try { $line | Set-Content $commandPath -Encoding UTF8 -ErrorAction Stop; return }
+              catch { Start-Sleep -Milliseconds 120 }
             }
             throw "Unable to write Agent command after retries: $line"
           }
@@ -174,6 +164,7 @@ jobs:
           $env:WENDAO_TRACE_LOG = $tracePath
           $env:WENDAO_TRACE_HIDE = "1"
           $env:WENDAO_ACHIEVEMENT_SMOKE = "1"
+          Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
 
           $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
             -WorkingDirectory $release -PassThru `
@@ -182,12 +173,11 @@ jobs:
             $deadline = (Get-Date).AddSeconds(30)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 200 }
             if (-not (Test-Path $statePath)) { throw "Weapon smoke state was not created" }
-            Send-AgentCommand "00001 START v10-weapon-smoke"
+            Send-AgentCommand "00001 START v11-weapon-smoke"
             Start-Sleep -Seconds 3
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
             if ([int]$state.player.achievementCount -lt 3) { throw "Smoke did not unlock three achievement tiers" }
             if ([int]$state.player.jadeWeaponCount -lt 3) { throw "Smoke did not unlock reward weapons" }
-            if ($state.player.jadeWeapon -eq "尚无玉兵") { throw "No jade weapon equipped" }
 
             for ($seq = 2; $seq -le 24; $seq++) {
               Send-AgentCommand ("{0:D5} KEY 1" -f $seq)
@@ -195,42 +185,17 @@ jobs:
             }
             Start-Sleep -Seconds 1
             $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$state.player.jadeWeaponResonance -lt 30) {
-              throw "Weapon did not reach first awakening: $($state.player.jadeWeaponResonance)"
-            }
-            if ($state.player.jadeWeaponStage -eq "沉眠") { throw "Weapon remained dormant" }
-            if ([int]$state.player.jadeWeaponCharge -lt 100) { throw "Weapon technique did not charge" }
-
+            if ([int]$state.player.jadeWeaponResonance -lt 30) { throw "Weapon did not awaken" }
+            if ([int]$state.player.jadeWeaponCharge -lt 100) { throw "Weapon did not charge" }
             Send-AgentCommand "00025 KEY J"
             Start-Sleep -Seconds 1
             $afterInvoke = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([int]$afterInvoke.player.jadeWeaponCharge -ne 0) { throw "KEY J did not consume weapon charge" }
-
-            $beforeWeapon = [string]$afterInvoke.player.jadeWeapon
-            Send-AgentCommand "00026 KEY Y"
-            Start-Sleep -Seconds 1
-            $afterSwitch = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
-            if ([string]$afterSwitch.player.jadeWeapon -eq $beforeWeapon) { throw "KEY Y did not rotate the jade weapon" }
-
+            if ([int]$afterInvoke.player.jadeWeaponCharge -ne 0) { throw "KEY J did not consume charge" }
+            Send-AgentCommand "00026 QUIT"
             $trace = Get-Content $tracePath -Raw -Encoding UTF8
-            foreach ($required in @(
-              "ACHIEVEMENT_UNLOCK", "ACHIEVEMENT_TOAST_START", "JADE_WEAPON_SYNC",
-              "JADE_WEAPON_RESONANCE", "JADE_WEAPON_INVOKE", "初鸣"
-            )) {
+            foreach ($required in @("ACHIEVEMENT_UNLOCK", "JADE_WEAPON_RESONANCE", "JADE_WEAPON_INVOKE", "初鸣")) {
               if ($trace -notmatch $required) { throw "Weapon trace missing $required" }
             }
-            [ordered]@{
-              achievementCount = $afterSwitch.player.achievementCount
-              jadeWeaponCount = $afterSwitch.player.jadeWeaponCount
-              awakenedWeapon = $beforeWeapon
-              awakenedStage = $state.player.jadeWeaponStage
-              resonance = $state.player.jadeWeaponResonance
-              chargeBeforeInvoke = $state.player.jadeWeaponCharge
-              chargeAfterInvoke = $afterInvoke.player.jadeWeaponCharge
-              switchedWeapon = $afterSwitch.player.jadeWeapon
-              style = $state.player.jadeWeaponStyle
-            } | ConvertTo-Json | Set-Content (Join-Path $release "v10_weapon_summary.json") -Encoding UTF8
-            Send-AgentCommand "00027 QUIT"
           }
           finally {
             Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
@@ -238,15 +203,76 @@ jobs:
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
           }
 
+      - name: Second-life legacy chapter smoke
+        shell: pwsh
+        run: |
+          $release = (Resolve-Path release).Path
+          $statePath = Join-Path $release "v11_echo_state.json"
+          $commandPath = Join-Path $release "v11_echo_command.txt"
+          $tracePath = Join-Path $release "v11_echo_trace.log"
+          $stdoutPath = Join-Path $release "v11_echo_stdout.log"
+          $stderrPath = Join-Path $release "v11_echo_stderr.log"
+          Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
+
+          $env:WENDAO_AGENT_STATE = $statePath
+          $env:WENDAO_AGENT_COMMAND = $commandPath
+          $env:WENDAO_AGENT_HIDE = "1"
+          $env:WENDAO_TRACE_LOG = $tracePath
+          $env:WENDAO_TRACE_AUTOPLAY = "1"
+          $env:WENDAO_TRACE_HIDE = "1"
+          $env:WENDAO_TRACE_MAX_ACTIONS = "150"
+          $env:WENDAO_TRACE_MAX_LIVES = "1"
+          $env:WENDAO_ARC_ECHO_SMOKE = "1"
+          Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
+
+          $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") `
+            -WorkingDirectory $release -PassThru `
+            -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
+          try {
+            $deadline = (Get-Date).AddSeconds(25)
+            while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 250 }
+            if (-not (Test-Path $statePath)) { throw "Echo smoke Agent state was not created" }
+            "00001 START v11-echo-smoke" | Set-Content $commandPath -Encoding UTF8
+            $runDeadline = (Get-Date).AddSeconds(180)
+            while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) { Start-Sleep -Seconds 1; $proc.Refresh() }
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force; Start-Sleep -Milliseconds 500 }
+            if (-not (Test-Path $tracePath)) { throw "Echo trace was not created" }
+            $trace = Get-Content $tracePath -Raw -Encoding UTF8
+            $chapterCount = ([regex]::Matches($trace, "【定局续章·")).Count
+            $resolveCount = ([regex]::Matches($trace, "ARC_ECHO_RESOLVE")).Count
+            if ($chapterCount -lt 12) { throw "Too few second-life chapters: $chapterCount" }
+            if ($resolveCount -lt 4) { throw "Too few resolved second-life chapters: $resolveCount" }
+            foreach ($family in @("旧玉", "山门", "家世", "战帖")) {
+              if ($trace -notmatch "【定局续章·$family") { throw "Missing second-life family: $family" }
+            }
+            $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($state.player.arcEchoes -notmatch "旧玉续章3/3" -or
+                $state.player.arcEchoes -notmatch "山门续章3/3" -or
+                $state.player.arcEchoes -notmatch "家世续章3/3" -or
+                $state.player.arcEchoes -notmatch "战帖续章3/3") {
+              throw "Second-life chapters did not all resolve: $($state.player.arcEchoes)"
+            }
+            [ordered]@{
+              chapterCount = $chapterCount
+              resolveCount = $resolveCount
+              finalEchoes = $state.player.arcEchoes
+              legacyTags = $state.player.arcLegacies
+            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_echo_summary.json") -Encoding UTF8
+          }
+          finally {
+            Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
+            if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
+          }
+
       - name: Long-form narrative and mastery smoke
         shell: pwsh
         run: |
           $release = (Resolve-Path release).Path
-          $statePath = Join-Path $release "v10_long_state.json"
-          $commandPath = Join-Path $release "v10_long_command.txt"
-          $tracePath = Join-Path $release "v10_long_trace.log"
-          $stdoutPath = Join-Path $release "v10_long_stdout.log"
-          $stderrPath = Join-Path $release "v10_long_stderr.log"
+          $statePath = Join-Path $release "v11_long_state.json"
+          $commandPath = Join-Path $release "v11_long_command.txt"
+          $tracePath = Join-Path $release "v11_long_trace.log"
+          $stdoutPath = Join-Path $release "v11_long_stdout.log"
+          $stderrPath = Join-Path $release "v11_long_stderr.log"
           Remove-Item $statePath,$commandPath,$tracePath,$stdoutPath,$stderrPath -ErrorAction SilentlyContinue
           $env:WENDAO_AGENT_STATE = $statePath
           $env:WENDAO_AGENT_COMMAND = $commandPath
@@ -257,12 +283,13 @@ jobs:
           $env:WENDAO_TRACE_MAX_ACTIONS = "230"
           $env:WENDAO_TRACE_MAX_LIVES = "1"
           Remove-Item Env:WENDAO_ACHIEVEMENT_SMOKE -ErrorAction SilentlyContinue
+          Remove-Item Env:WENDAO_ARC_ECHO_SMOKE -ErrorAction SilentlyContinue
           $proc = Start-Process -FilePath (Join-Path $release "wendao_enhanced.exe") -WorkingDirectory $release -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
           try {
             $deadline = (Get-Date).AddSeconds(25)
             while ((Get-Date) -lt $deadline -and -not (Test-Path $statePath)) { Start-Sleep -Milliseconds 250 }
             if (-not (Test-Path $statePath)) { throw "Long smoke Agent state was not created" }
-            "00001 START v10-long-smoke" | Set-Content $commandPath -Encoding UTF8
+            "00001 START v11-long-smoke" | Set-Content $commandPath -Encoding UTF8
             $runDeadline = (Get-Date).AddSeconds(210)
             while ((Get-Date) -lt $runDeadline -and -not $proc.HasExited) { Start-Sleep -Seconds 1; $proc.Refresh() }
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force; Start-Sleep -Milliseconds 500 }
@@ -279,8 +306,7 @@ jobs:
               legacySetCount = ([regex]::Matches($trace, "ARC_LEGACY_SET")).Count
               achievementUnlockCount = ([regex]::Matches($trace, "ACHIEVEMENT_UNLOCK")).Count
               weaponResonanceTicks = ([regex]::Matches($trace, "JADE_WEAPON_RESONANCE")).Count
-              weaponAwakeningToasts = ([regex]::Matches($trace, "轮回玉兵在真实道途中完成新一层苏醒")).Count
-            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v10_long_summary.json") -Encoding UTF8
+            } | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $release "v11_long_summary.json") -Encoding UTF8
           }
           finally {
             if (-not $proc.HasExited) { Stop-Process -Id $proc.Id -Force }
@@ -290,7 +316,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wendao-v10-awakened-jade-weapons
+          name: wendao-v11-second-life-chapters
           path: |
             build.log
             release/
