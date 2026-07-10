@@ -4,7 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src" / "wendao_enhanced.cpp"
-MARKER = '<< L" | 分线 " << BuildNarrativeArcDigest();'
+MARKER = '<< L" | 分线 " << BuildNarrativeArcDigest()'
+TRACE_PREFIX = '       << L" | 历练 " << g_player.totalEvents'
 
 
 def main() -> int:
@@ -15,14 +16,24 @@ def main() -> int:
         print("v0.7 trace arc digest already present.")
         return 0
 
-    old = '       << L" | 历练 " << g_player.totalEvents;'
-    new = (
-        '       << L" | 历练 " << g_player.totalEvents\n'
-        '       << L" | 分线 " << BuildNarrativeArcDigest();'
-    )
-    if old not in content:
+    terminated = TRACE_PREFIX + ";"
+    chained = TRACE_PREFIX + "\n"
+    if terminated in content:
+        replacement = (
+            TRACE_PREFIX + "\n"
+            '       << L" | 分线 " << BuildNarrativeArcDigest();'
+        )
+        content = content.replace(terminated, replacement, 1)
+    elif chained in content:
+        replacement = (
+            chained +
+            '       << L" | 分线 " << BuildNarrativeArcDigest()\n'
+        )
+        content = content.replace(chained, replacement, 1)
+    else:
         raise RuntimeError("Unable to patch trace arc digest: anchor not found")
-    SRC.write_text(content.replace(old, new, 1), encoding="utf-8")
+
+    SRC.write_text(content, encoding="utf-8")
     print("Added narrative arc digest to trace logs.")
     return 0
 
