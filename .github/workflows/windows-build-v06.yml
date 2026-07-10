@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - gameplay-path-dimensions-v06
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
