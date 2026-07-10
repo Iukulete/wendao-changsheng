@@ -105,6 +105,17 @@ if exist "%ROOT%tools\tune_v10_weapon_pacing.py" (
     echo.
 )
 
+if exist "%ROOT%tools\apply_v11_arc_echo_chapters.py" (
+    echo Applying v0.11 second-life legacy chapters...
+    python "%ROOT%tools\apply_v11_arc_echo_chapters.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.11 arc echo chapter patch failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 "%SRC%" -o "%OUT%" -lgdiplus -lgdi32 -mwindows -static-libgcc -static-libstdc++ -I"%ROOT%"
