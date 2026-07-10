@@ -72,6 +72,17 @@ if exist "%ROOT%tools\apply_v09_achievement_toasts.py" (
     echo.
 )
 
+if exist "%ROOT%tools\apply_v10_jade_weapon_awakening.py" (
+    echo Applying v0.10 jade weapon resonance and signature techniques...
+    python "%ROOT%tools\apply_v10_jade_weapon_awakening.py"
+    if errorlevel 1 (
+        echo.
+        echo v0.10 jade weapon awakening patch failed.
+        exit /b 1
+    )
+    echo.
+)
+
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 g++ -std=c++17 -O2 -finput-charset=UTF-8 -fexec-charset=UTF-8 "%SRC%" -o "%OUT%" -lgdiplus -lgdi32 -mwindows -static-libgcc -static-libstdc++ -I"%ROOT%"
