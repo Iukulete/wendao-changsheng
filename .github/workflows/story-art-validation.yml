@@ -1,0 +1,44 @@
+name: Story Art Validation
+
+on:
+  push:
+    branches:
+      - codex/integrate-web-iterations
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate curated story art
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install curated story art
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+        run: python -X utf8 tools/install_curated_story_art.py
+
+      - name: Verify art direction and inventory
+        shell: pwsh
+        run: |
+          $manifest = Get-Content assets/story_art/story_art_manifest.json -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($manifest.version -ne "v1.2") { throw "Unexpected story-art version: $($manifest.version)" }
+          if ($manifest.files.Count -ne 15) { throw "Expected 15 curated assets, got $($manifest.files.Count)" }
+          if ($manifest.characters.protagonist.eyes_visible -ne $false) { throw "Protagonist eyes must remain hidden" }
+          $ids = @($manifest.character_identities | ForEach-Object { $_.character_id })
+          if (($ids | Sort-Object -Unique).Count -ne $ids.Count) { throw "Duplicate character identity IDs" }
+          if (-not (Test-Path release/story_art/characters/protagonist_hooded_close.jpg)) { throw "Hooded protagonist asset missing" }
+          if (-not (Test-Path release/story_art/characters/qingyun_sword_heroine.jpg)) { throw "Sword heroine asset missing" }
+          if (-not (Test-Path release/story_art/characters/herbalist_lingzhi.jpg)) { throw "Herbalist asset missing" }
+
+      - name: Upload curated story-art library
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-curated-story-art-v12
+          path: release/story_art/
+          if-no-files-found: error
