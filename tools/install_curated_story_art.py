@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 """Install the curated v1.2 story-art archive.
 
-The preferred payload location is ``assets/story_art_b64/story_art_bundle_part_*.b64``.
-For the initial web integration commit, the installer also accepts the curated archive
-stored as ``assets/generated_b64/art_bundle_part_00.b64``.
+Preferred source:
+``assets/story_art_b64/story_art_v12_curated.zip``
+
+Compatibility sources:
+- concatenated ``assets/story_art_b64/story_art_bundle_part_*.b64`` files;
+- the older ``assets/generated_b64/art_bundle_part_00.b64`` payload.
+
+The installer never re-encodes image data. It validates every extracted file
+against the manifest before copying the library into the release directory.
 """
 from __future__ import annotations
 
@@ -18,16 +24,24 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "assets" / "story_art"
 RELEASE_TARGET = ROOT / "release" / "story_art"
+DIRECT_PAYLOAD = ROOT / "assets" / "story_art_b64" / "story_art_v12_curated.zip"
 
 
-def payload_parts() -> list[Path]:
+def payload_bytes() -> tuple[bytes, str]:
+    if DIRECT_PAYLOAD.is_file():
+        return DIRECT_PAYLOAD.read_bytes(), str(DIRECT_PAYLOAD.relative_to(ROOT))
+
     preferred = sorted((ROOT / "assets" / "story_art_b64").glob("story_art_bundle_part_*.b64"))
     if preferred:
-        return preferred
+        encoded = "".join(part.read_text(encoding="ascii").strip() for part in preferred)
+        return base64.b64decode(encoded, validate=True), f"{len(preferred)} Base64 parts"
+
     compatibility = ROOT / "assets" / "generated_b64" / "art_bundle_part_00.b64"
     if compatibility.is_file():
-        return [compatibility]
-    raise RuntimeError("curated story-art base64 payload was not found")
+        encoded = compatibility.read_text(encoding="ascii").strip()
+        return base64.b64decode(encoded, validate=True), str(compatibility.relative_to(ROOT))
+
+    raise RuntimeError("curated story-art payload was not found")
 
 
 def safe_member(name: str) -> bool:
@@ -75,9 +89,8 @@ def validate_manifest(root: Path) -> tuple[str, int]:
 
 
 def main() -> int:
-    parts = payload_parts()
-    encoded = "".join(part.read_text(encoding="ascii").strip() for part in parts)
-    payload = base64.b64decode(encoded, validate=True)
+    payload, source_name = payload_bytes()
+    archive_digest = hashlib.sha256(payload).hexdigest()
 
     staging = ROOT / "assets" / ".story_art_staging"
     if staging.exists():
@@ -103,7 +116,10 @@ def main() -> int:
     RELEASE_TARGET.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(TARGET, RELEASE_TARGET)
 
-    print(f"Installed curated story art {version}: {count} validated assets.")
+    print(
+        f"Installed curated story art {version}: {count} validated assets "
+        f"from {source_name} (archive sha256 {archive_digest})."
+    )
     return 0
 
 
