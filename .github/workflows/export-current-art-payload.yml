@@ -1,0 +1,30 @@
+name: Export Current Art Payload
+
+on:
+  push:
+    branches:
+      - codex/integrate-web-iterations
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode current compatibility payload
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib
+          src = Path('assets/generated_b64/art_bundle_part_00.b64')
+          data = base64.b64decode(src.read_text(encoding='ascii').strip(), validate=True)
+          Path('current_art_bundle.zip').write_bytes(data)
+          print('decoded bytes:', len(data))
+          print('decoded sha256:', hashlib.sha256(data).hexdigest())
+          PY
+      - name: Upload decoded payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-art-payload
+          path: current_art_bundle.zip
+          if-no-files-found: error
