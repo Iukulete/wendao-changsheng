@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - codex/integrate-web-iterations
+  pull_request:
+    branches:
+      - main
 
 jobs:
   export:
