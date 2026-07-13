@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - content-opening-menu-polish
+      - codex/integrate-web-iterations
   pull_request:
     branches:
       - main
@@ -39,6 +40,12 @@ jobs:
           set BUILD_EXIT=%ERRORLEVEL%
           type build.log
           exit /b %BUILD_EXIT%
+
+      - name: Install curated story art
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+        run: python -X utf8 tools/install_curated_story_art.py
 
       - name: Agent bridge playthrough
         shell: pwsh
@@ -80,7 +87,7 @@ jobs:
           path: release/dao_smoke_result.txt
           if-no-files-found: warn
 
-      - name: Upload executable
+      - name: Upload executable and story art
         if: always()
         uses: actions/upload-artifact@v4
         with:
