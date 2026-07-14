@@ -36,6 +36,12 @@ jobs:
           if (-not (Test-Path release/story_art/characters/qingyun_sword_heroine.jpg)) { throw "Sword heroine asset missing" }
           if (-not (Test-Path release/story_art/characters/herbalist_lingzhi.jpg)) { throw "Herbalist asset missing" }
 
+      - name: Verify native runtime routing
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+        run: python -X utf8 tools/verify_story_art_runtime.py
+
       - name: Upload curated story-art library
         uses: actions/upload-artifact@v4
         with:
