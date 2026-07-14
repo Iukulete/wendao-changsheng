@@ -142,7 +142,7 @@ private:
     int ResonanceAwakeningStage(int resonance) const {
         if (resonance >= 760) return 5;
         if (resonance >= 520) return 4;
-        if (resonance >= 320) return 3;
+        if (resonance >= 300) return 3; // V0_10_WEAPON_PACING
         if (resonance >= 180) return 2;
         if (resonance >= 80) return 1;
         return 0;
@@ -793,117 +793,504 @@ public:
     }
 };
 
-// ==================== 成就系统 ====================
-struct Achievement {
-    wstring name;
-    wstring description;
-    bool unlocked;
-
-    Achievement(wstring n, wstring d) : name(n), description(d), unlocked(false) {}
+// ==================== 成就与轮回玉藏兵系统 ====================
+enum AchievementTier {
+    ACHIEVEMENT_TIER_JADE = 0,
+    ACHIEVEMENT_TIER_MYSTIC = 1,
+    ACHIEVEMENT_TIER_HEAVEN = 2
 };
 
-class AchievementSystem {
+inline wstring GetAchievementTierName(int tier) {
+    if (tier >= ACHIEVEMENT_TIER_HEAVEN) return L"天命";
+    if (tier >= ACHIEVEMENT_TIER_MYSTIC) return L"玄金";
+    return L"灵玉";
+}
+
+struct EternalWeapon {
+    wstring id;
+    wstring name;
+    wstring description;
+    int tier;
+    int attack;
+    int defense;
+    int maxHp;
+    int daoHeart;
+    int resonance;       // V0_10_JADE_WEAPON_AWAKENING
+    int awakeningStage;  // 0沉眠 1初鸣 2真名 3道化
+    int charge;          // 0~100，满后可显圣
+    int invocations;
+    bool unlocked;
+
+    EternalWeapon(wstring id, wstring name, wstring description, int tier,
+                  int attack, int defense, int maxHp, int daoHeart)
+        : id(id), name(name), description(description), tier(tier),
+          attack(attack), defense(defense), maxHp(maxHp), daoHeart(daoHeart),
+          resonance(0), awakeningStage(0), charge(0), invocations(0),
+          unlocked(false) {}
+};
+
+struct AchievementUnlockNotice {
+    wstring id;
+    wstring name;
+    wstring description;
+    int tier;
+    wstring rewardWeapon;
+    wstring rewardText;
+};
+
+struct Achievement {
+    wstring id;
+    wstring name;
+    wstring description;
+    int tier;
+    wstring rewardWeaponId;
+    bool unlocked;
+
+    Achievement(wstring id, wstring name, wstring description, int tier, wstring rewardWeaponId)
+        : id(id), name(name), description(description), tier(tier),
+          rewardWeaponId(rewardWeaponId), unlocked(false) {}
+};
+
+class AchievementSystem { // V0_9_ACHIEVEMENT_TOASTS
 private:
     vector<Achievement> achievements;
+    vector<EternalWeapon> jadeWeapons;
+    vector<AchievementUnlockNotice> pendingUnlocks;
+    int equippedWeapon;
+    bool legacyWeaponMigrationPending;
+
+
+    int WeaponStageFromResonance(int resonance) const { // V0_10_JADE_WEAPON_AWAKENING
+        if (resonance >= 320) return 3;
+        if (resonance >= 120) return 2;
+        if (resonance >= 30) return 1;
+        return 0;
+    }
+
+    wstring WeaponStageName(int stage) const {
+        if (stage >= 3) return L"道化";
+        if (stage >= 2) return L"真名";
+        if (stage >= 1) return L"初鸣";
+        return L"沉眠";
+    }
+
+    wstring WeaponStyleName(const EternalWeapon& weapon) const {
+        if (weapon.id == L"zhanjie" || weapon.id == L"xuesha" ||
+            weapon.id == L"jiuxiao" || weapon.id == L"canxing") return L"杀伐";
+        if (weapon.id == L"qinglian" || weapon.id == L"suiyue" ||
+            weapon.id == L"zuting" || weapon.id == L"lunhui") return L"护生";
+        if (weapon.id == L"wandao" || weapon.id == L"heibai" ||
+            weapon.id == L"wuliang" || weapon.id == L"sixiang") return L"万道";
+        return L"问心";
+    }
+
+    int StageScalePercent(int stage) const {
+        if (stage >= 3) return 80;
+        if (stage >= 2) return 45;
+        if (stage >= 1) return 20;
+        return 0;
+    }
+
+    int FindWeaponIndex(const wstring& id) const {
+        for (int i = 0; i < (int)jadeWeapons.size(); ++i) {
+            if (jadeWeapons[i].id == id) return i;
+        }
+        return -1;
+    }
+
+    int WeaponScore(const EternalWeapon& weapon) const {
+        return weapon.tier * 1000 + weapon.attack * 20 + weapon.defense * 16 +
+               weapon.maxHp / 4 + weapon.daoHeart * 18 +
+               weapon.awakeningStage * 260 + weapon.resonance / 3;
+    }
+
+    void SelectStrongestUnlockedWeapon() {
+        int best = -1;
+        int bestScore = -1;
+        for (int i = 0; i < (int)jadeWeapons.size(); ++i) {
+            if (!jadeWeapons[i].unlocked) continue;
+            int score = WeaponScore(jadeWeapons[i]);
+            if (score > bestScore) { bestScore = score; best = i; }
+        }
+        equippedWeapon = best;
+    }
+
+    bool UnlockIndex(int index, bool queueNotice = true) {
+        if (index < 0 || index >= (int)achievements.size()) return false;
+        Achievement& achievement = achievements[index];
+        if (achievement.unlocked) return false;
+        achievement.unlocked = true;
+
+        int weaponIndex = FindWeaponIndex(achievement.rewardWeaponId);
+        wstring weaponName = L"轮回玉回响";
+        wstring rewardText = L"此成就已写入轮回玉。";
+        if (weaponIndex >= 0) {
+            jadeWeapons[weaponIndex].unlocked = true;
+            weaponName = jadeWeapons[weaponIndex].name;
+            rewardText = jadeWeapons[weaponIndex].description;
+            if (equippedWeapon < 0 ||
+                WeaponScore(jadeWeapons[weaponIndex]) > WeaponScore(jadeWeapons[equippedWeapon])) {
+                equippedWeapon = weaponIndex;
+            }
+        }
+
+        if (queueNotice) {
+            AchievementUnlockNotice notice;
+            notice.id = achievement.id;
+            notice.name = achievement.name;
+            notice.description = achievement.description;
+            notice.tier = achievement.tier;
+            notice.rewardWeapon = weaponName;
+            notice.rewardText = rewardText;
+            pendingUnlocks.push_back(notice);
+        }
+        return true;
+    }
+
+    int UnlockedCountInternal() const {
+        int count = 0;
+        for (const auto& achievement : achievements) if (achievement.unlocked) count++;
+        return count;
+    }
 
 public:
-    AchievementSystem() {
+    AchievementSystem() : equippedWeapon(-1), legacyWeaponMigrationPending(false) {
+        InitWeapons();
         InitAchievements();
     }
 
+    void InitWeapons() {
+        jadeWeapons.clear();
+        jadeWeapons.push_back(EternalWeapon(L"qingxiao", L"青霄问心剑", L"灵玉级心剑；飞升后仍被轮回玉完整保存。攻击+8，道心+2。", 0, 8, 0, 0, 2));
+        jadeWeapons.push_back(EternalWeapon(L"zhanjie", L"斩劫古刀", L"百战磨出的古刀；不受纪元锈蚀。攻击+14，防御+2。", 1, 14, 2, 0, 0));
+        jadeWeapons.push_back(EternalWeapon(L"qinglian", L"青莲护生杖", L"善缘凝成的护生法杖。防御+8，气血+100，道心+3。", 0, 2, 8, 100, 3));
+        jadeWeapons.push_back(EternalWeapon(L"xuesha", L"血煞断魄刀", L"恶名与血债铸成的凶兵。攻击+18，气血+60。", 1, 18, 0, 60, 0));
+        jadeWeapons.push_back(EternalWeapon(L"suiyue", L"岁月长生木剑", L"五百年风霜未能磨损的木剑。防御+7，气血+150，道心+4。", 0, 3, 7, 150, 4));
+        jadeWeapons.push_back(EternalWeapon(L"zuting", L"祖庭镇世剑", L"道祖名位所化的镇世之剑。攻击+25，防御+12，气血+180。", 2, 25, 12, 180, 5));
+        jadeWeapons.push_back(EternalWeapon(L"wandao", L"万道归一刃", L"天道境成就凝成的天命神兵。攻击+34，防御+16，气血+280，道心+10。", 2, 34, 16, 280, 10));
+        jadeWeapons.push_back(EternalWeapon(L"lunhui", L"轮回断界刀", L"十世轮回仍能认主的玄金重兵。攻击+20，防御+8，气血+160。", 1, 20, 8, 160, 4));
+        jadeWeapons.push_back(EternalWeapon(L"chuancheng", L"承道玉简剑", L"多重传承在轮回玉中叠成剑脊。攻击+9，防御+6，道心+3。", 0, 9, 6, 0, 3));
+        jadeWeapons.push_back(EternalWeapon(L"baijie", L"百劫照尘锋", L"百次历练留下的每一道判断都刻在刃上。攻击+12，防御+7。", 0, 12, 7, 0, 2));
+        jadeWeapons.push_back(EternalWeapon(L"wugou", L"无垢心锋", L"道心如砥后自然显化的玄金心兵。攻击+15，防御+8，道心+8。", 1, 15, 8, 0, 8));
+        jadeWeapons.push_back(EternalWeapon(L"jiuxiao", L"九霄名器", L"众生名望汇成的玄金长枪。攻击+13，防御+11，气血+80。", 1, 13, 11, 80, 2));
+        jadeWeapons.push_back(EternalWeapon(L"sixiang", L"四象巡道戟", L"四条本世主线全部收束后形成的玄金道兵。攻击+18，防御+12，道心+5。", 1, 18, 12, 0, 5));
+        jadeWeapons.push_back(EternalWeapon(L"heibai", L"黑白轮回剑", L"四项跨世定局共同刻入黑白旧玉。攻击+28，防御+20，气血+220，道心+8。", 2, 28, 20, 220, 8));
+        jadeWeapons.push_back(EternalWeapon(L"canxing", L"通天残星枪", L"通天灵宝三次苏醒后分出的玄金器影。攻击+19，防御+10，气血+100。", 1, 19, 10, 100, 4));
+        jadeWeapons.push_back(EternalWeapon(L"wuliang", L"无量玉皇兵", L"大量成就共同铸出的天命玉兵；天地可改，玉中真形不改。攻击+38，防御+24，气血+360，道心+12。", 2, 38, 24, 360, 12));
+    }
+
     void InitAchievements() {
-        achievements.push_back(Achievement(L"初次飞升", L"第一次达到飞升境界"));
-        achievements.push_back(Achievement(L"百战不殆", L"赢得100场战斗"));
-        achievements.push_back(Achievement(L"善行千里", L"因果值达到200"));
-        achievements.push_back(Achievement(L"魔道至尊", L"因果值低于-200"));
-        achievements.push_back(Achievement(L"长生不老", L"活到500岁"));
-        achievements.push_back(Achievement(L"证道成祖", L"达到道祖境界"));
-        achievements.push_back(Achievement(L"万道归一", L"达到天道境"));
-        achievements.push_back(Achievement(L"十世轮回", L"经历10次轮回"));
-        achievements.push_back(Achievement(L"传承者", L"留下5个以上传承"));
+        achievements.clear();
+        // 前九项保持旧版顺序，便于 ACHIEVEMENTS_V1 无损迁移。
+        achievements.push_back(Achievement(L"first_ascension", L"初次飞升", L"第一次踏入半仙之体", 0, L"qingxiao"));
+        achievements.push_back(Achievement(L"hundred_battles", L"百战不殆", L"一世赢得100场战斗", 1, L"zhanjie"));
+        achievements.push_back(Achievement(L"great_kindness", L"善行千里", L"因果达到200", 0, L"qinglian"));
+        achievements.push_back(Achievement(L"demonic_supreme", L"魔道至尊", L"因果低于-200", 1, L"xuesha"));
+        achievements.push_back(Achievement(L"long_life", L"长生不老", L"一世活到500岁", 0, L"suiyue"));
+        achievements.push_back(Achievement(L"dao_ancestor", L"证道成祖", L"达到道祖境界", 2, L"zuting"));
+        achievements.push_back(Achievement(L"heavenly_dao", L"万道归一", L"达到道祖-天道境", 2, L"wandao"));
+        achievements.push_back(Achievement(L"ten_lives", L"十世轮回", L"经历10次轮回", 1, L"lunhui"));
+        achievements.push_back(Achievement(L"legacy_keeper", L"传承者", L"同时拥有5项以上传承回响", 0, L"chuancheng"));
+        achievements.push_back(Achievement(L"hundred_events", L"百劫见真", L"一世完成100次历练", 0, L"baijie"));
+        achievements.push_back(Achievement(L"steadfast_heart", L"道心如砥", L"道心达到80", 1, L"wugou"));
+        achievements.push_back(Achievement(L"renown", L"名动诸天", L"名望达到100", 1, L"jiuxiao"));
+        achievements.push_back(Achievement(L"all_arcs", L"四线收束", L"旧玉、山门、家世、战帖四线全部收束", 1, L"sixiang"));
+        achievements.push_back(Achievement(L"four_legacies", L"四世定局", L"四条分线都留下跨世定局", 2, L"heibai"));
+        achievements.push_back(Achievement(L"relic_three", L"通天三醒", L"通天灵宝残印苏醒三次", 1, L"canxing"));
+        achievements.push_back(Achievement(L"jade_armory", L"玉中万兵", L"解锁十二项其他成就", 2, L"wuliang"));
+    }
+
+    void CheckLiveProgress(int realm, int age, int karma, int totalEvents,
+                           int battlesWon, int generation, int daoHeart,
+                           int reputation, int inheritedLegacyCount,
+                           int arcProgress, int arcLegacyCount, int relicAwakenings) {
+        if (realm >= 10) UnlockIndex(0);
+        if (battlesWon >= 100) UnlockIndex(1);
+        if (karma >= 200) UnlockIndex(2);
+        if (karma <= -200) UnlockIndex(3);
+        if (age >= 500) UnlockIndex(4);
+        if (realm >= 19) UnlockIndex(5);
+        if (realm >= 20) UnlockIndex(6);
+        if (generation >= 10) UnlockIndex(7);
+        if (inheritedLegacyCount >= 5) UnlockIndex(8);
+        if (totalEvents >= 100) UnlockIndex(9);
+        if (daoHeart >= 80) UnlockIndex(10);
+        if (reputation >= 100) UnlockIndex(11);
+        if (arcProgress >= 16) UnlockIndex(12);
+        if (arcLegacyCount >= 4) UnlockIndex(13);
+        if (relicAwakenings >= 3) UnlockIndex(14);
+        if (UnlockedCountInternal() >= 12) UnlockIndex(15);
     }
 
     void CheckAchievements(PastLife& life, int generation) {
-        // 检查各种成就
-        if (life.realmReached >= 10 && !achievements[0].unlocked) {
-            achievements[0].unlocked = true;
-        }
-
-        if (life.battlesWon >= 100 && !achievements[1].unlocked) {
-            achievements[1].unlocked = true;
-        }
-
-        if (life.karma >= 200 && !achievements[2].unlocked) {
-            achievements[2].unlocked = true;
-        }
-
-        if (life.karma <= -200 && !achievements[3].unlocked) {
-            achievements[3].unlocked = true;
-        }
-
-        if (life.ageAtDeath >= 500 && !achievements[4].unlocked) {
-            achievements[4].unlocked = true;
-        }
-
-        if (life.realmReached >= 19 && !achievements[5].unlocked) {
-            achievements[5].unlocked = true;
-        }
-
-        if (life.realmReached >= 20 && !achievements[6].unlocked) {
-            achievements[6].unlocked = true;
-        }
-
-        if (generation >= 10 && !achievements[7].unlocked) {
-            achievements[7].unlocked = true;
-        }
-
-        if (life.legacies.size() >= 5 && !achievements[8].unlocked) {
-            achievements[8].unlocked = true;
-        }
+        CheckLiveProgress(life.realmReached, life.ageAtDeath, life.karma,
+            life.totalEvents, life.battlesWon, generation, 0, 0,
+            (int)life.legacies.size(), 0, 0, 0);
     }
 
-    wstring GetAchievementsText() {
+    vector<AchievementUnlockNotice> ConsumeUnlockNotices() {
+        vector<AchievementUnlockNotice> result = pendingUnlocks;
+        pendingUnlocks.clear();
+        return result;
+    }
+
+    bool UnlockForTestingTier(int tier) {
+        for (int i = 0; i < (int)achievements.size(); ++i) {
+            if (!achievements[i].unlocked && achievements[i].tier == tier) return UnlockIndex(i);
+        }
+        return false;
+    }
+
+    int GetUnlockedCount() const { return UnlockedCountInternal(); }
+    int GetTotalCount() const { return (int)achievements.size(); }
+    int GetUnlockedWeaponCount() const {
+        int count = 0;
+        for (const auto& weapon : jadeWeapons) if (weapon.unlocked) count++;
+        return count;
+    }
+
+    const EternalWeapon* GetEquippedWeapon() const {
+        if (equippedWeapon < 0 || equippedWeapon >= (int)jadeWeapons.size() ||
+            !jadeWeapons[equippedWeapon].unlocked) return nullptr;
+        return &jadeWeapons[equippedWeapon];
+    }
+
+    wstring GetEquippedWeaponName() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? weapon->name : L"尚无玉兵";
+    }
+
+
+    int GetEquippedWeaponResonance() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? weapon->resonance : 0;
+    }
+
+    int GetEquippedWeaponStage() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? weapon->awakeningStage : 0;
+    }
+
+    int GetEquippedWeaponCharge() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? weapon->charge : 0;
+    }
+
+    wstring GetEquippedWeaponStageName() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? WeaponStageName(weapon->awakeningStage) : L"未唤醒";
+    }
+
+    wstring GetEquippedWeaponStyleName() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon ? WeaponStyleName(*weapon) : L"无";
+    }
+
+    void GetEquippedWeaponEffectiveBonuses(int& attack, int& defense, int& maxHp, int& daoHeart) const {
+        attack = defense = maxHp = daoHeart = 0;
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        if (!weapon) return;
+        int scale = StageScalePercent(weapon->awakeningStage);
+        attack = weapon->attack + weapon->attack * scale / 100;
+        defense = weapon->defense + weapon->defense * scale / 100;
+        maxHp = weapon->maxHp + weapon->maxHp * scale / 100;
+        daoHeart = weapon->daoHeart + weapon->daoHeart * scale / 100;
+        wstring style = WeaponStyleName(*weapon);
+        int stage = weapon->awakeningStage;
+        if (style == L"杀伐") attack += stage * 3;
+        else if (style == L"护生") { defense += stage * 2; maxHp += stage * 45; }
+        else if (style == L"问心") daoHeart += stage * 2;
+        else { attack += stage * 2; defense += stage * 2; maxHp += stage * 30; daoHeart += stage; }
+    }
+
+    int GetEquippedWeaponBreakthroughBonus() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        if (!weapon) return 0;
+        int stage = weapon->awakeningStage;
+        wstring style = WeaponStyleName(*weapon);
+        if (style == L"问心") return stage * 3;
+        if (style == L"万道") return stage * 4;
+        if (style == L"护生") return stage * 2;
+        return stage;
+    }
+
+    int GetEquippedWeaponAdventureSuccessBonus() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        if (!weapon) return 0;
+        int stage = weapon->awakeningStage;
+        wstring style = WeaponStyleName(*weapon);
+        if (style == L"杀伐") return stage * 4;
+        if (style == L"万道") return stage * 3;
+        if (style == L"问心") return stage * 2;
+        return stage;
+    }
+
+    bool AddEquippedWeaponResonance(int amount, const wstring& reason) {
+        if (amount <= 0 || equippedWeapon < 0 || equippedWeapon >= (int)jadeWeapons.size()) return false;
+        EternalWeapon& weapon = jadeWeapons[equippedWeapon];
+        if (!weapon.unlocked) return false;
+        int oldStage = weapon.awakeningStage;
+        weapon.resonance = min(9999, weapon.resonance + amount);
+        weapon.charge = min(100, weapon.charge + max(1, amount * 4));
+        weapon.awakeningStage = max(weapon.awakeningStage, WeaponStageFromResonance(weapon.resonance));
+        if (weapon.awakeningStage > oldStage) {
+            AchievementUnlockNotice notice;
+            notice.id = L"weapon_awaken_" + weapon.id + L"_" + to_wstring(weapon.awakeningStage);
+            notice.name = weapon.name + L"·" + WeaponStageName(weapon.awakeningStage);
+            notice.description = L"轮回玉兵在真实道途中完成新一层苏醒。缘由：" + reason;
+            notice.tier = min((int)ACHIEVEMENT_TIER_HEAVEN, max(weapon.tier, weapon.awakeningStage - 1)); // V0_10_COMPILE_REPAIR
+            notice.rewardWeapon = weapon.name;
+            notice.rewardText = L"共鸣" + to_wstring(weapon.resonance) + L"；道法流派：" + WeaponStyleName(weapon);
+            pendingUnlocks.push_back(notice);
+            return true;
+        }
+        return false;
+    }
+
+    bool CanInvokeEquippedWeapon() const {
+        const EternalWeapon* weapon = GetEquippedWeapon();
+        return weapon && weapon->charge >= 100;
+    }
+
+    bool ConsumeEquippedWeaponCharge() {
+        if (!CanInvokeEquippedWeapon()) return false;
+        EternalWeapon& weapon = jadeWeapons[equippedWeapon];
+        weapon.charge = 0;
+        weapon.invocations++;
+        return true;
+    }
+
+    bool EquipNextUnlockedWeapon() {
+        if (GetUnlockedWeaponCount() <= 0) return false;
+        int start = equippedWeapon;
+        for (int offset = 1; offset <= (int)jadeWeapons.size(); ++offset) {
+            int index = (max(-1, start) + offset) % (int)jadeWeapons.size();
+            if (jadeWeapons[index].unlocked) {
+                equippedWeapon = index;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool NeedsLegacyWeaponMigrationApply() const { return legacyWeaponMigrationPending; }
+    void ClearLegacyWeaponMigrationFlag() { legacyWeaponMigrationPending = false; }
+
+    wstring GetJadeArmoryText() const {
+        wstringstream ss;
+        ss << L"【轮回玉藏兵】\n";
+        ss << L"这些兵器由成就道痕直接凝成，保存在黑白轮回玉内，不属于当世器物，不受纪元断代、天地侵扰或轮回散失。\n";
+        ss << L"已解锁 " << GetUnlockedWeaponCount() << L"/" << jadeWeapons.size()
+           << L"；当前共鸣：" << GetEquippedWeaponName() << L"。游戏中按 [Y] 可切换已解锁玉兵。\n\n";
+        for (const auto& weapon : jadeWeapons) {
+            ss << (weapon.unlocked ? L"◆ " : L"◇ ")
+               << L"[" << GetAchievementTierName(weapon.tier) << L"] " << weapon.name << L"\n";
+            if (weapon.unlocked) {
+                ss << L"  " << weapon.description << L"\n";
+                int effectiveAttack = weapon.attack + weapon.attack * StageScalePercent(weapon.awakeningStage) / 100;
+                int effectiveDefense = weapon.defense + weapon.defense * StageScalePercent(weapon.awakeningStage) / 100;
+                int effectiveHp = weapon.maxHp + weapon.maxHp * StageScalePercent(weapon.awakeningStage) / 100;
+                int effectiveDao = weapon.daoHeart + weapon.daoHeart * StageScalePercent(weapon.awakeningStage) / 100;
+                ss << L"  觉醒：" << WeaponStageName(weapon.awakeningStage)
+                   << L" · 共鸣" << weapon.resonance << L" · 显圣蓄能" << weapon.charge << L"/100"
+                   << L" · " << WeaponStyleName(weapon) << L"道法\n";
+                ss << L"  基础加成：攻击+" << effectiveAttack << L"，防御+" << effectiveDefense
+                   << L"，气血+" << effectiveHp << L"，道心+" << effectiveDao << L"\n";
+            } else {
+                ss << L"  尚未由对应成就唤醒。\n";
+            }
+        }
+        return ss.str();
+    }
+
+    wstring GetAchievementsText() const {
         wstringstream ss;
         ss << L"【成就】\n\n";
-
-        int unlocked = 0;
-        for (auto& ach : achievements) {
-            if (ach.unlocked) {
-                ss << L"✓ ";
-                unlocked++;
-            } else {
-                ss << L"  ";
+        for (int tier = ACHIEVEMENT_TIER_HEAVEN; tier >= ACHIEVEMENT_TIER_JADE; --tier) {
+            ss << L"—— " << GetAchievementTierName(tier) << L"成就 ——\n";
+            for (const auto& achievement : achievements) {
+                if (achievement.tier != tier) continue;
+                ss << (achievement.unlocked ? L"✓ " : L"  ")
+                   << achievement.name << L" - " << achievement.description << L"\n";
             }
-            ss << ach.name << L" - " << ach.description << L"\n";
+            ss << L"\n";
         }
-
-        ss << L"\n解锁: " << unlocked << L"/" << achievements.size();
-
+        ss << L"解锁：" << GetUnlockedCount() << L"/" << achievements.size() << L"\n\n";
+        ss << GetJadeArmoryText();
         return ss.str();
     }
 
     void Save(wofstream& file) {
-        file << L"ACHIEVEMENTS_V1\n";
+        file << L"ACHIEVEMENTS_V3\n";
         file << achievements.size() << L"\n";
-        for (auto& ach : achievements) {
-            file << ach.unlocked << L"\n";
+        for (const auto& achievement : achievements) file << achievement.unlocked << L"\n";
+        file << jadeWeapons.size() << L"\n";
+        for (const auto& weapon : jadeWeapons) {
+            file << weapon.unlocked << L" " << weapon.resonance << L" "
+                 << weapon.awakeningStage << L" " << weapon.charge << L" "
+                 << weapon.invocations << L"\n";
         }
+        file << equippedWeapon << L"\n";
     }
 
     bool Load(wifstream& file) {
         wstring marker;
         getline(file, marker);
         if (marker.empty()) getline(file, marker);
-        if (marker != L"ACHIEVEMENTS_V1") return false;
+        bool isV1 = marker == L"ACHIEVEMENTS_V1";
+        bool isV2 = marker == L"ACHIEVEMENTS_V2";
+        bool isV3 = marker == L"ACHIEVEMENTS_V3";
+        if (!isV1 && !isV2 && !isV3) return false;
+
+        for (auto& achievement : achievements) achievement.unlocked = false;
+        for (auto& weapon : jadeWeapons) {
+            weapon.unlocked = false; weapon.resonance = 0; weapon.awakeningStage = 0;
+            weapon.charge = 0; weapon.invocations = 0;
+        }
+        pendingUnlocks.clear();
+        equippedWeapon = -1;
+        legacyWeaponMigrationPending = false;
 
         size_t count = 0;
         file >> count;
         file.ignore(numeric_limits<streamsize>::max(), L'\n');
-        for (size_t i = 0; i < count && i < achievements.size(); i++) {
-            bool unlocked;
+        for (size_t i = 0; i < count; ++i) {
+            bool unlocked = false;
             file >> unlocked;
             file.ignore(numeric_limits<streamsize>::max(), L'\n');
-            achievements[i].unlocked = unlocked;
+            if (i < achievements.size()) achievements[i].unlocked = unlocked;
+        }
+
+        if (isV2 || isV3) {
+            size_t weaponCount = 0;
+            file >> weaponCount;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            for (size_t i = 0; i < weaponCount; ++i) {
+                bool unlocked = false;
+                int resonance = 0, stage = 0, charge = 0, invocations = 0;
+                if (isV3) file >> unlocked >> resonance >> stage >> charge >> invocations;
+                else file >> unlocked;
+                file.ignore(numeric_limits<streamsize>::max(), L'\n');
+                if (i < jadeWeapons.size()) {
+                    jadeWeapons[i].unlocked = unlocked;
+                    jadeWeapons[i].resonance = max(0, resonance);
+                    jadeWeapons[i].awakeningStage = max(stage, WeaponStageFromResonance(resonance));
+                    jadeWeapons[i].charge = max(0, min(100, charge));
+                    jadeWeapons[i].invocations = max(0, invocations);
+                }
+            }
+            file >> equippedWeapon;
+            file.ignore(numeric_limits<streamsize>::max(), L'\n');
+            if (equippedWeapon < 0 || equippedWeapon >= (int)jadeWeapons.size() ||
+                !jadeWeapons[equippedWeapon].unlocked) SelectStrongestUnlockedWeapon();
+        } else {
+            for (const auto& achievement : achievements) {
+                if (!achievement.unlocked) continue;
+                int index = FindWeaponIndex(achievement.rewardWeaponId);
+                if (index >= 0) jadeWeapons[index].unlocked = true;
+            }
+            SelectStrongestUnlockedWeapon();
+            legacyWeaponMigrationPending = GetUnlockedWeaponCount() > 0;
         }
         return true;
     }
