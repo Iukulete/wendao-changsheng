@@ -3,7 +3,7 @@ name: Story Art Validation
 on:
   push:
     branches:
-      - codex/integrate-web-iterations
+      - main
   pull_request:
     branches:
       - main
