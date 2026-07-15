@@ -1,0 +1,193 @@
+{
+  "manifest_version": 1,
+  "asset_set": "wendao-godot-main-v0.14",
+  "runtime_root": "res://art",
+  "art_direction": "电影感写实中国修仙；允许不同时代的灵能工业、道法网络、废土与仙朝视觉，但保持同一世界的材质和色彩语言",
+  "source_type_definitions": {
+    "generated": "通过图像生成工作流创作并纳入 Godot 新版的资产",
+    "curated": "从项目既有策划精选图包中挑选并纳入 Godot 新版的资产"
+  },
+  "rights_notice": "本清单只记录技术来源类别、文件完整性与游戏用途，不声明、推定或授予任何版权或许可。发布前仍须由项目维护者完成权利审查。",
+  "files": [
+    {
+      "path": "portraits/final_age_meridian_physician.png",
+      "sha256": "d76b50f986bef49f899d6ed6d52707345df9a5dd8ebe3cfeb334f247e429b48b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2311263,
+      "purpose": "成熟末法契师、经脉契约与抵押所制度事件人物立绘",
+      "eras": ["末法裂变纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "portraits/imperial_sky_inspector.png",
+      "sha256": "869a414b7dd2679060b7d65b7a1358b0798f32dfe59062ee5758da54ef869f81",
+      "width": 887,
+      "height": 1774,
+      "bytes": 2694864,
+      "purpose": "仙朝巡天司监察使、命籍审查与空阙封关事件人物立绘",
+      "eras": ["仙朝鼎盛纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "portraits/jade_healer.jpg",
+      "sha256": "02f63c971a928a3f971b1aedeaadbc5bc2d1264a8f4634ce1ab8d41642f961a3",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 259089,
+      "purpose": "无照药师、灵根医师等医修事件人物立绘",
+      "eras": ["古典修仙纪", "末法裂变纪"],
+      "source_type": "curated"
+    },
+    {
+      "path": "portraits/protagonist_hooded_close.jpg",
+      "sha256": "78323d185fbe99fbe29579a028e2b486a316e190b26d6a4d8d46995f02e75133",
+      "width": 1086,
+      "height": 1448,
+      "bytes": 173686,
+      "purpose": "玩家身份、门后之影与默认主角近景立绘",
+      "eras": ["全时代"],
+      "source_type": "curated"
+    },
+    {
+      "path": "portraits/qingyun_sword_heroine.jpg",
+      "sha256": "9e845ad2f1e6e6a480823471e02ac3285407c70483616736ba7c1a058d724728",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 195561,
+      "purpose": "古典剑修及仙朝下城阵师事件人物立绘",
+      "eras": ["古典修仙纪", "仙朝鼎盛纪"],
+      "source_type": "curated"
+    },
+    {
+      "path": "portraits/star_network_cultivator.png",
+      "sha256": "ceb218ccdcd9e09b1f86072cd0f8fe73430544d1518ad7c1666f792669af3e0f",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2752240,
+      "purpose": "星网巡道使、复制神识与轨道剑阵事件人物立绘",
+      "eras": ["星穹道网纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "portraits/steam_artificer.png",
+      "sha256": "4861a41edf3b92f158b33a3b9b082fd00ad8523bd65d29cbe97c39d35aa19b60",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2308269,
+      "purpose": "灵轨工造师、炉灵与黄铜黑匣事件人物立绘",
+      "eras": ["灵机蒸汽纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "portraits/wasteland_pathfinder.png",
+      "sha256": "183fad77632e94c9dae3a23c07233ca889ee9f8499f0bd13df18394c841059ec",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2818400,
+      "purpose": "返道火种引路人与荒原迁徙事件人物立绘",
+      "eras": ["废土返道纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/final_age_spirit_station.png",
+      "sha256": "e978b1825707173e7bb43dc002c69c748c8a94823dbd3b1094a4973756414ee9",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2499302,
+      "purpose": "灵息配给站、经脉抵押与末法城市公共危机场景",
+      "eras": ["末法裂变纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/immortal_dynasty_skycourt.png",
+      "sha256": "38463273334dde9fb86bcbfb2b098bb0d035998f392b5309f10a56f2569e6201",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2914307,
+      "purpose": "浮空仙城、巡天司与功德云制度抉择场景",
+      "eras": ["仙朝鼎盛纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/lantern_river_spirit_bazaar.png",
+      "sha256": "079659c1c0c1c9f7b088ebfaafdbed98c31458b52c88af6bcb6571c7e4371299",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2686124,
+      "purpose": "灯河夜市、灵市交易、黑匣竞拍与寿元药引事件场景",
+      "eras": ["古典修仙纪", "灵机蒸汽纪", "末法裂变纪"],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "灯河灵市：夜色水上市集与修仙坊市交叠，古典灯火中嵌入黄铜灵械、灵能终端和若隐若现的道网投影",
+        "mood": "繁华、诡秘、诱人而带有交易代价",
+        "story_use": "承接跨时代竞拍、记忆交易、旧协议与灰色医药事件，让同一地点在技术更替中留下连续记忆"
+      }
+    },
+    {
+      "path": "scenes/orbital_sword_array.png",
+      "sha256": "d46ca2a560bc00bab6352eb4a7379402574cd0ca4fbb788da065da906a5a1644",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2672211,
+      "purpose": "轨道剑阵误锁与天剑覆写事件场景",
+      "eras": ["星穹道网纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/star_dao_network.png",
+      "sha256": "04c852ab09f23d069920518f88e8257694edf9c1d3c4c4cdedec59ea295467b2",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2536505,
+      "purpose": "神识云海、道网节点与人格分叉事件场景",
+      "eras": ["星穹道网纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/steam_forge_city.png",
+      "sha256": "1b6ac3c02721ed978cce2fa8db0b16b27437a5215620c498808f688048a0a43b",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2575829,
+      "purpose": "百炉城、中央灵炉与灵能工业伦理事件场景",
+      "eras": ["灵机蒸汽纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/steam_spirit_rail.png",
+      "sha256": "fff817a03280bddf542908db35ed638a07056edafeeb311fc52a95cce7bd1bb4",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2549718,
+      "purpose": "云上灵轨、灵压锅炉与工业交通危机场景",
+      "eras": ["灵机蒸汽纪"],
+      "source_type": "generated"
+    },
+    {
+      "path": "scenes/void_threshold_temple.png",
+      "sha256": "2a6d050d2fa8c43b9a50a981c70e119c5790ce6d9c9c13fdeb13b96a5a966c92",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2587920,
+      "purpose": "镜湖空阙、无字古门、轮回门槛与命籍之外事件场景",
+      "eras": ["古典修仙纪", "仙朝鼎盛纪"],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "镜湖空阙：镜面般的湖心通向悬于空阙的无字古门，断玉小径与门后天光暗示未被记录的另一种命途",
+        "mood": "寂静、庄严、超现实并带有命运临界感",
+        "story_use": "承接轮回、身份、封关与不可逆抉择，让玩家在进入未知之前感到世界正在凝视自己"
+      }
+    },
+    {
+      "path": "scenes/wasteland_black_rain.png",
+      "sha256": "3276fecc2bc641d1eaf0c2a696343d58d7b6193a386cf5eb2a226804f637c758",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 2538683,
+      "purpose": "黑雨迁徙、净雨塔与废土聚落存续事件场景",
+      "eras": ["废土返道纪"],
+      "source_type": "generated"
+    }
+  ]
+}

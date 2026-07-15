@@ -1,95 +1,75 @@
-# 问道长生
+# 问道长生 · 神游版
 
-一款文字修仙 Roguelike。
+一款以轮回、因果与时代演化为核心的 2D 叙事修仙 Roguelike。项目现以 **Godot 4.7.1** 为唯一面向玩家的主版本：六种纪元拥有独立场景、色彩和氛围语言，修炼与抉择会改变角色命途，也会在世界中留下跨越轮回的回响。
 
-从凡人入道开始，玩家会在修炼、历练、突破、因果抉择和一次次轮回中推进自己的道途。世界不是静止背景，修士会成长，时代会变化，旧事会留下回响，而每一世的身份、家世、人脉和机缘都可能不同。
+旧 Win32/GDI+ 实现暂时保留在仓库中，仅用于迁移玩法规则和核对历史行为；它不再是游戏入口，也不会进入 Godot 新版发布包。
 
-游戏重点放在文字叙事、轮回记忆、动态世界和本地 AI 事件上。
+## 直接启动新版
 
-## 快速开始
-
-双击运行：
+Windows 10/11 下双击：
 
 ```bat
-启动游戏.bat
+启动Godot版.bat
 ```
 
-如果本地没有编译好的程序，启动脚本会自动尝试调用 `build.bat` 构建。
-
-## 环境需求
-
-- Windows 10/11
-- PowerShell 5 或更新版本
-- g++ / MinGW-w64，用于从源码构建游戏
-- 可选本地 AI：需要网络下载模型与运行时，并预留数 GB 磁盘空间
-
-一种常见的 g++ 安装方式是先安装 MSYS2，再在 `MSYS2 UCRT64` 中安装 `mingw-w64-ucrt-x86_64-gcc`，并把 `C:\msys64\ucrt64\bin` 加入 PATH。
-
-也可以手动编译：
-
-```bat
-build.bat
-```
-
-游戏运行目录为 `release/`，存档会写入 `release/save/`。
-
-## 游戏内容
-
-- 从凡人一路修行，经历多个大境界，直到触碰更高层次的道途。
-- 通过打坐、历练、突破、丹药、闭关等方式推进角色成长。
-- 每次选择都会影响因果、资源、人情、突破和后续事件倾向。
-- 死亡不是简单结束，前世经历会以记忆、名声、旧债、传承或梦兆的形式影响下一世。
-- 每次转世的家世、关系、时代背景和开局线索都会变化。
-- 世界中存在活跃修士、宗门势力、时代大事和持续发酵的人情风波。
-- 普通器物、本命之物、灵宝、古老至宝等体系会随道途逐渐展开。
-- 本地 AI 可参与生成动态事件，让同一套世界规则下出现更随机的修仙遭遇。
-
-## 操作
+本机使用的便携 Godot 固定在 D 盘项目目录：
 
 ```text
-[1] 修炼
-[2] 历练
-[3] 突破
-[4] 调息服药
-[5] 灵石闭关
-[6] 铸炼器物
-[W] 世界
-[Q] 本世
-[E] 传承
-[T] 至宝
-[S] 保存到槽位
-[L] 读取槽位
-[ESC] 退出 / 返回
+D:\Games\wendao\tools\godot\4.7.1\Godot_v4.7.1-stable_win64.exe
 ```
 
-## 动态 AI
+引擎、导出模板、Godot 编辑器数据、临时目录和构建产物都留在 `D:\Games\wendao` 内。首次准备环境时会从 Godot 官方下载与发布源获取固定的 4.7.1 文件，并在解压前校验 SHA-256。
 
-游戏可以在没有 AI 的情况下运行，动态事件会回退到内置模板。
+## 开发与构建
 
-如果想启用本地 AI 动态事件，可以运行：
+在项目根目录执行：
 
-```bat
-准备本地AI.bat
+```powershell
+# 准备便携编辑器和 Windows 导出模板（首次约需下载 1.3 GB）
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
+
+# 导入资源、检查脚本、加载主场景并运行存档回归
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1
+
+# 验证并导出 Windows 新版
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1
 ```
 
-便携模型和运行时文件体积较大，不会提交到仓库。准备脚本会尝试补齐所需文件；如果环境不支持，也不影响基础游戏流程。
+也可以双击 `构建Godot版.bat`。导出结果位于：
 
-## 开源协议
+```text
+release\godot\windows\wendao-changsheng.exe
+release\godot\windows\wendao-changsheng.pck
+```
 
-本项目除另有说明外采用 GNU Affero General Public License v3.0，详见 [LICENSE](LICENSE)。
+`release/`、便携引擎、模板与 Godot 导入缓存均被 Git 忽略，不会污染仓库。GitHub Actions 会运行同一套验证与导出脚本，只上传 Godot Windows 产物。
 
-欢迎试玩、学习、交流和基于本项目继续探索。若发布修改版或提供在线版本，请按 AGPL-3.0 保留同样的开源方式，让后续改进也能回到社区。第三方模型、运行时、库或外部资源仍遵循其各自许可证。
+## 当前内容
+
+- 六种时代：古典、灵机蒸汽、星穹道网、废土返道、末法裂变、仙朝鼎盛。
+- 修炼、历练、突破和时代观测的可玩闭环切片。
+- 数据驱动的事件、场景和人物资源路由。
+- 呼吸立绘、环境微粒、远近景视差、暗角与时代主题渲染。
+- 随五行、因果和道心变化的原创“命途罗盘”。
+- 带校验、备份恢复与坏档隔离的新版存档；导出后保存在 EXE 同目录 `save/`。
+- D 盘本地 AI 模型与运行环境探测；通信桥仍在迁移，当前稳定使用内置事件。
+
+完整的轮回、动态世界、本地 AI 通讯和旧档导入仍在持续迁移。Godot 新版会继续吸收旧实现中已经验证的规则，但不会恢复旧版入口。
 
 ## 项目结构
 
 ```text
-src/                 主程序
-ai_engine/           本地 AI 事件桥与质量测试脚本
-assets/              背景、图标与物品资源
-world_system/        动态世界相关代码
-legacy_system/       轮回与前世传承相关代码
-procedural_gen/      程序化生成辅助
-build.bat            编译入口
-启动游戏.bat         启动入口
-准备本地AI.bat       可选本地 AI 准备入口
+godot/                       Godot 4.7.1 主项目
+godot/art/                   新版场景与人物资源
+godot/data/                  数据驱动事件
+godot/scripts/               界面、玩法与动态渲染
+godot/export_presets.cfg     Windows 导出预设
+tools/prepare_godot.ps1      D 盘便携环境与哈希校验
+tools/verify_godot.ps1       导入、脚本与主场景验证
+tools/build_godot.ps1        Windows 新版导出
+docs/godot_migration_v014.md 迁移和切换标准
 ```
+
+## 开源协议
+
+项目除另有说明外采用 GNU Affero General Public License v3.0，详见 [LICENSE](LICENSE)。第三方美术、模型、运行时与库仍遵循各自许可证。

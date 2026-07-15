@@ -1,0 +1,68 @@
+name: Godot Windows Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-export:
+    name: Validate and export Godot 4.7.1
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache verified Godot archives and templates
+        uses: actions/cache@v4
+        with:
+          path: |
+            tools/godot/4.7.1/Godot_v4.7.1-stable_win64.exe.zip
+            tools/godot/4.7.1/Godot_v4.7.1-stable_export_templates.tpz
+          key: godot-4.7.1-windows-c7a28905-templates-86409db6
+
+      - name: Prepare pinned official Godot environment
+        shell: pwsh
+        run: ./tools/prepare_godot.ps1
+
+      - name: Verify Godot art inventory
+        shell: pwsh
+        env:
+          PYTHONUTF8: "1"
+        run: python -X utf8 ./tools/verify_godot_art.py
+
+      - name: Validate project and load main scene
+        shell: pwsh
+        run: ./tools/verify_godot.ps1 -NoPrepare
+
+      - name: Export Windows x86_64 release
+        shell: pwsh
+        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify
+
+      - name: Verify release boundary
+        shell: pwsh
+        run: |
+          $output = "release/godot/windows"
+          if (-not (Test-Path "$output/wendao-changsheng.exe")) { throw "Windows executable missing" }
+          if (-not (Test-Path "$output/wendao-changsheng.pck")) { throw "Godot resource pack missing" }
+          $unexpected = Get-ChildItem $output -Recurse -File | Where-Object {
+            $_.Name -match 'wendao_enhanced|\.cpp$|\.obj$'
+          }
+          if ($unexpected) { throw "Legacy runtime leaked into the Godot artifact: $($unexpected.FullName -join ', ')" }
+
+      - name: Upload Godot-only Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: wendao-changsheng-godot-4.7.1-windows-x86_64
+          path: release/godot/windows/
+          if-no-files-found: error
+          retention-days: 14

@@ -4,6 +4,7 @@ release/
 *.dll
 *.o
 *.obj
+*.pck
 
 # Local AI model/runtime bundles
 ai_engine/models/
@@ -37,3 +38,10 @@ Thumbs.db
 Desktop.ini
 .vscode/
 .idea/
+
+# Godot local engine/import cache (project source stays tracked)
+godot/.godot/
+tools/godot/
+tools/gh/
+.tmp/
+.local/

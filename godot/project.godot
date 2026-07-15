@@ -1,0 +1,28 @@
+; Engine configuration file.
+; Godot 4.7.1 vertical-slice migration for 问道长生.
+config_version=5
+
+[application]
+
+config/name="问道长生 · 神游版"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+
+window/size/viewport_width=1440
+window/size/viewport_height=900
+window/size/window_width_override=1440
+window/size/window_height_override=900
+window/stretch/mode="canvas_items"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+environment/defaults/default_clear_color=Color(0.018, 0.024, 0.035, 1)
+
+[gui]
+
+theme/default_font_multichannel_signed_distance_field=true
