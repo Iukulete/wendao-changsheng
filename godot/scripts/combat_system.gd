@@ -51,6 +51,13 @@ const INTENT_NAMES := {
 	"strike": "迅击", "heavy": "蓄势重击", "guard": "结印护身",
 	"bleed": "撕裂经脉", "weaken": "蚀心咒",
 }
+const INTENT_DESCRIPTIONS := {
+	"strike": "直接攻势，伤害存在小幅波动。",
+	"heavy": "高威胁重击，护盾能抵消主要伤害。",
+	"guard": "本回合不攻击，并结成护身罡气。",
+	"bleed": "攻击后留下流血，后续回合持续损伤气血。",
+	"weaken": "攻击并施加虚弱，暂时降低你的伤害。",
+}
 
 
 static func normalize(state: Dictionary) -> Dictionary:
@@ -188,6 +195,10 @@ static func auto_resolve(state: Dictionary, action_limit: int = MAX_TURNS) -> Di
 
 static func intent_label(battle: Dictionary) -> String:
 	return str(INTENT_NAMES.get(str(battle.get("intent", "strike")), "未知意图"))
+
+
+static func intent_description(battle: Dictionary) -> String:
+	return str(INTENT_DESCRIPTIONS.get(str(battle.get("intent", "strike")), "敌意尚未完全显形。"))
 
 
 static func _apply_player_action(state: Dictionary, battle: Dictionary, action: String) -> Dictionary:

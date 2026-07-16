@@ -40,6 +40,20 @@ func _run() -> void:
 		_capture(root, output_root.path_join("main_%dx%d.png" % [viewport_size.x, viewport_size.y]),
 			viewport_size, "主界面 %dx%d" % [viewport_size.x, viewport_size.y])
 
+	var pre_combat_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
+	root.size = Vector2i(1280, 720)
+	game.call("_start_combat")
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("normal_combat_1280x720.png"), Vector2i(1280, 720),
+		"普通战斗 1280x720")
+	root.size = Vector2i(1440, 900)
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("normal_combat_1440x900.png"), Vector2i(1440, 900),
+		"普通战斗 1440x900")
+	game.set("run_state", pre_combat_state)
+	game.call("_sync_state_views")
+	game.call("_show_game")
+
 	root.size = Vector2i(1440, 900)
 	game.call("_enter_dungeon")
 	await _settle_frames(4)
@@ -60,7 +74,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, 3 main viewports and dungeon route/combat are nonblank and correctly sized")
+		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat and dungeon route/combat are nonblank and correctly sized")
 		quit(0)
 	else:
 		for failure in failures:

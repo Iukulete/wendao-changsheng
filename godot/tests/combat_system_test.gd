@@ -15,7 +15,9 @@ func _init() -> void:
 	var start_b: Dictionary = CombatSystemScript.start_combat(deterministic_b, "classical_razor_wolf")
 	_expect(bool(start_a.ok) and start_a == start_b and deterministic_a == deterministic_b,
 		"同一状态与敌人必须生成完全相同的战局")
-	_expect(not CombatSystemScript.intent_label(start_a.battle).is_empty(), "敌人必须提前暴露明确意图")
+	_expect(not CombatSystemScript.intent_label(start_a.battle).is_empty() and
+		not CombatSystemScript.intent_description(start_a.battle).is_empty(),
+		"敌人必须提前暴露明确意图及其战术含义")
 	var first_turn: Dictionary = CombatSystemScript.perform_action(deterministic_a, "attack")
 	_expect(bool(first_turn.ok) and int(first_turn.battle.turn) == 2 and
 		(first_turn.battle.log as Array).size() >= 3, "攻击必须推进双方行动并留下战斗日志")

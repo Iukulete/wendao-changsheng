@@ -10,6 +10,7 @@ const WorldSimulationScript = preload("res://scripts/world_simulation.gd")
 const LocalAIBridgeScript = preload("res://scripts/local_ai_bridge.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
+const CombatStageScript = preload("res://scripts/combat_stage.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
@@ -781,7 +782,8 @@ func _show_combat() -> void:
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
 	body.add_child(_build_combatant_panel("此世之我", int(battle.player_hp), int(battle.player_max_hp),
-		int(battle.player_mp), int(battle.player_max_mp), battle.player_statuses, false))
+		int(battle.player_mp), int(battle.player_max_mp), int(battle.player_attack),
+		int(battle.player_defense), battle.player_statuses, false))
 	body.add_child(_build_combat_log(battle))
 	body.add_child(_build_enemy_panel(battle))
 
@@ -791,9 +793,11 @@ func _show_combat() -> void:
 	page.add_child(actions)
 	var attack_button := _button("斩击 [1]", _resolve_combat_action.bind("attack"), true)
 	attack_button.name = "CombatAttackButton"
+	attack_button.tooltip_text = "以攻势对敌，并有机会留下流血。"
 	actions.add_child(attack_button)
 	var guard_button := _button("守势 [2]", _resolve_combat_action.bind("guard"), false)
 	guard_button.name = "CombatGuardButton"
+	guard_button.tooltip_text = "根据护体强度凝成护盾。"
 	actions.add_child(guard_button)
 	var spell_button := _button("术法 [3]", _resolve_combat_action.bind("spell"), false)
 	spell_button.name = "CombatSpellButton"
@@ -807,15 +811,14 @@ func _show_combat() -> void:
 	actions.add_child(pill_button)
 	var flee_button := _button("脱战 [5]", _resolve_combat_action.bind("flee"), false)
 	flee_button.name = "CombatFleeButton"
+	flee_button.tooltip_text = "尝试退出战圈；拖得越久，成功率越低。"
 	actions.add_child(flee_button)
-	page.add_child(_label("敌方意图会在行动前公开；每一回合都会自动封存。", 14,
-		Color(0.78, 0.82, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 
 
 func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp: int,
-		statuses: Dictionary, enemy_side: bool) -> Control:
+		attack: int, defense: int, statuses: Dictionary, enemy_side: bool) -> Control:
 	var panel := _panel(0.82, Color("d46b61") if enemy_side else era_accent)
-	panel.custom_minimum_size.x = 270
+	panel.custom_minimum_size.x = 255
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
 	panel.add_child(column)
@@ -823,18 +826,24 @@ func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp
 	column.add_child(_progress_row("气血", hp, max_hp, Color("c95858")))
 	if not enemy_side:
 		column.add_child(_progress_row("灵力", mp, max_mp, Color("538fc2")))
+	column.add_child(_label("攻势 %d  ·  护体 %d" % [attack, defense], 15,
+		Color(0.82, 0.85, 0.84)))
 	column.add_child(_label(_combat_status_text(statuses), 15, Color(0.82, 0.84, 0.82)))
 	return panel
 
 
 func _build_enemy_panel(battle: Dictionary) -> Control:
 	var panel := _build_combatant_panel(str(battle.enemy_name), int(battle.enemy_hp),
-		int(battle.enemy_max_hp), 0, 0, battle.enemy_statuses, true)
+		int(battle.enemy_max_hp), 0, 0, int(battle.enemy_attack), int(battle.enemy_defense),
+		battle.enemy_statuses, true)
 	var column := panel.get_child(0) as VBoxContainer
 	column.add_child(_divider())
 	column.add_child(_label("下一意图", 14, Color(0.72, 0.76, 0.76)))
 	column.add_child(_label(CombatSystemScript.intent_label(battle), 22, Color("ef9a78"),
 		HORIZONTAL_ALIGNMENT_CENTER))
+	var detail := _label(CombatSystemScript.intent_description(battle), 14, Color(0.82, 0.80, 0.76))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(detail)
 	return panel
 
 
@@ -842,8 +851,14 @@ func _build_combat_log(battle: Dictionary) -> Control:
 	var panel := _panel(0.76, era_accent)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
+	var combat_stage: Control = CombatStageScript.new()
+	combat_stage.name = "CombatStage"
+	combat_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	combat_stage.call("configure", battle, era_accent)
+	column.add_child(combat_stage)
+	column.add_child(_divider())
 	column.add_child(_section_title("交锋实录"))
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
