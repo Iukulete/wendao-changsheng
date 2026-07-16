@@ -2,6 +2,8 @@ extends SceneTree
 
 const GameStateScript = preload("res://scripts/game_state.gd")
 const SaveServiceScript = preload("res://scripts/save_service.gd")
+const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
+const ItemSystemScript = preload("res://scripts/item_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -55,6 +57,20 @@ func _run() -> void:
 	game.call("_show_game")
 
 	root.size = Vector2i(1440, 900)
+	var dungeon_state: Dictionary = game.get("run_state")
+	dungeon_state.player.path.insight = 18
+	dungeon_state.player.path.creation = 12
+	dungeon_state.player.path.bonds = 8
+	ItemSystemScript.equip(dungeon_state, "item_iron_sword_000001")
+	var armor_result: Dictionary = ItemSystemScript.add_item(dungeon_state, "cloud_robe")
+	ItemSystemScript.equip(dungeon_state, str(armor_result.get("instance_id", "")))
+	var armory: Dictionary = AchievementSystemScript.normalize(dungeon_state)
+	var jade_weapon: Dictionary = armory.weapons.qingxiao
+	jade_weapon["unlocked"] = true
+	armory.weapons.qingxiao = jade_weapon
+	armory["equipped_id"] = "qingxiao"
+	dungeon_state.legacy.armory = armory
+	dungeon_state.legacy.inherited_echoes = [{"id": "render_echo", "name": "前世行功残篇"}]
 	game.call("_enter_dungeon")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_route_1440x900.png"), Vector2i(1440, 900), "秘境路线")

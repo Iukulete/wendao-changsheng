@@ -979,6 +979,8 @@ func _show_dungeon_route() -> void:
 		Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
 	depth_column.add_child(_label("灵诀 %d式 · 心障随压力入组" % (run.deck as Array).size(), 14,
 		Color(0.76, 0.81, 0.81), HORIZONTAL_ALIGNMENT_CENTER))
+	depth_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
+		int(run.get("guard_power", 0))], 13, Color(era_accent, 0.86), HORIZONTAL_ALIGNMENT_CENTER))
 	status.add_child(depth_panel)
 
 	var body := HBoxContainer.new()
@@ -1036,6 +1038,8 @@ func _show_dungeon_combat() -> void:
 	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
 	self_column.add_child(_label("灵力 %d/%d · 护体 %d" % [int(battle.energy),
 		DungeonSystemScript.STARTING_ENERGY, int(battle.player_block)], 15, Color("b9d5e8")))
+	self_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
+		int(run.get("guard_power", 0))], 14, Color(era_accent, 0.88)))
 	combat_row.add_child(self_panel)
 	combat_row.add_child(_build_dungeon_log(run))
 	var enemy_panel := _panel(0.84, Color("d46b61"))
@@ -1068,16 +1072,25 @@ func _show_dungeon_combat() -> void:
 		var card: Dictionary = hand[index]
 		var definition: Dictionary = DungeonSystemScript.card_definition(str(card.card_id))
 		var upgrade := int(card.get("upgrade", 0))
-		var card_button := _button("%d  %s%s\n灵力 %d\n%s" % [index + 1, str(definition.name),
-			" +%d" % upgrade if upgrade > 0 else "", int(definition.cost), str(definition.description)],
+		var source_name := str(card.get("source_name", "既有功法"))
+		var source_kind := str(card.get("source_kind", "foundation"))
+		var card_button := _button("%d  %s%s\n源·%s  ·  灵力 %d\n%s" % [index + 1, str(definition.name),
+			" +%d" % upgrade if upgrade > 0 else "", source_name, int(definition.cost),
+			str(definition.description)],
 			_play_dungeon_card.bind(index), false)
 		card_button.name = "DungeonCardButton%d" % index
 		card_button.custom_minimum_size = Vector2(194, 116)
 		card_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		card_button.add_theme_font_size_override("font_size", 14)
+		var source_color := _ability_source_color(source_kind)
+		card_button.add_theme_stylebox_override("normal", _button_style(0.22, source_color, 0.56))
+		card_button.add_theme_stylebox_override("hover", _button_style(0.38, source_color, 0.94))
+		card_button.add_theme_stylebox_override("focus", _button_style(0.38, source_color, 0.94))
+		card_button.add_theme_stylebox_override("pressed", _button_style(0.52, source_color, 1.0))
 		card_button.disabled = int(definition.cost) > int(battle.energy)
-		card_button.tooltip_text = "当前灵力不足。" if card_button.disabled else str(definition.description)
+		card_button.tooltip_text = "当前灵力不足。" if card_button.disabled else \
+			"能力来源：%s\n%s" % [source_name, str(definition.description)]
 		hand_grid.add_child(card_button)
 
 	var actions := HBoxContainer.new()
@@ -1092,7 +1105,7 @@ func _show_dungeon_combat() -> void:
 
 func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	var header := _panel(0.82, era_accent)
-	header.custom_minimum_size.y = 72
+	header.custom_minimum_size.y = 86
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	header.add_child(row)
@@ -1101,6 +1114,10 @@ func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	row.add_child(title)
 	title.add_child(_label(str(run.name), 26, Color("f5e7bd")))
 	title.add_child(_label(subtitle, 14, Color(era_accent, 0.90)))
+	var profile_label := _label(DungeonSystemScript.ability_profile_label(run), 13,
+		Color(0.77, 0.83, 0.82))
+	profile_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title.add_child(profile_label)
 	var rewards: Dictionary = run.rewards
 	row.add_child(_label("暂存修为 %d · 灵石 %d" % [int(rewards.exp), int(rewards.spirit_stones)],
 		15, Color("e7c778"), HORIZONTAL_ALIGNMENT_RIGHT))
@@ -1123,6 +1140,19 @@ func _build_dungeon_log(run: Dictionary) -> Control:
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(log_label)
 	return panel
+
+
+func _ability_source_color(source_kind: String) -> Color:
+	return {
+		"weapon": Color("dc8b55"),
+		"armor": Color("62b4c5"),
+		"realm": Color("9b7ed0"),
+		"path": Color("67b98d"),
+		"relic": Color("d6b45c"),
+		"jade": Color("e2786c"),
+		"memory": Color("a58bc9"),
+		"heart": Color("bd5364"),
+	}.get(source_kind, era_accent)
 
 
 func _choose_dungeon_route(index: int) -> void:

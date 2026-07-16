@@ -11,6 +11,27 @@ const MAX_LOG := 48
 const MAX_HISTORY := 64
 const MAX_TURNS := 60
 const STARTING_ENERGY := 3
+const PATH_IDS := ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]
+const PATH_TIE_ORDER := ["insight", "creation", "compassion", "bonds", "defiance", "ambition"]
+const PATH_NAMES := {
+	"compassion": "慈悲", "ambition": "凌云", "defiance": "逆命",
+	"insight": "明悟", "creation": "造化", "bonds": "羁绊",
+}
+const PATH_CARDS := {
+	"compassion": "lotus_vow", "ambition": "sky_seize", "defiance": "fate_break",
+	"insight": "cause_trace", "creation": "forge_edge", "bonds": "shared_oath",
+}
+const JADE_STYLE_CARDS := {
+	"slaughter": "blood_arc", "guardian": "timeless_ward",
+	"insight": "mind_mirror", "myriad": "myriad_cycle",
+}
+const REQUIRED_ABILITY_CARDS := [
+	"sword_cut", "jade_guard", "qi_breath", "weapon_resonance", "armor_circulation",
+	"realm_manifestation", "relic_cycle", "past_life_echo", "lotus_vow", "sky_seize",
+	"fate_break", "cause_trace", "forge_edge", "shared_oath", "blood_arc",
+	"timeless_ward", "mind_mirror", "myriad_cycle", "heart_demon",
+]
+const SUPPORTED_EFFECTS := ["attack", "block", "heal", "energy", "weak", "power", "stress", "calm", "draw"]
 
 static var _data_cache: Dictionary = {}
 
@@ -30,7 +51,7 @@ static func validate_definitions() -> Dictionary:
 		return {"ok": false, "code": "unsupported_dungeon_schema"}
 	var cards_value: Variant = data.get("cards", [])
 	var dungeons_value: Variant = data.get("dungeons", [])
-	if not cards_value is Array or (cards_value as Array).size() < 12 or not dungeons_value is Array or \
+	if not cards_value is Array or (cards_value as Array).size() < REQUIRED_ABILITY_CARDS.size() or not dungeons_value is Array or \
 			(dungeons_value as Array).is_empty():
 		return {"ok": false, "code": "missing_dungeon_content"}
 	var card_ids := {}
@@ -40,9 +61,17 @@ static func validate_definitions() -> Dictionary:
 		var card: Dictionary = value
 		var card_id := str(card.get("id", ""))
 		if card_id.is_empty() or card_ids.has(card_id) or str(card.get("name", "")).is_empty() or \
+				str(card.get("description", "")).is_empty() or \
 				not card.get("effects", null) is Dictionary or int(card.get("cost", -1)) < 0:
 			return {"ok": false, "code": "invalid_card"}
+		for effect_id in (card.effects as Dictionary).keys():
+			if not SUPPORTED_EFFECTS.has(str(effect_id)) or \
+					typeof(card.effects[effect_id]) not in [TYPE_INT, TYPE_FLOAT]:
+				return {"ok": false, "code": "invalid_card_effect", "card_id": card_id}
 		card_ids[card_id] = true
+	for required_id in REQUIRED_ABILITY_CARDS:
+		if not card_ids.has(required_id):
+			return {"ok": false, "code": "missing_ability_card", "card_id": required_id}
 	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
 		var era: Dictionary = (data.get("era_enemies", {}) as Dictionary).get(era_id, {})
 		for rank in ["normal", "elite", "boss"]:
@@ -82,16 +111,22 @@ static func start(state: Dictionary, dungeon_id: String = "mirror_lake") -> Dict
 	if definition.is_empty():
 		return {"ok": false, "code": "unknown_dungeon"}
 	var effective: Dictionary = ItemSystemScript.effective_stats(state)
-	var deck := _starting_deck(state)
+	var projection := _starting_deck(state)
+	var deck: Array = projection.deck
 	var run := {
 		"id": "dungeon_%s" % ("%s|%s|%d|%d" % [state.get("run_id", "run"), dungeon_id,
 			state.get("turn", 0), state.get("rng_cursor", 0)]).sha256_text().left(16),
 		"dungeon_id": dungeon_id, "name": str(definition.name), "outcome": "active",
 		"era_id": str(state.get("current_era_id", "classical")), "depth": 0,
 		"max_depth": int(definition.max_depth), "hp": int(effective.max_hp),
-		"max_hp": int(effective.max_hp), "stress": 0, "attack_power": 0,
+		"max_hp": int(effective.max_hp), "stress": 0,
+		"attack_power": clampi(int(effective.attack) / 24, 0, 14),
+		"guard_power": clampi(int(effective.defense) / 18, 0, 14),
+		"card_counter": int(projection.card_counter),
+		"ability_profile": projection.profile,
 		"deck": deck, "route_choices": [], "battle": {}, "rewards": {"exp": 0, "spirit_stones": 0},
-		"log": ["你踏入%s，今生功法被秘境折成一组临时灵诀。" % str(definition.name)],
+		"log": ["你踏入%s，今生功法被秘境折成一组临时灵诀。" % str(definition.name),
+			"能力映照：%s" % ability_profile_label(projection.profile)],
 	}
 	_generate_route(state, run)
 	dungeon["active"] = true
@@ -150,7 +185,7 @@ static func play_card(state: Dictionary, hand_index: int) -> Dictionary:
 		var base_damage := int(effects.attack) * scale / 100 + int(run.attack_power)
 		damage = _damage_enemy(battle, base_damage + int((state.get("player", {}) as Dictionary).get("realm_index", 0)))
 	if int(effects.get("block", 0)) > 0:
-		block = int(effects.block) * scale / 100
+		block = int(effects.block) * scale / 100 + int(run.get("guard_power", 0))
 		battle["player_block"] = int(battle.player_block) + block
 	if int(effects.get("heal", 0)) > 0:
 		run["hp"] = mini(int(run.max_hp), int(run.hp) + int(effects.heal) * scale / 100)
@@ -216,10 +251,15 @@ static func end_turn(state: Dictionary) -> Dictionary:
 		run["battle"] = battle
 		return _finish_battle(state, dungeon, run, "defeat")
 	if int(run.stress) >= 100:
-		var curse := _new_card(run, "heart_demon")
+		var curse := _new_card(run, "heart_demon", "heart", "心魔压力")
 		discard = battle.discard_pile
 		discard.append(curse)
 		battle["discard_pile"] = discard
+		var deck: Array = run.deck
+		if deck.size() >= MAX_DECK:
+			deck.pop_front()
+		deck.append(curse.duplicate(true))
+		run["deck"] = deck
 		run["stress"] = 60
 		_append_log(run, "心魔压力越过极限，一张心障残页混入牌组。")
 	var cycle: Array = battle.intent_cycle
@@ -282,26 +322,139 @@ static func intent_label(intent: String) -> String:
 	return str({"strike": "迅击", "heavy": "蓄势重击", "guard": "结界护体", "stress": "心魔低语"}.get(intent, "未知意图"))
 
 
-static func _starting_deck(state: Dictionary) -> Array:
+static func _starting_deck(state: Dictionary) -> Dictionary:
 	var run_seed := {"card_counter": 0}
+	var profile := _build_ability_profile(state)
 	var deck: Array = []
-	for _i in range(4): deck.append(_new_card(run_seed, "sword_cut"))
-	for _i in range(4): deck.append(_new_card(run_seed, "jade_guard"))
-	deck.append(_new_card(run_seed, "qi_breath"))
-	var path: Dictionary = (state.get("player", {}) as Dictionary).get("path", {})
-	var dominant := "insight"
-	var best := -1000000
-	for path_id in ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]:
-		if int(path.get(path_id, 0)) > best: best = int(path.get(path_id, 0)); dominant = path_id
-	var path_cards := {"compassion":"lotus_vow", "ambition":"sky_seize", "defiance":"fate_break",
-		"insight":"cause_trace", "creation":"forge_edge", "bonds":"shared_oath"}
-	deck.append(_new_card(run_seed, str(path_cards[dominant])))
+	var weapon_source := str(profile.weapon_name)
+	for index in range(3):
+		var card_id := "weapon_resonance" if index == 0 and bool(profile.weapon_equipped) else "sword_cut"
+		deck.append(_new_card(run_seed, card_id, "weapon", weapon_source))
+	var armor_source := str(profile.armor_name)
+	for index in range(3):
+		var card_id := "armor_circulation" if index == 0 and bool(profile.armor_equipped) else "jade_guard"
+		deck.append(_new_card(run_seed, card_id, "armor", armor_source))
+	deck.append(_new_card(run_seed, "qi_breath", "realm", str(profile.realm_name)))
+	deck.append(_new_card(run_seed, str(PATH_CARDS[profile.primary_path_id]), "path",
+		str(profile.primary_source_name)))
+	deck.append(_new_card(run_seed, str(PATH_CARDS[profile.secondary_path_id]), "path",
+		str(profile.secondary_source_name)))
+	deck.append(_new_card(run_seed, "realm_manifestation", "realm", str(profile.realm_name)))
+	deck.append(_new_card(run_seed, "relic_cycle", "relic", str(profile.relic_name)))
+	if not str(profile.jade_weapon_name).is_empty():
+		deck.append(_new_card(run_seed, str(profile.jade_card_id), "jade",
+			str(profile.jade_weapon_name)))
+	if not str(profile.memory_name).is_empty():
+		deck.append(_new_card(run_seed, "past_life_echo", "memory", str(profile.memory_name)))
+	return {"deck": deck, "profile": profile, "card_counter": int(run_seed.card_counter)}
+
+
+static func ability_profile_label(run_or_profile: Dictionary) -> String:
+	var profile_value: Variant = run_or_profile.get("ability_profile", run_or_profile)
+	var profile: Dictionary = profile_value if profile_value is Dictionary else {}
+	var primary_name := str(PATH_NAMES.get(str(profile.get("primary_path_id", "insight")), "未定"))
+	var primary_source := str(profile.get("primary_source_name", primary_name))
+	var secondary_name := str(PATH_NAMES.get(str(profile.get("secondary_path_id", "creation")), "未定"))
+	var secondary_source := str(profile.get("secondary_source_name", secondary_name))
+	var parts: Array[String] = [
+		"境界·%s" % str(profile.get("realm_name", "未显")),
+		"主道·%s%s" % [primary_name, "·%s" % primary_source if primary_source != primary_name else ""],
+		"次道·%s%s" % [secondary_name, "·%s" % secondary_source if secondary_source != secondary_name else ""],
+		"器·%s" % str(profile.get("weapon_name", "本命攻法")),
+	]
+	if not str(profile.get("jade_weapon_name", "")).is_empty():
+		parts.append("玉兵·%s" % str(profile.jade_weapon_name))
+	if not str(profile.get("memory_name", "")).is_empty():
+		parts.append("前世·%s" % str(profile.memory_name))
+	return "  |  ".join(parts)
+
+
+static func _build_ability_profile(state: Dictionary) -> Dictionary:
+	var player: Dictionary = state.get("player", {})
+	var ranked_paths := _ranked_paths(player.get("path", {}))
+	var primary: Dictionary = ranked_paths[0]
+	var secondary: Dictionary = ranked_paths[1]
+	var weapon := _equipped_source(state, "weapon", "本命攻法")
+	var armor := _equipped_source(state, "armor", "护体根基")
+	var relic := _equipped_source(state, "relic", "黑白轮回玉")
 	var jade := AchievementSystemScript.current_weapon(state)
+	var jade_card_id := ""
 	if not jade.is_empty():
-		var style_cards := {"slaughter":"blood_arc", "guardian":"timeless_ward",
-			"insight":"mind_mirror", "myriad":"myriad_cycle"}
-		deck.append(_new_card(run_seed, str(style_cards.get(str(jade.style), "mind_mirror"))))
-	return deck
+		jade_card_id = str(JADE_STYLE_CARDS.get(str(jade.style), "mind_mirror"))
+	var echoes_value: Variant = (state.get("legacy", {}) as Dictionary).get("inherited_echoes", [])
+	var echoes: Array = echoes_value if echoes_value is Array else []
+	var memory_name := ""
+	if not echoes.is_empty() and echoes[0] is Dictionary:
+		memory_name = str((echoes[0] as Dictionary).get("name", "前世残响")).left(32)
+	return {
+		"realm_name": "%s %d层" % [str(player.get("realm", "凡人")), int(player.get("level", 1))],
+		"primary_path_id": str(primary.id),
+		"primary_path_score": int(primary.score),
+		"primary_source_name": _path_source_name(state, str(primary.id)),
+		"secondary_path_id": str(secondary.id),
+		"secondary_path_score": int(secondary.score),
+		"secondary_source_name": _path_source_name(state, str(secondary.id)),
+		"weapon_name": str(weapon.name), "weapon_equipped": bool(weapon.equipped),
+		"armor_name": str(armor.name), "armor_equipped": bool(armor.equipped),
+		"relic_name": str(relic.name),
+		"jade_weapon_name": str(jade.get("name", "")).left(32),
+		"jade_card_id": jade_card_id,
+		"memory_name": memory_name,
+	}
+
+
+static func _ranked_paths(path_value: Variant) -> Array:
+	var path: Dictionary = path_value if path_value is Dictionary else {}
+	var ranked: Array = []
+	for path_id in PATH_IDS:
+		ranked.append({"id": path_id, "score": int(path.get(path_id, 0)),
+			"tie": PATH_TIE_ORDER.find(path_id)})
+	ranked.sort_custom(func(left: Dictionary, right: Dictionary):
+		if int(left.score) == int(right.score):
+			return int(left.tie) < int(right.tie)
+		return int(left.score) > int(right.score))
+	return ranked
+
+
+static func _path_source_name(state: Dictionary, path_id: String) -> String:
+	if path_id == "bonds":
+		var bond_name := _strongest_bond_name(state)
+		if not bond_name.is_empty():
+			return bond_name
+	return str(PATH_NAMES.get(path_id, path_id))
+
+
+static func _strongest_bond_name(state: Dictionary) -> String:
+	var world_value: Variant = state.get("world", {})
+	var world: Dictionary = world_value if world_value is Dictionary else {}
+	var npcs_value: Variant = world.get("npcs", [])
+	if not npcs_value is Array:
+		return ""
+	var best_relation := 0
+	var best_name := ""
+	for npc_value in (npcs_value as Array):
+		if not npc_value is Dictionary:
+			continue
+		var npc: Dictionary = npc_value
+		var relation := int(npc.get("player_relation", 0))
+		if bool(npc.get("alive", true)) and relation > best_relation:
+			best_relation = relation
+			best_name = str(npc.get("name", "")).left(24)
+	return best_name
+
+
+static func _equipped_source(state: Dictionary, slot: String, fallback: String) -> Dictionary:
+	var inventory := ItemSystemScript.normalize(state)
+	var reference := str((inventory.equipped as Dictionary).get("%s_id" % slot, ""))
+	if reference.is_empty():
+		return {"name": fallback, "equipped": false}
+	if reference == "black_white_jade":
+		return {"name": "黑白轮回玉", "equipped": true}
+	for entry_value in (inventory.items as Array):
+		var entry: Dictionary = entry_value
+		if str(entry.get("instance_id", "")) == reference or str(entry.get("item_id", "")) == reference:
+			return {"name": ItemSystemScript.display_name(entry).left(32), "equipped": true}
+	return {"name": fallback, "equipped": false}
 
 
 static func _generate_route(state: Dictionary, run: Dictionary) -> void:
@@ -395,12 +548,34 @@ static func _resolve_noncombat_node(state: Dictionary, run: Dictionary, node_typ
 		run["deck"] = deck
 		_append_log(run, "%s被炉台刻入一道强化器痕。" % str(card_definition(str(card.card_id)).name))
 	else:
-		var candidates := ["lotus_vow", "fate_break", "cause_trace", "forge_edge", "shared_oath"]
-		var card := _new_card(run, str(candidates[_roll(state, 0, candidates.size() - 1)]))
+		var candidates := _memory_candidates(run)
+		var projection: Dictionary = candidates[_roll(state, 0, candidates.size() - 1)]
+		var card := _new_card(run, str(projection.card_id), str(projection.source_kind),
+			str(projection.source_name))
 		var deck: Array = run.deck
 		if deck.size() < MAX_DECK: deck.append(card)
 		run["deck"] = deck
-		_append_log(run, "失落道碑让你临时领悟%s。" % str(card_definition(str(card.card_id)).name))
+		_append_log(run, "失落道碑从%s中映出%s。" % [str(card.source_name),
+			str(card_definition(str(card.card_id)).name)])
+
+
+static func _memory_candidates(run: Dictionary) -> Array:
+	var profile: Dictionary = run.get("ability_profile", {})
+	var candidates: Array = [
+		{"card_id": str(PATH_CARDS.get(str(profile.get("primary_path_id", "insight")), "cause_trace")),
+			"source_kind": "path", "source_name": str(profile.get("primary_source_name", "明悟"))},
+		{"card_id": str(PATH_CARDS.get(str(profile.get("secondary_path_id", "creation")), "forge_edge")),
+			"source_kind": "path", "source_name": str(profile.get("secondary_source_name", "造化"))},
+		{"card_id": "relic_cycle", "source_kind": "relic",
+			"source_name": str(profile.get("relic_name", "黑白轮回玉"))},
+	]
+	if bool(profile.get("weapon_equipped", false)):
+		candidates.append({"card_id": "weapon_resonance", "source_kind": "weapon",
+			"source_name": str(profile.get("weapon_name", "本命攻法"))})
+	if not str(profile.get("memory_name", "")).is_empty():
+		candidates.append({"card_id": "past_life_echo", "source_kind": "memory",
+			"source_name": str(profile.memory_name)})
+	return candidates
 
 
 static func _advance_after_node(state: Dictionary, dungeon: Dictionary, run: Dictionary, node: Dictionary) -> Dictionary:
@@ -446,7 +621,10 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 	run["hp"] = clampi(int(run.get("hp", 1)), 0, int(run.max_hp))
 	run["stress"] = clampi(int(run.get("stress", 0)), 0, 100)
 	run["attack_power"] = clampi(int(run.get("attack_power", 0)), 0, 100000)
+	run["guard_power"] = clampi(int(run.get("guard_power", 0)), 0, 100000)
+	run["ability_profile"] = _normalize_ability_profile(run.get("ability_profile", {}))
 	run["deck"] = _normalize_cards(run.get("deck", []))
+	run["card_counter"] = maxi(int(run.get("card_counter", 0)), (run.deck as Array).size())
 	run["route_choices"] = _bounded_array(run.get("route_choices", []), 3)
 	run["log"] = _bounded_array(run.get("log", []), MAX_LOG)
 	var battle_value: Variant = run.get("battle", {})
@@ -456,20 +634,50 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 
 static func _normalize_cards(value: Variant) -> Array:
 	var result: Array = []
+	var seen_uids := {}
 	if value is Array:
 		for card_value in (value as Array):
 			if card_value is Dictionary and not card_definition(str((card_value as Dictionary).get("card_id", ""))).is_empty():
-				result.append({"uid":str((card_value as Dictionary).get("uid", "")).left(64),
+				var uid := str((card_value as Dictionary).get("uid", "")).left(64)
+				if uid.is_empty() or seen_uids.has(uid):
+					uid = "card_legacy_%06d" % (result.size() + 1)
+				seen_uids[uid] = true
+				result.append({"uid":uid,
 					"card_id":str((card_value as Dictionary).card_id),
-					"upgrade":clampi(int((card_value as Dictionary).get("upgrade", 0)), 0, 2)})
+					"upgrade":clampi(int((card_value as Dictionary).get("upgrade", 0)), 0, 2),
+					"source_kind":str((card_value as Dictionary).get("source_kind", "foundation")).left(24),
+					"source_name":str((card_value as Dictionary).get("source_name", "既有功法")).left(48)})
 				if result.size() >= MAX_DECK: break
 	return result
 
 
-static func _new_card(run: Dictionary, card_id: String) -> Dictionary:
+static func _normalize_ability_profile(value: Variant) -> Dictionary:
+	var profile: Dictionary = value.duplicate(true) if value is Dictionary else {}
+	return {
+		"realm_name": str(profile.get("realm_name", "未显境界")).left(48),
+		"primary_path_id": str(profile.get("primary_path_id", "insight")),
+		"primary_path_score": int(profile.get("primary_path_score", 0)),
+		"primary_source_name": str(profile.get("primary_source_name", "明悟")).left(32),
+		"secondary_path_id": str(profile.get("secondary_path_id", "creation")),
+		"secondary_path_score": int(profile.get("secondary_path_score", 0)),
+		"secondary_source_name": str(profile.get("secondary_source_name", "造化")).left(32),
+		"weapon_name": str(profile.get("weapon_name", "本命攻法")).left(32),
+		"weapon_equipped": bool(profile.get("weapon_equipped", false)),
+		"armor_name": str(profile.get("armor_name", "护体根基")).left(32),
+		"armor_equipped": bool(profile.get("armor_equipped", false)),
+		"relic_name": str(profile.get("relic_name", "黑白轮回玉")).left(32),
+		"jade_weapon_name": str(profile.get("jade_weapon_name", "")).left(32),
+		"jade_card_id": str(profile.get("jade_card_id", "")).left(64),
+		"memory_name": str(profile.get("memory_name", "")).left(32),
+	}
+
+
+static func _new_card(run: Dictionary, card_id: String, source_kind: String = "dungeon",
+		source_name: String = "秘境映照") -> Dictionary:
 	var counter := int(run.get("card_counter", 0)) + 1
 	run["card_counter"] = counter
-	return {"uid":"card_%06d" % counter, "card_id":card_id, "upgrade":0}
+	return {"uid":"card_%06d" % counter, "card_id":card_id, "upgrade":0,
+		"source_kind":source_kind.left(24), "source_name":source_name.left(48)}
 
 
 static func _dungeon_definition(dungeon_id: String) -> Dictionary:
