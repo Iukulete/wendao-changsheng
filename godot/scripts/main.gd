@@ -11,6 +11,7 @@ const LocalAIBridgeScript = preload("res://scripts/local_ai_bridge.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
+const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -54,7 +55,7 @@ const DEFAULT_PLAYER := {
 	"roots": [7, 4, 8, 5, 6],
 }
 
-enum ScreenState { MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT }
+enum ScreenState { MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY }
 
 var state: ScreenState = ScreenState.MENU
 var current_era: String = "古典修仙纪"
@@ -78,6 +79,8 @@ var animated_portrait: TextureRect
 var background_time: float = 0.0
 var era_accent: Color = Color("e4be4c")
 var base_theme: Theme
+var achievement_notice_queue: Array[Dictionary] = []
+var achievement_toast: Control
 
 
 func _ready() -> void:
@@ -115,6 +118,8 @@ func _process(delta: float) -> void:
 		animated_portrait.rotation = sin(background_time * 0.52) * 0.0035
 	if is_instance_valid(vignette) and vignette.material is ShaderMaterial:
 		vignette.material.set_shader_parameter("pulse", (sin(background_time * 1.1) + 1.0) * 0.5)
+	if not achievement_notice_queue.is_empty() and not is_instance_valid(achievement_toast):
+		_show_next_achievement_notice()
 
 
 func _build_theme() -> void:
@@ -351,6 +356,9 @@ func _sync_state_views() -> void:
 	ItemSystemScript.normalize(run_state)
 	CombatSystemScript.normalize(run_state)
 	StorySystemScript.normalize(run_state)
+	AchievementSystemScript.normalize(run_state)
+	AchievementSystemScript.check_progress(run_state)
+	_collect_achievement_notices()
 	current_era = str(run_state.get("current_era", "古典修仙纪"))
 	player = run_state.get("player", {})
 	recent_memories.clear()
@@ -396,7 +404,7 @@ func _show_game() -> void:
 
 	var footer := _panel(0.72, era_accent)
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼   [2] 历练   [3] 突破   [4] 迎战   [I] 行囊   [Tab] 时代观测   [S] 保存",
+	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [I] 行囊  [A] 玉兵  [Y] 切换  [J] 显圣",
 		15, Color(0.86, 0.89, 0.89, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -477,6 +485,10 @@ func _build_player_panel() -> Control:
 		CultivationScript.lifespan_pressure(player),
 		int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))],
 		13, Color(era_accent, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
+	var jade_weapon: Dictionary = AchievementSystemScript.current_weapon(run_state)
+	column.add_child(_label("玉兵 · %s" % ("尚未显化" if jade_weapon.is_empty() else "%s·%s  共鸣%d  蓄能%d/100" % [
+		str(jade_weapon.name), str(jade_weapon.stage_name), int(jade_weapon.resonance), int(jade_weapon.charge)]),
+		13, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
 	return panel
 
 
@@ -532,6 +544,9 @@ func _build_action_panel() -> Control:
 	var inventory_button := _button("陆 · 行囊与炼器", _show_inventory, false)
 	inventory_button.name = "InventoryButton"
 	column.add_child(inventory_button)
+	var armory_button := _button("柒 · 成就与轮回玉兵", _show_armory, false)
+	armory_button.name = "ArmoryButton"
+	column.add_child(armory_button)
 	column.add_child(_button("封存此世 · 保存进度", _manual_save, false))
 	column.add_child(_spacer(10))
 	column.add_child(_section_title("天机镜"))
@@ -627,6 +642,9 @@ func _meditate() -> void:
 	if bool(result.get("dead", false)):
 		_end_current_life("寿元耗尽")
 		return
+	AchievementSystemScript.add_resonance(run_state,
+		2 + int(result.get("levels_gained", 0)) * 2, "周天修炼")
+	_sync_state_views()
 	_save_current_state("周天已自动封存")
 	_show_game()
 
@@ -646,6 +664,9 @@ func _breakthrough() -> void:
 		else:
 			feedback = "破境失败。经脉受创，修为散去一半；天命从不保证努力必有回报。"
 			_add_memory("一次破境失败留下了真实伤势，也让你看清当前道途的缺口。")
+		AchievementSystemScript.add_resonance(run_state,
+			8 if bool(result.get("success", false)) else 2, "叩问瓶颈")
+		_sync_state_views()
 		if bool(result.get("dead", false)):
 			_end_current_life("破境反噬")
 			return
@@ -815,6 +836,7 @@ func _resolve_combat_action(action: String) -> void:
 	var battle: Dictionary = result.get("battle", {})
 	if outcome == "victory":
 		var rewards: Dictionary = result.get("rewards", {})
+		AchievementSystemScript.add_resonance(run_state, 6, "正面胜战")
 		CultivationScript.advance_time(run_state, 1)
 		_sync_state_views()
 		feedback = "你击败%s，修为 +%d、灵石 +%d，并取得一份战利材料。" % [
@@ -1064,7 +1086,9 @@ func _resolve_choice(index: int) -> void:
 		feedback += "\n\n" + str(story_resolution.get("message", "命途长卷又落下一笔。"))
 		if bool(story_resolution.get("terminal", false)):
 			_add_memory(str(story_resolution.get("message", "一条跨世因果已经定局。")))
+	AchievementSystemScript.add_resonance(run_state, 3, "历练抉择")
 	CultivationScript.advance_time(run_state, 1)
+	_sync_state_views()
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
 		_end_current_life("因果事件中的重创")
@@ -1347,11 +1371,143 @@ func _forge_inventory_item(recipe_id: String) -> void:
 		feedback = "炉火收束，你炼成%s%s。" % [str(result.quality_name), str((ItemSystemScript.RECIPES[recipe_id] as Dictionary).item_name)]
 		_add_memory("第%d年，一件%s器物在你的炉火中留下稳定器痕。" % [
 			int((run_state.world as Dictionary).get("year", 1)), str(result.quality_name)])
+		AchievementSystemScript.add_resonance(run_state, 4, "当世炼器")
+		_sync_state_views()
 		_save_current_state("炼器结果已封存")
 	else:
 		feedback = "炉中材料尚不足，器胚没有成形。"
 	_sync_state_views()
 	_show_inventory()
+
+
+func _show_armory() -> void:
+	state = ScreenState.ARMORY
+	_sync_state_views()
+	_clear_screen()
+	_apply_era_visuals(MENU_SCENE)
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 16)
+	screen_host.add_child(page)
+	page.add_child(_label("成就与轮回玉藏兵", 30, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 18)
+	page.add_child(body)
+	body.add_child(_build_achievement_list())
+	body.add_child(_build_jade_armory_list())
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 12)
+	page.add_child(actions)
+	actions.add_child(_button("切换下一件 [Y]", _cycle_jade_weapon, false))
+	var invoke_button := _button("玉兵显圣 [J]", _invoke_jade_weapon, true)
+	var current := AchievementSystemScript.current_weapon(run_state)
+	invoke_button.disabled = current.is_empty() or int(current.get("charge", 0)) < 100
+	invoke_button.tooltip_text = "显圣蓄能尚未达到100。" if invoke_button.disabled else "释放当前玉兵道法。"
+	actions.add_child(invoke_button)
+	var back_button := _button("返回山河", _show_game, false)
+	back_button.name = "ArmoryBackButton"
+	actions.add_child(back_button)
+
+
+func _build_achievement_list() -> Control:
+	var panel := _panel(0.84, era_accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+	column.add_child(_section_title("成就 %d/16" % AchievementSystemScript.unlocked_count(run_state)))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 9)
+	scroll.add_child(list)
+	var armory: Dictionary = run_state.legacy.armory
+	for value in (AchievementSystemScript.load_definitions().get("achievements", []) as Array):
+		var achievement: Dictionary = value
+		var unlocked := bool((armory.achievements as Dictionary).get(str(achievement.id), false))
+		var tier_color := _achievement_tier_color(int(achievement.tier))
+		var label := _label("%s [%s] %s\n%s" % ["已成" if unlocked else "未成",
+			AchievementSystemScript.TIER_NAMES[int(achievement.tier)], str(achievement.name), str(achievement.description)],
+			15, tier_color if unlocked else Color(0.58, 0.61, 0.62))
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		list.add_child(label)
+	return panel
+
+
+func _build_jade_armory_list() -> Control:
+	var panel := _panel(0.84, Color("d5a957"))
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+	column.add_child(_section_title("轮回玉藏兵"))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 8)
+	scroll.add_child(list)
+	var armory: Dictionary = run_state.legacy.armory
+	for value in (AchievementSystemScript.load_definitions().get("weapons", []) as Array):
+		var definition: Dictionary = value
+		var weapon: Dictionary = armory.weapons[str(definition.id)]
+		if not bool(weapon.unlocked):
+			list.add_child(_label("◇ %s · 尚未显化" % str(definition.name), 15, Color(0.55, 0.58, 0.59)))
+			continue
+		var equipped := str(armory.equipped_id) == str(definition.id)
+		var text_value := "%s [%s] %s · %s\n共鸣%d · 蓄能%d/100 · 显圣%d次" % [
+			"◆" if equipped else "◇", AchievementSystemScript.TIER_NAMES[int(definition.tier)],
+			str(definition.name), AchievementSystemScript.stage_name(int(weapon.stage)),
+			int(weapon.resonance), int(weapon.charge), int(weapon.invocations)]
+		var button := _button(text_value, _equip_jade_weapon.bind(str(definition.id)), equipped)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size.y = 76
+		button.disabled = equipped
+		list.add_child(button)
+	return panel
+
+
+func _equip_jade_weapon(weapon_id: String) -> void:
+	var result: Dictionary = AchievementSystemScript.equip_weapon(run_state, weapon_id)
+	feedback = "%s与今生气机完成共鸣。" % str(result.get("name", "轮回玉兵")) if bool(result.ok) else "这件玉兵尚未显化。"
+	_sync_state_views()
+	if bool(result.ok):
+		_save_current_state("玉兵切换已封存")
+	_show_armory()
+
+
+func _cycle_jade_weapon() -> void:
+	var return_to_armory := state == ScreenState.ARMORY
+	var result: Dictionary = AchievementSystemScript.cycle_weapon(run_state)
+	feedback = "当前共鸣切换为%s。" % str(result.get("name", "轮回玉兵")) if bool(result.ok) else "轮回玉中尚无可切换的兵器。"
+	_sync_state_views()
+	if bool(result.ok):
+		_save_current_state("玉兵切换已封存")
+	if return_to_armory: _show_armory()
+	else: _show_game()
+
+
+func _invoke_jade_weapon() -> void:
+	var return_to_armory := state == ScreenState.ARMORY
+	var result: Dictionary = AchievementSystemScript.invoke(run_state)
+	if bool(result.get("ok", false)):
+		feedback = "%s显圣：修为 +%d，气血 +%d，道心 +%d，灵石 +%d。" % [
+			str(result.name), int(result.exp), int(result.heal), int(result.dao_heart), int(result.spirit_stones)]
+		_add_memory("%s在此世第%d年显圣，道法流派为%s。" % [str(result.name),
+			int((run_state.world as Dictionary).get("year", 1)), str(result.style)])
+		_sync_state_views()
+		_save_current_state("玉兵显圣已封存")
+	else:
+		feedback = "当前玉兵显圣蓄能不足。"
+	if return_to_armory: _show_armory()
+	else: _show_game()
 
 
 func _equipped_name(reference_id: String) -> String:
@@ -1371,6 +1527,63 @@ func _local_model_ready() -> bool:
 		return false
 	var probe: Dictionary = ai_bridge.call("probe_runtime")
 	return bool(probe.get("ready", false))
+
+
+func _collect_achievement_notices() -> void:
+	for notice_value in AchievementSystemScript.consume_notices(run_state):
+		if notice_value is Dictionary:
+			achievement_notice_queue.append((notice_value as Dictionary).duplicate(true))
+
+
+func _show_next_achievement_notice() -> void:
+	if achievement_notice_queue.is_empty() or is_instance_valid(achievement_toast):
+		return
+	var notice: Dictionary = achievement_notice_queue.pop_front()
+	var tier := clampi(int(notice.get("tier", 0)), 0, 2)
+	var panel := _panel(0.96, _achievement_tier_color(tier))
+	panel.name = "AchievementToast"
+	panel.z_index = 200
+	panel.anchor_left = 0.5
+	panel.anchor_top = 1.0
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 1.0
+	panel.offset_left = -270
+	panel.offset_right = 270
+	panel.offset_top = -172
+	panel.offset_bottom = -42
+	var column := VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 6)
+	panel.add_child(column)
+	column.add_child(_label("%s · %s" % ["玉兵觉醒" if str(notice.get("kind", "")) == "awakening" else "成就达成",
+		AchievementSystemScript.TIER_NAMES[tier]], 14, _achievement_tier_color(tier), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label(str(notice.get("name", "无名道痕")), 23, Color("fff4d6"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("轮回玉显化 · %s" % str(notice.get("reward_weapon", "旧玉回响")), 15,
+		Color(0.84, 0.86, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+	add_child(panel)
+	achievement_toast = panel
+	panel.modulate.a = 0.0
+	panel.position.y += 28
+	var enter := create_tween().set_parallel(true)
+	enter.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	enter.tween_property(panel, "modulate:a", 1.0, 0.52)
+	enter.tween_property(panel, "position:y", panel.position.y - 28, 0.52)
+	await enter.finished
+	await get_tree().create_timer(float([4.8, 5.6, 6.5][tier])).timeout
+	if not is_instance_valid(panel):
+		return
+	var exit_tween := create_tween().set_parallel(true)
+	exit_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	exit_tween.tween_property(panel, "modulate:a", 0.0, 0.9)
+	exit_tween.tween_property(panel, "position:y", panel.position.y + 28, 0.9)
+	await exit_tween.finished
+	if is_instance_valid(panel):
+		panel.queue_free()
+	achievement_toast = null
+
+
+func _achievement_tier_color(tier: int) -> Color:
+	return [Color("68c9bb"), Color("c695e8"), Color("efb04d")][clampi(tier, 0, 2)]
 
 
 func _panel(alpha: float, accent: Color) -> PanelContainer:
@@ -1520,6 +1733,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_3: _breakthrough()
 				KEY_4: _start_combat()
 				KEY_I: _show_inventory()
+				KEY_A: _show_armory()
+				KEY_Y: _cycle_jade_weapon()
+				KEY_J: _invoke_jade_weapon()
 				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
 				KEY_ESCAPE: _show_menu()
@@ -1541,6 +1757,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		ScreenState.INVENTORY:
 			if event.keycode in [KEY_ESCAPE, KEY_I]:
 				_show_game()
+		ScreenState.ARMORY:
+			match event.keycode:
+				KEY_ESCAPE, KEY_A: _show_game()
+				KEY_Y: _cycle_jade_weapon()
+				KEY_J: _invoke_jade_weapon()
 		ScreenState.COMBAT:
 			match event.keycode:
 				KEY_1: _resolve_combat_action("attack")

@@ -1,6 +1,8 @@
 class_name ItemSystem
 extends RefCounted
 
+const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
+
 const MAX_ITEM_ENTRIES := 128
 const MAX_STACK := 999
 const MAX_MATERIAL_COUNT := 99999
@@ -252,6 +254,10 @@ static func effective_stats(state: Dictionary) -> Dictionary:
 		for stat_id in bonuses.keys():
 			if result.has(stat_id):
 				result[stat_id] = int(result[stat_id]) + int(bonuses[stat_id])
+	var jade_bonuses: Dictionary = AchievementSystemScript.effective_bonuses(state)
+	for stat_id in jade_bonuses.keys():
+		if result.has(stat_id):
+			result[stat_id] = int(result[stat_id]) + int(jade_bonuses[stat_id])
 	return result
 
 

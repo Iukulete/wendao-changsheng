@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "weapons": [
+    {"id":"qingxiao","name":"青霄问心剑","tier":0,"style":"insight","description":"灵玉级心剑；飞升后仍被轮回玉完整保存。","bonuses":{"attack":8,"dao_heart":2}},
+    {"id":"zhanjie","name":"斩劫古刀","tier":1,"style":"slaughter","description":"百战磨出的古刀；不受纪元锈蚀。","bonuses":{"attack":14,"defense":2}},
+    {"id":"qinglian","name":"青莲护生杖","tier":0,"style":"guardian","description":"善缘凝成的护生法杖。","bonuses":{"attack":2,"defense":8,"max_hp":100,"dao_heart":3}},
+    {"id":"xuesha","name":"血煞断魄刀","tier":1,"style":"slaughter","description":"恶名与血债铸成的凶兵。","bonuses":{"attack":18,"max_hp":60}},
+    {"id":"suiyue","name":"岁月长生木剑","tier":0,"style":"guardian","description":"五百年风霜未能磨损的木剑。","bonuses":{"attack":3,"defense":7,"max_hp":150,"dao_heart":4}},
+    {"id":"zuting","name":"祖庭镇世剑","tier":2,"style":"guardian","description":"道祖名位所化的镇世之剑。","bonuses":{"attack":25,"defense":12,"max_hp":180,"dao_heart":5}},
+    {"id":"wandao","name":"万道归一刃","tier":2,"style":"myriad","description":"天道境成就凝成的天命神兵。","bonuses":{"attack":34,"defense":16,"max_hp":280,"dao_heart":10}},
+    {"id":"lunhui","name":"轮回断界刀","tier":1,"style":"guardian","description":"十世轮回仍能认主的玄金重兵。","bonuses":{"attack":20,"defense":8,"max_hp":160,"dao_heart":4}},
+    {"id":"chuancheng","name":"承道玉简剑","tier":0,"style":"insight","description":"多重传承在轮回玉中叠成剑脊。","bonuses":{"attack":9,"defense":6,"dao_heart":3}},
+    {"id":"baijie","name":"百劫照尘锋","tier":0,"style":"insight","description":"百次历练的每一道判断都刻在刃上。","bonuses":{"attack":12,"defense":7,"dao_heart":2}},
+    {"id":"wugou","name":"无垢心锋","tier":1,"style":"insight","description":"道心如砥后自然显化的玄金心兵。","bonuses":{"attack":15,"defense":8,"dao_heart":8}},
+    {"id":"jiuxiao","name":"九霄名器","tier":1,"style":"slaughter","description":"众生名望汇成的玄金长枪。","bonuses":{"attack":13,"defense":11,"max_hp":80,"dao_heart":2}},
+    {"id":"sixiang","name":"四象巡道戟","tier":1,"style":"myriad","description":"四条本世主线全部收束后形成的玄金道兵。","bonuses":{"attack":18,"defense":12,"dao_heart":5}},
+    {"id":"heibai","name":"黑白轮回剑","tier":2,"style":"myriad","description":"四项跨世定局共同刻入黑白旧玉。","bonuses":{"attack":28,"defense":20,"max_hp":220,"dao_heart":8}},
+    {"id":"canxing","name":"通天残星枪","tier":1,"style":"slaughter","description":"通天灵宝三次苏醒后分出的玄金器影。","bonuses":{"attack":19,"defense":10,"max_hp":100,"dao_heart":4}},
+    {"id":"wuliang","name":"无量玉皇兵","tier":2,"style":"myriad","description":"大量成就共同铸出的天命玉兵；天地可改，玉中真形不改。","bonuses":{"attack":38,"defense":24,"max_hp":360,"dao_heart":12}}
+  ],
+  "achievements": [
+    {"id":"first_ascension","name":"初次飞升","description":"第一次踏入半仙之体","tier":0,"weapon_id":"qingxiao","condition":{"type":"player_min","field":"realm_index","value":10}},
+    {"id":"hundred_battles","name":"百战不殆","description":"一世赢得100场战斗","tier":1,"weapon_id":"zhanjie","condition":{"type":"player_min","field":"battles_won","value":100}},
+    {"id":"great_kindness","name":"善行千里","description":"因果达到200","tier":0,"weapon_id":"qinglian","condition":{"type":"player_min","field":"karma","value":200}},
+    {"id":"demonic_supreme","name":"魔道至尊","description":"因果低于-200","tier":1,"weapon_id":"xuesha","condition":{"type":"player_max","field":"karma","value":-200}},
+    {"id":"long_life","name":"长生不老","description":"一世活到500岁","tier":0,"weapon_id":"suiyue","condition":{"type":"player_min","field":"age","value":500}},
+    {"id":"dao_ancestor","name":"证道成祖","description":"达到道祖境界","tier":2,"weapon_id":"zuting","condition":{"type":"player_min","field":"realm_index","value":19}},
+    {"id":"heavenly_dao","name":"万道归一","description":"达到道祖-天道境","tier":2,"weapon_id":"wandao","condition":{"type":"player_min","field":"realm_index","value":20}},
+    {"id":"ten_lives","name":"十世轮回","description":"抵达第十世","tier":1,"weapon_id":"lunhui","condition":{"type":"state_min","field":"generation","value":10}},
+    {"id":"legacy_keeper","name":"传承者","description":"轮回玉保存5项以上不同传承回响","tier":0,"weapon_id":"chuancheng","condition":{"type":"legacy_echo_count","value":5}},
+    {"id":"hundred_events","name":"百劫见真","description":"一世完成100次历练","tier":0,"weapon_id":"baijie","condition":{"type":"player_min","field":"total_events","value":100}},
+    {"id":"steadfast_heart","name":"道心如砥","description":"道心达到80","tier":1,"weapon_id":"wugou","condition":{"type":"player_min","field":"dao_heart","value":80}},
+    {"id":"renown","name":"名动诸天","description":"名望达到100","tier":1,"weapon_id":"jiuxiao","condition":{"type":"player_min","field":"reputation","value":100}},
+    {"id":"all_arcs","name":"四线收束","description":"旧玉、山门、家世、战帖四线全部收束","tier":1,"weapon_id":"sixiang","condition":{"type":"arc_progress","value":16}},
+    {"id":"four_legacies","name":"四世定局","description":"四条分线都留下跨世定局","tier":2,"weapon_id":"heibai","condition":{"type":"arc_legacy_count","value":4}},
+    {"id":"relic_three","name":"通天三醒","description":"黑白轮回玉完成三层苏醒","tier":1,"weapon_id":"canxing","condition":{"type":"relic_stage","value":3}},
+    {"id":"jade_armory","name":"玉中万兵","description":"解锁十二项其他成就","tier":2,"weapon_id":"wuliang","condition":{"type":"achievement_count","value":12}}
+  ]
+}

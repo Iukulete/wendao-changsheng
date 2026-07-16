@@ -40,6 +40,13 @@ func _run() -> void:
 	var combat_button := game.find_child("CombatButton", true, false) as Button
 	_expect(combat_button != null and not combat_button.disabled,
 		"新生必须能从主界面进入确定性战斗")
+	var armory_button := game.find_child("ArmoryButton", true, false) as Button
+	_expect(armory_button != null and not armory_button.disabled,
+		"主界面必须能够查看成就和永久玉兵")
+	game.call("_show_armory")
+	_expect(game.find_child("ArmoryBackButton", true, false) != null,
+		"玉藏兵界面必须提供明确返回动作")
+	game.call("_show_game")
 	game.call("_show_inventory")
 	_expect(game.find_child("InventoryBackButton", true, false) != null,
 		"行囊界面必须提供明确返回动作")

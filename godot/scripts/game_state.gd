@@ -194,6 +194,13 @@ static func create_legacy_state() -> Dictionary:
 			"dao_id": "",
 			"dao_depth": 0,
 		},
+		"armory": {
+			"version": 1,
+			"achievements": {},
+			"weapons": {},
+			"equipped_id": "",
+			"notices": [],
+		},
 	}
 
 
