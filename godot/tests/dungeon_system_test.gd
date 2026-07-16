@@ -10,8 +10,9 @@ var failures: Array[String] = []
 
 func _init() -> void:
 	var validation: Dictionary = DungeonSystemScript.validate_definitions()
-	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 19,
-		"可选秘境必须拥有独立、可校验的灵诀牌池")
+	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 19 and
+		int(validation.get("route_node_count", 0)) == 36 and int(validation.get("trait_count", 0)) == 6,
+		"可选秘境必须拥有灵诀牌池、六时代36个路线节点与六条首领法则")
 	var base := GameStateScript.create_new_game("入梦人", 969696, [8, 8, 8, 8, 8])
 	base.player.max_hp = 1200
 	base.player.hp = 1200
@@ -81,6 +82,79 @@ func _init() -> void:
 		str((persisted.dungeon.run.deck as Array)[0].source_name) == str(identity_deck[0].source_name),
 		"进行中的能力来源与临时牌组必须通过存档往返")
 
+	var route_names := {}
+	var trait_ids := {}
+	for era_id in DungeonSystemScript.ERA_IDS:
+		for node_type in DungeonSystemScript.ROUTE_TYPES:
+			var node: Dictionary = DungeonSystemScript.route_definition(str(era_id), str(node_type))
+			_expect(str(node.get("type", "")) == str(node_type) and not str(node.get("name", "")).is_empty() and
+				not str(node.get("description", "")).is_empty(), "每个时代的路线节点必须完整可读：%s/%s" % [era_id, node_type])
+			route_names[str(node.name)] = true
+		var boss_rule: Dictionary = DungeonSystemScript.boss_trait_for_era(str(era_id))
+		_expect(not str(boss_rule.get("id", "")).is_empty() and not str(boss_rule.get("description", "")).is_empty(),
+			"每个时代首领必须公开独立法则：%s" % era_id)
+		trait_ids[str(boss_rule.id)] = true
+	_expect(route_names.size() == 36 and trait_ids.size() == 6,
+		"六时代路线名称与首领法则不得只是同一内容换皮")
+
+	var classical_boss := _start_boss("classical", 970101)
+	_set_test_hand(classical_boss, ["sword_cut"])
+	var mirror_hp := int(classical_boss.dungeon.run.hp)
+	DungeonSystemScript.play_card(classical_boss, 0)
+	_expect(int(classical_boss.dungeon.run.hp) == mirror_hp - 4,
+		"古典首领的镜身照返必须反噬每回合首张伤害灵诀")
+
+	var steam_boss := _start_boss("steam", 970102)
+	_set_test_hand(steam_boss, ["sword_cut", "sword_cut", "sword_cut"])
+	for _index in range(3): DungeonSystemScript.play_card(steam_boss, 0)
+	_expect(int(steam_boss.dungeon.run.stress) == 9,
+		"蒸汽首领必须在第三张灵诀时触发炉压过载")
+
+	var star_boss := _start_boss("star_network", 970103)
+	_set_test_hand(star_boss, ["sword_cut"])
+	DungeonSystemScript.play_card(star_boss, 0)
+	var star_discard: Array = star_boss.dungeon.run.battle.discard_pile
+	_expect(star_discard.size() == 2 and int(star_boss.dungeon.run.stress) == 4 and
+		str((star_discard[-1] as Dictionary).source_kind) == "trait",
+		"星网首领必须复制每回合首张灵诀并留下可审计来源")
+	var star_payload: Variant = JSON.parse_string(JSON.stringify(star_boss))
+	var restored_star: Dictionary = GameStateScript.ensure_v2(star_payload as Dictionary)
+	DungeonSystemScript.normalize(restored_star)
+	_expect(str(restored_star.dungeon.run.battle.trait.id) == "memory_fork" and
+		int(restored_star.dungeon.run.battle.cards_played_turn) == 1,
+		"首领法则与本回合触发状态必须通过存档往返")
+
+	var wasteland_boss := _start_boss("wasteland", 970104)
+	_set_boss_intent(wasteland_boss, "guard")
+	var rain_hp := int(wasteland_boss.dungeon.run.hp)
+	DungeonSystemScript.end_turn(wasteland_boss)
+	_expect(int(wasteland_boss.dungeon.run.hp) == rain_hp - 3,
+		"废土首领必须在回合末执行黑雨侵蚀")
+
+	var final_boss := _start_boss("final_age", 970105)
+	_expect(int(final_boss.dungeon.run.battle.energy) == 2 and
+		DungeonSystemScript.energy_cap(final_boss.dungeon.run.battle) == 2,
+		"末法首领必须公开并执行灵息抽税")
+
+	var imperial_boss := _start_boss("immortal_dynasty", 970106)
+	_set_boss_intent(imperial_boss, "guard")
+	DungeonSystemScript.end_turn(imperial_boss)
+	_expect(int(imperial_boss.dungeon.run.stress) == 10,
+		"仙朝首领结界护体时必须追加天册敕令压力")
+
+	var rest_state := _resolve_noncombat("classical", "rest", 970201)
+	_expect(int(rest_state.dungeon.run.hp) > 500 and int(rest_state.dungeon.run.stress) < 50,
+		"时代休整节点必须执行数据中的恢复与平心效果")
+	var forge_state := _resolve_noncombat("star_network", "forge", 970202)
+	_expect(int(forge_state.dungeon.run.attack_power) >= 2 and int(forge_state.dungeon.run.guard_power) >= 2 and
+		int(forge_state.dungeon.run.stress) == 54,
+		"时代炼器节点必须执行器诀、护诀与压力代价（实际 %d/%d/%d）" % [
+			int(forge_state.dungeon.run.attack_power), int(forge_state.dungeon.run.guard_power),
+			int(forge_state.dungeon.run.stress)])
+	var fire_state := _resolve_noncombat("wasteland", "forge", 970203)
+	_expect(int(fire_state.dungeon.run.hp) == 494 and int(fire_state.dungeon.run.attack_power) >= 5,
+		"废土深火焊台必须以气血换取器诀成长")
+
 	var combat_index := _find_route(first.dungeon.run.route_choices, "combat")
 	if combat_index < 0: combat_index = 0
 	var chosen: Dictionary = DungeonSystemScript.choose_route(first, combat_index)
@@ -123,12 +197,67 @@ func _init() -> void:
 		"副本结果必须写入有界历史且不替代主线剧情状态")
 
 	if failures.is_empty():
-		print("DUNGEON_SYSTEM_TEST_OK: character ability projection, sources, routes, intents, stress and deterministic exit passed")
+		print("DUNGEON_SYSTEM_TEST_OK: character abilities, 36 era routes, six boss rules and deterministic exit passed")
 		quit(0)
 	else:
 		for failure in failures:
 			push_error("DUNGEON_SYSTEM_TEST_FAILED: %s" % failure)
 		quit(1)
+
+
+func _start_boss(era_id: String, seed_value: int) -> Dictionary:
+	var state := GameStateScript.create_new_game("法则见证人", seed_value, [8, 8, 8, 8, 8])
+	state.current_era_id = era_id
+	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
+	state.player.max_hp = 1200
+	state.player.hp = 1200
+	state.player.attack = 180
+	DungeonSystemScript.start(state)
+	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, "boss")]
+	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
+		str(state.dungeon.run.battle.get("rank", "")) == "boss",
+		"测试必须能直接进入时代首领战：%s" % era_id)
+	return state
+
+
+func _set_test_hand(state: Dictionary, card_ids: Array[String]) -> void:
+	var battle: Dictionary = state.dungeon.run.battle
+	var hand: Array = []
+	for index in range(card_ids.size()):
+		hand.append({"uid":"test_card_%02d" % index, "card_id":card_ids[index], "upgrade":0,
+			"source_kind":"test", "source_name":"回归灵诀"})
+	battle["hand"] = hand
+	battle["draw_pile"] = []
+	battle["discard_pile"] = []
+	battle["exhausted"] = []
+	battle["energy"] = DungeonSystemScript.STARTING_ENERGY
+	state.dungeon.run.battle = battle
+
+
+func _set_boss_intent(state: Dictionary, intent: String) -> void:
+	var battle: Dictionary = state.dungeon.run.battle
+	battle["intent"] = intent
+	battle["intent_cycle"] = [intent]
+	battle["intent_index"] = 0
+	state.dungeon.run.battle = battle
+
+
+func _resolve_noncombat(era_id: String, node_type: String, seed_value: int) -> Dictionary:
+	var state := GameStateScript.create_new_game("道标见证人", seed_value, [8, 8, 8, 8, 8])
+	state.current_era_id = era_id
+	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
+	state.player.max_hp = 1000
+	state.player.hp = 1000
+	state.player.attack = 180
+	DungeonSystemScript.start(state)
+	state.dungeon.run.hp = 500
+	state.dungeon.run.stress = 50
+	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, node_type)]
+	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	_expect(str(result.get("code", "")) == "dungeon_node_completed",
+		"测试必须能解析时代非战斗节点：%s/%s" % [era_id, node_type])
+	return state
 
 
 func _find_route(routes: Array, node_type: String) -> int:

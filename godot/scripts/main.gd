@@ -997,11 +997,13 @@ func _show_dungeon_route() -> void:
 	var routes: Array = run.route_choices
 	for index in range(routes.size()):
 		var node: Dictionary = routes[index]
-		var route_button := _button("%d · %s\n%s" % [index + 1, str(node.name), str(node.danger)],
+		var route_button := _button("%d · %s\n%s · %s" % [index + 1, str(node.name), str(node.danger),
+			str(node.get("description", "前路因果未明。"))],
 			_choose_dungeon_route.bind(index), index == 0)
 		route_button.name = "DungeonRouteButton%d" % index
 		route_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		route_button.custom_minimum_size.y = 92
+		route_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		route_button.custom_minimum_size.y = 104
 		route_column.add_child(route_button)
 	route_column.add_child(_spacer(6))
 	var abandon_button := _button("撤出秘境", _abandon_dungeon, false)
@@ -1036,8 +1038,8 @@ func _show_dungeon_combat() -> void:
 	self_column.add_child(_section_title(str(player.name)))
 	self_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
 	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
-	self_column.add_child(_label("灵力 %d/%d · 护体 %d" % [int(battle.energy),
-		DungeonSystemScript.STARTING_ENERGY, int(battle.player_block)], 15, Color("b9d5e8")))
+	self_column.add_child(_label("灵力 %d · 回合基础 %d · 护体 %d" % [int(battle.energy),
+		DungeonSystemScript.energy_cap(battle), int(battle.player_block)], 15, Color("b9d5e8")))
 	self_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
 		int(run.get("guard_power", 0))], 14, Color(era_accent, 0.88)))
 	combat_row.add_child(self_panel)
@@ -1054,6 +1056,15 @@ func _show_dungeon_combat() -> void:
 	enemy_column.add_child(_label("下一意图", 13, Color(0.68, 0.72, 0.73)))
 	enemy_column.add_child(_label(DungeonSystemScript.intent_label(str(battle.intent)), 21,
 		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER))
+	var boss_rule_value: Variant = battle.get("trait", {})
+	if boss_rule_value is Dictionary and not (boss_rule_value as Dictionary).is_empty():
+		var boss_rule: Dictionary = boss_rule_value
+		enemy_column.add_child(_divider())
+		enemy_column.add_child(_label("首领法则 · %s" % str(boss_rule.get("name", "未知法则")), 14,
+			Color("efbd72"), HORIZONTAL_ALIGNMENT_CENTER))
+		var trait_description := _label(str(boss_rule.get("description", "")), 12, Color(0.84, 0.80, 0.73))
+		trait_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		enemy_column.add_child(trait_description)
 	combat_row.add_child(enemy_panel)
 
 	var hand_scroll := ScrollContainer.new()

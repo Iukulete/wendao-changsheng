@@ -24,12 +24,62 @@
   "dungeons": [
     {"id":"mirror_lake","name":"镜湖空阙秘境","max_depth":4,"scene":"res://art/scenes/void_threshold_temple.png","reward_material":"fate_thread"}
   ],
+  "era_routes": {
+    "classical": {
+      "combat":{"name":"断玉试剑路","danger":"交锋","description":"旧剑意沿断玉小径逐段苏醒。"},
+      "memory":{"name":"无字残碑","danger":"机缘","description":"碑上没有功法，只有你曾经走过的经脉。","effects":{"calm":4}},
+      "rest":{"name":"枯松听泉","danger":"休整","description":"泉声替你梳开一段心魔。","effects":{"heal_percent":30,"calm":20}},
+      "elite":{"name":"守誓人石阶","danger":"强敌","description":"每一级石阶都要求偿还旧誓。"},
+      "forge":{"name":"洗剑玉台","danger":"炼器","description":"玉台能磨亮一式灵诀，也会把守势刻得更稳。","effects":{"guard_power":1}},
+      "boss":{"name":"镜中未生门","danger":"首领","description":"门后站着从未作出任何选择的你。"}
+    },
+    "steam": {
+      "combat":{"name":"高压灵轨桥","danger":"交锋","description":"失控炉压在桥梁两侧反复冲撞。"},
+      "memory":{"name":"报废蓝图库","danger":"机缘","description":"被删除的机灵仍在蓝图夹层里求救。","effects":{"stress":4}},
+      "rest":{"name":"冷凝检修舱","danger":"休整","description":"停炉冷凝让伤口与杂念一同降温。","effects":{"heal_percent":24,"calm":30}},
+      "elite":{"name":"黄铜裁定厅","danger":"强敌","description":"裁定机只承认写进工契的生命。"},
+      "forge":{"name":"百炉校准台","danger":"炼器","description":"超额炉压换来更锋利的器诀。","effects":{"stress":6,"attack_power":2}},
+      "boss":{"name":"零号炉心","danger":"首领","description":"第一缕机灵在全城炉火下醒来。"}
+    },
+    "star_network": {
+      "combat":{"name":"失联节点廊","danger":"交锋","description":"断线人格把来客视为新的宿主。"},
+      "memory":{"name":"漂流人格云","danger":"机缘","description":"别人的一生在你的识海边缘请求缓存。","effects":{"stress":7}},
+      "rest":{"name":"静默维护窗","danger":"休整","description":"道网停机的片刻足以让神识恢复安静。","effects":{"heal_percent":20,"calm":36}},
+      "elite":{"name":"因果清算栈","danger":"强敌","description":"每一段未经许可的记忆都被列为欠债。"},
+      "forge":{"name":"轨道重编台","danger":"炼器","description":"重编能力会留下短暂的身份漂移。","effects":{"stress":4,"attack_power":1,"guard_power":1}},
+      "boss":{"name":"第七未来域","danger":"首领","description":"一份被拒绝的人格拥有整座未来。"}
+    },
+    "wasteland": {
+      "combat":{"name":"黑雨断桥","danger":"交锋","description":"旧战机在酸雨里守着不存在的边界。"},
+      "memory":{"name":"被背回的经阁","danger":"机缘","description":"半间经阁仍记得宗门倒塌前的最后一课。","effects":{"calm":2}},
+      "rest":{"name":"净雨篷站","danger":"休整","description":"一夜干燥比灵药更接近奇迹。","effects":{"heal_percent":34,"calm":16}},
+      "elite":{"name":"归墟拾忆坑","danger":"强敌","description":"拾荒者遗落的执念在深坑中结王。"},
+      "forge":{"name":"深火焊台","danger":"炼器","description":"以血肉靠近火种，换取粗粝而强横的器锋。","effects":{"hp_cost":6,"attack_power":3}},
+      "boss":{"name":"失败祖庭","danger":"首领","description":"整座祖庭拒绝承认自己已经死去。"}
+    },
+    "final_age": {
+      "combat":{"name":"断息配给线","danger":"交锋","description":"欠缴灵息的人影堵住仅剩的供给管。"},
+      "memory":{"name":"抵押记忆库","danger":"机缘","description":"每一份记忆都附着尚未结清的契约。","effects":{"stress":5}},
+      "rest":{"name":"无息诊疗床","danger":"休整","description":"医师用凡药替你稳住不再充盈的经脉。","effects":{"heal_percent":28,"calm":24}},
+      "elite":{"name":"契约执行廊","danger":"强敌","description":"执行者按条款封锁每一条退路。"},
+      "forge":{"name":"经脉契印台","danger":"炼器","description":"把未来灵息抵押给一式更强的能力。","effects":{"stress":8,"attack_power":2}},
+      "boss":{"name":"共同心魔井","danger":"首领","description":"整座城被压抑的匮乏在井底获得声音。"}
+    },
+    "immortal_dynasty": {
+      "combat":{"name":"巡天命籍关","danger":"交锋","description":"影卫查验每一道未被天册许可的气机。"},
+      "memory":{"name":"失籍天册页","danger":"机缘","description":"被抹去的姓名仍在纸背彼此呼唤。","effects":{"stress":3}},
+      "rest":{"name":"功德云歇台","danger":"休整","description":"残余功德雨暂时抚平伤势与因果躁动。","effects":{"heal_percent":26,"calm":28}},
+      "elite":{"name":"无籍问审殿","danger":"强敌","description":"没有命籍的人只能以战证明存在。"},
+      "forge":{"name":"天工敕造署","danger":"炼器","description":"仙朝敕印让护诀变得不可违逆。","effects":{"guard_power":2}},
+      "boss":{"name":"天册外帝阙","danger":"首领","description":"帝影以天册空白处为自己的疆域。"}
+    }
+  },
   "era_enemies": {
-    "classical":{"normal":{"name":"镜湖剑傀","hp":58,"attack":11,"intents":["strike","guard","heavy"]},"elite":{"name":"无字门守誓人","hp":92,"attack":15,"intents":["guard","heavy","stress"]},"boss":{"name":"未发生之我","hp":148,"attack":19,"intents":["stress","heavy","guard","strike"]}},
-    "steam":{"normal":{"name":"失压炉心机偶","hp":64,"attack":12,"intents":["strike","guard","stress"]},"elite":{"name":"黄铜记忆裁定机","hp":98,"attack":16,"intents":["stress","heavy","guard"]},"boss":{"name":"百炉城零号心智","hp":156,"attack":20,"intents":["guard","stress","heavy","strike"]}},
-    "star_network":{"normal":{"name":"废弃人格猎手","hp":70,"attack":13,"intents":["stress","strike","guard"]},"elite":{"name":"因果清算节点","hp":106,"attack":17,"intents":["guard","stress","heavy"]},"boss":{"name":"第七份未来人格","hp":166,"attack":21,"intents":["stress","heavy","stress","guard"]}},
-    "wasteland":{"normal":{"name":"黑雨旧战机","hp":68,"attack":14,"intents":["strike","heavy","guard"]},"elite":{"name":"归墟拾忆王","hp":110,"attack":18,"intents":["heavy","stress","guard"]},"boss":{"name":"返道失败的祖庭","hp":174,"attack":22,"intents":["guard","heavy","stress","strike"]}},
-    "final_age":{"normal":{"name":"配给站债魂","hp":62,"attack":14,"intents":["stress","strike","heavy"]},"elite":{"name":"经脉契约执行者","hp":102,"attack":19,"intents":["stress","heavy","guard"]},"boss":{"name":"末法共同心魔","hp":168,"attack":23,"intents":["stress","guard","heavy","stress"]}},
-    "immortal_dynasty":{"normal":{"name":"巡天命籍影卫","hp":76,"attack":15,"intents":["guard","strike","heavy"]},"elite":{"name":"无籍仙民怨相","hp":118,"attack":20,"intents":["stress","guard","heavy"]},"boss":{"name":"天册之外的帝影","hp":188,"attack":24,"intents":["guard","stress","heavy","strike"]}}
+    "classical":{"normal":{"name":"镜湖剑傀","hp":58,"attack":11,"intents":["strike","guard","heavy"]},"elite":{"name":"无字门守誓人","hp":92,"attack":15,"intents":["guard","heavy","stress"]},"boss":{"name":"未发生之我","hp":148,"attack":19,"intents":["stress","heavy","guard","strike"],"trait":{"id":"mirror_rebuke","name":"镜身照返","description":"每回合首张造成伤害的灵诀会反噬4点秘境气血。","value":4}}},
+    "steam":{"normal":{"name":"失压炉心机偶","hp":64,"attack":12,"intents":["strike","guard","stress"]},"elite":{"name":"黄铜记忆裁定机","hp":98,"attack":16,"intents":["stress","heavy","guard"]},"boss":{"name":"百炉城零号心智","hp":156,"attack":20,"intents":["guard","stress","heavy","strike"],"trait":{"id":"furnace_overload","name":"炉压过载","description":"每回合施展第三张灵诀时，心魔压力增加9。","value":9}}},
+    "star_network":{"normal":{"name":"废弃人格猎手","hp":70,"attack":13,"intents":["stress","strike","guard"]},"elite":{"name":"因果清算节点","hp":106,"attack":17,"intents":["guard","stress","heavy"]},"boss":{"name":"第七份未来人格","hp":166,"attack":21,"intents":["stress","heavy","stress","guard"],"trait":{"id":"memory_fork","name":"记忆分叉","description":"每回合首张灵诀会生成临时副本并混入弃牌堆，同时压力增加4。","value":4}}},
+    "wasteland":{"normal":{"name":"黑雨旧战机","hp":68,"attack":14,"intents":["strike","heavy","guard"]},"elite":{"name":"归墟拾忆王","hp":110,"attack":18,"intents":["heavy","stress","guard"]},"boss":{"name":"返道失败的祖庭","hp":174,"attack":22,"intents":["guard","heavy","stress","strike"],"trait":{"id":"black_rain_erosion","name":"黑雨侵蚀","description":"每次结束回合，黑雨额外侵蚀3点秘境气血。","value":3}}},
+    "final_age":{"normal":{"name":"配给站债魂","hp":62,"attack":14,"intents":["stress","strike","heavy"]},"elite":{"name":"经脉契约执行者","hp":102,"attack":19,"intents":["stress","heavy","guard"]},"boss":{"name":"末法共同心魔","hp":168,"attack":23,"intents":["stress","guard","heavy","stress"],"trait":{"id":"breath_tax","name":"灵息抽税","description":"首领战每回合基础灵力从3降为2。","value":1}}},
+    "immortal_dynasty":{"normal":{"name":"巡天命籍影卫","hp":76,"attack":15,"intents":["guard","strike","heavy"]},"elite":{"name":"无籍仙民怨相","hp":118,"attack":20,"intents":["stress","guard","heavy"]},"boss":{"name":"天册之外的帝影","hp":188,"attack":24,"intents":["guard","stress","heavy","strike"],"trait":{"id":"heavenly_decree","name":"天册敕令","description":"首领结界护体时仍会追加10点心魔压力。","value":10}}}
   }
 }

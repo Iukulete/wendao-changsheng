@@ -4,6 +4,7 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const SaveServiceScript = preload("res://scripts/save_service.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
+const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -84,13 +85,20 @@ func _run() -> void:
 	game.call("_choose_dungeon_route", route_index)
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
+	var boss_state: Dictionary = game.get("run_state")
+	boss_state.dungeon.run.battle = {}
+	boss_state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(
+		str(boss_state.dungeon.run.era_id), "boss")]
+	game.call("_choose_dungeon_route", 0)
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("dungeon_boss_1440x900.png"), Vector2i(1440, 900), "秘境首领法则")
 
 	game.call("_abandon_dungeon")
 	service.call("clear_slot")
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat and dungeon route/combat are nonblank and correctly sized")
+		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat, dungeon routes, abilities and boss rules are nonblank")
 		quit(0)
 	else:
 		for failure in failures:
