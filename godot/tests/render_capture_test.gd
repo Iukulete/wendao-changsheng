@@ -85,6 +85,14 @@ func _run() -> void:
 	game.call("_choose_dungeon_route", route_index)
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
+	var elite_state: Dictionary = game.get("run_state")
+	elite_state.dungeon.run.battle = {}
+	elite_state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(
+		str(elite_state.dungeon.run.era_id), "elite")]
+	game.set("run_state", elite_state)
+	game.call("_choose_dungeon_route", 0)
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("dungeon_elite_1440x900.png"), Vector2i(1440, 900), "秘境精英被动")
 	var boss_state: Dictionary = game.get("run_state")
 	boss_state.dungeon.run.battle = {}
 	boss_state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(
@@ -92,13 +100,30 @@ func _run() -> void:
 	game.call("_choose_dungeon_route", 0)
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_boss_1440x900.png"), Vector2i(1440, 900), "秘境首领法则")
+	var phase_state: Dictionary = game.get("run_state")
+	var phase_battle: Dictionary = phase_state.dungeon.run.battle
+	var phase: Dictionary = phase_battle.get("phase", {})
+	phase_battle["phase_active"] = true
+	phase_battle["phase_turn"] = int(phase_battle.get("turn", 1))
+	phase_battle["enemy_hp"] = maxi(1, int(phase_battle.enemy_max_hp) * int(phase.get("threshold", 50)) / 100)
+	var phase_intents: Array = phase.get("intents", [])
+	if not phase_intents.is_empty():
+		phase_battle["intent_cycle"] = phase_intents.duplicate()
+		phase_battle["intent_index"] = 0
+		phase_battle["intent"] = str(phase_intents[0])
+	phase_state.dungeon.run.battle = phase_battle
+	game.set("run_state", phase_state)
+	game.call("_show_dungeon_combat")
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("dungeon_boss_phase_1440x900.png"), Vector2i(1440, 900),
+		"秘境首领第二相")
 
 	game.call("_abandon_dungeon")
 	service.call("clear_slot")
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat, dungeon routes, abilities and boss rules are nonblank")
+		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat, dungeon routes, elite rules and two-phase bosses are nonblank")
 		quit(0)
 	else:
 		for failure in failures:

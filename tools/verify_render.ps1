@@ -37,9 +37,11 @@ $expected = @(
     "main_1920x1080.png",
     "normal_combat_1280x720.png",
     "normal_combat_1440x900.png",
-    "dungeon_route_1440x900.png",
-    "dungeon_combat_1440x900.png",
-    "dungeon_boss_1440x900.png"
+	"dungeon_route_1440x900.png",
+	"dungeon_combat_1440x900.png",
+	"dungeon_elite_1440x900.png",
+	"dungeon_boss_1440x900.png",
+	"dungeon_boss_phase_1440x900.png"
 )
 foreach ($name in $expected) {
     $path = Join-Path $CaptureDir $name

@@ -11,8 +11,10 @@ var failures: Array[String] = []
 func _init() -> void:
 	var validation: Dictionary = DungeonSystemScript.validate_definitions()
 	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 19 and
-		int(validation.get("route_node_count", 0)) == 36 and int(validation.get("trait_count", 0)) == 6,
-		"可选秘境必须拥有灵诀牌池、六时代36个路线节点与六条首领法则")
+		int(validation.get("route_node_count", 0)) == 36 and
+		int(validation.get("elite_trait_count", 0)) == 6 and
+		int(validation.get("boss_trait_count", 0)) == 6 and int(validation.get("phase_count", 0)) == 6,
+		"可选秘境必须拥有能力牌池、六时代36个路线节点、六套精英被动与六个首领第二相")
 	var base := GameStateScript.create_new_game("入梦人", 969696, [8, 8, 8, 8, 8])
 	base.player.max_hp = 1200
 	base.player.hp = 1200
@@ -84,6 +86,8 @@ func _init() -> void:
 
 	var route_names := {}
 	var trait_ids := {}
+	var elite_trait_ids := {}
+	var phase_ids := {}
 	for era_id in DungeonSystemScript.ERA_IDS:
 		for node_type in DungeonSystemScript.ROUTE_TYPES:
 			var node: Dictionary = DungeonSystemScript.route_definition(str(era_id), str(node_type))
@@ -94,8 +98,51 @@ func _init() -> void:
 		_expect(not str(boss_rule.get("id", "")).is_empty() and not str(boss_rule.get("description", "")).is_empty(),
 			"每个时代首领必须公开独立法则：%s" % era_id)
 		trait_ids[str(boss_rule.id)] = true
-	_expect(route_names.size() == 36 and trait_ids.size() == 6,
-		"六时代路线名称与首领法则不得只是同一内容换皮")
+		var elite_rule: Dictionary = DungeonSystemScript.elite_trait_for_era(str(era_id))
+		var phase: Dictionary = DungeonSystemScript.boss_phase_for_era(str(era_id))
+		_expect(not str(elite_rule.get("id", "")).is_empty() and not str(phase.get("id", "")).is_empty() and
+			(phase.get("intents", []) as Array).size() >= 3, "每个时代必须有精英被动与首领第二相：%s" % era_id)
+		elite_trait_ids[str(elite_rule.id)] = true
+		phase_ids[str(phase.id)] = true
+	_expect(route_names.size() == 36 and trait_ids.size() == 6 and elite_trait_ids.size() == 6 and
+		phase_ids.size() == 6, "六时代路线、精英被动、首领法则与第二相不得只是同一内容换皮")
+
+	var classical_elite := _start_elite("classical", 970001)
+	_expect(int(classical_elite.dungeon.run.battle.enemy_block) == 8,
+		"古典精英必须以守誓石障进入战斗")
+	var steam_elite := _start_elite("steam", 970002)
+	_set_test_hand(steam_elite, ["qi_breath"])
+	DungeonSystemScript.play_card(steam_elite, 0)
+	_expect(int(steam_elite.dungeon.run.stress) == 5,
+		"蒸汽精英必须追缴0灵力能力的代价")
+	var star_elite := _start_elite("star_network", 970003)
+	_set_test_hand(star_elite, ["sword_cut", "sword_cut"])
+	DungeonSystemScript.play_card(star_elite, 0)
+	DungeonSystemScript.play_card(star_elite, 0)
+	_expect(int(star_elite.dungeon.run.stress) == 5,
+		"星网精英必须识别连续的同来源角色能力")
+	var wasteland_elite := _start_elite("wasteland", 970004)
+	wasteland_elite.dungeon.run.battle.enemy_hp = int(wasteland_elite.dungeon.run.battle.enemy_max_hp) / 2 + 1
+	wasteland_elite.dungeon.run.attack_power = 20
+	_set_test_hand(wasteland_elite, ["sword_cut"])
+	DungeonSystemScript.play_card(wasteland_elite, 0)
+	_expect(int(wasteland_elite.dungeon.run.battle.enemy_block) == 20 and
+		bool(wasteland_elite.dungeon.run.battle.trait_triggered_battle),
+		"废土精英必须在首次半血时拾忆覆甲")
+	var final_elite := _start_elite("final_age", 970005)
+	_set_boss_intent(final_elite, "guard")
+	final_elite.dungeon.run.battle.energy = 2
+	DungeonSystemScript.end_turn(final_elite)
+	_expect(int(final_elite.dungeon.run.stress) == 8,
+		"末法精英必须把未使用灵力转化为契约利息")
+	var imperial_elite := _start_elite("immortal_dynasty", 970006)
+	_set_test_hand(imperial_elite, ["sword_cut"])
+	var upgraded_card: Dictionary = imperial_elite.dungeon.run.battle.hand[0]
+	upgraded_card["upgrade"] = 1
+	imperial_elite.dungeon.run.battle.hand[0] = upgraded_card
+	DungeonSystemScript.play_card(imperial_elite, 0)
+	_expect(int(imperial_elite.dungeon.run.stress) == 6,
+		"仙朝精英必须追责每回合首张强化能力")
 
 	var classical_boss := _start_boss("classical", 970101)
 	_set_test_hand(classical_boss, ["sword_cut"])
@@ -141,6 +188,76 @@ func _init() -> void:
 	DungeonSystemScript.end_turn(imperial_boss)
 	_expect(int(imperial_boss.dungeon.run.stress) == 10,
 		"仙朝首领结界护体时必须追加天册敕令压力")
+
+	var phased_bosses := {}
+	for era_id in DungeonSystemScript.ERA_IDS:
+		var phased := _start_boss(str(era_id), 970300 + DungeonSystemScript.ERA_IDS.find(era_id))
+		var phase: Dictionary = DungeonSystemScript.boss_phase_for_era(str(era_id))
+		var threshold_hp := maxi(1, int(phased.dungeon.run.battle.enemy_max_hp) *
+			int(phase.get("threshold", 50)) / 100)
+		phased.dungeon.run.battle.enemy_hp = threshold_hp + 1
+		phased.dungeon.run.attack_power = 100
+		_set_test_hand(phased, ["sword_cut"])
+		DungeonSystemScript.play_card(phased, 0)
+		_expect(bool(phased.dungeon.run.battle.phase_active) and
+			int(phased.dungeon.run.battle.enemy_hp) == threshold_hp and
+			str(phased.dungeon.run.battle.intent) == str((phase.intents as Array)[0]),
+			"首领必须在半血门槛锁血破相并切换意图：%s" % era_id)
+		phased_bosses[str(era_id)] = phased
+
+	var phased_classical: Dictionary = phased_bosses.classical
+	phased_classical.dungeon.run.attack_power = 0
+	_set_test_hand(phased_classical, ["jade_guard", "sword_cut"])
+	DungeonSystemScript.play_card(phased_classical, 0)
+	var mirror_phase_hp := int(phased_classical.dungeon.run.hp)
+	DungeonSystemScript.play_card(phased_classical, 0)
+	_expect(int(phased_classical.dungeon.run.hp) == mirror_phase_hp - 2,
+		"万镜同身必须反噬第二张造成伤害的能力")
+	var phased_steam: Dictionary = phased_bosses.steam
+	phased_steam.dungeon.run.stress = 0
+	phased_steam.dungeon.run.battle.cards_played_turn = 0
+	_set_test_hand(phased_steam, ["jade_guard", "jade_guard"])
+	DungeonSystemScript.play_card(phased_steam, 0)
+	DungeonSystemScript.play_card(phased_steam, 0)
+	_expect(int(phased_steam.dungeon.run.stress) == 7,
+		"赤线熔毁必须把炉压触发提前到第二张能力")
+	var phased_star: Dictionary = phased_bosses.star_network
+	phased_star.dungeon.run.stress = 0
+	phased_star.dungeon.run.battle.cards_played_turn = 0
+	phased_star.dungeon.run.battle.discard_pile = []
+	_set_test_hand(phased_star, ["jade_guard", "jade_guard"])
+	DungeonSystemScript.play_card(phased_star, 0)
+	DungeonSystemScript.play_card(phased_star, 0)
+	_expect(int(phased_star.dungeon.run.stress) == 10 and
+		(phased_star.dungeon.run.battle.discard_pile as Array).size() == 4,
+		"未来并栈必须复制每回合前两张能力")
+	var phased_wasteland: Dictionary = phased_bosses.wasteland
+	phased_wasteland.dungeon.run.stress = 0
+	_set_boss_intent(phased_wasteland, "guard")
+	var deluge_hp := int(phased_wasteland.dungeon.run.hp)
+	DungeonSystemScript.end_turn(phased_wasteland)
+	_expect(int(phased_wasteland.dungeon.run.hp) == deluge_hp - 6,
+		"永夜暴雨必须把回合末侵蚀提升至6点")
+	var phased_final: Dictionary = phased_bosses.final_age
+	phased_final.dungeon.run.stress = 0
+	phased_final.dungeon.run.battle.energy = 0
+	_set_boss_intent(phased_final, "guard")
+	DungeonSystemScript.end_turn(phased_final)
+	_expect(int(phased_final.dungeon.run.stress) == 8,
+		"全额追缴必须在第二相每回合追加压力")
+	var phased_imperial: Dictionary = phased_bosses.immortal_dynasty
+	phased_imperial.dungeon.run.stress = 0
+	_set_boss_intent(phased_imperial, "guard")
+	DungeonSystemScript.end_turn(phased_imperial)
+	_expect(int(phased_imperial.dungeon.run.stress) == 15,
+		"无字天敕必须与原有天册敕令叠加")
+	var phased_payload: Variant = JSON.parse_string(JSON.stringify(phased_star))
+	var restored_phase: Dictionary = GameStateScript.ensure_v2(phased_payload as Dictionary)
+	DungeonSystemScript.normalize(restored_phase)
+	_expect(bool(restored_phase.dungeon.run.battle.phase_active) and
+		str(restored_phase.dungeon.run.battle.phase.id) == "future_merge" and
+		int(restored_phase.dungeon.run.battle.phase_turn) >= 1,
+		"首领第二相、切换回合与强化规则必须通过存档往返")
 
 	var rest_state := _resolve_noncombat("classical", "rest", 970201)
 	_expect(int(rest_state.dungeon.run.hp) > 500 and int(rest_state.dungeon.run.stress) < 50,
@@ -197,7 +314,7 @@ func _init() -> void:
 		"副本结果必须写入有界历史且不替代主线剧情状态")
 
 	if failures.is_empty():
-		print("DUNGEON_SYSTEM_TEST_OK: character abilities, 36 era routes, six boss rules and deterministic exit passed")
+		print("DUNGEON_SYSTEM_TEST_OK: character abilities, six elite rules, six two-phase bosses and deterministic exit passed")
 		quit(0)
 	else:
 		for failure in failures:
@@ -218,6 +335,22 @@ func _start_boss(era_id: String, seed_value: int) -> Dictionary:
 	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
 		str(state.dungeon.run.battle.get("rank", "")) == "boss",
 		"测试必须能直接进入时代首领战：%s" % era_id)
+	return state
+
+
+func _start_elite(era_id: String, seed_value: int) -> Dictionary:
+	var state := GameStateScript.create_new_game("被动见证人", seed_value, [8, 8, 8, 8, 8])
+	state.current_era_id = era_id
+	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
+	state.player.max_hp = 1200
+	state.player.hp = 1200
+	state.player.attack = 180
+	DungeonSystemScript.start(state)
+	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, "elite")]
+	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
+		str(state.dungeon.run.battle.get("rank", "")) == "elite",
+		"测试必须能直接进入时代精英战：%s" % era_id)
 	return state
 
 

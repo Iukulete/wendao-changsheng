@@ -1027,7 +1027,7 @@ func _show_dungeon_combat() -> void:
 	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn)))
 
 	var combat_row := HBoxContainer.new()
-	combat_row.custom_minimum_size.y = 205
+	combat_row.custom_minimum_size.y = 270
 	combat_row.add_theme_constant_override("separation", 14)
 	page.add_child(combat_row)
 	var self_panel := _panel(0.84, era_accent)
@@ -1045,7 +1045,7 @@ func _show_dungeon_combat() -> void:
 	combat_row.add_child(self_panel)
 	combat_row.add_child(_build_dungeon_log(run))
 	var enemy_panel := _panel(0.84, Color("d46b61"))
-	enemy_panel.custom_minimum_size.x = 280
+	enemy_panel.custom_minimum_size.x = 330
 	var enemy_column := VBoxContainer.new()
 	enemy_column.add_theme_constant_override("separation", 8)
 	enemy_panel.add_child(enemy_column)
@@ -1056,15 +1056,28 @@ func _show_dungeon_combat() -> void:
 	enemy_column.add_child(_label("下一意图", 13, Color(0.68, 0.72, 0.73)))
 	enemy_column.add_child(_label(DungeonSystemScript.intent_label(str(battle.intent)), 21,
 		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER))
-	var boss_rule_value: Variant = battle.get("trait", {})
-	if boss_rule_value is Dictionary and not (boss_rule_value as Dictionary).is_empty():
-		var boss_rule: Dictionary = boss_rule_value
+	var rule_value: Variant = battle.get("trait", {})
+	if rule_value is Dictionary and not (rule_value as Dictionary).is_empty():
+		var rule: Dictionary = rule_value
 		enemy_column.add_child(_divider())
-		enemy_column.add_child(_label("首领法则 · %s" % str(boss_rule.get("name", "未知法则")), 14,
+		enemy_column.add_child(_label("%s · %s" % [DungeonSystemScript.combat_rule_title(battle),
+			str(rule.get("name", "未知法则"))], 14,
 			Color("efbd72"), HORIZONTAL_ALIGNMENT_CENTER))
-		var trait_description := _label(str(boss_rule.get("description", "")), 12, Color(0.84, 0.80, 0.73))
+		var trait_description := _label(str(rule.get("description", "")), 12, Color(0.84, 0.80, 0.73))
 		trait_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		enemy_column.add_child(trait_description)
+	var phase_value: Variant = battle.get("phase", {})
+	if phase_value is Dictionary and not (phase_value as Dictionary).is_empty():
+		var phase: Dictionary = phase_value
+		var phase_active := bool(battle.get("phase_active", false))
+		enemy_column.add_child(_divider())
+		enemy_column.add_child(_label("%s · %s" % ["第二相已显" if phase_active else "未显之相",
+			str(phase.get("name", "未知形态"))], 13,
+			Color("f08b72") if phase_active else Color("b9a780"), HORIZONTAL_ALIGNMENT_CENTER))
+		var phase_description := _label(str(phase.get("description", "")), 11,
+			Color(0.88, 0.76, 0.69) if phase_active else Color(0.68, 0.68, 0.65))
+		phase_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		enemy_column.add_child(phase_description)
 	combat_row.add_child(enemy_panel)
 
 	var hand_scroll := ScrollContainer.new()

@@ -14,10 +14,17 @@ const STARTING_ENERGY := 3
 const ERA_IDS := ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]
 const ROUTE_TYPES := ["combat", "memory", "rest", "elite", "forge", "boss"]
 const SUPPORTED_NODE_EFFECTS := ["heal_percent", "calm", "stress", "hp_cost", "attack_power", "guard_power"]
-const SUPPORTED_BOSS_TRAITS := [
+const SUPPORTED_ENEMY_TRAITS := [
+	"oath_barrier", "zero_cost_pressure", "causal_checksum",
+	"salvage_shell", "breath_interest", "upgrade_censure",
 	"mirror_rebuke", "furnace_overload", "memory_fork",
 	"black_rain_erosion", "breath_tax", "heavenly_decree",
 ]
+const SUPPORTED_BOSS_PHASES := [
+	"mirror_unbound", "redline", "future_merge",
+	"rain_deluge", "total_collection", "blank_edict",
+]
+const SUPPORTED_INTENTS := ["strike", "heavy", "guard", "stress"]
 const PATH_IDS := ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]
 const PATH_TIE_ORDER := ["insight", "creation", "compassion", "bonds", "defiance", "ambition"]
 const PATH_NAMES := {
@@ -80,7 +87,11 @@ static func validate_definitions() -> Dictionary:
 		if not card_ids.has(required_id):
 			return {"ok": false, "code": "missing_ability_card", "card_id": required_id}
 	var route_node_count := 0
-	var trait_count := 0
+	var elite_trait_count := 0
+	var boss_trait_count := 0
+	var phase_count := 0
+	var trait_ids := {}
+	var phase_ids := {}
 	var era_routes_value: Variant = data.get("era_routes", {})
 	if not era_routes_value is Dictionary:
 		return {"ok": false, "code": "missing_era_routes"}
@@ -113,18 +124,42 @@ static func validate_definitions() -> Dictionary:
 			var intents_value: Variant = (enemy_value as Dictionary).get("intents", [])
 			if not intents_value is Array or (intents_value as Array).is_empty():
 				return {"ok": false, "code": "missing_enemy_intents", "era_id": era_id, "rank": rank}
-		var boss_rule_value: Variant = (era.boss as Dictionary).get("trait", {})
-		if not boss_rule_value is Dictionary:
-			return {"ok": false, "code": "missing_boss_trait", "era_id": era_id}
-		var boss_rule: Dictionary = boss_rule_value
-		if not SUPPORTED_BOSS_TRAITS.has(str(boss_rule.get("id", ""))) or \
-				str(boss_rule.get("name", "")).is_empty() or str(boss_rule.get("description", "")).is_empty() or \
-				int(boss_rule.get("value", 0)) <= 0:
-			return {"ok": false, "code": "invalid_boss_trait", "era_id": era_id}
-		trait_count += 1
+			for intent_value in (intents_value as Array):
+				if not SUPPORTED_INTENTS.has(str(intent_value)):
+					return {"ok": false, "code": "invalid_enemy_intent", "era_id": era_id, "rank": rank}
+		for rank in ["elite", "boss"]:
+			var rule_value: Variant = (era.get(rank, {}) as Dictionary).get("trait", {})
+			if not rule_value is Dictionary:
+				return {"ok": false, "code": "missing_enemy_trait", "era_id": era_id, "rank": rank}
+			var rule: Dictionary = rule_value
+			var rule_id := str(rule.get("id", ""))
+			if not SUPPORTED_ENEMY_TRAITS.has(rule_id) or trait_ids.has(rule_id) or \
+					str(rule.get("name", "")).is_empty() or str(rule.get("description", "")).is_empty() or \
+					int(rule.get("value", 0)) <= 0:
+				return {"ok": false, "code": "invalid_enemy_trait", "era_id": era_id, "rank": rank}
+			trait_ids[rule_id] = true
+			if rank == "elite": elite_trait_count += 1
+			else: boss_trait_count += 1
+		var phase_value: Variant = (era.boss as Dictionary).get("phase", {})
+		if not phase_value is Dictionary:
+			return {"ok": false, "code": "missing_boss_phase", "era_id": era_id}
+		var phase: Dictionary = phase_value
+		var phase_id := str(phase.get("id", ""))
+		var phase_intents_value: Variant = phase.get("intents", [])
+		if not SUPPORTED_BOSS_PHASES.has(phase_id) or phase_ids.has(phase_id) or \
+				str(phase.get("name", "")).is_empty() or str(phase.get("description", "")).is_empty() or \
+				int(phase.get("threshold", 0)) not in range(1, 100) or int(phase.get("value", 0)) <= 0 or \
+				not phase_intents_value is Array or (phase_intents_value as Array).is_empty():
+			return {"ok": false, "code": "invalid_boss_phase", "era_id": era_id}
+		for intent_value in (phase_intents_value as Array):
+			if not SUPPORTED_INTENTS.has(str(intent_value)):
+				return {"ok": false, "code": "invalid_boss_phase_intent", "era_id": era_id}
+		phase_ids[phase_id] = true
+		phase_count += 1
 	return {"ok": true, "code": "valid", "card_count": card_ids.size(),
 		"dungeon_count": (dungeons_value as Array).size(), "route_node_count": route_node_count,
-		"trait_count": trait_count}
+		"elite_trait_count": elite_trait_count, "boss_trait_count": boss_trait_count,
+		"phase_count": phase_count}
 
 
 static func normalize(state: Dictionary) -> Dictionary:
@@ -198,6 +233,13 @@ static func choose_route(state: Dictionary, choice_index: int) -> Dictionary:
 		run["battle"] = _start_battle(state, run, node_type)
 		_append_log(run, "%s：%s" % [str(node.name), str(node.get("description", "前路敌意凝结。"))])
 		_append_log(run, "%s在前方显形。" % str(run.battle.enemy_name))
+		var rule: Dictionary = run.battle.get("trait", {})
+		if not rule.is_empty():
+			_append_log(run, "%s·%s：%s" % [combat_rule_title(run.battle), str(rule.name),
+				str(rule.description)])
+		var phase: Dictionary = run.battle.get("phase", {})
+		if not phase.is_empty():
+			_append_log(run, "未显之相·%s：%s" % [str(phase.name), str(phase.description)])
 		dungeon["run"] = run
 		state["dungeon"] = dungeon
 		return {"ok": true, "code": "dungeon_battle_started", "node": node, "run": run}
@@ -228,9 +270,12 @@ static func play_card(state: Dictionary, hand_index: int) -> Dictionary:
 	var scale := 100 + int(card.get("upgrade", 0)) * 30
 	var damage := 0
 	var block := 0
+	var enemy_hp_before := int(battle.enemy_hp)
 	if int(effects.get("attack", 0)) > 0:
 		var base_damage := int(effects.attack) * scale / 100 + int(run.attack_power)
 		damage = _damage_enemy(battle, base_damage + int((state.get("player", {}) as Dictionary).get("realm_index", 0)))
+		_activate_phase_if_needed(run, battle)
+		damage = maxi(0, enemy_hp_before - int(battle.enemy_hp))
 	if int(effects.get("block", 0)) > 0:
 		block = int(effects.block) * scale / 100 + int(run.get("guard_power", 0))
 		battle["player_block"] = int(battle.player_block) + block
@@ -298,6 +343,7 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	battle["enemy_weak"] = maxi(0, int(battle.enemy_weak) - 1)
 	battle["cards_played_turn"] = 0
 	battle["trait_triggered_turn"] = false
+	battle["last_source_kind"] = ""
 	battle["turn"] = int(battle.turn) + 1
 	if int(run.hp) <= 0:
 		run["battle"] = battle
@@ -330,39 +376,106 @@ static func end_turn(state: Dictionary) -> Dictionary:
 
 static func _apply_trait_after_card(run: Dictionary, battle: Dictionary, card: Dictionary,
 		damage: int) -> void:
-	var boss_rule: Dictionary = battle.get("trait", {})
-	var trait_id := str(boss_rule.get("id", ""))
-	var value := maxi(0, int(boss_rule.get("value", 0)))
+	var rule: Dictionary = battle.get("trait", {})
+	var trait_id := str(rule.get("id", ""))
+	var value := maxi(0, int(rule.get("value", 0)))
+	var phase: Dictionary = battle.get("phase", {})
+	var phase_active := bool(battle.get("phase_active", false))
+	var phase_id := str(phase.get("id", "")) if phase_active else ""
+	var phase_value := maxi(0, int(phase.get("value", 0)))
 	var played := int(battle.get("cards_played_turn", 0))
-	if trait_id == "mirror_rebuke" and damage > 0 and not bool(battle.get("trait_triggered_turn", false)):
-		var reflected := mini(int(run.hp), value)
+	var source_kind := str(card.get("source_kind", "unknown"))
+	if trait_id == "zero_cost_pressure" and int(card_definition(str(card.card_id)).get("cost", 0)) == 0:
+		run["stress"] = mini(100, int(run.stress) + value)
+		_append_log(run, "无偿能力触发炉城禁令，心魔压力+%d。" % value)
+	elif trait_id == "causal_checksum" and source_kind == str(battle.get("last_source_kind", "")):
+		run["stress"] = mini(100, int(run.stress) + value)
+		_append_log(run, "连续的同源能力未通过因果校验，心魔压力+%d。" % value)
+	elif trait_id == "salvage_shell" and not bool(battle.get("trait_triggered_battle", false)) and \
+			int(battle.enemy_hp) * 2 <= int(battle.enemy_max_hp):
+		battle["enemy_block"] = int(battle.enemy_block) + value
+		battle["trait_triggered_battle"] = true
+		_append_log(run, "拾荒记忆聚成覆甲，敌方护体+%d。" % value)
+	elif trait_id == "upgrade_censure" and int(card.get("upgrade", 0)) > 0 and \
+			not bool(battle.get("trait_triggered_turn", false)):
+		run["stress"] = mini(100, int(run.stress) + value)
+		battle["trait_triggered_turn"] = true
+		_append_log(run, "强化器痕被天册追责，心魔压力+%d。" % value)
+	elif trait_id == "mirror_rebuke" and damage > 0 and (phase_id == "mirror_unbound" or \
+			not bool(battle.get("trait_triggered_turn", false))):
+		var reflected_value := phase_value if phase_id == "mirror_unbound" else value
+		var reflected := mini(int(run.hp), reflected_value)
 		run["hp"] = maxi(0, int(run.hp) - reflected)
 		battle["trait_triggered_turn"] = true
 		_append_log(run, "镜身照返沿灵诀反噬，你失去%d点气血。" % reflected)
-	elif trait_id == "furnace_overload" and played == 3:
-		run["stress"] = mini(100, int(run.stress) + value)
-		_append_log(run, "第三式令炉压越线，心魔压力+%d。" % value)
-	elif trait_id == "memory_fork" and played == 1:
+	elif trait_id == "furnace_overload" and played == (2 if phase_id == "redline" else 3):
+		var overload := phase_value if phase_id == "redline" else value
+		run["stress"] = mini(100, int(run.stress) + overload)
+		_append_log(run, "连续施法令炉压越线，心魔压力+%d。" % overload)
+	elif trait_id == "memory_fork" and played <= (2 if phase_id == "future_merge" else 1):
 		var copied := _new_card(run, str(card.card_id), "trait", "道网复制·%s" % str(card.get("source_name", "能力")))
 		var discard: Array = battle.discard_pile
 		discard.append(copied)
 		battle["discard_pile"] = discard
-		run["stress"] = mini(100, int(run.stress) + value)
+		var fork_stress := phase_value if phase_id == "future_merge" else value
+		run["stress"] = mini(100, int(run.stress) + fork_stress)
 		_append_log(run, "记忆分叉复制了%s，心魔压力+%d。" % [
-			str(card_definition(str(card.card_id)).name), value])
+			str(card_definition(str(card.card_id)).name), fork_stress])
+	battle["last_source_kind"] = source_kind
 
 
 static func _apply_trait_end_turn(run: Dictionary, battle: Dictionary, intent: String) -> void:
-	var boss_rule: Dictionary = battle.get("trait", {})
-	var trait_id := str(boss_rule.get("id", ""))
-	var value := maxi(0, int(boss_rule.get("value", 0)))
+	var rule: Dictionary = battle.get("trait", {})
+	var trait_id := str(rule.get("id", ""))
+	var value := maxi(0, int(rule.get("value", 0)))
+	var phase: Dictionary = battle.get("phase", {})
+	var phase_id := str(phase.get("id", "")) if bool(battle.get("phase_active", false)) else ""
+	var phase_value := maxi(0, int(phase.get("value", 0)))
+	if trait_id == "oath_barrier":
+		battle["enemy_block"] = int(battle.enemy_block) + value
+		_append_log(run, "守誓石障复原，敌方护体+%d。" % value)
+	elif trait_id == "breath_interest" and int(battle.energy) > 0:
+		var interest := int(battle.energy) * value
+		run["stress"] = mini(100, int(run.stress) + interest)
+		_append_log(run, "未用灵息被契约计息，心魔压力+%d。" % interest)
 	if trait_id == "black_rain_erosion":
-		var eroded := mini(int(run.hp), value)
+		var eroded := mini(int(run.hp), phase_value if phase_id == "rain_deluge" else value)
 		run["hp"] = maxi(0, int(run.hp) - eroded)
 		_append_log(run, "黑雨穿透护体，额外侵蚀%d点气血。" % eroded)
 	elif trait_id == "heavenly_decree" and intent == "guard":
 		run["stress"] = mini(100, int(run.stress) + value)
 		_append_log(run, "天册敕令在结界中落印，心魔压力+%d。" % value)
+	if phase_id == "total_collection":
+		run["stress"] = mini(100, int(run.stress) + phase_value)
+		_append_log(run, "全额追缴越过护体，心魔压力+%d。" % phase_value)
+	elif phase_id == "blank_edict":
+		run["stress"] = mini(100, int(run.stress) + phase_value)
+		_append_log(run, "无字天敕随敌方行动落印，心魔压力+%d。" % phase_value)
+
+
+static func _activate_phase_if_needed(run: Dictionary, battle: Dictionary) -> void:
+	if str(battle.get("rank", "")) != "boss" or bool(battle.get("phase_active", false)):
+		return
+	var phase: Dictionary = battle.get("phase", {})
+	if phase.is_empty():
+		return
+	var threshold_hp := maxi(1, int(battle.enemy_max_hp) * int(phase.get("threshold", 50)) / 100)
+	if int(battle.enemy_hp) > threshold_hp:
+		return
+	battle["enemy_hp"] = threshold_hp
+	battle["phase_active"] = true
+	battle["phase_turn"] = int(battle.get("turn", 1))
+	var phase_intents: Array = phase.get("intents", [])
+	if not phase_intents.is_empty():
+		battle["intent_cycle"] = phase_intents.duplicate()
+		battle["intent_index"] = 0
+		battle["intent"] = str(phase_intents[0])
+	_append_log(run, "%s破开第一相，显露%s：%s" % [str(battle.enemy_name), str(phase.name),
+		str(phase.description)])
+
+
+static func combat_rule_title(battle: Dictionary) -> String:
+	return "首领法则" if str(battle.get("rank", "")) == "boss" else "精英被动"
 
 
 static func energy_cap(battle: Dictionary) -> int:
@@ -433,6 +546,20 @@ static func boss_trait_for_era(era_id: String) -> Dictionary:
 	var era: Dictionary = enemies.get(era_id, enemies.get("classical", {}))
 	var boss_value: Variant = (era.get("boss", {}) as Dictionary).get("trait", {})
 	return (boss_value as Dictionary).duplicate(true) if boss_value is Dictionary else {}
+
+
+static func elite_trait_for_era(era_id: String) -> Dictionary:
+	var enemies: Dictionary = load_definitions().get("era_enemies", {})
+	var era: Dictionary = enemies.get(era_id, enemies.get("classical", {}))
+	var elite_value: Variant = (era.get("elite", {}) as Dictionary).get("trait", {})
+	return (elite_value as Dictionary).duplicate(true) if elite_value is Dictionary else {}
+
+
+static func boss_phase_for_era(era_id: String) -> Dictionary:
+	var enemies: Dictionary = load_definitions().get("era_enemies", {})
+	var era: Dictionary = enemies.get(era_id, enemies.get("classical", {}))
+	var phase_value: Variant = (era.get("boss", {}) as Dictionary).get("phase", {})
+	return (phase_value as Dictionary).duplicate(true) if phase_value is Dictionary else {}
 
 
 static func intent_label(intent: String) -> String:
@@ -596,15 +723,20 @@ static func _start_battle(state: Dictionary, run: Dictionary, rank: String) -> D
 	var scale := 100 + realm * 12 + int(run.depth) * 12
 	var deck: Array = run.deck.duplicate(true)
 	_shuffle(state, deck)
-	var boss_rule_value: Variant = source.get("trait", {})
-	var boss_rule: Dictionary = (boss_rule_value as Dictionary).duplicate(true) if boss_rule_value is Dictionary else {}
+	var rule_value: Variant = source.get("trait", {})
+	var rule: Dictionary = (rule_value as Dictionary).duplicate(true) if rule_value is Dictionary else {}
+	var phase_value: Variant = source.get("phase", {})
+	var phase: Dictionary = (phase_value as Dictionary).duplicate(true) if phase_value is Dictionary else {}
 	var battle := {"outcome":"active", "rank":rank, "turn":1, "energy":STARTING_ENERGY,
 		"player_block":0, "enemy_name":str(source.name), "enemy_hp":maxi(20, int(source.hp) * scale / 100),
 		"enemy_max_hp":maxi(20, int(source.hp) * scale / 100), "enemy_attack":maxi(4, int(source.attack) * scale / 100),
 		"enemy_block":0, "enemy_weak":0, "intent_cycle":(source.intents as Array).duplicate(),
 		"intent_index":0, "intent":str((source.intents as Array)[0]), "draw_pile":deck,
-		"discard_pile":[], "exhausted":[], "hand":[], "trait":boss_rule,
-		"cards_played_turn":0, "trait_triggered_turn":false}
+		"discard_pile":[], "exhausted":[], "hand":[], "trait":rule, "phase":phase,
+		"phase_active":false, "phase_turn":0, "cards_played_turn":0,
+		"trait_triggered_turn":false, "trait_triggered_battle":false, "last_source_kind":""}
+	if str(rule.get("id", "")) == "oath_barrier":
+		battle["enemy_block"] = maxi(0, int(rule.get("value", 0)))
 	battle["energy"] = energy_cap(battle)
 	_draw_cards(state, battle, 5)
 	return battle
@@ -790,8 +922,13 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 	var battle: Dictionary = battle_value.duplicate(true) if battle_value is Dictionary else {}
 	if not battle.is_empty():
 		battle["trait"] = _normalize_trait(battle.get("trait", {}))
+		battle["phase"] = _normalize_phase(battle.get("phase", {}))
+		battle["phase_active"] = bool(battle.get("phase_active", false)) and not (battle.phase as Dictionary).is_empty()
+		battle["phase_turn"] = clampi(int(battle.get("phase_turn", 0)), 0, MAX_TURNS)
 		battle["cards_played_turn"] = clampi(int(battle.get("cards_played_turn", 0)), 0, MAX_HAND)
 		battle["trait_triggered_turn"] = bool(battle.get("trait_triggered_turn", false))
+		battle["trait_triggered_battle"] = bool(battle.get("trait_triggered_battle", false))
+		battle["last_source_kind"] = str(battle.get("last_source_kind", "")).left(32)
 		run["battle"] = battle
 	else:
 		run["battle"] = {}
@@ -801,13 +938,34 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 static func _normalize_trait(value: Variant) -> Dictionary:
 	if not value is Dictionary:
 		return {}
-	var boss_rule: Dictionary = value
-	var trait_id := str(boss_rule.get("id", ""))
-	if not SUPPORTED_BOSS_TRAITS.has(trait_id):
+	var rule: Dictionary = value
+	var trait_id := str(rule.get("id", ""))
+	if not SUPPORTED_ENEMY_TRAITS.has(trait_id):
 		return {}
-	return {"id":trait_id, "name":str(boss_rule.get("name", "首领法则")).left(32),
-		"description":str(boss_rule.get("description", "")).left(160),
-		"value":clampi(int(boss_rule.get("value", 1)), 1, 1000)}
+	return {"id":trait_id, "name":str(rule.get("name", "战斗规则")).left(32),
+		"description":str(rule.get("description", "")).left(160),
+		"value":clampi(int(rule.get("value", 1)), 1, 1000)}
+
+
+static func _normalize_phase(value: Variant) -> Dictionary:
+	if not value is Dictionary:
+		return {}
+	var source: Dictionary = value
+	var phase_id := str(source.get("id", ""))
+	if not SUPPORTED_BOSS_PHASES.has(phase_id):
+		return {}
+	var intents: Array = []
+	var intents_value: Variant = source.get("intents", [])
+	if intents_value is Array:
+		for intent_value in (intents_value as Array):
+			var intent := str(intent_value)
+			if SUPPORTED_INTENTS.has(intent): intents.append(intent)
+	if intents.is_empty():
+		return {}
+	return {"id":phase_id, "name":str(source.get("name", "未显之相")).left(32),
+		"description":str(source.get("description", "")).left(160),
+		"threshold":clampi(int(source.get("threshold", 50)), 1, 99),
+		"value":clampi(int(source.get("value", 1)), 1, 1000), "intents":intents}
 
 
 static func _normalize_cards(value: Variant) -> Array:
