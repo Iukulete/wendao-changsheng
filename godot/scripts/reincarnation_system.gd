@@ -127,6 +127,10 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	combat["active"] = false
 	combat["current"] = {}
 	state["combat"] = combat
+	var dungeon: Dictionary = state.get("dungeon", {})
+	dungeon["active"] = false
+	dungeon["run"] = {}
+	state["dungeon"] = dungeon
 	var birth_story: Dictionary = StorySystemScript.apply_birth_legacies(state)
 	var opening_memories := _memory_opening(last_life, inherited_echoes)
 	for note_value in (birth_story.get("notes", []) as Array):

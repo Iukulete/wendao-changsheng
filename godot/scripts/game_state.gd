@@ -103,6 +103,11 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"current": {},
 			"history": [],
 		},
+		"dungeon": {
+			"active": false,
+			"run": {},
+			"history": [],
+		},
 		"story": {
 			"story_version": 1,
 			"completed_event_ids": [],
@@ -244,6 +249,9 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 	})
 	state["combat"] = _merge_defaults(state.get("combat", {}), {
 		"active": false, "current": {}, "history": [],
+	})
+	state["dungeon"] = _merge_defaults(state.get("dungeon", {}), {
+		"active": false, "run": {}, "history": [],
 	})
 	state["story"] = _merge_defaults(state.get("story", {}), {
 		"story_version": 1,

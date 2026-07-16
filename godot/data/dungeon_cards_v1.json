@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "cards": [
+    {"id":"sword_cut","name":"引锋式","cost":1,"description":"造成8点伤害。","effects":{"attack":8}},
+    {"id":"jade_guard","name":"抱玉守","cost":1,"description":"获得7点护体。","effects":{"block":7}},
+    {"id":"qi_breath","name":"一息归元","cost":0,"description":"灵力+1，抽1张牌，消耗。","effects":{"energy":1,"draw":1},"exhaust":true},
+    {"id":"lotus_vow","name":"莲心护生","cost":1,"description":"获得6点护体，恢复3点气血。","effects":{"block":6,"heal":3},"path":"compassion"},
+    {"id":"sky_seize","name":"凌霄夺势","cost":2,"description":"造成17点伤害，心魔压力+7。","effects":{"attack":17,"stress":7},"path":"ambition"},
+    {"id":"fate_break","name":"逆命断章","cost":1,"description":"造成9点伤害，令敌方虚弱1回合。","effects":{"attack":9,"weak":1},"path":"defiance"},
+    {"id":"cause_trace","name":"照因见隙","cost":1,"description":"获得4点护体，抽2张牌。","effects":{"block":4,"draw":2},"path":"insight"},
+    {"id":"forge_edge","name":"造化器锋","cost":1,"description":"造成6点伤害，本场攻击成长2。","effects":{"attack":6,"power":2},"path":"creation"},
+    {"id":"shared_oath","name":"众生同契","cost":1,"description":"获得9点护体，心魔压力-6。","effects":{"block":9,"calm":6},"path":"bonds"},
+    {"id":"blood_arc","name":"血照长空","cost":2,"description":"造成23点伤害，心魔压力+6。","effects":{"attack":23,"stress":6},"style":"slaughter"},
+    {"id":"timeless_ward","name":"不坏长生障","cost":2,"description":"获得20点护体。","effects":{"block":20},"style":"guardian"},
+    {"id":"mind_mirror","name":"问心镜","cost":1,"description":"抽2张牌，令敌方虚弱2回合。","effects":{"draw":2,"weak":2},"style":"insight"},
+    {"id":"myriad_cycle","name":"万道一轮","cost":2,"description":"造成11点伤害，获得11点护体，抽1张牌。","effects":{"attack":11,"block":11,"draw":1},"style":"myriad"},
+    {"id":"heart_demon","name":"心障残页","cost":1,"description":"消耗此牌并平复8点压力。","effects":{"calm":8},"exhaust":true,"curse":true}
+  ],
+  "dungeons": [
+    {"id":"mirror_lake","name":"镜湖空阙秘境","max_depth":4,"scene":"res://art/scenes/void_threshold_temple.png","reward_material":"fate_thread"}
+  ],
+  "era_enemies": {
+    "classical":{"normal":{"name":"镜湖剑傀","hp":58,"attack":11,"intents":["strike","guard","heavy"]},"elite":{"name":"无字门守誓人","hp":92,"attack":15,"intents":["guard","heavy","stress"]},"boss":{"name":"未发生之我","hp":148,"attack":19,"intents":["stress","heavy","guard","strike"]}},
+    "steam":{"normal":{"name":"失压炉心机偶","hp":64,"attack":12,"intents":["strike","guard","stress"]},"elite":{"name":"黄铜记忆裁定机","hp":98,"attack":16,"intents":["stress","heavy","guard"]},"boss":{"name":"百炉城零号心智","hp":156,"attack":20,"intents":["guard","stress","heavy","strike"]}},
+    "star_network":{"normal":{"name":"废弃人格猎手","hp":70,"attack":13,"intents":["stress","strike","guard"]},"elite":{"name":"因果清算节点","hp":106,"attack":17,"intents":["guard","stress","heavy"]},"boss":{"name":"第七份未来人格","hp":166,"attack":21,"intents":["stress","heavy","stress","guard"]}},
+    "wasteland":{"normal":{"name":"黑雨旧战机","hp":68,"attack":14,"intents":["strike","heavy","guard"]},"elite":{"name":"归墟拾忆王","hp":110,"attack":18,"intents":["heavy","stress","guard"]},"boss":{"name":"返道失败的祖庭","hp":174,"attack":22,"intents":["guard","heavy","stress","strike"]}},
+    "final_age":{"normal":{"name":"配给站债魂","hp":62,"attack":14,"intents":["stress","strike","heavy"]},"elite":{"name":"经脉契约执行者","hp":102,"attack":19,"intents":["stress","heavy","guard"]},"boss":{"name":"末法共同心魔","hp":168,"attack":23,"intents":["stress","guard","heavy","stress"]}},
+    "immortal_dynasty":{"normal":{"name":"巡天命籍影卫","hp":76,"attack":15,"intents":["guard","strike","heavy"]},"elite":{"name":"无籍仙民怨相","hp":118,"attack":20,"intents":["stress","guard","heavy"]},"boss":{"name":"天册之外的帝影","hp":188,"attack":24,"intents":["guard","stress","heavy","strike"]}}
+  }
+}

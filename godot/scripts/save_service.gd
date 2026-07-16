@@ -6,6 +6,7 @@ const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
+const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 
 ## Versioned, checksummed and atomically replaced JSON saves.
 ##
@@ -301,7 +302,7 @@ func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
 	var current_era_id := str(upgraded.get("current_era_id", ""))
 	if not GameStateScript.ERA_IDS.has(current_era_id):
 		return _failure("invalid_state", "存档中的时代 ID 无效。")
-	for required_dictionary in ["legacy", "world", "inventory", "combat", "story", "ai"]:
+	for required_dictionary in ["legacy", "world", "inventory", "combat", "dungeon", "story", "ai"]:
 		if not upgraded.get(required_dictionary, null) is Dictionary:
 			return _failure("invalid_state", "存档缺少 %s 状态。" % required_dictionary)
 	var normalized_state := upgraded.duplicate(true)
@@ -412,6 +413,7 @@ func _normalize_nested_state(state: Dictionary) -> void:
 	CombatSystemScript.normalize(state)
 	StorySystemScript.normalize(state)
 	AchievementSystemScript.normalize(state)
+	DungeonSystemScript.normalize(state)
 	var story: Dictionary = state.story
 	story["completed_event_ids"] = _bounded_array(story.get("completed_event_ids", []), 2048)
 	story["life_event_ids"] = _bounded_array(story.get("life_event_ids", []), 512)
