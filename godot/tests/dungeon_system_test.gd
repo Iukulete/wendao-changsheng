@@ -202,9 +202,12 @@ func _init() -> void:
 	var classical_boss := _start_boss("classical", 970101)
 	_set_test_hand(classical_boss, ["sword_cut"])
 	var mirror_hp := int(classical_boss.dungeon.run.hp)
-	DungeonSystemScript.play_card(classical_boss, 0)
-	_expect(int(classical_boss.dungeon.run.hp) == mirror_hp - 4,
-		"古典首领的镜身照返必须反噬每回合首张伤害灵诀")
+	var mirror_result: Dictionary = DungeonSystemScript.play_card(classical_boss, 0)
+	_expect(int(classical_boss.dungeon.run.hp) == mirror_hp - 4 and
+		str((mirror_result.get("feedback", {}) as Dictionary).get("kind", "")) == "card" and
+		int((mirror_result.get("feedback", {}) as Dictionary).get("damage", 0)) > 0 and
+		int((mirror_result.get("feedback", {}) as Dictionary).get("hp_delta", 0)) == -4,
+		"古典首领反噬必须执行并返回结构化出牌反馈")
 
 	var steam_boss := _start_boss("steam", 970102)
 	_set_test_hand(steam_boss, ["sword_cut", "sword_cut", "sword_cut"])
@@ -229,9 +232,11 @@ func _init() -> void:
 	var wasteland_boss := _start_boss("wasteland", 970104)
 	_set_boss_intent(wasteland_boss, "guard")
 	var rain_hp := int(wasteland_boss.dungeon.run.hp)
-	DungeonSystemScript.end_turn(wasteland_boss)
-	_expect(int(wasteland_boss.dungeon.run.hp) == rain_hp - 3,
-		"废土首领必须在回合末执行黑雨侵蚀")
+	var rain_result: Dictionary = DungeonSystemScript.end_turn(wasteland_boss)
+	_expect(int(wasteland_boss.dungeon.run.hp) == rain_hp - 3 and
+		str((rain_result.get("feedback", {}) as Dictionary).get("kind", "")) == "enemy" and
+		int((rain_result.get("feedback", {}) as Dictionary).get("hp_delta", 0)) == -3,
+		"废土首领回合侵蚀必须执行并返回结构化敌方反馈")
 
 	var final_boss := _start_boss("final_age", 970105)
 	_expect(int(final_boss.dungeon.run.battle.energy) == 2 and
@@ -253,10 +258,12 @@ func _init() -> void:
 		phased.dungeon.run.battle.enemy_hp = threshold_hp + 1
 		phased.dungeon.run.attack_power = 100
 		_set_test_hand(phased, ["sword_cut"])
-		DungeonSystemScript.play_card(phased, 0)
+		var phase_result: Dictionary = DungeonSystemScript.play_card(phased, 0)
 		_expect(bool(phased.dungeon.run.battle.phase_active) and
 			int(phased.dungeon.run.battle.enemy_hp) == threshold_hp and
-			str(phased.dungeon.run.battle.intent) == str((phase.intents as Array)[0]),
+			str(phased.dungeon.run.battle.intent) == str((phase.intents as Array)[0]) and
+			bool((phase_result.get("feedback", {}) as Dictionary).get("phase_shifted", false)) and
+			str((phase_result.get("feedback", {}) as Dictionary).get("phase_name", "")) == str(phase.name),
 			"首领必须在半血门槛锁血破相并切换意图：%s" % era_id)
 		phased_bosses[str(era_id)] = phased
 
@@ -350,7 +357,7 @@ func _init() -> void:
 		pressure.dungeon.run.battle.intent_cycle = ["stress"]
 		pressure.dungeon.run.battle.energy = 3
 		var hp_before := int(pressure.dungeon.run.hp)
-		DungeonSystemScript.end_turn(pressure)
+		var pressure_result: Dictionary = DungeonSystemScript.end_turn(pressure)
 		var heart: Dictionary = DungeonSystemScript.heart_demon_for_era(str(era_id))
 		var heart_card_id := str(heart.card_id)
 		var copies := int((heart.penalty as Dictionary).get("copies", 1))
@@ -361,7 +368,10 @@ func _init() -> void:
 		for card_value in pressure.dungeon.run.deck:
 			if str((card_value as Dictionary).card_id) == heart_card_id: deck_curse_count += 1
 		_expect(int(pressure.dungeon.run.stress) == int(heart.recovery) and
-			battle_curse_count == copies and deck_curse_count == copies,
+			battle_curse_count == copies and deck_curse_count == copies and
+			bool((pressure_result.get("feedback", {}) as Dictionary).get("heart_awakened", false)) and
+			str((pressure_result.get("feedback", {}) as Dictionary).get("heart_name", "")) ==
+				str(DungeonSystemScript.card_definition(heart_card_id).name),
 			"时代心魔必须按定义污染当前战斗与跨战斗牌组：%s" % era_id)
 		heart_card_ids[heart_card_id] = true
 		heart_states[str(era_id)] = pressure

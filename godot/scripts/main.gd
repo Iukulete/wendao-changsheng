@@ -11,6 +11,7 @@ const LocalAIBridgeScript = preload("res://scripts/local_ai_bridge.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const CombatStageScript = preload("res://scripts/combat_stage.gd")
+const DungeonFeedbackLayerScript = preload("res://scripts/dungeon_feedback_layer.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
@@ -87,6 +88,7 @@ var era_accent: Color = Color("e4be4c")
 var base_theme: Theme
 var achievement_notice_queue: Array[Dictionary] = []
 var achievement_toast: Control
+var dungeon_action_feedback: Dictionary = {}
 
 
 func _ready() -> void:
@@ -950,6 +952,7 @@ func _show_dungeon() -> void:
 
 func _show_dungeon_route() -> void:
 	state = ScreenState.DUNGEON_ROUTE
+	dungeon_action_feedback = {}
 	_clear_screen()
 	var run: Dictionary = run_state.dungeon.run
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
@@ -1135,6 +1138,7 @@ func _show_dungeon_combat() -> void:
 	end_button.name = "DungeonEndTurnButton"
 	actions.add_child(end_button)
 	actions.add_child(_button("撤出秘境", _abandon_dungeon, false))
+	_show_dungeon_action_feedback()
 
 
 func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
@@ -1203,6 +1207,67 @@ func _apply_dungeon_stress_visuals(stress: int) -> void:
 		vignette.material.set_shader_parameter("tint", Color(0.09, 0.045, 0.018, 0.24))
 
 
+func _show_dungeon_action_feedback() -> void:
+	if dungeon_action_feedback.is_empty():
+		return
+	var action_feedback := dungeon_action_feedback.duplicate(true)
+	dungeon_action_feedback = {}
+	var kind := str(action_feedback.get("kind", "card"))
+	var feedback_color := _ability_source_color(str(action_feedback.get("source_kind", "foundation"))) \
+		if kind == "card" else Color("ef665e")
+	if bool(action_feedback.get("phase_shifted", false)):
+		feedback_color = Color("f0a06d")
+	elif bool(action_feedback.get("heart_awakened", false)):
+		feedback_color = Color("df5f79")
+	var layer: Control = DungeonFeedbackLayerScript.new()
+	layer.name = "DungeonFeedbackLayer"
+	layer.z_index = 120
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	screen_host.add_child(layer)
+	layer.call("configure", action_feedback, feedback_color)
+	var summary := _dungeon_feedback_summary(action_feedback)
+	if summary.is_empty():
+		return
+	var label := _label(summary, 23, Color(feedback_color, 0.98), HORIZONTAL_ALIGNMENT_CENTER)
+	label.name = "DungeonFeedbackSummary"
+	label.add_theme_constant_override("outline_size", 7)
+	label.add_theme_color_override("font_outline_color", Color(0.015, 0.02, 0.03, 0.94))
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.anchor_left = 0.30
+	label.anchor_right = 0.70
+	label.anchor_top = 0.70
+	label.anchor_bottom = 0.70
+	label.offset_top = -26
+	label.offset_bottom = 48
+	layer.add_child(label)
+
+
+func _dungeon_feedback_summary(action_feedback: Dictionary) -> String:
+	var parts: Array[String] = []
+	if str(action_feedback.get("kind", "")) == "card":
+		parts.append(str(action_feedback.get("card_name", "能力显化")))
+		if int(action_feedback.get("damage", 0)) > 0:
+			parts.append("敌方气血 -%d" % int(action_feedback.damage))
+		if int(action_feedback.get("block", 0)) > 0:
+			parts.append("护体 +%d" % int(action_feedback.block))
+	else:
+		parts.append(str(action_feedback.get("intent_name", "敌方行动")))
+		if int(action_feedback.get("damage", 0)) > 0:
+			parts.append("气血 -%d" % int(action_feedback.damage))
+		if int(action_feedback.get("enemy_block_delta", 0)) > 0:
+			parts.append("敌方护体 +%d" % int(action_feedback.enemy_block_delta))
+	var stress_delta := int(action_feedback.get("stress_delta", 0))
+	if stress_delta != 0:
+		parts.append("压力 %s%d" % ["+" if stress_delta > 0 else "", stress_delta])
+	if bool(action_feedback.get("heart_awakened", false)):
+		parts.append("心魔显化 · %s" % str(action_feedback.get("heart_name", "心障")))
+	if bool(action_feedback.get("phase_shifted", false)):
+		parts.append("破相 · %s" % str(action_feedback.get("phase_name", "第二相")))
+	return "  ·  ".join(parts)
+
+
 func _ability_source_color(source_kind: String) -> Color:
 	return {
 		"weapon": Color("dc8b55"),
@@ -1239,13 +1304,18 @@ func _abandon_dungeon() -> void:
 
 func _handle_dungeon_action(result: Dictionary, save_reason: String) -> void:
 	if not bool(result.get("ok", false)):
+		dungeon_action_feedback = {}
 		feedback = str({
 			"insufficient_energy": "当前灵力不足，无法施展这式能力。",
 			"invalid_route_choice": "这条秘境道路已经消散。",
 		}.get(str(result.get("code", "")), "秘境没有接受这一行动。"))
 		_show_dungeon()
 		return
+	var action_feedback_value: Variant = result.get("feedback", {})
+	dungeon_action_feedback = (action_feedback_value as Dictionary).duplicate(true) \
+		if action_feedback_value is Dictionary else {}
 	if str(result.get("code", "")) == "dungeon_finished":
+		dungeon_action_feedback = {}
 		_finalize_dungeon_exit(result, save_reason)
 		return
 	_sync_state_views()
@@ -1254,6 +1324,7 @@ func _handle_dungeon_action(result: Dictionary, save_reason: String) -> void:
 
 
 func _finalize_dungeon_exit(result: Dictionary, save_reason: String) -> void:
+	dungeon_action_feedback = {}
 	var outcome := str(result.get("outcome", "abandoned"))
 	var run: Dictionary = result.get("run", {})
 	var rewards: Dictionary = result.get("rewards", {})

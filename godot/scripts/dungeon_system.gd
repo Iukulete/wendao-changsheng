@@ -316,6 +316,11 @@ static func play_card(state: Dictionary, hand_index: int) -> Dictionary:
 	var battle: Dictionary = run.battle
 	if battle.is_empty() or str(battle.get("outcome", "")) != "active":
 		return {"ok": false, "code": "no_dungeon_battle"}
+	var player_hp_before := int(run.hp)
+	var stress_before := int(run.stress)
+	var enemy_block_before := int(battle.enemy_block)
+	var attack_power_before := int(run.attack_power)
+	var phase_was_active := bool(battle.get("phase_active", false))
 	var hand: Array = battle.hand
 	if hand_index < 0 or hand_index >= hand.size():
 		return {"ok": false, "code": "invalid_hand_index"}
@@ -361,16 +366,31 @@ static func play_card(state: Dictionary, hand_index: int) -> Dictionary:
 	_append_log(run, "你施展%s，造成%d伤害、凝成%d护体。" % [str(definition.name), damage, block])
 	battle["cards_played_turn"] = int(battle.get("cards_played_turn", 0)) + 1
 	_apply_trait_after_card(run, battle, card, damage)
+	var phase_shifted := not phase_was_active and bool(battle.get("phase_active", false))
+	var phase: Dictionary = battle.get("phase", {})
+	var feedback := {"kind":"card", "card_id":str(card.card_id),
+		"card_name":str(definition.name), "source_kind":str(card.get("source_kind", "foundation")),
+		"damage":damage, "block":block, "hp_delta":int(run.hp) - player_hp_before,
+		"stress_delta":int(run.stress) - stress_before,
+		"enemy_block_delta":int(battle.enemy_block) - enemy_block_before,
+		"attack_power_delta":int(run.attack_power) - attack_power_before,
+		"phase_shifted":phase_shifted,
+		"phase_name":str(phase.get("name", "")) if phase_shifted else ""}
 	if int(battle.enemy_hp) <= 0:
 		run["battle"] = battle
-		return _finish_battle(state, dungeon, run, "victory")
+		var victory := _finish_battle(state, dungeon, run, "victory")
+		victory["feedback"] = feedback
+		return victory
 	if int(run.hp) <= 0:
 		run["battle"] = battle
-		return _finish_battle(state, dungeon, run, "defeat")
+		var defeat := _finish_battle(state, dungeon, run, "defeat")
+		defeat["feedback"] = feedback
+		return defeat
 	run["battle"] = battle
 	dungeon["run"] = run
 	state["dungeon"] = dungeon
-	return {"ok": true, "code": "card_played", "card": card, "battle": battle, "run": run}
+	return {"ok": true, "code": "card_played", "card": card, "battle": battle, "run": run,
+		"feedback":feedback}
 
 
 static func end_turn(state: Dictionary) -> Dictionary:
@@ -381,6 +401,11 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	var battle: Dictionary = run.battle
 	if battle.is_empty() or str(battle.get("outcome", "")) != "active":
 		return {"ok": false, "code": "no_dungeon_battle"}
+	var player_hp_before := int(run.hp)
+	var stress_before := int(run.stress)
+	var enemy_block_before := int(battle.enemy_block)
+	var attack_power_before := int(run.attack_power)
+	var guard_power_before := int(run.guard_power)
 	var intent := str(battle.intent)
 	var damage := 0
 	if intent == "guard":
@@ -406,12 +431,23 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	battle["trait_triggered_turn"] = false
 	battle["last_source_kind"] = ""
 	battle["turn"] = int(battle.turn) + 1
+	var feedback := {"kind":"enemy", "intent":intent, "intent_name":intent_label(intent),
+		"damage":damage, "hp_delta":int(run.hp) - player_hp_before,
+		"stress_delta":int(run.stress) - stress_before,
+		"enemy_block_delta":int(battle.enemy_block) - enemy_block_before,
+		"attack_power_delta":int(run.attack_power) - attack_power_before,
+		"guard_power_delta":int(run.guard_power) - guard_power_before,
+		"heart_awakened":false, "heart_name":""}
 	if int(run.hp) <= 0:
 		run["battle"] = battle
-		return _finish_battle(state, dungeon, run, "defeat")
+		var defeat := _finish_battle(state, dungeon, run, "defeat")
+		defeat["feedback"] = feedback
+		return defeat
 	if int(battle.turn) > MAX_TURNS:
 		run["battle"] = battle
-		return _finish_battle(state, dungeon, run, "defeat")
+		var timeout := _finish_battle(state, dungeon, run, "defeat")
+		timeout["feedback"] = feedback
+		return timeout
 	var heart_penalty: Dictionary = {}
 	if int(run.stress) >= 100:
 		heart_penalty = _awaken_heart_demon(run, battle)
@@ -420,15 +456,23 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	battle["intent"] = str(cycle[int(battle.intent_index)])
 	battle["energy"] = maxi(0, energy_cap(battle) - int(heart_penalty.get("energy_loss", 0)))
 	_draw_cards(state, battle, 5)
+	feedback["hp_delta"] = int(run.hp) - player_hp_before
+	feedback["stress_delta"] = int(run.stress) - stress_before
+	feedback["enemy_block_delta"] = int(battle.enemy_block) - enemy_block_before
+	feedback["attack_power_delta"] = int(run.attack_power) - attack_power_before
+	feedback["guard_power_delta"] = int(run.guard_power) - guard_power_before
+	feedback["heart_awakened"] = bool(heart_penalty.get("heart_awakened", false))
+	feedback["heart_name"] = str(heart_penalty.get("heart_name", ""))
 	run["battle"] = battle
 	dungeon["run"] = run
 	state["dungeon"] = dungeon
-	return {"ok": true, "code": "dungeon_turn_ended", "battle": battle, "run": run}
+	return {"ok": true, "code": "dungeon_turn_ended", "battle": battle, "run": run,
+		"feedback":feedback}
 
 
 static func _awaken_heart_demon(run: Dictionary, battle: Dictionary) -> Dictionary:
 	var heart := heart_demon_for_era(str(run.get("era_id", "classical")))
-	var penalty: Dictionary = heart.get("penalty", {})
+	var penalty: Dictionary = (heart.get("penalty", {}) as Dictionary).duplicate(true)
 	var copies := clampi(int(penalty.get("copies", 1)), 1, 3)
 	var deck: Array = run.deck
 	var discard: Array = battle.discard_pile
@@ -451,6 +495,8 @@ static func _awaken_heart_demon(run: Dictionary, battle: Dictionary) -> Dictiona
 	run["stress"] = clampi(int(heart.get("recovery", 60)), 0, 99)
 	_append_log(run, "%s显化，%d张心障混入能力循环。%s" % [
 		str(card_definition(str(heart.card_id)).name), copies, str(heart.awakening)])
+	penalty["heart_awakened"] = true
+	penalty["heart_name"] = str(card_definition(str(heart.card_id)).name)
 	return penalty
 
 

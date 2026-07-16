@@ -105,6 +105,17 @@ func _run() -> void:
 		game.call("_show_dungeon_combat")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
+	game.set("dungeon_action_feedback", {"kind":"card", "card_name":"今身定锚",
+		"source_kind":"story", "damage":18, "block":10, "hp_delta":0,
+		"stress_delta":-5, "enemy_block_delta":0, "attack_power_delta":0,
+		"phase_shifted":false, "phase_name":""})
+	game.call("_show_dungeon_combat")
+	await _settle_frames(4)
+	if game.find_child("DungeonFeedbackLayer", true, false) == null or \
+			game.find_child("DungeonFeedbackSummary", true, false) == null:
+		failures.append("秘境出牌没有生成程序化反馈层与摘要")
+	_capture(root, output_root.path_join("dungeon_card_feedback_1440x900.png"), Vector2i(1440, 900),
+		"秘境出牌反馈")
 	var critical_state: Dictionary = game.get("run_state")
 	critical_state.dungeon.run.stress = 92
 	var heart: Dictionary = DungeonSystemScript.heart_demon_for_era(
@@ -153,8 +164,14 @@ func _run() -> void:
 		phase_battle["intent"] = str(phase_intents[0])
 	phase_state.dungeon.run.battle = phase_battle
 	game.set("run_state", phase_state)
+	game.set("dungeon_action_feedback", {"kind":"card", "card_name":"引锋式",
+		"source_kind":"weapon", "damage":74, "block":0, "hp_delta":-2,
+		"stress_delta":0, "enemy_block_delta":0, "attack_power_delta":0,
+		"phase_shifted":true, "phase_name":str(phase.get("name", "第二相"))})
 	game.call("_show_dungeon_combat")
 	await _settle_frames(4)
+	if game.find_child("DungeonFeedbackLayer", true, false) == null:
+		failures.append("首领破相没有生成程序化转场反馈层")
 	_capture(root, output_root.path_join("dungeon_boss_phase_1440x900.png"), Vector2i(1440, 900),
 		"秘境首领第二相")
 
@@ -163,7 +180,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, story abilities, era heart demons, elite rules and two-phase bosses are nonblank")
+		print("RENDER_CAPTURE_TEST_OK: menu, story abilities, heart demons, card feedback and boss transitions are nonblank")
 		quit(0)
 	else:
 		for failure in failures:
