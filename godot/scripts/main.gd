@@ -7,6 +7,10 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const CultivationScript = preload("res://scripts/cultivation_system.gd")
 const ReincarnationScript = preload("res://scripts/reincarnation_system.gd")
 const WorldSimulationScript = preload("res://scripts/world_simulation.gd")
+const LocalAIBridgeScript = preload("res://scripts/local_ai_bridge.gd")
+const ItemSystemScript = preload("res://scripts/item_system.gd")
+const CombatSystemScript = preload("res://scripts/combat_system.gd")
+const StorySystemScript = preload("res://scripts/story_system.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -50,7 +54,7 @@ const DEFAULT_PLAYER := {
 	"roots": [7, 4, 8, 5, 6],
 }
 
-enum ScreenState { MENU, GAME, EVENT, REINCARNATION }
+enum ScreenState { MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT }
 
 var state: ScreenState = ScreenState.MENU
 var current_era: String = "古典修仙纪"
@@ -64,6 +68,7 @@ var menu_notice: String = ""
 var run_state: Dictionary = {}
 var player: Dictionary = {}
 var save_service: RefCounted = SaveServiceScript.new()
+var ai_bridge: Node
 
 var background: TextureRect
 var vignette: ColorRect
@@ -76,6 +81,9 @@ var base_theme: Theme
 
 
 func _ready() -> void:
+	ai_bridge = LocalAIBridgeScript.new()
+	add_child(ai_bridge)
+	ai_bridge.connect("event_ready", _on_ai_event_ready)
 	if run_state.is_empty():
 		run_state = GameStateScript.create_new_game("无名", 1, DEFAULT_PLAYER.roots)
 	_sync_state_views()
@@ -331,12 +339,18 @@ func _continue_game() -> void:
 	save_notice = str(load_result.get("message", "旧玉已续接上一次命途。"))
 	menu_notice = ""
 	current_event = {}
-	_show_game()
+	if CombatSystemScript.has_active_combat(run_state):
+		_show_combat()
+	else:
+		_show_game()
 
 
 func _sync_state_views() -> void:
 	run_state = GameStateScript.ensure_v2(run_state)
 	WorldSimulationScript.initialize(run_state)
+	ItemSystemScript.normalize(run_state)
+	CombatSystemScript.normalize(run_state)
+	StorySystemScript.normalize(run_state)
 	current_era = str(run_state.get("current_era", "古典修仙纪"))
 	player = run_state.get("player", {})
 	recent_memories.clear()
@@ -353,6 +367,9 @@ func _commit_state_views() -> void:
 
 
 func _show_game() -> void:
+	if CombatSystemScript.has_active_combat(run_state):
+		_show_combat()
+		return
 	if bool(run_state.get("life_closed", false)):
 		_show_reincarnation()
 		return
@@ -379,7 +396,7 @@ func _show_game() -> void:
 
 	var footer := _panel(0.72, era_accent)
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼   [2] 历练   [3] 突破   [Tab] 时代观测   [S] 保存   [Esc] 返回题签",
+	var footer_text := _label("[1] 修炼   [2] 历练   [3] 突破   [4] 迎战   [I] 行囊   [Tab] 时代观测   [S] 保存",
 		15, Color(0.86, 0.89, 0.89, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -449,8 +466,13 @@ func _build_player_panel() -> Control:
 		int(player.karma), int(player.dao_heart), int(player.reputation), int(player.enmity)],
 		15, Color(0.85, 0.87, 0.88, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("寿元 %d/%d   灵石 %d   丹药 %d" % [
-		int(player.age), int(player.lifespan), int(player.spirit_stones), int(player.pills)],
+		int(player.age), int(player.lifespan), int(player.spirit_stones),
+		int(player.pills) + ItemSystemScript.count(run_state, "healing_pill")],
 		15, Color(0.72, 0.78, 0.80, 0.90), HORIZONTAL_ALIGNMENT_CENTER))
+	var effective_stats: Dictionary = ItemSystemScript.effective_stats(run_state)
+	column.add_child(_label("实战属性 · 攻%d  守%d  气血上限%d" % [
+		int(effective_stats.attack), int(effective_stats.defense), int(effective_stats.max_hp)],
+		13, Color(0.76, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("寿元势态 · %s   旧玉共鸣 · %d" % [
 		CultivationScript.lifespan_pressure(player),
 		int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))],
@@ -499,6 +521,17 @@ func _build_action_panel() -> Control:
 	column.add_child(_button("壹 · 打坐修炼", _meditate, true))
 	column.add_child(_button("贰 · 外出历练", _open_adventure, true))
 	column.add_child(_button("叁 · 叩问瓶颈", _breakthrough, false))
+	var combat_button := _button("肆 · 踏入凶地迎战", _start_combat, false)
+	combat_button.name = "CombatButton"
+	column.add_child(combat_button)
+	var ai_button := _button("伍 · 求问本地天机", _request_ai_event, false)
+	ai_button.name = "LocalAIButton"
+	ai_button.disabled = not _local_model_ready() or ai_bridge.call("is_busy")
+	ai_button.tooltip_text = "本地模型与 llama.cpp 运行时尚未就绪。" if ai_button.disabled else ""
+	column.add_child(ai_button)
+	var inventory_button := _button("陆 · 行囊与炼器", _show_inventory, false)
+	inventory_button.name = "InventoryButton"
+	column.add_child(inventory_button)
 	column.add_child(_button("封存此世 · 保存进度", _manual_save, false))
 	column.add_child(_spacer(10))
 	column.add_child(_section_title("天机镜"))
@@ -561,6 +594,7 @@ func _world_digest() -> String:
 			int(world.get("stability", 65)), int(world.get("era_pressure", 0)), annual_line] + \
 		"[color=#d9c98f][b]势力消长[/b][/color]\n" + faction_lines + "\n" + \
 		"[color=#d9c98f][b]同世之人[/b][/color]\n" + npc_lines + "\n" + \
+		"[color=#d9c98f][b]命途长卷[/b][/color]\n" + StorySystemScript.digest(run_state) + "\n\n" + \
 		"[color=#d9c98f][b]旧玉近录[/b][/color]\n" + memory_lines + \
 		"\n[color=#8fbfb7][b]因果不会清零[/b][/color]\n" + \
 		"你闭关的一年也是众生的一年；旧人会老去，盟约会变质，前世留下的缺口仍在山河中。"
@@ -623,6 +657,11 @@ func _open_adventure() -> void:
 	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
 		_end_current_life(_current_death_cause())
 		return
+	var story_event: Dictionary = StorySystemScript.next_event(run_state)
+	if not story_event.is_empty():
+		current_event = story_event
+		_show_event()
+		return
 	var candidates: Array = events.filter(func(event_data): return str(event_data.get("era", "")) == current_era)
 	if candidates.is_empty():
 		candidates = events
@@ -631,6 +670,235 @@ func _open_adventure() -> void:
 		_show_game()
 		return
 	current_event = candidates.pick_random()
+	_show_event()
+
+
+func _start_combat() -> void:
+	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
+	var result: Dictionary = CombatSystemScript.start_combat(run_state)
+	if not bool(result.get("ok", false)):
+		feedback = "山道上的杀机没有凝成可辨认的战局。"
+		_show_game()
+		return
+	feedback = "%s拦住去路，你已看清它的第一道意图。" % str((result.battle as Dictionary).enemy_name)
+	_save_current_state("战局已自动封存")
+	_show_combat()
+
+
+func _show_combat() -> void:
+	if not CombatSystemScript.has_active_combat(run_state):
+		_show_game()
+		return
+	state = ScreenState.COMBAT
+	_clear_screen()
+	_apply_era_visuals()
+	var battle: Dictionary = run_state.combat.current
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 16)
+	screen_host.add_child(page)
+
+	var header := _panel(0.80, era_accent)
+	header.custom_minimum_size.y = 76
+	header.add_child(_label("生死战 · 第%d回合 · %s" % [int(battle.turn), current_era], 27,
+		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
+	page.add_child(header)
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 18)
+	page.add_child(body)
+	body.add_child(_build_combatant_panel("此世之我", int(battle.player_hp), int(battle.player_max_hp),
+		int(battle.player_mp), int(battle.player_max_mp), battle.player_statuses, false))
+	body.add_child(_build_combat_log(battle))
+	body.add_child(_build_enemy_panel(battle))
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 10)
+	page.add_child(actions)
+	var attack_button := _button("斩击 [1]", _resolve_combat_action.bind("attack"), true)
+	attack_button.name = "CombatAttackButton"
+	actions.add_child(attack_button)
+	var guard_button := _button("守势 [2]", _resolve_combat_action.bind("guard"), false)
+	guard_button.name = "CombatGuardButton"
+	actions.add_child(guard_button)
+	var spell_button := _button("术法 [3]", _resolve_combat_action.bind("spell"), false)
+	spell_button.name = "CombatSpellButton"
+	spell_button.disabled = int(battle.player_mp) < CombatSystemScript.SPELL_COST
+	spell_button.tooltip_text = "灵力不足。" if spell_button.disabled else "消耗%d点灵力。" % CombatSystemScript.SPELL_COST
+	actions.add_child(spell_button)
+	var pill_button := _button("服丹 [4]", _resolve_combat_action.bind("pill"), false)
+	pill_button.name = "CombatPillButton"
+	pill_button.disabled = ItemSystemScript.count(run_state, "healing_pill") <= 0 and int(player.get("pills", 0)) <= 0
+	pill_button.tooltip_text = "行囊中没有疗伤丹。" if pill_button.disabled else "恢复四成气血。"
+	actions.add_child(pill_button)
+	var flee_button := _button("脱战 [5]", _resolve_combat_action.bind("flee"), false)
+	flee_button.name = "CombatFleeButton"
+	actions.add_child(flee_button)
+	page.add_child(_label("敌方意图会在行动前公开；每一回合都会自动封存。", 14,
+		Color(0.78, 0.82, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+
+
+func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp: int,
+		statuses: Dictionary, enemy_side: bool) -> Control:
+	var panel := _panel(0.82, Color("d46b61") if enemy_side else era_accent)
+	panel.custom_minimum_size.x = 270
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	panel.add_child(column)
+	column.add_child(_section_title(title))
+	column.add_child(_progress_row("气血", hp, max_hp, Color("c95858")))
+	if not enemy_side:
+		column.add_child(_progress_row("灵力", mp, max_mp, Color("538fc2")))
+	column.add_child(_label(_combat_status_text(statuses), 15, Color(0.82, 0.84, 0.82)))
+	return panel
+
+
+func _build_enemy_panel(battle: Dictionary) -> Control:
+	var panel := _build_combatant_panel(str(battle.enemy_name), int(battle.enemy_hp),
+		int(battle.enemy_max_hp), 0, 0, battle.enemy_statuses, true)
+	var column := panel.get_child(0) as VBoxContainer
+	column.add_child(_divider())
+	column.add_child(_label("下一意图", 14, Color(0.72, 0.76, 0.76)))
+	column.add_child(_label(CombatSystemScript.intent_label(battle), 22, Color("ef9a78"),
+		HORIZONTAL_ALIGNMENT_CENTER))
+	return panel
+
+
+func _build_combat_log(battle: Dictionary) -> Control:
+	var panel := _panel(0.76, era_accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+	column.add_child(_section_title("交锋实录"))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var log_label := _label("\n".join((battle.log as Array).slice(-12)), 17, Color("eee8da"))
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(log_label)
+	return panel
+
+
+func _combat_status_text(statuses: Dictionary) -> String:
+	var parts: Array[String] = []
+	if int(statuses.get("shield", 0)) > 0:
+		parts.append("护盾 %d" % int(statuses.shield))
+	if int(statuses.get("bleed", 0)) > 0:
+		parts.append("流血 %d回合" % int(statuses.bleed))
+	if int(statuses.get("weak", 0)) > 0:
+		parts.append("虚弱 %d回合" % int(statuses.weak))
+	return " · ".join(parts) if not parts.is_empty() else "气机平稳"
+
+
+func _resolve_combat_action(action: String) -> void:
+	var result: Dictionary = CombatSystemScript.perform_action(run_state, action)
+	if not bool(result.get("ok", false)):
+		feedback = str({
+			"insufficient_mp": "灵力不足，术式未能成形。",
+			"no_healing_pill": "行囊中已无疗伤丹。",
+		}.get(str(result.get("code", "")), "这一行动未能落入战局。"))
+		_show_combat()
+		return
+	_sync_state_views()
+	if str(result.get("code", "")) != "combat_finished":
+		_save_current_state("战斗回合已自动封存")
+		_show_combat()
+		return
+	var outcome := str(result.get("outcome", "escaped"))
+	var battle: Dictionary = result.get("battle", {})
+	if outcome == "victory":
+		var rewards: Dictionary = result.get("rewards", {})
+		CultivationScript.advance_time(run_state, 1)
+		_sync_state_views()
+		feedback = "你击败%s，修为 +%d、灵石 +%d，并取得一份战利材料。" % [
+			str(battle.get("enemy_name", "强敌")), int(rewards.get("exp", 0)),
+			int(rewards.get("spirit_stones", 0))]
+		_add_memory("第%d年，你看穿%s的意图并在正面交锋中取胜。" % [
+			int((run_state.world as Dictionary).get("year", 1)), str(battle.get("enemy_name", "强敌"))])
+		if CultivationScript.is_dead(run_state):
+			_end_current_life("胜战后寿元耗尽")
+			return
+		_save_current_state("胜战与年史已自动封存")
+		_show_game()
+		return
+	if outcome == "defeat":
+		feedback = "你败于%s，此世气血归零。" % str(battle.get("enemy_name", "强敌"))
+		_end_current_life("战败身陨：%s" % str(battle.get("enemy_name", "强敌")))
+		return
+	feedback = "你脱离了与%s的战圈，未分胜负。" % str(battle.get("enemy_name", "强敌"))
+	_save_current_state("脱战结果已自动封存")
+	_show_game()
+
+
+func _request_ai_event() -> void:
+	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
+	var request: Dictionary = ai_bridge.call("request_event", run_state)
+	var ai_state: Dictionary = run_state.get("ai", {})
+	ai_state["request_count"] = int(ai_state.get("request_count", 0)) + 1
+	if bool(request.get("pending", false)):
+		ai_state["last_status"] = "pending"
+		run_state["ai"] = ai_state
+		_show_ai_pending()
+		return
+	ai_state["last_status"] = str(request.get("code", "runtime_unavailable"))
+	ai_state["fallback_count"] = int(ai_state.get("fallback_count", 0)) + 1
+	run_state["ai"] = ai_state
+	current_event = request.get("event", ai_bridge.call("fallback_event", run_state, "本地天机不可用"))
+	feedback = "本地天机未能启动，规则因果已无缝接管。"
+	_show_event()
+
+
+func _show_ai_pending() -> void:
+	state = ScreenState.AI_PENDING
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.alignment = BoxContainer.ALIGNMENT_CENTER
+	page.add_theme_constant_override("separation", 18)
+	screen_host.add_child(page)
+	var panel := _panel(0.86, era_accent)
+	panel.custom_minimum_size = Vector2(640, 310)
+	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	page.add_child(panel)
+	var column := VBoxContainer.new()
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_theme_constant_override("separation", 20)
+	panel.add_child(column)
+	column.add_child(_label("本地天机正在推演", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("旧玉正把此世人物、山河年史与未竟因果送入本机模型。",
+		17, Color(0.82, 0.84, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_button("收回神识", _cancel_ai_request, false))
+
+
+func _cancel_ai_request() -> void:
+	ai_bridge.call("cancel")
+	var ai_state: Dictionary = run_state.get("ai", {})
+	ai_state["last_status"] = "cancelled"
+	run_state["ai"] = ai_state
+	feedback = "你收回神识，本地推演没有改变任何因果。"
+	_show_game()
+
+
+func _on_ai_event_ready(event_data: Dictionary, metadata: Dictionary) -> void:
+	var ai_state: Dictionary = run_state.get("ai", {})
+	ai_state["last_status"] = str(metadata.get("code", "completed"))
+	ai_state["last_backend"] = str(metadata.get("backend", "portable-local"))
+	if bool(metadata.get("fallback", false)):
+		ai_state["fallback_count"] = int(ai_state.get("fallback_count", 0)) + 1
+	run_state["ai"] = ai_state
+	current_event = event_data
+	feedback = "本地天机已落成一段可选择的因果。" if not bool(metadata.get("fallback", false)) else \
+		"本地天机未通过校验，规则因果已无缝接管。"
 	_show_event()
 
 
@@ -791,6 +1059,11 @@ func _resolve_choice(index: int) -> void:
 		story["life_event_ids"] = life_events
 	run_state["story"] = story
 	run_state["player"] = player
+	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
+	if bool(story_resolution.get("ok", false)):
+		feedback += "\n\n" + str(story_resolution.get("message", "命途长卷又落下一笔。"))
+		if bool(story_resolution.get("terminal", false)):
+			_add_memory(str(story_resolution.get("message", "一条跨世因果已经定局。")))
 	CultivationScript.advance_time(run_state, 1)
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
@@ -953,9 +1226,151 @@ func _begin_next_life(name_input: LineEdit) -> void:
 	_show_game()
 
 
+func _show_inventory() -> void:
+	state = ScreenState.INVENTORY
+	_sync_state_views()
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 16)
+	screen_host.add_child(page)
+	page.add_child(_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 18)
+	page.add_child(body)
+	body.add_child(_build_inventory_list())
+	body.add_child(_build_forge_panel())
+	var back_button := _button("返回山河", _show_game, true)
+	back_button.name = "InventoryBackButton"
+	page.add_child(back_button)
+
+
+func _build_inventory_list() -> Control:
+	var panel := _panel(0.84, era_accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+	column.add_child(_section_title("所持器物"))
+	var inventory: Dictionary = run_state.inventory
+	var equipped: Dictionary = inventory.equipped
+	column.add_child(_label("当前 · 兵器 %s  护甲 %s  灵物 %s" % [
+		_equipped_name(str(equipped.weapon_id)), _equipped_name(str(equipped.armor_id)),
+		_equipped_name(str(equipped.relic_id))], 15, Color(0.78, 0.84, 0.83)))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 8)
+	scroll.add_child(list)
+	for entry_value in inventory.items:
+		var entry: Dictionary = entry_value
+		var row := HBoxContainer.new()
+		var name_text := "%s ×%d" % [ItemSystemScript.display_name(entry), int(entry.quantity)]
+		var item_label := _label(name_text, 16, Color(0.86, 0.87, 0.84))
+		item_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(item_label)
+		var item_id := str(entry.item_id)
+		var definition: Dictionary = ItemSystemScript.ITEMS.get(item_id, {})
+		if str(definition.get("category", "")) == "consumable":
+			row.add_child(_button("服用", _use_inventory_item.bind(item_id), false))
+		elif definition.has("slot") or entry.has("slot"):
+			row.add_child(_button("装备", _equip_inventory_item.bind(str(entry.instance_id)), false))
+		list.add_child(row)
+	list.add_child(_divider())
+	list.add_child(_section_title("材料"))
+	var material_names: Array[String] = []
+	for material_id in (inventory.materials as Dictionary).keys():
+		var material_definition: Dictionary = ItemSystemScript.ITEMS.get(str(material_id), {})
+		material_names.append("%s ×%d" % [str(material_definition.get("name", material_id)),
+			int(inventory.materials[material_id])])
+	list.add_child(_label("  ·  ".join(material_names) if not material_names.is_empty() else "炉中尚无材料。",
+		15, Color(0.73, 0.78, 0.78)))
+	return panel
+
+
+func _build_forge_panel() -> Control:
+	var panel := _panel(0.84, era_accent)
+	panel.custom_minimum_size.x = 390
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	panel.add_child(column)
+	column.add_child(_section_title("当世炼器"))
+	for recipe_id_value in ItemSystemScript.RECIPES.keys():
+		var recipe_id := str(recipe_id_value)
+		var recipe: Dictionary = ItemSystemScript.RECIPES[recipe_id]
+		var cost_parts: Array[String] = []
+		for material_id in (recipe.cost as Dictionary).keys():
+			var material: Dictionary = ItemSystemScript.ITEMS.get(str(material_id), {})
+			cost_parts.append("%s%d" % [str(material.get("name", material_id)), int(recipe.cost[material_id])])
+		cost_parts.append("灵石%d" % int(recipe.spirit_stones))
+		var button := _button("%s\n%s" % [str(recipe.name), " · ".join(cost_parts)],
+			_forge_inventory_item.bind(recipe_id), false)
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.custom_minimum_size.y = 72
+		var readiness: Dictionary = ItemSystemScript.can_forge(run_state, recipe_id)
+		button.disabled = not bool(readiness.ok)
+		button.tooltip_text = "材料或灵石不足。" if button.disabled else ""
+		column.add_child(button)
+	column.add_child(_spacer(8))
+	column.add_child(_label("品质由造化道途、当前境界与此世随机游标共同决定。道品虚痕佩可随轮回保留。",
+		14, Color(0.72, 0.77, 0.78)))
+	return panel
+
+
+func _use_inventory_item(item_id: String) -> void:
+	var result: Dictionary = ItemSystemScript.use_consumable(run_state, item_id)
+	feedback = "你服下%s，药力已经进入此世经脉。" % str((ItemSystemScript.ITEMS[item_id] as Dictionary).name) \
+		if bool(result.ok) else "此刻无法服用这件物品。"
+	_sync_state_views()
+	if bool(result.ok):
+		_save_current_state("行囊变化已封存")
+	_show_inventory()
+
+
+func _equip_inventory_item(reference_id: String) -> void:
+	var result: Dictionary = ItemSystemScript.equip(run_state, reference_id)
+	feedback = "器物与气机完成共鸣。" if bool(result.ok) else "这件器物无法装备。"
+	_sync_state_views()
+	if bool(result.ok):
+		_save_current_state("装备变化已封存")
+	_show_inventory()
+
+
+func _forge_inventory_item(recipe_id: String) -> void:
+	var result: Dictionary = ItemSystemScript.forge(run_state, recipe_id)
+	if bool(result.ok):
+		feedback = "炉火收束，你炼成%s%s。" % [str(result.quality_name), str((ItemSystemScript.RECIPES[recipe_id] as Dictionary).item_name)]
+		_add_memory("第%d年，一件%s器物在你的炉火中留下稳定器痕。" % [
+			int((run_state.world as Dictionary).get("year", 1)), str(result.quality_name)])
+		_save_current_state("炼器结果已封存")
+	else:
+		feedback = "炉中材料尚不足，器胚没有成形。"
+	_sync_state_views()
+	_show_inventory()
+
+
+func _equipped_name(reference_id: String) -> String:
+	if reference_id.is_empty():
+		return "无"
+	if reference_id == "black_white_jade":
+		return "黑白轮回玉"
+	for entry_value in (run_state.inventory.items as Array):
+		var entry: Dictionary = entry_value
+		if str(entry.instance_id) == reference_id:
+			return ItemSystemScript.display_name(entry)
+	return "失落"
+
+
 func _local_model_ready() -> bool:
-	var root := ProjectSettings.globalize_path("res://").path_join("..").simplify_path()
-	return FileAccess.file_exists(root.path_join("ai_engine/models/gemma-4-E4B_q4_0-it.gguf"))
+	if not is_instance_valid(ai_bridge):
+		return false
+	var probe: Dictionary = ai_bridge.call("probe_runtime")
+	return bool(probe.get("ready", false))
 
 
 func _panel(alpha: float, accent: Color) -> PanelContainer:
@@ -1103,6 +1518,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_1: _meditate()
 				KEY_2: _open_adventure()
 				KEY_3: _breakthrough()
+				KEY_4: _start_combat()
+				KEY_I: _show_inventory()
 				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
 				KEY_ESCAPE: _show_menu()
@@ -1118,3 +1535,16 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				var input := screen_host.find_child("NextLifeNameInput", true, false) as LineEdit
 				if input:
 					_begin_next_life(input)
+		ScreenState.AI_PENDING:
+			if event.keycode == KEY_ESCAPE:
+				_cancel_ai_request()
+		ScreenState.INVENTORY:
+			if event.keycode in [KEY_ESCAPE, KEY_I]:
+				_show_game()
+		ScreenState.COMBAT:
+			match event.keycode:
+				KEY_1: _resolve_combat_action("attack")
+				KEY_2: _resolve_combat_action("guard")
+				KEY_3: _resolve_combat_action("spell")
+				KEY_4: _resolve_combat_action("pill")
+				KEY_5, KEY_ESCAPE: _resolve_combat_action("flee")

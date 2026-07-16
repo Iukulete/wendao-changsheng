@@ -3,6 +3,8 @@ extends RefCounted
 
 const GameStateScript = preload("res://scripts/game_state.gd")
 const WorldSimulationScript = preload("res://scripts/world_simulation.gd")
+const ItemSystemScript = preload("res://scripts/item_system.gd")
+const StorySystemScript = preload("res://scripts/story_system.gd")
 
 const DAO_NAMES := {
 	"compassion": "护生大道",
@@ -82,6 +84,7 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	if lives.is_empty():
 		return {"ok": false, "code": "missing_past_life"}
 	var last_life: Dictionary = lives[-1]
+	var inventory_result: Dictionary = ItemSystemScript.apply_reincarnation(state)
 	var next_generation := int(state.get("generation", 1)) + 1
 	var next_seed := int(state.get("world_seed", 1)) + next_generation * 7919
 	var next_name := dao_name.strip_edges().left(32)
@@ -120,12 +123,21 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	state["story"]["life_event_ids"] = []
 	state["story"]["active_arcs"] = {}
 	state["story"]["unresolved_threads"] = legacy.get("unresolved_threads", []).duplicate()
-	state["recent_memories"] = _memory_opening(last_life, inherited_echoes)
+	var combat: Dictionary = state.get("combat", {})
+	combat["active"] = false
+	combat["current"] = {}
+	state["combat"] = combat
+	var birth_story: Dictionary = StorySystemScript.apply_birth_legacies(state)
+	var opening_memories := _memory_opening(last_life, inherited_echoes)
+	for note_value in (birth_story.get("notes", []) as Array):
+		opening_memories.append("轮回定局入世：%s。" % str(note_value))
+	state["recent_memories"] = opening_memories
 	state["feedback"] = "旧玉冷了%d年，又在你的新生掌心里醒来。" % years_between
 	state["life_closed"] = false
 	return {
 		"ok": true, "code": "next_life_started", "generation": next_generation,
 		"years_between": years_between, "inherited_echoes": inherited_echoes,
+		"inventory_result": inventory_result,
 	}
 
 

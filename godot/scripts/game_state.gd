@@ -88,17 +88,43 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 		"legacy": create_legacy_state(),
 		"world": create_world_state(actual_seed),
 		"inventory": {
-			"items": [],
-			"materials": {},
+			"items": [
+				{"item_id": "healing_pill", "instance_id": "healing_pill", "quantity": 1, "stackable": true},
+				{"item_id": "iron_sword", "instance_id": "item_iron_sword_000001", "quantity": 1, "stackable": false},
+			],
+			"materials": {"spirit_herb": 2, "black_iron": 2},
 			"equipped": {"weapon_id": "", "armor_id": "", "relic_id": "black_white_jade"},
+			"instance_counter": 1,
+			"forge_counter": 0,
+			"lost_artifacts": [],
+		},
+		"combat": {
+			"active": false,
+			"current": {},
+			"history": [],
 		},
 		"story": {
+			"story_version": 1,
 			"completed_event_ids": [],
 			"life_event_ids": [],
 			"event_cooldowns": {},
 			"active_arcs": {},
+			"arc_progress": {"jade": 0, "sect": 0, "family": 0, "rival": 0},
+			"arc_legacies": {},
+			"arc_echoes": {},
+			"last_arc_id": "",
+			"next_arc_event_at": 0,
+			"birth_effects_applied_generation": 0,
 			"resolved_arcs": [],
 			"unresolved_threads": [],
+		},
+		"ai": {
+			"enabled": true,
+			"local_only": true,
+			"last_status": "not_requested",
+			"last_backend": "",
+			"request_count": 0,
+			"fallback_count": 0,
 		},
 		"recent_memories": [
 			"测灵台没有记下识海中的空阙。",
@@ -207,10 +233,22 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 	state["inventory"] = _merge_defaults(state.get("inventory", {}), {
 		"items": [], "materials": {},
 		"equipped": {"weapon_id": "", "armor_id": "", "relic_id": "black_white_jade"},
+		"instance_counter": 0, "forge_counter": 0, "lost_artifacts": [],
+	})
+	state["combat"] = _merge_defaults(state.get("combat", {}), {
+		"active": false, "current": {}, "history": [],
 	})
 	state["story"] = _merge_defaults(state.get("story", {}), {
+		"story_version": 1,
 		"completed_event_ids": [], "life_event_ids": [], "event_cooldowns": {},
 		"active_arcs": {}, "resolved_arcs": [], "unresolved_threads": [],
+		"arc_progress": {"jade": 0, "sect": 0, "family": 0, "rival": 0},
+		"arc_legacies": {}, "arc_echoes": {}, "last_arc_id": "",
+		"next_arc_event_at": 0, "birth_effects_applied_generation": 0,
+	})
+	state["ai"] = _merge_defaults(state.get("ai", {}), {
+		"enabled": true, "local_only": true, "last_status": "not_requested",
+		"last_backend": "", "request_count": 0, "fallback_count": 0,
 	})
 	state["life_closed"] = bool(state.get("life_closed", false))
 	var source_player: Dictionary = state.get("player", {})

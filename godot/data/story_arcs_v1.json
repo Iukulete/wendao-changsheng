@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "arcs": [
+    {
+      "id": "jade",
+      "name": "旧玉",
+      "scene": "res://art/scenes/void_threshold_temple.png",
+      "portrait": "res://art/portraits/protagonist_hooded_close.jpg",
+      "portrait_name": "玉中旧影",
+      "portrait_title": "只保存选择，不替今生作答",
+      "main": [
+        {"id": "jade_main_1", "title": "【旧玉·一】夜半微温", "description": "夜半醒来，黑白旧玉第一次在无人触碰时自行发温。窗纸上映出两道互不相容的影子：一道像今生，一道像尚未发生的死局。", "next": "jade_main_2"},
+        {"id": "jade_main_2", "title": "【旧玉·二】镜中旧名", "description": "旧玉把你的脸映成一个陌生旧名。那名字没有完整记忆，只有近乎本能的警惕，像有人曾用它欠下无法结清的因果。", "next": "jade_main_3"},
+        {"id": "jade_main_3", "title": "【旧玉·三】生死回响", "description": "一次险境后，旧玉没有替你挡灾，只把生死之间那一瞬完整留住。它保存的不是答案，而是每次取舍留下的轮廓。", "next": "jade_main_4"},
+        {"id": "jade_main_4", "title": "【旧玉·终】不借旧我", "description": "旧玉终于托起足够多的回响，像要让过去替你决定今生。真正的终局，是决定哪些旧意可以留下，哪些必须止于此世。", "next": "legacy"}
+      ],
+      "echo": [
+        {"id": "jade_echo_1", "title": "【定局续章·旧玉一】旧梦证词", "description": "轮回玉吐出一段可被现实核验的旧梦。梦里的人认得你，今生的人却说那段往事根本不存在。", "next": "jade_echo_2"},
+        {"id": "jade_echo_2", "title": "【定局续章·旧玉二】伪忆歧路", "description": "两段互相矛盾的记忆同时显真。真正危险的不是忘记过去，而是把一段伪忆当成自己的意志。", "next": "jade_echo_3"},
+        {"id": "jade_echo_3", "title": "【定局续章·旧玉终】玉中自证", "description": "旧玉把前世证词与今生经历并列放在面前。你必须决定谁能作证，谁只能留下痕迹。", "next": "resolution"}
+      ],
+      "main_choices": [
+        {"text": "握玉静听", "outcome": "你允许旧梦提供证词，却要求每一处细节接受今生事实的核验。", "deltas": {"exp": 84, "dao_heart": 3}, "path_deltas": {"insight": 3, "bonds": 1}, "resolution": "旧我为证"},
+        {"text": "以今证旧", "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分。", "deltas": {"exp": 62, "karma": 5}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "今生校旧"},
+        {"text": "封住梦兆", "outcome": "你不销毁过去，只切断它替今生发号施令的权力。", "deltas": {"dao_heart": 6, "hp": -8}, "path_deltas": {"defiance": 3, "ambition": 1}, "resolution": "封梦自持"}
+      ],
+      "echo_choices": [
+        {"text": "承认旧证", "outcome": "两世证词被并排保存，旧我可以作证，却不能越俎代庖。", "deltas": {"exp": 96, "dao_heart": 4}, "path_deltas": {"bonds": 2, "insight": 2}, "resolution": "守证旧我"},
+        {"text": "以今校旧", "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实。", "deltas": {"exp": 74, "karma": 6}, "path_deltas": {"insight": 3, "defiance": 1}, "resolution": "今身定锚"},
+        {"text": "留痕断梦", "outcome": "过去被允许留痕，却永远失去替今生下令的资格。", "deltas": {"dao_heart": 8, "hp": -10}, "path_deltas": {"defiance": 4}, "resolution": "断梦留痕"}
+      ],
+      "legacy_birth_effects": {"旧我为证": {"exp": 18, "dao_heart": 3}, "今生校旧": {"dao_heart": 5}, "封梦自持": {"dao_heart": 7}},
+      "echo_birth_effects": {"守证旧我": {"exp": 15}, "今身定锚": {"dao_heart": 2}, "断梦留痕": {"dao_heart": 3}}
+    },
+    {
+      "id": "sect",
+      "name": "山门",
+      "scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
+      "portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+      "portrait_name": "两代执律人",
+      "portrait_title": "旧律与今章都在等待回答",
+      "main": [
+        {"id": "sect_main_1", "title": "【山门·一】测灵余波", "description": "测灵台上的结果已经传遍山门。有人把你当成值得下注的苗子，也有人认为你的家世、旧玉与灵根都该先被审查。", "next": "sect_main_2"},
+        {"id": "sect_main_2", "title": "【山门·二】外院名额", "description": "外院名额忽然少了一席，执事说是资源不足，几名同辈却知道有人在用名额试你的软硬。", "next": "sect_main_3"},
+        {"id": "sect_main_3", "title": "【山门·三】掌律问心", "description": "掌律玉简把早年的每次选择串成一份问心案卷。一脉长老要证明你只是靠师承庇护才走到今天。", "next": "sect_main_4"},
+        {"id": "sect_main_4", "title": "【山门·终】自择道统", "description": "山门愿意给你更高的位置，代价是让某一脉替你定义道途。走到这一步，你必须决定自己属于谁，又不属于谁。", "next": "legacy"}
+      ],
+      "echo": [
+        {"id": "sect_echo_1", "title": "【定局续章·山门一】旧宗来使", "description": "前世山门派来一名今生从未见过的使者，手里却有只属于旧约的印记。", "next": "sect_echo_2"},
+        {"id": "sect_echo_2", "title": "【定局续章·山门二】两代门规", "description": "旧门规与今世山门的制度发生冲突。两边都声称是在保护你，也都想借你证明自己更正统。", "next": "sect_echo_3"},
+        {"id": "sect_echo_3", "title": "【定局续章·山门终】道统归属", "description": "两代山门同时要求明确归属。真正的问题不是选哪块牌匾，而是谁有权替你解释道统。", "next": "resolution"}
+      ],
+      "main_choices": [
+        {"text": "据理受验", "outcome": "你逐条回应质疑，不借天资压人，也不让门规替旁人定罪。", "deltas": {"exp": 82, "reputation": 5}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "守律立道"},
+        {"text": "借师承入局", "outcome": "你承认师承给过机会，却没有把全部责任推给长辈。", "deltas": {"exp": 64, "spirit_stones": 8}, "path_deltas": {"bonds": 3, "ambition": 1}, "resolution": "师承共担"},
+        {"text": "拒绝被定价", "outcome": "你要求把规则与代价写明，第一次以自己的名字站在山门前。", "deltas": {"dao_heart": 6, "reputation": -2}, "path_deltas": {"defiance": 3, "creation": 1}, "resolution": "自立道统"}
+      ],
+      "echo_choices": [
+        {"text": "续写旧律", "outcome": "你保留旧律中真正能护人的部分，并把旧宗也纳入问责。", "deltas": {"exp": 94, "reputation": 7}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "旧律新章"},
+        {"text": "与今门共议", "outcome": "两代山门公开核对权利与代价，道统第一次不再等同于服从。", "deltas": {"spirit_stones": 12, "karma": 5}, "path_deltas": {"bonds": 4}, "resolution": "两代同门"},
+        {"text": "另立新章", "outcome": "你只承认自己愿意承担的道统，并为它写下可被后人质疑的新章。", "deltas": {"dao_heart": 8, "enmity": 3}, "path_deltas": {"defiance": 3, "creation": 2}, "resolution": "今世开宗"}
+      ],
+      "legacy_birth_effects": {"守律立道": {"reputation": 5}, "师承共担": {"reputation": 3, "dao_heart": 2}, "自立道统": {"dao_heart": 4, "enmity": 2}},
+      "echo_birth_effects": {"旧律新章": {"reputation": 2}, "两代同门": {"reputation": 1, "dao_heart": 1}, "今世开宗": {"dao_heart": 2}}
+    },
+    {
+      "id": "family",
+      "name": "家世",
+      "scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
+      "portrait": "res://art/portraits/jade_healer.jpg",
+      "portrait_name": "祖契持有人",
+      "portrait_title": "血脉只能解释来处",
+      "main": [
+        {"id": "family_main_1", "title": "【家世·一】旧仆来信", "description": "一封没有署名的旧信送到手中，字迹像家中长辈，又像多年不曾露面的旧仆。信里只写：不要让旁人先替你认祖。", "next": "family_main_2"},
+        {"id": "family_main_2", "title": "【家世·二】封名玉简", "description": "家中封存的玉简被人送来，里面记着一个被抹去的名字，也记着养育者曾替你挡下的第一场灾。", "next": "family_main_3"},
+        {"id": "family_main_3", "title": "【家世·三】旧宅暗门", "description": "旧宅地基下露出一扇暗门。门后不是宝库，而是家族曾经选错边、欠下债、又拼命藏住你的证据。", "next": "family_main_4"},
+        {"id": "family_main_4", "title": "【家世·终】认或不认", "description": "身世真相足以改变名望、资源和仇家。可血脉只能解释你从哪里来，不能替你决定要成为谁。", "next": "legacy"}
+      ],
+      "echo": [
+        {"id": "family_echo_1", "title": "【定局续章·家世一】祖契来人", "description": "祖契中的人循着前世定局找到今生。他们带来资源，也带来一份必须有人承担的旧债。", "next": "family_echo_2"},
+        {"id": "family_echo_2", "title": "【定局续章·家世二】养恩与血脉", "description": "血脉证据与养育之恩被摆到同一张案上。任何一方被轻易抹去，都会让另一方变成新的枷锁。", "next": "family_echo_3"},
+        {"id": "family_echo_3", "title": "【定局续章·家世终】旧名裁决", "description": "旧名、祖脉和养育者共同到场。你要留下的不只是姓氏，而是一套今后仍能承担后果的关系。", "next": "resolution"}
+      ],
+      "main_choices": [
+        {"text": "追查旧账", "outcome": "你查清一部分真相，也把一部分债正式记到自己名下。", "deltas": {"exp": 86, "spirit_stones": 8}, "path_deltas": {"insight": 3, "ambition": 1}, "resolution": "承认旧脉"},
+        {"text": "问养育者", "outcome": "你没有越过真正养大你的人，对方终于说出此前不敢说的旧事。", "deltas": {"karma": 8, "reputation": 4}, "path_deltas": {"compassion": 2, "bonds": 3}, "resolution": "护亲问源"},
+        {"text": "不让血脉定命", "outcome": "你保留真相，却拒绝拿祖名换取现成位置。家世从枷锁变成证据。", "deltas": {"dao_heart": 7, "spirit_stones": -4}, "path_deltas": {"defiance": 3, "insight": 1}, "resolution": "断名自立"}
+      ],
+      "echo_choices": [
+        {"text": "连债承脉", "outcome": "你承认祖脉，也把资源背后的旧债写进共同承担的契约。", "deltas": {"spirit_stones": 16, "karma": 4}, "path_deltas": {"bonds": 2, "ambition": 2}, "resolution": "祖脉共担"},
+        {"text": "养恩为先", "outcome": "血脉被留下查证，但真正养育今生的人先得到回答。", "deltas": {"reputation": 9, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2}, "resolution": "养恩为先"},
+        {"text": "去名留义", "outcome": "你放下可以换取位置的旧名，只保留仍愿意承担彼此的关系。", "deltas": {"dao_heart": 9, "spirit_stones": -6}, "path_deltas": {"defiance": 3, "compassion": 1}, "resolution": "去名留义"}
+      ],
+      "legacy_birth_effects": {"承认旧脉": {"family_fame": 10, "family_wealth": 3}, "护亲问源": {"reputation": 3, "family_wealth": 2}, "断名自立": {"dao_heart": 3}},
+      "echo_birth_effects": {"祖脉共担": {"family_wealth": 1}, "养恩为先": {"reputation": 2}, "去名留义": {"dao_heart": 2}}
+    },
+    {
+      "id": "rival",
+      "name": "战帖",
+      "scene": "res://art/scenes/orbital_sword_array.png",
+      "portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+      "portrait_name": "江照雪",
+      "portrait_title": "跨世战帖的另一端",
+      "main": [
+        {"id": "rival_main_1", "title": "【战帖·一】照雪初帖", "description": "江照雪递来第一封正式战帖。她没有暗算，也没有客套，只写明地点、时辰和一句：别让长辈替你接剑。", "next": "rival_main_2"},
+        {"id": "rival_main_2", "title": "【战帖·二】同阵争先", "description": "秘境阵门将你与江照雪锁进同一支队伍。谁都想先拿机缘，可真正危险逼近时，胜负与活命必须重新排序。", "next": "rival_main_3"},
+        {"id": "rival_main_3", "title": "【战帖·三】江氏旧账", "description": "江氏旧账被人翻出，战帖背后多了一层家族压力。她可以借此踩下你，也可能先斩断自家递来的暗箭。", "next": "rival_main_4"},
+        {"id": "rival_main_4", "title": "【战帖·终】敌友由我", "description": "数次争胜后，你们都知道对方不是可以轻易抹去的人。最后一帖不只问谁赢，而是问往后如何相见。", "next": "legacy"}
+      ],
+      "echo": [
+        {"id": "rival_echo_1", "title": "【定局续章·战帖一】照雪再逢", "description": "江照雪在另一世再次递帖。她记不得全部旧事，却准确写出了只有你们才懂的落款。", "next": "rival_echo_2"},
+        {"id": "rival_echo_2", "title": "【定局续章·战帖二】共同危局", "description": "一场更大的危局迫使你们先并肩。旧约究竟是宿敌、盟友还是清醒对手，将在真正危险中接受检验。", "next": "rival_echo_3"},
+        {"id": "rival_echo_3", "title": "【定局续章·战帖终】旧约新解", "description": "危局已解，最后一帖重新落到手中。两世争胜后，你们必须给这段关系一个不靠旁人定义的名字。", "next": "resolution"}
+      ],
+      "main_choices": [
+        {"text": "正面接帖", "outcome": "你不借旁人造势，也不把旧怨藏进暗手。江照雪收剑时仍不服，却承认此战值得记住。", "deltas": {"exp": 92, "hp": -10}, "path_deltas": {"ambition": 2, "bonds": 2}, "resolution": "照雪宿敌"},
+        {"text": "同阵合作", "outcome": "你们先拆开真正的危局，再回头算谁多走半步。", "deltas": {"exp": 68, "spirit_stones": 10}, "path_deltas": {"bonds": 3, "creation": 1}, "resolution": "照雪盟友"},
+        {"text": "不以胜负定敌友", "outcome": "你承认争胜，也拒绝让旁人的旧账替你们决定关系。", "deltas": {"dao_heart": 7, "reputation": 3}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "清醒对手"}
+      ],
+      "echo_choices": [
+        {"text": "再决高下", "outcome": "两世未尽的一战有了新约束：只以彼此真正认可的手段争胜。", "deltas": {"exp": 112, "hp": -14}, "path_deltas": {"ambition": 3, "bonds": 1}, "resolution": "再续宿敌"},
+        {"text": "先并肩破局", "outcome": "你们斩断真正操纵战帖的人，再回来计算彼此的胜负。", "deltas": {"spirit_stones": 14, "karma": 6}, "path_deltas": {"bonds": 3, "creation": 2}, "resolution": "并肩照雪"},
+        {"text": "约定只争道途", "outcome": "你们承认竞争，也共同拒绝把仇怨传给下一世。", "deltas": {"dao_heart": 8, "reputation": 4}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "相争不相害"}
+      ],
+      "legacy_birth_effects": {"照雪宿敌": {"attack": 3, "enmity": 4}, "照雪盟友": {"defense": 2, "reputation": 4}, "清醒对手": {"attack": 1, "defense": 1, "dao_heart": 3}},
+      "echo_birth_effects": {"再续宿敌": {"attack": 1}, "并肩照雪": {"defense": 1}, "相争不相害": {"dao_heart": 1}}
+    }
+  ]
+}

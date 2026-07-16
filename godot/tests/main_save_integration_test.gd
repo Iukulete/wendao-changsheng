@@ -31,8 +31,41 @@ func _run() -> void:
 		"新生立档时必须初始化时代势力")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("npcs", []) as Array).size() >= 6,
 		"新生立档时必须初始化同世人物")
+	var local_ai_button := game.find_child("LocalAIButton", true, false) as Button
+	_expect(local_ai_button != null and local_ai_button.disabled,
+		"CI 无本地模型时 AI 动作必须明确禁用，不能伪装就绪")
+	var inventory_button := game.find_child("InventoryButton", true, false) as Button
+	_expect(inventory_button != null and not inventory_button.disabled,
+		"新生必须能进入行囊与炼器界面")
+	var combat_button := game.find_child("CombatButton", true, false) as Button
+	_expect(combat_button != null and not combat_button.disabled,
+		"新生必须能从主界面进入确定性战斗")
+	game.call("_show_inventory")
+	_expect(game.find_child("InventoryBackButton", true, false) != null,
+		"行囊界面必须提供明确返回动作")
+	game.call("_show_game")
+	game.call("_start_combat")
+	var active_combat_state: Dictionary = game.get("run_state")
+	_expect(bool((active_combat_state.get("combat", {}) as Dictionary).get("active", false)),
+		"开始战斗必须写入可保存的进行中战局")
+	_expect(game.find_child("CombatAttackButton", true, false) != null,
+		"战斗界面必须提供明确的攻击行动")
+	active_combat_state.combat.current.enemy_hp = 1
+	active_combat_state.combat.current.enemy_defense = 0
+	active_combat_state.combat.current.player_attack = 999
+	game.call("_save_current_state", "测试战局断点")
+	game.call("_show_menu")
+	game.call("_continue_game")
+	_expect(game.find_child("CombatAttackButton", true, false) != null,
+		"续接存档必须直接恢复进行中的战斗，而不是绕回主界面")
+	game.call("_resolve_combat_action", "attack")
+	var finished_combat_state: Dictionary = game.get("run_state")
+	_expect(not bool((finished_combat_state.get("combat", {}) as Dictionary).get("active", true)),
+		"胜利后必须结束进行中的战斗状态")
+	_expect(((finished_combat_state.combat as Dictionary).get("history", []) as Array).size() == 1,
+		"战斗结果必须写入有界战史")
 	var player_before: Dictionary = game.get("player")
-	var blocked_choice := {"deltas": {"spirit_stones": -12}}
+	var blocked_choice := {"deltas": {"spirit_stones": -int(player_before.spirit_stones) - 1}}
 	_expect(not str(game.call("_choice_unavailable_reason", blocked_choice)).is_empty(),
 		"资源不足的付费选择必须在应用负数前被拒绝")
 	var exp_before := int(player_before.get("exp", 0))
@@ -61,6 +94,16 @@ func _run() -> void:
 		"保存读取必须保留已经推进的世界时间")
 	_expect((restored_state.world as Dictionary).has("last_year_summary"),
 		"保存读取必须保留年度世界摘要")
+	var ai_bridge: Node = game.get("ai_bridge")
+	var ai_fixture := "【因果】镜湖来书\n沈照川从年史暗页里找到一封未署名的来书，墨痕正随你的道心明灭，等你决定如何回应。\n替人守信\n照见墨痕\n借书破局"
+	var ai_resolution: Dictionary = ai_bridge.call("resolve_generated_text", ai_fixture, restored_state, "integration-fixture")
+	game.call("_on_ai_event_ready", ai_resolution.event, {"code": "generated", "backend": "integration-fixture", "fallback": false})
+	_expect(str((game.get("current_event") as Dictionary).get("source", "")) == "local_ai",
+		"合法本地 AI 输出必须进入同一结构化事件界面")
+	game.call("_resolve_choice", 0)
+	var ai_state: Dictionary = (game.get("run_state") as Dictionary).get("ai", {})
+	_expect(str(ai_state.get("last_backend", "")) == "integration-fixture",
+		"本地 AI 后端状态必须随完整存档保存")
 	restored_state.player.age = restored_state.player.lifespan
 	var death_save: Dictionary = service.call("save_game", restored_state)
 	_expect(bool(death_save.get("ok", false)), "寿尽状态应能写入以验证续档收尾")

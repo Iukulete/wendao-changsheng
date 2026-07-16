@@ -2,6 +2,9 @@ class_name SaveService
 extends RefCounted
 
 const GameStateScript = preload("res://scripts/game_state.gd")
+const ItemSystemScript = preload("res://scripts/item_system.gd")
+const CombatSystemScript = preload("res://scripts/combat_system.gd")
+const StorySystemScript = preload("res://scripts/story_system.gd")
 
 ## Versioned, checksummed and atomically replaced JSON saves.
 ##
@@ -297,7 +300,7 @@ func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
 	var current_era_id := str(upgraded.get("current_era_id", ""))
 	if not GameStateScript.ERA_IDS.has(current_era_id):
 		return _failure("invalid_state", "存档中的时代 ID 无效。")
-	for required_dictionary in ["legacy", "world", "inventory", "story"]:
+	for required_dictionary in ["legacy", "world", "inventory", "combat", "story", "ai"]:
 		if not upgraded.get(required_dictionary, null) is Dictionary:
 			return _failure("invalid_state", "存档缺少 %s 状态。" % required_dictionary)
 	var normalized_state := upgraded.duplicate(true)
@@ -404,15 +407,23 @@ func _normalize_nested_state(state: Dictionary) -> void:
 	world["npcs"] = _bounded_array(world.get("npcs", []), 512)
 	world["active_events"] = _bounded_array(world.get("active_events", []), 64)
 	state["world"] = world
-	var inventory: Dictionary = state.inventory
-	inventory["items"] = _bounded_array(inventory.get("items", []), 512)
-	state["inventory"] = inventory
+	ItemSystemScript.normalize(state)
+	CombatSystemScript.normalize(state)
+	StorySystemScript.normalize(state)
 	var story: Dictionary = state.story
 	story["completed_event_ids"] = _bounded_array(story.get("completed_event_ids", []), 2048)
 	story["life_event_ids"] = _bounded_array(story.get("life_event_ids", []), 512)
 	story["resolved_arcs"] = _bounded_array(story.get("resolved_arcs", []), 256)
 	story["unresolved_threads"] = _bounded_array(story.get("unresolved_threads", []), 128)
 	state["story"] = story
+	var ai: Dictionary = state.ai
+	ai["enabled"] = bool(ai.get("enabled", true))
+	ai["local_only"] = true
+	ai["last_status"] = str(ai.get("last_status", "not_requested")).left(64)
+	ai["last_backend"] = str(ai.get("last_backend", "")).left(96)
+	ai["request_count"] = clampi(int(ai.get("request_count", 0)), 0, 1000000)
+	ai["fallback_count"] = clampi(int(ai.get("fallback_count", 0)), 0, 1000000)
+	state["ai"] = ai
 
 
 func _bounded_array(value: Variant, maximum: int) -> Array:
