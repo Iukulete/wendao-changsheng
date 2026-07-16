@@ -72,6 +72,14 @@ func _run() -> void:
 	armory["equipped_id"] = "qingxiao"
 	dungeon_state.legacy.armory = armory
 	dungeon_state.legacy.inherited_echoes = [{"id": "render_echo", "name": "前世行功残篇"}]
+	dungeon_state.story.arc_legacies = {"jade":"旧我为证", "sect":"师承共担",
+		"family":"断名自立", "rival":"照雪盟友"}
+	dungeon_state.story.arc_echoes = {
+		"jade":{"stage":3, "resolution":"今身定锚"},
+		"sect":{"stage":0, "resolution":""},
+		"family":{"stage":3, "resolution":"去名留义"},
+		"rival":{"stage":3, "resolution":"相争不相害"},
+	}
 	game.call("_enter_dungeon")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_route_1440x900.png"), Vector2i(1440, 900), "秘境路线")
@@ -83,6 +91,18 @@ func _run() -> void:
 			route_index = index
 			break
 	game.call("_choose_dungeon_route", route_index)
+	var combat_state: Dictionary = game.get("run_state")
+	var story_card: Dictionary = {}
+	for card_value in (combat_state.dungeon.run.deck as Array):
+		if card_value is Dictionary and str((card_value as Dictionary).get("source_kind", "")) == "story":
+			story_card = (card_value as Dictionary).duplicate(true)
+			break
+	if story_card.is_empty():
+		failures.append("剧情定局能力没有进入秘境牌组")
+	if not story_card.is_empty() and not (combat_state.dungeon.run.battle.hand as Array).is_empty():
+		combat_state.dungeon.run.battle.hand[0] = story_card
+		game.set("run_state", combat_state)
+		game.call("_show_dungeon_combat")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
 	var elite_state: Dictionary = game.get("run_state")
@@ -123,7 +143,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, main, normal combat, dungeon routes, elite rules and two-phase bosses are nonblank")
+		print("RENDER_CAPTURE_TEST_OK: menu, main, story abilities, elite rules and two-phase bosses are nonblank")
 		quit(0)
 	else:
 		for failure in failures:

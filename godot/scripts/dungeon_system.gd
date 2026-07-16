@@ -25,6 +25,7 @@ const SUPPORTED_BOSS_PHASES := [
 	"rain_deluge", "total_collection", "blank_edict",
 ]
 const SUPPORTED_INTENTS := ["strike", "heavy", "guard", "stress"]
+const STORY_ARC_IDS := ["jade", "sect", "family", "rival"]
 const PATH_IDS := ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]
 const PATH_TIE_ORDER := ["insight", "creation", "compassion", "bonds", "defiance", "ambition"]
 const PATH_NAMES := {
@@ -44,6 +45,9 @@ const REQUIRED_ABILITY_CARDS := [
 	"realm_manifestation", "relic_cycle", "past_life_echo", "lotus_vow", "sky_seize",
 	"fate_break", "cause_trace", "forge_edge", "shared_oath", "blood_arc",
 	"timeless_ward", "mind_mirror", "myriad_cycle", "heart_demon",
+	"old_self_witness", "present_anchor", "dream_seal", "law_inscription",
+	"lineage_burden", "founding_doctrine", "ancestral_covenant", "nurture_first",
+	"nameless_duty", "snow_duel", "shoulder_snow", "lucid_rivalry",
 ]
 const SUPPORTED_EFFECTS := ["attack", "block", "heal", "energy", "weak", "power", "stress", "calm", "draw"]
 
@@ -86,6 +90,30 @@ static func validate_definitions() -> Dictionary:
 	for required_id in REQUIRED_ABILITY_CARDS:
 		if not card_ids.has(required_id):
 			return {"ok": false, "code": "missing_ability_card", "card_id": required_id}
+	var story_projections_value: Variant = data.get("story_projections", {})
+	if not story_projections_value is Dictionary:
+		return {"ok": false, "code": "missing_story_projections"}
+	var story_projection_count := 0
+	var story_card_ids := {}
+	for arc_id in STORY_ARC_IDS:
+		var arc_projection_value: Variant = (story_projections_value as Dictionary).get(arc_id, {})
+		if not arc_projection_value is Dictionary:
+			return {"ok": false, "code": "missing_story_projection", "arc_id": arc_id}
+		var arc_projection: Dictionary = arc_projection_value
+		var resolutions_value: Variant = arc_projection.get("resolutions", {})
+		if str(arc_projection.get("name", "")).is_empty() or not resolutions_value is Dictionary or \
+				(resolutions_value as Dictionary).size() != 6:
+			return {"ok": false, "code": "invalid_story_projection", "arc_id": arc_id}
+		for resolution_value in (resolutions_value as Dictionary).keys():
+			var resolution := str(resolution_value)
+			var card_id := str((resolutions_value as Dictionary)[resolution_value])
+			if resolution.is_empty() or not card_ids.has(card_id):
+				return {"ok": false, "code": "invalid_story_ability", "arc_id": arc_id,
+					"resolution": resolution, "card_id": card_id}
+			story_projection_count += 1
+			story_card_ids[card_id] = true
+	if story_card_ids.size() != 12:
+		return {"ok": false, "code": "invalid_story_ability_variety"}
 	var route_node_count := 0
 	var elite_trait_count := 0
 	var boss_trait_count := 0
@@ -159,7 +187,8 @@ static func validate_definitions() -> Dictionary:
 	return {"ok": true, "code": "valid", "card_count": card_ids.size(),
 		"dungeon_count": (dungeons_value as Array).size(), "route_node_count": route_node_count,
 		"elite_trait_count": elite_trait_count, "boss_trait_count": boss_trait_count,
-		"phase_count": phase_count}
+		"phase_count": phase_count, "story_projection_count": story_projection_count,
+		"story_card_count": story_card_ids.size()}
 
 
 static func normalize(state: Dictionary) -> Dictionary:
@@ -580,9 +609,9 @@ static func _starting_deck(state: Dictionary) -> Dictionary:
 		deck.append(_new_card(run_seed, card_id, "armor", armor_source))
 	deck.append(_new_card(run_seed, "qi_breath", "realm", str(profile.realm_name)))
 	deck.append(_new_card(run_seed, str(PATH_CARDS[profile.primary_path_id]), "path",
-		str(profile.primary_source_name)))
+		str(profile.primary_source_name), _bond_upgrade(profile, str(profile.primary_path_id))))
 	deck.append(_new_card(run_seed, str(PATH_CARDS[profile.secondary_path_id]), "path",
-		str(profile.secondary_source_name)))
+		str(profile.secondary_source_name), _bond_upgrade(profile, str(profile.secondary_path_id))))
 	deck.append(_new_card(run_seed, "realm_manifestation", "realm", str(profile.realm_name)))
 	deck.append(_new_card(run_seed, "relic_cycle", "relic", str(profile.relic_name)))
 	if not str(profile.jade_weapon_name).is_empty():
@@ -590,6 +619,10 @@ static func _starting_deck(state: Dictionary) -> Dictionary:
 			str(profile.jade_weapon_name)))
 	if not str(profile.memory_name).is_empty():
 		deck.append(_new_card(run_seed, "past_life_echo", "memory", str(profile.memory_name)))
+	for ability_value in (profile.get("story_abilities", []) as Array):
+		var ability: Dictionary = ability_value
+		deck.append(_new_card(run_seed, str(ability.card_id), "story", str(ability.source_name),
+			int(ability.get("upgrade", 0))))
 	return {"deck": deck, "profile": profile, "card_counter": int(run_seed.card_counter)}
 
 
@@ -610,6 +643,15 @@ static func ability_profile_label(run_or_profile: Dictionary) -> String:
 		parts.append("玉兵·%s" % str(profile.jade_weapon_name))
 	if not str(profile.get("memory_name", "")).is_empty():
 		parts.append("前世·%s" % str(profile.memory_name))
+	var story_abilities_value: Variant = profile.get("story_abilities", [])
+	if story_abilities_value is Array and not (story_abilities_value as Array).is_empty():
+		var arc_names: Array[String] = []
+		for ability_value in (story_abilities_value as Array):
+			if ability_value is Dictionary: arc_names.append(str((ability_value as Dictionary).get("arc_name", "定局")))
+		parts.append("定局·%s" % "/".join(arc_names))
+	if int(profile.get("bond_relation", 0)) > 0 and \
+			(str(profile.get("primary_path_id", "")) == "bonds" or str(profile.get("secondary_path_id", "")) == "bonds"):
+		parts.append("羁绊·%s%d" % [str(profile.get("bond_name", "故人")), int(profile.bond_relation)])
 	return "  |  ".join(parts)
 
 
@@ -621,6 +663,8 @@ static func _build_ability_profile(state: Dictionary) -> Dictionary:
 	var weapon := _equipped_source(state, "weapon", "本命攻法")
 	var armor := _equipped_source(state, "armor", "护体根基")
 	var relic := _equipped_source(state, "relic", "黑白轮回玉")
+	var bond := _strongest_bond(state)
+	var story_abilities := _story_ability_projections(state)
 	var jade := AchievementSystemScript.current_weapon(state)
 	var jade_card_id := ""
 	if not jade.is_empty():
@@ -634,16 +678,18 @@ static func _build_ability_profile(state: Dictionary) -> Dictionary:
 		"realm_name": "%s %d层" % [str(player.get("realm", "凡人")), int(player.get("level", 1))],
 		"primary_path_id": str(primary.id),
 		"primary_path_score": int(primary.score),
-		"primary_source_name": _path_source_name(state, str(primary.id)),
+		"primary_source_name": _path_source_name(str(primary.id), bond),
 		"secondary_path_id": str(secondary.id),
 		"secondary_path_score": int(secondary.score),
-		"secondary_source_name": _path_source_name(state, str(secondary.id)),
+		"secondary_source_name": _path_source_name(str(secondary.id), bond),
 		"weapon_name": str(weapon.name), "weapon_equipped": bool(weapon.equipped),
 		"armor_name": str(armor.name), "armor_equipped": bool(armor.equipped),
 		"relic_name": str(relic.name),
 		"jade_weapon_name": str(jade.get("name", "")).left(32),
 		"jade_card_id": jade_card_id,
 		"memory_name": memory_name,
+		"bond_name": str(bond.get("name", "")), "bond_relation": int(bond.get("relation", 0)),
+		"bond_role": str(bond.get("role", "")), "story_abilities": story_abilities,
 	}
 
 
@@ -660,22 +706,20 @@ static func _ranked_paths(path_value: Variant) -> Array:
 	return ranked
 
 
-static func _path_source_name(state: Dictionary, path_id: String) -> String:
-	if path_id == "bonds":
-		var bond_name := _strongest_bond_name(state)
-		if not bond_name.is_empty():
-			return bond_name
+static func _path_source_name(path_id: String, bond: Dictionary) -> String:
+	if path_id == "bonds" and not str(bond.get("name", "")).is_empty():
+		return str(bond.name)
 	return str(PATH_NAMES.get(path_id, path_id))
 
 
-static func _strongest_bond_name(state: Dictionary) -> String:
+static func _strongest_bond(state: Dictionary) -> Dictionary:
 	var world_value: Variant = state.get("world", {})
 	var world: Dictionary = world_value if world_value is Dictionary else {}
 	var npcs_value: Variant = world.get("npcs", [])
 	if not npcs_value is Array:
-		return ""
+		return {"name":"", "relation":0, "role":""}
 	var best_relation := 0
-	var best_name := ""
+	var best: Dictionary = {"name":"", "relation":0, "role":""}
 	for npc_value in (npcs_value as Array):
 		if not npc_value is Dictionary:
 			continue
@@ -683,8 +727,64 @@ static func _strongest_bond_name(state: Dictionary) -> String:
 		var relation := int(npc.get("player_relation", 0))
 		if bool(npc.get("alive", true)) and relation > best_relation:
 			best_relation = relation
-			best_name = str(npc.get("name", "")).left(24)
-	return best_name
+			best = {"name":str(npc.get("name", "")).left(24), "relation":clampi(relation, 0, 100),
+				"role":str(npc.get("role", npc.get("stance", "故人"))).left(24)}
+	return best
+
+
+static func story_projection_for_resolution(arc_id: String, resolution: String) -> Dictionary:
+	var projections_value: Variant = load_definitions().get("story_projections", {})
+	if not projections_value is Dictionary:
+		return {}
+	var arc_value: Variant = (projections_value as Dictionary).get(arc_id, {})
+	if not arc_value is Dictionary:
+		return {}
+	var arc: Dictionary = arc_value
+	var resolutions_value: Variant = arc.get("resolutions", {})
+	if not resolutions_value is Dictionary:
+		return {}
+	var card_id := str((resolutions_value as Dictionary).get(resolution, ""))
+	if card_id.is_empty():
+		return {}
+	return {"arc_id":arc_id, "arc_name":str(arc.get("name", arc_id)),
+		"resolution":resolution, "card_id":card_id,
+		"source_name":"%s·%s" % [str(arc.get("name", arc_id)), resolution]}
+
+
+static func _story_ability_projections(state: Dictionary) -> Array:
+	var story_value: Variant = state.get("story", {})
+	var story: Dictionary = story_value if story_value is Dictionary else {}
+	var legacies_value: Variant = story.get("arc_legacies", {})
+	var legacies: Dictionary = legacies_value if legacies_value is Dictionary else {}
+	var echoes_value: Variant = story.get("arc_echoes", {})
+	var echoes: Dictionary = echoes_value if echoes_value is Dictionary else {}
+	var result: Array = []
+	for arc_id in STORY_ARC_IDS:
+		var resolution := str(legacies.get(arc_id, ""))
+		if resolution.is_empty():
+			continue
+		var upgrade := 0
+		var echo_value: Variant = echoes.get(arc_id, {})
+		if echo_value is Dictionary:
+			var echo_resolution := str((echo_value as Dictionary).get("resolution", ""))
+			if not echo_resolution.is_empty():
+				resolution = echo_resolution
+				upgrade = 1
+		var projection := story_projection_for_resolution(arc_id, resolution)
+		if projection.is_empty():
+			continue
+		projection["upgrade"] = upgrade
+		result.append(projection)
+	return result
+
+
+static func _bond_upgrade(profile: Dictionary, path_id: String) -> int:
+	if path_id != "bonds":
+		return 0
+	var relation := int(profile.get("bond_relation", 0))
+	if relation >= 75: return 2
+	if relation >= 40: return 1
+	return 0
 
 
 static func _equipped_source(state: Dictionary, slot: String, fallback: String) -> Dictionary:
@@ -805,7 +905,7 @@ static func _resolve_noncombat_node(state: Dictionary, run: Dictionary, node: Di
 		var candidates := _memory_candidates(run)
 		var projection: Dictionary = candidates[_roll(state, 0, candidates.size() - 1)]
 		var card := _new_card(run, str(projection.card_id), str(projection.source_kind),
-			str(projection.source_name))
+			str(projection.source_name), int(projection.get("upgrade", 0)))
 		var deck: Array = run.deck
 		if deck.size() < MAX_DECK: deck.append(card)
 		run["deck"] = deck
@@ -854,9 +954,11 @@ static func _memory_candidates(run: Dictionary) -> Array:
 	var profile: Dictionary = run.get("ability_profile", {})
 	var candidates: Array = [
 		{"card_id": str(PATH_CARDS.get(str(profile.get("primary_path_id", "insight")), "cause_trace")),
-			"source_kind": "path", "source_name": str(profile.get("primary_source_name", "明悟"))},
+			"source_kind": "path", "source_name": str(profile.get("primary_source_name", "明悟")),
+			"upgrade": _bond_upgrade(profile, str(profile.get("primary_path_id", "insight")))},
 		{"card_id": str(PATH_CARDS.get(str(profile.get("secondary_path_id", "creation")), "forge_edge")),
-			"source_kind": "path", "source_name": str(profile.get("secondary_source_name", "造化"))},
+			"source_kind": "path", "source_name": str(profile.get("secondary_source_name", "造化")),
+			"upgrade": _bond_upgrade(profile, str(profile.get("secondary_path_id", "creation")))},
 		{"card_id": "relic_cycle", "source_kind": "relic",
 			"source_name": str(profile.get("relic_name", "黑白轮回玉"))},
 	]
@@ -866,6 +968,11 @@ static func _memory_candidates(run: Dictionary) -> Array:
 	if not str(profile.get("memory_name", "")).is_empty():
 		candidates.append({"card_id": "past_life_echo", "source_kind": "memory",
 			"source_name": str(profile.memory_name)})
+	for ability_value in (profile.get("story_abilities", []) as Array):
+		if ability_value is Dictionary:
+			var ability: Dictionary = ability_value
+			candidates.append({"card_id":str(ability.card_id), "source_kind":"story",
+				"source_name":str(ability.source_name), "upgrade":int(ability.get("upgrade", 0))})
 	return candidates
 
 
@@ -1005,14 +1112,38 @@ static func _normalize_ability_profile(value: Variant) -> Dictionary:
 		"jade_weapon_name": str(profile.get("jade_weapon_name", "")).left(32),
 		"jade_card_id": str(profile.get("jade_card_id", "")).left(64),
 		"memory_name": str(profile.get("memory_name", "")).left(32),
+		"bond_name": str(profile.get("bond_name", "")).left(24),
+		"bond_relation": clampi(int(profile.get("bond_relation", 0)), 0, 100),
+		"bond_role": str(profile.get("bond_role", "")).left(24),
+		"story_abilities": _normalize_story_abilities(profile.get("story_abilities", [])),
 	}
 
 
+static func _normalize_story_abilities(value: Variant) -> Array:
+	var result: Array = []
+	if not value is Array:
+		return result
+	for ability_value in (value as Array):
+		if not ability_value is Dictionary:
+			continue
+		var ability: Dictionary = ability_value
+		var arc_id := str(ability.get("arc_id", ""))
+		var card_id := str(ability.get("card_id", ""))
+		if not STORY_ARC_IDS.has(arc_id) or card_definition(card_id).is_empty():
+			continue
+		result.append({"arc_id":arc_id, "arc_name":str(ability.get("arc_name", arc_id)).left(24),
+			"resolution":str(ability.get("resolution", "")).left(48), "card_id":card_id,
+			"source_name":str(ability.get("source_name", "定局映照")).left(48),
+			"upgrade":clampi(int(ability.get("upgrade", 0)), 0, 1)})
+		if result.size() >= STORY_ARC_IDS.size(): break
+	return result
+
+
 static func _new_card(run: Dictionary, card_id: String, source_kind: String = "dungeon",
-		source_name: String = "秘境映照") -> Dictionary:
+		source_name: String = "秘境映照", upgrade: int = 0) -> Dictionary:
 	var counter := int(run.get("card_counter", 0)) + 1
 	run["card_counter"] = counter
-	return {"uid":"card_%06d" % counter, "card_id":card_id, "upgrade":0,
+	return {"uid":"card_%06d" % counter, "card_id":card_id, "upgrade":clampi(upgrade, 0, 2),
 		"source_kind":source_kind.left(24), "source_name":source_name.left(48)}
 
 

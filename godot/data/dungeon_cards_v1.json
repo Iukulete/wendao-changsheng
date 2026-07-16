@@ -19,11 +19,29 @@
     {"id":"timeless_ward","name":"不坏长生障","cost":2,"description":"获得20点护体。","effects":{"block":20},"style":"guardian"},
     {"id":"mind_mirror","name":"问心镜","cost":1,"description":"抽2张牌，令敌方虚弱2回合。","effects":{"draw":2,"weak":2},"style":"insight"},
     {"id":"myriad_cycle","name":"万道一轮","cost":2,"description":"造成11点伤害，获得11点护体，抽1张牌。","effects":{"attack":11,"block":11,"draw":1},"style":"myriad"},
-    {"id":"heart_demon","name":"心障残页","cost":1,"description":"消耗此牌并平复8点压力。","effects":{"calm":8},"exhaust":true,"curse":true}
+    {"id":"heart_demon","name":"心障残页","cost":1,"description":"消耗此牌并平复8点压力。","effects":{"calm":8},"exhaust":true,"curse":true},
+    {"id":"old_self_witness","name":"两世证词","cost":1,"description":"造成6点伤害，获得6点护体，抽1张牌。","effects":{"attack":6,"block":6,"draw":1}},
+    {"id":"present_anchor","name":"今身定锚","cost":1,"description":"获得10点护体，平复5点压力。","effects":{"block":10,"calm":5}},
+    {"id":"dream_seal","name":"断梦留痕","cost":0,"description":"平复12点压力，消耗。","effects":{"calm":12},"exhaust":true},
+    {"id":"law_inscription","name":"护道律章","cost":1,"description":"获得12点护体。","effects":{"block":12}},
+    {"id":"lineage_burden","name":"师承共担","cost":1,"description":"获得7点护体，抽1张牌，平复3点压力。","effects":{"block":7,"draw":1,"calm":3}},
+    {"id":"founding_doctrine","name":"自立道统","cost":2,"description":"造成12点伤害，本场攻击成长2。","effects":{"attack":12,"power":2}},
+    {"id":"ancestral_covenant","name":"祖脉共契","cost":1,"description":"造成8点伤害，获得8点护体，压力+3。","effects":{"attack":8,"block":8,"stress":3}},
+    {"id":"nurture_first","name":"养恩为先","cost":1,"description":"获得8点护体，恢复4点气血。","effects":{"block":8,"heal":4}},
+    {"id":"nameless_duty","name":"去名留义","cost":0,"description":"获得4点护体，抽1张牌，消耗。","effects":{"block":4,"draw":1},"exhaust":true},
+    {"id":"snow_duel","name":"照雪战帖","cost":1,"description":"造成13点伤害，压力+3。","effects":{"attack":13,"stress":3}},
+    {"id":"shoulder_snow","name":"并肩照雪","cost":1,"description":"造成8点伤害，获得8点护体。","effects":{"attack":8,"block":8}},
+    {"id":"lucid_rivalry","name":"相争不害","cost":1,"description":"造成9点伤害，令敌方虚弱1回合，平复3点压力。","effects":{"attack":9,"weak":1,"calm":3}}
   ],
   "dungeons": [
     {"id":"mirror_lake","name":"镜湖空阙秘境","max_depth":4,"scene":"res://art/scenes/void_threshold_temple.png","reward_material":"fate_thread"}
   ],
+  "story_projections": {
+    "jade":{"name":"旧玉","resolutions":{"旧我为证":"old_self_witness","守证旧我":"old_self_witness","今生校旧":"present_anchor","今身定锚":"present_anchor","封梦自持":"dream_seal","断梦留痕":"dream_seal"}},
+    "sect":{"name":"山门","resolutions":{"守律立道":"law_inscription","旧律新章":"law_inscription","师承共担":"lineage_burden","两代同门":"lineage_burden","自立道统":"founding_doctrine","今世开宗":"founding_doctrine"}},
+    "family":{"name":"家世","resolutions":{"承认旧脉":"ancestral_covenant","祖脉共担":"ancestral_covenant","护亲问源":"nurture_first","养恩为先":"nurture_first","断名自立":"nameless_duty","去名留义":"nameless_duty"}},
+    "rival":{"name":"战帖","resolutions":{"照雪宿敌":"snow_duel","再续宿敌":"snow_duel","照雪盟友":"shoulder_snow","并肩照雪":"shoulder_snow","清醒对手":"lucid_rivalry","相争不相害":"lucid_rivalry"}}
+  },
   "era_routes": {
     "classical": {
       "combat":{"name":"断玉试剑路","danger":"交锋","description":"旧剑意沿断玉小径逐段苏醒。"},

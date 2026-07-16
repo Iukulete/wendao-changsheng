@@ -1175,6 +1175,7 @@ func _ability_source_color(source_kind: String) -> Color:
 		"relic": Color("d6b45c"),
 		"jade": Color("e2786c"),
 		"memory": Color("a58bc9"),
+		"story": Color("d989b5"),
 		"heart": Color("bd5364"),
 	}.get(source_kind, era_accent)
 
@@ -1926,17 +1927,18 @@ func _show_next_achievement_notice() -> void:
 		return
 	var notice: Dictionary = achievement_notice_queue.pop_front()
 	var tier := clampi(int(notice.get("tier", 0)), 0, 2)
-	var panel := _panel(0.96, _achievement_tier_color(tier))
+	var panel := _panel(1.0, _achievement_tier_color(tier))
 	panel.name = "AchievementToast"
 	panel.z_index = 200
-	panel.anchor_left = 0.5
-	panel.anchor_top = 1.0
-	panel.anchor_right = 0.5
-	panel.anchor_bottom = 1.0
-	panel.offset_left = -270
-	panel.offset_right = 270
-	panel.offset_top = -172
-	panel.offset_bottom = -42
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.anchor_left = 1.0
+	panel.anchor_top = 0.0
+	panel.anchor_right = 1.0
+	panel.anchor_bottom = 0.0
+	panel.offset_left = -470
+	panel.offset_right = -28
+	panel.offset_top = 28
+	panel.offset_bottom = 150
 	var column := VBoxContainer.new()
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	column.add_theme_constant_override("separation", 6)
@@ -1948,20 +1950,17 @@ func _show_next_achievement_notice() -> void:
 		Color(0.84, 0.86, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	add_child(panel)
 	achievement_toast = panel
-	panel.modulate.a = 0.0
-	panel.position.y += 28
-	var enter := create_tween().set_parallel(true)
+	panel.position.x += 28
+	var enter := create_tween()
 	enter.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	enter.tween_property(panel, "modulate:a", 1.0, 0.52)
-	enter.tween_property(panel, "position:y", panel.position.y - 28, 0.52)
+	enter.tween_property(panel, "position:x", panel.position.x - 28, 0.52)
 	await enter.finished
 	await get_tree().create_timer(float([4.8, 5.6, 6.5][tier])).timeout
 	if not is_instance_valid(panel):
 		return
-	var exit_tween := create_tween().set_parallel(true)
+	var exit_tween := create_tween()
 	exit_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	exit_tween.tween_property(panel, "modulate:a", 0.0, 0.9)
-	exit_tween.tween_property(panel, "position:y", panel.position.y + 28, 0.9)
+	exit_tween.tween_property(panel, "position:x", panel.position.x + 28, 0.52)
 	await exit_tween.finished
 	if is_instance_valid(panel):
 		panel.queue_free()

@@ -2,6 +2,7 @@ extends SceneTree
 
 const GameStateScript = preload("res://scripts/game_state.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
+const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 
@@ -10,11 +11,28 @@ var failures: Array[String] = []
 
 func _init() -> void:
 	var validation: Dictionary = DungeonSystemScript.validate_definitions()
-	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 19 and
+	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 31 and
 		int(validation.get("route_node_count", 0)) == 36 and
 		int(validation.get("elite_trait_count", 0)) == 6 and
-		int(validation.get("boss_trait_count", 0)) == 6 and int(validation.get("phase_count", 0)) == 6,
-		"可选秘境必须拥有能力牌池、六时代36个路线节点、六套精英被动与六个首领第二相")
+		int(validation.get("boss_trait_count", 0)) == 6 and int(validation.get("phase_count", 0)) == 6 and
+		int(validation.get("story_projection_count", 0)) == 24 and int(validation.get("story_card_count", 0)) == 12,
+		"可选秘境必须拥有角色能力牌池、24种剧情映射、六套精英被动与六个首领第二相")
+	var mapped_resolutions := 0
+	var mapped_story_cards := {}
+	for arc_value in (StorySystemScript.load_definitions().get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		for phase in ["main", "echo"]:
+			for choice_value in (arc.get("%s_choices" % phase, []) as Array):
+				var choice: Dictionary = choice_value
+				var projection := DungeonSystemScript.story_projection_for_resolution(
+					str(arc.id), str(choice.resolution))
+				_expect(not projection.is_empty() and
+					not DungeonSystemScript.card_definition(str(projection.get("card_id", ""))).is_empty(),
+					"真实剧情结论必须映射到有效角色能力：%s/%s" % [arc.id, choice.resolution])
+				mapped_resolutions += 1
+				mapped_story_cards[str(projection.get("card_id", ""))] = true
+	_expect(mapped_resolutions == 24 and mapped_story_cards.size() == 12,
+		"四条主线的今生与续章结论必须形成24对12的稳定能力映射")
 	var base := GameStateScript.create_new_game("入梦人", 969696, [8, 8, 8, 8, 8])
 	base.player.max_hp = 1200
 	base.player.hp = 1200
@@ -55,26 +73,29 @@ func _init() -> void:
 	var card_ids: Array[String] = []
 	var card_uids := {}
 	var sourced_cards := 0
+	var bond_upgrade := -1
 	for card_value in identity_deck:
 		var card: Dictionary = card_value
 		card_ids.append(str(card.card_id))
 		card_uids[str(card.uid)] = true
 		if not str(card.get("source_name", "")).is_empty(): sourced_cards += 1
+		if str(card.card_id) == "shared_oath": bond_upgrade = int(card.upgrade)
 	_expect(bool(identity_start.get("ok", false)) and identity_deck.size() == 13 and
 		card_uids.size() == identity_deck.size() and sourced_cards == identity_deck.size(),
 		"角色能力牌必须拥有唯一实例ID与可审计来源")
 	_expect("weapon_resonance" in card_ids and "armor_circulation" in card_ids and
 		"realm_manifestation" in card_ids and "relic_cycle" in card_ids and
 		"shared_oath" in card_ids and "cause_trace" in card_ids and
-		"mind_mirror" in card_ids and "past_life_echo" in card_ids,
+		"mind_mirror" in card_ids and "past_life_echo" in card_ids and bond_upgrade == 2,
 		"装备、境界、主次道途、玉兵与前世回响必须共同构成临时牌组")
 	var profile: Dictionary = identity.dungeon.run.ability_profile
 	_expect(str(profile.primary_path_id) == "bonds" and str(profile.primary_source_name) == "沈照川" and
 		str(profile.secondary_path_id) == "insight" and str(profile.weapon_name) == "青铁剑" and
 		str(profile.armor_name) == "流云袍" and str(profile.jade_weapon_name) == "青霄问心剑" and
 		str(profile.memory_name) == "前世行功残篇" and int(identity.dungeon.run.attack_power) > 0 and
-		int(identity.dungeon.run.guard_power) > 0,
-		"能力映照必须保留角色身份与装备形成的实际加成")
+		int(identity.dungeon.run.guard_power) > 0 and str(profile.bond_name) == "沈照川" and
+		int(profile.bond_relation) == 88,
+		"能力映照必须保留角色身份、羁绊强度与装备形成的实际加成")
 	var persisted_value: Variant = JSON.parse_string(JSON.stringify(identity))
 	var persisted: Dictionary = GameStateScript.ensure_v2(persisted_value as Dictionary)
 	DungeonSystemScript.normalize(persisted)
@@ -83,6 +104,39 @@ func _init() -> void:
 		(persisted.dungeon.run.deck as Array).size() == identity_deck.size() and
 		str((persisted.dungeon.run.deck as Array)[0].source_name) == str(identity_deck[0].source_name),
 		"进行中的能力来源与临时牌组必须通过存档往返")
+
+	var storied := base.duplicate(true)
+	storied.story.arc_legacies = {"jade":"旧我为证", "sect":"师承共担",
+		"family":"断名自立", "rival":"照雪盟友"}
+	storied.story.arc_echoes = {
+		"jade":{"stage":3, "resolution":"今身定锚"},
+		"sect":{"stage":0, "resolution":""},
+		"family":{"stage":3, "resolution":"去名留义"},
+		"rival":{"stage":3, "resolution":"相争不相害"},
+	}
+	var storied_start: Dictionary = DungeonSystemScript.start(storied)
+	var story_cards: Array = []
+	var story_card_ids: Array[String] = []
+	var upgraded_story_cards := 0
+	for card_value in (storied.dungeon.run.deck as Array):
+		var card: Dictionary = card_value
+		if str(card.source_kind) == "story":
+			story_cards.append(card)
+			story_card_ids.append(str(card.card_id))
+			if int(card.upgrade) == 1: upgraded_story_cards += 1
+	_expect(bool(storied_start.get("ok", false)) and (storied.dungeon.run.deck as Array).size() == 15 and
+		story_cards.size() == 4 and upgraded_story_cards == 3 and
+		story_card_ids == ["present_anchor", "lineage_burden", "nameless_duty", "lucid_rivalry"],
+		"四条主线定局必须各投影一项能力，完成续章的能力必须升级而不是复制成外部卡包")
+	_expect(DungeonSystemScript.ability_profile_label(storied.dungeon.run).contains("定局·旧玉/山门/家世/战帖") and
+		str((story_cards[0] as Dictionary).source_name) == "旧玉·今身定锚",
+		"剧情能力摘要和牌面来源必须公开具体定局")
+	var storied_payload: Variant = JSON.parse_string(JSON.stringify(storied))
+	var restored_story: Dictionary = GameStateScript.ensure_v2(storied_payload as Dictionary)
+	DungeonSystemScript.normalize(restored_story)
+	_expect((restored_story.dungeon.run.ability_profile.story_abilities as Array).size() == 4 and
+		int((restored_story.dungeon.run.ability_profile.story_abilities as Array)[0].upgrade) == 1,
+		"条件式剧情能力及续章升级必须通过存档往返")
 
 	var route_names := {}
 	var trait_ids := {}
@@ -314,7 +368,7 @@ func _init() -> void:
 		"副本结果必须写入有界历史且不替代主线剧情状态")
 
 	if failures.is_empty():
-		print("DUNGEON_SYSTEM_TEST_OK: character abilities, six elite rules, six two-phase bosses and deterministic exit passed")
+		print("DUNGEON_SYSTEM_TEST_OK: bonds, story abilities, elite rules, two-phase bosses and deterministic exit passed")
 		quit(0)
 	else:
 		for failure in failures:
