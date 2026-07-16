@@ -31,7 +31,13 @@
     {"id":"nameless_duty","name":"去名留义","cost":0,"description":"获得4点护体，抽1张牌，消耗。","effects":{"block":4,"draw":1},"exhaust":true},
     {"id":"snow_duel","name":"照雪战帖","cost":1,"description":"造成13点伤害，压力+3。","effects":{"attack":13,"stress":3}},
     {"id":"shoulder_snow","name":"并肩照雪","cost":1,"description":"造成8点伤害，获得8点护体。","effects":{"attack":8,"block":8}},
-    {"id":"lucid_rivalry","name":"相争不害","cost":1,"description":"造成9点伤害，令敌方虚弱1回合，平复3点压力。","effects":{"attack":9,"weak":1,"calm":3}}
+    {"id":"lucid_rivalry","name":"相争不害","cost":1,"description":"造成9点伤害，令敌方虚弱1回合，平复3点压力。","effects":{"attack":9,"weak":1,"calm":3}},
+    {"id":"heart_unmade_self","name":"未择之我","cost":1,"description":"获得5点护体，平复10点压力，消耗。","effects":{"block":5,"calm":10},"exhaust":true,"curse":true},
+    {"id":"heart_pressure_debt","name":"炉压债页","cost":2,"description":"平复14点压力，消耗。","effects":{"calm":14},"exhaust":true,"curse":true},
+    {"id":"heart_identity_fork","name":"人格错页","cost":0,"description":"抽1张牌，平复6点压力，消耗。","effects":{"draw":1,"calm":6},"exhaust":true,"curse":true},
+    {"id":"heart_black_rain","name":"黑雨旧痛","cost":1,"description":"恢复3点气血，平复8点压力，消耗。","effects":{"heal":3,"calm":8},"exhaust":true,"curse":true},
+    {"id":"heart_breath_ledger","name":"灵息欠契","cost":1,"description":"灵力+1，平复7点压力，消耗。","effects":{"energy":1,"calm":7},"exhaust":true,"curse":true},
+    {"id":"heart_unregistered","name":"无籍心印","cost":1,"description":"获得7点护体，平复8点压力，消耗。","effects":{"block":7,"calm":8},"exhaust":true,"curse":true}
   ],
   "dungeons": [
     {"id":"mirror_lake","name":"镜湖空阙秘境","max_depth":4,"scene":"res://art/scenes/void_threshold_temple.png","reward_material":"fate_thread"}
@@ -41,6 +47,14 @@
     "sect":{"name":"山门","resolutions":{"守律立道":"law_inscription","旧律新章":"law_inscription","师承共担":"lineage_burden","两代同门":"lineage_burden","自立道统":"founding_doctrine","今世开宗":"founding_doctrine"}},
     "family":{"name":"家世","resolutions":{"承认旧脉":"ancestral_covenant","祖脉共担":"ancestral_covenant","护亲问源":"nurture_first","养恩为先":"nurture_first","断名自立":"nameless_duty","去名留义":"nameless_duty"}},
     "rival":{"name":"战帖","resolutions":{"照雪宿敌":"snow_duel","再续宿敌":"snow_duel","照雪盟友":"shoulder_snow","并肩照雪":"shoulder_snow","清醒对手":"lucid_rivalry","相争不相害":"lucid_rivalry"}}
+  },
+  "heart_demons": {
+    "classical":{"card_id":"heart_unmade_self","source_name":"古典心魔·未择之我","awakening":"迟疑凝成镜障，敌方护体增加8。","recovery":60,"penalty":{"copies":1,"enemy_block":8}},
+    "steam":{"card_id":"heart_pressure_debt","source_name":"蒸汽心魔·炉压债页","awakening":"过载抽走下一回合1点灵力。","recovery":60,"penalty":{"copies":1,"energy_loss":1}},
+    "star_network":{"card_id":"heart_identity_fork","source_name":"星网心魔·人格错页","awakening":"人格分叉成两份错页，同时污染能力循环。","recovery":60,"penalty":{"copies":2}},
+    "wasteland":{"card_id":"heart_black_rain","source_name":"废土心魔·黑雨旧痛","awakening":"旧痛穿透护体，失去6点秘境气血。","recovery":60,"penalty":{"copies":1,"hp_loss":6}},
+    "final_age":{"card_id":"heart_breath_ledger","source_name":"末法心魔·灵息欠契","awakening":"欠契蚕食器诀，本次秘境器诀降低2。","recovery":60,"penalty":{"copies":1,"attack_loss":2}},
+    "immortal_dynasty":{"card_id":"heart_unregistered","source_name":"仙朝心魔·无籍心印","awakening":"天册夺去2点护诀，并为敌方敕造10点护体。","recovery":60,"penalty":{"copies":1,"guard_loss":2,"enemy_block":10}}
   },
   "era_routes": {
     "classical": {

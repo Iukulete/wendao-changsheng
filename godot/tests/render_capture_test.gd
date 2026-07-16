@@ -105,7 +105,27 @@ func _run() -> void:
 		game.call("_show_dungeon_combat")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
+	var critical_state: Dictionary = game.get("run_state")
+	critical_state.dungeon.run.stress = 92
+	var heart: Dictionary = DungeonSystemScript.heart_demon_for_era(
+		str(critical_state.dungeon.run.era_id))
+	if (critical_state.dungeon.run.battle.hand as Array).is_empty() or heart.is_empty():
+		failures.append("无法构造时代心魔临界画面")
+	else:
+		var heart_card: Dictionary = critical_state.dungeon.run.battle.hand[0].duplicate(true)
+		heart_card["uid"] = "render_heart_demon"
+		heart_card["card_id"] = str(heart.card_id)
+		heart_card["source_kind"] = "heart"
+		heart_card["source_name"] = str(heart.source_name)
+		heart_card["upgrade"] = 0
+		critical_state.dungeon.run.battle.hand[0] = heart_card
+		game.set("run_state", critical_state)
+		game.call("_show_dungeon_combat")
+	await _settle_frames(4)
+	_capture(root, output_root.path_join("dungeon_stress_1440x900.png"), Vector2i(1440, 900),
+		"秘境时代心魔临界")
 	var elite_state: Dictionary = game.get("run_state")
+	elite_state.dungeon.run.stress = 0
 	elite_state.dungeon.run.battle = {}
 	elite_state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(
 		str(elite_state.dungeon.run.era_id), "elite")]
@@ -143,7 +163,7 @@ func _run() -> void:
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, main, story abilities, elite rules and two-phase bosses are nonblank")
+		print("RENDER_CAPTURE_TEST_OK: menu, story abilities, era heart demons, elite rules and two-phase bosses are nonblank")
 		quit(0)
 	else:
 		for failure in failures:

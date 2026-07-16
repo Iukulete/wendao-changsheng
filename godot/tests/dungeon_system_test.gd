@@ -11,12 +11,13 @@ var failures: Array[String] = []
 
 func _init() -> void:
 	var validation: Dictionary = DungeonSystemScript.validate_definitions()
-	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 31 and
+	_expect(bool(validation.get("ok", false)) and int(validation.get("card_count", 0)) >= 37 and
 		int(validation.get("route_node_count", 0)) == 36 and
 		int(validation.get("elite_trait_count", 0)) == 6 and
 		int(validation.get("boss_trait_count", 0)) == 6 and int(validation.get("phase_count", 0)) == 6 and
-		int(validation.get("story_projection_count", 0)) == 24 and int(validation.get("story_card_count", 0)) == 12,
-		"可选秘境必须拥有角色能力牌池、24种剧情映射、六套精英被动与六个首领第二相")
+		int(validation.get("story_projection_count", 0)) == 24 and int(validation.get("story_card_count", 0)) == 12 and
+		int(validation.get("heart_demon_count", 0)) == 6,
+		"可选秘境必须拥有剧情能力、六时代心魔、六套精英被动与六个首领第二相")
 	var mapped_resolutions := 0
 	var mapped_story_cards := {}
 	for arc_value in (StorySystemScript.load_definitions().get("arcs", []) as Array):
@@ -338,19 +339,54 @@ func _init() -> void:
 	_expect(not DungeonSystemScript.intent_label(str(first.dungeon.run.battle.intent)).is_empty(),
 		"副本敌人必须公开下一行动意图")
 
-	var pressure := first.duplicate(true)
-	pressure.dungeon.run.stress = 99
-	pressure.dungeon.run.battle.intent = "stress"
-	pressure.dungeon.run.battle.intent_cycle = ["stress"]
-	DungeonSystemScript.end_turn(pressure)
-	var battle_curse_count := 0
-	for card_value in pressure.dungeon.run.battle.discard_pile:
-		if str((card_value as Dictionary).card_id) == "heart_demon": battle_curse_count += 1
-	var deck_curse_count := 0
-	for card_value in pressure.dungeon.run.deck:
-		if str((card_value as Dictionary).card_id) == "heart_demon": deck_curse_count += 1
-	_expect(int(pressure.dungeon.run.stress) == 60 and battle_curse_count == 1 and deck_curse_count == 1,
-		"心魔压力满值必须生成跨战斗保留的可处理心障牌，而不是只做装饰数值")
+	var heart_card_ids := {}
+	var heart_states := {}
+	for era_id in DungeonSystemScript.ERA_IDS:
+		var pressure := _start_normal(str(era_id), 970500 + DungeonSystemScript.ERA_IDS.find(era_id))
+		pressure.dungeon.run.stress = 99
+		pressure.dungeon.run.attack_power = 5
+		pressure.dungeon.run.guard_power = 5
+		pressure.dungeon.run.battle.intent = "stress"
+		pressure.dungeon.run.battle.intent_cycle = ["stress"]
+		pressure.dungeon.run.battle.energy = 3
+		var hp_before := int(pressure.dungeon.run.hp)
+		DungeonSystemScript.end_turn(pressure)
+		var heart: Dictionary = DungeonSystemScript.heart_demon_for_era(str(era_id))
+		var heart_card_id := str(heart.card_id)
+		var copies := int((heart.penalty as Dictionary).get("copies", 1))
+		var battle_curse_count := 0
+		for card_value in pressure.dungeon.run.battle.discard_pile:
+			if str((card_value as Dictionary).card_id) == heart_card_id: battle_curse_count += 1
+		var deck_curse_count := 0
+		for card_value in pressure.dungeon.run.deck:
+			if str((card_value as Dictionary).card_id) == heart_card_id: deck_curse_count += 1
+		_expect(int(pressure.dungeon.run.stress) == int(heart.recovery) and
+			battle_curse_count == copies and deck_curse_count == copies,
+			"时代心魔必须按定义污染当前战斗与跨战斗牌组：%s" % era_id)
+		heart_card_ids[heart_card_id] = true
+		heart_states[str(era_id)] = pressure
+		match str(era_id):
+			"classical": _expect(int(pressure.dungeon.run.battle.enemy_block) == 8,
+				"古典心魔必须把迟疑凝成镜障")
+			"steam": _expect(int(pressure.dungeon.run.battle.energy) == 2,
+				"蒸汽心魔必须抽走下一回合灵力")
+			"star_network": _expect(copies == 2,
+				"星网心魔必须分叉成两份人格错页")
+			"wasteland": _expect(int(pressure.dungeon.run.hp) == hp_before - 6,
+				"废土心魔必须让黑雨旧痛穿透护体")
+			"final_age": _expect(int(pressure.dungeon.run.attack_power) == 3,
+				"末法心魔必须蚕食本次秘境器诀")
+			"immortal_dynasty": _expect(int(pressure.dungeon.run.guard_power) == 3 and
+				int(pressure.dungeon.run.battle.enemy_block) == 10,
+				"仙朝心魔必须夺取护诀并为敌方敕造护体")
+	_expect(heart_card_ids.size() == 6, "六个时代必须生成六种不同心魔能力")
+	var heart_payload: Variant = JSON.parse_string(JSON.stringify(heart_states.star_network))
+	var restored_heart: Dictionary = GameStateScript.ensure_v2(heart_payload as Dictionary)
+	DungeonSystemScript.normalize(restored_heart)
+	var restored_heart_count := 0
+	for card_value in restored_heart.dungeon.run.deck:
+		if str((card_value as Dictionary).card_id) == "heart_identity_fork": restored_heart_count += 1
+	_expect(restored_heart_count == 2, "时代心魔牌及其多重污染必须通过存档往返")
 
 	var completed_a := base.duplicate(true)
 	var completed_b := base.duplicate(true)
@@ -368,7 +404,7 @@ func _init() -> void:
 		"副本结果必须写入有界历史且不替代主线剧情状态")
 
 	if failures.is_empty():
-		print("DUNGEON_SYSTEM_TEST_OK: bonds, story abilities, elite rules, two-phase bosses and deterministic exit passed")
+		print("DUNGEON_SYSTEM_TEST_OK: bonds, story abilities, six era heart demons and two-phase bosses passed")
 		quit(0)
 	else:
 		for failure in failures:
@@ -389,6 +425,22 @@ func _start_boss(era_id: String, seed_value: int) -> Dictionary:
 	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
 		str(state.dungeon.run.battle.get("rank", "")) == "boss",
 		"测试必须能直接进入时代首领战：%s" % era_id)
+	return state
+
+
+func _start_normal(era_id: String, seed_value: int) -> Dictionary:
+	var state := GameStateScript.create_new_game("心魔见证人", seed_value, [8, 8, 8, 8, 8])
+	state.current_era_id = era_id
+	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
+	state.player.max_hp = 1200
+	state.player.hp = 1200
+	state.player.attack = 180
+	DungeonSystemScript.start(state)
+	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, "combat")]
+	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
+		str(state.dungeon.run.battle.get("rank", "")) == "combat",
+		"测试必须能直接进入时代普通秘境战：%s" % era_id)
 	return state
 
 

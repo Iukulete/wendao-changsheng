@@ -953,6 +953,7 @@ func _show_dungeon_route() -> void:
 	_clear_screen()
 	var run: Dictionary = run_state.dungeon.run
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
+	_apply_dungeon_stress_visuals(int(run.stress))
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 14)
@@ -962,13 +963,17 @@ func _show_dungeon_route() -> void:
 	var status := HBoxContainer.new()
 	status.add_theme_constant_override("separation", 14)
 	page.add_child(status)
-	var vitality := _panel(0.80, era_accent)
+	var stress_color := _dungeon_stress_color(int(run.stress))
+	var vitality := _panel(0.80, stress_color if int(run.stress) >= 60 else era_accent)
 	vitality.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var vitality_column := VBoxContainer.new()
 	vitality_column.add_theme_constant_override("separation", 7)
 	vitality.add_child(vitality_column)
 	vitality_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
-	vitality_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
+	vitality_column.add_child(_progress_row("心魔压力", int(run.stress), 100, stress_color))
+	var route_stress_label := _label(_dungeon_stress_status(run), 13, Color(stress_color, 0.94))
+	route_stress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vitality_column.add_child(route_stress_label)
 	status.add_child(vitality)
 	var depth_panel := _panel(0.80, era_accent)
 	depth_panel.custom_minimum_size.x = 310
@@ -977,7 +982,7 @@ func _show_dungeon_route() -> void:
 	depth_panel.add_child(depth_column)
 	depth_column.add_child(_label("第 %d / %d 层" % [int(run.depth) + 1, int(run.max_depth)], 22,
 		Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
-	depth_column.add_child(_label("灵诀 %d式 · 心障随压力入组" % (run.deck as Array).size(), 14,
+	depth_column.add_child(_label("能力 %d式 · 心障随压力入组" % (run.deck as Array).size(), 14,
 		Color(0.76, 0.81, 0.81), HORIZONTAL_ALIGNMENT_CENTER))
 	depth_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
 		int(run.get("guard_power", 0))], 13, Color(era_accent, 0.86), HORIZONTAL_ALIGNMENT_CENTER))
@@ -1020,6 +1025,7 @@ func _show_dungeon_combat() -> void:
 	var run: Dictionary = run_state.dungeon.run
 	var battle: Dictionary = run.battle
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
+	_apply_dungeon_stress_visuals(int(run.stress))
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 12)
@@ -1030,14 +1036,18 @@ func _show_dungeon_combat() -> void:
 	combat_row.custom_minimum_size.y = 270
 	combat_row.add_theme_constant_override("separation", 14)
 	page.add_child(combat_row)
-	var self_panel := _panel(0.84, era_accent)
+	var stress_color := _dungeon_stress_color(int(run.stress))
+	var self_panel := _panel(0.84, stress_color if int(run.stress) >= 60 else era_accent)
 	self_panel.custom_minimum_size.x = 260
 	var self_column := VBoxContainer.new()
 	self_column.add_theme_constant_override("separation", 8)
 	self_panel.add_child(self_column)
 	self_column.add_child(_section_title(str(player.name)))
 	self_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
-	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
+	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, stress_color))
+	var combat_stress_label := _label(_dungeon_stress_status(run), 12, Color(stress_color, 0.96))
+	combat_stress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	self_column.add_child(combat_stress_label)
 	self_column.add_child(_label("灵力 %d · 回合基础 %d · 护体 %d" % [int(battle.energy),
 		DungeonSystemScript.energy_cap(battle), int(battle.player_block)], 15, Color("b9d5e8")))
 	self_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
@@ -1164,6 +1174,33 @@ func _build_dungeon_log(run: Dictionary) -> Control:
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(log_label)
 	return panel
+
+
+func _dungeon_stress_color(stress: int) -> Color:
+	if stress >= 85: return Color("df5f6d")
+	if stress >= 60: return Color("d6a04f")
+	return Color("6fbea0")
+
+
+func _dungeon_stress_status(run: Dictionary) -> String:
+	var heart := DungeonSystemScript.heart_demon_for_era(str(run.get("era_id", "classical")))
+	var heart_card := DungeonSystemScript.card_definition(str(heart.get("card_id", "heart_demon")))
+	var heart_name := str(heart_card.get("name", "心障残页"))
+	var stress := int(run.get("stress", 0))
+	if stress >= 85: return "心魔临界 · 越限将显化「%s」" % heart_name
+	if stress >= 60: return "心念躁动 · 「%s」正在成形" % heart_name
+	return "心境平稳 · 「%s」尚未成形" % heart_name
+
+
+func _apply_dungeon_stress_visuals(stress: int) -> void:
+	if not is_instance_valid(vignette) or not (vignette.material is ShaderMaterial):
+		return
+	if stress >= 85:
+		vignette.material.set_shader_parameter("accent", Color("df5f6d"))
+		vignette.material.set_shader_parameter("tint", Color(0.15, 0.012, 0.025, 0.30))
+	elif stress >= 60:
+		vignette.material.set_shader_parameter("accent", Color("d6a04f"))
+		vignette.material.set_shader_parameter("tint", Color(0.09, 0.045, 0.018, 0.24))
 
 
 func _ability_source_color(source_kind: String) -> Color:

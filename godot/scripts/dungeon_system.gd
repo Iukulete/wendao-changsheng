@@ -25,6 +25,9 @@ const SUPPORTED_BOSS_PHASES := [
 	"rain_deluge", "total_collection", "blank_edict",
 ]
 const SUPPORTED_INTENTS := ["strike", "heavy", "guard", "stress"]
+const SUPPORTED_HEART_PENALTIES := [
+	"copies", "hp_loss", "energy_loss", "enemy_block", "attack_loss", "guard_loss",
+]
 const STORY_ARC_IDS := ["jade", "sect", "family", "rival"]
 const PATH_IDS := ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]
 const PATH_TIE_ORDER := ["insight", "creation", "compassion", "bonds", "defiance", "ambition"]
@@ -48,6 +51,8 @@ const REQUIRED_ABILITY_CARDS := [
 	"old_self_witness", "present_anchor", "dream_seal", "law_inscription",
 	"lineage_burden", "founding_doctrine", "ancestral_covenant", "nurture_first",
 	"nameless_duty", "snow_duel", "shoulder_snow", "lucid_rivalry",
+	"heart_unmade_self", "heart_pressure_debt", "heart_identity_fork",
+	"heart_black_rain", "heart_breath_ledger", "heart_unregistered",
 ]
 const SUPPORTED_EFFECTS := ["attack", "block", "heal", "energy", "weak", "power", "stress", "calm", "draw"]
 
@@ -114,6 +119,33 @@ static func validate_definitions() -> Dictionary:
 			story_card_ids[card_id] = true
 	if story_card_ids.size() != 12:
 		return {"ok": false, "code": "invalid_story_ability_variety"}
+	var heart_demons_value: Variant = data.get("heart_demons", {})
+	if not heart_demons_value is Dictionary:
+		return {"ok": false, "code": "missing_heart_demons"}
+	var heart_card_ids := {}
+	for era_id in ERA_IDS:
+		var heart_value: Variant = (heart_demons_value as Dictionary).get(era_id, {})
+		if not heart_value is Dictionary:
+			return {"ok": false, "code": "missing_heart_demon", "era_id": era_id}
+		var heart: Dictionary = heart_value
+		var heart_card_id := str(heart.get("card_id", ""))
+		var penalty_value: Variant = heart.get("penalty", {})
+		if not card_ids.has(heart_card_id) or heart_card_ids.has(heart_card_id) or \
+				not bool(card_definition(heart_card_id).get("curse", false)) or \
+				str(heart.get("source_name", "")).is_empty() or str(heart.get("awakening", "")).is_empty() or \
+				int(heart.get("recovery", -1)) not in range(0, 100) or not penalty_value is Dictionary or \
+				(penalty_value as Dictionary).is_empty():
+			return {"ok": false, "code": "invalid_heart_demon", "era_id": era_id}
+		for penalty_id in (penalty_value as Dictionary).keys():
+			if not SUPPORTED_HEART_PENALTIES.has(str(penalty_id)) or \
+					typeof((penalty_value as Dictionary)[penalty_id]) not in [TYPE_INT, TYPE_FLOAT] or \
+					int((penalty_value as Dictionary)[penalty_id]) <= 0:
+				return {"ok": false, "code": "invalid_heart_penalty", "era_id": era_id,
+					"penalty_id": str(penalty_id)}
+		var copies := int((penalty_value as Dictionary).get("copies", 1))
+		if copies < 1 or copies > 3:
+			return {"ok": false, "code": "invalid_heart_copies", "era_id": era_id}
+		heart_card_ids[heart_card_id] = true
 	var route_node_count := 0
 	var elite_trait_count := 0
 	var boss_trait_count := 0
@@ -188,7 +220,7 @@ static func validate_definitions() -> Dictionary:
 		"dungeon_count": (dungeons_value as Array).size(), "route_node_count": route_node_count,
 		"elite_trait_count": elite_trait_count, "boss_trait_count": boss_trait_count,
 		"phase_count": phase_count, "story_projection_count": story_projection_count,
-		"story_card_count": story_card_ids.size()}
+		"story_card_count": story_card_ids.size(), "heart_demon_count": heart_card_ids.size()}
 
 
 static func normalize(state: Dictionary) -> Dictionary:
@@ -380,27 +412,46 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	if int(battle.turn) > MAX_TURNS:
 		run["battle"] = battle
 		return _finish_battle(state, dungeon, run, "defeat")
+	var heart_penalty: Dictionary = {}
 	if int(run.stress) >= 100:
-		var curse := _new_card(run, "heart_demon", "heart", "心魔压力")
-		discard = battle.discard_pile
-		discard.append(curse)
-		battle["discard_pile"] = discard
-		var deck: Array = run.deck
-		if deck.size() >= MAX_DECK:
-			deck.pop_front()
-		deck.append(curse.duplicate(true))
-		run["deck"] = deck
-		run["stress"] = 60
-		_append_log(run, "心魔压力越过极限，一张心障残页混入牌组。")
+		heart_penalty = _awaken_heart_demon(run, battle)
 	var cycle: Array = battle.intent_cycle
 	battle["intent_index"] = (int(battle.intent_index) + 1) % cycle.size()
 	battle["intent"] = str(cycle[int(battle.intent_index)])
-	battle["energy"] = energy_cap(battle)
+	battle["energy"] = maxi(0, energy_cap(battle) - int(heart_penalty.get("energy_loss", 0)))
 	_draw_cards(state, battle, 5)
 	run["battle"] = battle
 	dungeon["run"] = run
 	state["dungeon"] = dungeon
 	return {"ok": true, "code": "dungeon_turn_ended", "battle": battle, "run": run}
+
+
+static func _awaken_heart_demon(run: Dictionary, battle: Dictionary) -> Dictionary:
+	var heart := heart_demon_for_era(str(run.get("era_id", "classical")))
+	var penalty: Dictionary = heart.get("penalty", {})
+	var copies := clampi(int(penalty.get("copies", 1)), 1, 3)
+	var deck: Array = run.deck
+	var discard: Array = battle.discard_pile
+	for _index in range(copies):
+		var curse := _new_card(run, str(heart.card_id), "heart", str(heart.source_name))
+		discard.append(curse)
+		if deck.size() >= MAX_DECK:
+			deck.pop_front()
+		deck.append(curse.duplicate(true))
+	battle["discard_pile"] = discard
+	run["deck"] = deck
+	var hp_loss := mini(maxi(0, int(run.hp) - 1), maxi(0, int(penalty.get("hp_loss", 0))))
+	if hp_loss > 0: run["hp"] = int(run.hp) - hp_loss
+	var attack_loss := mini(int(run.attack_power), maxi(0, int(penalty.get("attack_loss", 0))))
+	if attack_loss > 0: run["attack_power"] = int(run.attack_power) - attack_loss
+	var guard_loss := mini(int(run.guard_power), maxi(0, int(penalty.get("guard_loss", 0))))
+	if guard_loss > 0: run["guard_power"] = int(run.guard_power) - guard_loss
+	var enemy_block := maxi(0, int(penalty.get("enemy_block", 0)))
+	if enemy_block > 0: battle["enemy_block"] = int(battle.enemy_block) + enemy_block
+	run["stress"] = clampi(int(heart.get("recovery", 60)), 0, 99)
+	_append_log(run, "%s显化，%d张心障混入能力循环。%s" % [
+		str(card_definition(str(heart.card_id)).name), copies, str(heart.awakening)])
+	return penalty
 
 
 static func _apply_trait_after_card(run: Dictionary, battle: Dictionary, card: Dictionary,
@@ -589,6 +640,15 @@ static func boss_phase_for_era(era_id: String) -> Dictionary:
 	var era: Dictionary = enemies.get(era_id, enemies.get("classical", {}))
 	var phase_value: Variant = (era.get("boss", {}) as Dictionary).get("phase", {})
 	return (phase_value as Dictionary).duplicate(true) if phase_value is Dictionary else {}
+
+
+static func heart_demon_for_era(era_id: String) -> Dictionary:
+	var hearts_value: Variant = load_definitions().get("heart_demons", {})
+	if not hearts_value is Dictionary:
+		return {}
+	var hearts: Dictionary = hearts_value
+	var heart_value: Variant = hearts.get(era_id, hearts.get("classical", {}))
+	return (heart_value as Dictionary).duplicate(true) if heart_value is Dictionary else {}
 
 
 static func intent_label(intent: String) -> String:
