@@ -253,5 +253,110 @@
       {"text": "篡改云阵，让雨落向下城", "outcome": "龟裂凡田一夜返青，巡天司也从云阵残留的神识笔迹里找到了你。", "deltas": {"karma": 17, "dao_heart": 7, "enmity": 11}, "path_deltas": {"defiance": 4, "compassion": 2}},
       {"text": "击散功德云，令两地各承半雨", "outcome": "两边都没得到足够灵雨，却因此开始共修一条跨越上下城的新水渠。", "deltas": {"exp": 69, "reputation": 9, "hp": -16}, "path_deltas": {"creation": 4, "insight": 2, "bonds": 1}}
     ]
+  },
+  {
+    "id": "classical_borrowed_wound_elixir",
+    "era": "古典修仙纪",
+    "title": "【古典修仙】无名丹方的借伤药",
+    "description": "疫村井边浮出一页没有署名的丹方，照方炼成的药能立刻治愈病者，却会把伤病与药债转给另一条经脉。宗门愿意收走丹方统一施药，村中医修则请求你先查清每一笔代价究竟落在谁身上。",
+    "scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
+    "portrait": "res://art/portraits/jade_healer.jpg",
+    "portrait_name": "迟药青",
+    "portrait_title": "游方医修 · 她不肯把代价写成药效",
+    "choices": [
+      {"text": "以自身经脉承接全村伤病", "outcome": "病榻上的呼吸逐渐平稳，所有未署名的痛楚却在你体内找到归处；丹方也因此显出真正的末行。", "deltas": {"karma": 14, "exp": 42, "hp": -24}, "path_deltas": {"compassion": 4, "creation": 2}},
+      {"text": "把丹方交给宗门设立药契", "outcome": "疫病得到控制，宗门也把偿还药债的年限写进每户命册；无人再猝死，却有人要用半生还清一次痊愈。", "deltas": {"reputation": 10, "spirit_stones": 14, "karma": -5}, "path_deltas": {"ambition": 3, "creation": 2, "compassion": -1}},
+      {"text": "公开转伤真相并封存丹方", "outcome": "村民拒绝了来历不明的痊愈，转而共同隔离、熬药和照料病弱；这一季死去的人少于预想，却仍有人没能等到新方。", "deltas": {"dao_heart": 7, "reputation": 5, "enmity": 4}, "path_deltas": {"insight": 4, "defiance": 2, "bonds": 1}}
+    ]
+  },
+  {
+    "id": "steam_twelve_hour_strike",
+    "era": "灵机蒸汽纪",
+    "title": "【灵机蒸汽】灵轨十二时辰停炉令",
+    "description": "灵轨工人封住总炉门，要求废除连续十二时辰的危险炉压配额。城北药仓只剩一夜保温灵煤，工坊主声称停炉就会毁掉救命药材；罢工领头人摊开名册，上面是本月被炉火烧空神识的十七个名字。",
+    "scene": "res://art/scenes/steam_forge_city.png",
+    "portrait": "res://art/portraits/steam_artificer.png",
+    "portrait_name": "岑照炉",
+    "portrait_title": "百炉城工造师 · 总闸与工牌都在她手中",
+    "choices": [
+      {"text": "落下总闸，站在罢工者一边", "outcome": "十二时辰里没有一座炉膛吞人，药仓却冻坏了最脆弱的一批药胚；工人第一次以自己的名字重写轮班表。", "deltas": {"karma": 9, "reputation": 8, "enmity": 8}, "path_deltas": {"bonds": 4, "defiance": 3}},
+      {"text": "维持炉压，先保住城北药仓", "outcome": "药材安然出库，工坊也按约付清伤亡抚恤；只是新名册第一页，很快又出现了一个熟悉的工号。", "deltas": {"spirit_stones": 18, "reputation": 6, "karma": -8}, "path_deltas": {"ambition": 4, "creation": 1, "compassion": -2}},
+      {"text": "拆开灵轨，让各区轮流借压", "outcome": "你与工人爬遍整夜管线，把一座总炉改成六段轮供。药胚损失了三成，危险工时也从此被锁进机械限位。", "deltas": {"exp": 66, "dao_heart": 6, "hp": -18}, "path_deltas": {"creation": 4, "compassion": 2, "bonds": 1}}
+    ]
+  },
+  {
+    "id": "star_memory_ownership_trial",
+    "era": "星穹道网纪",
+    "title": "【星穹道网】复制记忆所有权公审",
+    "description": "一名阵师把自己的百年记忆备份卖给道网，复制体却在训练中生出新的恐惧与愿望。原主人要求删除副本以保护隐私，道网主张买卖契约已经转移所有权，而复制体只问了一句：谁能拥有我记得的童年？",
+    "scene": "res://art/scenes/star_dao_network.png",
+    "portrait": "res://art/portraits/star_network_cultivator.png",
+    "portrait_name": "闻星渡",
+    "portrait_title": "星网巡道使 · 公审记录的第一个见证人",
+    "choices": [
+      {"text": "承认复制体拥有独立人格", "outcome": "复制体获得道号与断开权限，原主人的隐私却随一位独立修士继续活在世上；道网不得不承认契约买不到一个人。", "deltas": {"karma": 13, "dao_heart": 7, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}},
+      {"text": "归还记忆并终止复制人格", "outcome": "原主人收回了完整人生，副本在归并前留下最后一段只属于自己的记忆：她拒绝原谅这场审判。", "deltas": {"exp": 58, "reputation": 7, "dao_heart": -5}, "path_deltas": {"insight": 4, "ambition": 2, "bonds": -2}},
+      {"text": "剥离私密部分，公开其余记忆协议", "outcome": "两方都失去了一部分完整性，却换来第一套允许人格撤回、分割与再授权的公共协议；它并不完美，但不再只有删除一条路。", "deltas": {"exp": 47, "reputation": 12, "spirit_stones": -8}, "path_deltas": {"creation": 4, "compassion": 2, "insight": 1}}
+    ]
+  },
+  {
+    "id": "wasteland_fireseed_well",
+    "era": "废土返道纪",
+    "title": "【废土返道】最后一口深火种井",
+    "description": "荒原最后一口深井升起可供三个月的火种。北坡病营需要它熬过黑雨寒季，返道队想用它启动净土钻机寻找下一处水脉，守井家族则拿出祖契，声称井火本就属于他们死去的七代人。",
+    "scene": "res://art/scenes/wasteland_black_rain.png",
+    "portrait": "res://art/portraits/wasteland_pathfinder.png",
+    "portrait_name": "沙砾",
+    "portrait_title": "返道火种引路人 · 一口井装不下三种未来",
+    "choices": [
+      {"text": "把火种送往北坡病营", "outcome": "病营的夜灯撑过整季，钻机却在冻土中锈死；来年开春，活下来的人必须徒步寻找新水源。", "deltas": {"karma": 14, "reputation": 9, "exp": 28}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"text": "启动净土钻机，寻找下一口井", "outcome": "钻头在地底敲出微弱水声，北坡却有一半帐篷没熬过最冷的七夜；你押中了未来，也记住了代价。", "deltas": {"exp": 65, "dao_heart": 5, "karma": -9}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -2}},
+      {"text": "重铸井脉，让三方分时取火", "outcome": "每一方所得都不足原先所求，守井祖契也在重铸中作废；病营、钻机与聚落却第一次被迫维护同一套火种刻度。", "deltas": {"exp": 57, "reputation": 7, "hp": -16}, "path_deltas": {"creation": 4, "defiance": 2, "bonds": 1}}
+    ]
+  },
+  {
+    "id": "wasteland_mobile_sect_rooms",
+    "era": "废土返道纪",
+    "title": "【废土返道】被背回来的宗门",
+    "description": "拾荒队从沙海归来，车架上绑着旧宗门仅存的藏经室、祖师堂与半间灶房。旧弟子要求原样复宗，难民想拆木造屋，拾荒者则说每一块墙板都该归冒死背它回来的人；黑雨将在两日后封路。",
+    "scene": "res://art/scenes/wasteland_black_rain.png",
+    "portrait": "res://art/portraits/wasteland_pathfinder.png",
+    "portrait_name": "沙砾",
+    "portrait_title": "返道火种引路人 · 她背着祖师堂的最后一扇门",
+    "choices": [
+      {"text": "依旧制复宗，开放藏经室收徒", "outcome": "旧弟子重新点起山门灯，难民中也有人第一次摸到完整功法；祖师堂成了避雨最差、却最不肯拆的一间屋。", "deltas": {"reputation": 11, "exp": 48, "spirit_stones": -8}, "path_deltas": {"bonds": 4, "insight": 2}},
+      {"text": "拆掉祖师堂，为难民搭建居所", "outcome": "百余人住进挡雨的新屋，旧弟子把祖牌埋在地基下后离开；他们承认人活下来了，却不承认宗门也活着。", "deltas": {"karma": 13, "reputation": 6, "enmity": 5}, "path_deltas": {"compassion": 4, "creation": 2, "bonds": -2}},
+      {"text": "把三间旧室改成轮换公所", "outcome": "白日传功、夜间收容、每月由拾荒者议价维护。没有人完全满意，但这座移动宗门第一次不再由祖谱决定谁能进门。", "deltas": {"exp": 55, "dao_heart": 6, "reputation": 8}, "path_deltas": {"defiance": 3, "creation": 3, "ambition": 1}}
+    ]
+  },
+  {
+    "id": "final_age_nursery_lottery",
+    "era": "末法裂变纪",
+    "title": "【末法裂变】灵息育幼院的名单",
+    "description": "育幼院本月只剩能让十二名孩子完成启灵的灵息，等待名单上却有四十七人。世家捐助者要求按灵根潜力排序，医师主张优先救治衰弱者，孩子们自己做了一只抽签木筒，想让所有名字拥有同样重量。",
+    "scene": "res://art/scenes/final_age_spirit_station.png",
+    "portrait": "res://art/portraits/final_age_meridian_physician.png",
+    "portrait_name": "韩玄素",
+    "portrait_title": "经脉契师 · 她必须在天亮前封存名单",
+    "choices": [
+      {"text": "按灵根潜力选出十二人", "outcome": "十二条最稳定的周天顺利点亮，世家也承诺继续供给；落选者第一次知道，所谓天资会在童年就替他们关门。", "deltas": {"spirit_stones": 16, "reputation": 7, "karma": -8}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -2}},
+      {"text": "采用孩子们的无记名抽签", "outcome": "木签让出身与天资暂时失效，结果却把两名最衰弱的孩子留在名单外；公平没有替你免去悔恨。", "deltas": {"karma": 7, "dao_heart": 5, "enmity": 4}, "path_deltas": {"defiance": 3, "bonds": 3}},
+      {"text": "稀释灵息，让四十七人共同启灵", "outcome": "无人完成标准周天，却有四十七点微弱灵光同时亮起。医师们得到数年难题，孩子们得到一次尚未被定义的开始。", "deltas": {"exp": 62, "reputation": 9, "hp": -14}, "path_deltas": {"creation": 4, "compassion": 3}}
+    ]
+  },
+  {
+    "id": "imperial_ascension_registry",
+    "era": "仙朝鼎盛纪",
+    "title": "【仙朝鼎盛】下界飞升名额簿",
+    "description": "仙朝今年只开放九个下界飞升登记位，等候者却来自三百座小界。巡天司按功德与贡赋排出名单，边界使团要求各界至少一席，黑市阵师则提出把一个命籍拆成三份，让更多人冒险穿过天门。",
+    "scene": "res://art/scenes/immortal_dynasty_skycourt.png",
+    "portrait": "res://art/portraits/imperial_sky_inspector.png",
+    "portrait_name": "裴照微",
+    "portrait_title": "巡天司监察使 · 九枚玉签压着三百座天",
+    "choices": [
+      {"text": "依功德榜核发九个名额", "outcome": "天门准时开启，九位积功最深者平安飞升；从未被仙朝记入功德网的小界，仍旧没有名字。", "deltas": {"reputation": 12, "spirit_stones": 20, "karma": -7}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -1}},
+      {"text": "废除贡赋权重，由小界共议九席", "outcome": "最弱的九座小界第一次送出代表，原榜首们却堵住巡天司问责；一套更平等的名单从争执而非圣旨中诞生。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 10}, "path_deltas": {"defiance": 4, "bonds": 3}},
+      {"text": "拆分命籍，送二十七人闯过天门", "outcome": "二十五人带着残缺命籍抵达仙朝，两人失散在界壁之间。巡天司无法承认他们，也无法再宣称九席是天道极限。", "deltas": {"exp": 73, "reputation": 8, "hp": -20}, "path_deltas": {"creation": 4, "defiance": 2, "compassion": 1}}
+    ]
   }
 ]

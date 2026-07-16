@@ -10,7 +10,17 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
+GODOT_ROOT = ROOT / "godot"
 EVENTS_PATH = ROOT / "godot" / "data" / "events_v014.json"
+SUPPORTED_ERAS = {
+    "古典修仙纪",
+    "灵机蒸汽纪",
+    "星穹道网纪",
+    "废土返道纪",
+    "末法裂变纪",
+    "仙朝鼎盛纪",
+}
+MIN_EVENTS_PER_ERA = 4
 PATH_DIMENSIONS = {
     "compassion",
     "ambition",
@@ -19,6 +29,19 @@ PATH_DIMENSIONS = {
     "creation",
     "bonds",
 }
+PLAYER_DELTAS = {
+    "exp",
+    "hp",
+    "mp",
+    "karma",
+    "dao_heart",
+    "reputation",
+    "enmity",
+    "spirit_stones",
+    "pills",
+}
+EVENT_TEXT_FIELDS = ("title", "description", "portrait_name", "portrait_title")
+RESOURCE_FIELDS = ("scene", "portrait")
 MIN_DELTA = -4
 MAX_DELTA = 4
 
@@ -27,12 +50,31 @@ def fail(message: str) -> None:
     raise ValueError(message)
 
 
+def require_text(value: object, location: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        fail(f"{location} must be a non-empty string")
+    return value
+
+
+def validate_resource(value: object, location: str) -> None:
+    resource_path = require_text(value, location)
+    if not resource_path.startswith("res://"):
+        fail(f"{location} must use a res:// path")
+    relative = Path(resource_path.removeprefix("res://"))
+    if relative.is_absolute() or ".." in relative.parts:
+        fail(f"{location} escapes the Godot project: {resource_path}")
+    disk_path = GODOT_ROOT / relative
+    if not disk_path.is_file():
+        fail(f"{location} does not exist: {resource_path}")
+
+
 def main() -> int:
     events = json.loads(EVENTS_PATH.read_text(encoding="utf-8"))
     if not isinstance(events, list) or not events:
         fail("event catalog must be a non-empty JSON array")
 
     event_ids: set[str] = set()
+    era_counts: Counter[str] = Counter()
     positive_coverage: Counter[str] = Counter()
     negative_coverage: Counter[str] = Counter()
     choice_count = 0
@@ -40,22 +82,40 @@ def main() -> int:
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
             fail(f"event[{event_index}] must be an object")
-        event_id = event.get("id")
-        if not isinstance(event_id, str) or not event_id:
-            fail(f"event[{event_index}] has no stable id")
+        event_id = require_text(event.get("id"), f"event[{event_index}].id")
         if event_id in event_ids:
             fail(f"duplicate event id: {event_id}")
         event_ids.add(event_id)
 
+        era = require_text(event.get("era"), f"{event_id}.era")
+        if era not in SUPPORTED_ERAS:
+            fail(f"{event_id}.era is unsupported: {era}")
+        era_counts[era] += 1
+        for field in EVENT_TEXT_FIELDS:
+            require_text(event.get(field), f"{event_id}.{field}")
+        for field in RESOURCE_FIELDS:
+            validate_resource(event.get(field), f"{event_id}.{field}")
+
         choices = event.get("choices")
-        if not isinstance(choices, list) or not choices:
-            fail(f"{event_id}: choices must be a non-empty array")
+        if not isinstance(choices, list) or len(choices) != 3:
+            fail(f"{event_id}: choices must contain exactly three entries")
 
         for choice_index, choice in enumerate(choices):
             choice_count += 1
             location = f"{event_id}.choices[{choice_index}]"
             if not isinstance(choice, dict):
                 fail(f"{location} must be an object")
+            require_text(choice.get("text"), f"{location}.text")
+            require_text(choice.get("outcome"), f"{location}.outcome")
+            deltas = choice.get("deltas")
+            if not isinstance(deltas, dict) or not deltas:
+                fail(f"{location} must define non-empty deltas")
+            unknown_deltas = set(deltas) - PLAYER_DELTAS
+            if unknown_deltas:
+                fail(f"{location} contains unknown player deltas: {sorted(unknown_deltas)}")
+            for delta_id, delta in deltas.items():
+                if isinstance(delta, bool) or not isinstance(delta, int):
+                    fail(f"{location}.deltas.{delta_id} must be an integer")
             path_deltas = choice.get("path_deltas")
             if not isinstance(path_deltas, dict) or not path_deltas:
                 fail(f"{location} must define non-empty path_deltas")
@@ -81,6 +141,20 @@ def main() -> int:
             if not has_positive_delta:
                 fail(f"{location} must advance at least one path")
 
+    missing_eras = SUPPORTED_ERAS - set(era_counts)
+    if missing_eras:
+        fail(f"catalog is missing eras: {sorted(missing_eras)}")
+    undersized_eras = {
+        era: era_counts[era]
+        for era in sorted(SUPPORTED_ERAS)
+        if era_counts[era] < MIN_EVENTS_PER_ERA
+    }
+    if undersized_eras:
+        fail(
+            f"each era needs at least {MIN_EVENTS_PER_ERA} events: "
+            f"{undersized_eras}"
+        )
+
     missing_positive_paths = PATH_DIMENSIONS - set(positive_coverage)
     if missing_positive_paths:
         fail(f"paths never advanced by any choice: {sorted(missing_positive_paths)}")
@@ -93,7 +167,7 @@ def main() -> int:
     )
     print(
         f"Event path validation passed: {len(events)} events, "
-        f"{choice_count} choices; {coverage}"
+        f"{choice_count} choices, six eras >= {MIN_EVENTS_PER_ERA}; {coverage}"
     )
     return 0
 

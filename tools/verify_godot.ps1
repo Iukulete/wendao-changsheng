@@ -68,6 +68,7 @@ $testScripts = @(
     "res://tests/story_system_test.gd",
     "res://tests/achievement_system_test.gd",
     "res://tests/dungeon_system_test.gd",
+    "res://tests/event_catalog_test.gd",
     "res://tests/local_ai_bridge_test.gd",
     "res://tests/item_system_test.gd",
     "res://tests/combat_system_test.gd",

@@ -13,6 +13,7 @@ const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
+const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -175,10 +176,9 @@ func _build_stage() -> void:
 
 
 func _load_events() -> void:
-	var payload := FileAccess.get_file_as_string(EVENTS_PATH)
-	var parsed = JSON.parse_string(payload)
-	if parsed is Array:
-		events = parsed
+	var validation: Dictionary = EventCatalogScript.validate_catalog()
+	if bool(validation.get("ok", false)):
+		events = EventCatalogScript.load_events()
 	else:
 		push_error("无法读取事件数据：%s" % EVENTS_PATH)
 		events = []
@@ -735,14 +735,11 @@ func _open_adventure() -> void:
 		current_event = story_event
 		_show_event()
 		return
-	var candidates: Array = events.filter(func(event_data): return str(event_data.get("era", "")) == current_era)
-	if candidates.is_empty():
-		candidates = events
-	if candidates.is_empty():
+	current_event = EventCatalogScript.select_event(run_state, current_era)
+	if current_event.is_empty():
 		feedback = "事件数据尚未显形。"
 		_show_game()
 		return
-	current_event = candidates.pick_random()
 	_show_event()
 
 
@@ -1390,18 +1387,8 @@ func _resolve_choice(index: int) -> void:
 	player.total_events = int(player.get("total_events", 0)) + 1
 	feedback = str(choice.get("outcome", "因果落定，旧玉没有给出解释。"))
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
-	var event_id := str(current_event.get("id", ""))
-	var story: Dictionary = run_state.get("story", {})
-	if not event_id.is_empty():
-		var completed: Array = story.get("completed_event_ids", [])
-		if not completed.has(event_id):
-			completed.append(event_id)
-		story["completed_event_ids"] = completed
-		var life_events: Array = story.get("life_event_ids", [])
-		life_events.append(event_id)
-		story["life_event_ids"] = life_events
-	run_state["story"] = story
 	run_state["player"] = player
+	EventCatalogScript.record_resolution(run_state, current_event)
 	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
 	if bool(story_resolution.get("ok", false)):
 		feedback += "\n\n" + str(story_resolution.get("message", "命途长卷又落下一笔。"))
