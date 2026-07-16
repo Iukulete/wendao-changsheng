@@ -3,6 +3,10 @@ extends Control
 const AmbientLayerScript = preload("res://scripts/ambient_layer.gd")
 const DaoCompassScript = preload("res://scripts/dao_compass.gd")
 const SaveServiceScript = preload("res://scripts/save_service.gd")
+const GameStateScript = preload("res://scripts/game_state.gd")
+const CultivationScript = preload("res://scripts/cultivation_system.gd")
+const ReincarnationScript = preload("res://scripts/reincarnation_system.gd")
+const WorldSimulationScript = preload("res://scripts/world_simulation.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -46,7 +50,7 @@ const DEFAULT_PLAYER := {
 	"roots": [7, 4, 8, 5, 6],
 }
 
-enum ScreenState { MENU, GAME, EVENT }
+enum ScreenState { MENU, GAME, EVENT, REINCARNATION }
 
 var state: ScreenState = ScreenState.MENU
 var current_era: String = "古典修仙纪"
@@ -57,7 +61,8 @@ var feedback: String = "旧玉仍温，今生尚未落笔。"
 var save_notice: String = "尚未封存"
 var menu_notice: String = ""
 
-var player: Dictionary = DEFAULT_PLAYER.duplicate(true)
+var run_state: Dictionary = {}
+var player: Dictionary = {}
 var save_service: RefCounted = SaveServiceScript.new()
 
 var background: TextureRect
@@ -71,6 +76,9 @@ var base_theme: Theme
 
 
 func _ready() -> void:
+	if run_state.is_empty():
+		run_state = GameStateScript.create_new_game("无名", 1, DEFAULT_PLAYER.roots)
+	_sync_state_views()
 	_build_theme()
 	_build_stage()
 	_load_events()
@@ -299,11 +307,8 @@ func _start_new_game(name_input: LineEdit) -> void:
 	var dao_name := name_input.text.strip_edges()
 	if dao_name.is_empty():
 		dao_name = "无名客"
-	player = DEFAULT_PLAYER.duplicate(true)
-	player.name = dao_name.left(16)
-	current_era = "古典修仙纪"
-	feedback = "镜湖古门在你写下道号的那一刻开启。"
-	recent_memories = ["测灵台没有记下识海中的空阙。", "黑白旧玉在掌心第一次发热。"]
+	run_state = GameStateScript.create_new_game(dao_name)
+	_sync_state_views()
 	menu_notice = ""
 	_save_current_state("新生命途已立档")
 	_show_game()
@@ -315,24 +320,45 @@ func _continue_game() -> void:
 		menu_notice = str(load_result.get("message", "旧档无法读取。"))
 		_show_menu()
 		return
-	var loaded_state: Dictionary = load_result.get("state", {})
+	var loaded_state: Dictionary = GameStateScript.ensure_v2(load_result.get("state", {}))
 	var loaded_era := str(loaded_state.get("current_era", ""))
 	if not ERA_ORDER.has(loaded_era):
 		menu_notice = "旧档记载了当前版本不认识的时代，未载入任何状态。"
 		_show_menu()
 		return
-	current_era = loaded_era
-	player = (loaded_state.get("player", DEFAULT_PLAYER) as Dictionary).duplicate(true)
-	recent_memories.clear()
-	recent_memories.assign(loaded_state.get("recent_memories", []))
-	feedback = str(loaded_state.get("feedback", "旧玉从沉眠中醒来。"))
+	run_state = loaded_state
+	_sync_state_views()
 	save_notice = str(load_result.get("message", "旧玉已续接上一次命途。"))
 	menu_notice = ""
 	current_event = {}
 	_show_game()
 
 
+func _sync_state_views() -> void:
+	run_state = GameStateScript.ensure_v2(run_state)
+	WorldSimulationScript.initialize(run_state)
+	current_era = str(run_state.get("current_era", "古典修仙纪"))
+	player = run_state.get("player", {})
+	recent_memories.clear()
+	recent_memories.assign(run_state.get("recent_memories", []))
+	feedback = str(run_state.get("feedback", "旧玉从沉眠中醒来。"))
+
+
+func _commit_state_views() -> void:
+	run_state["current_era"] = current_era
+	run_state["current_era_id"] = GameStateScript.era_id_for_name(current_era)
+	run_state["player"] = player
+	run_state["recent_memories"] = recent_memories.duplicate()
+	run_state["feedback"] = feedback
+
+
 func _show_game() -> void:
+	if bool(run_state.get("life_closed", false)):
+		_show_reincarnation()
+		return
+	if CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
 	state = ScreenState.GAME
 	_clear_screen()
 	_apply_era_visuals()
@@ -370,7 +396,9 @@ func _build_header() -> Control:
 	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(title_box)
 	title_box.add_child(_label("问道长生 · %s" % player.name, 28, Color("f4e5b7")))
-	title_box.add_child(_label("%s · 世界第 %d 年" % [current_era, int(player.age) - 15], 15,
+	title_box.add_child(_label("第%d世 · %s · 世界第 %d 年" % [
+		int(run_state.get("generation", 1)), current_era,
+		int((run_state.get("world", {}) as Dictionary).get("year", 1))], 15,
 		Color(era_accent, 0.92)))
 	var ai_ready := _local_model_ready()
 	var ai_text := "本地天机已就绪" if ai_ready else "规则事件运行中"
@@ -407,7 +435,7 @@ func _build_player_panel() -> Control:
 
 	column.add_child(_label("%s · %s %d层" % [player.name, player.realm, int(player.level)], 20,
 		Color("f1e5c5"), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_progress_row("修为", int(player.exp), 100, era_accent))
+	column.add_child(_progress_row("修为", int(player.exp), CultivationScript.exp_needed(player), era_accent))
 	column.add_child(_progress_row("气血", int(player.hp), int(player.max_hp), Color("c95858")))
 	column.add_child(_progress_row("灵力", int(player.mp), int(player.max_mp), Color("538fc2")))
 
@@ -423,6 +451,10 @@ func _build_player_panel() -> Control:
 	column.add_child(_label("寿元 %d/%d   灵石 %d   丹药 %d" % [
 		int(player.age), int(player.lifespan), int(player.spirit_stones), int(player.pills)],
 		15, Color(0.72, 0.78, 0.80, 0.90), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("寿元势态 · %s   旧玉共鸣 · %d" % [
+		CultivationScript.lifespan_pressure(player),
+		int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))],
+		13, Color(era_accent, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
 	return panel
 
 
@@ -492,45 +524,105 @@ func _world_digest() -> String:
 	if recent_memories.is_empty():
 		memory_lines = "- 今生尚无足以被旧玉铭记的大事。"
 	else:
-		for memory in recent_memories.slice(max(0, recent_memories.size() - 5)):
+		for memory in recent_memories.slice(maxi(0, recent_memories.size() - 5)):
 			memory_lines += "- %s\n" % memory
+	var world: Dictionary = run_state.get("world", {})
+	var last_summary: Dictionary = world.get("last_year_summary", {})
+	var annual_line := str(last_summary.get("detail", "各方势力刚刚落下第一枚棋子，新的年史尚未写成。"))
+	var faction_lines := ""
+	var factions: Array = world.get("factions", [])
+	for faction_value in factions.slice(0, 3):
+		var faction: Dictionary = faction_value
+		faction_lines += "- %s · 势%d 资%d 心%d\n" % [
+			str(faction.get("name", "无名势力")), int(faction.get("influence", 0)),
+			int(faction.get("resources", 0)), int(faction.get("cohesion", 0))]
+	if faction_lines.is_empty():
+		faction_lines = "- 山门旗号尚未被年史认出。\n"
+	var npc_lines := ""
+	var npcs: Array = world.get("npcs", [])
+	var visible_npcs := 0
+	for npc_value in npcs:
+		var npc: Dictionary = npc_value
+		if not bool(npc.get("alive", true)):
+			continue
+		npc_lines += "- %s · %s · %d岁 · %s\n" % [
+			str(npc.get("name", "无名客")), str(npc.get("realm", "凡人")),
+			int(npc.get("age", 0)), _faction_name(str(npc.get("faction_id", "")), factions)]
+		visible_npcs += 1
+		if visible_npcs >= 4:
+			break
+	if npc_lines.is_empty():
+		npc_lines = "- 旧人皆已隐入年史。\n"
 	return "[color=#%s][font_size=22][b]%s[/b][/font_size][/color]\n\n%s\n\n" % [
 		era_accent.to_html(false), current_era, era_line] + \
-		"[color=#d9c98f][b]眼前要事[/b][/color]\n" + \
-		"在寿元耗尽前推进境界，也别让每次选择只剩数值。因果、道心和人情会改变命途罗盘。\n\n" + \
+		"[color=#d9c98f][b]天地脉象[/b][/color]\n" + \
+		"世界第%d年 · 灵潮%d · 稳定%d · 纪元压力%d\n%s\n\n" % [
+			int(world.get("year", 1)), int(world.get("qi_tide", 50)),
+			int(world.get("stability", 65)), int(world.get("era_pressure", 0)), annual_line] + \
+		"[color=#d9c98f][b]势力消长[/b][/color]\n" + faction_lines + "\n" + \
+		"[color=#d9c98f][b]同世之人[/b][/color]\n" + npc_lines + "\n" + \
 		"[color=#d9c98f][b]旧玉近录[/b][/color]\n" + memory_lines + \
-		"\n[color=#8fbfb7][b]迁移状态[/b][/color]\n" + \
-		"Godot 主版本已接管界面、动态背景、事件与可靠存档；世界系统和本地 AI 将在同一运行时中继续扩展。"
+		"\n[color=#8fbfb7][b]因果不会清零[/b][/color]\n" + \
+		"你闭关的一年也是众生的一年；旧人会老去，盟约会变质，前世留下的缺口仍在山河中。"
+
+
+func _faction_name(faction_id: String, factions: Array) -> String:
+	for faction_value in factions:
+		var faction: Dictionary = faction_value
+		if str(faction.get("id", "")) == faction_id:
+			return str(faction.get("name", "无所属"))
+	return "无所属"
 
 
 func _meditate() -> void:
-	var gain := 28 + int(player.roots.reduce(func(total, value): return total + int(value), 0)) / 5
-	player.exp = min(140, int(player.exp) + gain)
-	player.mp = min(int(player.max_mp), int(player.mp) + 5)
-	player.age = int(player.age) + 1
-	feedback = "你在%s的灵机中运转周天，修为 +%d。" % [current_era, gain]
+	var result: Dictionary = CultivationScript.meditate(run_state)
+	if not bool(result.get("ok", false)):
+		if str(result.get("code", "")) == "life_ended":
+			_end_current_life(_current_death_cause())
+			return
+		feedback = str(result.get("message", "此刻无法运转周天。"))
+		_show_game()
+		return
+	_sync_state_views()
+	var gain := int(result.get("gain", 0))
+	var level_note := "，连破%d层" % int(result.get("levels_gained", 0)) if int(result.get("levels_gained", 0)) > 0 else ""
+	feedback = "你在%s的灵机中运转周天，修为 +%d%s。" % [current_era, gain, level_note]
 	_add_memory("第%d年，你在%s打坐，命途罗盘的%s位微微发亮。" % [
-		int(player.age) - 15, current_era, ["火", "水", "木", "金", "土"][randi() % 5]])
+		int((run_state.world as Dictionary).get("year", 1)), current_era,
+		["火", "水", "木", "金", "土"][int(run_state.rng_cursor) % 5]])
+	if bool(result.get("dead", false)):
+		_end_current_life("寿元耗尽")
+		return
 	_save_current_state("周天已自动封存")
 	_show_game()
 
 
 func _breakthrough() -> void:
-	if int(player.exp) < 100:
-		feedback = "修为尚差 %d，瓶颈没有真正显形。" % (100 - int(player.exp))
+	var result: Dictionary = CultivationScript.attempt_breakthrough(run_state)
+	if not bool(result.get("ok", false)):
+		if str(result.get("code", "")) == "life_ended":
+			_end_current_life(_current_death_cause())
+			return
+		feedback = str(result.get("message", "瓶颈尚未真正显形。"))
 	else:
-		player.exp = int(player.exp) - 100
-		player.level = int(player.level) + 1
-		player.max_hp = int(player.max_hp) + 12
-		player.hp = int(player.max_hp)
-		player.dao_heart = int(player.dao_heart) + 2
-		feedback = "旧玉映出五道流光，你踏入凡人 %d 层。" % int(player.level)
-		_add_memory("一次突破改变了五行流向，道心更稳。")
-		_save_current_state("突破已自动封存")
+		_sync_state_views()
+		if bool(result.get("success", false)):
+			feedback = "旧玉映出五道流光，你踏入%s。" % str(result.get("realm", player.realm))
+			_add_memory("一次大境突破改变了五行流向，道心与寿元一同重铸。")
+		else:
+			feedback = "破境失败。经脉受创，修为散去一半；天命从不保证努力必有回报。"
+			_add_memory("一次破境失败留下了真实伤势，也让你看清当前道途的缺口。")
+		if bool(result.get("dead", false)):
+			_end_current_life("破境反噬")
+			return
+		_save_current_state("破境结果已自动封存")
 	_show_game()
 
 
 func _open_adventure() -> void:
+	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
 	var candidates: Array = events.filter(func(event_data): return str(event_data.get("era", "")) == current_era)
 	if candidates.is_empty():
 		candidates = events
@@ -650,11 +742,14 @@ func _build_event_choices() -> Control:
 	for index in range(choices.size()):
 		var choice: Dictionary = choices[index]
 		var delta_hint := _format_delta_hint(choice.get("deltas", {}))
+		var unavailable_reason := _choice_unavailable_reason(choice)
 		var choice_button := _button("%d  %s\n     %s" % [index + 1, str(choice.get("text", "沉默")), delta_hint],
 			_resolve_choice.bind(index), false)
 		choice_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		choice_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		choice_button.custom_minimum_size.y = 88
+		choice_button.disabled = not unavailable_reason.is_empty()
+		choice_button.tooltip_text = unavailable_reason
 		column.add_child(choice_button)
 	return panel
 
@@ -664,15 +759,43 @@ func _resolve_choice(index: int) -> void:
 	if index < 0 or index >= choices.size():
 		return
 	var choice: Dictionary = choices[index]
+	var unavailable_reason := _choice_unavailable_reason(choice)
+	if not unavailable_reason.is_empty():
+		feedback = unavailable_reason
+		_show_event()
+		return
 	var deltas: Dictionary = choice.get("deltas", {})
 	for key in deltas.keys():
 		if player.has(key):
 			player[key] = int(player[key]) + int(deltas[key])
+	var path_deltas: Dictionary = choice.get("path_deltas", {})
+	var path: Dictionary = player.get("path", {})
+	for path_id in path_deltas.keys():
+		if path.has(path_id):
+			path[path_id] = int(path[path_id]) + int(path_deltas[path_id])
+	player["path"] = path
 	player.hp = clamp(int(player.hp), 0, int(player.max_hp))
 	player.exp = max(0, int(player.exp))
+	player.total_events = int(player.get("total_events", 0)) + 1
 	feedback = str(choice.get("outcome", "因果落定，旧玉没有给出解释。"))
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
+	var event_id := str(current_event.get("id", ""))
+	var story: Dictionary = run_state.get("story", {})
+	if not event_id.is_empty():
+		var completed: Array = story.get("completed_event_ids", [])
+		if not completed.has(event_id):
+			completed.append(event_id)
+		story["completed_event_ids"] = completed
+		var life_events: Array = story.get("life_event_ids", [])
+		life_events.append(event_id)
+		story["life_event_ids"] = life_events
+	run_state["story"] = story
+	run_state["player"] = player
+	CultivationScript.advance_time(run_state, 1)
 	current_event = {}
+	if CultivationScript.is_dead(run_state):
+		_end_current_life("因果事件中的重创")
+		return
 	_save_current_state("因果抉择已自动封存")
 	_show_game()
 
@@ -690,10 +813,27 @@ func _format_delta_hint(deltas: Dictionary) -> String:
 	return "可能回响 · " + "  ".join(parts) if not parts.is_empty() else "结果不会立刻显形"
 
 
+func _choice_unavailable_reason(choice: Dictionary) -> String:
+	var deltas: Dictionary = choice.get("deltas", {})
+	var resource_names := {"spirit_stones": "灵石", "pills": "丹药"}
+	for resource_id in resource_names.keys():
+		var delta := int(deltas.get(resource_id, 0))
+		if delta < 0 and int(player.get(resource_id, 0)) + delta < 0:
+			return "%s不足，无法作出这个选择。" % str(resource_names[resource_id])
+	return ""
+
+
 func _cycle_era() -> void:
 	var index := ERA_ORDER.find(current_era)
-	current_era = ERA_ORDER[(index + 1) % ERA_ORDER.size()]
-	feedback = "天机镜越过一层纪元尘埃：%s正在覆盖旧日山河。" % current_era
+	var next_era: String = str(ERA_ORDER[(index + 1) % ERA_ORDER.size()])
+	var transition: Dictionary = WorldSimulationScript.transition_era(
+		run_state, GameStateScript.era_id_for_name(next_era))
+	if not bool(transition.get("ok", false)):
+		feedback = "天机镜中的纪元裂隙没有稳定下来。"
+		_show_game()
+		return
+	_sync_state_views()
+	feedback = "天机镜越过一层纪元尘埃：%s覆盖旧日山河，旧人与新势力同时留在年史中。" % current_era
 	_add_memory("旧玉观测到%s的一段可能未来。" % current_era)
 	_save_current_state("纪元变化已自动封存")
 	_show_game()
@@ -705,13 +845,8 @@ func _manual_save() -> void:
 
 
 func _save_current_state(reason: String) -> bool:
-	var snapshot := {
-		"current_era": current_era,
-		"player": player.duplicate(true),
-		"recent_memories": recent_memories.duplicate(),
-		"feedback": feedback,
-	}
-	var save_result: Dictionary = save_service.call("save_game", snapshot)
+	_commit_state_views()
+	var save_result: Dictionary = save_service.call("save_game", run_state)
 	if bool(save_result.get("ok", false)):
 		save_notice = "%s · %s" % [reason, str(save_result.get("message", "已保存"))]
 		return true
@@ -723,6 +858,99 @@ func _add_memory(text: String) -> void:
 	recent_memories.append(text)
 	while recent_memories.size() > 12:
 		recent_memories.pop_front()
+	run_state["recent_memories"] = recent_memories.duplicate()
+
+
+func _end_current_life(cause: String) -> void:
+	_commit_state_views()
+	var result: Dictionary = ReincarnationScript.close_life(run_state, cause)
+	if not bool(result.get("ok", false)) and str(result.get("code", "")) != "already_closed":
+		feedback = "旧玉无法封存此世，轮回暂时停在门外。"
+		_show_game()
+		return
+	_sync_state_views()
+	_save_current_state("此世终章已封存")
+	_show_reincarnation()
+
+
+func _current_death_cause() -> String:
+	if int(player.get("hp", 0)) <= 0:
+		return "重伤不治"
+	return "寿元耗尽"
+
+
+func _show_reincarnation() -> void:
+	state = ScreenState.REINCARNATION
+	_clear_screen()
+	_set_background(MENU_SCENE)
+	var legacy: Dictionary = run_state.get("legacy", {})
+	var lives: Array = legacy.get("past_lives", [])
+	if lives.is_empty():
+		if bool(run_state.get("life_closed", false)):
+			run_state["life_closed"] = false
+			_end_current_life("旧档终章补录")
+			return
+		_show_menu()
+		return
+	var last_life: Dictionary = lives[-1]
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.alignment = BoxContainer.ALIGNMENT_CENTER
+	page.add_theme_constant_override("separation", 16)
+	screen_host.add_child(page)
+	var card := _panel(0.86, Color("d7bd75"))
+	card.custom_minimum_size = Vector2(760, 560)
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	page.add_child(card)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 14)
+	card.add_child(column)
+	column.add_child(_label("此世已尽，道痕未灭", 34, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("第%d世 · %s · %s %d层 · 享年%d" % [
+		int(last_life.get("generation", 1)), str(last_life.get("name", "无名")),
+		str(last_life.get("realm", "凡人")), int(last_life.get("level", 1)),
+		int(last_life.get("age_at_death", 16))],
+		18, Color(0.86, 0.87, 0.85), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("死因 · %s\n道途归结 · %s" % [
+		str(last_life.get("cause_of_death", "命数已尽")), str(last_life.get("dao_name", "本我大道"))],
+		17, Color(0.78, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_divider())
+	column.add_child(_section_title("将被下一世听见的回响"))
+	var echoes: Array = last_life.get("echoes", [])
+	if echoes.is_empty():
+		column.add_child(_label("这一世没有留下显眼遗产，但世界仍记得你曾来过。", 16,
+			Color(0.75, 0.78, 0.79), HORIZONTAL_ALIGNMENT_CENTER))
+	else:
+		for echo in echoes.slice(0, 4):
+			var echo_data: Dictionary = echo
+			var echo_label := _label("• %s · %s" % [echo_data.get("name", "无名回响"), echo_data.get("description", "")],
+				16, Color("d9d2bb"))
+			echo_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			column.add_child(echo_label)
+	column.add_child(_spacer(6))
+	var name_input := LineEdit.new()
+	name_input.name = "NextLifeNameInput"
+	name_input.placeholder_text = "为第%d世写下道号" % (int(run_state.get("generation", 1)) + 1)
+	name_input.max_length = 32
+	name_input.custom_minimum_size.y = 48
+	_style_line_edit(name_input)
+	column.add_child(name_input)
+	column.add_child(_button("步入下一世", _begin_next_life.bind(name_input), true))
+	column.add_child(_label("世界不会重置：旧人会老去，宗门会兴衰，未竟因果会换一副面孔回来。",
+		14, Color(0.72, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
+	name_input.grab_focus()
+
+
+func _begin_next_life(name_input: LineEdit) -> void:
+	var result: Dictionary = ReincarnationScript.begin_next_life(run_state, name_input.text)
+	if not bool(result.get("ok", false)):
+		feedback = "轮回尚未准备好：%s" % str(result.get("code", "unknown"))
+		_show_reincarnation()
+		return
+	_sync_state_views()
+	current_event = {}
+	_save_current_state("新一世已立档")
+	_show_game()
 
 
 func _local_model_ready() -> bool:
@@ -885,3 +1113,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				feedback = "你暂时离开这段因果，但它没有真正结束。"
 				current_event = {}
 				_show_game()
+		ScreenState.REINCARNATION:
+			if event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
+				var input := screen_host.find_child("NextLifeNameInput", true, false) as LineEdit
+				if input:
+					_begin_next_life(input)

@@ -1,6 +1,8 @@
 class_name SaveService
 extends RefCounted
 
+const GameStateScript = preload("res://scripts/game_state.gd")
+
 ## Versioned, checksummed and atomically replaced JSON saves.
 ##
 ## The payload is stored as a JSON string inside the envelope.  This keeps the
@@ -8,7 +10,8 @@ extends RefCounted
 ## Development builds store beside the project on D:, while exported builds
 ## store beside the executable.  We deliberately never fall back to AppData.
 
-const SAVE_VERSION: int = 1
+const SAVE_VERSION: int = 2
+const MIN_READABLE_VERSION: int = 1
 const FORMAT_ID := "wendao-changsheng-save"
 const VALID_ERAS := [
 	"古典修仙纪", "灵机蒸汽纪", "星穹道网纪", "废土返道纪", "末法裂变纪", "仙朝鼎盛纪",
@@ -16,6 +19,7 @@ const VALID_ERAS := [
 const PLAYER_INT_FIELDS := [
 	"level", "exp", "hp", "max_hp", "mp", "max_mp", "age", "lifespan",
 	"spirit_stones", "pills", "karma", "dao_heart", "reputation", "enmity",
+	"realm_index", "attack", "defense", "total_events", "battles_won", "npcs_met",
 ]
 
 var _slot_name: String
@@ -166,7 +170,8 @@ func _read_save(path: String) -> Dictionary:
 	var envelope: Dictionary = parsed
 	if str(envelope.get("format", "")) != FORMAT_ID:
 		return _failure("invalid_format", "这不是问道长生存档。")
-	if int(envelope.get("version", -1)) != SAVE_VERSION:
+	var stored_version := int(envelope.get("version", -1))
+	if stored_version < MIN_READABLE_VERSION or stored_version > SAVE_VERSION:
 		return _failure("unsupported_version", "存档版本暂不受支持。")
 	var payload_value = envelope.get("payload", null)
 	var checksum_value = envelope.get("sha256", null)
@@ -184,18 +189,25 @@ func _read_save(path: String) -> Dictionary:
 	var normalized := _normalize_snapshot(state_value)
 	if not bool(normalized.get("ok", false)):
 		return normalized
-	return {
+	var result := {
 		"ok": true,
 		"code": "loaded",
 		"state": normalized.get("state", {}),
 		"saved_at_unix": int(envelope.get("saved_at_unix", 0)),
 	}
+	if stored_version < SAVE_VERSION:
+		result["migrated_from_version"] = stored_version
+	return result
 
 
 func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
-	var era_value = snapshot.get("current_era", null)
-	var player_value = snapshot.get("player", null)
-	var memories_value = snapshot.get("recent_memories", null)
+	var preflight := _preflight_snapshot(snapshot)
+	if not bool(preflight.get("ok", false)):
+		return preflight
+	var upgraded := GameStateScript.ensure_v2(snapshot)
+	var era_value = upgraded.get("current_era", null)
+	var player_value = upgraded.get("player", null)
+	var memories_value = upgraded.get("recent_memories", null)
 	if not era_value is String or str(era_value).strip_edges().is_empty():
 		return _failure("invalid_state", "存档缺少有效时代。")
 	if not VALID_ERAS.has(str(era_value)):
@@ -208,25 +220,33 @@ func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
 	var source_player: Dictionary = player_value
 	var name_value = source_player.get("name", null)
 	var realm_value = source_player.get("realm", null)
+	var realm_id_value = source_player.get("realm_id", null)
 	var roots_value = source_player.get("roots", null)
 	if not name_value is String or str(name_value).strip_edges().is_empty():
 		return _failure("invalid_state", "存档中的道号无效。")
 	if not realm_value is String or str(realm_value).strip_edges().is_empty():
 		return _failure("invalid_state", "存档中的境界无效。")
+	if not realm_id_value is String or not GameStateScript.REALM_IDS.has(str(realm_id_value)):
+		return _failure("invalid_state", "存档中的境界 ID 无效。")
 	if not roots_value is Array or roots_value.size() != 5:
 		return _failure("invalid_state", "存档中的五行灵根无效。")
 
 	var normalized_player := {
 		"name": str(name_value).strip_edges().left(32),
 		"realm": str(realm_value).strip_edges().left(32),
+		"realm_id": str(realm_id_value),
 	}
 	for field in PLAYER_INT_FIELDS:
 		if not source_player.has(field) or not _is_number(source_player[field]):
 			return _failure("invalid_state", "存档角色字段 %s 无效。" % field)
 		normalized_player[field] = int(source_player[field])
 
-	if normalized_player.level < 1 or normalized_player.max_hp < 1 or normalized_player.max_mp < 0:
+	if normalized_player.level < 1 or normalized_player.level > 9 or normalized_player.max_hp < 1 or normalized_player.max_mp < 0:
 		return _failure("invalid_state", "存档中的境界或生命上限无效。")
+	if normalized_player.realm_index < 0 or normalized_player.realm_index >= GameStateScript.REALM_IDS.size():
+		return _failure("invalid_state", "存档中的境界序号无效。")
+	if str(GameStateScript.REALM_IDS[normalized_player.realm_index]) != normalized_player.realm_id:
+		return _failure("invalid_state", "存档中的境界 ID 与序号不一致。")
 	if normalized_player.age < 0 or normalized_player.lifespan < 1:
 		return _failure("invalid_state", "存档中的寿元无效。")
 	if normalized_player.exp < 0 or normalized_player.spirit_stones < 0 or normalized_player.pills < 0:
@@ -243,6 +263,23 @@ func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
 			return _failure("invalid_state", "存档中的灵根数值越界。")
 		normalized_roots.append(root_number)
 	normalized_player["roots"] = normalized_roots
+	var path_value = source_player.get("path", null)
+	if not path_value is Dictionary:
+		return _failure("invalid_state", "存档中的道途维度无效。")
+	var normalized_path := {}
+	for path_id in GameStateScript.PATH_DIMENSIONS:
+		if not path_value.has(path_id) or not _is_number(path_value[path_id]):
+			return _failure("invalid_state", "存档道途字段 %s 无效。" % path_id)
+		normalized_path[path_id] = clampi(int(path_value[path_id]), -100000, 100000)
+	normalized_player["path"] = normalized_path
+	var family_value = source_player.get("family", {})
+	if not family_value is Dictionary:
+		return _failure("invalid_state", "存档中的家世状态无效。")
+	normalized_player["family"] = (family_value as Dictionary).duplicate(true)
+	var statuses_value = source_player.get("statuses", [])
+	if not statuses_value is Array:
+		return _failure("invalid_state", "存档中的角色状态列表无效。")
+	normalized_player["statuses"] = (statuses_value as Array).duplicate().slice(-64)
 
 	var normalized_memories: Array[String] = []
 	for memory_value in memories_value:
@@ -254,19 +291,137 @@ func _normalize_snapshot(snapshot: Dictionary) -> Dictionary:
 	while normalized_memories.size() > 64:
 		normalized_memories.pop_front()
 
-	var feedback_value = snapshot.get("feedback", "旧玉从沉眠中醒来。")
+	var feedback_value = upgraded.get("feedback", "旧玉从沉眠中醒来。")
 	if not feedback_value is String:
 		feedback_value = "旧玉从沉眠中醒来。"
+	var current_era_id := str(upgraded.get("current_era_id", ""))
+	if not GameStateScript.ERA_IDS.has(current_era_id):
+		return _failure("invalid_state", "存档中的时代 ID 无效。")
+	for required_dictionary in ["legacy", "world", "inventory", "story"]:
+		if not upgraded.get(required_dictionary, null) is Dictionary:
+			return _failure("invalid_state", "存档缺少 %s 状态。" % required_dictionary)
+	var normalized_state := upgraded.duplicate(true)
+	normalized_state["schema_version"] = SAVE_VERSION
+	normalized_state["run_id"] = str(upgraded.get("run_id", "wendao-imported")).left(96)
+	normalized_state["world_seed"] = int(upgraded.get("world_seed", 1)) & 0x7fffffff
+	normalized_state["rng_cursor"] = clampi(int(upgraded.get("rng_cursor", 0)), 0, 0x7fffffff)
+	normalized_state["generation"] = clampi(int(upgraded.get("generation", 1)), 1, 100000)
+	normalized_state["turn"] = clampi(int(upgraded.get("turn", 0)), 0, 0x7fffffff)
+	normalized_state["current_era_id"] = current_era_id
+	normalized_state["current_era"] = str(era_value).strip_edges().left(32)
+	normalized_state["player"] = normalized_player
+	normalized_state["recent_memories"] = normalized_memories
+	normalized_state["feedback"] = str(feedback_value).left(1024)
+	normalized_state["life_closed"] = bool(upgraded.get("life_closed", false))
+	_normalize_nested_state(normalized_state)
 	return {
 		"ok": true,
 		"code": "valid",
-		"state": {
-			"current_era": str(era_value).strip_edges().left(32),
-			"player": normalized_player,
-			"recent_memories": normalized_memories,
-			"feedback": str(feedback_value).left(1024),
-		},
+		"state": normalized_state,
 	}
+
+
+func _preflight_snapshot(snapshot: Dictionary) -> Dictionary:
+	var schema_value = snapshot.get("schema_version", 1)
+	if not _is_number(schema_value):
+		return _failure("invalid_state", "存档版本字段无效。")
+	var schema_version := int(schema_value)
+	if schema_version < MIN_READABLE_VERSION or schema_version > SAVE_VERSION:
+		return _failure("invalid_state", "存档状态版本暂不受支持。")
+
+	var era_value = snapshot.get("current_era", null)
+	if not era_value is String or not VALID_ERAS.has(str(era_value)):
+		return _failure("invalid_state", "存档中的时代无效或不受支持。")
+	var player_value = snapshot.get("player", null)
+	if not player_value is Dictionary:
+		return _failure("invalid_state", "存档缺少有效角色状态。")
+	var memories_value = snapshot.get("recent_memories", null)
+	if not memories_value is Array:
+		return _failure("invalid_state", "存档中的近期记忆列表无效。")
+
+	var source_player: Dictionary = player_value
+	var name_value = source_player.get("name", null)
+	var realm_value = source_player.get("realm", null)
+	if not name_value is String or str(name_value).strip_edges().is_empty():
+		return _failure("invalid_state", "存档中的道号格式无效。")
+	if not realm_value is String or str(realm_value).strip_edges().is_empty():
+		return _failure("invalid_state", "存档中的境界名称格式无效。")
+	var realm_name := str(realm_value).strip_edges()
+	if not GameStateScript.REALM_NAMES.has(realm_name) and not GameStateScript.LEGACY_REALM_ALIASES.has(realm_name):
+		return _failure("invalid_state", "存档中的境界名称不受支持。")
+	var roots_value = source_player.get("roots", null)
+	if not roots_value is Array or roots_value.size() != 5:
+		return _failure("invalid_state", "存档中的五行灵根格式无效。")
+	for root_value in roots_value:
+		if not _is_number(root_value):
+			return _failure("invalid_state", "存档中的五行灵根数值类型无效。")
+	for memory_value in memories_value:
+		if not memory_value is String:
+			return _failure("invalid_state", "存档中的近期记忆内容无效。")
+	for field in PLAYER_INT_FIELDS:
+		if source_player.has(field) and not _is_number(source_player[field]):
+			return _failure("invalid_state", "存档角色字段 %s 类型无效。" % field)
+	if source_player.has("path") and not source_player.path is Dictionary:
+		return _failure("invalid_state", "存档中的道途维度格式无效。")
+	if source_player.has("family") and not source_player.family is Dictionary:
+		return _failure("invalid_state", "存档中的家世状态格式无效。")
+	if source_player.has("statuses") and not source_player.statuses is Array:
+		return _failure("invalid_state", "存档中的角色状态列表格式无效。")
+
+	if schema_version >= 2:
+		var era_id := str(snapshot.get("current_era_id", ""))
+		if not GameStateScript.ERA_IDS.has(era_id) or str(GameStateScript.ERA_NAMES[era_id]) != str(era_value):
+			return _failure("invalid_state", "存档中的时代 ID 与时代名称不一致。")
+		for required_dictionary in ["legacy", "world", "inventory", "story"]:
+			if not snapshot.get(required_dictionary, null) is Dictionary:
+				return _failure("invalid_state", "存档缺少有效的 %s 状态。" % required_dictionary)
+		var realm_id := str(source_player.get("realm_id", ""))
+		var realm_index_value = source_player.get("realm_index", null)
+		if not _is_number(realm_index_value):
+			return _failure("invalid_state", "存档中的境界序号无效。")
+		var realm_index := int(realm_index_value)
+		if not GameStateScript.REALM_IDS.has(realm_id) or realm_index < 0 or realm_index >= GameStateScript.REALM_IDS.size():
+			return _failure("invalid_state", "存档中的境界标识无效。")
+		if str(GameStateScript.REALM_IDS[realm_index]) != realm_id:
+			return _failure("invalid_state", "存档中的境界 ID 与序号冲突。")
+		if str(GameStateScript.REALM_NAMES[realm_index]) != realm_name:
+			return _failure("invalid_state", "存档中的境界名称与稳定 ID 冲突。")
+	return {"ok": true, "code": "preflight_valid"}
+
+
+func _normalize_nested_state(state: Dictionary) -> void:
+	var legacy: Dictionary = state.legacy
+	legacy["generation"] = clampi(int(legacy.get("generation", state.generation)), 1, 100000)
+	legacy["past_lives"] = _bounded_array(legacy.get("past_lives", []), 64)
+	legacy["inherited_echoes"] = _bounded_array(legacy.get("inherited_echoes", []), 16)
+	legacy["unresolved_threads"] = _bounded_array(legacy.get("unresolved_threads", []), 64)
+	state["legacy"] = legacy
+	var world: Dictionary = state.world
+	world["year"] = clampi(int(world.get("year", 1)), 1, 0x7fffffff)
+	world["age"] = clampi(int(world.get("age", 0)), 0, 0x7fffffff)
+	world["history"] = _bounded_array(world.get("history", []), 128)
+	world["factions"] = _bounded_array(world.get("factions", []), 128)
+	world["npcs"] = _bounded_array(world.get("npcs", []), 512)
+	world["active_events"] = _bounded_array(world.get("active_events", []), 64)
+	state["world"] = world
+	var inventory: Dictionary = state.inventory
+	inventory["items"] = _bounded_array(inventory.get("items", []), 512)
+	state["inventory"] = inventory
+	var story: Dictionary = state.story
+	story["completed_event_ids"] = _bounded_array(story.get("completed_event_ids", []), 2048)
+	story["life_event_ids"] = _bounded_array(story.get("life_event_ids", []), 512)
+	story["resolved_arcs"] = _bounded_array(story.get("resolved_arcs", []), 256)
+	story["unresolved_threads"] = _bounded_array(story.get("unresolved_threads", []), 128)
+	state["story"] = story
+
+
+func _bounded_array(value: Variant, maximum: int) -> Array:
+	if not value is Array:
+		return []
+	var items: Array = (value as Array).duplicate(true)
+	if items.size() > maximum:
+		items = items.slice(items.size() - maximum)
+	return items
 
 
 func _restore_primary_from_backup() -> bool:

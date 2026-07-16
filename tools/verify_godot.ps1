@@ -15,6 +15,12 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 $env:TEMP = $TempDir
 $env:TMP = $TempDir
 
+Write-Host "Validating authored event path deltas..."
+& python (Join-Path $PSScriptRoot "verify_event_paths.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Event path validation failed with exit code $LASTEXITCODE."
+}
+
 if (-not $NoPrepare) {
     & (Join-Path $PSScriptRoot "prepare_godot.ps1") -SkipTemplates
     if ($LASTEXITCODE -ne 0) {
@@ -47,12 +53,14 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $testScripts = @(
+    "res://tests/game_state_test.gd",
+    "res://tests/world_simulation_test.gd",
     "res://tests/save_service_test.gd",
     "res://tests/main_save_integration_test.gd"
 )
 foreach ($testScript in $testScripts) {
     Write-Host "Running Godot regression: $testScript"
-    & $ConsolePath --headless --path $ProjectDir --script $testScript
+    & $ConsolePath --headless --path $ProjectDir --quit-after 600 --script $testScript
     if ($LASTEXITCODE -ne 0) {
         throw "Godot regression failed ($testScript) with exit code $LASTEXITCODE."
     }

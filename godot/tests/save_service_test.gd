@@ -26,11 +26,33 @@ func _init() -> void:
 	_expect(bool(first_load.get("ok", false)), "首次读取应成功")
 	_expect(_loaded_name(first_load) == "测试道君", "道号应完整恢复")
 	_expect(_loaded_exp(first_load) == 37, "修为应完整恢复")
+	var first_state: Dictionary = first_load.get("state", {})
+	_expect(int(first_state.get("schema_version", 0)) == 2, "v1 形状快照保存后必须升级为 v2")
+	_expect(first_state.has("legacy") and first_state.has("world") and first_state.has("story"),
+		"升级后的存档必须包含完整运行时状态")
 
 	var second := _snapshot("第二世", "星穹道网纪", 88, ["第二次记忆", "星网回响"])
 	var second_save: Dictionary = service.call("save_game", second)
 	_expect(bool(second_save.get("ok", false)), "第二次保存应成功并产生备份")
 	_expect(FileAccess.file_exists(str(service.call("get_backup_path"))), "轮换后应存在备份")
+
+	_write_envelope(service, str(service.call("get_save_path")), {
+		"schema_version": 2,
+		"current_era": "不存在的纪元",
+		"player": "wrong type",
+		"recent_memories": [],
+	})
+	var structurally_recovered: Dictionary = service.call("load_game")
+	_expect(bool(structurally_recovered.get("ok", false)) and
+		bool(structurally_recovered.get("recovered", false)),
+		"哈希正确但结构损坏的主档必须安全回退备份，不能在迁移中崩溃")
+	_expect(_loaded_name(structurally_recovered) == "测试道君",
+		"结构损坏后的恢复必须使用上一份完整快照")
+	var unknown_era := _snapshot("错纪元", "不存在的纪元", 1, [])
+	var unknown_era_save: Dictionary = service.call("save_game", unknown_era)
+	_expect(not bool(unknown_era_save.get("ok", true)) and
+		str(unknown_era_save.get("code", "")) == "invalid_state",
+		"未知时代不得在校验前被静默改写成古典时代")
 
 	_write_text(str(service.call("get_save_path")), "{broken primary")
 	var recovered: Dictionary = service.call("load_game")
@@ -104,6 +126,18 @@ func _write_text(path: String, contents: String) -> void:
 		return
 	file.store_string(contents)
 	file.close()
+
+
+func _write_envelope(service: RefCounted, path: String, snapshot: Dictionary) -> void:
+	var payload := JSON.stringify(snapshot)
+	var envelope := {
+		"format": "wendao-changsheng-save",
+		"version": 2,
+		"saved_at_unix": 1,
+		"payload": payload,
+		"sha256": str(service.call("_sha256", payload)),
+	}
+	_write_text(path, JSON.stringify(envelope))
 
 
 func _expect(condition: bool, message: String) -> void:

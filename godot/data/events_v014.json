@@ -9,9 +9,9 @@
     "portrait_name": "门后之影",
     "portrait_title": "旧玉未曾记录的可能",
     "choices": [
-      {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}},
-      {"text": "以旧玉映照门后之影", "outcome": "两枚黑白旧玉在水面重叠，镜湖替你记下了一笔尚未发生的因果。", "deltas": {"karma": 7, "mp": -8}},
-      {"text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心。", "deltas": {"dao_heart": 6, "reputation": 2}}
+      {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}, "path_deltas": {"defiance": 3, "insight": 1}},
+      {"text": "以旧玉映照门后之影", "outcome": "两枚黑白旧玉在水面重叠，镜湖替你记下了一笔尚未发生的因果。", "deltas": {"karma": 7, "mp": -8}, "path_deltas": {"insight": 4, "bonds": 1}},
+      {"text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心。", "deltas": {"dao_heart": 6, "reputation": 2}, "path_deltas": {"ambition": 3, "insight": 2}}
     ]
   },
   {
@@ -24,9 +24,9 @@
     "portrait_name": "无照药师",
     "portrait_title": "灯河桥下 · 记忆换药",
     "choices": [
-      {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}},
-      {"text": "追问这些记忆的去处", "outcome": "你发现灯河下游有人把记忆炼成可伪造的前世凭证。", "deltas": {"reputation": 7, "enmity": 4}},
-      {"text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；其中一个与你同姓。", "deltas": {"karma": 11, "dao_heart": 5}}
+      {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}, "path_deltas": {"ambition": 3, "insight": 1}},
+      {"text": "追问这些记忆的去处", "outcome": "你发现灯河下游有人把记忆炼成可伪造的前世凭证。", "deltas": {"reputation": 7, "enmity": 4}, "path_deltas": {"insight": 3, "defiance": 2}},
+      {"text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；其中一个与你同姓。", "deltas": {"karma": 11, "dao_heart": 5}, "path_deltas": {"compassion": 4, "bonds": 2}}
     ]
   },
   {
@@ -39,9 +39,9 @@
     "portrait_name": "岑照炉",
     "portrait_title": "百炉城工造师",
     "choices": [
-      {"text": "进入炉心重排五行炉压", "outcome": "你让水火两路重新咬合，整列灵轨贴着断崖冲出云海。", "deltas": {"exp": 55, "dao_heart": 3, "hp": -12}},
-      {"text": "组织凡人与修士分舱疏散", "outcome": "最危险的一节车厢被主动舍弃，所有人都活了下来。", "deltas": {"karma": 9, "reputation": 8}},
-      {"text": "循敲击声追查破坏者", "outcome": "炉壁后没有邪修，只有一具被工坊除名的觉灵机偶。", "deltas": {"exp": 35, "enmity": 5, "spirit_stones": 8}}
+      {"text": "进入炉心重排五行炉压", "outcome": "你让水火两路重新咬合，整列灵轨贴着断崖冲出云海。", "deltas": {"exp": 55, "dao_heart": 3, "hp": -12}, "path_deltas": {"creation": 4, "insight": 1}},
+      {"text": "组织凡人与修士分舱疏散", "outcome": "最危险的一节车厢被主动舍弃，所有人都活了下来。", "deltas": {"karma": 9, "reputation": 8}, "path_deltas": {"compassion": 3, "bonds": 3}},
+      {"text": "循敲击声追查破坏者", "outcome": "炉壁后没有邪修，只有一具被工坊除名的觉灵机偶。", "deltas": {"exp": 35, "enmity": 5, "spirit_stones": 8}, "path_deltas": {"insight": 3, "defiance": 2}}
     ]
   },
   {
@@ -54,9 +54,9 @@
     "portrait_name": "岑照炉",
     "portrait_title": "她认得黑匣上的旧编号",
     "choices": [
-      {"text": "封场拆匣，验证神识来源", "outcome": "夹层里藏着一名学徒的完整神识，工坊终于承认曾把记忆当作耗材。", "deltas": {"karma": 10, "reputation": 10, "hp": -8}},
-      {"text": "替匣中残识赎身", "outcome": "残识转入养魂灯后，第一次说出了自己的名字。", "deltas": {"dao_heart": 7, "spirit_stones": -12}},
-      {"text": "追查第一位卖家", "outcome": "线索指向一座从城册上消失的地下灵械学宫。", "deltas": {"exp": 44, "enmity": 6}}
+      {"text": "封场拆匣，验证神识来源", "outcome": "夹层里藏着一名学徒的完整神识，工坊终于承认曾把记忆当作耗材。", "deltas": {"karma": 10, "reputation": 10, "hp": -8}, "path_deltas": {"defiance": 3, "insight": 2}},
+      {"text": "替匣中残识赎身", "outcome": "残识转入养魂灯后，第一次说出了自己的名字。", "deltas": {"dao_heart": 7, "spirit_stones": -12}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"text": "追查第一位卖家", "outcome": "线索指向一座从城册上消失的地下灵械学宫。", "deltas": {"exp": 44, "enmity": 6}, "path_deltas": {"insight": 3, "ambition": 2}}
     ]
   },
   {
@@ -69,9 +69,9 @@
     "portrait_name": "闻星渡",
     "portrait_title": "星网巡道使",
     "choices": [
-      {"text": "逐一关闭执念最深的节点", "outcome": "旧人格终于停止轮转，最后一人把旧玉坐标托付给你。", "deltas": {"karma": 12, "dao_heart": 6, "hp": -10}},
-      {"text": "提取残识共同修订的心法", "outcome": "万次失败叠成一条可行周天，却也留下了不属于你的梦。", "deltas": {"exp": 62, "enmity": 3}},
-      {"text": "保留云海，公开研究权限", "outcome": "坐化者第一次拥有旁听自己历史的人。", "deltas": {"reputation": 9, "spirit_stones": 7}}
+      {"text": "逐一关闭执念最深的节点", "outcome": "旧人格终于停止轮转，最后一人把旧玉坐标托付给你。", "deltas": {"karma": 12, "dao_heart": 6, "hp": -10}, "path_deltas": {"compassion": 3, "bonds": 2}},
+      {"text": "提取残识共同修订的心法", "outcome": "万次失败叠成一条可行周天，却也留下了不属于你的梦。", "deltas": {"exp": 62, "enmity": 3}, "path_deltas": {"insight": 4, "ambition": 2}},
+      {"text": "保留云海，公开研究权限", "outcome": "坐化者第一次拥有旁听自己历史的人。", "deltas": {"reputation": 9, "spirit_stones": 7}, "path_deltas": {"creation": 3, "bonds": 2}}
     ]
   },
   {
@@ -84,9 +84,9 @@
     "portrait_name": "闻星渡",
     "portrait_title": "她只有一次覆写权限",
     "choices": [
-      {"text": "强闯阵列中枢覆写坐标", "outcome": "天剑在云外偏转，你的神识也被反制削去一角。", "deltas": {"exp": 68, "reputation": 11, "hp": -20}},
-      {"text": "调动灵轨先撤离全城", "outcome": "最后一艘飞舟离地时，剑光擦过空城屋脊。", "deltas": {"karma": 14, "reputation": 7}},
-      {"text": "相信剑阵判定并寻找地下源头", "outcome": "地下确有魔巢，但城市也为你的迟疑付出了代价。", "deltas": {"exp": 49, "karma": -10, "dao_heart": -2}}
+      {"text": "强闯阵列中枢覆写坐标", "outcome": "天剑在云外偏转，你的神识也被反制削去一角。", "deltas": {"exp": 68, "reputation": 11, "hp": -20}, "path_deltas": {"defiance": 4, "creation": 2}},
+      {"text": "调动灵轨先撤离全城", "outcome": "最后一艘飞舟离地时，剑光擦过空城屋脊。", "deltas": {"karma": 14, "reputation": 7}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"text": "相信剑阵判定并寻找地下源头", "outcome": "地下确有魔巢，但城市也为你的迟疑付出了代价。", "deltas": {"exp": 49, "karma": -10, "dao_heart": -2}, "path_deltas": {"insight": 3, "ambition": 2, "compassion": -1}}
     ]
   },
   {
@@ -99,9 +99,9 @@
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人",
     "choices": [
-      {"text": "把战争机偶引入雷暴区", "outcome": "车队换来整夜路程，而机偶从此记住了你的灵压。", "deltas": {"karma": 10, "exp": 46, "hp": -16}},
-      {"text": "用残阵和车架修复旧桥", "outcome": "最后一辆药种车驶过时，桥梁在你身后断成两截。", "deltas": {"reputation": 9, "spirit_stones": 6, "hp": -10}},
-      {"text": "只护送决定聚落未来的药种", "outcome": "药种活了下来，留在雨里的人却成为旧玉不肯淡去的一页。", "deltas": {"exp": 36, "karma": -9, "dao_heart": -3}}
+      {"text": "把战争机偶引入雷暴区", "outcome": "车队换来整夜路程，而机偶从此记住了你的灵压。", "deltas": {"karma": 10, "exp": 46, "hp": -16}, "path_deltas": {"defiance": 3, "compassion": 2}},
+      {"text": "用残阵和车架修复旧桥", "outcome": "最后一辆药种车驶过时，桥梁在你身后断成两截。", "deltas": {"reputation": 9, "spirit_stones": 6, "hp": -10}, "path_deltas": {"creation": 4, "bonds": 2}},
+      {"text": "只护送决定聚落未来的药种", "outcome": "药种活了下来，留在雨里的人却成为旧玉不肯淡去的一页。", "deltas": {"exp": 36, "karma": -9, "dao_heart": -3}, "path_deltas": {"ambition": 3, "insight": 2, "compassion": -2}}
     ]
   },
   {
@@ -114,9 +114,9 @@
     "portrait_name": "迟药青",
     "portrait_title": "无照灵根医师",
     "choices": [
-      {"text": "抢救账册，重算真实份额", "outcome": "世家暗扣的灵息被迫归还，配给站第一次向所有人公开库存。", "deltas": {"reputation": 12, "karma": 9, "enmity": 6}},
-      {"text": "先稳住镇压阵与人群", "outcome": "没有人死在阵下，但最愤怒的人也记住了你的脸。", "deltas": {"exp": 39, "reputation": 4, "karma": -3}},
-      {"text": "带底层修士夺取隐藏储罐", "outcome": "今夜人人分到灵息，明日整座城却要面对空仓。", "deltas": {"spirit_stones": 10, "reputation": 8, "karma": -7}}
+      {"text": "抢救账册，重算真实份额", "outcome": "世家暗扣的灵息被迫归还，配给站第一次向所有人公开库存。", "deltas": {"reputation": 12, "karma": 9, "enmity": 6}, "path_deltas": {"insight": 3, "defiance": 2}},
+      {"text": "先稳住镇压阵与人群", "outcome": "没有人死在阵下，但最愤怒的人也记住了你的脸。", "deltas": {"exp": 39, "reputation": 4, "karma": -3}, "path_deltas": {"bonds": 3, "compassion": 1, "defiance": -1}},
+      {"text": "带底层修士夺取隐藏储罐", "outcome": "今夜人人分到灵息，明日整座城却要面对空仓。", "deltas": {"spirit_stones": 10, "reputation": 8, "karma": -7}, "path_deltas": {"defiance": 4, "bonds": 2, "insight": -1}}
     ]
   },
   {
@@ -129,9 +129,9 @@
     "portrait_name": "迟药青",
     "portrait_title": "她不相信那份自愿契约",
     "choices": [
-      {"text": "查明自愿者背后的灵息债", "outcome": "所谓自愿只是债务换了名字，你替他们解开了强制条款。", "deltas": {"karma": 12, "reputation": 8, "enmity": 5}},
-      {"text": "以草木灵性改写药引阵式", "outcome": "寿元消耗降到原来的三成，配方被刻进公共药碑。", "deltas": {"exp": 57, "dao_heart": 4, "hp": -9}},
-      {"text": "为自己买下一剂", "outcome": "瓶颈短暂松动，陌生人的衰老记忆也留在了你梦里。", "deltas": {"exp": 66, "spirit_stones": -12, "dao_heart": -4}}
+      {"text": "查明自愿者背后的灵息债", "outcome": "所谓自愿只是债务换了名字，你替他们解开了强制条款。", "deltas": {"karma": 12, "reputation": 8, "enmity": 5}, "path_deltas": {"insight": 3, "compassion": 3}},
+      {"text": "以草木灵性改写药引阵式", "outcome": "寿元消耗降到原来的三成，配方被刻进公共药碑。", "deltas": {"exp": 57, "dao_heart": 4, "hp": -9}, "path_deltas": {"creation": 4, "compassion": 2}},
+      {"text": "为自己买下一剂", "outcome": "瓶颈短暂松动，陌生人的衰老记忆也留在了你梦里。", "deltas": {"exp": 66, "spirit_stones": -12, "dao_heart": -4}, "path_deltas": {"ambition": 4, "compassion": -2, "bonds": -1}}
     ]
   },
   {
@@ -144,9 +144,9 @@
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 她握着两套预案",
     "choices": [
-      {"text": "托住下城承重环", "outcome": "仙城擦着山脉缓缓落地，平民区第一次完整看见地面。", "deltas": {"karma": 16, "reputation": 12, "hp": -24}},
-      {"text": "执行皇族上城预案", "outcome": "宫阙与核心传承保住了，下城的哭声却传了很久。", "deltas": {"spirit_stones": 20, "exp": 48, "karma": -14}},
-      {"text": "五行重排全城龙脉", "outcome": "两套互相争夺的灵路第一次被迫共享同一条水脉。", "deltas": {"exp": 72, "dao_heart": 5, "enmity": 7}}
+      {"text": "托住下城承重环", "outcome": "仙城擦着山脉缓缓落地，平民区第一次完整看见地面。", "deltas": {"karma": 16, "reputation": 12, "hp": -24}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"text": "执行皇族上城预案", "outcome": "宫阙与核心传承保住了，下城的哭声却传了很久。", "deltas": {"spirit_stones": 20, "exp": 48, "karma": -14}, "path_deltas": {"ambition": 4, "compassion": -2, "bonds": -1}},
+      {"text": "五行重排全城龙脉", "outcome": "两套互相争夺的灵路第一次被迫共享同一条水脉。", "deltas": {"exp": 72, "dao_heart": 5, "enmity": 7}, "path_deltas": {"creation": 4, "insight": 2}}
     ]
   },
   {
@@ -159,9 +159,9 @@
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 她的母亲也没有命籍",
     "choices": [
-      {"text": "先入空阙查证门后身份", "outcome": "门后是一处被朝廷抹去的下城避难所，你带回了完整名册。", "deltas": {"reputation": 13, "karma": 12, "hp": -15}},
-      {"text": "阻止巡天司封湖七日", "outcome": "数百名失籍者沿断玉路回到现世，也把你的名字带进问审名单。", "deltas": {"karma": 15, "dao_heart": 6, "enmity": 9}},
-      {"text": "协助封存无字古门", "outcome": "仙朝赐下功勋；此后旧玉每逢月夜都会无缘无故发冷。", "deltas": {"spirit_stones": 18, "exp": 43, "dao_heart": -6}}
+      {"text": "先入空阙查证门后身份", "outcome": "门后是一处被朝廷抹去的下城避难所，你带回了完整名册。", "deltas": {"reputation": 13, "karma": 12, "hp": -15}, "path_deltas": {"insight": 4, "compassion": 2}},
+      {"text": "阻止巡天司封湖七日", "outcome": "数百名失籍者沿断玉路回到现世，也把你的名字带进问审名单。", "deltas": {"karma": 15, "dao_heart": 6, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}},
+      {"text": "协助封存无字古门", "outcome": "仙朝赐下功勋；此后旧玉每逢月夜都会无缘无故发冷。", "deltas": {"spirit_stones": 18, "exp": 43, "dao_heart": -6}, "path_deltas": {"ambition": 3, "bonds": -2, "compassion": -1}}
     ]
   },
   {
@@ -174,9 +174,9 @@
     "portrait_name": "宁照雪",
     "portrait_title": "守山一脉末徒 · 誓与命之间",
     "choices": [
-      {"text": "助白泽燃丹，先守住山门", "outcome": "兽潮撞碎在古阵之外，白泽却在晨钟前化作一场白雪；幼崽从此不再靠近宗门。", "deltas": {"reputation": 11, "exp": 45, "karma": -7}},
-      {"text": "护送白泽与村民穿过后山", "outcome": "宗门外院被兽潮踏毁，数千凡人与一脉灵兽却沿断玉路活了下来。", "deltas": {"karma": 15, "dao_heart": 6, "spirit_stones": -10}},
-      {"text": "以自身精血续接护山古阵", "outcome": "你替白泽偿完旧誓，山门与村镇同时得救；经脉中也从此留下兽纹般的灼痕。", "deltas": {"exp": 58, "reputation": 8, "hp": -24}}
+      {"text": "助白泽燃丹，先守住山门", "outcome": "兽潮撞碎在古阵之外，白泽却在晨钟前化作一场白雪；幼崽从此不再靠近宗门。", "deltas": {"reputation": 11, "exp": 45, "karma": -7}, "path_deltas": {"bonds": 3, "ambition": 2, "compassion": -1}},
+      {"text": "护送白泽与村民穿过后山", "outcome": "宗门外院被兽潮踏毁，数千凡人与一脉灵兽却沿断玉路活了下来。", "deltas": {"karma": 15, "dao_heart": 6, "spirit_stones": -10}, "path_deltas": {"compassion": 4, "defiance": 2}},
+      {"text": "以自身精血续接护山古阵", "outcome": "你替白泽偿完旧誓，山门与村镇同时得救；经脉中也从此留下兽纹般的灼痕。", "deltas": {"exp": 58, "reputation": 8, "hp": -24}, "path_deltas": {"creation": 3, "compassion": 3}}
     ]
   },
   {
@@ -189,9 +189,9 @@
     "portrait_name": "岑照炉",
     "portrait_title": "百炉城工造师 · 炉灵见证人",
     "choices": [
-      {"text": "钉入镇魂铆钉，恢复全城供暖", "outcome": "蒸汽重新漫过铜塔，下城无人冻死；中央灵炉却再也没有发出过那句求救。", "deltas": {"reputation": 9, "spirit_stones": 14, "dao_heart": -5}},
-      {"text": "承认炉灵，承担停炉谈判", "outcome": "药圃损失了半季收成，百炉城却签下第一份人与机灵共同遵守的工契。", "deltas": {"karma": 12, "reputation": 7, "enmity": 6}},
-      {"text": "拆分炉火，让万户暂借一缕", "outcome": "你逐门重接灵压管线，炉灵保住了意识，病弱者也熬过寒夜，只是你的经脉被蒸汽灼伤。", "deltas": {"exp": 64, "dao_heart": 5, "hp": -18}}
+      {"text": "钉入镇魂铆钉，恢复全城供暖", "outcome": "蒸汽重新漫过铜塔，下城无人冻死；中央灵炉却再也没有发出过那句求救。", "deltas": {"reputation": 9, "spirit_stones": 14, "dao_heart": -5}, "path_deltas": {"ambition": 3, "compassion": 1, "bonds": -2}},
+      {"text": "承认炉灵，承担停炉谈判", "outcome": "药圃损失了半季收成，百炉城却签下第一份人与机灵共同遵守的工契。", "deltas": {"karma": 12, "reputation": 7, "enmity": 6}, "path_deltas": {"bonds": 4, "defiance": 2}},
+      {"text": "拆分炉火，让万户暂借一缕", "outcome": "你逐门重接灵压管线，炉灵保住了意识，病弱者也熬过寒夜，只是你的经脉被蒸汽灼伤。", "deltas": {"exp": 64, "dao_heart": 5, "hp": -18}, "path_deltas": {"creation": 4, "compassion": 3}}
     ]
   },
   {
@@ -204,9 +204,9 @@
     "portrait_name": "闻星渡·第七实例",
     "portrait_title": "未经许可的人生 · 边域守灯者",
     "choices": [
-      {"text": "执行合并，保全全部事故记忆", "outcome": "本体获得了边域三年的见闻，第七实例却在合并前删除了那座小城对她的称呼。", "deltas": {"exp": 67, "reputation": 8, "dao_heart": -4}},
-      {"text": "伪造故障报告，承认她为独立修士", "outcome": "边域多了一位真正拥有道号的人，你也被道网监察列入高危因果名单。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 9}},
-      {"text": "公开七份神识的全部裁决记录", "outcome": "星网上亿修士第一次讨论复制人格的权利，混乱与改革同时沿节点扩散。", "deltas": {"reputation": 13, "exp": 42, "spirit_stones": -8}}
+      {"text": "执行合并，保全全部事故记忆", "outcome": "本体获得了边域三年的见闻，第七实例却在合并前删除了那座小城对她的称呼。", "deltas": {"exp": 67, "reputation": 8, "dao_heart": -4}, "path_deltas": {"insight": 3, "ambition": 2, "bonds": -2}},
+      {"text": "伪造故障报告，承认她为独立修士", "outcome": "边域多了一位真正拥有道号的人，你也被道网监察列入高危因果名单。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 9}, "path_deltas": {"defiance": 4, "compassion": 2}},
+      {"text": "公开七份神识的全部裁决记录", "outcome": "星网上亿修士第一次讨论复制人格的权利，混乱与改革同时沿节点扩散。", "deltas": {"reputation": 13, "exp": 42, "spirit_stones": -8}, "path_deltas": {"bonds": 3, "creation": 2, "defiance": 1}}
     ]
   },
   {
@@ -219,9 +219,9 @@
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人 · 今人与来年",
     "choices": [
-      {"text": "把滤心留给绿洲饮水", "outcome": "聚落安稳度过黑雨季，地下种库却在翌日失去最后一点生命信号。", "deltas": {"karma": 10, "reputation": 10, "exp": 28}},
-      {"text": "开启种库，押注未来的春天", "outcome": "古灵植种子重见天日，绿洲却因缺水迁徙，许多人不会原谅这个决定。", "deltas": {"exp": 61, "dao_heart": 5, "reputation": -7}},
-      {"text": "以灵根代替滤心承受黑雨", "outcome": "净雨塔与种库在同一声雷鸣中启动，你救下两代人的希望，也让自己的灵息染上难以剥离的杂质。", "deltas": {"karma": 16, "reputation": 7, "hp": -26}}
+      {"text": "把滤心留给绿洲饮水", "outcome": "聚落安稳度过黑雨季，地下种库却在翌日失去最后一点生命信号。", "deltas": {"karma": 10, "reputation": 10, "exp": 28}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"text": "开启种库，押注未来的春天", "outcome": "古灵植种子重见天日，绿洲却因缺水迁徙，许多人不会原谅这个决定。", "deltas": {"exp": 61, "dao_heart": 5, "reputation": -7}, "path_deltas": {"ambition": 3, "insight": 2, "bonds": -1}},
+      {"text": "以灵根代替滤心承受黑雨", "outcome": "净雨塔与种库在同一声雷鸣中启动，你救下两代人的希望，也让自己的灵息染上难以剥离的杂质。", "deltas": {"karma": 16, "reputation": 7, "hp": -26}, "path_deltas": {"creation": 3, "compassion": 3}}
     ]
   },
   {
@@ -234,9 +234,9 @@
     "portrait_name": "韩玄素",
     "portrait_title": "经脉契师 · 契书拆解者",
     "choices": [
-      {"text": "公开后门，冻结全部抵押契约", "outcome": "数百条经脉免于被夺，商会也切断了城南灵息，街巷开始计算还能撑几天。", "deltas": {"karma": 13, "reputation": 10, "enmity": 8}},
-      {"text": "暗改阵式，只解救今日到期者", "outcome": "这一批修士平安离开，后门仍潜伏在其他契书中；你换来了继续调查的时间。", "deltas": {"exp": 51, "dao_heart": -2, "spirit_stones": 6}},
-      {"text": "以自身修为填平契约缺口", "outcome": "供给没有中断，抵押所被迫交出账册；代价是你的周天倒退了整整一层。", "deltas": {"reputation": 14, "karma": 9, "exp": -32, "hp": -12}}
+      {"text": "公开后门，冻结全部抵押契约", "outcome": "数百条经脉免于被夺，商会也切断了城南灵息，街巷开始计算还能撑几天。", "deltas": {"karma": 13, "reputation": 10, "enmity": 8}, "path_deltas": {"defiance": 4, "bonds": 2}},
+      {"text": "暗改阵式，只解救今日到期者", "outcome": "这一批修士平安离开，后门仍潜伏在其他契书中；你换来了继续调查的时间。", "deltas": {"exp": 51, "dao_heart": -2, "spirit_stones": 6}, "path_deltas": {"insight": 3, "creation": 2}},
+      {"text": "以自身修为填平契约缺口", "outcome": "供给没有中断，抵押所被迫交出账册；代价是你的周天倒退了整整一层。", "deltas": {"reputation": 14, "karma": 9, "exp": -32, "hp": -12}, "path_deltas": {"compassion": 4, "bonds": 2}}
     ]
   },
   {
@@ -249,9 +249,9 @@
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 云阵执笔人",
     "choices": [
-      {"text": "依诏降雨上城仙田", "outcome": "贡丹如期入库，你获赐丰厚灵石；下城逃荒者却在官道上望见了那场雨。", "deltas": {"spirit_stones": 24, "reputation": 6, "karma": -15}},
-      {"text": "篡改云阵，让雨落向下城", "outcome": "龟裂凡田一夜返青，巡天司也从云阵残留的神识笔迹里找到了你。", "deltas": {"karma": 17, "dao_heart": 7, "enmity": 11}},
-      {"text": "击散功德云，令两地各承半雨", "outcome": "两边都没得到足够灵雨，却因此开始共修一条跨越上下城的新水渠。", "deltas": {"exp": 69, "reputation": 9, "hp": -16}}
+      {"text": "依诏降雨上城仙田", "outcome": "贡丹如期入库，你获赐丰厚灵石；下城逃荒者却在官道上望见了那场雨。", "deltas": {"spirit_stones": 24, "reputation": 6, "karma": -15}, "path_deltas": {"ambition": 4, "compassion": -2}},
+      {"text": "篡改云阵，让雨落向下城", "outcome": "龟裂凡田一夜返青，巡天司也从云阵残留的神识笔迹里找到了你。", "deltas": {"karma": 17, "dao_heart": 7, "enmity": 11}, "path_deltas": {"defiance": 4, "compassion": 2}},
+      {"text": "击散功德云，令两地各承半雨", "outcome": "两边都没得到足够灵雨，却因此开始共修一条跨越上下城的新水渠。", "deltas": {"exp": 69, "reputation": 9, "hp": -16}, "path_deltas": {"creation": 4, "insight": 2, "bonds": 1}}
     ]
   }
 ]
