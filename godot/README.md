@@ -1,36 +1,24 @@
-# 问道长生 · Godot 神游版
+# 问道长生 Godot 工程
 
-这是由原 Win32/GDI+ 项目翻新而来的 Godot 4.7.1 主版本。Godot 是唯一面向玩家的运行时；旧实现只在功能对等完成前作为规则参考保留。
+这是《问道长生》的唯一游戏工程，目标版本为 Godot 4.7.1 stable 标准版与 GDScript。
 
-## 当前已迁移
+## 状态域
 
-- 响应式道号菜单与单一新版入口
-- 六种时代换景、主题色与氛围微粒
-- 21 境界、九层修炼、突破、寿元死亡和多世轮回
-- 17 个数据驱动事件、51 个道途选择与显式资源 ID
-- 场景分栏事件界面、选项回响预览
-- 静态立绘的呼吸与微摆动过渡效果
-- 随五行、因果、道心变化的原创“命途罗盘”
-- 年度势力/NPC/关系模拟、跨世续时和跨时代连续性
-- v2 完整状态存档、v1 迁移、原子写入、备份恢复和坏档隔离
-- D 盘本地模型存在状态检测；通信桥尚在迁移
+- `GameStateSchema`：统一 v2 运行状态和 v1 JSON 迁移。
+- `SaveService`：校验、原子替换、备份恢复、坏档隔离和便携存档目录。
+- `LegacySaveImporter`：只读导入 Win32 `SAVE_V4/SAVE_V5` 六槽旧录。
+- `WorldSimulation`：势力、NPC、关系、世界事件和纪元连续性。
+- `CultivationSystem` / `ReincarnationSystem`：21 境界、寿元、死亡和多世继承。
+- `ItemSystem` / `CombatSystem`：背包、锻造、装备与普通战斗。
+- `StorySystem` / `AchievementSystem`：剧情图、跨世续章、成就和永久玉兵。
+- `DungeonSystem`：独立的可选秘境能力构筑，不替代普通战斗。
+- `LocalAIBridge`：本地进程调用、隐私边界、输出校验和规则回退。
 
-## 启动
+## 资源
 
-在项目根目录双击 `启动Godot版.bat`。便携引擎固定放在：
+- `art/`：运行时场景与人物资源，完整性由 `art_manifest.json` 管理。
+- `data/`：事件、剧情、秘境能力和玉兵定义。
+- `scenes/main.tscn`：唯一主场景。
+- `tests/`：无窗口确定性回归与真实 GL 截图驱动。
 
-`D:\Games\wendao\tools\godot\4.7.1\Godot_v4.7.1-stable_win64.exe`
-
-也可以在 PowerShell 中运行：
-
-```powershell
-& D:\Games\wendao\tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe `
-  --path D:\Games\wendao\godot
-```
-
-## 迁移原则
-
-- Godot 项目是后续唯一主版本，不在游戏内暴露旧运行时入口。
-- 旧实现仅在功能迁移阶段留作对照，功能对等后统一退役。
-- 事件、美术、存档和 AI 通讯逐步改为显式 ID/JSON，不继续扩大关键词硬编码。
-- 完整 Live2D 不作为当前硬依赖；关键角色稳定后再评估少量 Cubism 模型。
+项目根目录的 [README](../README.md) 包含启动、构建、旧档导入和完整验证命令。

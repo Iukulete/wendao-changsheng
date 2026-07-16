@@ -404,6 +404,7 @@ static func _create_transition_npc(
 		"faction_id": faction_id,
 		"era_id": era_id,
 		"alive": true,
+		"player_relation": 0,
 		"relations": {},
 		"fame": _rand_range(state, -6, 18),
 		"legacy": false,
@@ -546,6 +547,7 @@ static func _normalize_npcs(
 			"stance": NPC_STANCES[(serial - 2) % NPC_STANCES.size()],
 			"faction_id": faction_id,
 			"alive": true,
+			"player_relation": 0,
 			"relations": {},
 			"fame": _rand_range(state, -12, 24),
 		})
@@ -568,6 +570,7 @@ static func _normalize_npc(npc: Dictionary, npc_id: String, faction_ids: Array[S
 		faction_id = faction_ids[0]
 	npc["faction_id"] = faction_id
 	npc["alive"] = bool(npc.get("alive", true))
+	npc["player_relation"] = clampi(int(npc.get("player_relation", 0)), -100, 100)
 	npc["relations"] = _dictionary_or_empty(npc.get("relations", {}))
 	npc["fame"] = clampi(int(npc.get("fame", 0)), -100, 100)
 	return npc

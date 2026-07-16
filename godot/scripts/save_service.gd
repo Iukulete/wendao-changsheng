@@ -7,6 +7,7 @@ const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
+const LegacySaveImporterScript = preload("res://scripts/legacy_save_importer.gd")
 
 ## Versioned, checksummed and atomically replaced JSON saves.
 ##
@@ -102,6 +103,40 @@ func load_game() -> Dictionary:
 
 func inspect_save() -> Dictionary:
 	return load_game()
+
+
+func inspect_legacy_saves() -> Dictionary:
+	var candidates: Array[Dictionary] = LegacySaveImporterScript.find_candidates(_legacy_search_roots())
+	if candidates.is_empty():
+		return _failure("no_legacy_save", "未发现可导入的旧版六槽存档。")
+	return {"ok": true, "code": "legacy_saves_found", "candidates": candidates,
+		"latest": candidates[0]}
+
+
+func import_legacy_save(source_path: String = "") -> Dictionary:
+	var path := source_path.strip_edges()
+	if path.is_empty():
+		var probe := inspect_legacy_saves()
+		if not bool(probe.get("ok", false)):
+			return probe
+		path = str((probe.latest as Dictionary).path)
+	var imported: Dictionary = LegacySaveImporterScript.import_file(path)
+	if not bool(imported.get("ok", false)):
+		return imported
+	var normalized := _normalize_snapshot(imported.state)
+	if not bool(normalized.get("ok", false)):
+		return normalized
+	var normalized_state: Dictionary = normalized.state
+	var saved := save_game(normalized_state)
+	if not bool(saved.get("ok", false)):
+		return saved
+	saved["code"] = "legacy_imported"
+	saved["state"] = normalized_state
+	saved["source_path"] = imported.source_path
+	saved["source_sha256"] = imported.source_sha256
+	saved["save_version"] = imported.save_version
+	saved["message"] = "旧版六槽存档已迁入；原始文件未被修改。"
+	return saved
 
 
 func has_any_save() -> bool:
@@ -485,6 +520,16 @@ func _default_root_path() -> String:
 	if OS.has_feature("editor"):
 		return ProjectSettings.globalize_path("res://").path_join("..").path_join(".local").path_join("save").simplify_path()
 	return OS.get_executable_path().get_base_dir().path_join("save").simplify_path()
+
+
+func _legacy_search_roots() -> Array[String]:
+	var roots: Array[String] = [_root_path]
+	var executable_save := OS.get_executable_path().get_base_dir().path_join("save").simplify_path()
+	var project_save := ProjectSettings.globalize_path("res://").path_join("..").path_join("save").simplify_path()
+	for candidate in [executable_save, project_save]:
+		if not roots.has(candidate):
+			roots.append(candidate)
+	return roots
 
 
 func _ensure_root_directory() -> Dictionary:

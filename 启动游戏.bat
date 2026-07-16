@@ -1,61 +1,33 @@
 @echo off
+chcp 65001 >nul
 setlocal
 
 set "ROOT=%~dp0"
-set "RUN_DIR=%ROOT%release"
-set "GAME=%ROOT%release\wendao_enhanced.exe"
-
-cls
-echo.
-echo ============================================================
-echo   Wendao Changsheng
-echo ============================================================
-echo.
-echo Startup:
-echo.
-echo [2] Adventure:
-echo   - Hand-written events
-echo   - Optional local AI events
-echo.
-echo Living world:
-echo   - Cultivators act on their own
-echo   - Press [W] in game to view world state
-echo   - The world reacts to your choices
-echo.
-echo ============================================================
-echo.
-
-if not exist "%GAME%" (
-    echo Game executable not found. Building now...
-    echo.
-    call "%ROOT%build.bat"
-    if errorlevel 1 (
-        echo.
-        echo Build failed. Please install g++ / MinGW and check the error above.
-        pause
-        exit /b 1
-    )
-)
+set "GAME_DIR=%ROOT%release\godot\windows"
+set "GAME=%GAME_DIR%\wendao-changsheng.exe"
+set "ENGINE=%ROOT%tools\godot\4.7.1\Godot_v4.7.1-stable_win64.exe"
+set "PROJECT=%ROOT%godot"
+set "TEMP=%ROOT%.tmp\godot"
+set "TMP=%ROOT%.tmp\godot"
 
 if exist "%GAME%" (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "if ((Get-Item -LiteralPath '%ROOT%src\wendao_enhanced.cpp').LastWriteTime -gt (Get-Item -LiteralPath '%GAME%').LastWriteTime) { exit 2 } else { exit 0 }" >nul 2>nul
-    if errorlevel 2 (
-        echo Source changed after the last build. Rebuilding now...
-        echo.
-        call "%ROOT%build.bat"
-        if errorlevel 1 (
-            echo.
-            echo Build failed. Please install g++ / MinGW and check the error above.
-            pause
-            exit /b 1
-        )
-    )
+    start "问道长生" /D "%GAME_DIR%" "%GAME%"
+    exit /b 0
 )
 
-echo Press any key to start...
-pause >nul
-start "" /D "%RUN_DIR%" "%GAME%"
+if not exist "%ENGINE%" (
+    echo 未找到已导出的游戏或便携 Godot 4.7.1。
+    echo 请先运行 构建Godot版.bat，或执行 tools\prepare_godot.ps1。
+    pause
+    exit /b 1
+)
 
-echo.
-echo Game launched.
+if not exist "%PROJECT%\project.godot" (
+    echo Godot 项目不存在：%PROJECT%
+    pause
+    exit /b 1
+)
+
+if not exist "%TEMP%" mkdir "%TEMP%"
+start "问道长生" /D "%PROJECT%" "%ENGINE%" --path "%PROJECT%"
 exit /b 0

@@ -14,7 +14,7 @@ echo   - 首次准备需要联网下载基础模型、问道 LoRA 和 llama.cpp 
 echo.
 echo 说明：
 echo   - 模型、LoRA 和运行时已存在时会直接复用，不会重复下载
-echo   - 正常游玩不需要安装 g++；只有从源码重新编译时才需要 C++ 编译环境
+echo   - 本地 AI 完全可选；未安装时游戏会无损回退到内置事件
 echo.
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT%" %*

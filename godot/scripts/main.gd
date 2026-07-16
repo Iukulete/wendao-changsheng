@@ -311,11 +311,29 @@ func _show_menu() -> void:
 	var start_button := _button(start_label, _start_new_game.bind(name_input), not can_continue)
 	start_button.custom_minimum_size = Vector2(430, 52)
 	column.add_child(start_button)
+	var legacy_probe: Dictionary = save_service.call("inspect_legacy_saves")
+	var can_import_legacy := bool(legacy_probe.get("ok", false))
+	if can_import_legacy:
+		var legacy_latest: Dictionary = legacy_probe.get("latest", {})
+		var import_text := "承接旧版六槽 · %s · %s" % [
+			str(legacy_latest.get("player_name", "旧日之我")),
+			str(legacy_latest.get("era", "未知纪元")),
+		]
+		if can_continue:
+			import_text = "导入旧版六槽并备份当前档 · %s" % str(legacy_latest.get("player_name", "旧日之我"))
+		var import_button := _button(import_text, _import_legacy_game, false)
+		import_button.name = "LegacyImportButton"
+		import_button.custom_minimum_size = Vector2(430, 48)
+		import_button.tooltip_text = "只读导入最近的旧版 slot_*.txt；源文件不会被修改。"
+		column.add_child(import_button)
 	var save_status := menu_notice if not menu_notice.is_empty() else str(save_probe.get("message", ""))
 	column.add_child(_label(save_status, 14,
 		Color("e9c67a") if not can_continue and save_probe.get("code", "") == "corrupt_save" else Color(0.72, 0.76, 0.78, 0.84),
 		HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_label("Enter 开始新生  ·  C 续接旧档", 14,
+	var shortcut_text := "Enter 开始新生  ·  C 续接旧档"
+	if can_import_legacy:
+		shortcut_text += "  ·  I 导入旧版"
+	column.add_child(_label(shortcut_text, 14,
 		Color(0.72, 0.76, 0.78, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
 	name_input.grab_focus()
 
@@ -354,6 +372,20 @@ func _continue_game() -> void:
 		_show_combat()
 	else:
 		_show_game()
+
+
+func _import_legacy_game() -> void:
+	var import_result: Dictionary = save_service.call("import_legacy_save")
+	if not bool(import_result.get("ok", false)):
+		menu_notice = str(import_result.get("message", "旧版存档无法导入。"))
+		_show_menu()
+		return
+	run_state = GameStateScript.ensure_v2(import_result.get("state", {}))
+	_sync_state_views()
+	save_notice = str(import_result.get("message", "旧版命途已迁入。"))
+	menu_notice = ""
+	current_event = {}
+	_show_game()
 
 
 func _sync_state_views() -> void:
@@ -610,9 +642,12 @@ func _world_digest() -> String:
 		var npc: Dictionary = npc_value
 		if not bool(npc.get("alive", true)):
 			continue
-		npc_lines += "- %s · %s · %d岁 · %s\n" % [
+		var imported_relation := int(npc.get("player_relation", 0))
+		var relation_suffix := " · 旧谊%+d" % imported_relation if imported_relation != 0 else ""
+		npc_lines += "- %s · %s · %d岁 · %s%s\n" % [
 			str(npc.get("name", "无名客")), str(npc.get("realm", "凡人")),
-			int(npc.get("age", 0)), _faction_name(str(npc.get("faction_id", "")), factions)]
+			int(npc.get("age", 0)), _faction_name(str(npc.get("faction_id", "")), factions),
+			relation_suffix]
 		visible_npcs += 1
 		if visible_npcs >= 4:
 			break
@@ -2021,6 +2056,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 					_start_new_game(input)
 			elif event.keycode == KEY_C:
 				_continue_game()
+			elif event.keycode == KEY_I:
+				_import_legacy_game()
 		ScreenState.GAME:
 			match event.keycode:
 				KEY_1: _meditate()

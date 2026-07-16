@@ -1,76 +1,77 @@
-# 问道长生 · 神游版
+# 问道长生
 
-一款以轮回、因果与时代演化为核心的 2D 叙事修仙 Roguelike。项目现以 **Godot 4.7.1** 为唯一面向玩家的主版本：六种纪元拥有独立场景、色彩和氛围语言，修炼与抉择会改变角色命途，也会在世界中留下跨越轮回的回响。
+《问道长生》是一款以轮回、动态世界、人物关系和跨世叙事为核心的 2D 修仙 Roguelike。
 
-旧 Win32/GDI+ 实现暂时保留在仓库中，仅用于迁移玩法规则和核对历史行为；它不再是游戏入口，也不会进入 Godot 新版发布包。
+项目现已完成 Godot 4.7.1 迁移。Godot 是仓库中唯一的游戏引擎和玩家运行时；旧 Win32/C++ 源码、构建链、启动入口与 CI 已退役。
 
-## 直接启动新版
+## 开始游戏
 
 Windows 10/11 下双击：
 
 ```bat
-启动Godot版.bat
+启动游戏.bat
 ```
 
-本机使用的便携 Godot 固定在 D 盘项目目录：
-
-```text
-D:\Games\wendao\tools\godot\4.7.1\Godot_v4.7.1-stable_win64.exe
-```
-
-引擎、导出模板、Godot 编辑器数据、临时目录和构建产物都留在 `D:\Games\wendao` 内。首次准备环境时会从 Godot 官方下载与发布源获取固定的 4.7.1 文件，并在解压前校验 SHA-256。
-
-## 开发与构建
-
-在项目根目录执行：
-
-```powershell
-# 准备便携编辑器和 Windows 导出模板（首次约需下载 1.3 GB）
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
-
-# 导入资源、检查脚本、加载主场景并运行存档回归
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1
-
-# 验证并导出 Windows 新版
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1
-```
-
-也可以双击 `构建Godot版.bat`。导出结果位于：
+启动器会优先运行已经导出的版本：
 
 ```text
 release\godot\windows\wendao-changsheng.exe
-release\godot\windows\wendao-changsheng.pck
 ```
 
-`release/`、便携引擎、模板与 Godot 导入缓存均被 Git 忽略，不会污染仓库。GitHub Actions 会运行同一套验证与导出脚本，只上传 Godot Windows 产物。
+若尚未导出，但仓库内已有便携 Godot 4.7.1，则直接启动 `godot/project.godot`。
 
-## 当前内容
+## 当前玩法
 
-- 六种时代：古典、灵机蒸汽、星穹道网、废土返道、末法裂变、仙朝鼎盛。
-- 21 个稳定境界、九层修炼、突破代价、寿元死亡与多世轮回闭环。
-- 17 个数据驱动事件和 51 个选择，持续塑造六种道途维度。
-- 势力、NPC、关系、灵潮和纪元压力逐年演化；轮回间隔与时代切换不会重置世界。
-- 呼吸立绘、环境微粒、远近景视差、暗角与时代主题渲染。
-- 随五行、因果和道心变化的原创“命途罗盘”。
-- v2 完整状态存档、v1 只读迁移、校验、备份恢复与坏档隔离；导出后保存在 EXE 同目录 `save/`。
-- D 盘本地 AI 模型与运行环境探测；通信桥仍在迁移，当前稳定使用内置事件。
+- 21 个稳定境界、每境九层、突破代价、寿元、自然死亡、战斗死亡、飞升、道祖与天道闭环。
+- 六种纪元，各自拥有场景、氛围、资源偏向、势力和人物生态。
+- 势力、NPC、关系、灵潮、稳定度与纪元压力按年确定性演化，轮回后世界继续前进。
+- 四条四阶段主线与四条三阶段跨世续章，选择会留下未竟因果和后世定局。
+- 物品、消耗品、装备、锻造、16 项成就、16 件永久玉兵、觉醒、蓄能与显圣。
+- 可复现的普通战斗，包含敌方意图、招式、状态、奖励和中途存档恢复。
+- 可选的镜湖秘境构筑玩法。牌组是角色功法、道途、玉兵、记忆与心魔的临时投影，不是独立卡包，也不替代主线修仙循环。
+- 本地 AI 事件桥只调用本机进程，输出经过结构与内容校验；禁用、超时和非法输出都会回退到内置事件。
 
-删除旧实现前仍需迁移物品/装备/锻造、战斗、连续剧情图、本地 AI 通讯，并完成长局、导出和多分辨率验收。Godot 新版会继续吸收旧实现中已经验证的规则，但不会恢复旧版入口。
+## 旧版存档
+
+Godot 新版可只读导入旧 Win32 版的 `SAVE_V4` 与 `SAVE_V5` 六槽存档，迁移：
+
+- 角色、境界、五行、家世与成长资源；
+- 当前纪元、世界年份、动态人物、关系与世界史；
+- 轮回世数、前世记录、传承、未竟因果与旧玉；
+- 连续剧情进度、成就、玉兵成长与当前装备。
+
+把原有 `slot_1.txt` 至 `slot_6.txt` 保留在游戏同级 `save` 目录，主菜单会显示最近一份可导入旧录。导入只会创建新版校验存档，原始 `.txt` 文件不会被修改；已有新版主档会先进入备份。
+
+## 开发与验证
+
+所有依赖、缓存、导出和测试文件都留在仓库所在磁盘，不使用 Godot 的用户目录作为项目存档位置。
+
+```powershell
+# 首次准备固定版本的便携 Godot 与官方 Windows 导出模板
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
+
+# 美术清单、资源导入、主场景和全部确定性回归
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -NoPrepare
+
+# 屏幕外真实 GL 截图验收，不打开前台窗口
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_render.ps1
+
+# 验证、导出并后台运行导出包冒烟测试
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare
+```
+
+全量回归包含存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及秘境路线和战斗画面。
 
 ## 项目结构
 
 ```text
-godot/                       Godot 4.7.1 主项目
-godot/art/                   新版场景与人物资源
-godot/data/                  数据驱动事件
-godot/scripts/               界面、玩法与动态渲染
-godot/export_presets.cfg     Windows 导出预设
-tools/prepare_godot.ps1      D 盘便携环境与哈希校验
-tools/verify_godot.ps1       导入、脚本与主场景验证
-tools/build_godot.ps1        Windows 新版导出
-docs/godot_migration_v014.md 迁移和切换标准
+godot/                    唯一游戏工程、数据、美术、脚本和测试
+ai_engine/                新版本地 AI 运行、模型准备与评测工具
+docs/                     产品边界、迁移记录与后续方向
+tools/                    Godot 准备、验证、渲染和构建工具
+.github/workflows/        唯一 Godot Windows CI
 ```
 
 ## 开源协议
 
-项目除另有说明外采用 GNU Affero General Public License v3.0，详见 [LICENSE](LICENSE)。第三方美术、模型、运行时与库仍遵循各自许可证。
+项目除另有说明外采用 GNU Affero General Public License v3.0，详见 [LICENSE](LICENSE)。美术、模型和第三方运行时仍须分别完成权利与许可证审查。

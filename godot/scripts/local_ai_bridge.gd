@@ -277,9 +277,9 @@ func build_prompt(state: Dictionary) -> String:
 		var npc: Dictionary = npc_value
 		if not bool(npc.get("alive", true)):
 			continue
-		lines.append("- %s，%s，立场%s。" % [
+		lines.append("- %s，%s，立场%s，与玩家关系%d。" % [
 			str(npc.get("name", "无名")).left(32), str(npc.get("realm", "凡人")).left(20),
-			str(npc.get("stance", "未明")).left(20)])
+			str(npc.get("stance", "未明")).left(20), int(npc.get("player_relation", 0))])
 		npc_count += 1
 		if npc_count >= 4:
 			break

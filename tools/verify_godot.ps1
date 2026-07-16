@@ -15,6 +15,12 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 $env:TEMP = $TempDir
 $env:TMP = $TempDir
 
+Write-Host "Validating the self-contained Godot art inventory..."
+& python -X utf8 (Join-Path $PSScriptRoot "verify_godot_art.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Godot art validation failed with exit code $LASTEXITCODE."
+}
+
 Write-Host "Validating authored event path deltas..."
 & python (Join-Path $PSScriptRoot "verify_event_paths.py")
 if ($LASTEXITCODE -ne 0) {
@@ -66,6 +72,7 @@ $testScripts = @(
     "res://tests/item_system_test.gd",
     "res://tests/combat_system_test.gd",
     "res://tests/save_service_test.gd",
+    "res://tests/legacy_save_importer_test.gd",
     "res://tests/main_save_integration_test.gd",
     "res://tests/ten_life_long_run_test.gd"
 )

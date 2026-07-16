@@ -15,12 +15,18 @@ func _run() -> void:
 	var service: RefCounted = SaveServiceScript.new("integrationtest", test_root)
 	service.call("clear_slot")
 	DirAccess.remove_absolute(test_root)
+	DirAccess.make_dir_recursive_absolute(test_root)
+	var legacy_source_path := test_root.path_join("slot_1.txt")
+	_write_text(legacy_source_path, _minimal_legacy_save())
 	var game := MainScene.instantiate()
 	game.set("save_service", service)
 	root.add_child(game)
 
 	var name_input := game.find_child("DaoNameInput", true, false) as LineEdit
 	_expect(name_input != null, "新生菜单应存在道号输入框")
+	_expect(game.find_child("LegacyImportButton", true, false) != null,
+		"发现有效 SAVE_V4/V5 六槽旧录时菜单必须提供只读导入入口")
+	DirAccess.remove_absolute(legacy_source_path)
 	if name_input != null:
 		name_input.text = "归档真人"
 		game.call("_start_new_game", name_input)
@@ -175,6 +181,17 @@ func _write_text(path: String, contents: String) -> void:
 		return
 	file.store_string(contents)
 	file.close()
+
+
+func _minimal_legacy_save() -> String:
+	return "\n".join([
+		"SAVE_V5", "旧录访客", "1", "1", "0", "100", "100", "50", "50",
+		"0", "0", "0", "0", "16", "80", "10", "0", "10", "5",
+		"5", "5", "5", "5", "5", "0", "0", "0",
+		"WORLD_ERA_V1", "古典修仙纪",
+		"WORLD_V2", "1", "0", "0", "0",
+		"LEGACY_V1", "1", "0", "黑白轮回玉", "0", "0", "未定道痕", "0", "0",
+	]) + "\n"
 
 
 func _expect(condition: bool, message: String) -> void:

@@ -55,14 +55,14 @@ jobs:
           if (-not (Test-Path "$output/wendao-changsheng.exe")) { throw "Windows executable missing" }
           if (-not (Test-Path "$output/wendao-changsheng.pck")) { throw "Godot resource pack missing" }
           $unexpected = Get-ChildItem $output -Recurse -File | Where-Object {
-            $_.Name -match 'wendao_enhanced|\.cpp$|\.obj$'
+            $_.Name -match '\.cpp$|\.h$|\.obj$'
           }
-          if ($unexpected) { throw "Legacy runtime leaked into the Godot artifact: $($unexpected.FullName -join ', ')" }
+          if ($unexpected) { throw "Non-Godot source leaked into the release artifact: $($unexpected.FullName -join ', ')" }
 
       - name: Upload Godot-only Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: wendao-changsheng-godot-4.7.1-windows-x86_64
+          name: wendao-changsheng-4.7.1-windows-x86_64
           path: release/godot/windows/
           if-no-files-found: error
           retention-days: 14

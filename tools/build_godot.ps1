@@ -62,7 +62,8 @@ try {
     $env:APPDATA = $SmokeDataDir
     $env:LOCALAPPDATA = $SmokeDataDir
     Write-Host "Running exported Windows build smoke test..."
-    $smoke = Start-Process -FilePath $OutputExe -WorkingDirectory $OutputDir -ArgumentList "--headless", "--quit-after", "5" -PassThru -Wait
+    $smoke = Start-Process -FilePath $OutputExe -WorkingDirectory $OutputDir `
+        -ArgumentList "--headless", "--quit-after", "5" -WindowStyle Hidden -PassThru -Wait
     if ($smoke.ExitCode -ne 0) {
         throw "Exported Windows build smoke test failed with exit code $($smoke.ExitCode)."
     }
@@ -74,3 +75,5 @@ try {
 Write-Host "Godot Windows build complete:"
 Write-Host "  $OutputExe ($exeSize bytes)"
 Write-Host "  $OutputPck ($pckSize bytes)"
+Get-FileHash -LiteralPath $OutputExe, $OutputPck -Algorithm SHA256 |
+    Select-Object Path, Hash

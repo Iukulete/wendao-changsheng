@@ -29,5 +29,5 @@ Training path:
 
 - Primary: `run_remote_gemma4_unsloth.sh`, which builds the filtered dataset and trains the Gemma 4 E4B adapter through Unsloth.
 - Default mix: repeat Codex gold heavily, then fill the rest with rule-generated project samples.
-- C++ game rules remain final authority for rewards, artifacts, realm gates, relationship progression, and consequences.
+- Godot gameplay state machines remain final authority for rewards, artifacts, realm gates, relationship progression, and consequences.
 - Legacy hand-written HF Trainer scripts were removed to keep the training surface small; add a backup path only if Unsloth fails hard.
