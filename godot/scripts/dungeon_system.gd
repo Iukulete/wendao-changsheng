@@ -76,6 +76,8 @@ static func start(state: Dictionary, dungeon_id: String = "mirror_lake") -> Dict
 	var dungeon := normalize(state)
 	if bool(dungeon.active):
 		return {"ok": false, "code": "dungeon_already_active", "run": dungeon.run}
+	if bool((state.get("combat", {}) as Dictionary).get("active", false)):
+		return {"ok": false, "code": "combat_active"}
 	var definition := _dungeon_definition(dungeon_id)
 	if definition.is_empty():
 		return {"ok": false, "code": "unknown_dungeon"}

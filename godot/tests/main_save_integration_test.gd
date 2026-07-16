@@ -47,6 +47,35 @@ func _run() -> void:
 	_expect(game.find_child("ArmoryBackButton", true, false) != null,
 		"玉藏兵界面必须提供明确返回动作")
 	game.call("_show_game")
+	var dungeon_button := game.find_child("DungeonButton", true, false) as Button
+	_expect(dungeon_button != null and not dungeon_button.disabled,
+		"镜湖秘境必须是主线之外的明确可选入口")
+	game.call("_enter_dungeon")
+	var active_dungeon_state: Dictionary = game.get("run_state")
+	_expect(bool((active_dungeon_state.get("dungeon", {}) as Dictionary).get("active", false)),
+		"进入秘境必须创建独立且可保存的副本状态")
+	_expect(game.find_child("DungeonRouteButton0", true, false) != null,
+		"秘境必须显示可选择的路线道标")
+	var route_index := 0
+	var routes: Array = active_dungeon_state.dungeon.run.route_choices
+	for index in range(routes.size()):
+		if str((routes[index] as Dictionary).type) in ["combat", "elite", "boss"]:
+			route_index = index
+			break
+	game.call("_choose_dungeon_route", route_index)
+	_expect(game.find_child("DungeonCardButton0", true, false) != null and
+		game.find_child("DungeonEndTurnButton", true, false) != null,
+		"副本交锋必须显示角色能力牌与结束回合动作")
+	game.call("_save_current_state", "测试秘境断点")
+	game.call("_show_menu")
+	game.call("_continue_game")
+	_expect(game.find_child("DungeonCardButton0", true, false) != null,
+		"续接存档必须直接恢复秘境能力牌战斗")
+	game.call("_abandon_dungeon")
+	var exited_dungeon_state: Dictionary = game.get("run_state")
+	_expect(not bool((exited_dungeon_state.get("dungeon", {}) as Dictionary).get("active", true)) and
+		game.find_child("DungeonButton", true, false) != null,
+		"撤离秘境必须回到原有主线且不替换普通战斗入口")
 	game.call("_show_inventory")
 	_expect(game.find_child("InventoryBackButton", true, false) != null,
 		"行囊界面必须提供明确返回动作")

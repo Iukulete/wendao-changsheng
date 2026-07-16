@@ -78,6 +78,8 @@ static func start_combat(state: Dictionary, enemy_id: String = "") -> Dictionary
 	var combat := normalize(state)
 	if bool(combat.active):
 		return {"ok": false, "code": "combat_already_active", "battle": combat.current}
+	if bool((state.get("dungeon", {}) as Dictionary).get("active", false)):
+		return {"ok": false, "code": "dungeon_active"}
 	var era_id := str(state.get("current_era_id", "classical"))
 	var definition := _find_enemy(enemy_id)
 	if definition.is_empty():

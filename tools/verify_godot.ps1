@@ -66,7 +66,8 @@ $testScripts = @(
     "res://tests/item_system_test.gd",
     "res://tests/combat_system_test.gd",
     "res://tests/save_service_test.gd",
-    "res://tests/main_save_integration_test.gd"
+    "res://tests/main_save_integration_test.gd",
+    "res://tests/ten_life_long_run_test.gd"
 )
 foreach ($testScript in $testScripts) {
     Write-Host "Running Godot regression: $testScript"

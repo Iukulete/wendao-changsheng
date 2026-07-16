@@ -12,6 +12,7 @@ const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
+const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -55,7 +56,10 @@ const DEFAULT_PLAYER := {
 	"roots": [7, 4, 8, 5, 6],
 }
 
-enum ScreenState { MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY }
+enum ScreenState {
+	MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
+	DUNGEON_ROUTE, DUNGEON_COMBAT,
+}
 
 var state: ScreenState = ScreenState.MENU
 var current_era: String = "古典修仙纪"
@@ -344,7 +348,9 @@ func _continue_game() -> void:
 	save_notice = str(load_result.get("message", "旧玉已续接上一次命途。"))
 	menu_notice = ""
 	current_event = {}
-	if CombatSystemScript.has_active_combat(run_state):
+	if DungeonSystemScript.has_active_run(run_state):
+		_show_dungeon()
+	elif CombatSystemScript.has_active_combat(run_state):
 		_show_combat()
 	else:
 		_show_game()
@@ -355,6 +361,7 @@ func _sync_state_views() -> void:
 	WorldSimulationScript.initialize(run_state)
 	ItemSystemScript.normalize(run_state)
 	CombatSystemScript.normalize(run_state)
+	DungeonSystemScript.normalize(run_state)
 	StorySystemScript.normalize(run_state)
 	AchievementSystemScript.normalize(run_state)
 	AchievementSystemScript.check_progress(run_state)
@@ -375,6 +382,9 @@ func _commit_state_views() -> void:
 
 
 func _show_game() -> void:
+	if DungeonSystemScript.has_active_run(run_state):
+		_show_dungeon()
+		return
 	if CombatSystemScript.has_active_combat(run_state):
 		_show_combat()
 		return
@@ -404,7 +414,7 @@ func _show_game() -> void:
 
 	var footer := _panel(0.72, era_accent)
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [I] 行囊  [A] 玉兵  [Y] 切换  [J] 显圣",
+	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [J] 显圣",
 		15, Color(0.86, 0.89, 0.89, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -547,6 +557,13 @@ func _build_action_panel() -> Control:
 	var armory_button := _button("柒 · 成就与轮回玉兵", _show_armory, false)
 	armory_button.name = "ArmoryButton"
 	column.add_child(armory_button)
+	var dungeon_button := _button("捌 · 镜湖空阙秘境", _enter_dungeon, false)
+	dungeon_button.name = "DungeonButton"
+	column.add_child(dungeon_button)
+	if int(player.get("realm_index", 0)) >= 19:
+		var transcend_button := _button("证道圆满 · 自择轮回", _transcend_life, true)
+		transcend_button.name = "TranscendLifeButton"
+		column.add_child(transcend_button)
 	column.add_child(_button("封存此世 · 保存进度", _manual_save, false))
 	column.add_child(_spacer(10))
 	column.add_child(_section_title("天机镜"))
@@ -859,6 +876,275 @@ func _resolve_combat_action(action: String) -> void:
 	_show_game()
 
 
+func _enter_dungeon() -> void:
+	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
+	var result: Dictionary = DungeonSystemScript.start(run_state, "mirror_lake")
+	if not bool(result.get("ok", false)):
+		feedback = "镜湖空阙没有形成稳定入口。"
+		_show_game()
+		return
+	feedback = "无字古门在镜湖中央开启，你的功法化为一组可调度的临时灵诀。"
+	_save_current_state("秘境入口已自动封存")
+	_show_dungeon()
+
+
+func _show_dungeon() -> void:
+	if not DungeonSystemScript.has_active_run(run_state):
+		_show_game()
+		return
+	var run: Dictionary = run_state.dungeon.run
+	if not (run.get("battle", {}) as Dictionary).is_empty():
+		_show_dungeon_combat()
+		return
+	_show_dungeon_route()
+
+
+func _show_dungeon_route() -> void:
+	state = ScreenState.DUNGEON_ROUTE
+	_clear_screen()
+	var run: Dictionary = run_state.dungeon.run
+	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 14)
+	screen_host.add_child(page)
+	page.add_child(_build_dungeon_header(run, "秘境岔路"))
+
+	var status := HBoxContainer.new()
+	status.add_theme_constant_override("separation", 14)
+	page.add_child(status)
+	var vitality := _panel(0.80, era_accent)
+	vitality.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var vitality_column := VBoxContainer.new()
+	vitality_column.add_theme_constant_override("separation", 7)
+	vitality.add_child(vitality_column)
+	vitality_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
+	vitality_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
+	status.add_child(vitality)
+	var depth_panel := _panel(0.80, era_accent)
+	depth_panel.custom_minimum_size.x = 310
+	var depth_column := VBoxContainer.new()
+	depth_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	depth_panel.add_child(depth_column)
+	depth_column.add_child(_label("第 %d / %d 层" % [int(run.depth) + 1, int(run.max_depth)], 22,
+		Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
+	depth_column.add_child(_label("灵诀 %d式 · 心障随压力入组" % (run.deck as Array).size(), 14,
+		Color(0.76, 0.81, 0.81), HORIZONTAL_ALIGNMENT_CENTER))
+	status.add_child(depth_panel)
+
+	var body := HBoxContainer.new()
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 16)
+	page.add_child(body)
+	body.add_child(_build_dungeon_log(run))
+	var route_panel := _panel(0.86, Color("d5a957"))
+	route_panel.custom_minimum_size.x = 440
+	var route_column := VBoxContainer.new()
+	route_column.add_theme_constant_override("separation", 12)
+	route_panel.add_child(route_column)
+	route_column.add_child(_section_title("选择下一处道标"))
+	var routes: Array = run.route_choices
+	for index in range(routes.size()):
+		var node: Dictionary = routes[index]
+		var route_button := _button("%d · %s\n%s" % [index + 1, str(node.name), str(node.danger)],
+			_choose_dungeon_route.bind(index), index == 0)
+		route_button.name = "DungeonRouteButton%d" % index
+		route_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		route_button.custom_minimum_size.y = 92
+		route_column.add_child(route_button)
+	route_column.add_child(_spacer(6))
+	var abandon_button := _button("撤出秘境", _abandon_dungeon, false)
+	abandon_button.name = "DungeonAbandonButton"
+	route_column.add_child(abandon_button)
+	body.add_child(route_panel)
+	page.add_child(_label("数字键选择道标 · Esc 撤离", 14, Color(0.76, 0.80, 0.81, 0.82),
+		HORIZONTAL_ALIGNMENT_CENTER))
+
+
+func _show_dungeon_combat() -> void:
+	state = ScreenState.DUNGEON_COMBAT
+	_clear_screen()
+	var run: Dictionary = run_state.dungeon.run
+	var battle: Dictionary = run.battle
+	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 12)
+	screen_host.add_child(page)
+	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn)))
+
+	var combat_row := HBoxContainer.new()
+	combat_row.custom_minimum_size.y = 205
+	combat_row.add_theme_constant_override("separation", 14)
+	page.add_child(combat_row)
+	var self_panel := _panel(0.84, era_accent)
+	self_panel.custom_minimum_size.x = 260
+	var self_column := VBoxContainer.new()
+	self_column.add_theme_constant_override("separation", 8)
+	self_panel.add_child(self_column)
+	self_column.add_child(_section_title(str(player.name)))
+	self_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
+	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, Color("c98a58")))
+	self_column.add_child(_label("灵力 %d/%d · 护体 %d" % [int(battle.energy),
+		DungeonSystemScript.STARTING_ENERGY, int(battle.player_block)], 15, Color("b9d5e8")))
+	combat_row.add_child(self_panel)
+	combat_row.add_child(_build_dungeon_log(run))
+	var enemy_panel := _panel(0.84, Color("d46b61"))
+	enemy_panel.custom_minimum_size.x = 280
+	var enemy_column := VBoxContainer.new()
+	enemy_column.add_theme_constant_override("separation", 8)
+	enemy_panel.add_child(enemy_column)
+	enemy_column.add_child(_section_title(str(battle.enemy_name)))
+	enemy_column.add_child(_progress_row("气血", int(battle.enemy_hp), int(battle.enemy_max_hp), Color("d35f58")))
+	enemy_column.add_child(_label("护体 %d · 虚弱 %d回合" % [int(battle.enemy_block), int(battle.enemy_weak)],
+		14, Color(0.78, 0.81, 0.81)))
+	enemy_column.add_child(_label("下一意图", 13, Color(0.68, 0.72, 0.73)))
+	enemy_column.add_child(_label(DungeonSystemScript.intent_label(str(battle.intent)), 21,
+		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER))
+	combat_row.add_child(enemy_panel)
+
+	var hand_scroll := ScrollContainer.new()
+	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	hand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(hand_scroll)
+	var hand_grid := GridContainer.new()
+	hand_grid.name = "DungeonHandGrid"
+	hand_grid.columns = 5
+	hand_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hand_grid.add_theme_constant_override("h_separation", 10)
+	hand_grid.add_theme_constant_override("v_separation", 10)
+	hand_scroll.add_child(hand_grid)
+	var hand: Array = battle.hand
+	for index in range(hand.size()):
+		var card: Dictionary = hand[index]
+		var definition: Dictionary = DungeonSystemScript.card_definition(str(card.card_id))
+		var upgrade := int(card.get("upgrade", 0))
+		var card_button := _button("%d  %s%s\n灵力 %d\n%s" % [index + 1, str(definition.name),
+			" +%d" % upgrade if upgrade > 0 else "", int(definition.cost), str(definition.description)],
+			_play_dungeon_card.bind(index), false)
+		card_button.name = "DungeonCardButton%d" % index
+		card_button.custom_minimum_size = Vector2(194, 116)
+		card_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		card_button.add_theme_font_size_override("font_size", 14)
+		card_button.disabled = int(definition.cost) > int(battle.energy)
+		card_button.tooltip_text = "当前灵力不足。" if card_button.disabled else str(definition.description)
+		hand_grid.add_child(card_button)
+
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 12)
+	page.add_child(actions)
+	var end_button := _button("结束回合 [E]", _end_dungeon_turn, true)
+	end_button.name = "DungeonEndTurnButton"
+	actions.add_child(end_button)
+	actions.add_child(_button("撤出秘境", _abandon_dungeon, false))
+
+
+func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
+	var header := _panel(0.82, era_accent)
+	header.custom_minimum_size.y = 72
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	header.add_child(row)
+	var title := VBoxContainer.new()
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(title)
+	title.add_child(_label(str(run.name), 26, Color("f5e7bd")))
+	title.add_child(_label(subtitle, 14, Color(era_accent, 0.90)))
+	var rewards: Dictionary = run.rewards
+	row.add_child(_label("暂存修为 %d · 灵石 %d" % [int(rewards.exp), int(rewards.spirit_stones)],
+		15, Color("e7c778"), HORIZONTAL_ALIGNMENT_RIGHT))
+	return header
+
+
+func _build_dungeon_log(run: Dictionary) -> Control:
+	var panel := _panel(0.78, era_accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 8)
+	panel.add_child(column)
+	column.add_child(_section_title("空阙回声"))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var log_label := _label("\n".join((run.log as Array).slice(-10)), 15, Color("eee8da"))
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(log_label)
+	return panel
+
+
+func _choose_dungeon_route(index: int) -> void:
+	var result: Dictionary = DungeonSystemScript.choose_route(run_state, index)
+	_handle_dungeon_action(result, "秘境道标已自动封存")
+
+
+func _play_dungeon_card(index: int) -> void:
+	var result: Dictionary = DungeonSystemScript.play_card(run_state, index)
+	_handle_dungeon_action(result, "秘境灵诀已自动封存")
+
+
+func _end_dungeon_turn() -> void:
+	var result: Dictionary = DungeonSystemScript.end_turn(run_state)
+	_handle_dungeon_action(result, "秘境回合已自动封存")
+
+
+func _abandon_dungeon() -> void:
+	var result: Dictionary = DungeonSystemScript.abandon(run_state)
+	_handle_dungeon_action(result, "秘境撤离已自动封存")
+
+
+func _handle_dungeon_action(result: Dictionary, save_reason: String) -> void:
+	if not bool(result.get("ok", false)):
+		feedback = str({
+			"insufficient_energy": "当前灵力不足，无法施展这式能力。",
+			"invalid_route_choice": "这条秘境道路已经消散。",
+		}.get(str(result.get("code", "")), "秘境没有接受这一行动。"))
+		_show_dungeon()
+		return
+	if str(result.get("code", "")) == "dungeon_finished":
+		_finalize_dungeon_exit(result, save_reason)
+		return
+	_sync_state_views()
+	_save_current_state(save_reason)
+	_show_dungeon()
+
+
+func _finalize_dungeon_exit(result: Dictionary, save_reason: String) -> void:
+	var outcome := str(result.get("outcome", "abandoned"))
+	var run: Dictionary = result.get("run", {})
+	var rewards: Dictionary = result.get("rewards", {})
+	var years := maxi(1, int(ceil(float(run.get("depth", 1)) / 2.0)))
+	CultivationScript.advance_time(run_state, years)
+	_sync_state_views()
+	if outcome == "completed":
+		feedback = "你走出%s，带回修为%d、灵石%d与一缕因果丝。" % [str(run.get("name", "镜湖秘境")),
+			int(rewards.get("exp", 0)), int(rewards.get("spirit_stones", 0))]
+	elif outcome == "defeat":
+		feedback = "秘境将你逐出空阙，今生留下了一道需要慢慢化解的心创。"
+	else:
+		feedback = "你主动退出空阙，秘境中的临时能力牌随门影散去。"
+	_add_memory("第%d年，你从%s归来：%s。" % [int((run_state.world as Dictionary).get("year", 1)),
+		str(run.get("name", "镜湖秘境")), outcome])
+	if CultivationScript.is_dead(run_state):
+		_end_current_life("秘境归来后寿元耗尽")
+		return
+	_save_current_state(save_reason)
+	_show_game()
+
+
+func _dungeon_scene_path(dungeon_id: String) -> String:
+	for value in (DungeonSystemScript.load_definitions().get("dungeons", []) as Array):
+		var definition: Dictionary = value
+		if str(definition.id) == dungeon_id:
+			return str(definition.scene)
+	return MENU_SCENE
+
+
 func _request_ai_event() -> void:
 	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
 		_end_current_life(_current_death_cause())
@@ -1168,6 +1454,15 @@ func _end_current_life(cause: String) -> void:
 	_sync_state_views()
 	_save_current_state("此世终章已封存")
 	_show_reincarnation()
+
+
+func _transcend_life() -> void:
+	if int(player.get("realm_index", 0)) < 19:
+		feedback = "此世大道尚未圆满，轮回玉不会提前收束命途。"
+		_show_game()
+		return
+	_add_memory("你在%s留下完整道痕，并主动让今身归入轮回。" % str(player.realm))
+	_end_current_life("证道圆满，自择轮回")
 
 
 func _current_death_cause() -> String:
@@ -1732,10 +2027,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_2: _open_adventure()
 				KEY_3: _breakthrough()
 				KEY_4: _start_combat()
+				KEY_M: _enter_dungeon()
 				KEY_I: _show_inventory()
 				KEY_A: _show_armory()
 				KEY_Y: _cycle_jade_weapon()
 				KEY_J: _invoke_jade_weapon()
+				KEY_R:
+					if int(player.get("realm_index", 0)) >= 19:
+						_transcend_life()
 				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
 				KEY_ESCAPE: _show_menu()
@@ -1769,3 +2068,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_3: _resolve_combat_action("spell")
 				KEY_4: _resolve_combat_action("pill")
 				KEY_5, KEY_ESCAPE: _resolve_combat_action("flee")
+		ScreenState.DUNGEON_ROUTE:
+			if event.keycode >= KEY_1 and event.keycode <= KEY_3:
+				_choose_dungeon_route(int(event.keycode - KEY_1))
+			elif event.keycode == KEY_ESCAPE:
+				_abandon_dungeon()
+		ScreenState.DUNGEON_COMBAT:
+			if event.keycode >= KEY_1 and event.keycode <= KEY_9:
+				_play_dungeon_card(int(event.keycode - KEY_1))
+			elif event.keycode == KEY_0:
+				_play_dungeon_card(9)
+			elif event.keycode in [KEY_E, KEY_SPACE]:
+				_end_dungeon_turn()
+			elif event.keycode == KEY_ESCAPE:
+				_abandon_dungeon()
