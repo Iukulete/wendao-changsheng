@@ -6,6 +6,10 @@ const BUS_NAMES: PackedStringArray = ["Master", "Music", "Ambience", "SFX", "UI"
 const SFX_POOL_SIZE := 12
 const UI_POOL_SIZE := 4
 const SILENCE_DB := -80.0
+const AMBIENCE_CROSSFADE_SECONDS := 1.25
+const ERA_IDS: PackedStringArray = [
+	"classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty",
+]
 
 const DEFAULT_SETTINGS := {
 	"master": 100.0,
@@ -80,12 +84,15 @@ const EVENT_ALIASES := {
 
 var _settings: Dictionary = DEFAULT_SETTINGS.duplicate(true)
 var _context := "menu"
+var _era_id := "classical"
 var _initialized := false
 var _application_focused := true
 var _audio_cursor := 0
 var _last_played_ms: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _ambience_player: AudioStreamPlayer
+var _ambience_outgoing_player: AudioStreamPlayer
+var _ambience_tween: Tween
 
 
 func _ready() -> void:
@@ -109,6 +116,9 @@ func _exit_tree() -> void:
 	if is_instance_valid(_ambience_player):
 		_ambience_player.stop()
 		_ambience_player.stream = null
+	if is_instance_valid(_ambience_outgoing_player):
+		_ambience_outgoing_player.stop()
+		_ambience_outgoing_player.stream = null
 	for player in _players:
 		if is_instance_valid(player):
 			player.stop()
@@ -123,6 +133,10 @@ func _initialize_runtime() -> void:
 	_ambience_player.name = "AmbienceLoop"
 	_ambience_player.bus = &"Ambience"
 	add_child(_ambience_player)
+	_ambience_outgoing_player = AudioStreamPlayer.new()
+	_ambience_outgoing_player.name = "AmbienceCrossfade"
+	_ambience_outgoing_player.bus = &"Ambience"
+	add_child(_ambience_outgoing_player)
 	for index in range(SFX_POOL_SIZE + UI_POOL_SIZE):
 		var player := AudioStreamPlayer.new()
 		player.name = "Voice%02d" % index
@@ -187,6 +201,20 @@ func set_context(context_id: String) -> void:
 
 func get_context() -> String:
 	return _context
+
+
+func set_era(era_id: String) -> void:
+	if era_id not in ERA_IDS:
+		era_id = "classical"
+	if _era_id == era_id:
+		return
+	_era_id = era_id
+	_initialize_runtime()
+	_switch_ambience_for_era()
+
+
+func get_era() -> String:
+	return _era_id
 
 
 func play_event(event_id: String, context: Dictionary = {}) -> bool:
@@ -258,11 +286,23 @@ func debug_pool_size() -> int:
 	return _players.size()
 
 
+func debug_ambience_voice_count() -> int:
+	return int(is_instance_valid(_ambience_player)) + int(is_instance_valid(_ambience_outgoing_player))
+
+
+func debug_ambience_crossfade_seconds() -> float:
+	return AMBIENCE_CROSSFADE_SECONDS
+
+
 func debug_event_variant_count(event_id: String) -> int:
 	var resolved_id := str(EVENT_ALIASES.get(event_id, event_id))
 	if not EVENTS.has(resolved_id):
 		return 0
 	return (EVENTS[resolved_id].get("files", []) as Array).size()
+
+
+func debug_resolved_asset_path(asset_id: String) -> String:
+	return _resolve_audio_path(asset_id)
 
 
 func debug_reset_cooldowns() -> void:
@@ -337,24 +377,95 @@ func _apply_master_effects() -> void:
 func _start_ambience_if_needed() -> void:
 	if not _audio_output_available() or not is_instance_valid(_ambience_player) or _ambience_player.playing:
 		return
-	var stream := _load_audio_stream("classical_ambience")
+	var stream := _looping_stream(_ambience_asset_id())
 	if stream == null:
 		return
+	_ambience_player.stream = stream
+	_ambience_player.volume_db = _ambience_target_db()
+	_ambience_player.play()
+
+
+func _switch_ambience_for_era() -> void:
+	if not _audio_output_available():
+		return
+	var stream := _looping_stream(_ambience_asset_id())
+	if stream == null:
+		return
+	if not is_instance_valid(_ambience_player) or not _ambience_player.playing:
+		_start_ambience_if_needed()
+		return
+	if is_instance_valid(_ambience_tween):
+		_ambience_tween.kill()
+	if _ambience_outgoing_player.playing:
+		_ambience_outgoing_player.stop()
+		_ambience_outgoing_player.stream = null
+	var previous := _ambience_player
+	var incoming := _ambience_outgoing_player
+	previous.volume_db = _ambience_target_db()
+	incoming.stream = stream
+	incoming.volume_db = SILENCE_DB
+	incoming.play()
+	_ambience_tween = create_tween().set_parallel(true)
+	_ambience_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambience_tween.tween_property(previous, "volume_db", SILENCE_DB,
+		AMBIENCE_CROSSFADE_SECONDS)
+	_ambience_tween.tween_property(incoming, "volume_db", _ambience_target_db(),
+		AMBIENCE_CROSSFADE_SECONDS)
+	_ambience_tween.chain().tween_callback(_finish_ambience_crossfade.bind(previous, incoming))
+
+
+func _finish_ambience_crossfade(previous: AudioStreamPlayer, incoming: AudioStreamPlayer) -> void:
+	if is_instance_valid(previous):
+		previous.stop()
+		previous.stream = null
+	_ambience_player = incoming
+	_ambience_outgoing_player = previous
+	_ambience_tween = null
+
+
+func _looping_stream(asset_id: String) -> AudioStream:
+	var stream := _load_audio_stream(asset_id)
 	if stream is AudioStreamWAV and (stream as AudioStreamWAV).loop_mode == AudioStreamWAV.LOOP_DISABLED:
 		stream = stream.duplicate()
 		var wave := stream as AudioStreamWAV
 		wave.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		wave.loop_begin = 0
 		wave.loop_end = maxi(1, int(round(wave.get_length() * 48000.0)))
-	_ambience_player.stream = stream
-	_ambience_player.play()
+	return stream
+
+
+func _ambience_target_db() -> float:
+	var profile: Dictionary = CONTEXT_PROFILES.get(_context, CONTEXT_PROFILES.world)
+	return float(profile.get("ambience_db", -8.0))
 
 
 func _load_audio_stream(asset_id: String) -> AudioStream:
-	var path := "res://audio/generated/classical/%s.wav" % asset_id
-	if not ResourceLoader.exists(path):
+	var path := _resolve_audio_path(asset_id)
+	if path.is_empty():
 		return null
 	return ResourceLoader.load(path) as AudioStream
+
+
+func _ambience_asset_id() -> String:
+	return "classical_ambience" if _era_id == "classical" else "%s_ambience" % _era_id
+
+
+func _resolve_audio_path(asset_id: String) -> String:
+	var candidates: PackedStringArray = []
+	if asset_id.ends_with("_ambience"):
+		var ambience_era := asset_id.trim_suffix("_ambience")
+		if ambience_era == "classical":
+			candidates.append("res://audio/generated/classical/classical_ambience.wav")
+		elif ambience_era in ERA_IDS:
+			candidates.append("res://audio/generated/%s/%s.wav" % [ambience_era, asset_id])
+	else:
+		candidates.append("res://audio/generated/%s/%s.wav" % [_era_id, asset_id])
+		if _era_id != "classical":
+			candidates.append("res://audio/generated/classical/%s.wav" % asset_id)
+	for path in candidates:
+		if ResourceLoader.exists(path):
+			return path
+	return ""
 
 
 func _audio_output_available() -> bool:

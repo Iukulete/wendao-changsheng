@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$NoPrepare,
-    [switch]$SkipVerify
+    [switch]$SkipVerify,
+    [switch]$ProductRelease
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,9 +29,14 @@ if (-not $NoPrepare) {
 }
 
 if (-not $SkipVerify) {
-    & (Join-Path $PSScriptRoot "verify_godot.ps1") -NoPrepare
+    & (Join-Path $PSScriptRoot "verify_godot.ps1") -NoPrepare -RequireFinalAudio:$ProductRelease
     if ($LASTEXITCODE -ne 0) {
         throw "Godot validation failed with exit code $LASTEXITCODE."
+    }
+} elseif ($ProductRelease) {
+    & python -X utf8 (Join-Path $PSScriptRoot "verify_audio_assets.py") --require-final
+    if ($LASTEXITCODE -ne 0) {
+        throw "Product release audio gate failed with exit code $LASTEXITCODE."
     }
 }
 

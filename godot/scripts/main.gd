@@ -2185,6 +2185,7 @@ func _set_audio_context(context_id: String, entry_event: String = "") -> void:
 		return
 	var previous := str(audio_director.call("get_context"))
 	audio_director.call("set_context", context_id)
+	audio_director.call("set_era", str(run_state.get("current_era_id", "classical")))
 	if previous != context_id and not entry_event.is_empty():
 		audio_director.call("play_event", entry_event)
 

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import math
@@ -17,6 +18,15 @@ AUDIO_ROOT = ROOT / "godot" / "audio"
 MANIFEST = AUDIO_ROOT / "audio_manifest_v1.json"
 GENERATOR = ROOT / "tools" / "generate_audio_assets.py"
 AUDIO_LICENSE = AUDIO_ROOT / "LICENSE-AUDIO.txt"
+ERA_IDS = (
+    "classical", "steam", "star_network", "wasteland", "final_age",
+    "immortal_dynasty",
+)
+ERA_EVENT_BASES = ("card_cast", "impact", "guard")
+SHARED_EVENT_BASES = {
+    "ui_confirm", "ui_cancel", "stress", "heart_awaken", "elite_enter",
+    "boss_enter", "phase_break", "victory", "defeat",
+}
 REQUIRED = {
     "ui_confirm", "ui_cancel", "card_cast", "impact", "guard", "stress",
     "heart_awaken", "elite_enter", "boss_enter", "phase_break", "victory",
@@ -24,13 +34,18 @@ REQUIRED = {
 }
 for _base_id in ("ui_confirm", "ui_cancel", "card_cast", "impact", "guard"):
     REQUIRED.update(f"{_base_id}_{number:02d}" for number in range(2, 5))
+for _era_id in ERA_IDS[1:]:
+    REQUIRED.add(f"{_era_id}_ambience")
+    for _base_id in ERA_EVENT_BASES:
+        REQUIRED.add(f"{_era_id}_{_base_id}")
+        REQUIRED.update(f"{_era_id}_{_base_id}_{number:02d}" for number in range(2, 5))
 
 
 def dbfs(value: float) -> float:
     return 20.0 * math.log10(max(value, 1.0e-12))
 
 
-def main() -> int:
+def main(require_final: bool = False) -> int:
     failures: list[str] = []
     if not MANIFEST.is_file():
         print(f"AUDIO_ASSET_VERIFICATION_FAILED: missing {MANIFEST}", file=sys.stderr)
@@ -57,7 +72,7 @@ def main() -> int:
     if len(ids) != len(set(ids)):
         failures.append("asset ids are not unique")
     if set(ids) != REQUIRED:
-        failures.append(f"asset id set differs from required vertical slice: {sorted(set(ids) ^ REQUIRED)}")
+        failures.append(f"asset id set differs from required six-era runtime set: {sorted(set(ids) ^ REQUIRED)}")
 
     entries_by_id = {str(entry.get("id", "")): entry for entry in entries if isinstance(entry, dict)}
     for base_id in ("ui_confirm", "ui_cancel", "card_cast", "impact", "guard"):
@@ -65,6 +80,38 @@ def main() -> int:
         variant_hashes = {str(entries_by_id.get(asset_id, {}).get("sha256", "")) for asset_id in variant_ids}
         if len(variant_hashes) != 4 or "" in variant_hashes:
             failures.append(f"{base_id}: four high-frequency variants must have distinct content hashes")
+    for era_id in ERA_IDS:
+        for base_id in ERA_EVENT_BASES:
+            prefix = "" if era_id == "classical" else f"{era_id}_"
+            variant_ids = [f"{prefix}{base_id}"] + [
+                f"{prefix}{base_id}_{number:02d}" for number in range(2, 5)
+            ]
+            variant_hashes = {
+                str(entries_by_id.get(asset_id, {}).get("sha256", ""))
+                for asset_id in variant_ids
+            }
+            if len(variant_hashes) != 4 or "" in variant_hashes:
+                failures.append(
+                    f"{era_id}/{base_id}: four era variants must have distinct content hashes"
+                )
+    ambience_hashes = {
+        str(entries_by_id.get(
+            "classical_ambience" if era_id == "classical" else f"{era_id}_ambience", {}
+        ).get("sha256", ""))
+        for era_id in ERA_IDS
+    }
+    if len(ambience_hashes) != len(ERA_IDS) or "" in ambience_hashes:
+        failures.append("six era ambience beds must have distinct content hashes")
+    for base_id in ERA_EVENT_BASES:
+        for suffix in ("", "_02", "_03", "_04"):
+            era_hashes = {
+                str(entries_by_id.get(
+                    f"{'' if era_id == 'classical' else era_id + '_'}{base_id}{suffix}", {}
+                ).get("sha256", ""))
+                for era_id in ERA_IDS
+            }
+            if len(era_hashes) != len(ERA_IDS) or "" in era_hashes:
+                failures.append(f"{base_id}{suffix}: all six era materials must be distinct")
 
     managed_paths: set[Path] = set()
     total_bytes = 0
@@ -93,7 +140,10 @@ def main() -> int:
             failures.append(f"{asset_id}: license must explicitly identify project-original work")
         if entry.get("asset_id") != asset_id or entry.get("runtime_path") != f"res://audio/{relative}":
             failures.append(f"{asset_id}: audit identity/runtime path metadata is inconsistent")
-        if entry.get("era_ids") != ["classical"] or not isinstance(entry.get("event_ids"), list) or not entry["event_ids"]:
+        era_ids = entry.get("era_ids")
+        if (not isinstance(era_ids, list) or not era_ids or
+                any(era_id not in ERA_IDS for era_id in era_ids) or
+                not isinstance(entry.get("event_ids"), list) or not entry["event_ids"]):
             failures.append(f"{asset_id}: era/event audit mapping is incomplete")
         if entry.get("commercial_use") is not True or entry.get("redistribution_in_game") is not True:
             failures.append(f"{asset_id}: commercial redistribution rights are not explicit")
@@ -103,6 +153,14 @@ def main() -> int:
             failures.append(f"{asset_id}: invalid release state {entry.get('release_state')!r}")
         if entry.get("release_state") == "production_candidate" and entry.get("manual_qa_status") != "pending_multidevice_listening":
             failures.append(f"{asset_id}: candidate assets must state the pending manual QA gate")
+        if entry.get("release_state") == "final" and entry.get("manual_qa_status") not in {
+            "owner_post_release_playtest", "passed_multidevice_listening"
+        }:
+            failures.append(f"{asset_id}: final asset lacks the declared playtest policy")
+        if require_final and entry.get("release_state") != "final":
+            failures.append(
+                f"{asset_id}: product release requires final state"
+            )
         if entry.get("bus") not in {"Music", "Ambience", "SFX", "UI", "VO"}:
             failures.append(f"{asset_id}: invalid audio bus {entry.get('bus')!r}")
         validate_wav(path, entry, failures)
@@ -121,8 +179,28 @@ def main() -> int:
     for script in (ROOT / "godot" / "scripts").rglob("*.gd"):
         if script.name != "audio_director.gd" and "AudioStreamPlayer" in script.read_text(encoding="utf-8"):
             failures.append(f"runtime player bypasses AudioDirector: {script.relative_to(ROOT)}")
-    if total_bytes > 12 * 1024 * 1024:
-        failures.append(f"classical vertical slice exceeds 12 MiB ({total_bytes} bytes)")
+    for era_id in ERA_IDS:
+        ambience_id = "classical_ambience" if era_id == "classical" else f"{era_id}_ambience"
+        ambience = entries_by_id.get(ambience_id, {})
+        if ambience.get("era_ids") != [era_id] or ambience.get("role") != "ambience":
+            failures.append(f"{era_id}: dedicated ambience mapping is missing")
+        for base_id in ERA_EVENT_BASES:
+            prefix = "" if era_id == "classical" else f"{era_id}_"
+            for suffix in ("", "_02", "_03", "_04"):
+                entry = entries_by_id.get(f"{prefix}{base_id}{suffix}", {})
+                if entry.get("era_ids") != [era_id]:
+                    failures.append(f"{era_id}: {base_id}{suffix} is not era-exclusive")
+    for base_id in SHARED_EVENT_BASES:
+        entry = entries_by_id.get(base_id, {})
+        if entry.get("era_ids") != list(ERA_IDS):
+            failures.append(f"{base_id}: shared fallback must declare all six eras")
+    for base_id in ("ui_confirm", "ui_cancel"):
+        for suffix in ("", "_02", "_03", "_04"):
+            entry = entries_by_id.get(f"{base_id}{suffix}", {})
+            if entry.get("era_ids") != list(ERA_IDS):
+                failures.append(f"{base_id}{suffix}: shared UI mapping must declare all six eras")
+    if total_bytes > 48 * 1024 * 1024:
+        failures.append(f"six-era runtime audio exceeds 48 MiB ({total_bytes} bytes)")
 
     if failures:
         for failure in failures:
@@ -130,7 +208,7 @@ def main() -> int:
         return 1
     print(
         "AUDIO_ASSET_VERIFICATION_OK: "
-        f"{len(entries)} project-original 48 kHz stereo assets, hashes/levels/loop seam verified, "
+        f"{len(entries)} project-original six-era 48 kHz stereo assets, hashes/levels/loop seams verified, "
         f"{total_bytes} bytes"
     )
     return 0
@@ -217,4 +295,10 @@ def validate_import_settings(path: Path, entry: dict, failures: list[str]) -> No
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--require-final", action="store_true",
+        help="Reject prototype and production-candidate assets from product builds.",
+    )
+    arguments = parser.parse_args()
+    raise SystemExit(main(require_final=arguments.require_final))

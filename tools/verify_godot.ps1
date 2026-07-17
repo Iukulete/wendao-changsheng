@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [switch]$NoPrepare
+    [switch]$NoPrepare,
+    [switch]$RequireFinalAudio
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +29,11 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Validating original audio assets, hashes, levels, and loop seams..."
-& python -X utf8 (Join-Path $PSScriptRoot "verify_audio_assets.py")
+$audioArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_audio_assets.py"))
+if ($RequireFinalAudio) {
+    $audioArguments += "--require-final"
+}
+& python @audioArguments
 if ($LASTEXITCODE -ne 0) {
     throw "Audio asset validation failed with exit code $LASTEXITCODE."
 }

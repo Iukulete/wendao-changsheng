@@ -29,7 +29,7 @@ func _run() -> void:
 	await process_frame
 	_restore_settings()
 	if failures.is_empty():
-		print("AUDIO_SYSTEM_TEST_OK: buses, limiter, pool, contexts, settings, accessibility and audio RNG isolation verified")
+		print("AUDIO_SYSTEM_TEST_OK: six-era routing, crossfade, buses, pool, settings, accessibility and audio RNG isolation verified")
 		quit(0)
 	else:
 		for failure in failures:
@@ -64,14 +64,31 @@ func _validate_director(director: Node) -> void:
 		"dungeon.victory", "dungeon.defeat", "reincarnation.enter"]:
 		_expect(required in ids, "AudioDirector缺少稳定事件：%s" % required)
 	_expect(int(director.call("debug_pool_size")) == 16, "必须提供12个SFX与4个UI复用声部")
+	_expect(int(director.call("debug_ambience_voice_count")) == 2 and
+		float(director.call("debug_ambience_crossfade_seconds")) >= 1.0,
+		"纪元声景必须使用独立双声部和足够时长的交叉淡化，不能硬切循环")
 	for repeated_event in ["ui.confirm", "ui.cancel", "dungeon.card", "dungeon.impact", "dungeon.guard"]:
 		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 4,
 			"高频事件必须至少有四个轮换变体：%s" % repeated_event)
+	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
+		director.call("set_era", era_id)
+		var event_path := str(director.call("debug_resolved_asset_path", "card_cast"))
+		var ambience_id := "classical_ambience" if era_id == "classical" else "%s_ambience" % era_id
+		var ambience_path := str(director.call("debug_resolved_asset_path", ambience_id))
+		_expect(str(director.call("get_era")) == era_id and
+			event_path.contains("/generated/%s/" % era_id) and
+			ambience_path.contains("/generated/%s/" % era_id) and
+			ResourceLoader.exists(event_path) and ResourceLoader.exists(ambience_path),
+			"纪元必须解析自己的高频交互材质与环境底床：%s" % era_id)
+		_expect(str(director.call("debug_resolved_asset_path", "boss_enter")).contains(
+			"/generated/classical/boss_enter.wav"), "未完成时代专属终稿时必须稳定回退共享首领语义")
 	_expect(not bool(director.call("play_event", "missing.event")), "未知事件必须安静降级")
 	director.call("set_context", "boss")
 	_expect(str(director.call("get_context")) == "boss", "首领动态混音上下文没有生效")
 	director.call("set_context", "not-a-context")
 	_expect(str(director.call("get_context")) == "world", "非法上下文必须稳定回退到世界混音")
+	director.call("set_era", "not-an-era")
+	_expect(str(director.call("get_era")) == "classical", "非法纪元必须稳定回退到古典声音语言")
 	director.call("debug_reset_cooldowns")
 	var first := bool(director.call("play_event", "ui.confirm"))
 	var second := bool(director.call("play_event", "ui.confirm"))
@@ -86,12 +103,26 @@ func _validate_manifest_events(director: Node) -> void:
 	if not parsed is Dictionary:
 		return
 	var registered: PackedStringArray = director.call("event_ids")
+	var era_event_counts := {}
+	var era_ambience_counts := {}
 	for asset_value in ((parsed as Dictionary).get("assets", []) as Array):
 		var asset: Dictionary = asset_value
 		for event_value in (asset.get("event_ids", []) as Array):
 			var event_id := str(event_value)
 			if not event_id.begins_with("context."):
 				_expect(event_id in registered, "manifest引用了未注册事件：%s" % event_id)
+			for era_value in (asset.get("era_ids", []) as Array):
+				var era_id := str(era_value)
+				var key := "%s:%s" % [era_id, event_id]
+				era_event_counts[key] = int(era_event_counts.get(key, 0)) + 1
+				if event_id == "context.world" and str(asset.get("role", "")) == "ambience":
+					era_ambience_counts[era_id] = int(era_ambience_counts.get(era_id, 0)) + 1
+	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
+		for event_id in ["dungeon.card", "combat.impact", "combat.guard"]:
+			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) >= 4,
+				"每个纪元的高频事件必须拥有四个独立资产：%s/%s" % [era_id, event_id])
+		_expect(int(era_ambience_counts.get(era_id, 0)) == 1,
+			"每个纪元必须恰好登记一套世界环境底床：%s" % era_id)
 
 
 func _validate_settings_roundtrip(director: Node) -> void:
@@ -145,6 +176,13 @@ func _validate_settings_ui() -> void:
 	var main: Control = scene.instantiate()
 	root.add_child(main)
 	await process_frame
+	var era_state: Dictionary = main.get("run_state")
+	era_state["current_era_id"] = "steam"
+	main.set("run_state", era_state)
+	main.call("_set_audio_context", "world")
+	var runtime_director: Node = main.get("audio_director")
+	_expect(runtime_director != null and str(runtime_director.call("get_era")) == "steam",
+		"主场景切换纪元时必须同步切换AudioDirector声音语言")
 	main.call("_open_audio_settings")
 	await process_frame
 	for node_name in ["AudioMasterSlider", "AudioMusicSlider", "AudioAmbienceSlider", "AudioSFXSlider",

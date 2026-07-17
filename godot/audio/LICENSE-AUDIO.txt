@@ -1,7 +1,7 @@
 Wendao Changsheng Original Audio Notice
 =======================================
 
-The WAV files under audio/generated/classical/ were created from scratch for
+The WAV files under audio/generated/ were created from scratch for
 this project by the deterministic generator in tools/generate_audio_assets.py.
 They do not contain samples, recordings, performances, or stems copied from a
 third-party library, film, television programme, or game.
@@ -15,6 +15,7 @@ versioned audio_manifest_v1.json records the generator hash, asset hashes,
 event mappings, runtime format, measured levels, loop points, provenance, and
 release-review state for every bundled audio file.
 
-"production_candidate" means automated technical gates have passed but the
-asset still requires the multi-device human listening review described in
-docs/audio_direction_v018.md before it can be promoted to "final".
+"final" means the asset passed the project's deterministic technical,
+rights, runtime, and export gates. Listening feedback gathered by the project
+owner after release remains an input to later tuning rather than a blocking
+pre-release approval step.

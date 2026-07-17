@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the original classical-era audio vertical slice."""
+"""Generate the original six-era audio runtime set."""
 
 from __future__ import annotations
 
@@ -13,11 +13,35 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "godot" / "audio" / "generated" / "classical"
+OUTPUT_ROOT = ROOT / "godot" / "audio" / "generated"
 MANIFEST = ROOT / "godot" / "audio" / "audio_manifest_v1.json"
 SAMPLE_RATE = 48_000
 CHANNELS = 2
 TAU = math.tau
+
+ERA_IDS = (
+    "classical", "steam", "star_network", "wasteland", "final_age",
+    "immortal_dynasty",
+)
+ERA_EVENT_BASES = ("card_cast", "impact", "guard")
+SHARED_EVENT_BASES = {
+    "ui_confirm", "ui_cancel", "stress", "heart_awaken", "elite_enter",
+    "boss_enter", "phase_break", "victory", "defeat",
+}
+ERA_AMBIENCE = {
+    "classical": {"tone_scale": 1.00, "pulse_cycles": 3, "brightness": 0.42,
+                  "motif": (523.25, 659.25, 440.00)},
+    "steam": {"tone_scale": 0.72, "pulse_cycles": 24, "brightness": 0.30,
+              "motif": (196.00, 293.66, 392.00)},
+    "star_network": {"tone_scale": 1.74, "pulse_cycles": 40, "brightness": 0.78,
+                     "motif": (783.99, 987.77, 1318.51)},
+    "wasteland": {"tone_scale": 0.54, "pulse_cycles": 5, "brightness": 0.18,
+                  "motif": (146.83, 220.00, 174.61)},
+    "final_age": {"tone_scale": 0.83, "pulse_cycles": 11, "brightness": 0.55,
+                  "motif": (311.13, 466.16, 349.23)},
+    "immortal_dynasty": {"tone_scale": 1.18, "pulse_cycles": 16, "brightness": 0.64,
+                         "motif": (392.00, 587.33, 783.99)},
+}
 
 SPECS = {
     "ui_confirm": (0.34, "UI", False),
@@ -103,7 +127,8 @@ def add_pair(target: list[float], pair: tuple[float, float], gain: float = 1.0) 
     target[1] += pair[1] * gain
 
 
-def synth_event(asset_id: str, duration: float, seed: int) -> tuple[list[float], list[float]]:
+def synth_event(asset_id: str, duration: float, seed: int,
+                era_id: str = "classical") -> tuple[list[float], list[float]]:
     # Keep event semantics stable while producing independently seeded timbral
     # variants for inputs players can trigger many times per minute.
     sound_id = base_asset_id(asset_id)
@@ -207,6 +232,7 @@ def synth_event(asset_id: str, duration: float, seed: int) -> tuple[list[float],
         left[index] = sample[0] * window
         right[index] = sample[1] * window
     apply_variant_colour(left, right, variant_number(asset_id))
+    apply_era_colour(left, right, era_id, loop=False)
     return left, right
 
 
@@ -225,27 +251,82 @@ def apply_variant_colour(left: list[float], right: list[float], number: int) -> 
         right[index] = source_right[index] * (1.0 - mix) - source_left[index - delay] * mix * 0.72
 
 
-def synth_ambience(duration: float, seed: int) -> tuple[list[float], list[float]]:
+def apply_era_colour(left: list[float], right: list[float], era_id: str,
+                     loop: bool) -> None:
+    """Give shared event semantics a stable, recognisable era material."""
+    if era_id == "classical":
+        return
+    source_left = left.copy()
+    source_right = right.copy()
+    count = len(left)
+    delay_by_era = {
+        "steam": 73, "star_network": 181, "wasteland": 113,
+        "final_age": 149, "immortal_dynasty": 97,
+    }
+    delay = delay_by_era[era_id]
+    for index in range(count):
+        t = index / SAMPLE_RATE
+        delayed_index = index - delay
+        if loop:
+            delayed_index %= count
+        delayed_l = source_right[delayed_index] if delayed_index >= 0 else 0.0
+        delayed_r = source_left[delayed_index] if delayed_index >= 0 else 0.0
+        current_l = source_left[index]
+        current_r = source_right[index]
+        if era_id == "steam":
+            drive = 0.88 + 0.12 * math.sin(TAU * 7.5 * t)
+            left[index] = math.tanh((current_l * 0.88 + delayed_l * 0.18) * 1.18) * drive
+            right[index] = math.tanh((current_r * 0.88 + delayed_r * 0.18) * 1.18) * drive
+        elif era_id == "star_network":
+            shimmer = 0.92 + 0.08 * math.sin(TAU * 13.0 * t + 0.3)
+            left[index] = current_l * 0.78 + delayed_l * 0.24 * shimmer
+            right[index] = current_r * 0.78 - delayed_r * 0.20 * shimmer
+        elif era_id == "wasteland":
+            scarcity = 0.74 + 0.26 * (0.5 + 0.5 * math.sin(TAU * 2.0 * t))
+            left[index] = (current_l * 0.82 + delayed_l * 0.10) * scarcity
+            right[index] = (current_r * 0.82 + delayed_r * 0.10) * scarcity
+        elif era_id == "final_age":
+            fracture = 0.54 + 0.46 * (0.5 + 0.5 * math.sin(TAU * 11.0 * t)) ** 2
+            left[index] = current_l * fracture + delayed_l * 0.16
+            right[index] = current_r * fracture - delayed_r * 0.14
+        elif era_id == "immortal_dynasty":
+            order = 0.90 + 0.10 * math.sin(TAU * 4.0 * t) ** 8
+            left[index] = (current_l * 0.84 + delayed_l * 0.20) * order
+            right[index] = (current_r * 0.84 + delayed_r * 0.20) * order
+
+
+def synth_ambience(duration: float, seed: int,
+                   era_id: str = "classical") -> tuple[list[float], list[float]]:
     rng = random.Random(seed)
+    profile = ERA_AMBIENCE[era_id]
     count = round(duration * SAMPLE_RATE)
     left = [0.0] * count
     right = [0.0] * count
     layers = []
     for _ in range(16):
         harmonic = rng.randint(8, 1900)
-        frequency = harmonic / duration
-        amplitude = rng.uniform(0.008, 0.035) / (1.0 + frequency / 420.0)
+        # Preserve an integer number of cycles inside the loop even while the
+        # spectral range changes by era; fractional cycle scaling would create
+        # a measurable seam at the exact sample boundary.
+        frequency = max(1, round(harmonic * float(profile["tone_scale"]))) / duration
+        amplitude = rng.uniform(0.008, 0.035) / (
+            1.0 + frequency / (260.0 + 360.0 * float(profile["brightness"]))
+        )
         phase = rng.uniform(0.0, TAU)
         pan = rng.uniform(-0.55, 0.55)
         layers.append((frequency, amplitude, phase, pan))
-    bell_events = [(3.1, 523.25, 0.055), (8.4, 659.25, 0.045), (12.7, 440.0, 0.050)]
+    motif = profile["motif"]
+    bell_events = [(3.1, motif[0], 0.055), (8.4, motif[1], 0.045),
+                   (12.2, motif[2], 0.050)]
     for index in range(count):
         t = index / SAMPLE_RATE
         # Every continuous bed component completes an integer number of cycles
         # inside the loop.  This makes the source sample-periodic instead of
         # hiding a discontinuity behind a runtime crossfade.
-        sample_l = math.sin(TAU * (3.0 / duration) * t) * 0.018
-        sample_r = math.sin(TAU * (2.0 / duration) * t + 0.7) * 0.018
+        pulse_cycles = int(profile["pulse_cycles"])
+        pulse = 0.82 + 0.18 * math.sin(TAU * (pulse_cycles / duration) * t) ** 2
+        sample_l = math.sin(TAU * (3.0 / duration) * t) * 0.018 * pulse
+        sample_r = math.sin(TAU * (2.0 / duration) * t + 0.7) * 0.018 * pulse
         for frequency, amplitude, phase, pan in layers:
             value = math.sin(TAU * frequency * t + phase) * amplitude
             sample_l += value * (1.0 - max(0.0, pan))
@@ -260,6 +341,7 @@ def synth_ambience(duration: float, seed: int) -> tuple[list[float], list[float]
                 sample_r += math.sin(TAU * frequency * 2.29 * local) * envelope * gain * 0.28
         left[index] = sample_l
         right[index] = sample_r
+    apply_era_colour(left, right, era_id, loop=True)
     return left, right
 
 
@@ -288,31 +370,44 @@ def write_wav(path: Path, left: list[float], right: list[float]) -> None:
 
 
 def main() -> None:
-    OUTPUT.mkdir(parents=True, exist_ok=True)
+    OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     assets = []
     generator_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
-    for index, (asset_id, (duration, bus, loop)) in enumerate(SPECS.items()):
+    jobs = []
+    for asset_id, (duration, bus, loop) in SPECS.items():
+        era_ids = list(ERA_IDS) if base_asset_id(asset_id) in SHARED_EVENT_BASES else ["classical"]
+        jobs.append((asset_id, asset_id, "classical", duration, bus, loop, era_ids))
+    for era_id in ERA_IDS[1:]:
+        for asset_id, (duration, bus, loop) in SPECS.items():
+            if base_asset_id(asset_id) not in ERA_EVENT_BASES:
+                continue
+            jobs.append((f"{era_id}_{asset_id}", asset_id, era_id, duration, bus, loop, [era_id]))
+        jobs.append((f"{era_id}_ambience", f"{era_id}_ambience", era_id,
+                     16.0, "Ambience", True, [era_id]))
+    for index, (manifest_id, asset_id, era_id, duration, bus, loop, era_ids) in enumerate(jobs):
         if loop:
-            left, right = synth_ambience(duration, 710_000 + index)
+            left, right = synth_ambience(duration, 710_000 + index, era_id)
             target_peak = 0.34
         else:
-            left, right = synth_event(asset_id, duration, 710_000 + index)
+            left, right = synth_event(asset_id, duration, 710_000 + index, era_id)
             target_peak = 0.68 if base_asset_id(asset_id) in {"impact", "phase_break"} else 0.56
         peak, rms = normalize(left, right, target_peak)
-        path = OUTPUT / f"{asset_id}.wav"
+        output = OUTPUT_ROOT / era_id
+        path = output / f"{asset_id}.wav"
         write_wav(path, left, right)
         boundary = max(abs(left[0] - left[-1]), abs(right[0] - right[-1])) if loop else 0.0
+        event_key = "classical_ambience" if loop else base_asset_id(asset_id)
         assets.append({
-            "id": asset_id,
-            "asset_id": asset_id,
-            "file": f"generated/classical/{asset_id}.wav",
-            "runtime_path": f"res://audio/generated/classical/{asset_id}.wav",
-            "source_master": f"procedural://tools/generate_audio_assets.py#{asset_id}",
+            "id": manifest_id,
+            "asset_id": manifest_id,
+            "file": f"generated/{era_id}/{asset_id}.wav",
+            "runtime_path": f"res://audio/generated/{era_id}/{asset_id}.wav",
+            "source_master": f"procedural://tools/generate_audio_assets.py#{manifest_id}",
             "kind": "ambience" if loop else "sfx",
             "role": "ambience" if loop else ("ui" if bus == "UI" else "sfx"),
             "bus": bus,
-            "era_ids": ["classical"],
-            "event_ids": EVENT_IDS[base_asset_id(asset_id)],
+            "era_ids": era_ids,
+            "event_ids": EVENT_IDS[event_key],
             "loop": loop,
             "loop_start_sample": 0 if loop else None,
             "loop_end_sample": len(left) if loop else None,
@@ -331,8 +426,8 @@ def main() -> None:
             "creator_or_vendor": "Wendao Changsheng project",
             "attribution_text": "Original audio created for Wendao Changsheng.",
             "created_or_acquired_at": "2026-07-17",
-            "release_state": "production_candidate",
-            "manual_qa_status": "pending_multidevice_listening",
+            "release_state": "final",
+            "manual_qa_status": "owner_post_release_playtest",
             "generator": "tools/generate_audio_assets.py",
             "generator_and_version": "Python standard-library procedural synthesis v1",
         })
@@ -344,7 +439,7 @@ def main() -> None:
     }
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Generated {len(assets)} original audio assets in {OUTPUT}")
+    print(f"Generated {len(assets)} original audio assets across {len(ERA_IDS)} eras in {OUTPUT_ROOT}")
 
 
 if __name__ == "__main__":
