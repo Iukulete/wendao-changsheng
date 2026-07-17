@@ -75,6 +75,7 @@ var recent_memories: Array[String] = []
 var feedback: String = "旧玉仍温，今生尚未落笔。"
 var save_notice: String = "尚未封存"
 var menu_notice: String = ""
+var inventory_notice: String = "器物、材料与装备变化会立即封存。"
 
 var run_state: Dictionary = {}
 var player: Dictionary = {}
@@ -590,6 +591,7 @@ func _show_game() -> void:
 
 func _build_header() -> Control:
 	var header := _panel(0.78, era_accent)
+	header.name = "MainHeader"
 	header.custom_minimum_size.y = 82
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
@@ -1987,6 +1989,7 @@ func _show_event() -> void:
 	screen_host.add_child(page)
 
 	var header := _panel(0.78, era_accent)
+	header.name = "EventHeader"
 	header.custom_minimum_size.y = 76
 	var header_label := _display_label(str(current_event.get("title", "无名因果")), 29,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER)
@@ -1995,6 +1998,7 @@ func _show_event() -> void:
 	page.add_child(header)
 
 	var body := HBoxContainer.new()
+	body.name = "EventBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 20)
 	page.add_child(body)
@@ -2003,11 +2007,13 @@ func _show_event() -> void:
 
 	var footer := _label("数字键选择  ·  ESC 暂离此事", 15,
 		Color(0.78, 0.82, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER)
+	footer.name = "EventFooter"
 	page.add_child(footer)
 
 
 func _build_event_stage() -> Control:
 	var frame := _panel(0.38, era_accent)
+	frame.name = "EventStage"
 	frame.custom_minimum_size.x = 515
 	var stage := Control.new()
 	stage.clip_contents = true
@@ -2068,12 +2074,14 @@ func _build_event_stage() -> Control:
 
 func _build_event_choices() -> Control:
 	var panel := _panel(0.84, era_accent)
+	panel.name = "EventChoicesPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
 	panel.add_child(column)
 	column.add_child(_label(current_era + " · 因果抉择", 15, Color(era_accent, 0.92)))
 	var description := _label(str(current_event.get("description", "")), 20, Color("f1eee5"))
+	description.name = "EventDescription"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.custom_minimum_size.y = 150
 	column.add_child(description)
@@ -2086,6 +2094,7 @@ func _build_event_choices() -> Control:
 		var unavailable_reason := _choice_unavailable_reason(choice)
 		var choice_button := _button("%d  %s\n     %s" % [index + 1, str(choice.get("text", "沉默")), delta_hint],
 			_resolve_choice.bind(index), false)
+		choice_button.name = "EventChoiceButton%d" % index
 		choice_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		choice_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		choice_button.custom_minimum_size.y = 88
@@ -2256,6 +2265,7 @@ func _show_reincarnation() -> void:
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
 	var card := _panel(0.86, Color("d7bd75"))
+	card.name = "ReincarnationCard"
 	card.custom_minimum_size = Vector2(760, 560)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	page.add_child(card)
@@ -2292,7 +2302,9 @@ func _show_reincarnation() -> void:
 	name_input.custom_minimum_size.y = 48
 	_style_line_edit(name_input)
 	column.add_child(name_input)
-	column.add_child(_button("步入下一世", _begin_next_life.bind(name_input), true))
+	var next_life_button := _button("步入下一世", _begin_next_life.bind(name_input), true)
+	next_life_button.name = "NextLifeButton"
+	column.add_child(next_life_button)
 	column.add_child(_label("世界不会重置：旧人会老去，宗门会兴衰，未竟因果会换一副面孔回来。",
 		14, Color(0.72, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
 	name_input.grab_focus()
@@ -2541,11 +2553,23 @@ func _show_inventory() -> void:
 	_clear_screen()
 	_apply_era_visuals()
 	var page := VBoxContainer.new()
+	page.name = "InventoryPage"
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
 	page.add_child(_display_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	var notice_card := _panel(0.36, era_accent)
+	notice_card.name = "InventoryNoticeCard"
+	notice_card.custom_minimum_size.y = 54
+	var notice := _label(inventory_notice, 14, Color(0.82, 0.85, 0.83),
+		HORIZONTAL_ALIGNMENT_CENTER)
+	notice.name = "InventoryNotice"
+	notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	notice_card.add_child(notice)
+	page.add_child(notice_card)
 	var body := HBoxContainer.new()
+	body.name = "InventoryBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
@@ -2558,6 +2582,7 @@ func _show_inventory() -> void:
 
 func _build_inventory_list() -> Control:
 	var panel := _panel(0.84, era_accent)
+	panel.name = "InventoryListPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
@@ -2565,10 +2590,19 @@ func _build_inventory_list() -> Control:
 	column.add_child(_section_title("所持器物"))
 	var inventory: Dictionary = run_state.inventory
 	var equipped: Dictionary = inventory.equipped
-	column.add_child(_label("当前 · 兵器 %s  护甲 %s  灵物 %s" % [
-		_equipped_name(str(equipped.weapon_id)), _equipped_name(str(equipped.armor_id)),
-		_equipped_name(str(equipped.relic_id))], 15, Color(0.78, 0.84, 0.83)))
+	var loadout := HBoxContainer.new()
+	loadout.name = "InventoryLoadout"
+	loadout.add_theme_constant_override("separation", 8)
+	loadout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	loadout.add_child(_inventory_loadout_card("兵器", _equipped_name(str(equipped.weapon_id)),
+		Color("d49a62")))
+	loadout.add_child(_inventory_loadout_card("护甲", _equipped_name(str(equipped.armor_id)),
+		Color("69b1c5")))
+	loadout.add_child(_inventory_loadout_card("灵物", _equipped_name(str(equipped.relic_id)),
+		Color("b18bd0")))
+	column.add_child(loadout)
 	var scroll := ScrollContainer.new()
+	scroll.name = "InventoryListScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -2578,63 +2612,206 @@ func _build_inventory_list() -> Control:
 	scroll.add_child(list)
 	for entry_value in inventory.items:
 		var entry: Dictionary = entry_value
-		var row := HBoxContainer.new()
-		var name_text := "%s ×%d" % [ItemSystemScript.display_name(entry), int(entry.quantity)]
-		var item_label := _label(name_text, 16, Color(0.86, 0.87, 0.84))
-		item_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(item_label)
 		var item_id := str(entry.item_id)
 		var definition: Dictionary = ItemSystemScript.ITEMS.get(item_id, {})
+		var category := str(entry.get("category", definition.get("category", "器物")))
+		var item_card := _panel(0.28, _inventory_category_color(category))
+		item_card.custom_minimum_size.y = 72
+		var item_style := item_card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		item_style.content_margin_left = 12
+		item_style.content_margin_right = 12
+		item_style.content_margin_top = 8
+		item_style.content_margin_bottom = 8
+		item_style.shadow_size = 4
+		item_card.add_theme_stylebox_override("panel", item_style)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 10)
+		item_card.add_child(row)
+		var text_box := VBoxContainer.new()
+		text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(text_box)
+		var name_text := "%s ×%d" % [ItemSystemScript.display_name(entry), int(entry.quantity)]
+		text_box.add_child(_label(name_text, 16, Color(0.90, 0.89, 0.84)))
+		var detail := _label(_inventory_item_detail(entry, definition), 13,
+			Color(0.70, 0.77, 0.78))
+		detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		text_box.add_child(detail)
 		if str(definition.get("category", "")) == "consumable":
-			row.add_child(_button("服用", _use_inventory_item.bind(item_id), false))
+			var use_button := _button("服用", _use_inventory_item.bind(item_id), false, "", true)
+			use_button.custom_minimum_size = Vector2(84, 46)
+			row.add_child(use_button)
 		elif definition.has("slot") or entry.has("slot"):
-			row.add_child(_button("装备", _equip_inventory_item.bind(str(entry.instance_id)), false))
-		list.add_child(row)
+			var slot := str(entry.get("slot", definition.get("slot", "")))
+			var is_equipped := str(equipped.get("%s_id" % slot, "")) == str(entry.instance_id)
+			if is_equipped:
+				var equipped_label := _label("已装备", 14, _inventory_category_color(category),
+					HORIZONTAL_ALIGNMENT_CENTER)
+				equipped_label.custom_minimum_size.x = 84
+				equipped_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				row.add_child(equipped_label)
+			else:
+				var equip_button := _button("装备", _equip_inventory_item.bind(str(entry.instance_id)),
+					false, "", true)
+				equip_button.custom_minimum_size = Vector2(84, 46)
+				row.add_child(equip_button)
+		list.add_child(item_card)
 	list.add_child(_divider())
 	list.add_child(_section_title("材料"))
-	var material_names: Array[String] = []
+	var material_grid := GridContainer.new()
+	material_grid.name = "InventoryMaterialGrid"
+	material_grid.columns = 3
+	material_grid.add_theme_constant_override("h_separation", 8)
+	material_grid.add_theme_constant_override("v_separation", 8)
 	for material_id in (inventory.materials as Dictionary).keys():
 		var material_definition: Dictionary = ItemSystemScript.ITEMS.get(str(material_id), {})
-		material_names.append("%s ×%d" % [str(material_definition.get("name", material_id)),
-			int(inventory.materials[material_id])])
-	list.add_child(_label("  ·  ".join(material_names) if not material_names.is_empty() else "炉中尚无材料。",
-		15, Color(0.73, 0.78, 0.78)))
+		material_grid.add_child(_inventory_material_chip(str(material_definition.get("name", material_id)),
+			int(inventory.materials[material_id])))
+	if material_grid.get_child_count() > 0:
+		list.add_child(material_grid)
+	else:
+		list.add_child(_label("炉中尚无材料。", 15, Color(0.73, 0.78, 0.78)))
 	return panel
 
 
 func _build_forge_panel() -> Control:
 	var panel := _panel(0.84, era_accent)
-	panel.custom_minimum_size.x = 390
+	panel.name = "ForgePanel"
+	panel.custom_minimum_size.x = 430
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 	column.add_child(_section_title("当世炼器"))
+	column.add_child(_label("灵石 %d · 造化道途 %d" % [int(player.spirit_stones),
+		int((player.get("path", {}) as Dictionary).get("creation", 0))], 14,
+		Color(0.74, 0.80, 0.80)))
 	for recipe_id_value in ItemSystemScript.RECIPES.keys():
 		var recipe_id := str(recipe_id_value)
 		var recipe: Dictionary = ItemSystemScript.RECIPES[recipe_id]
 		var cost_parts: Array[String] = []
 		for material_id in (recipe.cost as Dictionary).keys():
 			var material: Dictionary = ItemSystemScript.ITEMS.get(str(material_id), {})
-			cost_parts.append("%s%d" % [str(material.get("name", material_id)), int(recipe.cost[material_id])])
-		cost_parts.append("灵石%d" % int(recipe.spirit_stones))
-		var button := _button("%s\n%s" % [str(recipe.name), " · ".join(cost_parts)],
-			_forge_inventory_item.bind(recipe_id), false)
-		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		button.custom_minimum_size.y = 72
+			cost_parts.append("%s %d/%d" % [str(material.get("name", material_id)),
+				ItemSystemScript.count(run_state, str(material_id)), int(recipe.cost[material_id])])
+		cost_parts.append("灵石 %d/%d" % [int(player.spirit_stones), int(recipe.spirit_stones)])
 		var readiness: Dictionary = ItemSystemScript.can_forge(run_state, recipe_id)
+		var recipe_card := _panel(0.28, Color("67b98d") if bool(readiness.ok) else era_accent)
+		recipe_card.custom_minimum_size.y = 96
+		var recipe_style := recipe_card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		recipe_style.content_margin_left = 12
+		recipe_style.content_margin_right = 12
+		recipe_style.content_margin_top = 8
+		recipe_style.content_margin_bottom = 8
+		recipe_style.shadow_size = 4
+		recipe_card.add_theme_stylebox_override("panel", recipe_style)
+		var recipe_row := HBoxContainer.new()
+		recipe_row.add_theme_constant_override("separation", 10)
+		recipe_card.add_child(recipe_row)
+		var recipe_text := VBoxContainer.new()
+		recipe_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		recipe_row.add_child(recipe_text)
+		recipe_text.add_child(_label(str(recipe.name), 16, Color("eee4cc")))
+		recipe_text.add_child(_label(_inventory_bonus_text(recipe.base_bonuses), 13,
+			Color("d8bf79")))
+		var cost_label := _label(" · ".join(cost_parts), 12,
+			Color("83c4a4") if bool(readiness.ok) else Color(0.67, 0.70, 0.70))
+		cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		recipe_text.add_child(cost_label)
+		var button_text := "开炉炼制" if bool(readiness.ok) else _forge_blocked_label(str(readiness.code))
+		var button := _button(button_text, _forge_inventory_item.bind(recipe_id), bool(readiness.ok),
+			"", true)
+		button.name = "ForgeRecipe_%s" % recipe_id
+		button.custom_minimum_size = Vector2(100, 48)
 		button.disabled = not bool(readiness.ok)
-		button.tooltip_text = "材料或灵石不足。" if button.disabled else ""
-		column.add_child(button)
-	column.add_child(_spacer(8))
+		if button.disabled:
+			button.add_theme_color_override("font_disabled_color", Color(0.62, 0.66, 0.66))
+			button.add_theme_stylebox_override("disabled", _button_style(0.08, era_accent, 0.18, true))
+		button.tooltip_text = "补齐卡片中标出的材料与灵石后即可开炉。" if button.disabled else ""
+		recipe_row.add_child(button)
+		column.add_child(recipe_card)
 	column.add_child(_label("品质由造化道途、当前境界与此世随机游标共同决定。道品虚痕佩可随轮回保留。",
-		14, Color(0.72, 0.77, 0.78)))
+		13, Color(0.72, 0.77, 0.78)))
 	return panel
+
+
+func _inventory_loadout_card(title: String, item_name: String, color: Color) -> PanelContainer:
+	var card := _panel(0.26, color)
+	card.custom_minimum_size.y = 60
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var style := card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 10
+	style.content_margin_right = 10
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	style.shadow_size = 3
+	card.add_theme_stylebox_override("panel", style)
+	var column := VBoxContainer.new()
+	column.add_child(_label(title, 12, Color(color, 0.86)))
+	var name_label := _label(item_name, 14, Color(0.88, 0.88, 0.84),
+		HORIZONTAL_ALIGNMENT_CENTER)
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(name_label)
+	card.add_child(column)
+	return card
+
+
+func _inventory_material_chip(material_name: String, count: int) -> PanelContainer:
+	var chip := _panel(0.20, era_accent)
+	chip.custom_minimum_size.y = 38
+	chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var style := chip.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	style.shadow_size = 2
+	chip.add_theme_stylebox_override("panel", style)
+	chip.add_child(_label("%s ×%d" % [material_name, count], 13,
+		Color(0.76, 0.81, 0.81), HORIZONTAL_ALIGNMENT_CENTER))
+	return chip
+
+
+func _inventory_item_detail(entry: Dictionary, definition: Dictionary) -> String:
+	var category := str(entry.get("category", definition.get("category", "器物")))
+	var category_name := str({
+		"consumable":"丹药", "weapon":"兵器", "armor":"护甲", "relic":"灵物",
+	}.get(category, "器物"))
+	var description := str(definition.get("description", ""))
+	var bonuses: Dictionary = entry.get("bonuses", definition.get("bonuses", {}))
+	var bonus_text := _inventory_bonus_text(bonuses)
+	var parts: Array[String] = [category_name]
+	if not description.is_empty(): parts.append(description)
+	if not bonus_text.is_empty(): parts.append(bonus_text)
+	return " · ".join(parts)
+
+
+func _inventory_bonus_text(bonuses: Dictionary) -> String:
+	var stat_names := {"attack":"攻势", "defense":"护体", "max_hp":"气血", "max_mp":"灵力", "dao_heart":"道心"}
+	var parts: Array[String] = []
+	for stat_id in ["attack", "defense", "max_hp", "max_mp", "dao_heart"]:
+		if int(bonuses.get(stat_id, 0)) != 0:
+			parts.append("%s%+d" % [str(stat_names[stat_id]), int(bonuses[stat_id])])
+	return "  ".join(parts)
+
+
+func _inventory_category_color(category: String) -> Color:
+	return {
+		"consumable": Color("70b98b"), "weapon": Color("d49a62"),
+		"armor": Color("69b1c5"), "relic": Color("b18bd0"),
+	}.get(category, era_accent)
+
+
+func _forge_blocked_label(code: String) -> String:
+	return {
+		"insufficient_spirit_stones":"灵石不足", "insufficient_material":"材料不足",
+		"inventory_full":"行囊已满",
+	}.get(code, "暂不可炼")
 
 
 func _use_inventory_item(item_id: String) -> void:
 	var result: Dictionary = ItemSystemScript.use_consumable(run_state, item_id)
 	feedback = "你服下%s，药力已经进入此世经脉。" % str((ItemSystemScript.ITEMS[item_id] as Dictionary).name) \
 		if bool(result.ok) else "此刻无法服用这件物品。"
+	inventory_notice = feedback
 	_sync_state_views()
 	if bool(result.ok):
 		_save_current_state("行囊变化已封存")
@@ -2644,6 +2821,7 @@ func _use_inventory_item(item_id: String) -> void:
 func _equip_inventory_item(reference_id: String) -> void:
 	var result: Dictionary = ItemSystemScript.equip(run_state, reference_id)
 	feedback = "器物与气机完成共鸣。" if bool(result.ok) else "这件器物无法装备。"
+	inventory_notice = feedback
 	_sync_state_views()
 	if bool(result.ok):
 		_save_current_state("装备变化已封存")
@@ -2661,6 +2839,7 @@ func _forge_inventory_item(recipe_id: String) -> void:
 		_save_current_state("炼器结果已封存")
 	else:
 		feedback = "炉中材料尚不足，器胚没有成形。"
+	inventory_notice = feedback
 	_sync_state_views()
 	_show_inventory()
 
@@ -2671,11 +2850,13 @@ func _show_armory() -> void:
 	_clear_screen()
 	_apply_era_visuals(MENU_SCENE)
 	var page := VBoxContainer.new()
+	page.name = "ArmoryPage"
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
 	page.add_child(_display_label("成就与轮回玉藏兵", 30, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
 	var body := HBoxContainer.new()
+	body.name = "ArmoryBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
@@ -2685,8 +2866,11 @@ func _show_armory() -> void:
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 12)
 	page.add_child(actions)
-	actions.add_child(_button("切换下一件 [Y]", _cycle_jade_weapon, false))
+	var cycle_button := _button("切换下一件 [Y]", _cycle_jade_weapon, false)
+	cycle_button.name = "ArmoryCycleButton"
+	actions.add_child(cycle_button)
 	var invoke_button := _button("玉兵显圣 [J]", _invoke_jade_weapon, true)
+	invoke_button.name = "ArmoryInvokeButton"
 	var current := AchievementSystemScript.current_weapon(run_state)
 	invoke_button.disabled = current.is_empty() or int(current.get("charge", 0)) < 100
 	invoke_button.tooltip_text = "显圣蓄能尚未达到100。" if invoke_button.disabled else "释放当前玉兵道法。"
@@ -2698,12 +2882,14 @@ func _show_armory() -> void:
 
 func _build_achievement_list() -> Control:
 	var panel := _panel(0.84, era_accent)
+	panel.name = "AchievementListPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	panel.add_child(column)
 	column.add_child(_section_title("成就 %d/16" % AchievementSystemScript.unlocked_count(run_state)))
 	var scroll := ScrollContainer.new()
+	scroll.name = "AchievementListScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -2726,12 +2912,14 @@ func _build_achievement_list() -> Control:
 
 func _build_jade_armory_list() -> Control:
 	var panel := _panel(0.84, Color("d5a957"))
+	panel.name = "JadeArmoryPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	panel.add_child(column)
 	column.add_child(_section_title("轮回玉藏兵"))
 	var scroll := ScrollContainer.new()
+	scroll.name = "JadeArmoryScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
@@ -2752,9 +2940,14 @@ func _build_jade_armory_list() -> Control:
 			str(definition.name), AchievementSystemScript.stage_name(int(weapon.stage)),
 			int(weapon.resonance), int(weapon.charge), int(weapon.invocations)]
 		var button := _button(text_value, _equip_jade_weapon.bind(str(definition.id)), equipped)
+		button.name = "JadeWeaponButton_%s" % str(definition.id)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size.y = 76
 		button.disabled = equipped
+		if equipped:
+			button.add_theme_color_override("font_disabled_color", Color("f0ddb0"))
+			button.add_theme_stylebox_override("disabled", _button_style(0.30,
+				_achievement_tier_color(int(definition.tier)), 0.78))
 		list.add_child(button)
 	return panel
 

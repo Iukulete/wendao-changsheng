@@ -134,6 +134,119 @@ func _run() -> void:
 		_capture(root, output_root.path_join("main_%dx%d.png" % [viewport_size.x, viewport_size.y]),
 			viewport_size, "主界面 %dx%d" % [viewport_size.x, viewport_size.y])
 
+	var auxiliary_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
+	root.size = Vector2i(1280, 720)
+	var inventory_render_state: Dictionary = game.get("run_state")
+	ItemSystemScript.add_item(inventory_render_state, "spirit_pill", 1)
+	ItemSystemScript.add_item(inventory_render_state, "cloud_robe", 1)
+	ItemSystemScript.add_item(inventory_render_state, "black_iron", 2)
+	inventory_render_state.player.spirit_stones = 24
+	game.set("inventory_notice", "行囊已展开：至少一式配方材料齐备，可直接开炉验收。")
+	game.call("_sync_state_views")
+	game.call("_show_inventory")
+	await _settle_frames(4)
+	var auxiliary_viewport := root.get_visible_rect()
+	var inventory_controls: Array[Control] = [
+		game.find_child("InventoryNoticeCard", true, false) as Control,
+		game.find_child("InventoryLoadout", true, false) as Control,
+		game.find_child("InventoryListPanel", true, false) as Control,
+		game.find_child("ForgePanel", true, false) as Control,
+		game.find_child("ForgeRecipe_spirit_blade", true, false) as Control,
+		game.find_child("InventoryBackButton", true, false) as Control,
+	]
+	for control in inventory_controls:
+		if control == null or not auxiliary_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720行囊炼器关键区域没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
+	_capture(root, output_root.path_join("inventory_1280x720.png"), Vector2i(1280, 720),
+		"行囊炼器 1280x720")
+
+	var armory_state: Dictionary = game.get("run_state")
+	var render_armory: Dictionary = AchievementSystemScript.normalize(armory_state)
+	var qingxiao: Dictionary = render_armory.weapons.qingxiao
+	qingxiao["unlocked"] = true
+	qingxiao["resonance"] = 68
+	qingxiao["charge"] = 100
+	qingxiao["stage"] = 2
+	render_armory.weapons.qingxiao = qingxiao
+	render_armory["equipped_id"] = "qingxiao"
+	armory_state.legacy.armory = render_armory
+	game.call("_show_armory")
+	await _settle_frames(4)
+	var armory_controls: Array[Control] = [
+		game.find_child("AchievementListPanel", true, false) as Control,
+		game.find_child("JadeArmoryPanel", true, false) as Control,
+		game.find_child("ArmoryCycleButton", true, false) as Control,
+		game.find_child("ArmoryInvokeButton", true, false) as Control,
+		game.find_child("ArmoryBackButton", true, false) as Control,
+		game.find_child("JadeWeaponButton_qingxiao", true, false) as Control,
+	]
+	for control in armory_controls:
+		if control == null or not auxiliary_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720成就玉兵关键区域没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
+	_capture(root, output_root.path_join("armory_1280x720.png"), Vector2i(1280, 720),
+		"成就玉兵 1280x720")
+
+	game.set("run_state", auxiliary_state.duplicate(true))
+	game.call("_sync_state_views")
+	game.set("current_event", {
+		"id": "render_lantern_healer", "title": "灯河医契",
+		"description": "灯河灵市的药师沈照川拦住你。她手中的旧契记着一名本应死去的散修，而契尾的血印正与你的轮回玉产生同一阵脉动。",
+		"scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
+		"portrait": "res://art/portraits/jade_healer.jpg",
+		"portrait_name": "沈照川", "portrait_title": "镜湖药师 · 旧契守人",
+		"choices": [
+			{"text":"替她验明旧契中的魂息", "deltas":{"exp":18, "dao_heart":2},
+				"path_deltas":{"insight":2}, "outcome":"旧契映出一段被宗门抹去的归魂路。"},
+			{"text":"以灵石买下契尾血印", "deltas":{"spirit_stones":-4, "reputation":2},
+				"path_deltas":{"creation":1}, "outcome":"血印离纸，化作一枚温热的因果种。"},
+			{"text":"劝她将旧契投入灯河", "deltas":{"karma":-1, "dao_heart":1},
+				"path_deltas":{"compassion":2}, "outcome":"纸灰顺流而下，那名散修的名字却留在你心里。"},
+		],
+	})
+	game.call("_show_event")
+	await _settle_frames(4)
+	var event_controls: Array[Control] = [
+		game.find_child("EventHeader", true, false) as Control,
+		game.find_child("EventStage", true, false) as Control,
+		game.find_child("EventChoicesPanel", true, false) as Control,
+		game.find_child("EventChoiceButton0", true, false) as Control,
+		game.find_child("EventChoiceButton1", true, false) as Control,
+		game.find_child("EventChoiceButton2", true, false) as Control,
+		game.find_child("EventFooter", true, false) as Control,
+	]
+	for control in event_controls:
+		if control == null or not auxiliary_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720叙事事件关键区域没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
+	_capture(root, output_root.path_join("event_1280x720.png"), Vector2i(1280, 720),
+		"叙事事件 1280x720")
+
+	var reincarnation_state := auxiliary_state.duplicate(true)
+	reincarnation_state.player.age = reincarnation_state.player.lifespan
+	game.set("run_state", reincarnation_state)
+	game.call("_sync_state_views")
+	game.call("_end_current_life", "寿元耗尽")
+	await _settle_frames(4)
+	var reincarnation_controls: Array[Control] = [
+		game.find_child("ReincarnationCard", true, false) as Control,
+		game.find_child("NextLifeNameInput", true, false) as Control,
+		game.find_child("NextLifeButton", true, false) as Control,
+	]
+	for control in reincarnation_controls:
+		if control == null or not auxiliary_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720轮回页关键区域没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
+	_capture(root, output_root.path_join("reincarnation_1280x720.png"), Vector2i(1280, 720),
+		"轮回页 1280x720")
+	game.set("run_state", auxiliary_state)
+	game.set("current_event", {})
+	game.set("achievement_notice_queue", [])
+	game.call("_sync_state_views")
+	game.call("_show_game")
+	await _settle_frames(2)
+
 	var pre_combat_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
 	root.size = Vector2i(1280, 720)
 	game.call("_start_combat")
