@@ -44,7 +44,8 @@ func _init() -> void:
 	var start_b: Dictionary = DungeonSystemScript.start(second)
 	_expect(start_a == start_b and first == second, "相同状态必须生成相同秘境牌组与路线")
 	_expect((first.dungeon.run.deck as Array).size() >= 11 and
-		(first.dungeon.run.route_choices as Array).size() >= 1,
+		(first.dungeon.run.route_choices as Array).size() >= 1 and
+		(first.dungeon.run.route_history as Array).is_empty(),
 		"进入秘境才应生成临时牌组与分岔路线")
 	_expect(str(first.dungeon.run.ability_profile.primary_path_id) == "insight" and
 		str(first.dungeon.run.ability_profile.secondary_path_id) == "creation",
@@ -372,6 +373,17 @@ func _init() -> void:
 	var combat_index := _find_route(first.dungeon.run.route_choices, "combat")
 	if combat_index < 0: combat_index = 0
 	var chosen: Dictionary = DungeonSystemScript.choose_route(first, combat_index)
+	var first_route: Dictionary = first.dungeon.run.route_history[0]
+	_expect((first.dungeon.run.route_history as Array).size() == 1 and int(first_route.depth) == 0 and
+		str(first_route.name) == str((chosen.get("node", {}) as Dictionary).get("name", "")) and
+		str(first_route.type) == str((chosen.get("node", {}) as Dictionary).get("type", "")),
+		"选择道标必须把真实层数、名称和类型写入可存档的因果路线")
+	var chosen_value: Variant = JSON.parse_string(JSON.stringify(first))
+	var chosen_persisted: Dictionary = GameStateScript.ensure_v2(chosen_value as Dictionary)
+	DungeonSystemScript.normalize(chosen_persisted)
+	_expect((chosen_persisted.dungeon.run.route_history as Array).size() == 1 and
+		str(chosen_persisted.dungeon.run.route_history[0].name) == str(first_route.name),
+		"已走过的因果路线必须通过存档往返，旧档缺省字段也必须由标准化层接管")
 	if str(chosen.code) != "dungeon_battle_started":
 		while DungeonSystemScript.has_active_run(first) and (first.dungeon.run.battle as Dictionary).is_empty():
 			DungeonSystemScript.choose_route(first, 0)

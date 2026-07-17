@@ -266,7 +266,8 @@ static func start(state: Dictionary, dungeon_id: String = "mirror_lake") -> Dict
 		"guard_power": clampi(int(effective.defense) / 18, 0, 14),
 		"card_counter": int(projection.card_counter),
 		"ability_profile": projection.profile,
-		"deck": deck, "route_choices": [], "battle": {}, "rewards": {"exp": 0, "spirit_stones": 0},
+		"deck": deck, "route_choices": [], "route_history": [], "battle": {},
+		"rewards": {"exp": 0, "spirit_stones": 0},
 		"log": ["你踏入%s，今生功法被秘境折成一组临时灵诀。" % str(definition.name),
 			"能力映照：%s" % ability_profile_label(projection.profile)],
 	}
@@ -288,6 +289,14 @@ static func choose_route(state: Dictionary, choice_index: int) -> Dictionary:
 	if choice_index < 0 or choice_index >= choices.size():
 		return {"ok": false, "code": "invalid_route_choice"}
 	var node: Dictionary = choices[choice_index]
+	var route_history: Array = run.get("route_history", [])
+	route_history.append({
+		"depth": int(run.depth),
+		"type": str(node.get("type", "unknown")).left(32),
+		"name": str(node.get("name", "无名道标")).left(64),
+		"danger": str(node.get("danger", "因果未明")).left(32),
+	})
+	run["route_history"] = _bounded_array(route_history, 64)
 	run["route_choices"] = []
 	var node_type := str(node.type)
 	if node_type in ["combat", "elite", "boss"]:
@@ -1161,6 +1170,7 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 	run["deck"] = _normalize_cards(run.get("deck", []))
 	run["card_counter"] = maxi(int(run.get("card_counter", 0)), (run.deck as Array).size())
 	run["route_choices"] = _bounded_array(run.get("route_choices", []), 3)
+	run["route_history"] = _normalize_route_history(run.get("route_history", []))
 	run["log"] = _bounded_array(run.get("log", []), MAX_LOG)
 	var battle_value: Variant = run.get("battle", {})
 	var battle: Dictionary = battle_value.duplicate(true) if battle_value is Dictionary else {}
@@ -1177,6 +1187,25 @@ static func _normalize_run(source: Dictionary) -> Dictionary:
 	else:
 		run["battle"] = {}
 	return run
+
+
+static func _normalize_route_history(value: Variant) -> Array:
+	var result: Array = []
+	if not value is Array:
+		return result
+	for entry_value in value:
+		if not entry_value is Dictionary:
+			continue
+		var entry: Dictionary = entry_value
+		result.append({
+			"depth": clampi(int(entry.get("depth", result.size())), 0, 63),
+			"type": str(entry.get("type", "unknown")).left(32),
+			"name": str(entry.get("name", "无名道标")).left(64),
+			"danger": str(entry.get("danger", "因果未明")).left(32),
+		})
+		if result.size() >= 64:
+			break
+	return result
 
 
 static func _normalize_trait(value: Variant) -> Dictionary:

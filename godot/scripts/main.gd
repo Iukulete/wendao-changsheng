@@ -1054,9 +1054,9 @@ func _show_dungeon_route() -> void:
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 16)
 	page.add_child(body)
-	body.add_child(_build_dungeon_log(run))
+	body.add_child(_build_dungeon_route_journal(run))
 	var route_panel := _panel(0.86, Color("d5a957"))
-	route_panel.custom_minimum_size.x = 440
+	route_panel.custom_minimum_size.x = 420
 	var route_column := VBoxContainer.new()
 	route_column.add_theme_constant_override("separation", 12)
 	route_panel.add_child(route_column)
@@ -1064,13 +1064,14 @@ func _show_dungeon_route() -> void:
 	var routes: Array = run.route_choices
 	for index in range(routes.size()):
 		var node: Dictionary = routes[index]
-		var route_button := _button("%d · %s\n%s · %s" % [index + 1, str(node.name), str(node.danger),
-			str(node.get("description", "前路因果未明。"))],
+		var route_button := _button("%d · %s 〔%s〕\n%s\n预示 · %s" % [index + 1, str(node.name),
+			str(node.danger), str(node.get("description", "前路因果未明。")),
+			_dungeon_route_preview(node)],
 			_choose_dungeon_route.bind(index), index == 0)
 		route_button.name = "DungeonRouteButton%d" % index
 		route_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		route_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		route_button.custom_minimum_size.y = 104
+		route_button.custom_minimum_size.y = 122
 		route_column.add_child(route_button)
 	route_column.add_child(_spacer(6))
 	var abandon_button := _button("撤出秘境", _abandon_dungeon, false)
@@ -1263,6 +1264,120 @@ func _build_dungeon_log(run: Dictionary) -> Control:
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(log_label)
 	return panel
+
+
+func _build_dungeon_route_journal(run: Dictionary) -> Control:
+	var panel := _panel(0.78, era_accent)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	panel.add_child(column)
+	column.add_child(_section_title("镜路因果图"))
+	column.add_child(_build_dungeon_route_trail(run))
+	column.add_child(_divider())
+	column.add_child(_label("近途回声", 16, Color(era_accent, 0.88)))
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+	var log_label := _label("\n".join((run.log as Array).slice(-7)), 15, Color("eee8da"))
+	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(log_label)
+	return panel
+
+
+func _build_dungeon_route_trail(run: Dictionary) -> Control:
+	var trail := HBoxContainer.new()
+	trail.name = "DungeonRouteTrail"
+	trail.custom_minimum_size.y = 116
+	trail.add_theme_constant_override("separation", 6)
+	var history: Array = run.get("route_history", [])
+	var depth := int(run.get("depth", 0))
+	var max_depth := maxi(1, int(run.get("max_depth", 4)))
+	var choice_count := (run.get("route_choices", []) as Array).size()
+	for stage_index in range(max_depth):
+		var reached: Dictionary = {}
+		for entry_value in history:
+			if entry_value is Dictionary and int((entry_value as Dictionary).get("depth", -1)) == stage_index:
+				reached = entry_value as Dictionary
+				break
+		var stage_color := Color(era_accent, 0.56)
+		var status_text := "因果未显"
+		var name_text := "雾中道标"
+		if not reached.is_empty():
+			stage_color = _dungeon_route_type_color(str(reached.get("type", "unknown")))
+			status_text = "%s · 已渡" % str(reached.get("danger", "因果"))
+			name_text = str(reached.get("name", "无名道标"))
+		elif stage_index == depth:
+			stage_color = era_accent
+			status_text = "%d 条因果待择" % maxi(1, choice_count)
+			name_text = "此刻立足"
+		elif stage_index == max_depth - 1:
+			stage_color = Color("df8764")
+			status_text = "首领 · 必经"
+			name_text = "未生门"
+		var stage_panel := _panel(0.47, stage_color)
+		stage_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var style := stage_panel.get_theme_stylebox("panel") as StyleBoxFlat
+		style.content_margin_left = 10
+		style.content_margin_right = 10
+		style.content_margin_top = 9
+		style.content_margin_bottom = 9
+		style.shadow_size = 5
+		var stack := VBoxContainer.new()
+		stack.alignment = BoxContainer.ALIGNMENT_CENTER
+		stage_panel.add_child(stack)
+		stack.add_child(_label("第 %d 层" % (stage_index + 1), 13, Color(stage_color, 0.92),
+			HORIZONTAL_ALIGNMENT_CENTER))
+		var marker := "◆" if not reached.is_empty() else ("◇" if stage_index == depth else "·")
+		stack.add_child(_display_label(marker, 18, Color(stage_color, 0.96), HORIZONTAL_ALIGNMENT_CENTER))
+		var name_label := _label(name_text, 14, Color("f0eadb"), HORIZONTAL_ALIGNMENT_CENTER)
+		name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		stack.add_child(name_label)
+		stack.add_child(_label(status_text, 12, Color(0.72, 0.78, 0.79, 0.90),
+			HORIZONTAL_ALIGNMENT_CENTER))
+		trail.add_child(stage_panel)
+		if stage_index < max_depth - 1:
+			var connector := _display_label("›", 22, Color(era_accent, 0.58),
+				HORIZONTAL_ALIGNMENT_CENTER)
+			connector.custom_minimum_size.x = 14
+			connector.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			trail.add_child(connector)
+	return trail
+
+
+func _dungeon_route_type_color(node_type: String) -> Color:
+	return {
+		"combat": Color("dc8262"),
+		"memory": Color("74b9c9"),
+		"rest": Color("72bd98"),
+		"elite": Color("d96f7b"),
+		"forge": Color("d5a957"),
+		"boss": Color("e55f67"),
+	}.get(node_type, era_accent)
+
+
+func _dungeon_route_preview(node: Dictionary) -> String:
+	var node_type := str(node.get("type", "memory"))
+	if node_type == "combat":
+		return "时代敌手 · 胜后暂存修为与灵石"
+	if node_type == "elite":
+		return "时代被动强敌 · 高额修为与灵石"
+	if node_type == "boss":
+		return "半血转相 · 击破后结算整座秘境"
+	var effects: Dictionary = node.get("effects", {})
+	var notes: Array[String] = []
+	if node_type == "memory": notes.append("映出一式角色能力")
+	if node_type == "forge": notes.append("随机强化一式灵诀")
+	if int(effects.get("heal_percent", 0)) > 0:
+		notes.append("气血+%d%%" % int(effects.heal_percent))
+	if int(effects.get("calm", 0)) > 0: notes.append("压力-%d" % int(effects.calm))
+	if int(effects.get("stress", 0)) > 0: notes.append("压力+%d" % int(effects.stress))
+	if int(effects.get("hp_cost", 0)) > 0: notes.append("气血-%d" % int(effects.hp_cost))
+	if int(effects.get("attack_power", 0)) > 0: notes.append("器诀+%d" % int(effects.attack_power))
+	if int(effects.get("guard_power", 0)) > 0: notes.append("护诀+%d" % int(effects.guard_power))
+	return " · ".join(notes) if not notes.is_empty() else "结果随时代规则显化"
 
 
 func _dungeon_stress_color(stress: int) -> Color:

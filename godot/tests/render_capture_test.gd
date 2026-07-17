@@ -98,7 +98,36 @@ func _run() -> void:
 	}
 	game.call("_enter_dungeon")
 	await _settle_frames(4)
+	var route_trail := game.find_child("DungeonRouteTrail", true, false) as Control
+	var route_button := game.find_child("DungeonRouteButton0", true, false) as Button
+	if route_trail == null or route_trail.size.x < 500.0 or route_button == null or \
+			not route_button.text.contains("预示"):
+		failures.append("秘境岔路没有显示可读的四层因果路线与收益风险预示")
 	_capture(root, output_root.path_join("dungeon_route_1440x900.png"), Vector2i(1440, 900), "秘境路线")
+	var first_run_state: Dictionary = game.get("run_state")
+	var memory_index := -1
+	var memory_name := ""
+	for index in range((first_run_state.dungeon.run.route_choices as Array).size()):
+		var node: Dictionary = first_run_state.dungeon.run.route_choices[index]
+		if str(node.type) == "memory":
+			memory_index = index
+			memory_name = str(node.name)
+			break
+	if memory_index < 0:
+		failures.append("首层秘境没有生成用于路线历史验收的机缘道标")
+	else:
+		game.call("_choose_dungeon_route", memory_index)
+		await _settle_frames(4)
+		var progressed_trail := game.find_child("DungeonRouteTrail", true, false) as Control
+		var progressed_text := ""
+		if progressed_trail != null:
+			for label_value in progressed_trail.find_children("*", "Label", true, false):
+				progressed_text += (label_value as Label).text + "\n"
+		if progressed_trail == null or not progressed_text.contains(memory_name) or \
+				not progressed_text.contains("已渡"):
+			failures.append("已选择道标没有在因果路线中转为可见的已渡节点")
+		_capture(root, output_root.path_join("dungeon_route_progress_1440x900.png"),
+			Vector2i(1440, 900), "秘境路线推进")
 	var run_state: Dictionary = game.get("run_state")
 	var route_index := 0
 	for index in range((run_state.dungeon.run.route_choices as Array).size()):
