@@ -38,10 +38,11 @@ ERA_IDS = (
     "immortal_dynasty",
 )
 ERA_EVENT_BASES = ("card_cast", "impact", "guard")
-SHARED_EVENT_BASES = {
-    "ui_confirm", "ui_cancel", "stress", "heart_awaken", "elite_enter",
-    "boss_enter", "phase_break", "victory", "defeat",
+ERA_LOW_FREQUENCY_BASES = {
+    "stress", "heart_awaken", "elite_enter", "boss_enter", "phase_break",
+    "victory", "defeat",
 }
+SHARED_EVENT_BASES = {"ui_confirm", "ui_cancel"}
 ERA_AMBIENCE = {
     "classical": {"tone_scale": 1.00, "pulse_cycles": 3, "brightness": 0.42,
                   "motif": (523.25, 659.25, 440.00)},
@@ -288,6 +289,7 @@ def synth_event(asset_id: str, duration: float, seed: int,
         left[index] = sample[0] * window
         right[index] = sample[1] * window
     apply_variant_colour(left, right, variant_number(asset_id))
+    apply_era_narrative_signature(left, right, era_id, sound_id)
     apply_era_colour(left, right, era_id, loop=False)
     return left, right
 
@@ -305,6 +307,63 @@ def apply_variant_colour(left: list[float], right: list[float], number: int) -> 
     for index in range(delay, len(left)):
         left[index] = source_left[index] * (1.0 - mix) + source_right[index - delay] * mix
         right[index] = source_right[index] * (1.0 - mix) - source_left[index - delay] * mix * 0.72
+
+
+def apply_era_narrative_signature(left: list[float], right: list[float],
+                                  era_id: str, sound_id: str) -> None:
+    """Give rare narrative/combat cues a composed era identity, not just EQ."""
+    if era_id == "classical" or sound_id not in ERA_LOW_FREQUENCY_BASES:
+        return
+    base_hz = {
+        "stress": 164.81,
+        "heart_awaken": 220.00,
+        "elite_enter": 110.00,
+        "boss_enter": 73.42,
+        "phase_break": 146.83,
+        "victory": 329.63,
+        "defeat": 98.00,
+    }[sound_id]
+    semantic_gain = 1.18 if sound_id in {"boss_enter", "phase_break", "heart_awaken"} else 1.0
+    duration = len(left) / SAMPLE_RATE
+    for index in range(len(left)):
+        t = index / SAMPLE_RATE
+        window = fade_window(t, duration, 0.035, 0.16)
+        if era_id == "steam":
+            gear = max(0.0, math.sin(TAU * 7.5 * t)) ** 8
+            breath = 0.78 + 0.22 * math.sin(TAU * 1.5 * t) ** 2
+            left[index] += (math.sin(TAU * base_hz * t) * 0.040 * breath +
+                            math.sin(TAU * base_hz * 2.01 * t) * gear * 0.032) * window * semantic_gain
+            right[index] += (math.sin(TAU * base_hz * 0.998 * t + 0.06) * 0.040 * breath +
+                             math.sin(TAU * base_hz * 2.02 * t + 0.1) * gear * 0.030) * window * semantic_gain
+        elif era_id == "star_network":
+            phase = TAU * base_hz * 1.5 * t
+            shimmer = math.sin(phase + 0.82 * math.sin(TAU * 9.0 * t))
+            pulse = 0.66 + 0.34 * math.sin(TAU * 5.0 * t) ** 2
+            left[index] += (shimmer * 0.047 + math.sin(phase * 2.03) * 0.018) * pulse * window * semantic_gain
+            right[index] += (math.sin(phase * 1.003 + 0.16 + 0.74 * math.sin(TAU * 9.0 * t + 0.3)) * 0.045 -
+                             math.sin(phase * 2.01) * 0.016) * pulse * window * semantic_gain
+        elif era_id == "wasteland":
+            scarcity = max(0.0, math.sin(TAU * 2.0 * t)) ** 3
+            grain = math.sin(TAU * 913.0 * t) * math.sin(TAU * 37.0 * t)
+            left[index] += (math.sin(TAU * base_hz * 0.5 * t) * 0.052 * scarcity +
+                            grain * 0.013) * window * semantic_gain
+            right[index] += (math.sin(TAU * base_hz * 0.503 * t + 0.08) * 0.050 * scarcity -
+                             grain * 0.011) * window * semantic_gain
+        elif era_id == "final_age":
+            fracture = 0.25 + 0.75 * float(math.sin(TAU * 13.0 * t) > -0.18)
+            dying = 1.0 - 0.44 * smoothstep(t / max(duration, 1e-6))
+            left[index] += (math.sin(TAU * base_hz * t) * 0.043 +
+                            math.sin(TAU * base_hz * 1.017 * t) * 0.031) * fracture * dying * window * semantic_gain
+            right[index] += (math.sin(TAU * base_hz * 0.991 * t + 0.13) * 0.043 -
+                             math.sin(TAU * base_hz * 1.021 * t) * 0.028) * fracture * dying * window * semantic_gain
+        elif era_id == "immortal_dynasty":
+            decree = 0.76 + 0.24 * max(0.0, math.sin(TAU * 4.0 * t)) ** 6
+            left[index] += (math.sin(TAU * base_hz * t) * 0.044 +
+                            math.sin(TAU * base_hz * 1.5 * t) * 0.032 +
+                            math.sin(TAU * base_hz * 2.0 * t) * 0.019) * decree * window * semantic_gain
+            right[index] += (math.sin(TAU * base_hz * 1.002 * t + 0.05) * 0.044 +
+                             math.sin(TAU * base_hz * 1.503 * t + 0.12) * 0.030 +
+                             math.sin(TAU * base_hz * 2.004 * t) * 0.018) * decree * window * semantic_gain
 
 
 def apply_era_colour(left: list[float], right: list[float], era_id: str,
@@ -892,6 +951,14 @@ def main() -> None:
             jobs.append((f"{era_id}_{asset_id}", asset_id, era_id, duration, bus, loop, [era_id]))
         jobs.append((f"{era_id}_ambience_seed_slot", f"{era_id}_ambience", era_id,
                      16.0, "Ambience", True, [era_id]))
+    # Append new rare cues after the frozen v1 seed sequence.  This preserves
+    # every established SFX hash while allowing each later era to replace the
+    # former classical fallback with authored material.
+    for era_id in ERA_IDS[1:]:
+        for asset_id, (duration, bus, loop) in SPECS.items():
+            if base_asset_id(asset_id) not in ERA_LOW_FREQUENCY_BASES:
+                continue
+            jobs.append((f"{era_id}_{asset_id}", asset_id, era_id, duration, bus, loop, [era_id]))
     for index, (manifest_id, asset_id, era_id, duration, bus, loop, era_ids) in enumerate(jobs):
         if loop:
             continue

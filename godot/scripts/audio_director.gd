@@ -712,7 +712,9 @@ func _resolve_audio_path(asset_id: String) -> String:
 			candidates.append("res://audio/generated/%s/%s.ogg" % [soundscape_era, asset_id])
 	else:
 		candidates.append("res://audio/generated/%s/%s.wav" % [_era_id, asset_id])
-		if _era_id != "classical":
+		# UI semantics intentionally stay shared.  Every gameplay and narrative
+		# cue is release-gated per era and must never silently fall back.
+		if _era_id != "classical" and asset_id.begins_with("ui_"):
 			candidates.append("res://audio/generated/classical/%s.wav" % asset_id)
 	for path in candidates:
 		if ResourceLoader.exists(path):

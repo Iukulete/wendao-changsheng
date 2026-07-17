@@ -32,10 +32,11 @@ MUSIC_ENCODE_ARGS_EXPECTED = (
     "-ar", "48000", "-ac", "2", "-fflags", "+bitexact", "-flags:a", "+bitexact",
 )
 ERA_EVENT_BASES = ("card_cast", "impact", "guard")
-SHARED_EVENT_BASES = {
-    "ui_confirm", "ui_cancel", "stress", "heart_awaken", "elite_enter",
-    "boss_enter", "phase_break", "victory", "defeat",
-}
+ERA_LOW_FREQUENCY_BASES = (
+    "stress", "heart_awaken", "elite_enter", "boss_enter", "phase_break",
+    "victory", "defeat",
+)
+SHARED_EVENT_BASES = {"ui_confirm", "ui_cancel"}
 REQUIRED = {
     "ui_confirm", "ui_cancel", "card_cast", "impact", "guard", "stress",
     "heart_awaken", "elite_enter", "boss_enter", "phase_break", "victory",
@@ -48,6 +49,7 @@ for _era_id in ERA_IDS[1:]:
     for _base_id in ERA_EVENT_BASES:
         REQUIRED.add(f"{_era_id}_{_base_id}")
         REQUIRED.update(f"{_era_id}_{_base_id}_{number:02d}" for number in range(2, 5))
+    REQUIRED.update(f"{_era_id}_{base_id}" for base_id in ERA_LOW_FREQUENCY_BASES)
 for _era_id in ERA_IDS:
     REQUIRED.update(f"{_era_id}_music_{state}" for state in MUSIC_STATES)
     REQUIRED.add(f"{_era_id}_dungeon_ambience")
@@ -183,6 +185,15 @@ def main(require_final: bool = False) -> int:
             }
             if len(era_hashes) != len(ERA_IDS) or "" in era_hashes:
                 failures.append(f"{base_id}{suffix}: all six era materials must be distinct")
+    for base_id in ERA_LOW_FREQUENCY_BASES:
+        era_hashes = {
+            str(entries_by_id.get(
+                f"{'' if era_id == 'classical' else era_id + '_'}{base_id}", {}
+            ).get("sha256", ""))
+            for era_id in ERA_IDS
+        }
+        if len(era_hashes) != len(ERA_IDS) or "" in era_hashes:
+            failures.append(f"{base_id}: all six rare-event materials must be distinct")
 
     managed_paths: set[Path] = set()
     total_bytes = 0
@@ -286,6 +297,11 @@ def main(require_final: bool = False) -> int:
                 entry = entries_by_id.get(f"{prefix}{base_id}{suffix}", {})
                 if entry.get("era_ids") != [era_id]:
                     failures.append(f"{era_id}: {base_id}{suffix} is not era-exclusive")
+        for base_id in ERA_LOW_FREQUENCY_BASES:
+            prefix = "" if era_id == "classical" else f"{era_id}_"
+            entry = entries_by_id.get(f"{prefix}{base_id}", {})
+            if entry.get("era_ids") != [era_id]:
+                failures.append(f"{era_id}: {base_id} rare cue is not era-exclusive")
         for state in MUSIC_STATES:
             music = entries_by_id.get(f"{era_id}_music_{state}", {})
             if (music.get("era_ids") != [era_id] or music.get("role") != "music" or
@@ -295,7 +311,7 @@ def main(require_final: bool = False) -> int:
     for base_id in SHARED_EVENT_BASES:
         entry = entries_by_id.get(base_id, {})
         if entry.get("era_ids") != list(ERA_IDS):
-            failures.append(f"{base_id}: shared fallback must declare all six eras")
+            failures.append(f"{base_id}: shared UI base must declare all six eras")
     for base_id in ("ui_confirm", "ui_cancel"):
         for suffix in ("", "_02", "_03", "_04"):
             entry = entries_by_id.get(f"{base_id}{suffix}", {})
@@ -311,7 +327,7 @@ def main(require_final: bool = False) -> int:
     print(
         "AUDIO_ASSET_VERIFICATION_OK: "
         f"{len(entries)} project-original six-era 48 kHz stereo assets, including 18 synchronized music loops and "
-        "24 two-location layered soundscapes, "
+        "24 two-location layered soundscapes plus 42 era-exclusive rare-event cues, "
         "hashes/levels/loop seams verified, "
         f"{total_bytes} bytes"
     )

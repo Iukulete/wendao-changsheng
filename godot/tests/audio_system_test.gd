@@ -29,7 +29,7 @@ func _run() -> void:
 	await process_frame
 	_restore_settings()
 	if failures.is_empty():
-		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, two-location layered soundscapes, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
+		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, two-location layered soundscapes, era-exclusive rare cues, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
 		quit(0)
 	else:
 		for failure in failures:
@@ -83,8 +83,15 @@ func _validate_director(director: Node) -> void:
 			ambience_path.contains("/generated/%s/" % era_id) and
 			ResourceLoader.exists(event_path) and ResourceLoader.exists(ambience_path),
 			"纪元必须解析自己的高频交互材质与环境底床：%s" % era_id)
-		_expect(str(director.call("debug_resolved_asset_path", "boss_enter")).contains(
-			"/generated/classical/boss_enter.wav"), "未完成时代专属终稿时必须稳定回退共享首领语义")
+		for rare_asset_id in ["stress", "heart_awaken", "elite_enter", "boss_enter",
+				"phase_break", "victory", "defeat"]:
+			var rare_path := str(director.call("debug_resolved_asset_path", rare_asset_id))
+			_expect(rare_path.contains("/generated/%s/%s.wav" % [era_id, rare_asset_id]) and
+				ResourceLoader.load(rare_path) is AudioStreamWAV,
+				"压力、轮回、精英、首领、破相与结算必须解析纪元专属终稿：%s/%s" % [era_id, rare_asset_id])
+		var ui_path := str(director.call("debug_resolved_asset_path", "ui_confirm"))
+		_expect(ui_path.contains("/generated/classical/ui_confirm.wav"),
+			"共享UI语义必须稳定解析古典公共素材")
 		var soundscape_ids := [
 			"classical_ambience" if era_id == "classical" else "%s_ambience" % era_id,
 			"%s_world_detail" % era_id,
@@ -174,6 +181,11 @@ func _validate_manifest_events(director: Node) -> void:
 		for event_id in ["dungeon.card", "combat.impact", "combat.guard"]:
 			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) >= 4,
 				"每个纪元的高频事件必须拥有四个独立资产：%s/%s" % [era_id, event_id])
+		for event_id in ["dungeon.stress", "dungeon.heart", "dungeon.elite_enter",
+				"dungeon.boss_enter", "dungeon.phase_break", "dungeon.victory",
+				"dungeon.defeat", "reincarnation.enter", "combat.victory", "combat.defeat"]:
+			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) == 1,
+				"每个纪元的低频叙事与战斗事件必须恰好拥有一套专属终稿：%s/%s" % [era_id, event_id])
 		_expect(int(era_ambience_counts.get(era_id, 0)) == 1,
 			"每个纪元必须恰好登记一套世界环境底床：%s" % era_id)
 		for state in ["exploration", "pressure", "decisive"]:
