@@ -60,6 +60,7 @@ jobs:
 
       - name: Install pinned virtual WASAPI validation endpoint
         shell: pwsh
+        timeout-minutes: 5
         run: |
           # VB-CABLE is third-party donationware fetched from its official
           # origin (https://vb-audio.com/Cable/). It is CI infrastructure only
@@ -94,18 +95,22 @@ jobs:
             throw "VB-CABLE installation failed with exit code $($installer.ExitCode)."
           }
           pnputil /scan-devices
-          Restart-Service Audiosrv -Force
-          $deadline = (Get-Date).AddSeconds(30)
+          Stop-Service Audiosrv -Force -ErrorAction SilentlyContinue
+          Restart-Service AudioEndpointBuilder -Force
+          Start-Service Audiosrv
+          $deadline = (Get-Date).AddSeconds(60)
           do {
             $endpoint = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
-              Where-Object { $_.Status -eq "OK" -and $_.FriendlyName -like "CABLE Input*" } |
+              Where-Object { $_.FriendlyName -like "CABLE Input*" } |
               Select-Object -First 1
             if (-not $endpoint) { Start-Sleep -Seconds 2 }
           } until ($endpoint -or (Get-Date) -ge $deadline)
           if (-not $endpoint) {
+            Get-PnpDevice -Class Media -ErrorAction SilentlyContinue | Format-Table -AutoSize
+            Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue | Format-Table -AutoSize
             throw "The pinned CI audio driver installed but exposed no active render endpoint."
           }
-          Write-Host "Virtual WASAPI render endpoint ready: $($endpoint.FriendlyName)"
+          Write-Host "Virtual WASAPI render endpoint enumerated: $($endpoint.FriendlyName) [$($endpoint.Status)]"
 
       - name: Export Windows x86_64 release
         shell: pwsh
