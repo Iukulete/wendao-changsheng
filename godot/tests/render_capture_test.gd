@@ -34,6 +34,17 @@ func _run() -> void:
 	root.size = Vector2i(1280, 720)
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("menu_1280x720.png"), Vector2i(1280, 720), "主菜单 1280x720")
+	game.call("_open_audio_settings")
+	await _settle_frames(4)
+	var audio_panel := game.find_child("AudioSettingsPanel", true, false) as Control
+	var audio_scroll := game.find_child("AudioSettingsScroll", true, false) as ScrollContainer
+	if audio_panel == null or audio_scroll == null or audio_panel.size.x < 800.0 or \
+			audio_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_AUTO:
+		failures.append("1280x720音频设置没有保持清晰宽度与真实滚动路径")
+	_capture(root, output_root.path_join("audio_settings_1280x720.png"), Vector2i(1280, 720),
+		"音频设置 1280x720")
+	game.call("_close_audio_settings")
+	await _settle_frames(2)
 	DirAccess.remove_absolute(legacy_source_path)
 	game.call("_show_game")
 

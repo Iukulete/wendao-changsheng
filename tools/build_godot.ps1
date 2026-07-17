@@ -63,6 +63,14 @@ foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt")) {
     }
     Copy-Item -LiteralPath $licenseSource -Destination $licenseTarget -Force
 }
+$audioLicenseSource = Join-Path $ProjectDir "audio\LICENSE-AUDIO.txt"
+$audioManifestSource = Join-Path $ProjectDir "audio\audio_manifest_v1.json"
+foreach ($auditSource in @($audioLicenseSource, $audioManifestSource)) {
+    if (-not (Test-Path -LiteralPath $auditSource)) {
+        throw "Bundled audio audit file is missing: $auditSource"
+    }
+    Copy-Item -LiteralPath $auditSource -Destination (Join-Path $OutputLicenseDir (Split-Path -Leaf $auditSource)) -Force
+}
 
 # Run the actual exported build, while keeping its user-data probe on D:.
 $SmokeDataDir = Join-Path $TempDir "export-smoke-userdata"
@@ -81,6 +89,11 @@ try {
 } finally {
     $env:APPDATA = $previousAppData
     $env:LOCALAPPDATA = $previousLocalAppData
+}
+
+& (Join-Path $PSScriptRoot "verify_export_audio.ps1") -ExePath $OutputExe
+if ($LASTEXITCODE -ne 0) {
+    throw "Exported Windows audio-device smoke failed with exit code $LASTEXITCODE."
 }
 
 Write-Host "Godot Windows build complete:"

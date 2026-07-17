@@ -27,6 +27,12 @@ if ($LASTEXITCODE -ne 0) {
     throw "Event path validation failed with exit code $LASTEXITCODE."
 }
 
+Write-Host "Validating original audio assets, hashes, levels, and loop seams..."
+& python -X utf8 (Join-Path $PSScriptRoot "verify_audio_assets.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Audio asset validation failed with exit code $LASTEXITCODE."
+}
+
 if (-not $NoPrepare) {
     & (Join-Path $PSScriptRoot "prepare_godot.ps1") -SkipTemplates
     if ($LASTEXITCODE -ne 0) {
@@ -47,15 +53,32 @@ if ($version -notmatch '^4\.7\.1\.stable\.official\.') {
 }
 
 Write-Host "Importing resources and checking scripts..."
-$importOutput = @(& $ConsolePath --headless --path $ProjectDir --import 2>&1)
-$importExitCode = $LASTEXITCODE
-$importOutput | ForEach-Object { Write-Host $_ }
-if ($importExitCode -ne 0 -or (($importOutput | Out-String) -match '(?m)^(SCRIPT ERROR|ERROR):')) {
+$importPassed = $false
+for ($importAttempt = 1; $importAttempt -le 2; $importAttempt++) {
+    $importOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --import 2>&1)
+    $importExitCode = $LASTEXITCODE
+    $importOutput | ForEach-Object { Write-Host $_ }
+    $importText = $importOutput | Out-String
+    if ($importExitCode -eq 0 -and $importText -notmatch '(?m)^(SCRIPT ERROR|ERROR):') {
+        $importPassed = $true
+        break
+    }
+    # Godot 4.7.1 can raise an access violation while closing the editor after
+    # a first-time bulk WAV import on Windows.  A clean second scan must pass;
+    # every other error, or a repeated crash, remains a hard failure.
+    if ($importAttempt -eq 1 -and $importExitCode -eq -1073741819 -and
+            $importText.Contains("reimport")) {
+        Write-Warning "Godot exited during post-import cleanup; verifying the completed import with one clean rescan."
+        continue
+    }
+    break
+}
+if (-not $importPassed) {
     throw "Godot resource import/script validation failed with exit code $importExitCode."
 }
 
 Write-Host "Loading the configured main scene for a headless smoke test..."
-$smokeOutput = @(& $ConsolePath --headless --path $ProjectDir --quit-after 5 2>&1)
+$smokeOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after 5 2>&1)
 $smokeExitCode = $LASTEXITCODE
 $smokeOutput | ForEach-Object { Write-Host $_ }
 if ($smokeExitCode -ne 0 -or (($smokeOutput | Out-String) -match '(?m)^(SCRIPT ERROR|ERROR):')) {
@@ -64,6 +87,7 @@ if ($smokeExitCode -ne 0 -or (($smokeOutput | Out-String) -match '(?m)^(SCRIPT E
 
 $testScripts = @(
     "res://tests/typography_system_test.gd",
+    "res://tests/audio_system_test.gd",
     "res://tests/game_state_test.gd",
     "res://tests/world_simulation_test.gd",
     "res://tests/story_system_test.gd",
@@ -80,7 +104,7 @@ $testScripts = @(
 )
 foreach ($testScript in $testScripts) {
     Write-Host "Running Godot regression: $testScript"
-    $testOutput = @(& $ConsolePath --headless --path $ProjectDir --quit-after 600 --script $testScript 2>&1)
+    $testOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after 600 --script $testScript 2>&1)
     $testExitCode = $LASTEXITCODE
     $testOutput | ForEach-Object { Write-Host $_ }
     $testText = $testOutput | Out-String

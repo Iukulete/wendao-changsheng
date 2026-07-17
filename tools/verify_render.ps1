@@ -34,6 +34,7 @@ if ($exitCode -ne 0 -or $text -match '(?m)^(SCRIPT ERROR|ERROR):' -or
 
 $expected = @(
     "menu_1280x720.png",
+    "audio_settings_1280x720.png",
     "main_1280x720.png",
     "main_1440x900.png",
     "main_1920x1080.png",

@@ -51,17 +51,17 @@ Godot 新版可只读导入旧 Win32 版的 `SAVE_V4` 与 `SAVE_V5` 六槽存档
 # 首次准备固定版本的便携 Godot 与官方 Windows 导出模板
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
 
-# 美术清单、资源导入、主场景和全部确定性回归
+# 美术/音频清单、资源导入、主场景和全部确定性回归
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -NoPrepare
 
 # 屏幕外真实 GL 截图验收，不打开前台窗口
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_render.ps1
 
-# 验证、导出并后台运行导出包冒烟测试
+# 验证、导出，并执行无设备与屏幕外静音真实音频后端冒烟
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare
 ```
 
-全量回归包含字体文件与授权哈希、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及普通战斗、秘境路线和秘境战斗画面。
+全量回归包含字体文件与授权哈希、28 个原创音频候选的格式/哈希/响度/循环/变体门禁、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及音频设置、普通战斗、秘境路线和秘境战斗画面。
 
 ## 项目结构
 

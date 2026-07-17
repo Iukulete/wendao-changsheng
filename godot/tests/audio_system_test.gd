@@ -1,0 +1,179 @@
+extends SceneTree
+
+const AudioDirectorScript = preload("res://scripts/audio_director.gd")
+const GameStateScript = preload("res://scripts/game_state.gd")
+const SETTINGS_PATH := "user://audio_settings.cfg"
+
+var failures: Array[String] = []
+var previous_settings_existed := false
+var previous_settings_text := ""
+
+
+func _init() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	_backup_settings()
+	_validate_bus_layout()
+	var director: Node = AudioDirectorScript.new()
+	director.name = "AudioDirectorUnderTest"
+	root.add_child(director)
+	await process_frame
+	_validate_director(director)
+	_validate_manifest_events(director)
+	await _validate_settings_roundtrip(director)
+	await _validate_audio_rng_isolation(director)
+	await _validate_settings_ui()
+	director.queue_free()
+	await process_frame
+	_restore_settings()
+	if failures.is_empty():
+		print("AUDIO_SYSTEM_TEST_OK: buses, limiter, pool, contexts, settings, accessibility and audio RNG isolation verified")
+		quit(0)
+	else:
+		for failure in failures:
+			push_error("AUDIO_SYSTEM_TEST_FAILED: %s" % failure)
+		quit(1)
+
+
+func _validate_bus_layout() -> void:
+	var expected := ["Master", "Music", "Ambience", "SFX", "UI", "VO"]
+	_expect(AudioServer.bus_count == expected.size(), "总线数量必须恰好覆盖六类产品音频")
+	for index in range(mini(AudioServer.bus_count, expected.size())):
+		_expect(AudioServer.get_bus_name(index) == expected[index], "总线顺序或名称错误：%s" % expected[index])
+		if index > 0:
+			_expect(AudioServer.get_bus_send(index) == &"Master", "%s必须汇入Master" % expected[index])
+	var master := AudioServer.get_bus_index(&"Master")
+	var has_limiter := false
+	var has_compressor := false
+	var has_stereo_accessibility := false
+	for effect_index in range(AudioServer.get_bus_effect_count(master)):
+		var effect := AudioServer.get_bus_effect(master, effect_index)
+		has_limiter = has_limiter or effect is AudioEffectLimiter
+		has_compressor = has_compressor or effect is AudioEffectCompressor
+		has_stereo_accessibility = has_stereo_accessibility or effect is AudioEffectStereoEnhance
+	_expect(has_limiter and has_compressor and has_stereo_accessibility,
+		"Master必须同时拥有安全限幅、夜间动态与单声道辅助处理")
+
+
+func _validate_director(director: Node) -> void:
+	var ids: PackedStringArray = director.call("event_ids")
+	for required in ["ui.confirm", "ui.cancel", "combat.impact", "dungeon.card",
+		"dungeon.heart", "dungeon.elite_enter", "dungeon.boss_enter", "dungeon.phase_break",
+		"dungeon.victory", "dungeon.defeat", "reincarnation.enter"]:
+		_expect(required in ids, "AudioDirector缺少稳定事件：%s" % required)
+	_expect(int(director.call("debug_pool_size")) == 16, "必须提供12个SFX与4个UI复用声部")
+	for repeated_event in ["ui.confirm", "ui.cancel", "dungeon.card", "dungeon.impact", "dungeon.guard"]:
+		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 4,
+			"高频事件必须至少有四个轮换变体：%s" % repeated_event)
+	_expect(not bool(director.call("play_event", "missing.event")), "未知事件必须安静降级")
+	director.call("set_context", "boss")
+	_expect(str(director.call("get_context")) == "boss", "首领动态混音上下文没有生效")
+	director.call("set_context", "not-a-context")
+	_expect(str(director.call("get_context")) == "world", "非法上下文必须稳定回退到世界混音")
+	director.call("debug_reset_cooldowns")
+	var first := bool(director.call("play_event", "ui.confirm"))
+	var second := bool(director.call("play_event", "ui.confirm"))
+	_expect(first and not second, "UI高频事件必须执行防抖冷却")
+	director.call("debug_reset_cooldowns")
+	_expect(bool(director.call("play_event", "ui.confirm")), "清除冷却后事件必须可再次解析")
+
+
+func _validate_manifest_events(director: Node) -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://audio/audio_manifest_v1.json"))
+	_expect(parsed is Dictionary, "音频manifest必须是有效JSON对象")
+	if not parsed is Dictionary:
+		return
+	var registered: PackedStringArray = director.call("event_ids")
+	for asset_value in ((parsed as Dictionary).get("assets", []) as Array):
+		var asset: Dictionary = asset_value
+		for event_value in (asset.get("event_ids", []) as Array):
+			var event_id := str(event_value)
+			if not event_id.begins_with("context."):
+				_expect(event_id in registered, "manifest引用了未注册事件：%s" % event_id)
+
+
+func _validate_settings_roundtrip(director: Node) -> void:
+	director.call("set_bus_percent", "Master", 43.0)
+	director.call("set_setting", "night_mode", true)
+	director.call("set_setting", "reduce_sudden", true)
+	director.call("set_setting", "mono", true)
+	director.call("save_settings")
+	var second: Node = AudioDirectorScript.new()
+	second.name = "AudioDirectorRoundTrip"
+	root.add_child(second)
+	await process_frame
+	var restored: Dictionary = second.call("get_settings")
+	_expect(is_equal_approx(float(restored.master), 43.0) and bool(restored.night_mode) and
+		bool(restored.reduce_sudden) and bool(restored.mono), "音量与听觉辅助选项必须通过配置往返")
+	var master := AudioServer.get_bus_index(&"Master")
+	var compressor_enabled := false
+	var mono_enabled := false
+	for effect_index in range(AudioServer.get_bus_effect_count(master)):
+		var effect := AudioServer.get_bus_effect(master, effect_index)
+		if effect is AudioEffectCompressor:
+			compressor_enabled = AudioServer.is_bus_effect_enabled(master, effect_index)
+		elif effect is AudioEffectStereoEnhance:
+			mono_enabled = is_zero_approx((effect as AudioEffectStereoEnhance).pan_pullout)
+	_expect(compressor_enabled and mono_enabled, "夜间模式与单声道必须实际作用于Master处理链")
+	second.queue_free()
+	await process_frame
+
+
+func _validate_audio_rng_isolation(director: Node) -> void:
+	var game_state: Dictionary = GameStateScript.create_new_game("听雨人", 718001, [7, 7, 7, 7, 7])
+	var gameplay_cursor := int(game_state.get("rng_cursor", -1))
+	var audio_cursor_before := int(director.call("debug_audio_cursor"))
+	for event_id in ["dungeon.card", "dungeon.impact", "dungeon.guard", "dungeon.stress"]:
+		director.call("debug_reset_cooldowns")
+		director.call("play_event", event_id)
+	_expect(int(game_state.get("rng_cursor", -1)) == gameplay_cursor,
+		"声音变体绝不能消耗或写入玩法rng_cursor")
+	_expect(int(director.call("debug_audio_cursor")) >= audio_cursor_before + 4,
+		"声音变体必须使用独立游标")
+	_expect(int(director.call("debug_active_voice_count")) <= int(director.call("debug_pool_size")),
+		"并发播放不得突破池上限")
+	await process_frame
+
+
+func _validate_settings_ui() -> void:
+	var scene := load("res://scenes/main.tscn") as PackedScene
+	_expect(scene != null, "主场景必须可加载")
+	if scene == null:
+		return
+	var main: Control = scene.instantiate()
+	root.add_child(main)
+	await process_frame
+	main.call("_open_audio_settings")
+	await process_frame
+	for node_name in ["AudioMasterSlider", "AudioMusicSlider", "AudioAmbienceSlider", "AudioSFXSlider",
+		"AudioUISlider", "AudioVOSlider", "AudioMutedToggle", "AudioUnfocusedToggle", "AudioNightToggle",
+		"AudioSuddenToggle", "AudioMonoToggle", "AudioPreviewButton", "AudioSettingsBackButton"]:
+		_expect(main.find_child(node_name, true, false) != null, "音频设置缺少可访问控件：%s" % node_name)
+	var panel := main.find_child("AudioSettingsPanel", true, false) as Control
+	var scroll := main.find_child("AudioSettingsScroll", true, false) as ScrollContainer
+	_expect(panel != null and scroll != null and scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
+		"音频设置必须在短窗口中保留真实滚动路径")
+	main.queue_free()
+	await process_frame
+
+
+func _backup_settings() -> void:
+	previous_settings_existed = FileAccess.file_exists(SETTINGS_PATH)
+	if previous_settings_existed:
+		previous_settings_text = FileAccess.get_file_as_string(SETTINGS_PATH)
+
+
+func _restore_settings() -> void:
+	if previous_settings_existed:
+		var file := FileAccess.open(SETTINGS_PATH, FileAccess.WRITE)
+		if file != null:
+			file.store_string(previous_settings_text)
+	else:
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(SETTINGS_PATH))
+
+
+func _expect(condition: bool, message: String) -> void:
+	if not condition:
+		failures.append(message)

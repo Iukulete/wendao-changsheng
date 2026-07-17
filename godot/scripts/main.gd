@@ -16,6 +16,7 @@ const StorySystemScript = preload("res://scripts/story_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
+const AudioDirectorScript = preload("res://scripts/audio_director.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -63,7 +64,7 @@ const DEFAULT_PLAYER := {
 
 enum ScreenState {
 	MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
-	DUNGEON_ROUTE, DUNGEON_COMBAT,
+	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS,
 }
 
 var state: ScreenState = ScreenState.MENU
@@ -79,6 +80,8 @@ var run_state: Dictionary = {}
 var player: Dictionary = {}
 var save_service: RefCounted = SaveServiceScript.new()
 var ai_bridge: Node
+var audio_director: Node
+var audio_return_state: ScreenState = ScreenState.MENU
 
 var background: TextureRect
 var vignette: ColorRect
@@ -98,6 +101,12 @@ var dungeon_action_feedback: Dictionary = {}
 
 
 func _ready() -> void:
+	audio_director = AudioDirectorScript.new()
+	audio_director.name = "AudioDirector"
+	add_child(audio_director)
+	if "--audio-smoke" in OS.get_cmdline_user_args():
+		print("AUDIO_DEVICE_SMOKE_READY: driver=%s display=%s" % [
+			AudioServer.get_driver_name(), DisplayServer.get_name()])
 	ai_bridge = LocalAIBridgeScript.new()
 	add_child(ai_bridge)
 	ai_bridge.connect("event_ready", _on_ai_event_ready)
@@ -250,6 +259,7 @@ func _set_background(path: String) -> void:
 
 func _show_menu() -> void:
 	state = ScreenState.MENU
+	_set_audio_context("menu")
 	_clear_screen()
 	_set_background(MENU_SCENE)
 	var style := _era_style("古典修仙纪")
@@ -346,11 +356,15 @@ func _show_menu() -> void:
 		import_button.custom_minimum_size = Vector2(430, 48)
 		import_button.tooltip_text = "只读导入最近的旧版 slot_*.txt；源文件不会被修改。"
 		column.add_child(import_button)
+	var audio_button := _button("音律与听觉设置", _open_audio_settings, false)
+	audio_button.name = "MenuAudioSettingsButton"
+	audio_button.custom_minimum_size = Vector2(430, 48)
+	column.add_child(audio_button)
 	var save_status := menu_notice if not menu_notice.is_empty() else str(save_probe.get("message", ""))
 	column.add_child(_label(save_status, 14,
 		Color("e9c67a") if not can_continue and save_probe.get("code", "") == "corrupt_save" else Color(0.72, 0.76, 0.78, 0.84),
 		HORIZONTAL_ALIGNMENT_CENTER))
-	var shortcut_text := "Enter 开始新生  ·  C 续接旧档"
+	var shortcut_text := "Enter 开始新生  ·  C 续接旧档  ·  O 音律"
 	if can_import_legacy:
 		shortcut_text += "  ·  I 导入旧版"
 	column.add_child(_label(shortcut_text, 14,
@@ -447,6 +461,7 @@ func _show_game() -> void:
 		_end_current_life(_current_death_cause())
 		return
 	state = ScreenState.GAME
+	_set_audio_context("world")
 	_clear_screen()
 	_apply_era_visuals()
 
@@ -473,7 +488,7 @@ func _show_game() -> void:
 	var footer := _panel(0.72, era_accent)
 	footer.name = "GameFooter"
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [J] 显圣",
+	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律",
 		16, Color(0.88, 0.91, 0.91, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -639,6 +654,9 @@ func _build_action_panel() -> Control:
 		transcend_button.name = "TranscendLifeButton"
 		column.add_child(transcend_button)
 	column.add_child(_button("封存此世 · 保存进度", _manual_save, false))
+	var audio_button := _button("音律与听觉设置", _open_audio_settings, false)
+	audio_button.name = "GameAudioSettingsButton"
+	column.add_child(audio_button)
 	column.add_child(_spacer(10))
 	column.add_child(_section_title("天机镜"))
 	column.add_child(_button("观测下一纪元", _cycle_era, false))
@@ -804,6 +822,7 @@ func _show_combat() -> void:
 		_show_game()
 		return
 	state = ScreenState.COMBAT
+	_set_audio_context("combat")
 	_clear_screen()
 	_apply_era_visuals()
 	var battle: Dictionary = run_state.combat.current
@@ -932,6 +951,7 @@ func _resolve_combat_action(action: String) -> void:
 		}.get(str(result.get("code", "")), "这一行动未能落入战局。"))
 		_show_combat()
 		return
+	_play_combat_action_audio(action, result)
 	_sync_state_views()
 	if str(result.get("code", "")) != "combat_finished":
 		_save_current_state("战斗回合已自动封存")
@@ -991,6 +1011,7 @@ func _show_dungeon() -> void:
 
 func _show_dungeon_route() -> void:
 	state = ScreenState.DUNGEON_ROUTE
+	_set_audio_context("dungeon")
 	_clear_screen()
 	var run: Dictionary = run_state.dungeon.run
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
@@ -1071,6 +1092,7 @@ func _show_dungeon_combat() -> void:
 	_clear_screen()
 	var run: Dictionary = run_state.dungeon.run
 	var battle: Dictionary = run.battle
+	_set_audio_context("boss" if str(battle.get("rank", "combat")) == "boss" else "dungeon")
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
 	_apply_dungeon_stress_visuals(int(run.stress))
 	var page := VBoxContainer.new()
@@ -1275,6 +1297,7 @@ func _show_dungeon_action_feedback() -> void:
 		return
 	var action_feedback := dungeon_action_feedback.duplicate(true)
 	dungeon_action_feedback = {}
+	_play_dungeon_feedback_audio(action_feedback)
 	var kind := str(action_feedback.get("kind", "card"))
 	var resolution := _dungeon_resolution_feedback(action_feedback)
 	var feedback_color := Color("ef665e")
@@ -1556,6 +1579,7 @@ func _on_ai_event_ready(event_data: Dictionary, metadata: Dictionary) -> void:
 
 func _show_event() -> void:
 	state = ScreenState.EVENT
+	_set_audio_context("event")
 	_clear_screen()
 	var scene_path := str(current_event.get("scene", ERA_SCENES.get(current_era, MENU_SCENE)))
 	_apply_era_visuals(scene_path)
@@ -1807,6 +1831,7 @@ func _current_death_cause() -> String:
 
 func _show_reincarnation() -> void:
 	state = ScreenState.REINCARNATION
+	_set_audio_context("reincarnation", "reincarnation.enter")
 	_clear_screen()
 	_set_background(MENU_SCENE)
 	var legacy: Dictionary = run_state.get("legacy", {})
@@ -1877,6 +1902,230 @@ func _begin_next_life(name_input: LineEdit) -> void:
 	current_event = {}
 	_save_current_state("新一世已立档")
 	_show_game()
+
+
+func _open_audio_settings() -> void:
+	audio_return_state = state if state in [ScreenState.MENU, ScreenState.GAME] else ScreenState.GAME
+	_show_audio_settings()
+
+
+func _show_audio_settings() -> void:
+	state = ScreenState.AUDIO_SETTINGS
+	_clear_screen()
+	var scroll := ScrollContainer.new()
+	scroll.name = "AudioSettingsScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	screen_host.add_child(scroll)
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.custom_minimum_size.y = 760
+	scroll.add_child(center)
+	var card := _panel(0.90, Color("d8b967"))
+	card.name = "AudioSettingsPanel"
+	card.custom_minimum_size = Vector2(850, 0)
+	center.add_child(card)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	card.add_child(column)
+	column.add_child(_display_label("音律与听觉设置", 34, Color("f3dfa8"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("每一类声音都可独立归零；关键危险始终同时保留文字与视觉反馈。", 15,
+		Color(0.80, 0.84, 0.83), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_divider())
+	column.add_child(_section_title("音量分层"))
+	var settings: Dictionary = audio_director.call("get_settings") if is_instance_valid(audio_director) else {}
+	var volume_specs := [
+		["master", "总音量", "全局最终输出", "AudioMasterSlider"],
+		["music", "音乐", "主题、探索与战斗音乐", "AudioMusicSlider"],
+		["ambience", "环境", "时代声景、天气与地点底床", "AudioAmbienceSlider"],
+		["sfx", "音效", "战斗、能力、秘境与转场", "AudioSFXSlider"],
+		["ui", "界面", "确认、返回与操作反馈", "AudioUISlider"],
+		["vo", "语音", "为后续角色语音保留的独立通道", "AudioVOSlider"],
+	]
+	for spec_value in volume_specs:
+		var spec: Array = spec_value
+		column.add_child(_audio_volume_row(str(spec[0]), str(spec[1]), str(spec[2]),
+			str(spec[3]), float(settings.get(spec[0], 100.0))))
+	column.add_child(_divider())
+	column.add_child(_section_title("舒适与无障碍"))
+	var toggle_grid := GridContainer.new()
+	toggle_grid.name = "AudioAccessibilityGrid"
+	toggle_grid.columns = 2
+	toggle_grid.add_theme_constant_override("h_separation", 12)
+	toggle_grid.add_theme_constant_override("v_separation", 10)
+	column.add_child(toggle_grid)
+	toggle_grid.add_child(_audio_toggle("全局静音", "立即静音全部总线，音量值不会丢失。", "muted",
+		bool(settings.get("muted", false)), "AudioMutedToggle"))
+	toggle_grid.add_child(_audio_toggle("失焦时静音", "切换到其他窗口时停止非必要声音。", "mute_unfocused",
+		bool(settings.get("mute_unfocused", true)), "AudioUnfocusedToggle"))
+	toggle_grid.add_child(_audio_toggle("夜间模式", "压缩动态范围，让低声可辨而强声不扰人。", "night_mode",
+		bool(settings.get("night_mode", false)), "AudioNightToggle"))
+	toggle_grid.add_child(_audio_toggle("减少突发强音", "首领破相、失败与强冲击降低峰值约六分贝。", "reduce_sudden",
+		bool(settings.get("reduce_sudden", false)), "AudioSuddenToggle"))
+	toggle_grid.add_child(_audio_toggle("单声道输出", "折叠左右声像；关键信息不会只存在于一侧。", "mono",
+		bool(settings.get("mono", false)), "AudioMonoToggle"))
+	column.add_child(_label("运行规格 · 48 kHz 立体声 · Master 安全限幅 -1 dB · 设置保存在本机用户目录",
+		14, Color(0.70, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
+	var actions := HBoxContainer.new()
+	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 14)
+	column.add_child(actions)
+	var preview := _button("试听关键反馈", _preview_audio_mix, false)
+	preview.name = "AudioPreviewButton"
+	preview.custom_minimum_size.x = 230
+	actions.add_child(preview)
+	var close := _button("关闭并返回", _close_audio_settings, true)
+	close.name = "AudioSettingsBackButton"
+	close.custom_minimum_size.x = 230
+	actions.add_child(close)
+
+
+func _audio_volume_row(key: String, title: String, description: String,
+		node_name: String, value: float) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var text_box := VBoxContainer.new()
+	text_box.custom_minimum_size.x = 245
+	row.add_child(text_box)
+	text_box.add_child(_label(title, 17, Color("f0e7d2")))
+	text_box.add_child(_label(description, 13, Color(0.70, 0.76, 0.77)))
+	var slider := HSlider.new()
+	slider.name = node_name
+	slider.min_value = 0.0
+	slider.max_value = 100.0
+	slider.step = 1.0
+	slider.value = value
+	slider.tick_count = 11
+	slider.ticks_on_borders = true
+	slider.custom_minimum_size = Vector2(420, 38)
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.tooltip_text = "%s音量，方向键可逐级调整。" % title
+	row.add_child(slider)
+	var value_label := _label("%d%%" % int(round(value)), 16, Color("e8c878"), HORIZONTAL_ALIGNMENT_RIGHT)
+	value_label.name = "%sValue" % node_name
+	value_label.custom_minimum_size.x = 60
+	row.add_child(value_label)
+	slider.value_changed.connect(_on_audio_volume_changed.bind(key, value_label))
+	return row
+
+
+func _audio_toggle(title: String, description: String, key: String,
+		value: bool, node_name: String) -> Control:
+	var panel := _panel(0.46, era_accent)
+	panel.custom_minimum_size = Vector2(380, 82)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	panel.add_child(column)
+	var toggle := CheckButton.new()
+	toggle.name = node_name
+	toggle.text = title
+	toggle.button_pressed = value
+	toggle.add_theme_font_size_override("font_size", 17)
+	toggle.tooltip_text = description
+	column.add_child(toggle)
+	var explanation := _label(description, 13, Color(0.72, 0.78, 0.78))
+	explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(explanation)
+	toggle.toggled.connect(_on_audio_setting_toggled.bind(key))
+	return panel
+
+
+func _on_audio_volume_changed(value: float, key: String, value_label: Label) -> void:
+	value_label.text = "%d%%" % int(round(value))
+	if not is_instance_valid(audio_director):
+		return
+	audio_director.call("set_bus_percent", key, value)
+	audio_director.call("save_settings")
+
+
+func _on_audio_setting_toggled(enabled: bool, key: String) -> void:
+	if not is_instance_valid(audio_director):
+		return
+	audio_director.call("set_setting", key, enabled)
+	audio_director.call("save_settings")
+	if key == "muted" and not enabled:
+		audio_director.call("play_event", "ui.confirm")
+
+
+func _preview_audio_mix() -> void:
+	if is_instance_valid(audio_director):
+		audio_director.call("play_event", "dungeon.phase_break")
+
+
+func _close_audio_settings() -> void:
+	if is_instance_valid(audio_director):
+		audio_director.call("save_settings")
+	if audio_return_state == ScreenState.MENU:
+		_show_menu()
+	else:
+		_show_game()
+
+
+func _set_audio_context(context_id: String, entry_event: String = "") -> void:
+	if not is_instance_valid(audio_director):
+		return
+	var previous := str(audio_director.call("get_context"))
+	audio_director.call("set_context", context_id)
+	if previous != context_id and not entry_event.is_empty():
+		audio_director.call("play_event", entry_event)
+
+
+func _play_combat_action_audio(action: String, result: Dictionary) -> void:
+	if not is_instance_valid(audio_director):
+		return
+	if str(result.get("code", "")) == "combat_finished":
+		var outcome := str(result.get("outcome", "escaped"))
+		if outcome == "victory":
+			audio_director.call("play_event", "combat.victory")
+		elif outcome == "defeat":
+			audio_director.call("play_event", "combat.defeat")
+		else:
+			audio_director.call("play_event", "ui.cancel")
+		return
+	var event_id: String = str({
+		"attack": "combat.impact", "guard": "combat.guard", "spell": "combat.spell",
+		"pill": "ui.confirm", "flee": "ui.cancel",
+	}.get(action, "ui.confirm"))
+	audio_director.call("play_event", event_id)
+
+
+func _play_dungeon_feedback_audio(action_feedback: Dictionary) -> void:
+	if not is_instance_valid(audio_director):
+		return
+	if bool(action_feedback.get("phase_shifted", false)):
+		audio_director.call("play_event", "dungeon.phase_break")
+		return
+	if bool(action_feedback.get("heart_awakened", false)):
+		audio_director.call("play_event", "dungeon.heart")
+		return
+	var resolution := _dungeon_resolution_feedback(action_feedback)
+	var audible := resolution if not resolution.is_empty() else action_feedback
+	var kind := str(audible.get("kind", "card"))
+	if kind == "encounter":
+		var rank := str(audible.get("rank", "combat"))
+		if rank == "boss":
+			audio_director.call("play_event", "dungeon.boss_enter")
+		elif rank == "elite":
+			audio_director.call("play_event", "dungeon.elite_enter")
+		return
+	if kind == "victory":
+		audio_director.call("play_event", "dungeon.victory")
+		return
+	if kind == "defeat":
+		audio_director.call("play_event", "dungeon.defeat")
+		return
+	if int(audible.get("stress_delta", 0)) >= 6:
+		audio_director.call("play_event", "dungeon.stress")
+	elif kind == "card":
+		audio_director.call("play_event", "dungeon.card")
+	elif int(audible.get("damage", 0)) > 0 or int(audible.get("hp_delta", 0)) < 0:
+		audio_director.call("play_event", "dungeon.impact")
+	elif int(audible.get("block", 0)) > 0 or int(audible.get("enemy_block_delta", 0)) > 0:
+		audio_director.call("play_event", "dungeon.guard")
 
 
 func _show_inventory() -> void:
@@ -2234,7 +2483,8 @@ func _panel(alpha: float, accent: Color) -> PanelContainer:
 	return panel
 
 
-func _button(text_value: String, callback: Callable, primary: bool) -> Button:
+func _button(text_value: String, callback: Callable, primary: bool,
+		sound_event: String = "") -> Button:
 	var button := Button.new()
 	button.text = text_value
 	button.custom_minimum_size.y = 50
@@ -2250,8 +2500,24 @@ func _button(text_value: String, callback: Callable, primary: bool) -> Button:
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("focus", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
-	button.pressed.connect(callback)
+	if sound_event.is_empty():
+		sound_event = "ui.cancel" if _is_cancel_action(text_value) else "ui.confirm"
+	button.pressed.connect(_activate_button.bind(callback, sound_event))
 	return button
+
+
+func _activate_button(callback: Callable, sound_event: String) -> void:
+	if is_instance_valid(audio_director):
+		audio_director.call("play_event", sound_event)
+	if callback.is_valid():
+		callback.call()
+
+
+func _is_cancel_action(text_value: String) -> bool:
+	for marker in ["返回", "撤出", "脱战", "取消", "收回", "暂离", "关闭"]:
+		if text_value.contains(marker):
+			return true
+	return false
 
 
 func _button_style(alpha: float, accent: Color, border_alpha: float) -> StyleBoxFlat:
@@ -2362,6 +2628,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_continue_game()
 			elif event.keycode == KEY_I:
 				_import_legacy_game()
+			elif event.keycode == KEY_O:
+				_open_audio_settings()
 		ScreenState.GAME:
 			match event.keycode:
 				KEY_1: _meditate()
@@ -2378,6 +2646,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 						_transcend_life()
 				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
+				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _show_menu()
 		ScreenState.EVENT:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_9:
@@ -2423,3 +2692,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_end_dungeon_turn()
 			elif event.keycode == KEY_ESCAPE:
 				_abandon_dungeon()
+		ScreenState.AUDIO_SETTINGS:
+			if event.keycode in [KEY_ESCAPE, KEY_O]:
+				_close_audio_settings()
