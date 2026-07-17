@@ -30,7 +30,7 @@ release\godot\windows\wendao-changsheng.exe
 - 可复现的普通战斗，包含敌方意图、招式、状态、奖励和中途存档恢复。
 - 可选的镜湖秘境构筑玩法。进入副本时，当前境界、主次道途、人物羁绊强度、装备、玉兵、前世记忆、四条主线定局与心魔会即时投影成带来源的能力牌组；续章会深化已有定局能力，而非增加外部收藏。六个时代拥有不同路线事件、压力临界心魔、精英被动和不能被爆发跳过的半血首领第二相，并以程序化施法轨迹、精英与首领显形、受击光痕、破相扩散环及击破结算反馈真实战斗结果。它不是独立卡包，也不替代主线修仙循环。
 - 秘境岔路拥有可存档的四层因果路线图：已选道标会保留名称、类型与层数，当前分岔直接预示战斗风险、恢复、压力、强化与结算收益，旧存档缺少路线历史时可无损补齐。
-- 六个纪元各有独立环境底床，以及四套可轮换的施法、命中与护体材质；纪元切换会同步切换声音语言，低频叙事反馈在专属终稿完成前使用可审计的共享语义回退。
+- 六个纪元各有独立的探索、压力、决战三态配乐和环境底床，以及四套可轮换的施法、命中与护体材质；三态配乐共享 64 秒/120 BPM 同步契约，战斗、首领和纪元切换通过双声部按当前相位平滑过渡，低频叙事反馈在专属终稿完成前使用可审计的共享语义回退。
 - 产品标题使用随包分发的 Noto Serif SC，正文、按钮、数值与能力说明使用 Noto Sans SC；720p 不缩小关键文字，短屏通过响应式布局和独立滚动保持清晰。
 - 本地 AI 事件桥只调用本机进程，输出经过结构与内容校验；禁用、超时和非法输出都会回退到内置事件。
 
@@ -53,6 +53,11 @@ Godot 新版可只读导入旧 Win32 版的 `SAVE_V4` 与 `SAVE_V5` 六槽存档
 # 首次准备固定版本的便携 Godot 与官方 Windows 导出模板
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
 
+# 仅在重新生成原创音频时：准备哈希锁定的本地 FFmpeg，并固定 NumPy 版本
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_audio_encoder.ps1
+python -m pip install -r .\tools\audio-requirements.txt
+python -X utf8 .\tools\generate_audio_assets.py
+
 # 美术/音频清单、资源导入、主场景和全部确定性回归
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -NoPrepare
 
@@ -66,7 +71,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoP
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare -ProductRelease
 ```
 
-全量回归包含字体文件与授权哈希、93 个六纪元原创音频素材的格式/哈希/响度/循环/跨纪元差异与变体门禁、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及音频设置、普通战斗、秘境路线和秘境战斗画面。
+全量回归包含字体文件与授权哈希、111 个六纪元原创音频素材的格式/哈希/响度/循环/跨纪元差异与变体门禁（含 18 条流式三态配乐）、音乐上下文映射与双声部相位切换、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及音频设置、普通战斗、秘境路线和秘境战斗画面。
 
 ## 项目结构
 

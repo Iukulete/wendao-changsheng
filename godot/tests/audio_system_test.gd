@@ -29,7 +29,7 @@ func _run() -> void:
 	await process_frame
 	_restore_settings()
 	if failures.is_empty():
-		print("AUDIO_SYSTEM_TEST_OK: six-era routing, crossfade, buses, pool, settings, accessibility and audio RNG isolation verified")
+		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
 		quit(0)
 	else:
 		for failure in failures:
@@ -67,6 +67,9 @@ func _validate_director(director: Node) -> void:
 	_expect(int(director.call("debug_ambience_voice_count")) == 2 and
 		float(director.call("debug_ambience_crossfade_seconds")) >= 1.0,
 		"纪元声景必须使用独立双声部和足够时长的交叉淡化，不能硬切循环")
+	_expect(int(director.call("debug_music_voice_count")) == 2 and
+		float(director.call("debug_music_crossfade_seconds")) >= 1.5,
+		"音乐必须使用独立双声部和产品级交叉淡化，不能硬切状态或纪元")
 	for repeated_event in ["ui.confirm", "ui.cancel", "dungeon.card", "dungeon.impact", "dungeon.guard"]:
 		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 4,
 			"高频事件必须至少有四个轮换变体：%s" % repeated_event)
@@ -82,11 +85,25 @@ func _validate_director(director: Node) -> void:
 			"纪元必须解析自己的高频交互材质与环境底床：%s" % era_id)
 		_expect(str(director.call("debug_resolved_asset_path", "boss_enter")).contains(
 			"/generated/classical/boss_enter.wav"), "未完成时代专属终稿时必须稳定回退共享首领语义")
+		for state in ["exploration", "pressure", "decisive"]:
+			var music_path := str(director.call("debug_resolved_asset_path", "music_%s" % state))
+			var music_stream := ResourceLoader.load(music_path)
+			_expect(music_path.contains("/generated/%s/music_%s.ogg" % [era_id, state]) and
+				music_stream is AudioStreamOggVorbis and
+				(music_stream as AudioStreamOggVorbis).loop and
+				is_equal_approx((music_stream as AudioStreamOggVorbis).get_length(), 64.0),
+				"每个纪元必须解析并解码自己的64秒流式音乐：%s/%s" % [era_id, state])
 	_expect(not bool(director.call("play_event", "missing.event")), "未知事件必须安静降级")
 	director.call("set_context", "boss")
-	_expect(str(director.call("get_context")) == "boss", "首领动态混音上下文没有生效")
+	_expect(str(director.call("get_context")) == "boss" and
+		str(director.call("get_music_state")) == "decisive", "首领上下文必须进入决战音乐")
+	director.call("set_context", "combat")
+	_expect(str(director.call("get_music_state")) == "pressure", "战斗上下文必须进入压力音乐")
+	director.call("set_context", "event")
+	_expect(str(director.call("get_music_state")) == "exploration", "事件与阅读上下文必须回到探索音乐")
 	director.call("set_context", "not-a-context")
-	_expect(str(director.call("get_context")) == "world", "非法上下文必须稳定回退到世界混音")
+	_expect(str(director.call("get_context")) == "world" and
+		str(director.call("get_music_state")) == "exploration", "非法上下文必须稳定回退世界探索混音")
 	director.call("set_era", "not-an-era")
 	_expect(str(director.call("get_era")) == "classical", "非法纪元必须稳定回退到古典声音语言")
 	director.call("debug_reset_cooldowns")
@@ -105,11 +122,17 @@ func _validate_manifest_events(director: Node) -> void:
 	var registered: PackedStringArray = director.call("event_ids")
 	var era_event_counts := {}
 	var era_ambience_counts := {}
+	var era_music_counts := {}
+	var music_sync: Dictionary = (parsed as Dictionary).get("music_sync", {})
+	_expect(float(music_sync.get("duration_seconds", 0.0)) == 64.0 and
+		int(music_sync.get("tempo_bpm", 0)) == 120 and
+		(music_sync.get("states", []) as Array).size() == 3,
+		"音乐manifest必须声明统一的64秒、120 BPM三状态同步契约")
 	for asset_value in ((parsed as Dictionary).get("assets", []) as Array):
 		var asset: Dictionary = asset_value
 		for event_value in (asset.get("event_ids", []) as Array):
 			var event_id := str(event_value)
-			if not event_id.begins_with("context."):
+			if not event_id.begins_with("context.") and not event_id.begins_with("music."):
 				_expect(event_id in registered, "manifest引用了未注册事件：%s" % event_id)
 			for era_value in (asset.get("era_ids", []) as Array):
 				var era_id := str(era_value)
@@ -117,12 +140,17 @@ func _validate_manifest_events(director: Node) -> void:
 				era_event_counts[key] = int(era_event_counts.get(key, 0)) + 1
 				if event_id == "context.world" and str(asset.get("role", "")) == "ambience":
 					era_ambience_counts[era_id] = int(era_ambience_counts.get(era_id, 0)) + 1
+				if event_id.begins_with("music.") and str(asset.get("role", "")) == "music":
+					era_music_counts[key] = int(era_music_counts.get(key, 0)) + 1
 	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
 		for event_id in ["dungeon.card", "combat.impact", "combat.guard"]:
 			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) >= 4,
 				"每个纪元的高频事件必须拥有四个独立资产：%s/%s" % [era_id, event_id])
 		_expect(int(era_ambience_counts.get(era_id, 0)) == 1,
 			"每个纪元必须恰好登记一套世界环境底床：%s" % era_id)
+		for state in ["exploration", "pressure", "decisive"]:
+			_expect(int(era_music_counts.get("%s:music.%s" % [era_id, state], 0)) == 1,
+				"每个纪元必须恰好登记一套三状态音乐：%s/%s" % [era_id, state])
 
 
 func _validate_settings_roundtrip(director: Node) -> void:

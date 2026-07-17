@@ -73,4 +73,8 @@ if ($stdout -notmatch 'AUDIO_DEVICE_SMOKE_READY: driver=(.+) display=windows') {
     throw "The exported build did not report a live Windows audio/display backend."
 }
 $driver = $Matches[1].Trim()
-Write-Host "Exported Windows audio-device smoke passed off-screen and muted (driver=$driver)."
+if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2') {
+    Write-Host $stdout
+    throw "The exported build did not complete real-backend Ogg music transitions."
+}
+Write-Host "Exported Windows audio-device and dual-player music smoke passed off-screen and muted (driver=$driver)."

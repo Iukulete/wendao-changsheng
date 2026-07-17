@@ -1,7 +1,7 @@
 Wendao Changsheng Original Audio Notice
 =======================================
 
-The WAV files under audio/generated/ were created from scratch for
+The WAV and Ogg Vorbis files under audio/generated/ were created from scratch for
 this project by the deterministic generator in tools/generate_audio_assets.py.
 They do not contain samples, recordings, performances, or stems copied from a
 third-party library, film, television programme, or game.
@@ -14,6 +14,11 @@ redistribution as part of the game are permitted subject to that license. The
 versioned audio_manifest_v1.json records the generator hash, asset hashes,
 event mappings, runtime format, measured levels, loop points, provenance, and
 release-review state for every bundled audio file.
+
+The long-form music is composed as deterministic 48 kHz procedural source
+masters and encoded for runtime streaming with the manifest-pinned FFmpeg 7.1
+LGPL/libvorbis toolchain. The generated music contains no third-party samples,
+recorded performances, system sound banks, or remotely downloaded content.
 
 "final" means the asset passed the project's deterministic technical,
 rights, runtime, and export gates. Listening feedback gathered by the project

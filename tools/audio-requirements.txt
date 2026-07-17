@@ -1,0 +1,2 @@
+# Version-pinned procedural music generation dependency.
+numpy==2.3.3

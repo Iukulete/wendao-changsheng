@@ -1,7 +1,43 @@
 {
   "version": 1,
-  "generator_sha256": "24BEB866BB5E5FFF3EC7DEC60408B4CE871B047FE946F4BC6D7D3FBB20BBAA83",
+  "generator_sha256": "FECF71FED3757F839173D788A7168A402D26A04DF2AFB18618DCE4869E238207",
   "asset_root": "res://audio/",
+  "music_sync": {
+    "duration_seconds": 64.0,
+    "sample_rate": 48000,
+    "tempo_bpm": 120,
+    "bar_beats": 4,
+    "bar_count": 32,
+    "states": [
+      "exploration",
+      "pressure",
+      "decisive"
+    ]
+  },
+  "music_encoder": {
+    "archive": "ffmpeg-n7.1-latest-win64-lgpl-7.1.zip",
+    "archive_sha256": "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3",
+    "version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+    "executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+    "parameters": [
+      "-map_metadata",
+      "-1",
+      "-vn",
+      "-c:a",
+      "libvorbis",
+      "-q:a",
+      "4",
+      "-ar",
+      "48000",
+      "-ac",
+      "2",
+      "-fflags",
+      "+bitexact",
+      "-flags:a",
+      "+bitexact"
+    ],
+    "numpy_version": "2.3.3"
+  },
   "assets": [
     {
       "id": "ui_confirm",
@@ -44,7 +80,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_cancel",
@@ -87,7 +123,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "card_cast",
@@ -126,7 +162,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "impact",
@@ -165,7 +201,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "guard",
@@ -204,7 +240,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "stress",
@@ -247,7 +283,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "heart_awaken",
@@ -291,7 +327,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "elite_enter",
@@ -334,7 +370,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "boss_enter",
@@ -377,7 +413,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "phase_break",
@@ -420,7 +456,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "victory",
@@ -464,7 +500,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "defeat",
@@ -508,7 +544,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "classical_ambience",
@@ -552,7 +588,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_confirm_02",
@@ -595,7 +631,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_confirm_03",
@@ -638,7 +674,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_confirm_04",
@@ -681,7 +717,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_cancel_02",
@@ -724,7 +760,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_cancel_03",
@@ -767,7 +803,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "ui_cancel_04",
@@ -810,7 +846,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "card_cast_02",
@@ -849,7 +885,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "card_cast_03",
@@ -888,7 +924,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "card_cast_04",
@@ -927,7 +963,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "impact_02",
@@ -966,7 +1002,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "impact_03",
@@ -1005,7 +1041,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "impact_04",
@@ -1044,7 +1080,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "guard_02",
@@ -1083,7 +1119,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "guard_03",
@@ -1122,7 +1158,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "guard_04",
@@ -1161,7 +1197,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_card_cast",
@@ -1200,7 +1236,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_impact",
@@ -1239,7 +1275,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_guard",
@@ -1278,7 +1314,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_card_cast_02",
@@ -1317,7 +1353,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_card_cast_03",
@@ -1356,7 +1392,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_card_cast_04",
@@ -1395,7 +1431,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_impact_02",
@@ -1434,7 +1470,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_impact_03",
@@ -1473,7 +1509,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_impact_04",
@@ -1512,7 +1548,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_guard_02",
@@ -1551,7 +1587,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_guard_03",
@@ -1590,7 +1626,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_guard_04",
@@ -1629,7 +1665,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "steam_ambience",
@@ -1673,7 +1709,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_card_cast",
@@ -1712,7 +1748,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_impact",
@@ -1751,7 +1787,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_guard",
@@ -1790,7 +1826,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_card_cast_02",
@@ -1829,7 +1865,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_card_cast_03",
@@ -1868,7 +1904,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_card_cast_04",
@@ -1907,7 +1943,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_impact_02",
@@ -1946,7 +1982,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_impact_03",
@@ -1985,7 +2021,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_impact_04",
@@ -2024,7 +2060,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_guard_02",
@@ -2063,7 +2099,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_guard_03",
@@ -2102,7 +2138,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_guard_04",
@@ -2141,7 +2177,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "star_network_ambience",
@@ -2185,7 +2221,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_card_cast",
@@ -2224,7 +2260,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_impact",
@@ -2263,7 +2299,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_guard",
@@ -2302,7 +2338,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_card_cast_02",
@@ -2341,7 +2377,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_card_cast_03",
@@ -2380,7 +2416,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_card_cast_04",
@@ -2419,7 +2455,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_impact_02",
@@ -2458,7 +2494,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_impact_03",
@@ -2497,7 +2533,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_impact_04",
@@ -2536,7 +2572,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_guard_02",
@@ -2575,7 +2611,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_guard_03",
@@ -2614,7 +2650,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_guard_04",
@@ -2653,7 +2689,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "wasteland_ambience",
@@ -2697,7 +2733,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_card_cast",
@@ -2736,7 +2772,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_impact",
@@ -2775,7 +2811,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_guard",
@@ -2814,7 +2850,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_card_cast_02",
@@ -2853,7 +2889,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_card_cast_03",
@@ -2892,7 +2928,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_card_cast_04",
@@ -2931,7 +2967,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_impact_02",
@@ -2970,7 +3006,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_impact_03",
@@ -3009,7 +3045,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_impact_04",
@@ -3048,7 +3084,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_guard_02",
@@ -3087,7 +3123,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_guard_03",
@@ -3126,7 +3162,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_guard_04",
@@ -3165,7 +3201,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "final_age_ambience",
@@ -3209,7 +3245,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_card_cast",
@@ -3248,7 +3284,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_impact",
@@ -3287,7 +3323,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_guard",
@@ -3326,7 +3362,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_card_cast_02",
@@ -3365,7 +3401,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_card_cast_03",
@@ -3404,7 +3440,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_card_cast_04",
@@ -3443,7 +3479,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_impact_02",
@@ -3482,7 +3518,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_impact_03",
@@ -3521,7 +3557,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_impact_04",
@@ -3560,7 +3596,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_guard_02",
@@ -3599,7 +3635,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_guard_03",
@@ -3638,7 +3674,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_guard_04",
@@ -3677,7 +3713,7 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
     },
     {
       "id": "immortal_dynasty_ambience",
@@ -3721,7 +3757,1195 @@
       "release_state": "final",
       "manual_qa_status": "owner_post_release_playtest",
       "generator": "tools/generate_audio_assets.py",
-      "generator_and_version": "Python standard-library procedural synthesis v1"
+      "generator_and_version": "Python procedural synthesis v2"
+    },
+    {
+      "id": "classical_music_exploration",
+      "asset_id": "classical_music_exploration",
+      "file": "generated/classical/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/classical/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#classical_music_exploration",
+      "source_master_sha256": "5A75AB3C2C036979FF85B1DC94D9935C85C0D77798AAA9FB9D4BD0954651F5BD",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "classical"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -19.308,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "202C34A11C815674B79EC24A48B215754C091450A52A885BB38034C7BCF1C2B0",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "classical_music_pressure",
+      "asset_id": "classical_music_pressure",
+      "file": "generated/classical/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/classical/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#classical_music_pressure",
+      "source_master_sha256": "A3F55A82B0E0FF78890C4F7883717F4F4C54A10E4BAD8115C07A278F4D0CB31E",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "classical"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -19.751,
+      "source_dc_offset": 0.0,
+      "loop_boundary_delta": 0.0,
+      "sha256": "9C6D146B859493E29267355024627C01E480056B271DC1045EEBCB4BE2CC4C82",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "classical_music_decisive",
+      "asset_id": "classical_music_decisive",
+      "file": "generated/classical/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/classical/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#classical_music_decisive",
+      "source_master_sha256": "E9F8DB7BF218A24A92CDED0B1D40376E4BC57A6867CFE1B33DBB6890DA187246",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "classical"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -19.702,
+      "source_dc_offset": 2e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "640E172C051551126278DF53A31ED1A7B15FCD34AA25D0DF706C34FD9102E0AC",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "steam_music_exploration",
+      "asset_id": "steam_music_exploration",
+      "file": "generated/steam/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/steam/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#steam_music_exploration",
+      "source_master_sha256": "15E4E6459D9FC63E3C2D5684D962527E3CAFAB5C7EB51677D586F0FA2C91F708",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "steam"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -18.988,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "94084DDA93EB2022EA1B1A2B685EDDB070CFB72EC569E1CF753B23ADC3A1A8FE",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "steam_music_pressure",
+      "asset_id": "steam_music_pressure",
+      "file": "generated/steam/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/steam/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#steam_music_pressure",
+      "source_master_sha256": "20636CE15DFAA063F68FC301FD98DF3382A601D59AED2476A185A07397152CD4",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "steam"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -19.388,
+      "source_dc_offset": 2e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "C65BF6F1C39FC55C8D9341A7192D0E229413BACBB2B0A7A5796D92B665187249",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "steam_music_decisive",
+      "asset_id": "steam_music_decisive",
+      "file": "generated/steam/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/steam/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#steam_music_decisive",
+      "source_master_sha256": "39717B55E15EDA3346D15D3F55A3BD49A1400C6465E1C1C3800FD7147B04E960",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "steam"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -20.436,
+      "source_dc_offset": 0.0,
+      "loop_boundary_delta": 0.0,
+      "sha256": "E9870459C5AB6E966D0155A8823A59774063E67C9B960C8077321EFCEC4EEC67",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "star_network_music_exploration",
+      "asset_id": "star_network_music_exploration",
+      "file": "generated/star_network/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/star_network/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#star_network_music_exploration",
+      "source_master_sha256": "9E6412F960308BBD50A93954362A051F23DFD210DE64814951D1B4AFD08B8E5F",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "star_network"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -19.766,
+      "source_dc_offset": 0.0,
+      "loop_boundary_delta": 0.0,
+      "sha256": "2BC4908E15FF0D8EB45B973F806B1A52C0606BFA4D916C14FA171E1B3C1C9709",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "star_network_music_pressure",
+      "asset_id": "star_network_music_pressure",
+      "file": "generated/star_network/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/star_network/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#star_network_music_pressure",
+      "source_master_sha256": "3CBCFEB8A401DB505A3448DDE602545E53C304E92FF2EC90A57EB06500241432",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "star_network"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -20.167,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "E1A3D6EC31AEF6F89FDBEC2F81765137F251FE023A1BC0E3075ECEEA22D2B33E",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "star_network_music_decisive",
+      "asset_id": "star_network_music_decisive",
+      "file": "generated/star_network/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/star_network/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#star_network_music_decisive",
+      "source_master_sha256": "E9DFA2570D028C011D0154B9D4243909AE4533CA412E26B90C933170B2EDD9F8",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "star_network"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -20.274,
+      "source_dc_offset": 0.0,
+      "loop_boundary_delta": 0.0,
+      "sha256": "25AAB0C570DF1680F5AAACA3B506CB096470EA76E3639AAFFF0B2A0C8FF209EF",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "wasteland_music_exploration",
+      "asset_id": "wasteland_music_exploration",
+      "file": "generated/wasteland/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/wasteland/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#wasteland_music_exploration",
+      "source_master_sha256": "13C0C3B94C266B639BABED7E8FB2EDDB2ABA90B9B429D22BB9A9AC7E4B3211FB",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "wasteland"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -19.067,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "CE3AC501D4FED5471214313CE44117185661FC11F3BDA57A0250B6CB7A428FCD",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "wasteland_music_pressure",
+      "asset_id": "wasteland_music_pressure",
+      "file": "generated/wasteland/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/wasteland/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#wasteland_music_pressure",
+      "source_master_sha256": "AF4C4EA5CFF48CA6C6F80245E7BD4624ECB5B5C113DED0AD8A264761441D8632",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "wasteland"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -20.017,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "8370F319E868B358B50E9510A7472F8E551939227A1FA9776D9919CB883C6441",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "wasteland_music_decisive",
+      "asset_id": "wasteland_music_decisive",
+      "file": "generated/wasteland/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/wasteland/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#wasteland_music_decisive",
+      "source_master_sha256": "4616886774F342B9FA02263779EB363F974F5E18E8640FFDFF30A601453A0A57",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "wasteland"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -19.856,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "91948E033F619E301693CCBB7552CF4B1D47526BFCB93B0346B85E564FE7EC13",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "final_age_music_exploration",
+      "asset_id": "final_age_music_exploration",
+      "file": "generated/final_age/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/final_age/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#final_age_music_exploration",
+      "source_master_sha256": "A694DE886CE46095E5AD6C2504B691D0EC8777069F54479B558E0D718D5906C2",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "final_age"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -19.303,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "0BF1F3C3170FA27CC348AE54514535F5D1396F1E044495C83D67255883C9F26B",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "final_age_music_pressure",
+      "asset_id": "final_age_music_pressure",
+      "file": "generated/final_age/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/final_age/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#final_age_music_pressure",
+      "source_master_sha256": "1BCA09E5E13F2CD0E130D79C146598B152ADEB0C34D26FA88F7ED34A32CE34A0",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "final_age"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -19.874,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "A270FF29D4CF1888621A75B89C99D95609BA81F0E6DC8C422A0FB93B69BC479D",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "final_age_music_decisive",
+      "asset_id": "final_age_music_decisive",
+      "file": "generated/final_age/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/final_age/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#final_age_music_decisive",
+      "source_master_sha256": "20EFD67428BB481B9300F632A53DA09E2F00DC10F031305F914CF9A0117FBBDB",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "final_age"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -19.745,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "22AD0CB0592565B473C14F80DAA94B8E9AC678371FB4A811F56FF50268027382",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "immortal_dynasty_music_exploration",
+      "asset_id": "immortal_dynasty_music_exploration",
+      "file": "generated/immortal_dynasty/music_exploration.ogg",
+      "runtime_path": "res://audio/generated/immortal_dynasty/music_exploration.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#immortal_dynasty_music_exploration",
+      "source_master_sha256": "755FECD5EB6D3D05279B647F0AA480457FB3E35E4FD4C2ED393B47291EBB5236",
+      "kind": "music",
+      "role": "music",
+      "music_state": "exploration",
+      "bus": "Music",
+      "era_ids": [
+        "immortal_dynasty"
+      ],
+      "event_ids": [
+        "music.exploration"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -7.535,
+      "rms_dbfs": -20.224,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "4D24FCA42BCC0E17B07F79EB6799E090758D52AC4897A3F590681B2A129D2DCC",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "immortal_dynasty_music_pressure",
+      "asset_id": "immortal_dynasty_music_pressure",
+      "file": "generated/immortal_dynasty/music_pressure.ogg",
+      "runtime_path": "res://audio/generated/immortal_dynasty/music_pressure.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#immortal_dynasty_music_pressure",
+      "source_master_sha256": "815D60B58EA5E9B9037CAE24042A2B6E5125DB45BB61043B973882A4BF4FCEBC",
+      "kind": "music",
+      "role": "music",
+      "music_state": "pressure",
+      "bus": "Music",
+      "era_ids": [
+        "immortal_dynasty"
+      ],
+      "event_ids": [
+        "music.pressure"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -6.375,
+      "rms_dbfs": -20.146,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "81AFF4A7537C28049E8FC7BEDD9EB64DBEA352F1FD124FEFB8C35F89E15CB805",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
+    },
+    {
+      "id": "immortal_dynasty_music_decisive",
+      "asset_id": "immortal_dynasty_music_decisive",
+      "file": "generated/immortal_dynasty/music_decisive.ogg",
+      "runtime_path": "res://audio/generated/immortal_dynasty/music_decisive.ogg",
+      "source_master": "procedural://tools/generate_audio_assets.py#immortal_dynasty_music_decisive",
+      "source_master_sha256": "BC5AEBA0D4A1D876AD276F2B6C44E32FA43E5C085656A8E84194A827C09A86CB",
+      "kind": "music",
+      "role": "music",
+      "music_state": "decisive",
+      "bus": "Music",
+      "era_ids": [
+        "immortal_dynasty"
+      ],
+      "event_ids": [
+        "music.decisive"
+      ],
+      "loop": true,
+      "loop_start_sample": 0,
+      "loop_end_sample": 3072000,
+      "sample_rate": 48000,
+      "channels": 2,
+      "bits_per_sample": null,
+      "codec": "vorbis",
+      "container": "ogg",
+      "streaming": true,
+      "duration": 64.0,
+      "tempo_bpm": 120,
+      "bar_beats": 4,
+      "bar_count": 32,
+      "peak_dbfs": -5.352,
+      "rms_dbfs": -20.183,
+      "source_dc_offset": 1e-09,
+      "loop_boundary_delta": 0.0,
+      "sha256": "0AE4729C52146AB15C88FD9808343FECACC11EAA0E3D236F0F265AE7743DEA93",
+      "license": "LicenseRef-Project-Original",
+      "license_name": "Project-original procedural composition and sound design",
+      "commercial_use": true,
+      "redistribution_in_game": true,
+      "creator_or_vendor": "Wendao Changsheng project",
+      "attribution_text": "Original music created for Wendao Changsheng.",
+      "created_or_acquired_at": "2026-07-17",
+      "release_state": "final",
+      "manual_qa_status": "owner_post_release_playtest",
+      "generator": "tools/generate_audio_assets.py",
+      "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+      "encoder_and_version": "ffmpeg version n7.1.5-2-g998de74adf-20260717 Copyright (c) 2000-2026 the FFmpeg developers",
+      "encoder_executable_sha256": "64E7FFADFB65D36BEFE5303FCC567028039AED8318276870FF31A600EEEE8377",
+      "encoding_parameters": [
+        "-map_metadata",
+        "-1",
+        "-vn",
+        "-c:a",
+        "libvorbis",
+        "-q:a",
+        "4",
+        "-ar",
+        "48000",
+        "-ac",
+        "2",
+        "-fflags",
+        "+bitexact",
+        "-flags:a",
+        "+bitexact"
+      ]
     }
   ]
 }

@@ -101,10 +101,11 @@ var dungeon_action_feedback: Dictionary = {}
 
 
 func _ready() -> void:
+	var audio_smoke_requested := "--audio-smoke" in OS.get_cmdline_user_args()
 	audio_director = AudioDirectorScript.new()
 	audio_director.name = "AudioDirector"
 	add_child(audio_director)
-	if "--audio-smoke" in OS.get_cmdline_user_args():
+	if audio_smoke_requested:
 		print("AUDIO_DEVICE_SMOKE_READY: driver=%s display=%s" % [
 			AudioServer.get_driver_name(), DisplayServer.get_name()])
 	ai_bridge = LocalAIBridgeScript.new()
@@ -117,6 +118,29 @@ func _ready() -> void:
 	_build_stage()
 	_load_events()
 	_show_menu()
+	if audio_smoke_requested:
+		call_deferred("_run_audio_device_music_smoke")
+
+
+func _run_audio_device_music_smoke() -> void:
+	# The exported-product smoke uses the real Windows audio backend while the
+	# persisted Master bus is muted.  Exercise both context and era transitions
+	# so release validation proves that Ogg decoding and dual-player playback
+	# work outside the editor, without producing audible automation noise.
+	audio_director.set_context("dungeon")
+	await get_tree().process_frame
+	var pressure_voices := int(audio_director.debug_music_playing_voice_count())
+	audio_director.set_era("steam")
+	await get_tree().process_frame
+	audio_director.set_context("boss")
+	await get_tree().process_frame
+	var decisive_voices := int(audio_director.debug_music_playing_voice_count())
+	if (audio_director.get_era() != "steam" or audio_director.get_music_state() != "decisive" or
+			pressure_voices != 2 or decisive_voices != 2):
+		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d" % [
+			audio_director.get_era(), audio_director.get_music_state(), pressure_voices, decisive_voices])
+		return
+	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2")
 
 
 func _process(delta: float) -> void:

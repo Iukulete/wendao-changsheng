@@ -6,8 +6,11 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import random
 import struct
+import subprocess
+import sys
 import wave
 from pathlib import Path
 
@@ -15,9 +18,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = ROOT / "godot" / "audio" / "generated"
 MANIFEST = ROOT / "godot" / "audio" / "audio_manifest_v1.json"
+MUSIC_MASTER_ROOT = ROOT / ".tmp" / "audio-masters"
 SAMPLE_RATE = 48_000
 CHANNELS = 2
 TAU = math.tau
+MUSIC_DURATION = 64.0
+MUSIC_STATES = ("exploration", "pressure", "decisive")
+MUSIC_ENCODE_ARGS = (
+    "-map_metadata", "-1", "-vn", "-c:a", "libvorbis", "-q:a", "4",
+    "-ar", str(SAMPLE_RATE), "-ac", str(CHANNELS), "-fflags", "+bitexact",
+    "-flags:a", "+bitexact",
+)
 
 ERA_IDS = (
     "classical", "steam", "star_network", "wasteland", "final_age",
@@ -41,6 +52,42 @@ ERA_AMBIENCE = {
                   "motif": (311.13, 466.16, 349.23)},
     "immortal_dynasty": {"tone_scale": 1.18, "pulse_cycles": 16, "brightness": 0.64,
                          "motif": (392.00, 587.33, 783.99)},
+}
+
+# Each era keeps the same 120 BPM / 64-second form, so all three intensity
+# states can enter at the outgoing normalized phase.  Scale, harmony, timbre,
+# density and percussion material remain deliberately era-specific.
+ERA_MUSIC = {
+    "classical": {
+        "root_hz": 110.00, "scale": (0, 3, 5, 7, 10, 12, 15),
+        "progression": (0, 5, 3, 7, 0, 10, 5, 7), "mode_third": 3,
+        "timbre": "silk", "drone_gain": 0.060, "seed": 821_101,
+    },
+    "steam": {
+        "root_hz": 82.41, "scale": (0, 2, 3, 7, 8, 11, 12),
+        "progression": (0, 3, 8, 7, 0, 11, 3, 7), "mode_third": 3,
+        "timbre": "brass", "drone_gain": 0.068, "seed": 821_202,
+    },
+    "star_network": {
+        "root_hz": 130.81, "scale": (0, 2, 4, 7, 9, 11, 14),
+        "progression": (0, 9, 4, 7, 0, 11, 9, 7), "mode_third": 4,
+        "timbre": "stellar", "drone_gain": 0.052, "seed": 821_303,
+    },
+    "wasteland": {
+        "root_hz": 73.42, "scale": (0, 3, 5, 6, 7, 10, 12),
+        "progression": (0, 6, 3, 10, 0, 5, 6, 7), "mode_third": 3,
+        "timbre": "dust", "drone_gain": 0.074, "seed": 821_404,
+    },
+    "final_age": {
+        "root_hz": 98.00, "scale": (0, 1, 3, 6, 7, 10, 13),
+        "progression": (0, 6, 1, 10, 0, 13, 6, 7), "mode_third": 3,
+        "timbre": "fracture", "drone_gain": 0.058, "seed": 821_505,
+    },
+    "immortal_dynasty": {
+        "root_hz": 123.47, "scale": (0, 2, 5, 7, 9, 12, 14),
+        "progression": (0, 5, 9, 7, 0, 12, 5, 9), "mode_third": 5,
+        "timbre": "celestial", "drone_gain": 0.064, "seed": 821_606,
+    },
 }
 
 SPECS = {
@@ -345,6 +392,325 @@ def synth_ambience(duration: float, seed: int,
     return left, right
 
 
+def require_numpy():
+    try:
+        import numpy as np
+    except ImportError as error:
+        raise SystemExit(
+            "Music generation requires NumPy 2.3.3. Run: "
+            f"{sys.executable} -m pip install -r tools/audio-requirements.txt"
+        ) from error
+    if np.__version__ != "2.3.3":
+        raise SystemExit(
+            f"Music generation is hash-pinned to NumPy 2.3.3, found {np.__version__}. "
+            "Install tools/audio-requirements.txt in the generation environment."
+        )
+    return np
+
+
+def find_ffmpeg() -> Path:
+    configured = os.environ.get("WENDAO_FFMPEG", "").strip()
+    if configured:
+        candidate = Path(configured).expanduser().resolve()
+        if candidate.is_file():
+            return candidate
+        raise SystemExit(f"WENDAO_FFMPEG does not point to a file: {candidate}")
+    cache = ROOT / ".local" / "audio-encoder" / "ffmpeg-n7.1-lgpl-7.1"
+    candidates = sorted(cache.rglob("ffmpeg.exe")) if cache.is_dir() else []
+    if len(candidates) != 1:
+        raise SystemExit(
+            "Pinned FFmpeg encoder is missing. Run tools/prepare_audio_encoder.ps1 "
+            "before regenerating the audio inventory."
+        )
+    return candidates[0]
+
+
+def ffmpeg_identity(ffmpeg: Path) -> tuple[str, str]:
+    completed = subprocess.run(
+        [str(ffmpeg), "-hide_banner", "-version"], check=True,
+        capture_output=True, text=True, encoding="utf-8", errors="replace",
+    )
+    version = completed.stdout.splitlines()[0].strip()
+    if not version.startswith("ffmpeg version n7.1"):
+        raise SystemExit(f"Unexpected FFmpeg encoder: {version}")
+    return version, hashlib.sha256(ffmpeg.read_bytes()).hexdigest().upper()
+
+
+def quantized_loop_frequency(frequency: float, duration: float = MUSIC_DURATION) -> float:
+    """Return the nearest tuning that completes an integer cycle per loop."""
+    return max(1, round(frequency * duration)) / duration
+
+
+def music_frequency(root_hz: float, semitones: float) -> float:
+    return root_hz * (2.0 ** (semitones / 12.0))
+
+
+def music_wave(np, local, frequency: float, timbre: str, phase_offset: float = 0.0):
+    phase = TAU * frequency * local + phase_offset
+    if timbre == "silk":
+        return (np.sin(phase) + 0.34 * np.sin(phase * 2.0 + 0.08) +
+                0.13 * np.sin(phase * 3.0 + 0.16)) / 1.47
+    if timbre == "brass":
+        source = (np.sin(phase) + 0.42 * np.sin(phase * 2.0) +
+                  0.20 * np.sin(phase * 3.0) + 0.08 * np.sin(phase * 5.0)) / 1.70
+        return np.tanh(source * 1.45) / math.tanh(1.45)
+    if timbre == "stellar":
+        return np.sin(phase + 0.72 * np.sin(phase * 0.503 + 0.31)) * 0.78 + np.sin(phase * 2.01) * 0.12
+    if timbre == "dust":
+        return (np.sin(phase) + 0.26 * np.sin(phase * 0.501 + 0.4) +
+                0.11 * np.sin(phase * 2.0)) / 1.37
+    if timbre == "fracture":
+        carrier = np.sin(phase + 0.38 * np.sin(phase * 1.997 + 0.2))
+        return carrier * (0.78 + 0.22 * np.sin(phase * 0.251) ** 2)
+    # Celestial: broad but mono-safe fifth and octave reinforcement.
+    return (np.sin(phase) + 0.30 * np.sin(phase * 1.5 + 0.12) +
+            0.18 * np.sin(phase * 2.0 + 0.04)) / 1.48
+
+
+def add_music_note(np, left, right, start: float, duration: float, frequency: float,
+                   gain: float, timbre: str, pan: float = 0.0,
+                   decay: float = 0.0, phase_offset: float = 0.0) -> None:
+    begin = max(0, round(start * SAMPLE_RATE))
+    end = min(len(left), round((start + duration) * SAMPLE_RATE))
+    if end <= begin:
+        return
+    local = np.arange(end - begin, dtype=np.float64) / SAMPLE_RATE
+    attack = min(0.055, max(0.008, duration * 0.16))
+    release = min(0.22, max(0.025, duration * 0.30))
+    attack_value = np.clip(local / attack, 0.0, 1.0)
+    release_value = np.clip((duration - local) / release, 0.0, 1.0)
+    envelope = attack_value * attack_value * (3.0 - 2.0 * attack_value)
+    envelope *= release_value * release_value * (3.0 - 2.0 * release_value)
+    if decay > 0.0:
+        envelope *= np.exp(-local * decay)
+    source = music_wave(np, local, frequency, timbre, phase_offset) * envelope * gain
+    # Most energy stays correlated for reliable mono fold-down; the quiet,
+    # detuned component provides width without becoming a gameplay cue.
+    width = np.sin(TAU * frequency * 1.0015 * local + phase_offset + 0.17) * envelope * gain * 0.07
+    left_gain = math.sqrt(max(0.0, (1.0 - pan) * 0.5)) * math.sqrt(2.0)
+    right_gain = math.sqrt(max(0.0, (1.0 + pan) * 0.5)) * math.sqrt(2.0)
+    left[begin:end] += (source * left_gain + width * 0.35).astype(np.float32)
+    right[begin:end] += (source * right_gain - width * 0.35).astype(np.float32)
+
+
+def add_kick(np, left, right, start: float, gain: float, material: str) -> None:
+    duration = 0.34 if material != "dust" else 0.46
+    begin = round(start * SAMPLE_RATE)
+    end = min(len(left), begin + round(duration * SAMPLE_RATE))
+    if end <= begin:
+        return
+    local = np.arange(end - begin, dtype=np.float64) / SAMPLE_RATE
+    start_hz = 112.0 if material in {"stellar", "fracture"} else 88.0
+    end_hz = 42.0 if material != "brass" else 48.0
+    sweep = (start_hz - end_hz) / duration
+    phase = TAU * (start_hz * local - 0.5 * sweep * local * local)
+    envelope = np.sin(np.clip(local / 0.008, 0.0, 1.0) * math.pi * 0.5) * np.exp(-local * 13.0)
+    source = np.sin(phase) * envelope * gain
+    left[begin:end] += source.astype(np.float32)
+    right[begin:end] += (source * 0.98).astype(np.float32)
+
+
+def add_noise_hit(np, left, right, start: float, gain: float, rng, material: str) -> None:
+    duration = 0.18 if material not in {"celestial", "dust"} else 0.28
+    begin = round(start * SAMPLE_RATE)
+    end = min(len(left), begin + round(duration * SAMPLE_RATE))
+    if end <= begin:
+        return
+    local = np.arange(end - begin, dtype=np.float64) / SAMPLE_RATE
+    noise = rng.standard_normal(end - begin)
+    high = noise - np.concatenate(([0.0], noise[:-1])) * 0.88
+    envelope = np.sin(np.clip(local / 0.006, 0.0, 1.0) * math.pi * 0.5) * np.exp(-local * 18.0)
+    if material == "brass":
+        high += np.sin(TAU * 1460.0 * local) * np.exp(-local * 22.0) * 0.55
+    elif material == "celestial":
+        high += np.sin(TAU * 1180.0 * local) * np.exp(-local * 9.0) * 0.42
+    elif material == "fracture":
+        high *= 0.62 + 0.38 * (np.sin(TAU * 31.0 * local) > 0.0)
+    source = high * envelope * gain
+    left[begin:end] += source.astype(np.float32)
+    right[begin:end] += (source * 0.84).astype(np.float32)
+
+
+def create_music_base(np, era_id: str):
+    profile = ERA_MUSIC[era_id]
+    count = round(MUSIC_DURATION * SAMPLE_RATE)
+    left = np.zeros(count, dtype=np.float32)
+    right = np.zeros(count, dtype=np.float32)
+    t = np.arange(count, dtype=np.float64) / SAMPLE_RATE
+    root_hz = float(profile["root_hz"])
+    timbre = str(profile["timbre"])
+    drone_gain = float(profile["drone_gain"])
+    motion_cycles = 3 + ERA_IDS.index(era_id) * 2
+    motion = 0.86 + 0.14 * np.cos(TAU * motion_cycles * t / MUSIC_DURATION)
+    drone_root = quantized_loop_frequency(root_hz * 0.5)
+    drone_fifth = quantized_loop_frequency(root_hz * 0.75)
+    source = (np.cos(TAU * drone_root * t) * 0.66 +
+              np.cos(TAU * drone_fifth * t) * 0.34) * motion * drone_gain
+    if timbre == "brass":
+        source = np.tanh(source * 8.0) / 8.0
+    elif timbre == "stellar":
+        source += np.cos(TAU * quantized_loop_frequency(root_hz * 2.0) * t) * 0.010 * motion
+    elif timbre == "dust":
+        source *= 0.78 + 0.22 * np.cos(TAU * 5.0 * t / MUSIC_DURATION) ** 2
+    elif timbre == "fracture":
+        source *= 0.68 + 0.32 * np.cos(TAU * 22.0 * t / MUSIC_DURATION) ** 6
+    elif timbre == "celestial":
+        source += np.cos(TAU * quantized_loop_frequency(root_hz * 1.5) * t) * 0.014 * motion
+    left += source.astype(np.float32)
+    right += (source * 0.96).astype(np.float32)
+
+    progression = tuple(profile["progression"])
+    third = int(profile["mode_third"])
+    # Sixteen four-second phrases fill the complete 64-second form.  The
+    # gentle overlap keeps the harmony continuous while each note has clean
+    # local boundaries for a codec-safe loop.
+    for phrase in range(16):
+        chord_root = progression[phrase % len(progression)]
+        start = phrase * 4.0
+        for chord_index, interval in enumerate((0, third, 7)):
+            frequency = music_frequency(root_hz, chord_root + interval)
+            pan = (-0.32, 0.18, 0.38)[chord_index]
+            add_music_note(
+                np, left, right, start, 4.0, frequency,
+                0.026 / (1.0 + chord_index * 0.12), timbre, pan,
+                decay=0.06, phase_offset=chord_index * 0.21,
+            )
+        if phrase % 2 == 1:
+            signature = music_frequency(root_hz, tuple(profile["scale"])[(phrase // 2) % 7] + 12)
+            add_music_note(np, left, right, start + 2.75, 1.05, signature,
+                           0.024, timbre, 0.42 if phrase % 4 else -0.42, decay=1.2)
+    return left, right
+
+
+def add_music_state_layers(np, left, right, era_id: str, state: str) -> None:
+    profile = ERA_MUSIC[era_id]
+    root_hz = float(profile["root_hz"])
+    scale = tuple(profile["scale"])
+    progression = tuple(profile["progression"])
+    timbre = str(profile["timbre"])
+    state_index = MUSIC_STATES.index(state)
+    rng = np.random.default_rng(int(profile["seed"]) + state_index * 10_003)
+
+    interval = (1.0, 0.5, 0.25)[state_index]
+    note_duration = (0.82, 0.43, 0.22)[state_index]
+    motif_gain = (0.034, 0.041, 0.046)[state_index]
+    step_count = int(MUSIC_DURATION / interval)
+    era_shift = ERA_IDS.index(era_id)
+    for step in range(step_count):
+        # State-independent indexing anchors motifs to the same phrase grid;
+        # denser states reveal subdivisions instead of restarting the score.
+        if state == "exploration" and (step + era_shift) % 7 in {3, 6}:
+            continue
+        phrase = int((step * interval) // 4.0)
+        degree_index = (step * (2 + era_shift) + phrase * 3 + state_index) % len(scale)
+        octave = 12 if state == "decisive" and step % 8 in {5, 6} else 0
+        semitone = progression[phrase % len(progression)] + scale[degree_index] + octave
+        frequency = music_frequency(root_hz, semitone)
+        pan = math.sin((step + 1) * (0.71 + era_shift * 0.09)) * (0.32 + state_index * 0.06)
+        add_music_note(np, left, right, step * interval, note_duration,
+                       frequency, motif_gain, timbre, pan, decay=0.75 + state_index * 0.35)
+
+    if state == "exploration":
+        # A slow answering voice creates long-form variation without turning
+        # menu reading into a constant wall of melody.
+        for phrase in range(8):
+            degree = scale[(phrase * 3 + era_shift) % len(scale)] + 12
+            add_music_note(np, left, right, phrase * 8.0 + 5.2, 2.15,
+                           music_frequency(root_hz, degree), 0.025, timbre,
+                           -0.45 if phrase % 2 else 0.45, decay=0.55)
+        return
+
+    beat_count = int(MUSIC_DURATION * 2.0)  # 120 BPM
+    bass_step = 2 if state == "pressure" else 1
+    for beat in range(0, beat_count, bass_step):
+        start = beat * 0.5
+        phrase = int(start // 4.0)
+        semitone = progression[phrase % len(progression)] - 12
+        if state == "decisive" and beat % 8 in {6, 7}:
+            semitone += 7
+        add_music_note(np, left, right, start, 0.38 if state == "pressure" else 0.27,
+                       music_frequency(root_hz, semitone),
+                       0.050 if state == "pressure" else 0.057,
+                       timbre, 0.0, decay=3.2)
+
+    for beat in range(beat_count):
+        beat_in_bar = beat % 4
+        start = beat * 0.5
+        if beat_in_bar in ({0, 2} if state == "pressure" else {0, 1, 2, 3}):
+            add_kick(np, left, right, start,
+                     0.090 if state == "pressure" else 0.105, timbre)
+        if beat_in_bar in {1, 3}:
+            add_noise_hit(np, left, right, start,
+                          0.018 if state == "pressure" else 0.024, rng, timbre)
+        if timbre in {"brass", "stellar", "fracture"} and beat % (4 if state == "pressure" else 2) == 1:
+            metal_hz = {"brass": 1160.0, "stellar": 1740.0, "fracture": 920.0}[timbre]
+            add_music_note(np, left, right, start + 0.24, 0.13, metal_hz,
+                           0.011 if state == "pressure" else 0.016,
+                           timbre, 0.30 if beat % 4 == 1 else -0.30, decay=14.0)
+
+    if state == "decisive":
+        for phrase in range(16):
+            chord_root = progression[phrase % len(progression)]
+            for beat in (0.0, 1.5, 3.0):
+                add_music_note(np, left, right, phrase * 4.0 + beat, 0.44,
+                               music_frequency(root_hz, chord_root + 12),
+                               0.035, timbre, -0.18 if beat == 1.5 else 0.18, decay=2.6)
+
+
+def close_music_loop(np, left, right) -> float:
+    # Oscillators and arrangement are already loop-periodic.  This short,
+    # sub-audible correction removes the remaining one-sample derivative
+    # difference before lossy encoding and records the exact source seam.
+    seam_frames = round(0.05 * SAMPLE_RATE)
+    ramp = np.linspace(0.0, 1.0, seam_frames, dtype=np.float64)
+    ramp = ramp * ramp * (3.0 - 2.0 * ramp)
+    left_delta = float(left[0] - left[-1])
+    right_delta = float(right[0] - right[-1])
+    left[-seam_frames:] += (left_delta * ramp).astype(np.float32)
+    right[-seam_frames:] += (right_delta * ramp).astype(np.float32)
+    return max(abs(float(left[0] - left[-1])), abs(float(right[0] - right[-1])))
+
+
+def normalize_music(np, left, right, target_peak: float) -> tuple[float, float, float]:
+    left -= np.mean(left, dtype=np.float64).astype(np.float32)
+    right -= np.mean(right, dtype=np.float64).astype(np.float32)
+    peak = max(float(np.max(np.abs(left))), float(np.max(np.abs(right))), 1e-9)
+    scale = target_peak / peak
+    np.multiply(left, scale, out=left)
+    np.multiply(right, scale, out=right)
+    np.clip(left, -0.98, 0.98, out=left)
+    np.clip(right, -0.98, 0.98, out=right)
+    rms = math.sqrt(float((np.mean(left.astype(np.float64) ** 2) +
+                           np.mean(right.astype(np.float64) ** 2)) * 0.5))
+    dc = max(abs(float(np.mean(left, dtype=np.float64))),
+             abs(float(np.mean(right, dtype=np.float64))))
+    return target_peak, rms, dc
+
+
+def write_wav_numpy(np, path: Path, left, right) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    interleaved = np.empty(left.size * 2, dtype=np.float32)
+    interleaved[0::2] = left
+    interleaved[1::2] = right
+    pcm = np.rint(np.clip(interleaved, -1.0, 1.0) * 32767.0).astype("<i2")
+    with wave.open(str(path), "wb") as output:
+        output.setnchannels(CHANNELS)
+        output.setsampwidth(2)
+        output.setframerate(SAMPLE_RATE)
+        output.writeframes(pcm.tobytes())
+
+
+def encode_music_ogg(ffmpeg: Path, master_path: Path, output_path: Path) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    command = [
+        str(ffmpeg), "-hide_banner", "-loglevel", "error", "-nostdin", "-y",
+        "-i", str(master_path), *MUSIC_ENCODE_ARGS, str(output_path),
+    ]
+    subprocess.run(command, check=True)
+    if not output_path.is_file() or output_path.stat().st_size < 16_384:
+        raise RuntimeError(f"FFmpeg did not produce a plausible Ogg stream: {output_path}")
+
+
 def normalize(left: list[float], right: list[float], target_peak: float) -> tuple[float, float]:
     peak = max(max(abs(value) for value in left), max(abs(value) for value in right), 1e-9)
     scale = target_peak / peak
@@ -370,6 +736,9 @@ def write_wav(path: Path, left: list[float], right: list[float]) -> None:
 
 
 def main() -> None:
+    np = require_numpy()
+    ffmpeg = find_ffmpeg()
+    encoder_version, encoder_executable_hash = ffmpeg_identity(ffmpeg)
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     assets = []
     generator_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest().upper()
@@ -429,17 +798,104 @@ def main() -> None:
             "release_state": "final",
             "manual_qa_status": "owner_post_release_playtest",
             "generator": "tools/generate_audio_assets.py",
-            "generator_and_version": "Python standard-library procedural synthesis v1",
+            "generator_and_version": "Python procedural synthesis v2",
         })
+
+    music_target_peaks = {"exploration": 0.42, "pressure": 0.48, "decisive": 0.54}
+    MUSIC_MASTER_ROOT.mkdir(parents=True, exist_ok=True)
+    for era_id in ERA_IDS:
+        print(f"Composing synchronized music states for {era_id}...")
+        base_left, base_right = create_music_base(np, era_id)
+        for state in MUSIC_STATES:
+            left = base_left.copy()
+            right = base_right.copy()
+            add_music_state_layers(np, left, right, era_id, state)
+            close_music_loop(np, left, right)
+            peak, rms, dc = normalize_music(np, left, right, music_target_peaks[state])
+            boundary = close_music_loop(np, left, right)
+            master_path = MUSIC_MASTER_ROOT / era_id / f"music_{state}_master.wav"
+            output_path = OUTPUT_ROOT / era_id / f"music_{state}.ogg"
+            write_wav_numpy(np, master_path, left, right)
+            encode_music_ogg(ffmpeg, master_path, output_path)
+            manifest_id = f"{era_id}_music_{state}"
+            relative = f"generated/{era_id}/music_{state}.ogg"
+            assets.append({
+                "id": manifest_id,
+                "asset_id": manifest_id,
+                "file": relative,
+                "runtime_path": f"res://audio/{relative}",
+                "source_master": f"procedural://tools/generate_audio_assets.py#{manifest_id}",
+                "source_master_sha256": hashlib.sha256(master_path.read_bytes()).hexdigest().upper(),
+                "kind": "music",
+                "role": "music",
+                "music_state": state,
+                "bus": "Music",
+                "era_ids": [era_id],
+                "event_ids": [f"music.{state}"],
+                "loop": True,
+                "loop_start_sample": 0,
+                "loop_end_sample": len(left),
+                "sample_rate": SAMPLE_RATE,
+                "channels": CHANNELS,
+                "bits_per_sample": None,
+                "codec": "vorbis",
+                "container": "ogg",
+                "streaming": True,
+                "duration": MUSIC_DURATION,
+                "tempo_bpm": 120,
+                "bar_beats": 4,
+                "bar_count": 32,
+                "peak_dbfs": round(20.0 * math.log10(max(peak, 1e-9)), 3),
+                "rms_dbfs": round(20.0 * math.log10(max(rms, 1e-9)), 3),
+                "source_dc_offset": round(dc, 9),
+                "loop_boundary_delta": round(boundary, 7),
+                "sha256": hashlib.sha256(output_path.read_bytes()).hexdigest().upper(),
+                "license": "LicenseRef-Project-Original",
+                "license_name": "Project-original procedural composition and sound design",
+                "commercial_use": True,
+                "redistribution_in_game": True,
+                "creator_or_vendor": "Wendao Changsheng project",
+                "attribution_text": "Original music created for Wendao Changsheng.",
+                "created_or_acquired_at": "2026-07-17",
+                "release_state": "final",
+                "manual_qa_status": "owner_post_release_playtest",
+                "generator": "tools/generate_audio_assets.py",
+                "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural composition v2",
+                "encoder_and_version": encoder_version,
+                "encoder_executable_sha256": encoder_executable_hash,
+                "encoding_parameters": list(MUSIC_ENCODE_ARGS),
+            })
+            del left, right
+        del base_left, base_right
     manifest = {
         "version": 1,
         "generator_sha256": generator_hash,
         "asset_root": "res://audio/",
+        "music_sync": {
+            "duration_seconds": MUSIC_DURATION,
+            "sample_rate": SAMPLE_RATE,
+            "tempo_bpm": 120,
+            "bar_beats": 4,
+            "bar_count": 32,
+            "states": list(MUSIC_STATES),
+        },
+        "music_encoder": {
+            "archive": "ffmpeg-n7.1-latest-win64-lgpl-7.1.zip",
+            "archive_sha256": "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3",
+            "version": encoder_version,
+            "executable_sha256": encoder_executable_hash,
+            "parameters": list(MUSIC_ENCODE_ARGS),
+            "numpy_version": np.__version__,
+        },
         "assets": assets,
     }
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Generated {len(assets)} original audio assets across {len(ERA_IDS)} eras in {OUTPUT_ROOT}")
+    print(
+        f"Generated {len(assets)} original audio assets, including "
+        f"{len(ERA_IDS) * len(MUSIC_STATES)} synchronized Ogg music loops, "
+        f"across {len(ERA_IDS)} eras in {OUTPUT_ROOT}"
+    )
 
 
 if __name__ == "__main__":

@@ -22,6 +22,12 @@ ERA_IDS = (
     "classical", "steam", "star_network", "wasteland", "final_age",
     "immortal_dynasty",
 )
+MUSIC_STATES = ("exploration", "pressure", "decisive")
+MUSIC_DURATION = 64.0
+MUSIC_ENCODE_ARGS_EXPECTED = (
+    "-map_metadata", "-1", "-vn", "-c:a", "libvorbis", "-q:a", "4",
+    "-ar", "48000", "-ac", "2", "-fflags", "+bitexact", "-flags:a", "+bitexact",
+)
 ERA_EVENT_BASES = ("card_cast", "impact", "guard")
 SHARED_EVENT_BASES = {
     "ui_confirm", "ui_cancel", "stress", "heart_awaken", "elite_enter",
@@ -39,6 +45,8 @@ for _era_id in ERA_IDS[1:]:
     for _base_id in ERA_EVENT_BASES:
         REQUIRED.add(f"{_era_id}_{_base_id}")
         REQUIRED.update(f"{_era_id}_{_base_id}_{number:02d}" for number in range(2, 5))
+for _era_id in ERA_IDS:
+    REQUIRED.update(f"{_era_id}_music_{state}" for state in MUSIC_STATES)
 
 
 def dbfs(value: float) -> float:
@@ -63,6 +71,23 @@ def main(require_final: bool = False) -> int:
     expected_generator_hash = hashlib.sha256(GENERATOR.read_bytes()).hexdigest().upper()
     if manifest.get("generator_sha256") != expected_generator_hash:
         failures.append("generator hash does not match tools/generate_audio_assets.py")
+    music_sync = manifest.get("music_sync", {})
+    if not isinstance(music_sync, dict) or music_sync != {
+        "duration_seconds": MUSIC_DURATION,
+        "sample_rate": 48_000,
+        "tempo_bpm": 120,
+        "bar_beats": 4,
+        "bar_count": 32,
+        "states": list(MUSIC_STATES),
+    }:
+        failures.append("music sync contract must pin the shared 64-second/120 BPM form")
+    music_encoder = manifest.get("music_encoder", {})
+    if (not isinstance(music_encoder, dict) or
+            music_encoder.get("archive_sha256") != "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3" or
+            music_encoder.get("numpy_version") != "2.3.3" or
+            not str(music_encoder.get("version", "")).startswith("ffmpeg version n7.1") or
+            not str(music_encoder.get("executable_sha256", ""))):
+        failures.append("music encoder provenance is missing or differs from the pinned toolchain")
 
     entries = manifest.get("assets")
     if not isinstance(entries, list):
@@ -102,6 +127,20 @@ def main(require_final: bool = False) -> int:
     }
     if len(ambience_hashes) != len(ERA_IDS) or "" in ambience_hashes:
         failures.append("six era ambience beds must have distinct content hashes")
+    for era_id in ERA_IDS:
+        state_hashes = {
+            str(entries_by_id.get(f"{era_id}_music_{state}", {}).get("sha256", ""))
+            for state in MUSIC_STATES
+        }
+        if len(state_hashes) != len(MUSIC_STATES) or "" in state_hashes:
+            failures.append(f"{era_id}: exploration/pressure/decisive music must be distinct")
+    for state in MUSIC_STATES:
+        era_hashes = {
+            str(entries_by_id.get(f"{era_id}_music_{state}", {}).get("sha256", ""))
+            for era_id in ERA_IDS
+        }
+        if len(era_hashes) != len(ERA_IDS) or "" in era_hashes:
+            failures.append(f"music/{state}: all six era compositions must be distinct")
     for base_id in ERA_EVENT_BASES:
         for suffix in ("", "_02", "_03", "_04"):
             era_hashes = {
@@ -163,7 +202,12 @@ def main(require_final: bool = False) -> int:
             )
         if entry.get("bus") not in {"Music", "Ambience", "SFX", "UI", "VO"}:
             failures.append(f"{asset_id}: invalid audio bus {entry.get('bus')!r}")
-        validate_wav(path, entry, failures)
+        if path.suffix.lower() == ".wav":
+            validate_wav(path, entry, failures)
+        elif path.suffix.lower() == ".ogg":
+            validate_ogg(path, entry, failures)
+        else:
+            failures.append(f"{asset_id}: unsupported runtime format {path.suffix}")
         validate_import_settings(path, entry, failures)
 
     unmanaged = {
@@ -190,6 +234,12 @@ def main(require_final: bool = False) -> int:
                 entry = entries_by_id.get(f"{prefix}{base_id}{suffix}", {})
                 if entry.get("era_ids") != [era_id]:
                     failures.append(f"{era_id}: {base_id}{suffix} is not era-exclusive")
+        for state in MUSIC_STATES:
+            music = entries_by_id.get(f"{era_id}_music_{state}", {})
+            if (music.get("era_ids") != [era_id] or music.get("role") != "music" or
+                    music.get("bus") != "Music" or music.get("music_state") != state or
+                    music.get("event_ids") != [f"music.{state}"]):
+                failures.append(f"{era_id}: dedicated {state} music mapping is incomplete")
     for base_id in SHARED_EVENT_BASES:
         entry = entries_by_id.get(base_id, {})
         if entry.get("era_ids") != list(ERA_IDS):
@@ -199,8 +249,8 @@ def main(require_final: bool = False) -> int:
             entry = entries_by_id.get(f"{base_id}{suffix}", {})
             if entry.get("era_ids") != list(ERA_IDS):
                 failures.append(f"{base_id}{suffix}: shared UI mapping must declare all six eras")
-    if total_bytes > 48 * 1024 * 1024:
-        failures.append(f"six-era runtime audio exceeds 48 MiB ({total_bytes} bytes)")
+    if total_bytes > 80 * 1024 * 1024:
+        failures.append(f"six-era runtime audio exceeds 80 MiB ({total_bytes} bytes)")
 
     if failures:
         for failure in failures:
@@ -208,7 +258,8 @@ def main(require_final: bool = False) -> int:
         return 1
     print(
         "AUDIO_ASSET_VERIFICATION_OK: "
-        f"{len(entries)} project-original six-era 48 kHz stereo assets, hashes/levels/loop seams verified, "
+        f"{len(entries)} project-original six-era 48 kHz stereo assets, including 18 streamable synchronized music loops, "
+        "hashes/levels/loop seams verified, "
         f"{total_bytes} bytes"
     )
     return 0
@@ -277,6 +328,126 @@ def validate_wav(path: Path, entry: dict, failures: list[str]) -> None:
         failures.append(f"{asset_id}: one-shot must not declare loop sample points")
 
 
+def parse_ogg_vorbis(path: Path) -> dict:
+    """Parse Ogg pages and the Vorbis identification header without a codec DLL."""
+    data = path.read_bytes()
+    position = 0
+    packets: list[bytes] = []
+    packet = bytearray()
+    serial: int | None = None
+    expected_sequence = 0
+    last_granule: int | None = None
+    page_count = 0
+    saw_bos = False
+    saw_eos = False
+    while position < len(data):
+        if position + 27 > len(data) or data[position:position + 4] != b"OggS":
+            raise ValueError(f"invalid Ogg capture pattern at byte {position}")
+        version = data[position + 4]
+        header_type = data[position + 5]
+        granule = struct.unpack_from("<Q", data, position + 6)[0]
+        page_serial = struct.unpack_from("<I", data, position + 14)[0]
+        sequence = struct.unpack_from("<I", data, position + 18)[0]
+        segment_count = data[position + 26]
+        header_end = position + 27 + segment_count
+        if version != 0 or header_end > len(data):
+            raise ValueError(f"invalid Ogg page header at byte {position}")
+        lacing = data[position + 27:header_end]
+        body_end = header_end + sum(lacing)
+        if body_end > len(data):
+            raise ValueError(f"truncated Ogg page body at byte {position}")
+        if serial is None:
+            serial = page_serial
+        elif page_serial != serial:
+            raise ValueError("chained or multiplexed Ogg streams are not allowed")
+        if sequence != expected_sequence:
+            raise ValueError(f"Ogg page sequence jumped from {expected_sequence} to {sequence}")
+        if page_count == 0:
+            saw_bos = bool(header_type & 0x02)
+        if bool(packet) != bool(header_type & 0x01):
+            raise ValueError("Ogg continued-packet flag is inconsistent")
+        saw_eos = saw_eos or bool(header_type & 0x04)
+        cursor = header_end
+        for length in lacing:
+            packet.extend(data[cursor:cursor + length])
+            cursor += length
+            if length < 255:
+                packets.append(bytes(packet))
+                packet.clear()
+        if granule != 0xFFFFFFFFFFFFFFFF:
+            last_granule = granule
+        position = body_end
+        page_count += 1
+        expected_sequence += 1
+    if position != len(data) or packet:
+        raise ValueError("Ogg stream ended with an incomplete packet")
+    if not packets or len(packets[0]) < 30 or packets[0][:7] != b"\x01vorbis":
+        raise ValueError("Vorbis identification packet is missing")
+    identification = packets[0]
+    codec_version = struct.unpack_from("<I", identification, 7)[0]
+    channels = identification[11]
+    sample_rate = struct.unpack_from("<I", identification, 12)[0]
+    if codec_version != 0 or not (identification[29] & 0x01):
+        raise ValueError("unsupported or malformed Vorbis identification packet")
+    if last_granule is None:
+        raise ValueError("Ogg stream has no PCM granule position")
+    return {
+        "channels": channels,
+        "sample_rate": sample_rate,
+        "frame_count": last_granule,
+        "page_count": page_count,
+        "bos": saw_bos,
+        "eos": saw_eos,
+    }
+
+
+def validate_ogg(path: Path, entry: dict, failures: list[str]) -> None:
+    asset_id = str(entry.get("id", path.stem))
+    try:
+        info = parse_ogg_vorbis(path)
+    except (OSError, ValueError, struct.error) as error:
+        failures.append(f"{asset_id}: Ogg/Vorbis parse failed: {error}")
+        return
+    channels = int(info["channels"])
+    sample_rate = int(info["sample_rate"])
+    frame_count = int(info["frame_count"])
+    if channels != 2 or sample_rate != 48_000:
+        failures.append(f"{asset_id}: expected Vorbis 48 kHz/stereo, got {sample_rate} Hz/{channels} ch")
+    if not info["bos"] or not info["eos"] or int(info["page_count"]) < 3:
+        failures.append(f"{asset_id}: Ogg stream lacks complete BOS/EOS page structure")
+    duration = frame_count / max(1, sample_rate)
+    if abs(duration - float(entry.get("duration", -1.0))) > 2.0 / max(1, sample_rate):
+        failures.append(f"{asset_id}: final Ogg granule differs from manifest duration")
+    if (entry.get("sample_rate") != sample_rate or entry.get("channels") != channels or
+            entry.get("bits_per_sample") is not None or entry.get("codec") != "vorbis" or
+            entry.get("container") != "ogg" or entry.get("streaming") is not True):
+        failures.append(f"{asset_id}: Ogg/Vorbis streaming metadata is inconsistent")
+    if (entry.get("loop") is not True or entry.get("loop_start_sample") != 0 or
+            entry.get("loop_end_sample") != frame_count):
+        failures.append(f"{asset_id}: Ogg loop range differs from final PCM granule")
+    if entry.get("music_state") not in MUSIC_STATES or entry.get("kind") != "music":
+        failures.append(f"{asset_id}: Ogg runtime asset must be a registered music state")
+    if float(entry.get("duration", 0.0)) < 60.0:
+        failures.append(f"{asset_id}: product music loop is shorter than one minute")
+    peak_db = float(entry.get("peak_dbfs", 999.0))
+    rms_db = float(entry.get("rms_dbfs", 999.0))
+    dc = abs(float(entry.get("source_dc_offset", 999.0)))
+    boundary = abs(float(entry.get("loop_boundary_delta", 999.0)))
+    if peak_db > -1.0 or peak_db < -18.0:
+        failures.append(f"{asset_id}: source-master peak {peak_db:.2f} dBFS is outside -18..-1 dBFS")
+    if rms_db > -8.5 or rms_db < -42.0:
+        failures.append(f"{asset_id}: source-master RMS {rms_db:.2f} dBFS is outside -42..-8.5 dBFS")
+    if dc > 0.002:
+        failures.append(f"{asset_id}: source-master DC offset {dc:.6f} exceeds 0.002")
+    if boundary > 0.002:
+        failures.append(f"{asset_id}: source-master loop boundary delta {boundary:.7f} exceeds 0.002")
+    if (not entry.get("source_master_sha256") or
+            not str(entry.get("encoder_and_version", "")).startswith("ffmpeg version n7.1") or
+            not entry.get("encoder_executable_sha256") or
+            entry.get("encoding_parameters") != list(MUSIC_ENCODE_ARGS_EXPECTED)):
+        failures.append(f"{asset_id}: reproducible source/encoder audit metadata is incomplete")
+
+
 def validate_import_settings(path: Path, entry: dict, failures: list[str]) -> None:
     asset_id = str(entry.get("id", path.stem))
     sidecar = Path(str(path) + ".import")
@@ -284,14 +455,20 @@ def validate_import_settings(path: Path, entry: dict, failures: list[str]) -> No
         failures.append(f"{asset_id}: Godot import sidecar is missing")
         return
     text = sidecar.read_text(encoding="utf-8")
-    if 'importer="wav"' not in text or 'type="AudioStreamWAV"' not in text:
-        failures.append(f"{asset_id}: import sidecar does not preserve WAV semantics")
-    if "compress/mode=0" not in text:
-        failures.append(f"{asset_id}: runtime import must remain lossless")
-    if bool(entry.get("loop", False)):
-        expected_end = round(float(entry["duration"]) * int(entry["sample_rate"]))
-        if "edit/loop_mode=1" not in text or f"edit/loop_end={expected_end}" not in text:
-            failures.append(f"{asset_id}: import loop points do not match the manifest sample boundary")
+    if path.suffix.lower() == ".wav":
+        if 'importer="wav"' not in text or 'type="AudioStreamWAV"' not in text:
+            failures.append(f"{asset_id}: import sidecar does not preserve WAV semantics")
+        if "compress/mode=0" not in text:
+            failures.append(f"{asset_id}: runtime import must remain lossless")
+        if bool(entry.get("loop", False)):
+            expected_end = round(float(entry["duration"]) * int(entry["sample_rate"]))
+            if "edit/loop_mode=1" not in text or f"edit/loop_end={expected_end}" not in text:
+                failures.append(f"{asset_id}: import loop points do not match the manifest sample boundary")
+    elif path.suffix.lower() == ".ogg":
+        if 'importer="oggvorbisstr"' not in text or 'type="AudioStreamOggVorbis"' not in text:
+            failures.append(f"{asset_id}: import sidecar does not preserve streamable Ogg/Vorbis semantics")
+        if "loop=true" not in text or "loop_offset=0" not in text:
+            failures.append(f"{asset_id}: imported music must retain an exact zero-offset loop")
 
 
 if __name__ == "__main__":
