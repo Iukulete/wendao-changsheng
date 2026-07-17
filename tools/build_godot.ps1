@@ -2,6 +2,7 @@
 param(
     [switch]$NoPrepare,
     [switch]$SkipVerify,
+    [switch]$SkipAudioDeviceSmoke,
     [switch]$ProductRelease
 )
 
@@ -16,6 +17,10 @@ $OutputPck = Join-Path $OutputDir "wendao-changsheng.pck"
 $OutputLicenseDir = Join-Path $OutputDir "licenses"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
 $TempDir = Join-Path $Root ".tmp\godot"
+
+if ($ProductRelease -and $SkipAudioDeviceSmoke) {
+    throw "ProductRelease cannot skip the real Windows audio-device smoke test."
+}
 
 New-Item -ItemType Directory -Force -Path $TempDir, $OutputDir | Out-Null
 $env:TEMP = $TempDir
@@ -97,9 +102,13 @@ try {
     $env:LOCALAPPDATA = $previousLocalAppData
 }
 
-& (Join-Path $PSScriptRoot "verify_export_audio.ps1") -ExePath $OutputExe
-if ($LASTEXITCODE -ne 0) {
-    throw "Exported Windows audio-device smoke failed with exit code $LASTEXITCODE."
+if (-not $SkipAudioDeviceSmoke) {
+    & (Join-Path $PSScriptRoot "verify_export_audio.ps1") -ExePath $OutputExe
+    if ($LASTEXITCODE -ne 0) {
+        throw "Exported Windows audio-device smoke failed with exit code $LASTEXITCODE."
+    }
+} else {
+    Write-Host "Skipping the hardware-backed Windows audio-device smoke; this mode is reserved for headless CI."
 }
 
 Write-Host "Godot Windows build complete:"

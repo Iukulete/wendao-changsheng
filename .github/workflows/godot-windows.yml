@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - "agent/**"
   pull_request:
     branches:
       - main
@@ -21,6 +22,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Enforce Godot-only source boundary
+        shell: pwsh
+        run: |
+          $legacy = git ls-files | Where-Object {
+            $_ -match '(?i)(^|/)(CMakeLists\.txt|Makefile|.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx|rc))$' -or
+            $_ -match '(?i)^\.github/workflows/(story-art-validation|windows-build(-v06)?)\.yml$'
+          }
+          if ($legacy) { throw "Legacy Win32/C++ runtime or CI returned: $($legacy -join ', ')" }
 
       - name: Cache verified Godot archives and templates
         uses: actions/cache@v4
@@ -42,11 +52,18 @@ jobs:
 
       - name: Validate project and load main scene
         shell: pwsh
-        run: ./tools/verify_godot.ps1 -NoPrepare
+        run: ./tools/verify_godot.ps1 -NoPrepare -RequireFinalAudio
+
+      - name: Validate rendered gameplay states
+        shell: pwsh
+        run: ./tools/verify_render.ps1
 
       - name: Export Windows x86_64 release
         shell: pwsh
-        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify
+        # GitHub-hosted Windows runners do not expose a stable physical audio
+        # endpoint. Final audio, decoding, gameplay and rendering are gated
+        # above; hardware-backed WASAPI remains mandatory for ProductRelease.
+        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify -SkipAudioDeviceSmoke
 
       - name: Verify release boundary
         shell: pwsh
