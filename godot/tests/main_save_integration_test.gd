@@ -46,6 +46,18 @@ func _run() -> void:
 	var combat_button := game.find_child("CombatButton", true, false) as Button
 	_expect(combat_button != null and not combat_button.disabled,
 		"新生必须能从主界面进入确定性战斗")
+	var return_button := game.find_child("ReturnToMenuButton", true, false) as Button
+	_expect(return_button != null and not return_button.disabled,
+		"主界面必须提供安全封存并返回标题的入口")
+	if return_button != null:
+		game.set("feedback", "返回标题自动封存验收")
+		return_button.emit_signal("pressed")
+		await process_frame
+		_expect(game.find_child("DaoNameInput", true, false) != null,
+			"返回标题动作必须回到可交互菜单")
+		game.call("_continue_game")
+		_expect(str(game.get("feedback")) == "返回标题自动封存验收",
+			"返回标题前必须原子保存当前命途，续接后不能丢失反馈状态")
 	var armory_button := game.find_child("ArmoryButton", true, false) as Button
 	_expect(armory_button != null and not armory_button.disabled,
 		"主界面必须能够查看成就和永久玉兵")

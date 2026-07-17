@@ -96,10 +96,41 @@ func _run() -> void:
 		root.size = viewport_size
 		await _settle_frames(4)
 		if viewport_size == Vector2i(1280, 720):
+			var main_viewport := root.get_visible_rect()
 			var footer := game.find_child("GameFooter", true, false) as Control
 			if footer == null or not root.get_visible_rect().encloses(footer.get_global_rect()):
 				failures.append("1280x720主界面页脚没有完整落在视口内：%s" % [
 					footer.get_global_rect() if footer != null else "missing"])
+			var player_panel := game.find_child("MainPlayerPanel", true, false) as Control
+			var player_compass := game.find_child("PlayerDaoCompass", true, false) as Control
+			var action_panel := game.find_child("GameActionPanel", true, false) as Control
+			var action_grid := game.find_child("GameActionGrid", true, false) as GridContainer
+			if player_panel == null or player_compass == null or action_panel == null or \
+					action_grid == null or action_grid.columns != 2:
+				failures.append("1280x720主界面没有启用无裁切人物栏与双列行动栏")
+			elif game.find_child("PlayerPanelScroll", true, false) != null or \
+					game.find_child("ActionPanelScroll", true, false) != null:
+				failures.append("1280x720主界面人物或行动栏仍依赖纵向滚动")
+			elif not main_viewport.encloses(player_compass.get_global_rect()):
+				failures.append("1280x720主界面命途罗盘没有完整落在首屏")
+			var main_actions: Array[Control] = [
+				game.find_child("MeditateButton", true, false) as Control,
+				game.find_child("AdventureButton", true, false) as Control,
+				game.find_child("BreakthroughButton", true, false) as Control,
+				game.find_child("CombatButton", true, false) as Control,
+				game.find_child("LocalAIButton", true, false) as Control,
+				game.find_child("InventoryButton", true, false) as Control,
+				game.find_child("ArmoryButton", true, false) as Control,
+				game.find_child("DungeonButton", true, false) as Control,
+				game.find_child("SaveGameButton", true, false) as Control,
+				game.find_child("GameAudioSettingsButton", true, false) as Control,
+				game.find_child("CycleEraButton", true, false) as Control,
+				game.find_child("ReturnToMenuButton", true, false) as Control,
+			]
+			for action in main_actions:
+				if action == null or not main_viewport.encloses(action.get_global_rect()):
+					failures.append("1280x720主界面行动入口没有完整落在首屏：%s" % [
+						action.name if action != null else "missing"])
 		_capture(root, output_root.path_join("main_%dx%d.png" % [viewport_size.x, viewport_size.y]),
 			viewport_size, "主界面 %dx%d" % [viewport_size.x, viewport_size.y])
 

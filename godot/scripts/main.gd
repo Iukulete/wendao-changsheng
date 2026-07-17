@@ -580,7 +580,7 @@ func _show_game() -> void:
 	var footer := _panel(0.72, era_accent)
 	footer.name = "GameFooter"
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律",
+	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律  [Esc] 标题",
 		16, Color(0.88, 0.91, 0.91, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -618,23 +618,34 @@ func _build_header() -> Control:
 
 func _build_player_panel() -> Control:
 	var panel := _panel(0.83, era_accent)
+	panel.name = "MainPlayerPanel"
 	panel.custom_minimum_size.x = 320
-	var scroll := ScrollContainer.new()
-	scroll.name = "PlayerPanelScroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.name = "MainPlayerColumn"
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 8)
-	scroll.add_child(column)
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 6)
+	panel.add_child(column)
 	column.add_child(_section_title("此世照影"))
 
+	var identity_row := HBoxContainer.new()
+	identity_row.name = "MainPlayerIdentity"
+	identity_row.custom_minimum_size.y = 154
+	identity_row.add_theme_constant_override("separation", 12)
+	identity_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.add_child(identity_row)
 	var portrait_frame := _panel(0.34, era_accent)
-	portrait_frame.custom_minimum_size = Vector2(282, 245)
-	column.add_child(portrait_frame)
+	portrait_frame.name = "MainPortraitFrame"
+	portrait_frame.custom_minimum_size = Vector2(104, 154)
+	var portrait_style := portrait_frame.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	portrait_style.content_margin_left = 6
+	portrait_style.content_margin_right = 6
+	portrait_style.content_margin_top = 6
+	portrait_style.content_margin_bottom = 6
+	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
+	identity_row.add_child(portrait_frame)
 	var portrait := TextureRect.new()
+	portrait.name = "MainPortrait"
 	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.texture = load(PROTAGONIST)
@@ -642,37 +653,45 @@ func _build_player_panel() -> Control:
 	portrait_frame.add_child(portrait)
 	animated_portrait = portrait
 
-	column.add_child(_label("%s · %s %d层" % [player.name, player.realm, int(player.level)], 20,
-		Color("f1e5c5"), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_progress_row("修为", int(player.exp), CultivationScript.exp_needed(player), era_accent))
-	column.add_child(_progress_row("气血", int(player.hp), int(player.max_hp), Color("c95858")))
-	column.add_child(_progress_row("灵力", int(player.mp), int(player.max_mp), Color("538fc2")))
+	var identity_detail := VBoxContainer.new()
+	identity_detail.name = "MainPlayerVitals"
+	identity_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	identity_detail.add_theme_constant_override("separation", 3)
+	identity_row.add_child(identity_detail)
+	identity_detail.add_child(_label(str(player.name), 20, Color("f1e5c5"),
+		HORIZONTAL_ALIGNMENT_CENTER))
+	identity_detail.add_child(_label("%s %d层 · 第%d世" % [
+		str(player.realm), int(player.level), int(run_state.get("generation", 1))], 13,
+		Color(era_accent, 0.86), HORIZONTAL_ALIGNMENT_CENTER))
+	identity_detail.add_child(_progress_row("修为", int(player.exp),
+		CultivationScript.exp_needed(player), era_accent))
+	identity_detail.add_child(_progress_row("气血", int(player.hp), int(player.max_hp), Color("c95858")))
+	identity_detail.add_child(_progress_row("灵力", int(player.mp), int(player.max_mp), Color("538fc2")))
 
 	var compass := DaoCompassScript.new()
-	compass.custom_minimum_size = Vector2(280, 178)
+	compass.name = "PlayerDaoCompass"
+	compass.custom_minimum_size = Vector2(276, 92)
+	compass.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	compass.call("set_stats", player.roots, int(player.karma), int(player.dao_heart), era_accent)
 	column.add_child(compass)
-	column.add_child(_label("命途罗盘 · 五行在选择中偏转", 14,
-		Color(era_accent, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("因果 %+d   道心 %d   名望 %+d   仇怨 %d" % [
 		int(player.karma), int(player.dao_heart), int(player.reputation), int(player.enmity)],
-		15, Color(0.85, 0.87, 0.88, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_label("寿元 %d/%d   灵石 %d   丹药 %d" % [
-		int(player.age), int(player.lifespan), int(player.spirit_stones),
+		13, Color(0.85, 0.87, 0.88, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("寿元 %d/%d（%s）  灵石 %d   丹药 %d" % [
+		int(player.age), int(player.lifespan), CultivationScript.lifespan_pressure(player),
+		int(player.spirit_stones),
 		int(player.pills) + ItemSystemScript.count(run_state, "healing_pill")],
-		15, Color(0.72, 0.78, 0.80, 0.90), HORIZONTAL_ALIGNMENT_CENTER))
+		13, Color(0.72, 0.78, 0.80, 0.90), HORIZONTAL_ALIGNMENT_CENTER))
 	var effective_stats: Dictionary = ItemSystemScript.effective_stats(run_state)
 	column.add_child(_label("实战属性 · 攻%d  守%d  气血上限%d" % [
 		int(effective_stats.attack), int(effective_stats.defense), int(effective_stats.max_hp)],
-		14, Color(0.76, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_label("寿元势态 · %s   旧玉共鸣 · %d" % [
-		CultivationScript.lifespan_pressure(player),
-		int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))],
-		14, Color(era_accent, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
+		13, Color(0.76, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	var jade_weapon: Dictionary = AchievementSystemScript.current_weapon(run_state)
-	column.add_child(_label("玉兵 · %s" % ("尚未显化" if jade_weapon.is_empty() else "%s·%s  共鸣%d  蓄能%d/100" % [
-		str(jade_weapon.name), str(jade_weapon.stage_name), int(jade_weapon.resonance), int(jade_weapon.charge)]),
-		14, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
+	var relic_resonance := int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))
+	var weapon_summary := "尚未显化" if jade_weapon.is_empty() else "%s·%s %d/100" % [
+		str(jade_weapon.name), str(jade_weapon.stage_name), int(jade_weapon.charge)]
+	column.add_child(_label("旧玉共鸣 %d   玉兵 · %s" % [relic_resonance, weapon_summary],
+		13, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
 	return panel
 
 
@@ -709,55 +728,86 @@ func _build_world_panel() -> Control:
 
 func _build_action_panel() -> Control:
 	var panel := _panel(0.84, era_accent)
+	panel.name = "GameActionPanel"
 	panel.custom_minimum_size.x = 300
-	var scroll := ScrollContainer.new()
-	scroll.name = "ActionPanelScroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.name = "GameActionColumn"
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 11)
-	scroll.add_child(column)
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 8)
+	panel.add_child(column)
 	column.add_child(_section_title("此刻可行"))
-	column.add_child(_button("壹 · 打坐修炼", _meditate, true))
-	column.add_child(_button("贰 · 外出历练", _open_adventure, true))
-	column.add_child(_button("叁 · 叩问瓶颈", _breakthrough, false))
-	var combat_button := _button("肆 · 踏入凶地迎战", _start_combat, false)
+	var action_grid := GridContainer.new()
+	action_grid.name = "GameActionGrid"
+	action_grid.columns = 2
+	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	action_grid.add_theme_constant_override("h_separation", 8)
+	action_grid.add_theme_constant_override("v_separation", 8)
+	column.add_child(action_grid)
+	var meditate_button := _main_action_button("壹 · 修炼", _meditate, true)
+	meditate_button.name = "MeditateButton"
+	meditate_button.tooltip_text = "运转周天，推进修为与世界年史。"
+	action_grid.add_child(meditate_button)
+	var adventure_button := _main_action_button("贰 · 历练", _open_adventure, true)
+	adventure_button.name = "AdventureButton"
+	adventure_button.tooltip_text = "踏入时代事件与命途长卷。"
+	action_grid.add_child(adventure_button)
+	var breakthrough_button := _main_action_button("叁 · 破境", _breakthrough, false)
+	breakthrough_button.name = "BreakthroughButton"
+	breakthrough_button.tooltip_text = "叩问当前大境瓶颈。"
+	action_grid.add_child(breakthrough_button)
+	var combat_button := _main_action_button("肆 · 迎战", _start_combat, false)
 	combat_button.name = "CombatButton"
-	column.add_child(combat_button)
-	var ai_button := _button("伍 · 求问本地天机", _request_ai_event, false)
+	combat_button.tooltip_text = "踏入凶地，迎接可读意图的生死战。"
+	action_grid.add_child(combat_button)
+	var ai_button := _main_action_button("伍 · 问天机", _request_ai_event, false)
 	ai_button.name = "LocalAIButton"
 	ai_button.disabled = not _local_model_ready() or ai_bridge.call("is_busy")
 	ai_button.tooltip_text = "本地模型与 llama.cpp 运行时尚未就绪。" if ai_button.disabled else ""
-	column.add_child(ai_button)
-	var inventory_button := _button("陆 · 行囊与炼器", _show_inventory, false)
+	action_grid.add_child(ai_button)
+	var inventory_button := _main_action_button("陆 · 行囊", _show_inventory, false)
 	inventory_button.name = "InventoryButton"
-	column.add_child(inventory_button)
-	var armory_button := _button("柒 · 成就与轮回玉兵", _show_armory, false)
+	inventory_button.tooltip_text = "查看物品、装备、材料与炼器。"
+	action_grid.add_child(inventory_button)
+	var armory_button := _main_action_button("柒 · 玉兵", _show_armory, false)
 	armory_button.name = "ArmoryButton"
-	column.add_child(armory_button)
-	var dungeon_button := _button("捌 · 镜湖空阙秘境", _enter_dungeon, false)
+	armory_button.tooltip_text = "查看成就、轮回玉兵与前世传承。"
+	action_grid.add_child(armory_button)
+	var dungeon_button := _main_action_button("捌 · 秘境", _enter_dungeon, false)
 	dungeon_button.name = "DungeonButton"
-	column.add_child(dungeon_button)
+	dungeon_button.tooltip_text = "进入四层镜湖空阙秘境。"
+	action_grid.add_child(dungeon_button)
 	if int(player.get("realm_index", 0)) >= 19:
-		var transcend_button := _button("证道圆满 · 自择轮回", _transcend_life, true)
+		var transcend_button := _main_action_button("自择轮回", _transcend_life, true)
 		transcend_button.name = "TranscendLifeButton"
-		column.add_child(transcend_button)
-	column.add_child(_button("封存此世 · 保存进度", _manual_save, false))
-	var audio_button := _button("音律与听觉设置", _open_audio_settings, false)
+		transcend_button.tooltip_text = "证道圆满后主动结束此世。"
+		action_grid.add_child(transcend_button)
+	var save_button := _main_action_button("封存此世", _manual_save, false)
+	save_button.name = "SaveGameButton"
+	save_button.tooltip_text = "立即以原子写入封存当前进度。"
+	action_grid.add_child(save_button)
+	var audio_button := _main_action_button("音律设置", _open_audio_settings, false)
 	audio_button.name = "GameAudioSettingsButton"
-	column.add_child(audio_button)
-	column.add_child(_spacer(10))
-	column.add_child(_section_title("天机镜"))
-	column.add_child(_button("观测下一纪元", _cycle_era, false))
-	column.add_child(_spacer(10))
-	var note := _label("时代不是皮肤：事件池、色彩、微粒与命途反馈会一起改变。", 14,
-		Color(0.76, 0.80, 0.81, 0.82))
+	action_grid.add_child(audio_button)
+	var era_button := _main_action_button("观测纪元", _cycle_era, false)
+	era_button.name = "CycleEraButton"
+	era_button.tooltip_text = "开发观测：切换下一纪元的事件、色彩与声景。"
+	action_grid.add_child(era_button)
+	var menu_button := _main_action_button("返回标题", _return_to_menu, false)
+	menu_button.name = "ReturnToMenuButton"
+	menu_button.tooltip_text = "安全封存当前命途并返回标题。"
+	action_grid.add_child(menu_button)
+	var note := _label("数字键行动 · M 秘境 · I 行囊 · A 玉兵 · O 音律", 12,
+		Color(0.76, 0.80, 0.81, 0.78), HORIZONTAL_ALIGNMENT_CENTER)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(note)
 	return panel
+
+
+func _main_action_button(text_value: String, callback: Callable, primary: bool) -> Button:
+	var button := _button(text_value, callback, primary, "", true)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return button
 
 
 func _world_digest() -> String:
@@ -930,6 +980,7 @@ func _show_combat() -> void:
 	page.add_child(header)
 
 	var body := HBoxContainer.new()
+	body.name = "GameBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
@@ -1992,6 +2043,15 @@ func _manual_save() -> void:
 	_show_game()
 
 
+func _return_to_menu() -> void:
+	if not _save_current_state("返回标题前自动封存"):
+		feedback = "旧玉未能完成封存；为避免丢失此世进度，仍留在当前山河。"
+		_show_game()
+		return
+	menu_notice = save_notice
+	_show_menu()
+
+
 func _save_current_state(reason: String) -> bool:
 	_commit_state_views()
 	var save_result: Dictionary = save_service.call("save_game", run_state)
@@ -2712,18 +2772,18 @@ func _menu_feature_pill(text_value: String) -> PanelContainer:
 
 
 func _button(text_value: String, callback: Callable, primary: bool,
-		sound_event: String = "") -> Button:
+		sound_event: String = "", compact: bool = false) -> Button:
 	var button := Button.new()
 	button.text = text_value
-	button.custom_minimum_size.y = 50
+	button.custom_minimum_size.y = 44 if compact else 50
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 17)
+	button.add_theme_font_size_override("font_size", 15 if compact else 17)
 	button.add_theme_color_override("font_color", Color("f4eee0"))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	var normal := _button_style(0.18 if not primary else 0.31, era_accent, 0.44)
-	var hover := _button_style(0.34 if not primary else 0.48, era_accent, 0.92)
-	var pressed := _button_style(0.50, era_accent, 1.0)
+	var normal := _button_style(0.18 if not primary else 0.31, era_accent, 0.44, compact)
+	var hover := _button_style(0.34 if not primary else 0.48, era_accent, 0.92, compact)
+	var pressed := _button_style(0.50, era_accent, 1.0, compact)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("focus", hover)
@@ -2748,7 +2808,8 @@ func _is_cancel_action(text_value: String) -> bool:
 	return false
 
 
-func _button_style(alpha: float, accent: Color, border_alpha: float) -> StyleBoxFlat:
+func _button_style(alpha: float, accent: Color, border_alpha: float,
+		compact: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(accent.darkened(0.68), alpha)
 	style.border_color = Color(accent, border_alpha)
@@ -2758,10 +2819,10 @@ func _button_style(alpha: float, accent: Color, border_alpha: float) -> StyleBox
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_left = 8
 	style.corner_radius_bottom_right = 8
-	style.content_margin_left = 18
-	style.content_margin_right = 18
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
+	style.content_margin_left = 9 if compact else 18
+	style.content_margin_right = 9 if compact else 18
+	style.content_margin_top = 7 if compact else 10
+	style.content_margin_bottom = 7 if compact else 10
 	return style
 
 
@@ -2875,7 +2936,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
-				KEY_ESCAPE: _show_menu()
+				KEY_ESCAPE: _return_to_menu()
 		ScreenState.EVENT:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_9:
 				_resolve_choice(int(event.keycode - KEY_1))
