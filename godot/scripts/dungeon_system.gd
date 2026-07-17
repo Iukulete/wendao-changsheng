@@ -301,9 +301,11 @@ static func choose_route(state: Dictionary, choice_index: int) -> Dictionary:
 		var phase: Dictionary = run.battle.get("phase", {})
 		if not phase.is_empty():
 			_append_log(run, "未显之相·%s：%s" % [str(phase.name), str(phase.description)])
+		var encounter_feedback := _encounter_feedback(run.battle)
 		dungeon["run"] = run
 		state["dungeon"] = dungeon
-		return {"ok": true, "code": "dungeon_battle_started", "node": node, "run": run}
+		return {"ok": true, "code": "dungeon_battle_started", "node": node, "run": run,
+			"feedback":encounter_feedback}
 	_resolve_noncombat_node(state, run, node)
 	return _advance_after_node(state, dungeon, run, node)
 
@@ -379,11 +381,13 @@ static func play_card(state: Dictionary, hand_index: int) -> Dictionary:
 	if int(battle.enemy_hp) <= 0:
 		run["battle"] = battle
 		var victory := _finish_battle(state, dungeon, run, "victory")
+		feedback["resolution"] = (victory.get("resolution", {}) as Dictionary).duplicate(true)
 		victory["feedback"] = feedback
 		return victory
 	if int(run.hp) <= 0:
 		run["battle"] = battle
 		var defeat := _finish_battle(state, dungeon, run, "defeat")
+		feedback["resolution"] = (defeat.get("resolution", {}) as Dictionary).duplicate(true)
 		defeat["feedback"] = feedback
 		return defeat
 	run["battle"] = battle
@@ -441,11 +445,13 @@ static func end_turn(state: Dictionary) -> Dictionary:
 	if int(run.hp) <= 0:
 		run["battle"] = battle
 		var defeat := _finish_battle(state, dungeon, run, "defeat")
+		feedback["resolution"] = (defeat.get("resolution", {}) as Dictionary).duplicate(true)
 		defeat["feedback"] = feedback
 		return defeat
 	if int(battle.turn) > MAX_TURNS:
 		run["battle"] = battle
 		var timeout := _finish_battle(state, dungeon, run, "defeat")
+		feedback["resolution"] = (timeout.get("resolution", {}) as Dictionary).duplicate(true)
 		timeout["feedback"] = feedback
 		return timeout
 	var heart_penalty: Dictionary = {}
@@ -948,6 +954,18 @@ static func _start_battle(state: Dictionary, run: Dictionary, rank: String) -> D
 	return battle
 
 
+static func _encounter_feedback(battle: Dictionary) -> Dictionary:
+	var rule: Dictionary = battle.get("trait", {})
+	var phase: Dictionary = battle.get("phase", {})
+	return {"kind":"encounter", "rank":str(battle.get("rank", "combat")),
+		"enemy_name":str(battle.get("enemy_name", "秘境异影")),
+		"enemy_max_hp":int(battle.get("enemy_max_hp", 0)),
+		"enemy_attack":int(battle.get("enemy_attack", 0)),
+		"intent_name":intent_label(str(battle.get("intent", "attack"))),
+		"rule_title":combat_rule_title(battle) if not rule.is_empty() else "",
+		"rule_name":str(rule.get("name", "")), "phase_name":str(phase.get("name", ""))}
+
+
 static func _draw_cards(state: Dictionary, battle: Dictionary, amount: int) -> void:
 	var hand: Array = battle.hand
 	var draw: Array = battle.draw_pile
@@ -979,15 +997,28 @@ static func _finish_battle(state: Dictionary, dungeon: Dictionary, run: Dictiona
 	var battle: Dictionary = run.battle
 	battle["outcome"] = outcome
 	run["battle"] = {}
-	if outcome == "defeat":
-		return _finish_run(state, dungeon, run, "defeat")
 	var rank := str(battle.rank)
+	var resolution := {"kind":"defeat" if outcome == "defeat" else "victory",
+		"outcome":outcome, "rank":rank, "enemy_name":str(battle.enemy_name),
+		"exp_gain":0, "stone_gain":0, "total_exp":0, "total_stones":0,
+		"dungeon_completed":false}
+	if outcome == "defeat":
+		var defeat := _finish_run(state, dungeon, run, "defeat")
+		defeat["resolution"] = resolution
+		return defeat
 	var exp_gain := 32 + int(run.depth) * 18 + (45 if rank == "elite" else 0) + (90 if rank == "boss" else 0)
 	var stone_gain := 2 + int(run.depth) + (5 if rank == "elite" else 0) + (12 if rank == "boss" else 0)
 	run.rewards.exp = int(run.rewards.exp) + exp_gain
 	run.rewards.spirit_stones = int(run.rewards.spirit_stones) + stone_gain
 	_append_log(run, "你战胜%s，秘境暂存修为%d、灵石%d。" % [str(battle.enemy_name), exp_gain, stone_gain])
-	return _advance_after_node(state, dungeon, run, {"type":rank, "name":str(battle.enemy_name)})
+	var result := _advance_after_node(state, dungeon, run, {"type":rank, "name":str(battle.enemy_name)})
+	resolution["exp_gain"] = exp_gain
+	resolution["stone_gain"] = stone_gain
+	resolution["total_exp"] = int(run.rewards.exp)
+	resolution["total_stones"] = int(run.rewards.spirit_stones)
+	resolution["dungeon_completed"] = str(result.get("code", "")) == "dungeon_finished"
+	result["resolution"] = resolution
+	return result
 
 
 static func _resolve_noncombat_node(state: Dictionary, run: Dictionary, node: Dictionary) -> void:

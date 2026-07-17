@@ -15,7 +15,14 @@ func _ready() -> void:
 func configure(next_feedback: Dictionary, next_accent: Color) -> void:
 	feedback = next_feedback.duplicate(true)
 	accent = next_accent
-	lifetime = 2.25 if bool(feedback.get("phase_shifted", false)) else 1.8
+	var kind := str(feedback.get("kind", "card"))
+	var resolution := _resolution_feedback()
+	if kind == "encounter":
+		lifetime = 2.65 if str(feedback.get("rank", "combat")) == "boss" else 2.15
+	elif kind in ["victory", "defeat"] or not resolution.is_empty():
+		lifetime = 2.45
+	else:
+		lifetime = 2.25 if bool(feedback.get("phase_shifted", false)) else 1.8
 	elapsed = 0.0
 	queue_redraw()
 
@@ -36,14 +43,78 @@ func _draw() -> void:
 	var player_position := Vector2(size.x * 0.16, size.y * 0.29)
 	var enemy_position := Vector2(size.x * 0.84, size.y * 0.29)
 	var hand_position := Vector2(size.x * 0.50, size.y * 0.62)
-	if str(feedback.get("kind", "")) == "card":
+	var kind := str(feedback.get("kind", ""))
+	if kind == "card":
 		_draw_card_cast(hand_position, enemy_position, player_position, fade, pulse)
-	else:
+	elif kind == "enemy":
 		_draw_enemy_action(enemy_position, player_position, fade, pulse)
+	elif kind == "encounter":
+		_draw_encounter(enemy_position, fade, pulse)
+	elif kind in ["victory", "defeat"]:
+		var result_position := Vector2(size.x * 0.50, size.y * 0.34)
+		_draw_resolution(feedback, result_position, result_position, fade, pulse)
 	if bool(feedback.get("phase_shifted", false)):
 		_draw_phase_break(enemy_position, fade, pulse)
 	if bool(feedback.get("heart_awakened", false)):
 		_draw_heart_awaken(player_position, fade, pulse)
+	var resolution := _resolution_feedback()
+	if not resolution.is_empty():
+		_draw_resolution(resolution, player_position, enemy_position, fade, pulse)
+
+
+func _resolution_feedback() -> Dictionary:
+	var value: Variant = feedback.get("resolution", {})
+	return value as Dictionary if value is Dictionary else {}
+
+
+func _draw_encounter(center: Vector2, fade: float, pulse: float) -> void:
+	var rank := str(feedback.get("rank", "combat"))
+	var is_boss := rank == "boss"
+	var is_elite := rank == "elite"
+	var tint := Color("c95055") if is_boss else Color("d79b4d") if is_elite else accent
+	draw_rect(Rect2(Vector2.ZERO, size), Color(tint, fade * (0.060 if is_boss else 0.035)), true)
+	var progress := clampf(elapsed / lifetime, 0.0, 1.0)
+	for index in range(5 if is_boss else 3):
+		var radius := 46.0 + float(index) * 24.0 + progress * 32.0
+		draw_arc(center, radius, -PI * (0.92 - float(index) * 0.04),
+			PI * (0.92 - float(index) * 0.04), 56,
+			Color(tint, fade * (0.58 - float(index) * 0.085)),
+			4.0 if index == 0 else 2.2, true)
+	for side in [-1.0, 1.0]:
+		var x := center.x + float(side) * (56.0 + progress * 22.0)
+		draw_line(Vector2(x, center.y - 112.0), Vector2(x, center.y + 112.0),
+			Color(tint, fade * (0.48 + pulse * 0.16)), 3.0, true)
+	if is_boss:
+		for index in range(6):
+			var angle := float(index) * TAU / 6.0 + elapsed * 0.22
+			var inner := center + Vector2(cos(angle), sin(angle)) * 72.0
+			var outer := center + Vector2(cos(angle), sin(angle)) * (118.0 + pulse * 9.0)
+			draw_line(inner, outer, Color("f2b06e", fade * 0.66), 2.6, true)
+
+
+func _draw_resolution(result: Dictionary, player_position: Vector2, enemy_position: Vector2,
+		fade: float, pulse: float) -> void:
+	var victory := str(result.get("kind", "victory")) == "victory"
+	var center := enemy_position if victory else player_position
+	var rank := str(result.get("rank", "combat"))
+	var color := Color("f0c36b") if victory else Color("b94d5d")
+	if rank == "boss" and victory:
+		color = Color("f29a67")
+	draw_rect(Rect2(Vector2.ZERO, size), Color(color, fade * 0.045), true)
+	var progress := clampf(elapsed / lifetime, 0.0, 1.0)
+	for index in range(4):
+		var radius := 34.0 + float(index) * 22.0 + progress * 58.0
+		draw_arc(center, radius, elapsed * (0.18 + float(index) * 0.05),
+			elapsed * (0.18 + float(index) * 0.05) + PI * 1.72, 56,
+			Color(color, fade * (0.68 - float(index) * 0.11)),
+			3.4 if index == 0 else 2.0, true)
+	for index in range(14 if rank == "boss" else 10):
+		var angle := float(index) * TAU / float(14 if rank == "boss" else 10) + elapsed * 0.28
+		var distance := 24.0 + progress * (118.0 + float(index % 3) * 18.0)
+		var direction := Vector2(cos(angle), sin(angle))
+		var inner := center + direction * distance
+		var outer := inner + direction * (18.0 + pulse * 7.0)
+		draw_line(inner, outer, Color(color, fade * 0.70), 2.4, true)
 
 
 func _draw_card_cast(origin: Vector2, target: Vector2, player_position: Vector2,

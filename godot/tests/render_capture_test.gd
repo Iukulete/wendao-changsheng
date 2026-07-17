@@ -111,8 +111,11 @@ func _run() -> void:
 		"phase_shifted":false, "phase_name":""})
 	game.call("_show_dungeon_combat")
 	await _settle_frames(4)
-	if game.find_child("DungeonFeedbackLayer", true, false) == null or \
-			game.find_child("DungeonFeedbackSummary", true, false) == null:
+	var card_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	var card_layer := game.find_child("DungeonFeedbackLayer", true, false) as Control
+	if card_layer == null or card_layer.mouse_filter != Control.MOUSE_FILTER_IGNORE or card_summary == null or \
+			not card_summary.text.contains("今身定锚") or \
+			card_summary.mouse_filter != Control.MOUSE_FILTER_IGNORE:
 		failures.append("秘境出牌没有生成程序化反馈层与摘要")
 	_capture(root, output_root.path_join("dungeon_card_feedback_1440x900.png"), Vector2i(1440, 900),
 		"秘境出牌反馈")
@@ -143,6 +146,10 @@ func _run() -> void:
 	game.set("run_state", elite_state)
 	game.call("_choose_dungeon_route", 0)
 	await _settle_frames(4)
+	var elite_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	if game.find_child("DungeonFeedbackLayer", true, false) == null or elite_summary == null or \
+			not elite_summary.text.contains("精英压境"):
+		failures.append("精英遭遇没有生成专属入场反馈")
 	_capture(root, output_root.path_join("dungeon_elite_1440x900.png"), Vector2i(1440, 900), "秘境精英被动")
 	var boss_state: Dictionary = game.get("run_state")
 	boss_state.dungeon.run.battle = {}
@@ -150,6 +157,10 @@ func _run() -> void:
 		str(boss_state.dungeon.run.era_id), "boss")]
 	game.call("_choose_dungeon_route", 0)
 	await _settle_frames(4)
+	var boss_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	if game.find_child("DungeonFeedbackLayer", true, false) == null or boss_summary == null or \
+			not boss_summary.text.contains("首领显形"):
+		failures.append("首领遭遇没有生成专属显形反馈")
 	_capture(root, output_root.path_join("dungeon_boss_1440x900.png"), Vector2i(1440, 900), "秘境首领法则")
 	var phase_state: Dictionary = game.get("run_state")
 	var phase_battle: Dictionary = phase_state.dungeon.run.battle
@@ -170,17 +181,61 @@ func _run() -> void:
 		"phase_shifted":true, "phase_name":str(phase.get("name", "第二相"))})
 	game.call("_show_dungeon_combat")
 	await _settle_frames(4)
-	if game.find_child("DungeonFeedbackLayer", true, false) == null:
+	var phase_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	if game.find_child("DungeonFeedbackLayer", true, false) == null or phase_summary == null or \
+			not phase_summary.text.contains("破相"):
 		failures.append("首领破相没有生成程序化转场反馈层")
 	_capture(root, output_root.path_join("dungeon_boss_phase_1440x900.png"), Vector2i(1440, 900),
 		"秘境首领第二相")
+	root.size = Vector2i(1280, 720)
+	game.set("dungeon_action_feedback", {"kind":"card", "card_name":"引锋式",
+		"source_kind":"weapon", "damage":74, "block":0, "hp_delta":-2,
+		"stress_delta":0, "enemy_block_delta":0, "attack_power_delta":0,
+		"phase_shifted":true, "phase_name":str(phase.get("name", "第二相"))})
+	game.call("_show_dungeon_combat")
+	await _settle_frames(4)
+	var compact_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	var compact_card := game.find_child("DungeonCardButton0", true, false) as Control
+	var compact_end := game.find_child("DungeonEndTurnButton", true, false) as Control
+	if compact_summary == null or compact_card == null or compact_end == null or \
+			compact_summary.get_global_rect().intersects(compact_card.get_global_rect()) or \
+			compact_summary.get_global_rect().intersects(compact_end.get_global_rect()):
+		failures.append("1280x720秘境反馈与手牌或操作按钮发生交叠")
+	_capture(root, output_root.path_join("dungeon_feedback_1280x720.png"), Vector2i(1280, 720),
+		"秘境反馈紧凑布局")
+	root.size = Vector2i(1440, 900)
+	await _settle_frames(4)
+	var victory_state: Dictionary = game.get("run_state")
+	var victory_battle: Dictionary = victory_state.dungeon.run.battle
+	victory_state.dungeon.run.depth = int(victory_state.dungeon.run.max_depth) - 1
+	victory_state.dungeon.run.attack_power = 300
+	victory_battle["phase_active"] = true
+	victory_battle["enemy_hp"] = 1
+	victory_battle["enemy_block"] = 0
+	victory_battle["energy"] = 3
+	victory_battle["hand"] = [{"uid":"render_finisher", "card_id":"sword_cut", "upgrade":0,
+		"source_kind":"story", "source_name":"今身定锚"}]
+	victory_battle["draw_pile"] = []
+	victory_battle["discard_pile"] = []
+	victory_state.dungeon.run.battle = victory_battle
+	game.set("run_state", victory_state)
+	game.call("_play_dungeon_card", 0)
+	await _settle_frames(4)
+	var victory_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
+	var victory_layer := game.find_child("DungeonFeedbackLayer", true, false) as Control
+	if victory_layer == null or victory_layer.mouse_filter != Control.MOUSE_FILTER_IGNORE or \
+			victory_summary == null or not victory_summary.text.contains("镇灭") or \
+			not victory_summary.text.contains("修为") or \
+			DungeonSystemScript.has_active_run(game.get("run_state")):
+		failures.append("首领击破没有生成退场与奖励反馈")
+	_capture(root, output_root.path_join("dungeon_boss_victory_1440x900.png"), Vector2i(1440, 900),
+		"秘境首领击破结算")
 
-	game.call("_abandon_dungeon")
 	service.call("clear_slot")
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: menu, story abilities, heart demons, card feedback and boss transitions are nonblank")
+		print("RENDER_CAPTURE_TEST_OK: abilities, encounters, heart demons, boss phases and victory feedback are nonblank")
 		quit(0)
 	else:
 		for failure in failures:
@@ -216,6 +271,7 @@ func _capture(viewport: Viewport, path: String, expected_size: Vector2i, label: 
 func _settle_frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
+	await RenderingServer.frame_post_draw
 
 
 func _write_text(path: String, contents: String) -> void:

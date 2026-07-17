@@ -11,6 +11,8 @@ $CaptureDir = Join-Path $Root ".tmp\render-captures"
 $TestScript = "res://tests/render_capture_test.gd"
 
 New-Item -ItemType Directory -Force -Path $CaptureDir | Out-Null
+Get-ChildItem -LiteralPath $CaptureDir -Filter "*.png" -File -ErrorAction SilentlyContinue |
+    Remove-Item -Force
 try {
     # A real Windows display driver is required for viewport pixel capture. The
     # window starts far outside the desktop work area and cannot take focus.
@@ -43,12 +45,20 @@ $expected = @(
     "dungeon_stress_1440x900.png",
     "dungeon_elite_1440x900.png",
     "dungeon_boss_1440x900.png",
-    "dungeon_boss_phase_1440x900.png"
+    "dungeon_boss_phase_1440x900.png",
+    "dungeon_feedback_1280x720.png",
+    "dungeon_boss_victory_1440x900.png"
 )
+$captureHashes = @{}
 foreach ($name in $expected) {
     $path = Join-Path $CaptureDir $name
     if (-not (Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -lt 10000) {
         throw "Render capture is missing or unexpectedly small: $path"
     }
+    $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+    if ($captureHashes.ContainsKey($hash)) {
+        throw "Render captures unexpectedly share the same pixels: $name and $($captureHashes[$hash])"
+    }
+    $captureHashes[$hash] = $name
 }
 Write-Host "Godot render validation passed: $($expected.Count) captures in $CaptureDir"

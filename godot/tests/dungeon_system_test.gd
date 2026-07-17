@@ -321,6 +321,41 @@ func _init() -> void:
 		int(restored_phase.dungeon.run.battle.phase_turn) >= 1,
 		"首领第二相、切换回合与强化规则必须通过存档往返")
 
+	var resolved_elite := _start_elite("classical", 970401)
+	resolved_elite.dungeon.run.attack_power = 200
+	resolved_elite.dungeon.run.battle.enemy_hp = 1
+	resolved_elite.dungeon.run.battle.enemy_block = 0
+	_set_test_hand(resolved_elite, ["sword_cut"])
+	var elite_victory: Dictionary = DungeonSystemScript.play_card(resolved_elite, 0)
+	var elite_resolution: Dictionary = elite_victory.get("resolution", {})
+	var elite_action: Dictionary = elite_victory.get("feedback", {})
+	var elite_nested: Dictionary = elite_action.get("resolution", {})
+	_expect(str(elite_victory.get("code", "")) == "dungeon_node_completed" and
+		str(elite_resolution.get("kind", "")) == "victory" and
+		str(elite_resolution.get("rank", "")) == "elite" and
+		int(elite_resolution.get("exp_gain", 0)) > 0 and
+		int(elite_resolution.get("stone_gain", 0)) > 0 and elite_nested == elite_resolution,
+		"精英击破必须返回可驱动退场与奖励演出的结构化结算")
+
+	var resolved_boss := _start_boss("classical", 970402)
+	resolved_boss.dungeon.run.depth = int(resolved_boss.dungeon.run.max_depth) - 1
+	resolved_boss.dungeon.run.attack_power = 300
+	resolved_boss.dungeon.run.battle.phase_active = true
+	resolved_boss.dungeon.run.battle.enemy_hp = 1
+	resolved_boss.dungeon.run.battle.enemy_block = 0
+	_set_test_hand(resolved_boss, ["sword_cut"])
+	var boss_victory: Dictionary = DungeonSystemScript.play_card(resolved_boss, 0)
+	var boss_resolution: Dictionary = boss_victory.get("resolution", {})
+	_expect(str(boss_victory.get("code", "")) == "dungeon_finished" and
+		str(boss_victory.get("outcome", "")) == "completed" and
+		str(boss_resolution.get("kind", "")) == "victory" and
+		str(boss_resolution.get("rank", "")) == "boss" and
+		bool(boss_resolution.get("dungeon_completed", false)) and
+		int(boss_resolution.get("total_exp", 0)) >= int(boss_resolution.get("exp_gain", 0)) and
+		int(boss_resolution.get("total_stones", 0)) >= int(boss_resolution.get("stone_gain", 0)) and
+		not DungeonSystemScript.has_active_run(resolved_boss),
+		"末层首领击破必须把退场结算带回副本完成结果")
+
 	var rest_state := _resolve_noncombat("classical", "rest", 970201)
 	_expect(int(rest_state.dungeon.run.hp) > 500 and int(rest_state.dungeon.run.stress) < 50,
 		"时代休整节点必须执行数据中的恢复与平心效果")
@@ -432,8 +467,13 @@ func _start_boss(era_id: String, seed_value: int) -> Dictionary:
 	DungeonSystemScript.start(state)
 	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, "boss")]
 	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	var encounter: Dictionary = result.get("feedback", {})
 	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
-		str(state.dungeon.run.battle.get("rank", "")) == "boss",
+		str(state.dungeon.run.battle.get("rank", "")) == "boss" and
+		str(encounter.get("kind", "")) == "encounter" and
+		str(encounter.get("rank", "")) == "boss" and
+		not str(encounter.get("enemy_name", "")).is_empty() and
+		not str(encounter.get("rule_name", "")).is_empty(),
 		"测试必须能直接进入时代首领战：%s" % era_id)
 	return state
 
@@ -464,8 +504,13 @@ func _start_elite(era_id: String, seed_value: int) -> Dictionary:
 	DungeonSystemScript.start(state)
 	state.dungeon.run.route_choices = [DungeonSystemScript.route_definition(era_id, "elite")]
 	var result: Dictionary = DungeonSystemScript.choose_route(state, 0)
+	var encounter: Dictionary = result.get("feedback", {})
 	_expect(str(result.get("code", "")) == "dungeon_battle_started" and
-		str(state.dungeon.run.battle.get("rank", "")) == "elite",
+		str(state.dungeon.run.battle.get("rank", "")) == "elite" and
+		str(encounter.get("kind", "")) == "encounter" and
+		str(encounter.get("rank", "")) == "elite" and
+		not str(encounter.get("enemy_name", "")).is_empty() and
+		not str(encounter.get("rule_name", "")).is_empty(),
 		"测试必须能直接进入时代精英战：%s" % era_id)
 	return state
 

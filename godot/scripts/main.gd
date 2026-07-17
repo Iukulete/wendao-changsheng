@@ -438,6 +438,12 @@ func _show_game() -> void:
 	page.add_theme_constant_override("separation", 18)
 	screen_host.add_child(page)
 	page.add_child(_build_header())
+	if not dungeon_action_feedback.is_empty():
+		var feedback_slot := MarginContainer.new()
+		feedback_slot.name = "DungeonFeedbackSlot"
+		feedback_slot.custom_minimum_size.y = 58
+		feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		page.add_child(feedback_slot)
 
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -454,6 +460,7 @@ func _show_game() -> void:
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
 	page.add_child(footer)
+	_show_dungeon_action_feedback()
 
 
 func _build_header() -> Control:
@@ -952,7 +959,6 @@ func _show_dungeon() -> void:
 
 func _show_dungeon_route() -> void:
 	state = ScreenState.DUNGEON_ROUTE
-	dungeon_action_feedback = {}
 	_clear_screen()
 	var run: Dictionary = run_state.dungeon.run
 	_apply_era_visuals(_dungeon_scene_path(str(run.dungeon_id)))
@@ -1018,8 +1024,14 @@ func _show_dungeon_route() -> void:
 	abandon_button.name = "DungeonAbandonButton"
 	route_column.add_child(abandon_button)
 	body.add_child(route_panel)
+	var feedback_slot := MarginContainer.new()
+	feedback_slot.name = "DungeonFeedbackSlot"
+	feedback_slot.custom_minimum_size.y = 54
+	feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	page.add_child(feedback_slot)
 	page.add_child(_label("数字键选择道标 · Esc 撤离", 14, Color(0.76, 0.80, 0.81, 0.82),
 		HORIZONTAL_ALIGNMENT_CENTER))
+	_show_dungeon_action_feedback()
 
 
 func _show_dungeon_combat() -> void:
@@ -1129,6 +1141,11 @@ func _show_dungeon_combat() -> void:
 		card_button.tooltip_text = "当前灵力不足。" if card_button.disabled else \
 			"能力来源：%s\n%s" % [source_name, str(definition.description)]
 		hand_grid.add_child(card_button)
+	var feedback_slot := MarginContainer.new()
+	feedback_slot.name = "DungeonFeedbackSlot"
+	feedback_slot.custom_minimum_size.y = 58
+	feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	page.add_child(feedback_slot)
 
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1213,9 +1230,21 @@ func _show_dungeon_action_feedback() -> void:
 	var action_feedback := dungeon_action_feedback.duplicate(true)
 	dungeon_action_feedback = {}
 	var kind := str(action_feedback.get("kind", "card"))
-	var feedback_color := _ability_source_color(str(action_feedback.get("source_kind", "foundation"))) \
-		if kind == "card" else Color("ef665e")
-	if bool(action_feedback.get("phase_shifted", false)):
+	var resolution := _dungeon_resolution_feedback(action_feedback)
+	var feedback_color := Color("ef665e")
+	if kind == "card":
+		feedback_color = _ability_source_color(str(action_feedback.get("source_kind", "foundation")))
+	elif kind == "encounter":
+		feedback_color = Color("ef8b69") if str(action_feedback.get("rank", "combat")) == "boss" \
+			else Color("e6b05f")
+	elif kind == "victory":
+		feedback_color = Color("f0c36b")
+	elif kind == "defeat":
+		feedback_color = Color("c95868")
+	if not resolution.is_empty():
+		feedback_color = Color("f29a67") if str(resolution.get("rank", "combat")) == "boss" \
+			else Color("f0c36b")
+	elif bool(action_feedback.get("phase_shifted", false)):
 		feedback_color = Color("f0a06d")
 	elif bool(action_feedback.get("heart_awakened", false)):
 		feedback_color = Color("df5f79")
@@ -1232,21 +1261,41 @@ func _show_dungeon_action_feedback() -> void:
 		return
 	var label := _label(summary, 23, Color(feedback_color, 0.98), HORIZONTAL_ALIGNMENT_CENTER)
 	label.name = "DungeonFeedbackSummary"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.add_theme_constant_override("outline_size", 7)
 	label.add_theme_color_override("font_outline_color", Color(0.015, 0.02, 0.03, 0.94))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.anchor_left = 0.30
-	label.anchor_right = 0.70
-	label.anchor_top = 0.70
-	label.anchor_bottom = 0.70
-	label.offset_top = -26
-	label.offset_bottom = 48
-	layer.add_child(label)
+	var slot := screen_host.find_child("DungeonFeedbackSlot", true, false) as Control
+	if slot != null:
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		slot.add_child(label)
+		get_tree().create_timer(float(layer.get("lifetime"))).timeout.connect(label.queue_free)
+	else:
+		label.anchor_left = 0.30
+		label.anchor_right = 0.70
+		label.anchor_top = 0.64
+		label.anchor_bottom = 0.64
+		label.offset_top = -26
+		label.offset_bottom = 48
+		layer.add_child(label)
 
 
 func _dungeon_feedback_summary(action_feedback: Dictionary) -> String:
 	var parts: Array[String] = []
-	if str(action_feedback.get("kind", "")) == "card":
+	var kind := str(action_feedback.get("kind", ""))
+	if kind == "encounter":
+		var rank_label := str({"boss":"首领显形", "elite":"精英压境"}.get(
+			str(action_feedback.get("rank", "combat")), "异影拦路"))
+		parts.append("%s · %s" % [rank_label, str(action_feedback.get("enemy_name", "秘境异影"))])
+		if not str(action_feedback.get("rule_name", "")).is_empty():
+			parts.append("%s · %s" % [str(action_feedback.get("rule_title", "敌方法则")),
+				str(action_feedback.get("rule_name", ""))])
+	elif kind == "victory":
+		parts.append("镇灭 · %s" % str(action_feedback.get("enemy_name", "秘境异影")))
+	elif kind == "defeat":
+		parts.append("道身溃散 · 秘境逐离")
+	elif kind == "card":
 		parts.append(str(action_feedback.get("card_name", "能力显化")))
 		if int(action_feedback.get("damage", 0)) > 0:
 			parts.append("敌方气血 -%d" % int(action_feedback.damage))
@@ -1265,7 +1314,35 @@ func _dungeon_feedback_summary(action_feedback: Dictionary) -> String:
 		parts.append("心魔显化 · %s" % str(action_feedback.get("heart_name", "心障")))
 	if bool(action_feedback.get("phase_shifted", false)):
 		parts.append("破相 · %s" % str(action_feedback.get("phase_name", "第二相")))
+	var resolution := _dungeon_resolution_feedback(action_feedback)
+	if not resolution.is_empty():
+		parts.append("镇灭 · %s" % str(resolution.get("enemy_name", "秘境异影")) \
+			if str(resolution.get("kind", "victory")) == "victory" else "秘境逐离")
+		var nested_prefix := "" if bool(resolution.get("dungeon_completed", false)) else "暂存"
+		var nested_exp := int(resolution.get("total_exp", 0)) \
+			if bool(resolution.get("dungeon_completed", false)) else int(resolution.get("exp_gain", 0))
+		var nested_stones := int(resolution.get("total_stones", 0)) \
+			if bool(resolution.get("dungeon_completed", false)) else int(resolution.get("stone_gain", 0))
+		if nested_exp > 0:
+			parts.append("%s修为 +%d" % [nested_prefix, nested_exp])
+		if nested_stones > 0:
+			parts.append("%s灵石 +%d" % [nested_prefix, nested_stones])
+	if kind in ["victory", "defeat"]:
+		var reward_prefix := "" if bool(action_feedback.get("dungeon_completed", false)) else "暂存"
+		var exp_reward := int(action_feedback.get("total_exp", 0)) \
+			if bool(action_feedback.get("dungeon_completed", false)) else int(action_feedback.get("exp_gain", 0))
+		var stone_reward := int(action_feedback.get("total_stones", 0)) \
+			if bool(action_feedback.get("dungeon_completed", false)) else int(action_feedback.get("stone_gain", 0))
+		if exp_reward > 0:
+			parts.append("%s修为 +%d" % [reward_prefix, exp_reward])
+		if stone_reward > 0:
+			parts.append("%s灵石 +%d" % [reward_prefix, stone_reward])
 	return "  ·  ".join(parts)
+
+
+func _dungeon_resolution_feedback(action_feedback: Dictionary) -> Dictionary:
+	var value: Variant = action_feedback.get("resolution", {})
+	return value as Dictionary if value is Dictionary else {}
 
 
 func _ability_source_color(source_kind: String) -> Color:
@@ -1314,16 +1391,25 @@ func _handle_dungeon_action(result: Dictionary, save_reason: String) -> void:
 	var action_feedback_value: Variant = result.get("feedback", {})
 	dungeon_action_feedback = (action_feedback_value as Dictionary).duplicate(true) \
 		if action_feedback_value is Dictionary else {}
+	var completed_resolution := _dungeon_resolution_feedback(dungeon_action_feedback)
+	if not completed_resolution.is_empty():
+		dungeon_action_feedback = completed_resolution.duplicate(true)
+		dungeon_action_feedback["placement"] = "main" \
+			if str(result.get("code", "")) == "dungeon_finished" else "route"
 	if str(result.get("code", "")) == "dungeon_finished":
+		var exit_feedback := _dungeon_resolution_feedback(dungeon_action_feedback)
+		if exit_feedback.is_empty() and str(dungeon_action_feedback.get("kind", "")) in ["victory", "defeat"]:
+			exit_feedback = dungeon_action_feedback.duplicate(true)
 		dungeon_action_feedback = {}
-		_finalize_dungeon_exit(result, save_reason)
+		_finalize_dungeon_exit(result, save_reason, exit_feedback)
 		return
 	_sync_state_views()
 	_save_current_state(save_reason)
 	_show_dungeon()
 
 
-func _finalize_dungeon_exit(result: Dictionary, save_reason: String) -> void:
+func _finalize_dungeon_exit(result: Dictionary, save_reason: String,
+		resolution_feedback: Dictionary = {}) -> void:
 	dungeon_action_feedback = {}
 	var outcome := str(result.get("outcome", "abandoned"))
 	var run: Dictionary = result.get("run", {})
@@ -1344,6 +1430,8 @@ func _finalize_dungeon_exit(result: Dictionary, save_reason: String) -> void:
 		_end_current_life("秘境归来后寿元耗尽")
 		return
 	_save_current_state(save_reason)
+	if not resolution_feedback.is_empty():
+		dungeon_action_feedback = resolution_feedback.duplicate(true)
 	_show_game()
 
 
