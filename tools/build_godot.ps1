@@ -12,6 +12,7 @@ $ProjectDir = Join-Path $Root "godot"
 $OutputDir = Join-Path $Root "release\godot\windows"
 $OutputExe = Join-Path $OutputDir "wendao-changsheng.exe"
 $OutputPck = Join-Path $OutputDir "wendao-changsheng.pck"
+$OutputLicenseDir = Join-Path $OutputDir "licenses"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
 $TempDir = Join-Path $Root ".tmp\godot"
 
@@ -51,6 +52,16 @@ $exeSize = (Get-Item -LiteralPath $OutputExe).Length
 $pckSize = (Get-Item -LiteralPath $OutputPck).Length
 if ($exeSize -lt 1MB -or $pckSize -lt 1KB) {
     throw "Export artifacts look incomplete (EXE=$exeSize bytes, PCK=$pckSize bytes)."
+}
+
+New-Item -ItemType Directory -Force -Path $OutputLicenseDir | Out-Null
+foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt")) {
+    $licenseSource = Join-Path $ProjectDir "art\fonts\$licenseName"
+    $licenseTarget = Join-Path $OutputLicenseDir $licenseName
+    if (-not (Test-Path -LiteralPath $licenseSource)) {
+        throw "Bundled font license is missing: $licenseSource"
+    }
+    Copy-Item -LiteralPath $licenseSource -Destination $licenseTarget -Force
 }
 
 # Run the actual exported build, while keeping its user-data probe on D:.

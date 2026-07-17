@@ -14,7 +14,7 @@ window/size/viewport_width=1440
 window/size/viewport_height=900
 window/size/window_width_override=1440
 window/size/window_height_override=900
-window/stretch/mode="canvas_items"
+window/stretch/mode="disabled"
 window/stretch/aspect="expand"
 
 [rendering]
@@ -26,4 +26,4 @@ environment/defaults/default_clear_color=Color(0.018, 0.024, 0.035, 1)
 
 [gui]
 
-theme/default_font_multichannel_signed_distance_field=true
+theme/default_font_multichannel_signed_distance_field=false

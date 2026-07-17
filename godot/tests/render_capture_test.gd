@@ -40,6 +40,11 @@ func _run() -> void:
 	for viewport_size in VIEWPORTS:
 		root.size = viewport_size
 		await _settle_frames(4)
+		if viewport_size == Vector2i(1280, 720):
+			var footer := game.find_child("GameFooter", true, false) as Control
+			if footer == null or not root.get_visible_rect().encloses(footer.get_global_rect()):
+				failures.append("1280x720主界面页脚没有完整落在视口内：%s" % [
+					footer.get_global_rect() if footer != null else "missing"])
 		_capture(root, output_root.path_join("main_%dx%d.png" % [viewport_size.x, viewport_size.y]),
 			viewport_size, "主界面 %dx%d" % [viewport_size.x, viewport_size.y])
 
@@ -197,7 +202,12 @@ func _run() -> void:
 	var compact_summary := game.find_child("DungeonFeedbackSummary", true, false) as Label
 	var compact_card := game.find_child("DungeonCardButton0", true, false) as Control
 	var compact_end := game.find_child("DungeonEndTurnButton", true, false) as Control
+	var compact_trait := game.find_child("DungeonTraitDescription", true, false) as Label
+	var compact_phase := game.find_child("DungeonPhaseDescription", true, false) as Label
 	if compact_summary == null or compact_card == null or compact_end == null or \
+			compact_trait == null or compact_phase == null or \
+			compact_trait.get_theme_font_size("font_size") < 15 or \
+			compact_phase.get_theme_font_size("font_size") < 15 or \
 			compact_summary.get_global_rect().intersects(compact_card.get_global_rect()) or \
 			compact_summary.get_global_rect().intersects(compact_end.get_global_rect()):
 		failures.append("1280x720秘境反馈与手牌或操作按钮发生交叠")

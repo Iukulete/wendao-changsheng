@@ -38,6 +38,8 @@ const ERA_SCENES := {
 const MENU_SCENE := "res://art/scenes/void_threshold_temple.png"
 const PROTAGONIST := "res://art/portraits/protagonist_hooded_close.jpg"
 const EVENTS_PATH := "res://data/events_v014.json"
+const BODY_FONT_PATH := "res://art/fonts/NotoSansSC-Variable.ttf"
+const DISPLAY_FONT_PATH := "res://art/fonts/NotoSerifSC-Variable.ttf"
 
 const DEFAULT_PLAYER := {
 	"name": "无名",
@@ -86,6 +88,10 @@ var animated_portrait: TextureRect
 var background_time: float = 0.0
 var era_accent: Color = Color("e4be4c")
 var base_theme: Theme
+var body_font: Font
+var body_medium_font: Font
+var body_semibold_font: Font
+var display_font: Font
 var achievement_notice_queue: Array[Dictionary] = []
 var achievement_toast: Control
 var dungeon_action_feedback: Dictionary = {}
@@ -131,18 +137,29 @@ func _process(delta: float) -> void:
 
 
 func _build_theme() -> void:
-	var font := SystemFont.new()
-	font.font_names = PackedStringArray([
-		"Microsoft YaHei UI",
-		"Microsoft YaHei",
-		"Noto Sans CJK SC",
-		"Source Han Sans SC",
-	])
-	font.font_weight = 480
+	var body_base := load(BODY_FONT_PATH) as Font
+	var display_base := load(DISPLAY_FONT_PATH) as Font
+	body_font = _font_variation(body_base, 500)
+	body_medium_font = _font_variation(body_base, 600)
+	body_semibold_font = _font_variation(body_base, 700)
+	display_font = _font_variation(display_base, 620)
 	base_theme = Theme.new()
-	base_theme.default_font = font
+	base_theme.default_font = body_font
 	base_theme.default_font_size = 18
+	base_theme.set_font("font", "Button", body_medium_font)
+	base_theme.set_font("font", "LineEdit", body_font)
+	base_theme.set_font("normal_font", "RichTextLabel", body_font)
+	base_theme.set_font("bold_font", "RichTextLabel", body_semibold_font)
+	base_theme.set_type_variation("DisplayLabel", "Label")
+	base_theme.set_font("font", "DisplayLabel", display_font)
 	theme = base_theme
+
+
+func _font_variation(base: Font, weight: int) -> FontVariation:
+	var variation := FontVariation.new()
+	variation.base_font = base
+	variation.variation_opentype = {"wght":weight}
+	return variation
 
 
 func _build_stage() -> void:
@@ -174,7 +191,7 @@ func _build_stage() -> void:
 	screen_host.name = "ScreenHost"
 	screen_host.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
-		screen_host.add_theme_constant_override(side, 34)
+		screen_host.add_theme_constant_override(side, 28)
 	add_child(screen_host)
 
 
@@ -271,7 +288,7 @@ func _show_menu() -> void:
 	column.add_child(_spacer(2))
 	var eyebrow := _label("旧玉纪事 · 神游新篇", 15, Color(era_accent, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
 	column.add_child(eyebrow)
-	var title := _label("问 道 长 生", 62, Color("f4e5b7"), HORIZONTAL_ALIGNMENT_CENTER)
+	var title := _display_label("问道长生", 62, Color("f4e5b7"), HORIZONTAL_ALIGNMENT_CENTER)
 	title.add_theme_constant_override("outline_size", 9)
 	title.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.72))
 	column.add_child(title)
@@ -454,9 +471,10 @@ func _show_game() -> void:
 	body.add_child(_build_action_panel())
 
 	var footer := _panel(0.72, era_accent)
+	footer.name = "GameFooter"
 	footer.custom_minimum_size.y = 48
 	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [J] 显圣",
-		15, Color(0.86, 0.89, 0.89, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
+		16, Color(0.88, 0.91, 0.91, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
 	page.add_child(footer)
@@ -472,7 +490,7 @@ func _build_header() -> Control:
 	var title_box := VBoxContainer.new()
 	title_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(title_box)
-	title_box.add_child(_label("问道长生 · %s" % player.name, 28, Color("f4e5b7")))
+	title_box.add_child(_display_label("问道长生 · %s" % player.name, 28, Color("f4e5b7")))
 	title_box.add_child(_label("第%d世 · %s · 世界第 %d 年" % [
 		int(run_state.get("generation", 1)), current_era,
 		int((run_state.get("world", {}) as Dictionary).get("year", 1))], 15,
@@ -494,9 +512,16 @@ func _build_header() -> Control:
 func _build_player_panel() -> Control:
 	var panel := _panel(0.83, era_accent)
 	panel.custom_minimum_size.x = 320
+	var scroll := ScrollContainer.new()
+	scroll.name = "PlayerPanelScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
-	panel.add_child(column)
+	scroll.add_child(column)
 	column.add_child(_section_title("此世照影"))
 
 	var portrait_frame := _panel(0.34, era_accent)
@@ -520,7 +545,7 @@ func _build_player_panel() -> Control:
 	compass.custom_minimum_size = Vector2(280, 178)
 	compass.call("set_stats", player.roots, int(player.karma), int(player.dao_heart), era_accent)
 	column.add_child(compass)
-	column.add_child(_label("命途罗盘 · 五行在选择中偏转", 13,
+	column.add_child(_label("命途罗盘 · 五行在选择中偏转", 14,
 		Color(era_accent, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("因果 %+d   道心 %d   名望 %+d   仇怨 %d" % [
 		int(player.karma), int(player.dao_heart), int(player.reputation), int(player.enmity)],
@@ -532,15 +557,15 @@ func _build_player_panel() -> Control:
 	var effective_stats: Dictionary = ItemSystemScript.effective_stats(run_state)
 	column.add_child(_label("实战属性 · 攻%d  守%d  气血上限%d" % [
 		int(effective_stats.attack), int(effective_stats.defense), int(effective_stats.max_hp)],
-		13, Color(0.76, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+		14, Color(0.76, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("寿元势态 · %s   旧玉共鸣 · %d" % [
 		CultivationScript.lifespan_pressure(player),
 		int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))],
-		13, Color(era_accent, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
+		14, Color(era_accent, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
 	var jade_weapon: Dictionary = AchievementSystemScript.current_weapon(run_state)
 	column.add_child(_label("玉兵 · %s" % ("尚未显化" if jade_weapon.is_empty() else "%s·%s  共鸣%d  蓄能%d/100" % [
 		str(jade_weapon.name), str(jade_weapon.stage_name), int(jade_weapon.resonance), int(jade_weapon.charge)]),
-		13, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
+		14, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
 	return panel
 
 
@@ -578,9 +603,16 @@ func _build_world_panel() -> Control:
 func _build_action_panel() -> Control:
 	var panel := _panel(0.84, era_accent)
 	panel.custom_minimum_size.x = 300
+	var scroll := ScrollContainer.new()
+	scroll.name = "ActionPanelScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_child(scroll)
 	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 11)
-	panel.add_child(column)
+	scroll.add_child(column)
 	column.add_child(_section_title("此刻可行"))
 	column.add_child(_button("壹 · 打坐修炼", _meditate, true))
 	column.add_child(_button("贰 · 外出历练", _open_adventure, true))
@@ -782,7 +814,7 @@ func _show_combat() -> void:
 
 	var header := _panel(0.80, era_accent)
 	header.custom_minimum_size.y = 76
-	header.add_child(_label("生死战 · 第%d回合 · %s" % [int(battle.turn), current_era], 27,
+	header.add_child(_display_label("生死战 · 第%d回合 · %s" % [int(battle.turn), current_era], 27,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
 	page.add_child(header)
 
@@ -980,7 +1012,7 @@ func _show_dungeon_route() -> void:
 	vitality.add_child(vitality_column)
 	vitality_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
 	vitality_column.add_child(_progress_row("心魔压力", int(run.stress), 100, stress_color))
-	var route_stress_label := _label(_dungeon_stress_status(run), 13, Color(stress_color, 0.94))
+	var route_stress_label := _label(_dungeon_stress_status(run), 14, Color(stress_color, 0.94))
 	route_stress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vitality_column.add_child(route_stress_label)
 	status.add_child(vitality)
@@ -1060,7 +1092,8 @@ func _show_dungeon_combat() -> void:
 	self_column.add_child(_section_title(str(player.name)))
 	self_column.add_child(_progress_row("秘境气血", int(run.hp), int(run.max_hp), Color("c95858")))
 	self_column.add_child(_progress_row("心魔压力", int(run.stress), 100, stress_color))
-	var combat_stress_label := _label(_dungeon_stress_status(run), 12, Color(stress_color, 0.96))
+	var combat_stress_label := _label(_dungeon_stress_status(run), 15, Color(stress_color, 0.98))
+	combat_stress_label.name = "DungeonStressStatus"
 	combat_stress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	self_column.add_child(combat_stress_label)
 	self_column.add_child(_label("灵力 %d · 回合基础 %d · 护体 %d" % [int(battle.energy),
@@ -1071,14 +1104,21 @@ func _show_dungeon_combat() -> void:
 	combat_row.add_child(_build_dungeon_log(run))
 	var enemy_panel := _panel(0.84, Color("d46b61"))
 	enemy_panel.custom_minimum_size.x = 330
+	var enemy_scroll := ScrollContainer.new()
+	enemy_scroll.name = "DungeonEnemyScroll"
+	enemy_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	enemy_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	enemy_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	enemy_panel.add_child(enemy_scroll)
 	var enemy_column := VBoxContainer.new()
+	enemy_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	enemy_column.add_theme_constant_override("separation", 8)
-	enemy_panel.add_child(enemy_column)
+	enemy_scroll.add_child(enemy_column)
 	enemy_column.add_child(_section_title(str(battle.enemy_name)))
 	enemy_column.add_child(_progress_row("气血", int(battle.enemy_hp), int(battle.enemy_max_hp), Color("d35f58")))
 	enemy_column.add_child(_label("护体 %d · 虚弱 %d回合" % [int(battle.enemy_block), int(battle.enemy_weak)],
 		14, Color(0.78, 0.81, 0.81)))
-	enemy_column.add_child(_label("下一意图", 13, Color(0.68, 0.72, 0.73)))
+	enemy_column.add_child(_label("下一意图", 14, Color(0.68, 0.72, 0.73)))
 	enemy_column.add_child(_label(DungeonSystemScript.intent_label(str(battle.intent)), 21,
 		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER))
 	var rule_value: Variant = battle.get("trait", {})
@@ -1086,9 +1126,10 @@ func _show_dungeon_combat() -> void:
 		var rule: Dictionary = rule_value
 		enemy_column.add_child(_divider())
 		enemy_column.add_child(_label("%s · %s" % [DungeonSystemScript.combat_rule_title(battle),
-			str(rule.get("name", "未知法则"))], 14,
+			str(rule.get("name", "未知法则"))], 15,
 			Color("efbd72"), HORIZONTAL_ALIGNMENT_CENTER))
-		var trait_description := _label(str(rule.get("description", "")), 12, Color(0.84, 0.80, 0.73))
+		var trait_description := _label(str(rule.get("description", "")), 15, Color(0.90, 0.86, 0.79))
+		trait_description.name = "DungeonTraitDescription"
 		trait_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		enemy_column.add_child(trait_description)
 	var phase_value: Variant = battle.get("phase", {})
@@ -1097,16 +1138,18 @@ func _show_dungeon_combat() -> void:
 		var phase_active := bool(battle.get("phase_active", false))
 		enemy_column.add_child(_divider())
 		enemy_column.add_child(_label("%s · %s" % ["第二相已显" if phase_active else "未显之相",
-			str(phase.get("name", "未知形态"))], 13,
+			str(phase.get("name", "未知形态"))], 15,
 			Color("f08b72") if phase_active else Color("b9a780"), HORIZONTAL_ALIGNMENT_CENTER))
-		var phase_description := _label(str(phase.get("description", "")), 11,
-			Color(0.88, 0.76, 0.69) if phase_active else Color(0.68, 0.68, 0.65))
+		var phase_description := _label(str(phase.get("description", "")), 15,
+			Color(0.92, 0.80, 0.73) if phase_active else Color(0.76, 0.76, 0.72))
+		phase_description.name = "DungeonPhaseDescription"
 		phase_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		enemy_column.add_child(phase_description)
 	combat_row.add_child(enemy_panel)
 
 	var hand_scroll := ScrollContainer.new()
 	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	hand_scroll.custom_minimum_size.y = 126
 	hand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(hand_scroll)
 	var hand_grid := GridContainer.new()
@@ -1128,10 +1171,10 @@ func _show_dungeon_combat() -> void:
 			str(definition.description)],
 			_play_dungeon_card.bind(index), false)
 		card_button.name = "DungeonCardButton%d" % index
-		card_button.custom_minimum_size = Vector2(194, 116)
+		card_button.custom_minimum_size = Vector2(194, 126)
 		card_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		card_button.add_theme_font_size_override("font_size", 14)
+		card_button.add_theme_font_size_override("font_size", 15)
 		var source_color := _ability_source_color(source_kind)
 		card_button.add_theme_stylebox_override("normal", _button_style(0.22, source_color, 0.56))
 		card_button.add_theme_stylebox_override("hover", _button_style(0.38, source_color, 0.94))
@@ -1143,7 +1186,7 @@ func _show_dungeon_combat() -> void:
 		hand_grid.add_child(card_button)
 	var feedback_slot := MarginContainer.new()
 	feedback_slot.name = "DungeonFeedbackSlot"
-	feedback_slot.custom_minimum_size.y = 58
+	feedback_slot.custom_minimum_size.y = 50
 	feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(feedback_slot)
 
@@ -1161,15 +1204,18 @@ func _show_dungeon_combat() -> void:
 func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	var header := _panel(0.82, era_accent)
 	header.custom_minimum_size.y = 86
+	var header_style := header.get_theme_stylebox("panel") as StyleBoxFlat
+	header_style.content_margin_top = 10
+	header_style.content_margin_bottom = 10
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	header.add_child(row)
 	var title := VBoxContainer.new()
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(title)
-	title.add_child(_label(str(run.name), 26, Color("f5e7bd")))
+	title.add_child(_display_label(str(run.name), 24, Color("f5e7bd")))
 	title.add_child(_label(subtitle, 14, Color(era_accent, 0.90)))
-	var profile_label := _label(DungeonSystemScript.ability_profile_label(run), 13,
+	var profile_label := _label(DungeonSystemScript.ability_profile_label(run), 14,
 		Color(0.77, 0.83, 0.82))
 	profile_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title.add_child(profile_label)
@@ -1480,7 +1526,7 @@ func _show_ai_pending() -> void:
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	column.add_theme_constant_override("separation", 20)
 	panel.add_child(column)
-	column.add_child(_label("本地天机正在推演", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_display_label("本地天机正在推演", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("旧玉正把此世人物、山河年史与未竟因果送入本机模型。",
 		17, Color(0.82, 0.84, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_button("收回神识", _cancel_ai_request, false))
@@ -1521,7 +1567,7 @@ func _show_event() -> void:
 
 	var header := _panel(0.78, era_accent)
 	header.custom_minimum_size.y = 76
-	var header_label := _label(str(current_event.get("title", "无名因果")), 29,
+	var header_label := _display_label(str(current_event.get("title", "无名因果")), 29,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER)
 	header_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(header_label)
@@ -1785,7 +1831,7 @@ func _show_reincarnation() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
 	card.add_child(column)
-	column.add_child(_label("此世已尽，道痕未灭", 34, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_display_label("此世已尽，道痕未灭", 34, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("第%d世 · %s · %s %d层 · 享年%d" % [
 		int(last_life.get("generation", 1)), str(last_life.get("name", "无名")),
 		str(last_life.get("realm", "凡人")), int(last_life.get("level", 1)),
@@ -1842,7 +1888,7 @@ func _show_inventory() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
-	page.add_child(_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	page.add_child(_display_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
@@ -1972,7 +2018,7 @@ func _show_armory() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
-	page.add_child(_label("成就与轮回玉藏兵", 30, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
+	page.add_child(_display_label("成就与轮回玉藏兵", 30, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
 	var body := HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
@@ -2141,7 +2187,7 @@ func _show_next_achievement_notice() -> void:
 	panel.add_child(column)
 	column.add_child(_label("%s · %s" % ["玉兵觉醒" if str(notice.get("kind", "")) == "awakening" else "成就达成",
 		AchievementSystemScript.TIER_NAMES[tier]], 14, _achievement_tier_color(tier), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_label(str(notice.get("name", "无名道痕")), 23, Color("fff4d6"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_display_label(str(notice.get("name", "无名道痕")), 23, Color("fff4d6"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("轮回玉显化 · %s" % str(notice.get("reward_weapon", "旧玉回响")), 15,
 		Color(0.84, 0.86, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 	add_child(panel)
@@ -2250,6 +2296,13 @@ func _label(text_value: String, font_size: int = 18, color: Color = Color.WHITE,
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.horizontal_alignment = alignment
+	return label
+
+
+func _display_label(text_value: String, font_size: int, color: Color = Color.WHITE,
+		alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var label := _label(text_value, font_size, color, alignment)
+	label.theme_type_variation = "DisplayLabel"
 	return label
 
 

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "fonts": [
+    {
+      "id": "noto_sans_sc_variable",
+      "file": "NotoSansSC-Variable.ttf",
+      "role": "body_controls_values",
+      "source": "https://github.com/google/fonts/tree/main/ofl/notosanssc",
+      "license": "OFL-1.1",
+      "license_file": "NotoSansSC-OFL.txt",
+      "sha256": "A3041811A78C361B1DE50F953C805E0244951C21C5BD412F7232EF0D899AF0DA"
+    },
+    {
+      "id": "noto_serif_sc_variable",
+      "file": "NotoSerifSC-Variable.ttf",
+      "role": "display_titles_only",
+      "source": "https://github.com/google/fonts/tree/main/ofl/notoserifsc",
+      "license": "OFL-1.1",
+      "license_file": "NotoSerifSC-OFL.txt",
+      "sha256": "050080D9255A86808F2945BFFAC582B31EF32BC36411CE29563B4961670C66F9"
+    }
+  ]
+}

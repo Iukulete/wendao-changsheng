@@ -63,6 +63,7 @@ if ($smokeExitCode -ne 0 -or (($smokeOutput | Out-String) -match '(?m)^(SCRIPT E
 }
 
 $testScripts = @(
+    "res://tests/typography_system_test.gd",
     "res://tests/game_state_test.gd",
     "res://tests/world_simulation_test.gd",
     "res://tests/story_system_test.gd",
