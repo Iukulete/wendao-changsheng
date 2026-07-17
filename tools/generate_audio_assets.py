@@ -23,7 +23,10 @@ SAMPLE_RATE = 48_000
 CHANNELS = 2
 TAU = math.tau
 MUSIC_DURATION = 64.0
+SOUNDSCAPE_DURATION = 64.0
 MUSIC_STATES = ("exploration", "pressure", "decisive")
+SOUNDSCAPE_LOCATIONS = ("world", "dungeon")
+SOUNDSCAPE_LAYERS = ("bed", "weather_points")
 MUSIC_ENCODE_ARGS = (
     "-map_metadata", "-1", "-vn", "-c:a", "libvorbis", "-q:a", "4",
     "-ar", str(SAMPLE_RATE), "-ac", str(CHANNELS), "-fflags", "+bitexact",
@@ -103,6 +106,8 @@ SPECS = {
     "phase_break": (1.62, "SFX", False),
     "victory": (2.24, "SFX", False),
     "defeat": (1.92, "SFX", False),
+    # Retained as a non-emitting seed slot so v2 soundscape migration never
+    # changes the deterministic hashes of the established short SFX catalog.
     "classical_ambience": (16.0, "Ambience", True),
 }
 
@@ -124,10 +129,14 @@ EVENT_IDS = {
     "phase_break": ["dungeon.phase_break"],
     "victory": ["combat.victory", "dungeon.victory"],
     "defeat": ["combat.defeat", "dungeon.defeat"],
-    "classical_ambience": [
+}
+
+SOUNDSCAPE_EVENTS = {
+    "world": [
         "context.menu", "context.world", "context.event", "context.combat",
-        "context.dungeon", "context.boss", "context.reincarnation",
+        "context.reincarnation",
     ],
+    "dungeon": ["context.dungeon", "context.boss"],
 }
 
 
@@ -531,6 +540,136 @@ def add_noise_hit(np, left, right, start: float, gain: float, rng, material: str
     right[begin:end] += (source * 0.84).astype(np.float32)
 
 
+def soundscape_asset_id(era_id: str, location: str, layer: str) -> str:
+    if layer == "bed":
+        if location == "world":
+            return "classical_ambience" if era_id == "classical" else f"{era_id}_ambience"
+        return f"{era_id}_dungeon_ambience"
+    return f"{era_id}_{location}_detail"
+
+
+def add_weather_swell(np, left, right, start: float, duration: float,
+                      gain: float, rng, timbre: str, pan: float) -> None:
+    begin = max(0, round(start * SAMPLE_RATE))
+    end = min(len(left), round((start + duration) * SAMPLE_RATE))
+    if end <= begin:
+        return
+    local = np.arange(end - begin, dtype=np.float64) / SAMPLE_RATE
+    noise = rng.standard_normal(end - begin)
+    kernel_size = {"silk": 36, "brass": 8, "stellar": 18, "dust": 64,
+                   "fracture": 12, "celestial": 28}[timbre]
+    kernel = np.ones(kernel_size, dtype=np.float64) / kernel_size
+    coloured = np.convolve(noise, kernel, mode="same")
+    coloured /= max(float(np.max(np.abs(coloured))), 1e-9)
+    attack = np.clip(local / min(0.35, duration * 0.22), 0.0, 1.0)
+    release = np.clip((duration - local) / min(0.65, duration * 0.32), 0.0, 1.0)
+    envelope = np.sin(attack * math.pi * 0.5) * np.sin(release * math.pi * 0.5)
+    if timbre == "brass":
+        coloured += np.sin(TAU * 780.0 * local) * 0.18
+    elif timbre == "stellar":
+        coloured += np.sin(TAU * (1320.0 + 170.0 * np.sin(TAU * 0.7 * local)) * local) * 0.12
+    elif timbre == "fracture":
+        coloured *= 0.68 + 0.32 * (np.sin(TAU * 17.0 * local) > -0.15)
+    elif timbre == "celestial":
+        coloured += np.sin(TAU * 920.0 * local) * 0.10
+    source = coloured * envelope * gain
+    left_gain = math.sqrt(max(0.0, (1.0 - pan) * 0.5)) * math.sqrt(2.0)
+    right_gain = math.sqrt(max(0.0, (1.0 + pan) * 0.5)) * math.sqrt(2.0)
+    left[begin:end] += (source * left_gain).astype(np.float32)
+    right[begin:end] += (source * right_gain).astype(np.float32)
+
+
+def create_soundscape(np, era_id: str, location: str, layer: str):
+    profile = ERA_AMBIENCE[era_id]
+    music_profile = ERA_MUSIC[era_id]
+    timbre = str(music_profile["timbre"])
+    count = round(SOUNDSCAPE_DURATION * SAMPLE_RATE)
+    left = np.zeros(count, dtype=np.float32)
+    right = np.zeros(count, dtype=np.float32)
+    t = np.arange(count, dtype=np.float64) / SAMPLE_RATE
+    seed = int(music_profile["seed"]) + (31_337 if location == "dungeon" else 0) + (
+        73_001 if layer == "weather_points" else 0
+    )
+    rng = np.random.default_rng(seed)
+    location_scale = 0.72 if location == "dungeon" else 1.0
+    brightness = float(profile["brightness"]) * (0.72 if location == "dungeon" else 1.0)
+
+    oscillator_count = 12 if layer == "bed" else 5
+    for oscillator in range(oscillator_count):
+        harmonic = int(rng.integers(5, 1450 if layer == "bed" else 2400))
+        cycles = max(1, round(harmonic * float(profile["tone_scale"]) * location_scale))
+        frequency = cycles / SOUNDSCAPE_DURATION
+        amplitude = float(rng.uniform(0.006, 0.022)) / (
+            1.0 + frequency / (180.0 + 420.0 * brightness)
+        )
+        if layer == "weather_points":
+            amplitude *= 0.42
+        phase = float(rng.uniform(0.0, TAU))
+        pan = float(rng.uniform(-0.64, 0.64))
+        motion_cycles = 2 + (oscillator * 3 + ERA_IDS.index(era_id)) % 17
+        motion = 0.78 + 0.22 * np.cos(TAU * motion_cycles * t / SOUNDSCAPE_DURATION + phase * 0.3)
+        source = np.sin(TAU * frequency * t + phase) * amplitude * motion
+        left += (source * (1.0 - max(0.0, pan))).astype(np.float32)
+        right += (source * (1.0 + min(0.0, pan))).astype(np.float32)
+
+    pulse_cycles = int(profile["pulse_cycles"]) * (2 if location == "dungeon" else 1)
+    pulse_frequency = max(1, pulse_cycles) / SOUNDSCAPE_DURATION
+    pulse_gain = 0.012 if layer == "bed" else 0.005
+    pulse = np.cos(TAU * pulse_frequency * t) * pulse_gain
+    left += pulse.astype(np.float32)
+    right += (pulse * 0.94).astype(np.float32)
+
+    motif = tuple(profile["motif"])
+    if layer == "bed":
+        # Eight widely spaced signatures keep the 64-second bed identifiable
+        # without turning ambience into a second melody track.
+        for point in range(8):
+            start = 3.4 + point * 7.25 + (ERA_IDS.index(era_id) % 3) * 0.37
+            frequency = float(motif[(point + (1 if location == "dungeon" else 0)) % len(motif)])
+            if location == "dungeon":
+                frequency *= 0.5
+            add_music_note(np, left, right, start, 1.45, frequency,
+                           0.020 if location == "world" else 0.017,
+                           timbre, -0.48 if point % 2 else 0.48, decay=1.05)
+    else:
+        # The detail layer combines weather motion with sparse point gestures.
+        # All events stay clear of the loop boundary, so the layer remains
+        # sample-periodic while still conveying distance and changing space.
+        for point in range(10):
+            start = 2.6 + point * 5.85 + float(rng.uniform(-0.65, 0.65))
+            duration = float(rng.uniform(0.75, 2.15))
+            pan = float(rng.uniform(-0.78, 0.78))
+            add_weather_swell(np, left, right, start, duration,
+                              0.018 if location == "world" else 0.014,
+                              rng, timbre, pan)
+            if point % 2 == 0:
+                frequency = float(motif[(point // 2 + 1) % len(motif)])
+                frequency *= 1.25 if location == "world" else 0.625
+                add_music_note(np, left, right, start + duration * 0.42, 0.72,
+                               frequency, 0.012, timbre, -pan * 0.7, decay=2.1)
+    return left, right
+
+
+def normalize_soundscape(np, left, right, target_rms: float,
+                         peak_ceiling: float) -> tuple[float, float, float]:
+    left -= np.float32(np.mean(left, dtype=np.float64))
+    right -= np.float32(np.mean(right, dtype=np.float64))
+    rms = math.sqrt(float((np.mean(left.astype(np.float64) ** 2) +
+                           np.mean(right.astype(np.float64) ** 2)) * 0.5))
+    scale = target_rms / max(rms, 1e-9)
+    peak = max(float(np.max(np.abs(left))), float(np.max(np.abs(right))), 1e-9)
+    scale = min(scale, peak_ceiling / peak)
+    np.multiply(left, scale, out=left)
+    np.multiply(right, scale, out=right)
+    close_music_loop(np, left, right)
+    peak = max(float(np.max(np.abs(left))), float(np.max(np.abs(right))), 1e-9)
+    rms = math.sqrt(float((np.mean(left.astype(np.float64) ** 2) +
+                           np.mean(right.astype(np.float64) ** 2)) * 0.5))
+    dc = max(abs(float(np.mean(left, dtype=np.float64))),
+             abs(float(np.mean(right, dtype=np.float64))))
+    return peak, rms, dc
+
+
 def create_music_base(np, era_id: str):
     profile = ERA_MUSIC[era_id]
     count = round(MUSIC_DURATION * SAMPLE_RATE)
@@ -751,21 +890,19 @@ def main() -> None:
             if base_asset_id(asset_id) not in ERA_EVENT_BASES:
                 continue
             jobs.append((f"{era_id}_{asset_id}", asset_id, era_id, duration, bus, loop, [era_id]))
-        jobs.append((f"{era_id}_ambience", f"{era_id}_ambience", era_id,
+        jobs.append((f"{era_id}_ambience_seed_slot", f"{era_id}_ambience", era_id,
                      16.0, "Ambience", True, [era_id]))
     for index, (manifest_id, asset_id, era_id, duration, bus, loop, era_ids) in enumerate(jobs):
         if loop:
-            left, right = synth_ambience(duration, 710_000 + index, era_id)
-            target_peak = 0.34
-        else:
-            left, right = synth_event(asset_id, duration, 710_000 + index, era_id)
-            target_peak = 0.68 if base_asset_id(asset_id) in {"impact", "phase_break"} else 0.56
+            continue
+        left, right = synth_event(asset_id, duration, 710_000 + index, era_id)
+        target_peak = 0.68 if base_asset_id(asset_id) in {"impact", "phase_break"} else 0.56
         peak, rms = normalize(left, right, target_peak)
         output = OUTPUT_ROOT / era_id
         path = output / f"{asset_id}.wav"
         write_wav(path, left, right)
         boundary = max(abs(left[0] - left[-1]), abs(right[0] - right[-1])) if loop else 0.0
-        event_key = "classical_ambience" if loop else base_asset_id(asset_id)
+        event_key = base_asset_id(asset_id)
         assets.append({
             "id": manifest_id,
             "asset_id": manifest_id,
@@ -800,6 +937,80 @@ def main() -> None:
             "generator": "tools/generate_audio_assets.py",
             "generator_and_version": "Python procedural synthesis v2",
         })
+
+    soundscape_target_rms = {"bed": 0.052, "weather_points": 0.031}
+    soundscape_peak_ceiling = {"bed": 0.38, "weather_points": 0.28}
+    for era_id in ERA_IDS:
+        print(f"Designing two-location soundscape layers for {era_id}...")
+        for location in SOUNDSCAPE_LOCATIONS:
+            for layer in SOUNDSCAPE_LAYERS:
+                left, right = create_soundscape(np, era_id, location, layer)
+                peak, rms, dc = normalize_soundscape(
+                    np, left, right, soundscape_target_rms[layer],
+                    soundscape_peak_ceiling[layer],
+                )
+                boundary = close_music_loop(np, left, right)
+                asset_id = soundscape_asset_id(era_id, location, layer)
+                master_path = MUSIC_MASTER_ROOT / era_id / f"{asset_id}_master.wav"
+                output_path = OUTPUT_ROOT / era_id / f"{asset_id}.ogg"
+                write_wav_numpy(np, master_path, left, right)
+                encode_music_ogg(ffmpeg, master_path, output_path)
+                relative = f"generated/{era_id}/{asset_id}.ogg"
+                assets.append({
+                    "id": asset_id,
+                    "asset_id": asset_id,
+                    "file": relative,
+                    "runtime_path": f"res://audio/{relative}",
+                    "source_master": f"procedural://tools/generate_audio_assets.py#{asset_id}",
+                    "source_master_sha256": hashlib.sha256(master_path.read_bytes()).hexdigest().upper(),
+                    "kind": "soundscape",
+                    "role": "ambience" if layer == "bed" else "ambience_detail",
+                    "soundscape_location": location,
+                    "soundscape_layer": layer,
+                    "bus": "Ambience",
+                    "era_ids": [era_id],
+                    "event_ids": SOUNDSCAPE_EVENTS[location],
+                    "loop": True,
+                    "loop_start_sample": 0,
+                    "loop_end_sample": len(left),
+                    "sample_rate": SAMPLE_RATE,
+                    "channels": CHANNELS,
+                    "bits_per_sample": None,
+                    "codec": "vorbis",
+                    "container": "ogg",
+                    "streaming": True,
+                    "duration": SOUNDSCAPE_DURATION,
+                    "peak_dbfs": round(20.0 * math.log10(max(peak, 1e-9)), 3),
+                    "rms_dbfs": round(20.0 * math.log10(max(rms, 1e-9)), 3),
+                    "source_dc_offset": round(dc, 9),
+                    "loop_boundary_delta": round(boundary, 7),
+                    "sha256": hashlib.sha256(output_path.read_bytes()).hexdigest().upper(),
+                    "license": "LicenseRef-Project-Original",
+                    "license_name": "Project-original procedural composition and sound design",
+                    "commercial_use": True,
+                    "redistribution_in_game": True,
+                    "creator_or_vendor": "Wendao Changsheng project",
+                    "attribution_text": "Original soundscape created for Wendao Changsheng.",
+                    "created_or_acquired_at": "2026-07-17",
+                    "release_state": "final",
+                    "manual_qa_status": "owner_post_release_playtest",
+                    "generator": "tools/generate_audio_assets.py",
+                    "generator_and_version": "Python 3.13 + NumPy 2.3.3 procedural soundscape v2",
+                    "encoder_and_version": encoder_version,
+                    "encoder_executable_sha256": encoder_executable_hash,
+                    "encoding_parameters": list(MUSIC_ENCODE_ARGS),
+                })
+                del left, right
+
+    # v2 soundscapes replace the six short PCM beds.  Removing these known
+    # legacy outputs is part of deterministic regeneration, not a wildcard
+    # cleanup of user-authored audio.
+    for era_id in ERA_IDS:
+        legacy_id = "classical_ambience" if era_id == "classical" else f"{era_id}_ambience"
+        for suffix in (".wav", ".wav.import"):
+            legacy_path = OUTPUT_ROOT / era_id / f"{legacy_id}{suffix}"
+            if legacy_path.is_file():
+                legacy_path.unlink()
 
     music_target_peaks = {"exploration": 0.42, "pressure": 0.48, "decisive": 0.54}
     MUSIC_MASTER_ROOT.mkdir(parents=True, exist_ok=True)
@@ -879,7 +1090,14 @@ def main() -> None:
             "bar_count": 32,
             "states": list(MUSIC_STATES),
         },
-        "music_encoder": {
+        "soundscape_contract": {
+            "duration_seconds": SOUNDSCAPE_DURATION,
+            "sample_rate": SAMPLE_RATE,
+            "locations": list(SOUNDSCAPE_LOCATIONS),
+            "layers": list(SOUNDSCAPE_LAYERS),
+            "per_era_asset_count": len(SOUNDSCAPE_LOCATIONS) * len(SOUNDSCAPE_LAYERS),
+        },
+        "stream_encoder": {
             "archive": "ffmpeg-n7.1-latest-win64-lgpl-7.1.zip",
             "archive_sha256": "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3",
             "version": encoder_version,
@@ -893,7 +1111,8 @@ def main() -> None:
     MANIFEST.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(
         f"Generated {len(assets)} original audio assets, including "
-        f"{len(ERA_IDS) * len(MUSIC_STATES)} synchronized Ogg music loops, "
+        f"{len(ERA_IDS) * len(MUSIC_STATES)} synchronized Ogg music loops and "
+        f"{len(ERA_IDS) * len(SOUNDSCAPE_LOCATIONS) * len(SOUNDSCAPE_LAYERS)} layered soundscapes, "
         f"across {len(ERA_IDS)} eras in {OUTPUT_ROOT}"
     )
 

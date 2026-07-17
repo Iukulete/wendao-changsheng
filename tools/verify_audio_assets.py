@@ -24,6 +24,9 @@ ERA_IDS = (
 )
 MUSIC_STATES = ("exploration", "pressure", "decisive")
 MUSIC_DURATION = 64.0
+SOUNDSCAPE_LOCATIONS = ("world", "dungeon")
+SOUNDSCAPE_LAYERS = ("bed", "weather_points")
+SOUNDSCAPE_DURATION = 64.0
 MUSIC_ENCODE_ARGS_EXPECTED = (
     "-map_metadata", "-1", "-vn", "-c:a", "libvorbis", "-q:a", "4",
     "-ar", "48000", "-ac", "2", "-fflags", "+bitexact", "-flags:a", "+bitexact",
@@ -47,6 +50,9 @@ for _era_id in ERA_IDS[1:]:
         REQUIRED.update(f"{_era_id}_{_base_id}_{number:02d}" for number in range(2, 5))
 for _era_id in ERA_IDS:
     REQUIRED.update(f"{_era_id}_music_{state}" for state in MUSIC_STATES)
+    REQUIRED.add(f"{_era_id}_dungeon_ambience")
+    REQUIRED.add(f"{_era_id}_world_detail")
+    REQUIRED.add(f"{_era_id}_dungeon_detail")
 
 
 def dbfs(value: float) -> float:
@@ -81,13 +87,22 @@ def main(require_final: bool = False) -> int:
         "states": list(MUSIC_STATES),
     }:
         failures.append("music sync contract must pin the shared 64-second/120 BPM form")
-    music_encoder = manifest.get("music_encoder", {})
-    if (not isinstance(music_encoder, dict) or
-            music_encoder.get("archive_sha256") != "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3" or
-            music_encoder.get("numpy_version") != "2.3.3" or
-            not str(music_encoder.get("version", "")).startswith("ffmpeg version n7.1") or
-            not str(music_encoder.get("executable_sha256", ""))):
-        failures.append("music encoder provenance is missing or differs from the pinned toolchain")
+    soundscape_contract = manifest.get("soundscape_contract", {})
+    if not isinstance(soundscape_contract, dict) or soundscape_contract != {
+        "duration_seconds": SOUNDSCAPE_DURATION,
+        "sample_rate": 48_000,
+        "locations": list(SOUNDSCAPE_LOCATIONS),
+        "layers": list(SOUNDSCAPE_LAYERS),
+        "per_era_asset_count": 4,
+    }:
+        failures.append("soundscape contract must pin two locations and two 64-second layers per era")
+    stream_encoder = manifest.get("stream_encoder", {})
+    if (not isinstance(stream_encoder, dict) or
+            stream_encoder.get("archive_sha256") != "985B3477E9A07399675F5923DCFDF57BAE41B3EC0A7B2AD61D9BE5E2DA30C6B3" or
+            stream_encoder.get("numpy_version") != "2.3.3" or
+            not str(stream_encoder.get("version", "")).startswith("ffmpeg version n7.1") or
+            not str(stream_encoder.get("executable_sha256", ""))):
+        failures.append("stream encoder provenance is missing or differs from the pinned toolchain")
 
     entries = manifest.get("assets")
     if not isinstance(entries, list):
@@ -127,6 +142,23 @@ def main(require_final: bool = False) -> int:
     }
     if len(ambience_hashes) != len(ERA_IDS) or "" in ambience_hashes:
         failures.append("six era ambience beds must have distinct content hashes")
+    soundscape_hashes: set[str] = set()
+    for era_id in ERA_IDS:
+        soundscape_ids = [
+            "classical_ambience" if era_id == "classical" else f"{era_id}_ambience",
+            f"{era_id}_world_detail",
+            f"{era_id}_dungeon_ambience",
+            f"{era_id}_dungeon_detail",
+        ]
+        era_hashes = {
+            str(entries_by_id.get(asset_id, {}).get("sha256", ""))
+            for asset_id in soundscape_ids
+        }
+        if len(era_hashes) != 4 or "" in era_hashes:
+            failures.append(f"{era_id}: four location/layer soundscapes must be distinct")
+        soundscape_hashes.update(era_hashes)
+    if len(soundscape_hashes) != len(ERA_IDS) * 4 or "" in soundscape_hashes:
+        failures.append("all 24 six-era soundscapes must have distinct content hashes")
     for era_id in ERA_IDS:
         state_hashes = {
             str(entries_by_id.get(f"{era_id}_music_{state}", {}).get("sha256", ""))
@@ -226,8 +258,28 @@ def main(require_final: bool = False) -> int:
     for era_id in ERA_IDS:
         ambience_id = "classical_ambience" if era_id == "classical" else f"{era_id}_ambience"
         ambience = entries_by_id.get(ambience_id, {})
-        if ambience.get("era_ids") != [era_id] or ambience.get("role") != "ambience":
+        if (ambience.get("era_ids") != [era_id] or ambience.get("role") != "ambience" or
+                ambience.get("soundscape_location") != "world" or
+                ambience.get("soundscape_layer") != "bed"):
             failures.append(f"{era_id}: dedicated ambience mapping is missing")
+        for location in SOUNDSCAPE_LOCATIONS:
+            for layer in SOUNDSCAPE_LAYERS:
+                if location == "world" and layer == "bed":
+                    soundscape_id = ambience_id
+                elif layer == "bed":
+                    soundscape_id = f"{era_id}_dungeon_ambience"
+                else:
+                    soundscape_id = f"{era_id}_{location}_detail"
+                soundscape = entries_by_id.get(soundscape_id, {})
+                expected_role = "ambience" if layer == "bed" else "ambience_detail"
+                if (soundscape.get("era_ids") != [era_id] or
+                        soundscape.get("role") != expected_role or
+                        soundscape.get("bus") != "Ambience" or
+                        soundscape.get("soundscape_location") != location or
+                        soundscape.get("soundscape_layer") != layer):
+                    failures.append(
+                        f"{era_id}: {location}/{layer} soundscape mapping is incomplete"
+                    )
         for base_id in ERA_EVENT_BASES:
             prefix = "" if era_id == "classical" else f"{era_id}_"
             for suffix in ("", "_02", "_03", "_04"):
@@ -258,7 +310,8 @@ def main(require_final: bool = False) -> int:
         return 1
     print(
         "AUDIO_ASSET_VERIFICATION_OK: "
-        f"{len(entries)} project-original six-era 48 kHz stereo assets, including 18 streamable synchronized music loops, "
+        f"{len(entries)} project-original six-era 48 kHz stereo assets, including 18 synchronized music loops and "
+        "24 two-location layered soundscapes, "
         "hashes/levels/loop seams verified, "
         f"{total_bytes} bytes"
     )
@@ -425,10 +478,19 @@ def validate_ogg(path: Path, entry: dict, failures: list[str]) -> None:
     if (entry.get("loop") is not True or entry.get("loop_start_sample") != 0 or
             entry.get("loop_end_sample") != frame_count):
         failures.append(f"{asset_id}: Ogg loop range differs from final PCM granule")
-    if entry.get("music_state") not in MUSIC_STATES or entry.get("kind") != "music":
-        failures.append(f"{asset_id}: Ogg runtime asset must be a registered music state")
+    kind = entry.get("kind")
+    if kind == "music":
+        if entry.get("music_state") not in MUSIC_STATES or entry.get("bus") != "Music":
+            failures.append(f"{asset_id}: Ogg music asset lacks a registered state")
+    elif kind == "soundscape":
+        if (entry.get("soundscape_location") not in SOUNDSCAPE_LOCATIONS or
+                entry.get("soundscape_layer") not in SOUNDSCAPE_LAYERS or
+                entry.get("bus") != "Ambience"):
+            failures.append(f"{asset_id}: Ogg soundscape lacks a registered location/layer")
+    else:
+        failures.append(f"{asset_id}: Ogg runtime asset has unsupported kind {kind!r}")
     if float(entry.get("duration", 0.0)) < 60.0:
-        failures.append(f"{asset_id}: product music loop is shorter than one minute")
+        failures.append(f"{asset_id}: product long-form loop is shorter than one minute")
     peak_db = float(entry.get("peak_dbfs", 999.0))
     rms_db = float(entry.get("rms_dbfs", 999.0))
     dc = abs(float(entry.get("source_dc_offset", 999.0)))

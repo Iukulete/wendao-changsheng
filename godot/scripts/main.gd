@@ -130,17 +130,19 @@ func _run_audio_device_music_smoke() -> void:
 	audio_director.set_context("dungeon")
 	await get_tree().process_frame
 	var pressure_voices := int(audio_director.debug_music_playing_voice_count())
+	var dungeon_ambience_voices := int(audio_director.debug_ambience_playing_voice_count())
 	audio_director.set_era("steam")
 	await get_tree().process_frame
 	audio_director.set_context("boss")
 	await get_tree().process_frame
 	var decisive_voices := int(audio_director.debug_music_playing_voice_count())
 	if (audio_director.get_era() != "steam" or audio_director.get_music_state() != "decisive" or
-			pressure_voices != 2 or decisive_voices != 2):
-		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d" % [
-			audio_director.get_era(), audio_director.get_music_state(), pressure_voices, decisive_voices])
+			pressure_voices != 2 or decisive_voices != 2 or dungeon_ambience_voices != 4):
+		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d ambience_voices=%d" % [
+			audio_director.get_era(), audio_director.get_music_state(), pressure_voices,
+			decisive_voices, dungeon_ambience_voices])
 		return
-	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2")
+	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=4")
 
 
 func _process(delta: float) -> void:

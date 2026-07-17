@@ -29,7 +29,7 @@ func _run() -> void:
 	await process_frame
 	_restore_settings()
 	if failures.is_empty():
-		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
+		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, two-location layered soundscapes, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
 		quit(0)
 	else:
 		for failure in failures:
@@ -64,9 +64,9 @@ func _validate_director(director: Node) -> void:
 		"dungeon.victory", "dungeon.defeat", "reincarnation.enter"]:
 		_expect(required in ids, "AudioDirector缺少稳定事件：%s" % required)
 	_expect(int(director.call("debug_pool_size")) == 16, "必须提供12个SFX与4个UI复用声部")
-	_expect(int(director.call("debug_ambience_voice_count")) == 2 and
+	_expect(int(director.call("debug_ambience_voice_count")) == 4 and
 		float(director.call("debug_ambience_crossfade_seconds")) >= 1.0,
-		"纪元声景必须使用独立双声部和足够时长的交叉淡化，不能硬切循环")
+		"地点声景的底床与天气点声必须各有独立双声部，不能硬切循环")
 	_expect(int(director.call("debug_music_voice_count")) == 2 and
 		float(director.call("debug_music_crossfade_seconds")) >= 1.5,
 		"音乐必须使用独立双声部和产品级交叉淡化，不能硬切状态或纪元")
@@ -85,6 +85,20 @@ func _validate_director(director: Node) -> void:
 			"纪元必须解析自己的高频交互材质与环境底床：%s" % era_id)
 		_expect(str(director.call("debug_resolved_asset_path", "boss_enter")).contains(
 			"/generated/classical/boss_enter.wav"), "未完成时代专属终稿时必须稳定回退共享首领语义")
+		var soundscape_ids := [
+			"classical_ambience" if era_id == "classical" else "%s_ambience" % era_id,
+			"%s_world_detail" % era_id,
+			"%s_dungeon_ambience" % era_id,
+			"%s_dungeon_detail" % era_id,
+		]
+		for soundscape_id in soundscape_ids:
+			var soundscape_path := str(director.call("debug_resolved_asset_path", soundscape_id))
+			var soundscape_stream := ResourceLoader.load(soundscape_path)
+			_expect(soundscape_path.contains("/generated/%s/" % era_id) and
+				soundscape_path.ends_with(".ogg") and soundscape_stream is AudioStreamOggVorbis and
+				(soundscape_stream as AudioStreamOggVorbis).loop and
+				is_equal_approx((soundscape_stream as AudioStreamOggVorbis).get_length(), 64.0),
+				"每个纪元必须解码世界/秘境的底床与天气点声层：%s/%s" % [era_id, soundscape_id])
 		for state in ["exploration", "pressure", "decisive"]:
 			var music_path := str(director.call("debug_resolved_asset_path", "music_%s" % state))
 			var music_stream := ResourceLoader.load(music_path)
@@ -96,9 +110,13 @@ func _validate_director(director: Node) -> void:
 	_expect(not bool(director.call("play_event", "missing.event")), "未知事件必须安静降级")
 	director.call("set_context", "boss")
 	_expect(str(director.call("get_context")) == "boss" and
-		str(director.call("get_music_state")) == "decisive", "首领上下文必须进入决战音乐")
+		str(director.call("get_music_state")) == "decisive" and
+		str(director.call("debug_soundscape_location")) == "dungeon",
+		"首领上下文必须进入决战音乐和秘境声景")
 	director.call("set_context", "combat")
-	_expect(str(director.call("get_music_state")) == "pressure", "战斗上下文必须进入压力音乐")
+	_expect(str(director.call("get_music_state")) == "pressure" and
+		str(director.call("debug_soundscape_location")) == "world",
+		"普通战斗上下文必须进入压力音乐和世界声景")
 	director.call("set_context", "event")
 	_expect(str(director.call("get_music_state")) == "exploration", "事件与阅读上下文必须回到探索音乐")
 	director.call("set_context", "not-a-context")
@@ -123,13 +141,23 @@ func _validate_manifest_events(director: Node) -> void:
 	var era_event_counts := {}
 	var era_ambience_counts := {}
 	var era_music_counts := {}
+	var era_soundscape_counts := {}
 	var music_sync: Dictionary = (parsed as Dictionary).get("music_sync", {})
 	_expect(float(music_sync.get("duration_seconds", 0.0)) == 64.0 and
 		int(music_sync.get("tempo_bpm", 0)) == 120 and
 		(music_sync.get("states", []) as Array).size() == 3,
 		"音乐manifest必须声明统一的64秒、120 BPM三状态同步契约")
+	var soundscape_contract: Dictionary = (parsed as Dictionary).get("soundscape_contract", {})
+	_expect(float(soundscape_contract.get("duration_seconds", 0.0)) == 64.0 and
+		int(soundscape_contract.get("per_era_asset_count", 0)) == 4,
+		"声景manifest必须声明每纪元四条世界/秘境双层契约")
 	for asset_value in ((parsed as Dictionary).get("assets", []) as Array):
 		var asset: Dictionary = asset_value
+		if str(asset.get("kind", "")) == "soundscape":
+			for era_value in (asset.get("era_ids", []) as Array):
+				var soundscape_key := "%s:%s:%s" % [str(era_value),
+					str(asset.get("soundscape_location", "")), str(asset.get("soundscape_layer", ""))]
+				era_soundscape_counts[soundscape_key] = int(era_soundscape_counts.get(soundscape_key, 0)) + 1
 		for event_value in (asset.get("event_ids", []) as Array):
 			var event_id := str(event_value)
 			if not event_id.begins_with("context.") and not event_id.begins_with("music."):
@@ -151,6 +179,10 @@ func _validate_manifest_events(director: Node) -> void:
 		for state in ["exploration", "pressure", "decisive"]:
 			_expect(int(era_music_counts.get("%s:music.%s" % [era_id, state], 0)) == 1,
 				"每个纪元必须恰好登记一套三状态音乐：%s/%s" % [era_id, state])
+		for location in ["world", "dungeon"]:
+			for layer in ["bed", "weather_points"]:
+				_expect(int(era_soundscape_counts.get("%s:%s:%s" % [era_id, location, layer], 0)) == 1,
+					"每个纪元必须恰好登记世界/秘境底床与天气点声：%s/%s/%s" % [era_id, location, layer])
 
 
 func _validate_settings_roundtrip(director: Node) -> void:

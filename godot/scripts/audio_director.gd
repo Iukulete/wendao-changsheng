@@ -7,6 +7,7 @@ const SFX_POOL_SIZE := 12
 const UI_POOL_SIZE := 4
 const SILENCE_DB := -80.0
 const AMBIENCE_CROSSFADE_SECONDS := 1.25
+const AMBIENCE_DETAIL_TRIM_DB := -4.0
 const MUSIC_CROSSFADE_SECONDS := 1.75
 const ERA_IDS: PackedStringArray = [
 	"classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty",
@@ -104,6 +105,9 @@ var _players: Array[AudioStreamPlayer] = []
 var _ambience_player: AudioStreamPlayer
 var _ambience_outgoing_player: AudioStreamPlayer
 var _ambience_tween: Tween
+var _ambience_detail_player: AudioStreamPlayer
+var _ambience_detail_outgoing_player: AudioStreamPlayer
+var _ambience_detail_tween: Tween
 var _music_player: AudioStreamPlayer
 var _music_outgoing_player: AudioStreamPlayer
 var _music_tween: Tween
@@ -134,6 +138,12 @@ func _exit_tree() -> void:
 	if is_instance_valid(_ambience_outgoing_player):
 		_ambience_outgoing_player.stop()
 		_ambience_outgoing_player.stream = null
+	if is_instance_valid(_ambience_detail_player):
+		_ambience_detail_player.stop()
+		_ambience_detail_player.stream = null
+	if is_instance_valid(_ambience_detail_outgoing_player):
+		_ambience_detail_outgoing_player.stop()
+		_ambience_detail_outgoing_player.stream = null
 	if is_instance_valid(_music_player):
 		_music_player.stop()
 		_music_player.stream = null
@@ -158,6 +168,14 @@ func _initialize_runtime() -> void:
 	_ambience_outgoing_player.name = "AmbienceCrossfade"
 	_ambience_outgoing_player.bus = &"Ambience"
 	add_child(_ambience_outgoing_player)
+	_ambience_detail_player = AudioStreamPlayer.new()
+	_ambience_detail_player.name = "AmbienceWeatherPoints"
+	_ambience_detail_player.bus = &"Ambience"
+	add_child(_ambience_detail_player)
+	_ambience_detail_outgoing_player = AudioStreamPlayer.new()
+	_ambience_detail_outgoing_player.name = "AmbienceWeatherPointsCrossfade"
+	_ambience_detail_outgoing_player.bus = &"Ambience"
+	add_child(_ambience_detail_outgoing_player)
 	_music_player = AudioStreamPlayer.new()
 	_music_player.name = "MusicLoop"
 	_music_player.bus = &"Music"
@@ -222,10 +240,14 @@ func set_setting(key: String, value: Variant) -> void:
 func set_context(context_id: String) -> void:
 	if not CONTEXT_PROFILES.has(context_id):
 		context_id = "world"
+	var previous_soundscape_location := _soundscape_location_for_context(_context)
 	_context = context_id
 	_initialize_runtime()
 	_apply_context_mix()
-	_start_ambience_if_needed()
+	if previous_soundscape_location != _soundscape_location_for_context(_context):
+		_switch_ambience_for_era()
+	else:
+		_start_ambience_if_needed()
 	var next_music_state := str(CONTEXT_MUSIC_STATES.get(_context, "exploration"))
 	if _music_state != next_music_state:
 		_music_state = next_music_state
@@ -327,7 +349,19 @@ func debug_pool_size() -> int:
 
 
 func debug_ambience_voice_count() -> int:
-	return int(is_instance_valid(_ambience_player)) + int(is_instance_valid(_ambience_outgoing_player))
+	return (int(is_instance_valid(_ambience_player)) + int(is_instance_valid(_ambience_outgoing_player)) +
+		int(is_instance_valid(_ambience_detail_player)) + int(is_instance_valid(_ambience_detail_outgoing_player)))
+
+
+func debug_ambience_playing_voice_count() -> int:
+	return (int(is_instance_valid(_ambience_player) and _ambience_player.playing) +
+		int(is_instance_valid(_ambience_outgoing_player) and _ambience_outgoing_player.playing) +
+		int(is_instance_valid(_ambience_detail_player) and _ambience_detail_player.playing) +
+		int(is_instance_valid(_ambience_detail_outgoing_player) and _ambience_detail_outgoing_player.playing))
+
+
+func debug_soundscape_location() -> String:
+	return _soundscape_location_for_context(_context)
 
 
 func debug_ambience_crossfade_seconds() -> float:
@@ -392,6 +426,8 @@ func _apply_context_mix() -> void:
 	var profile: Dictionary = CONTEXT_PROFILES[_context]
 	if is_instance_valid(_ambience_player):
 		_ambience_player.volume_db = float(profile.get("ambience_db", -8.0))
+	if is_instance_valid(_ambience_detail_player):
+		_ambience_detail_player.volume_db = float(profile.get("ambience_db", -8.0)) + AMBIENCE_DETAIL_TRIM_DB
 	# Context trim lives on the bus while the two player gains are reserved for
 	# phase-synchronised state/era crossfades.
 	var music_index := AudioServer.get_bus_index(&"Music")
@@ -428,36 +464,59 @@ func _apply_master_effects() -> void:
 
 
 func _start_ambience_if_needed() -> void:
-	if not _audio_output_available() or not is_instance_valid(_ambience_player) or _ambience_player.playing:
+	if not _audio_output_available():
 		return
-	var stream := _looping_stream(_ambience_asset_id())
-	if stream == null:
-		return
-	_ambience_player.stream = stream
-	_ambience_player.volume_db = _ambience_target_db()
-	_ambience_player.play()
+	if is_instance_valid(_ambience_player) and not _ambience_player.playing:
+		var bed_stream := _looping_stream(_ambience_asset_id("bed"))
+		if bed_stream != null:
+			_ambience_player.stream = bed_stream
+			_ambience_player.volume_db = _ambience_target_db()
+			_ambience_player.play()
+	if is_instance_valid(_ambience_detail_player) and not _ambience_detail_player.playing:
+		var detail_stream := _looping_stream(_ambience_asset_id("weather_points"))
+		if detail_stream != null:
+			_ambience_detail_player.stream = detail_stream
+			_ambience_detail_player.volume_db = _ambience_detail_target_db()
+			_ambience_detail_player.play()
 
 
 func _switch_ambience_for_era() -> void:
 	if not _audio_output_available():
 		return
-	var stream := _looping_stream(_ambience_asset_id())
-	if stream == null:
+	var bed_stream := _looping_stream(_ambience_asset_id("bed"))
+	var detail_stream := _looping_stream(_ambience_asset_id("weather_points"))
+	if bed_stream == null or detail_stream == null:
 		return
-	if not is_instance_valid(_ambience_player) or not _ambience_player.playing:
+	if (not is_instance_valid(_ambience_player) or not _ambience_player.playing or
+			not is_instance_valid(_ambience_detail_player) or not _ambience_detail_player.playing):
 		_start_ambience_if_needed()
 		return
+	_switch_ambience_bed(bed_stream)
+	_switch_ambience_detail(detail_stream)
+
+
+func _switch_ambience_bed(stream: AudioStream) -> void:
 	if is_instance_valid(_ambience_tween):
 		_ambience_tween.kill()
+		_ambience_tween = null
 	if _ambience_outgoing_player.playing:
+		if _ambience_outgoing_player.volume_db > _ambience_player.volume_db:
+			var swap := _ambience_player
+			_ambience_player = _ambience_outgoing_player
+			_ambience_outgoing_player = swap
 		_ambience_outgoing_player.stop()
 		_ambience_outgoing_player.stream = null
 	var previous := _ambience_player
 	var incoming := _ambience_outgoing_player
+	var phase_seconds := previous.get_playback_position()
+	if stream.get_length() > 0.0:
+		phase_seconds = fposmod(phase_seconds, stream.get_length())
 	previous.volume_db = _ambience_target_db()
 	incoming.stream = stream
 	incoming.volume_db = SILENCE_DB
-	incoming.play()
+	incoming.play(phase_seconds)
+	_ambience_player = incoming
+	_ambience_outgoing_player = previous
 	_ambience_tween = create_tween().set_parallel(true)
 	_ambience_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_ambience_tween.tween_property(previous, "volume_db", SILENCE_DB,
@@ -471,9 +530,50 @@ func _finish_ambience_crossfade(previous: AudioStreamPlayer, incoming: AudioStre
 	if is_instance_valid(previous):
 		previous.stop()
 		previous.stream = null
-	_ambience_player = incoming
-	_ambience_outgoing_player = previous
+	if _ambience_player == incoming:
+		_ambience_outgoing_player = previous
 	_ambience_tween = null
+
+
+func _switch_ambience_detail(stream: AudioStream) -> void:
+	if is_instance_valid(_ambience_detail_tween):
+		_ambience_detail_tween.kill()
+		_ambience_detail_tween = null
+	if _ambience_detail_outgoing_player.playing:
+		if _ambience_detail_outgoing_player.volume_db > _ambience_detail_player.volume_db:
+			var swap := _ambience_detail_player
+			_ambience_detail_player = _ambience_detail_outgoing_player
+			_ambience_detail_outgoing_player = swap
+		_ambience_detail_outgoing_player.stop()
+		_ambience_detail_outgoing_player.stream = null
+	var previous := _ambience_detail_player
+	var incoming := _ambience_detail_outgoing_player
+	var phase_seconds := previous.get_playback_position()
+	if stream.get_length() > 0.0:
+		phase_seconds = fposmod(phase_seconds, stream.get_length())
+	previous.volume_db = _ambience_detail_target_db()
+	incoming.stream = stream
+	incoming.volume_db = SILENCE_DB
+	incoming.play(phase_seconds)
+	_ambience_detail_player = incoming
+	_ambience_detail_outgoing_player = previous
+	_ambience_detail_tween = create_tween().set_parallel(true)
+	_ambience_detail_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_ambience_detail_tween.tween_property(previous, "volume_db", SILENCE_DB,
+		AMBIENCE_CROSSFADE_SECONDS)
+	_ambience_detail_tween.tween_property(incoming, "volume_db", _ambience_detail_target_db(),
+		AMBIENCE_CROSSFADE_SECONDS)
+	_ambience_detail_tween.chain().tween_callback(
+		_finish_ambience_detail_crossfade.bind(previous, incoming))
+
+
+func _finish_ambience_detail_crossfade(previous: AudioStreamPlayer, incoming: AudioStreamPlayer) -> void:
+	if is_instance_valid(previous):
+		previous.stop()
+		previous.stream = null
+	if _ambience_detail_player == incoming:
+		_ambience_detail_outgoing_player = previous
+	_ambience_detail_tween = null
 
 
 func _start_music_if_needed() -> void:
@@ -565,6 +665,10 @@ func _ambience_target_db() -> float:
 	return float(profile.get("ambience_db", -8.0))
 
 
+func _ambience_detail_target_db() -> float:
+	return _ambience_target_db() + AMBIENCE_DETAIL_TRIM_DB
+
+
 func _load_audio_stream(asset_id: String) -> AudioStream:
 	var path := _resolve_audio_path(asset_id)
 	if path.is_empty():
@@ -572,7 +676,16 @@ func _load_audio_stream(asset_id: String) -> AudioStream:
 	return ResourceLoader.load(path) as AudioStream
 
 
-func _ambience_asset_id() -> String:
+func _soundscape_location_for_context(context_id: String) -> String:
+	return "dungeon" if context_id in ["dungeon", "boss"] else "world"
+
+
+func _ambience_asset_id(layer: String) -> String:
+	var location := _soundscape_location_for_context(_context)
+	if layer == "weather_points":
+		return "%s_%s_detail" % [_era_id, location]
+	if location == "dungeon":
+		return "%s_dungeon_ambience" % _era_id
 	return "classical_ambience" if _era_id == "classical" else "%s_ambience" % _era_id
 
 
@@ -588,12 +701,15 @@ func _resolve_audio_path(asset_id: String) -> String:
 			candidates.append("res://audio/generated/%s/%s.ogg" % [_era_id, asset_id])
 			if _era_id != "classical":
 				candidates.append("res://audio/generated/classical/%s.ogg" % asset_id)
-	elif asset_id.ends_with("_ambience"):
-		var ambience_era := asset_id.trim_suffix("_ambience")
-		if ambience_era == "classical":
-			candidates.append("res://audio/generated/classical/classical_ambience.wav")
-		elif ambience_era in ERA_IDS:
-			candidates.append("res://audio/generated/%s/%s.wav" % [ambience_era, asset_id])
+	elif asset_id.ends_with("_ambience") or asset_id.ends_with("_detail"):
+		var soundscape_era := "classical" if asset_id == "classical_ambience" else ""
+		if soundscape_era.is_empty():
+			for candidate_era in ERA_IDS:
+				if asset_id.begins_with("%s_" % candidate_era):
+					soundscape_era = candidate_era
+					break
+		if not soundscape_era.is_empty():
+			candidates.append("res://audio/generated/%s/%s.ogg" % [soundscape_era, asset_id])
 	else:
 		candidates.append("res://audio/generated/%s/%s.wav" % [_era_id, asset_id])
 		if _era_id != "classical":
