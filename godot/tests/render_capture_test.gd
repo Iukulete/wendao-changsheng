@@ -138,6 +138,37 @@ func _run() -> void:
 	root.size = Vector2i(1280, 720)
 	game.call("_start_combat")
 	await _settle_frames(4)
+	var combat_viewport := root.get_visible_rect()
+	var combat_player_panel := game.find_child("CombatPlayerPanel", true, false) as Control
+	var combat_enemy_panel := game.find_child("CombatEnemyPanel", true, false) as Control
+	var combat_forecast_card := game.find_child("CombatForecastCard", true, false) as Control
+	var combat_forecast_range := game.find_child("CombatForecastRange", true, false) as Label
+	var combat_counterplay := game.find_child("CombatCounterplay", true, false) as Label
+	var combat_timeline := game.find_child("CombatIntentTimeline", true, false) as HBoxContainer
+	var combat_player_forecast := game.find_child("CombatPlayerDamageForecast", true, false) as Label
+	if combat_player_panel == null or combat_enemy_panel == null or combat_forecast_card == null or \
+			combat_forecast_range == null or combat_counterplay == null or combat_timeline == null or \
+			combat_player_forecast == null:
+		failures.append("1280x720普通战斗缺少规则驱动的双方预测与战术卡")
+	elif combat_timeline.get_child_count() < 3 or not combat_forecast_range.text.contains("预计") or \
+			combat_counterplay.text.is_empty() or not combat_player_forecast.text.contains("斩击"):
+		failures.append("1280x720普通战斗没有显示三步意图轮转与行动收益")
+	var combat_controls: Array[Control] = [
+		combat_player_panel, combat_enemy_panel, combat_forecast_card, combat_timeline,
+		game.find_child("CombatAttackButton", true, false) as Control,
+		game.find_child("CombatGuardButton", true, false) as Control,
+		game.find_child("CombatSpellButton", true, false) as Control,
+		game.find_child("CombatPillButton", true, false) as Control,
+		game.find_child("CombatFleeButton", true, false) as Control,
+	]
+	for control in combat_controls:
+		if control == null or not combat_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720普通战斗关键战术信息没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
+	var full_hp_pill_button := game.find_child("CombatPillButton", true, false) as Button
+	if full_hp_pill_button == null or not full_hp_pill_button.disabled or \
+			not full_hp_pill_button.text.contains("气血已满"):
+		failures.append("普通战斗满血状态没有阻止并解释疗伤丹浪费")
 	_capture(root, output_root.path_join("normal_combat_1280x720.png"), Vector2i(1280, 720),
 		"普通战斗 1280x720")
 	root.size = Vector2i(1440, 900)

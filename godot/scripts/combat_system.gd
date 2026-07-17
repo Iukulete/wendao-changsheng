@@ -136,6 +136,8 @@ static func perform_action(state: Dictionary, action: String) -> Dictionary:
 	if action == "pill" and ItemSystemScript.count(state, "healing_pill") <= 0 and \
 		int((state.get("player", {}) as Dictionary).get("pills", 0)) <= 0:
 		return {"ok": false, "code": "no_healing_pill", "battle": battle}
+	if action == "pill" and int(battle.player_hp) >= int(battle.player_max_hp):
+		return {"ok": false, "code": "hp_full", "battle": battle}
 
 	_apply_bleed_start(battle, true)
 	_apply_bleed_start(battle, false)
@@ -194,11 +196,89 @@ static func auto_resolve(state: Dictionary, action_limit: int = MAX_TURNS) -> Di
 
 
 static func intent_label(battle: Dictionary) -> String:
-	return str(INTENT_NAMES.get(str(battle.get("intent", "strike")), "未知意图"))
+	return intent_name(str(battle.get("intent", "strike")))
+
+
+static func intent_name(intent_id: String) -> String:
+	return str(INTENT_NAMES.get(intent_id, "未知意图"))
 
 
 static func intent_description(battle: Dictionary) -> String:
 	return str(INTENT_DESCRIPTIONS.get(str(battle.get("intent", "strike")), "敌意尚未完全显形。"))
+
+
+static func intent_forecast(battle: Dictionary) -> Dictionary:
+	var intent := str(battle.get("intent", "strike"))
+	if intent == "guard":
+		var guard_base := maxi(4, int(battle.get("enemy_defense", 0)))
+		var guard_roll := maxi(2, int(battle.get("enemy_defense", 0)) / 2)
+		var guard_max := maxi(4, int(battle.get("enemy_defense", 0)) + guard_roll)
+		return {
+			"intent": intent, "kind": "guard", "threat": "蓄势",
+			"min_shield": guard_base, "max_shield": guard_max,
+			"status": "护盾", "counter": "敌方本回合不会造成伤害；趁其结印蓄势，术法可绕过一半护体。",
+			"lethal": false,
+		}
+	var weak_scale := 75 if int((battle.get("enemy_statuses", {}) as Dictionary).get("weak", 0)) > 0 else 100
+	var power := int(battle.get("enemy_attack", 0)) * weak_scale / 100
+	var variance := 14
+	if intent == "heavy":
+		power = int(round(power * 1.55))
+		variance = 20
+	var damage_range := _damage_range(power, int(battle.get("player_defense", 0)),
+		variance, int((battle.get("player_statuses", {}) as Dictionary).get("shield", 0)))
+	var status := ""
+	var counter := "斩击与术法都可抢先压低敌方气血。"
+	var threat := "常规"
+	if intent == "heavy":
+		threat = "高危"
+		counter = "蓄势重击伤害最高；守势生成的护盾能直接抵消这段伤害。"
+	elif intent == "bleed":
+		threat = "持续"
+		status = "流血 3回合"
+		counter = "撕裂会留下持续伤害；尽快压制敌人，或用守势削减首次命中。"
+	elif intent == "weaken":
+		threat = "压制"
+		status = "虚弱 2回合"
+		counter = "蚀心咒会压低后续输出；术法反施虚弱可削减敌方攻势。"
+	var lethal := int(damage_range.max_damage) >= int(battle.get("player_hp", 1))
+	if lethal:
+		threat = "致命"
+		counter = "预测上限足以令你气血归零；优先守势或服丹，不宜赌伤害波动。"
+	return {
+		"intent": intent, "kind": "damage", "threat": threat,
+		"min_damage": int(damage_range.min_damage), "max_damage": int(damage_range.max_damage),
+		"status": status, "counter": counter, "lethal": lethal,
+	}
+
+
+static func action_forecasts(state: Dictionary, battle: Dictionary) -> Dictionary:
+	var weak_scale := 75 if int((battle.get("player_statuses", {}) as Dictionary).get("weak", 0)) > 0 else 100
+	var attack_power := int(battle.get("player_attack", 0)) * weak_scale / 100
+	var attack_range := _damage_range(attack_power, int(battle.get("enemy_defense", 0)),
+		18, int((battle.get("enemy_statuses", {}) as Dictionary).get("shield", 0)))
+	var spell_power := int(round(int(battle.get("player_attack", 0)) * 1.45)) * weak_scale / 100
+	var spell_range := _damage_range(spell_power, int(battle.get("enemy_defense", 0)) / 2,
+		12, int((battle.get("enemy_statuses", {}) as Dictionary).get("shield", 0)))
+	var defense := int(battle.get("player_defense", 0))
+	var guard_base := maxi(4, defense)
+	var guard_roll := maxi(2, defense / 2)
+	var guard_max := maxi(4, defense + guard_roll)
+	var heal := mini(int(battle.get("player_max_hp", 1)) - int(battle.get("player_hp", 0)),
+		maxi(1, int(battle.get("player_max_hp", 1)) * 40 / 100))
+	var pill_count := ItemSystemScript.count(state, "healing_pill") + \
+		int((state.get("player", {}) as Dictionary).get("pills", 0))
+	var flee_chance := clampi(42 + int((state.get("player", {}) as Dictionary).get("realm_index", 0)) * 2 -
+		int(battle.get("turn", 1)), 18, 82)
+	return {
+		"attack": {"min_damage": int(attack_range.min_damage), "max_damage": int(attack_range.max_damage),
+			"bleed_chance": 22},
+		"guard": {"min_shield": guard_base, "max_shield": guard_max},
+		"spell": {"min_damage": int(spell_range.min_damage), "max_damage": int(spell_range.max_damage),
+			"mp_cost": SPELL_COST, "applies_weak": true},
+		"pill": {"heal": maxi(0, heal), "count": maxi(0, pill_count)},
+		"flee": {"chance": flee_chance},
+	}
 
 
 static func _apply_player_action(state: Dictionary, battle: Dictionary, action: String) -> Dictionary:
@@ -393,6 +473,17 @@ static func _append_log(battle: Dictionary, text: String) -> void:
 	while log.size() > MAX_LOG:
 		log.pop_front()
 	battle["log"] = log
+
+
+static func _damage_range(power: int, defense: int, variance_percent: int,
+		shield: int = 0) -> Dictionary:
+	var defense_reduction := int(defense * 0.55)
+	var minimum_raw := maxi(1, power - power * variance_percent / 100 - defense_reduction)
+	var maximum_raw := maxi(1, power + power * variance_percent / 100 - defense_reduction)
+	return {
+		"min_damage": maxi(0, minimum_raw - maxi(0, shield)),
+		"max_damage": maxi(0, maximum_raw - maxi(0, shield)),
+	}
 
 
 static func _roll(state: Dictionary, minimum: int, maximum: int) -> int:

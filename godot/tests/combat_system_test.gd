@@ -18,6 +18,17 @@ func _init() -> void:
 	_expect(not CombatSystemScript.intent_label(start_a.battle).is_empty() and
 		not CombatSystemScript.intent_description(start_a.battle).is_empty(),
 		"敌人必须提前暴露明确意图及其战术含义")
+	var first_intent_forecast: Dictionary = CombatSystemScript.intent_forecast(start_a.battle)
+	var first_action_forecasts: Dictionary = CombatSystemScript.action_forecasts(deterministic_a, start_a.battle)
+	_expect(str(first_intent_forecast.get("kind", "")) == "damage" and
+		int(first_intent_forecast.get("max_damage", -1)) >= int(first_intent_forecast.get("min_damage", 0)) and
+		not str(first_intent_forecast.get("counter", "")).is_empty(),
+		"敌方意图必须给出与真实公式一致的伤害范围和应对建议")
+	_expect(int((first_action_forecasts.attack as Dictionary).max_damage) >=
+		int((first_action_forecasts.attack as Dictionary).min_damage) and
+		int((first_action_forecasts.spell as Dictionary).mp_cost) == CombatSystemScript.SPELL_COST and
+		int((first_action_forecasts.flee as Dictionary).chance) in range(18, 83),
+		"五种玩家行动必须暴露确定性的收益、消耗与脱战概率")
 	var first_turn: Dictionary = CombatSystemScript.perform_action(deterministic_a, "attack")
 	_expect(bool(first_turn.ok) and int(first_turn.battle.turn) == 2 and
 		(first_turn.battle.log as Array).size() >= 3, "攻击必须推进双方行动并留下战斗日志")
@@ -26,6 +37,10 @@ func _init() -> void:
 	CombatSystemScript.start_combat(guard_state, "classical_oath_breaker")
 	guard_state.combat.current.intent = "heavy"
 	guard_state.combat.current.intent_cycle = ["heavy"]
+	var heavy_forecast: Dictionary = CombatSystemScript.intent_forecast(guard_state.combat.current)
+	_expect(str(heavy_forecast.get("threat", "")) in ["高危", "致命"] and
+		int(heavy_forecast.get("max_damage", 0)) > 0,
+		"蓄势重击必须在执行前标注高危范围")
 	var hp_before := int(guard_state.combat.current.player_hp)
 	var guarded: Dictionary = CombatSystemScript.perform_action(guard_state, "guard")
 	_expect(int(guarded.battle.player_hp) > 0 and int(guarded.battle.player_hp) >= hp_before - 20,
@@ -47,6 +62,13 @@ func _init() -> void:
 	_expect(bool(pill.ok) and int(pill.battle.player_hp) > 10 and
 		ItemSystemScript.count(pill_state, "healing_pill") == pills_before - 1,
 		"战斗丹药必须真实恢复并消耗库存")
+	var full_hp_state := base.duplicate(true)
+	CombatSystemScript.start_combat(full_hp_state, "classical_razor_wolf")
+	var full_hp_pills_before := ItemSystemScript.count(full_hp_state, "healing_pill")
+	var wasted_pill: Dictionary = CombatSystemScript.perform_action(full_hp_state, "pill")
+	_expect(not bool(wasted_pill.ok) and str(wasted_pill.code) == "hp_full" and
+		ItemSystemScript.count(full_hp_state, "healing_pill") == full_hp_pills_before,
+		"气血已满时必须拒绝消耗疗伤丹")
 
 	var victory_state := base.duplicate(true)
 	victory_state.player.attack = 500

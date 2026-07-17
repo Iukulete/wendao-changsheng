@@ -968,6 +968,8 @@ func _show_combat() -> void:
 	_clear_screen()
 	_apply_era_visuals()
 	var battle: Dictionary = run_state.combat.current
+	var intent_forecast: Dictionary = CombatSystemScript.intent_forecast(battle)
+	var action_forecasts: Dictionary = CombatSystemScript.action_forecasts(run_state, battle)
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
@@ -980,42 +982,90 @@ func _show_combat() -> void:
 	page.add_child(header)
 
 	var body := HBoxContainer.new()
-	body.name = "GameBody"
+	body.name = "CombatBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
-	body.add_child(_build_combatant_panel("此世之我", int(battle.player_hp), int(battle.player_max_hp),
-		int(battle.player_mp), int(battle.player_max_mp), int(battle.player_attack),
-		int(battle.player_defense), battle.player_statuses, false))
-	body.add_child(_build_combat_log(battle))
-	body.add_child(_build_enemy_panel(battle))
+	body.add_child(_build_player_combat_panel(battle, action_forecasts))
+	body.add_child(_build_combat_log(battle, intent_forecast))
+	body.add_child(_build_enemy_panel(battle, intent_forecast))
 
 	var actions := HBoxContainer.new()
+	actions.name = "CombatActionBar"
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 10)
 	page.add_child(actions)
-	var attack_button := _button("斩击 [1]", _resolve_combat_action.bind("attack"), true)
+	var attack: Dictionary = action_forecasts.attack
+	var guard: Dictionary = action_forecasts.guard
+	var spell: Dictionary = action_forecasts.spell
+	var pill: Dictionary = action_forecasts.pill
+	var flee: Dictionary = action_forecasts.flee
+	var attack_button := _combat_action_button("斩击 %d–%d [1]" % [
+		int(attack.min_damage), int(attack.max_damage)], _resolve_combat_action.bind("attack"), true)
 	attack_button.name = "CombatAttackButton"
-	attack_button.tooltip_text = "以攻势对敌，并有机会留下流血。"
+	attack_button.tooltip_text = "以攻势对敌，22%概率留下流血。"
 	actions.add_child(attack_button)
-	var guard_button := _button("守势 [2]", _resolve_combat_action.bind("guard"), false)
+	var guard_button := _combat_action_button("守势 +%d–%d盾 [2]" % [
+		int(guard.min_shield), int(guard.max_shield)], _resolve_combat_action.bind("guard"), false)
 	guard_button.name = "CombatGuardButton"
-	guard_button.tooltip_text = "根据护体强度凝成护盾。"
+	guard_button.tooltip_text = "根据护体强度凝成可抵消本回合伤害的护盾。"
 	actions.add_child(guard_button)
-	var spell_button := _button("术法 [3]", _resolve_combat_action.bind("spell"), false)
+	var spell_button := _combat_action_button("术法 %d–%d [3]" % [
+		int(spell.min_damage), int(spell.max_damage)], _resolve_combat_action.bind("spell"), false)
 	spell_button.name = "CombatSpellButton"
 	spell_button.disabled = int(battle.player_mp) < CombatSystemScript.SPELL_COST
-	spell_button.tooltip_text = "灵力不足。" if spell_button.disabled else "消耗%d点灵力。" % CombatSystemScript.SPELL_COST
+	spell_button.tooltip_text = "灵力不足。" if spell_button.disabled else \
+		"消耗%d点灵力，穿透一半护体并施加虚弱。" % CombatSystemScript.SPELL_COST
 	actions.add_child(spell_button)
-	var pill_button := _button("服丹 [4]", _resolve_combat_action.bind("pill"), false)
+	var pill_button_text := "气血已满 [4]" if int(pill.heal) <= 0 else "服丹 +%d [4]" % int(pill.heal)
+	var pill_button := _combat_action_button(pill_button_text,
+		_resolve_combat_action.bind("pill"), false)
 	pill_button.name = "CombatPillButton"
-	pill_button.disabled = ItemSystemScript.count(run_state, "healing_pill") <= 0 and int(player.get("pills", 0)) <= 0
-	pill_button.tooltip_text = "行囊中没有疗伤丹。" if pill_button.disabled else "恢复四成气血。"
+	pill_button.disabled = int(pill.count) <= 0 or int(pill.heal) <= 0
+	pill_button.tooltip_text = "行囊中没有疗伤丹。" if int(pill.count) <= 0 else \
+		("气血已满，无需消耗疗伤丹。" if int(pill.heal) <= 0 else "消耗1枚疗伤丹，恢复四成气血。")
 	actions.add_child(pill_button)
-	var flee_button := _button("脱战 [5]", _resolve_combat_action.bind("flee"), false)
+	var flee_button := _combat_action_button("脱战 %d%% [5]" % int(flee.chance),
+		_resolve_combat_action.bind("flee"), false)
 	flee_button.name = "CombatFleeButton"
-	flee_button.tooltip_text = "尝试退出战圈；拖得越久，成功率越低。"
+	flee_button.tooltip_text = "尝试退出战圈；当前成功率%d%%，拖得越久越低。" % int(flee.chance)
 	actions.add_child(flee_button)
+
+
+func _combat_action_button(text_value: String, callback: Callable, primary: bool) -> Button:
+	var button := _button(text_value, callback, primary, "", true)
+	button.custom_minimum_size = Vector2(158, 48)
+	return button
+
+
+func _build_player_combat_panel(battle: Dictionary, forecasts: Dictionary) -> Control:
+	var panel := _build_combatant_panel("此世之我", int(battle.player_hp), int(battle.player_max_hp),
+		int(battle.player_mp), int(battle.player_max_mp), int(battle.player_attack),
+		int(battle.player_defense), battle.player_statuses, false)
+	panel.name = "CombatPlayerPanel"
+	var column := panel.get_child(0) as VBoxContainer
+	column.add_child(_divider())
+	column.add_child(_section_title("本回合筹码"))
+	var attack: Dictionary = forecasts.attack
+	var guard: Dictionary = forecasts.guard
+	var spell: Dictionary = forecasts.spell
+	var pill: Dictionary = forecasts.pill
+	var flee: Dictionary = forecasts.flee
+	var offense := _label("斩击 %d–%d\n术法 %d–%d" % [
+		int(attack.min_damage), int(attack.max_damage),
+		int(spell.min_damage), int(spell.max_damage)], 14, Color("e7d7a5"))
+	offense.name = "CombatPlayerDamageForecast"
+	offense.add_theme_constant_override("line_spacing", 5)
+	column.add_child(offense)
+	var healing_text := "已满" if int(pill.heal) <= 0 else "+%d" % int(pill.heal)
+	var defense := _label("守势 +%d–%d 护盾\n疗伤 %s · 余丹 %d" % [
+		int(guard.min_shield), int(guard.max_shield), healing_text, int(pill.count)],
+		14, Color(0.72, 0.83, 0.86))
+	defense.add_theme_constant_override("line_spacing", 5)
+	column.add_child(defense)
+	column.add_child(_label("脱战概率 %d%%" % int(flee.chance), 14,
+		Color(0.78, 0.80, 0.78)))
+	return panel
 
 
 func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp: int,
@@ -1035,23 +1085,35 @@ func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp
 	return panel
 
 
-func _build_enemy_panel(battle: Dictionary) -> Control:
+func _build_enemy_panel(battle: Dictionary, forecast: Dictionary) -> Control:
 	var panel := _build_combatant_panel(str(battle.enemy_name), int(battle.enemy_hp),
 		int(battle.enemy_max_hp), 0, 0, int(battle.enemy_attack), int(battle.enemy_defense),
 		battle.enemy_statuses, true)
+	panel.name = "CombatEnemyPanel"
 	var column := panel.get_child(0) as VBoxContainer
 	column.add_child(_divider())
 	column.add_child(_label("下一意图", 14, Color(0.72, 0.76, 0.76)))
 	column.add_child(_label(CombatSystemScript.intent_label(battle), 22, Color("ef9a78"),
 		HORIZONTAL_ALIGNMENT_CENTER))
+	var threat_color := _combat_threat_color(str(forecast.get("threat", "常规")))
+	column.add_child(_label("威胁 · %s" % str(forecast.get("threat", "常规")), 14,
+		threat_color, HORIZONTAL_ALIGNMENT_CENTER))
+	var range_label := _label(_combat_forecast_range_text(forecast), 18, Color("f2d6b5"),
+		HORIZONTAL_ALIGNMENT_CENTER)
+	range_label.name = "CombatEnemyForecast"
+	column.add_child(range_label)
+	if not str(forecast.get("status", "")).is_empty():
+		column.add_child(_label("附带 · %s" % str(forecast.status), 14,
+			Color("d99aba"), HORIZONTAL_ALIGNMENT_CENTER))
 	var detail := _label(CombatSystemScript.intent_description(battle), 14, Color(0.82, 0.80, 0.76))
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	column.add_child(detail)
 	return panel
 
 
-func _build_combat_log(battle: Dictionary) -> Control:
+func _build_combat_log(battle: Dictionary, forecast: Dictionary) -> Control:
 	var panel := _panel(0.76, era_accent)
+	panel.name = "CombatCenterPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
@@ -1061,17 +1123,93 @@ func _build_combat_log(battle: Dictionary) -> Control:
 	combat_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	combat_stage.call("configure", battle, era_accent)
 	column.add_child(combat_stage)
+	var forecast_card := _panel(0.38, _combat_threat_color(str(forecast.get("threat", "常规"))))
+	forecast_card.name = "CombatForecastCard"
+	forecast_card.custom_minimum_size.y = 82
+	var forecast_row := HBoxContainer.new()
+	forecast_row.add_theme_constant_override("separation", 18)
+	forecast_card.add_child(forecast_row)
+	var forecast_summary := VBoxContainer.new()
+	forecast_summary.custom_minimum_size.x = 190
+	forecast_summary.add_child(_label("敌意测算 · %s" % str(forecast.get("threat", "常规")),
+		14, _combat_threat_color(str(forecast.get("threat", "常规")))))
+	var forecast_range := _label(_combat_forecast_range_text(forecast), 20, Color("f3dfbc"))
+	forecast_range.name = "CombatForecastRange"
+	forecast_summary.add_child(forecast_range)
+	forecast_row.add_child(forecast_summary)
+	var counterplay := _label(str(forecast.get("counter", "先看清敌意，再决定这一回合。")),
+		14, Color(0.82, 0.84, 0.82))
+	counterplay.name = "CombatCounterplay"
+	counterplay.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	counterplay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	counterplay.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	forecast_row.add_child(counterplay)
+	column.add_child(forecast_card)
+	column.add_child(_build_combat_intent_timeline(battle))
 	column.add_child(_divider())
 	column.add_child(_section_title("交锋实录"))
 	var scroll := ScrollContainer.new()
+	scroll.name = "CombatLogScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(scroll)
-	var log_label := _label("\n".join((battle.log as Array).slice(-12)), 17, Color("eee8da"))
+	var log_lines: Array[String] = []
+	for log_value in (battle.log as Array).slice(-12):
+		log_lines.append("· %s" % str(log_value))
+	var log_label := _label("\n".join(log_lines), 16, Color("eee8da"))
+	log_label.name = "CombatLogLabel"
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(log_label)
 	return panel
+
+
+func _build_combat_intent_timeline(battle: Dictionary) -> HBoxContainer:
+	var timeline := HBoxContainer.new()
+	timeline.name = "CombatIntentTimeline"
+	timeline.add_theme_constant_override("separation", 8)
+	timeline.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var cycle: Array = battle.get("intent_cycle", ["strike"])
+	var current_index := int(battle.get("intent_index", 0))
+	var prefixes := ["当前", "下一", "随后"]
+	for offset in range(mini(3, cycle.size())):
+		var intent_id := str(cycle[(current_index + offset) % cycle.size()])
+		var intent_panel := _panel(0.28 if offset == 0 else 0.18,
+			Color("ef8a68") if offset == 0 else era_accent)
+		intent_panel.name = "CombatIntentStep%d" % offset
+		intent_panel.custom_minimum_size.y = 50
+		intent_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var intent_style := intent_panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		intent_style.content_margin_left = 8
+		intent_style.content_margin_right = 8
+		intent_style.content_margin_top = 5
+		intent_style.content_margin_bottom = 5
+		intent_style.shadow_size = 4
+		intent_panel.add_theme_stylebox_override("panel", intent_style)
+		intent_panel.add_child(_label("%s · %s" % [prefixes[offset],
+			CombatSystemScript.intent_name(intent_id)], 13,
+			Color("f1d4b7") if offset == 0 else Color(0.74, 0.78, 0.78, 0.86),
+			HORIZONTAL_ALIGNMENT_CENTER))
+		timeline.add_child(intent_panel)
+	return timeline
+
+
+func _combat_forecast_range_text(forecast: Dictionary) -> String:
+	if str(forecast.get("kind", "damage")) == "guard":
+		return "预计护盾 +%d–%d" % [int(forecast.get("min_shield", 0)),
+			int(forecast.get("max_shield", 0))]
+	return "预计伤害 %d–%d" % [int(forecast.get("min_damage", 0)),
+		int(forecast.get("max_damage", 0))]
+
+
+func _combat_threat_color(threat: String) -> Color:
+	return {
+		"致命": Color("ff625f"),
+		"高危": Color("ef7a62"),
+		"持续": Color("dc7c9c"),
+		"压制": Color("b68ddd"),
+		"蓄势": Color("74b9d8"),
+	}.get(threat, Color("d9bd76"))
 
 
 func _combat_status_text(statuses: Dictionary) -> String:
@@ -1091,6 +1229,7 @@ func _resolve_combat_action(action: String) -> void:
 		feedback = str({
 			"insufficient_mp": "灵力不足，术式未能成形。",
 			"no_healing_pill": "行囊中已无疗伤丹。",
+			"hp_full": "气血已满，旧玉阻止你浪费疗伤丹。",
 		}.get(str(result.get("code", "")), "这一行动未能落入战局。"))
 		_show_combat()
 		return
