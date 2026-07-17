@@ -131,6 +131,47 @@ static func unlocked_count(state: Dictionary) -> int:
 	return count
 
 
+static func achievement_progress(state: Dictionary, achievement: Dictionary) -> Dictionary:
+	var armory := normalize(state)
+	var condition: Dictionary = achievement.get("condition", {})
+	var condition_type := str(condition.get("type", ""))
+	var target := int(condition.get("value", 0))
+	var current := 0
+	var player: Dictionary = state.get("player", {})
+	if condition_type == "player_min":
+		current = int(player.get(str(condition.get("field", "")), 0))
+	elif condition_type == "player_max":
+		var raw_current := int(player.get(str(condition.get("field", "")), 0))
+		if target < 0:
+			current = maxi(0, -raw_current)
+			target = absi(target)
+		else:
+			current = target if raw_current <= target else maxi(0, target - (raw_current - target))
+	elif condition_type == "state_min":
+		current = int(state.get(str(condition.get("field", "")), 0))
+	elif condition_type == "legacy_echo_count":
+		current = _legacy_echo_count(state)
+	elif condition_type == "arc_progress":
+		for progress in ((state.get("story", {}) as Dictionary).get("arc_progress", {}) as Dictionary).values():
+			current += int(progress)
+	elif condition_type == "arc_legacy_count":
+		for tag in ((state.get("story", {}) as Dictionary).get("arc_legacies", {}) as Dictionary).values():
+			if not str(tag).is_empty(): current += 1
+	elif condition_type == "relic_stage":
+		current = int(((state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("awakening_stage", 0))
+	elif condition_type == "achievement_count":
+		for unlocked in (armory.achievements as Dictionary).values():
+			if bool(unlocked): current += 1
+	target = maxi(1, target)
+	var unlocked := bool((armory.achievements as Dictionary).get(str(achievement.get("id", "")), false))
+	return {
+		"current": current, "target": target,
+		"ratio": clampf(float(current) / float(target), 0.0, 1.0),
+		"label": "%d / %d" % [current, target],
+		"met": unlocked or current >= target, "unlocked": unlocked,
+	}
+
+
 static func effective_bonuses(state: Dictionary) -> Dictionary:
 	var armory := normalize(state)
 	var result := {"attack": 0, "defense": 0, "max_hp": 0, "dao_heart": 0}

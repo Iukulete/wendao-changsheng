@@ -14,13 +14,37 @@ func _init() -> void:
 	var state := GameStateScript.create_new_game("藏兵主", 858585, [7, 7, 7, 7, 7])
 	AchievementSystemScript.normalize(state)
 	_expect(AchievementSystemScript.current_weapon(state).is_empty(), "未达成成就前不得凭空装备玉兵")
+	var definitions: Dictionary = AchievementSystemScript.load_definitions()
+	var first_ascension: Dictionary = (definitions.achievements as Array)[0]
+	var first_progress: Dictionary = AchievementSystemScript.achievement_progress(state, first_ascension)
+	_expect(int(first_progress.current) == 0 and int(first_progress.target) == 10 and
+		is_equal_approx(float(first_progress.ratio), 0.0) and not bool(first_progress.met),
+		"成就进度必须从真实角色状态推导当前值、目标值与完成状态")
+	state.player.realm_index = 7
+	first_progress = AchievementSystemScript.achievement_progress(state, first_ascension)
+	_expect(str(first_progress.label) == "7 / 10" and is_equal_approx(float(first_progress.ratio), 0.7),
+		"阶段型成就必须提供可直接呈现的进度文字与比例")
+	var demonic: Dictionary = (definitions.achievements as Array)[3]
+	state.player.karma = -80
+	var demonic_progress: Dictionary = AchievementSystemScript.achievement_progress(state, demonic)
+	_expect(int(demonic_progress.current) == 80 and int(demonic_progress.target) == 200 and
+		is_equal_approx(float(demonic_progress.ratio), 0.4) and not bool(demonic_progress.met),
+		"负向阈值成就必须按绝对推进量显示，不能产生负进度")
+	state.player.karma = 20
+	demonic_progress = AchievementSystemScript.achievement_progress(state, demonic)
+	_expect(int(demonic_progress.current) == 0 and str(demonic_progress.label) == "0 / 200",
+		"尚未踏入负向因果时进度必须稳定归零")
 
 	state.player.realm_index = 10
+	state.player.karma = 0
 	var unlock: Dictionary = AchievementSystemScript.check_progress(state)
 	_expect((unlock.unlocked as Array).size() == 1 and AchievementSystemScript.unlocked_count(state) == 1,
 		"踏入半仙必须只解锁初次飞升及青霄问心剑")
 	var weapon: Dictionary = AchievementSystemScript.current_weapon(state)
 	_expect(str(weapon.id) == "qingxiao" and bool(weapon.unlocked), "成就奖励玉兵必须自动显化并共鸣")
+	first_progress = AchievementSystemScript.achievement_progress(state, first_ascension)
+	_expect(bool(first_progress.unlocked) and bool(first_progress.met) and float(first_progress.ratio) == 1.0,
+		"达成后的成就进度必须同时保持已解锁、已完成和满比例")
 	var bonuses: Dictionary = AchievementSystemScript.effective_bonuses(state)
 	_expect(int(bonuses.attack) == 8 and int(bonuses.dao_heart) == 2,
 		"沉眠玉兵必须提供一次动态基础属性，不能写入玩家基础值")

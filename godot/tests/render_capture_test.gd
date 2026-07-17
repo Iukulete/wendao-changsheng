@@ -162,10 +162,15 @@ func _run() -> void:
 		"行囊炼器 1280x720")
 
 	var armory_state: Dictionary = game.get("run_state")
+	armory_state.player.realm_index = 10
+	armory_state.player.realm_id = GameStateScript.REALM_IDS[10]
+	armory_state.player.battles_won = 100
+	armory_state.player.dao_heart = 80
+	AchievementSystemScript.check_progress(armory_state)
+	AchievementSystemScript.consume_notices(armory_state)
 	var render_armory: Dictionary = AchievementSystemScript.normalize(armory_state)
 	var qingxiao: Dictionary = render_armory.weapons.qingxiao
-	qingxiao["unlocked"] = true
-	qingxiao["resonance"] = 68
+	qingxiao["resonance"] = 168
 	qingxiao["charge"] = 100
 	qingxiao["stage"] = 2
 	render_armory.weapons.qingxiao = qingxiao
@@ -175,16 +180,29 @@ func _run() -> void:
 	await _settle_frames(4)
 	var armory_controls: Array[Control] = [
 		game.find_child("AchievementListPanel", true, false) as Control,
+		game.find_child("AchievementSummaryCard", true, false) as Control,
+		game.find_child("AchievementOverallProgress", true, false) as Control,
+		game.find_child("AchievementCard_first_ascension", true, false) as Control,
+		game.find_child("AchievementProgress_first_ascension", true, false) as Control,
 		game.find_child("JadeArmoryPanel", true, false) as Control,
+		game.find_child("ArmoryCurrentCard", true, false) as Control,
+		game.find_child("ArmoryResonanceProgress", true, false) as Control,
+		game.find_child("ArmoryChargeProgress", true, false) as Control,
 		game.find_child("ArmoryCycleButton", true, false) as Control,
 		game.find_child("ArmoryInvokeButton", true, false) as Control,
 		game.find_child("ArmoryBackButton", true, false) as Control,
+		game.find_child("JadeWeaponCard_qingxiao", true, false) as Control,
 		game.find_child("JadeWeaponButton_qingxiao", true, false) as Control,
 	]
 	for control in armory_controls:
 		if control == null or not auxiliary_viewport.encloses(control.get_global_rect()):
 			failures.append("1280x720成就玉兵关键区域没有完整落在首屏：%s" % [
 				control.name if control != null else "missing"])
+	if AchievementSystemScript.unlocked_count(armory_state) != 3:
+		failures.append("成就玉兵渲染夹具没有保持三项成就与三件玉兵的一致解锁状态")
+	var invoke_control := game.find_child("ArmoryInvokeButton", true, false) as Button
+	if invoke_control == null or invoke_control.disabled:
+		failures.append("满蓄能玉兵在成就玉兵首屏仍无法显圣")
 	_capture(root, output_root.path_join("armory_1280x720.png"), Vector2i(1280, 720),
 		"成就玉兵 1280x720")
 

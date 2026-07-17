@@ -2852,9 +2852,9 @@ func _show_armory() -> void:
 	var page := VBoxContainer.new()
 	page.name = "ArmoryPage"
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	page.add_theme_constant_override("separation", 16)
+	page.add_theme_constant_override("separation", 12)
 	screen_host.add_child(page)
-	page.add_child(_display_label("成就与轮回玉藏兵", 30, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
+	page.add_child(_display_label("成就与轮回玉藏兵", 28, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
 	var body := HBoxContainer.new()
 	body.name = "ArmoryBody"
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -2885,9 +2885,36 @@ func _build_achievement_list() -> Control:
 	panel.name = "AchievementListPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
-	column.add_child(_section_title("成就 %d/16" % AchievementSystemScript.unlocked_count(run_state)))
+	var definitions: Dictionary = AchievementSystemScript.load_definitions()
+	var achievement_total := (definitions.get("achievements", []) as Array).size()
+	var achievement_count := AchievementSystemScript.unlocked_count(run_state)
+	column.add_child(_section_title("轮回道痕"))
+	var summary := _panel(0.28, _achievement_tier_color(2) if achievement_count >= 12 else era_accent)
+	summary.name = "AchievementSummaryCard"
+	summary.custom_minimum_size.y = 82
+	var summary_style := summary.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	summary_style.content_margin_left = 12
+	summary_style.content_margin_right = 12
+	summary_style.content_margin_top = 8
+	summary_style.content_margin_bottom = 8
+	summary_style.shadow_size = 4
+	summary.add_theme_stylebox_override("panel", summary_style)
+	var summary_column := VBoxContainer.new()
+	summary_column.add_theme_constant_override("separation", 4)
+	summary.add_child(summary_column)
+	var summary_row := HBoxContainer.new()
+	var summary_title := _label("已铭刻 %d / %d" % [achievement_count, achievement_total], 17,
+		Color("f2dfaa"))
+	summary_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summary_row.add_child(summary_title)
+	summary_row.add_child(_label("尚余 %d 道因果" % (achievement_total - achievement_count), 13,
+		Color(0.70, 0.77, 0.78), HORIZONTAL_ALIGNMENT_RIGHT))
+	summary_column.add_child(summary_row)
+	summary_column.add_child(_progress_row("总体完成", achievement_count, achievement_total,
+		_achievement_tier_color(2), "AchievementOverallProgress"))
+	column.add_child(summary)
 	var scroll := ScrollContainer.new()
 	scroll.name = "AchievementListScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2897,17 +2924,59 @@ func _build_achievement_list() -> Control:
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 9)
 	scroll.add_child(list)
-	var armory: Dictionary = run_state.legacy.armory
-	for value in (AchievementSystemScript.load_definitions().get("achievements", []) as Array):
+	for value in (definitions.get("achievements", []) as Array):
 		var achievement: Dictionary = value
-		var unlocked := bool((armory.achievements as Dictionary).get(str(achievement.id), false))
-		var tier_color := _achievement_tier_color(int(achievement.tier))
-		var label := _label("%s [%s] %s\n%s" % ["已成" if unlocked else "未成",
-			AchievementSystemScript.TIER_NAMES[int(achievement.tier)], str(achievement.name), str(achievement.description)],
-			15, tier_color if unlocked else Color(0.58, 0.61, 0.62))
-		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		list.add_child(label)
+		list.add_child(_build_achievement_card(achievement))
 	return panel
+
+
+func _build_achievement_card(achievement: Dictionary) -> PanelContainer:
+	var progress: Dictionary = AchievementSystemScript.achievement_progress(run_state, achievement)
+	var unlocked := bool(progress.unlocked)
+	var tier := clampi(int(achievement.get("tier", 0)), 0, 2)
+	var tier_color := _achievement_tier_color(tier)
+	var card := _panel(0.31 if unlocked else 0.18, tier_color)
+	card.name = "AchievementCard_%s" % str(achievement.id)
+	card.custom_minimum_size.y = 116
+	var card_style := card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	card_style.content_margin_left = 12
+	card_style.content_margin_right = 12
+	card_style.content_margin_top = 8
+	card_style.content_margin_bottom = 8
+	card_style.shadow_size = 4
+	if not unlocked:
+		card_style.border_color = Color(tier_color, 0.30)
+	card.add_theme_stylebox_override("panel", card_style)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 4)
+	card.add_child(column)
+	var heading := HBoxContainer.new()
+	heading.add_theme_constant_override("separation", 8)
+	var status := _label("已铭刻" if unlocked else "行途中", 13,
+		tier_color if unlocked else Color(0.64, 0.69, 0.70))
+	status.custom_minimum_size.x = 48
+	heading.add_child(status)
+	var name_label := _label("[%s] %s" % [AchievementSystemScript.TIER_NAMES[tier],
+		str(achievement.name)], 16, Color("f2e7cf") if unlocked else Color(0.76, 0.78, 0.76))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	heading.add_child(name_label)
+	var weapon_definition := AchievementSystemScript.weapon_definition(str(achievement.weapon_id))
+	var reward := _label("玉兵 · %s" % str(weapon_definition.get("name", "未名玉兵")), 12,
+		Color(tier_color, 0.92), HORIZONTAL_ALIGNMENT_RIGHT)
+	reward.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	heading.add_child(reward)
+	column.add_child(heading)
+	var description := _label(str(achievement.description), 13,
+		Color(0.73, 0.78, 0.78) if not unlocked else Color(0.79, 0.82, 0.80))
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.max_lines_visible = 2
+	description.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(description)
+	column.add_child(_progress_row("达成进度", int(progress.current), int(progress.target),
+		tier_color if unlocked else Color(0.54, 0.63, 0.66),
+		"AchievementProgress_%s" % str(achievement.id)))
+	return card
 
 
 func _build_jade_armory_list() -> Control:
@@ -2915,9 +2984,18 @@ func _build_jade_armory_list() -> Control:
 	panel.name = "JadeArmoryPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 10)
+	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 	column.add_child(_section_title("轮回玉藏兵"))
+	column.add_child(_build_current_jade_weapon_card())
+	var collection_row := HBoxContainer.new()
+	var unlocked_count := AchievementSystemScript.unlocked_count(run_state)
+	var collection_title := _label("玉兵谱录", 15, Color("e9d29b"))
+	collection_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	collection_row.add_child(collection_title)
+	collection_row.add_child(_label("已显化 %d / 16" % unlocked_count, 13,
+		Color(0.70, 0.77, 0.78), HORIZONTAL_ALIGNMENT_RIGHT))
+	column.add_child(collection_row)
 	var scroll := ScrollContainer.new()
 	scroll.name = "JadeArmoryScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2928,28 +3006,142 @@ func _build_jade_armory_list() -> Control:
 	list.add_theme_constant_override("separation", 8)
 	scroll.add_child(list)
 	var armory: Dictionary = run_state.legacy.armory
-	for value in (AchievementSystemScript.load_definitions().get("weapons", []) as Array):
+	var definitions: Dictionary = AchievementSystemScript.load_definitions()
+	var achievement_by_weapon := {}
+	for achievement_value in (definitions.get("achievements", []) as Array):
+		var achievement: Dictionary = achievement_value
+		achievement_by_weapon[str(achievement.weapon_id)] = achievement
+	for value in (definitions.get("weapons", []) as Array):
 		var definition: Dictionary = value
-		var weapon: Dictionary = armory.weapons[str(definition.id)]
-		if not bool(weapon.unlocked):
-			list.add_child(_label("◇ %s · 尚未显化" % str(definition.name), 15, Color(0.55, 0.58, 0.59)))
-			continue
-		var equipped := str(armory.equipped_id) == str(definition.id)
-		var text_value := "%s [%s] %s · %s\n共鸣%d · 蓄能%d/100 · 显圣%d次" % [
-			"◆" if equipped else "◇", AchievementSystemScript.TIER_NAMES[int(definition.tier)],
-			str(definition.name), AchievementSystemScript.stage_name(int(weapon.stage)),
-			int(weapon.resonance), int(weapon.charge), int(weapon.invocations)]
-		var button := _button(text_value, _equip_jade_weapon.bind(str(definition.id)), equipped)
-		button.name = "JadeWeaponButton_%s" % str(definition.id)
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size.y = 76
+		list.add_child(_build_jade_weapon_card(definition, armory,
+			achievement_by_weapon.get(str(definition.id), {})))
+	return panel
+
+
+func _build_current_jade_weapon_card() -> PanelContainer:
+	var current := AchievementSystemScript.current_weapon(run_state)
+	var tier := clampi(int(current.get("tier", 0)), 0, 2)
+	var accent := _achievement_tier_color(tier) if not current.is_empty() else era_accent
+	var card := _panel(0.34, accent)
+	card.name = "ArmoryCurrentCard"
+	card.custom_minimum_size.y = 168
+	var card_style := card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	card_style.content_margin_left = 14
+	card_style.content_margin_right = 14
+	card_style.content_margin_top = 10
+	card_style.content_margin_bottom = 10
+	card_style.shadow_size = 6
+	card.add_theme_stylebox_override("panel", card_style)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 5)
+	card.add_child(column)
+	if current.is_empty():
+		column.add_child(_label("本命玉兵尚未显化", 18, Color("e2d5b7"), HORIZONTAL_ALIGNMENT_CENTER))
+		var empty_hint := _label("完成任一道轮回成就，黑白轮回玉便会显化第一件永久玉兵。", 14,
+			Color(0.72, 0.78, 0.78), HORIZONTAL_ALIGNMENT_CENTER)
+		empty_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(empty_hint)
+		return card
+	var heading := HBoxContainer.new()
+	var name_label := _label(str(current.name), 19, Color("f5e5bd"))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(name_label)
+	heading.add_child(_label("[%s] %s · %s" % [AchievementSystemScript.TIER_NAMES[tier],
+		_jade_style_name(str(current.style)), str(current.stage_name)], 13, accent,
+		HORIZONTAL_ALIGNMENT_RIGHT))
+	column.add_child(heading)
+	var description := _label(str(current.description), 13, Color(0.77, 0.81, 0.80))
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.max_lines_visible = 2
+	description.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(description)
+	var effective: Dictionary = AchievementSystemScript.effective_bonuses(run_state)
+	column.add_child(_label("当前加成 · %s   ·   已显圣 %d 次" % [
+		_jade_bonus_text(effective), int(current.invocations)], 13, Color("e4c878")))
+	var progress_row := HBoxContainer.new()
+	progress_row.add_theme_constant_override("separation", 12)
+	var stage := int(current.stage)
+	var resonance_target := int(AchievementSystemScript.STAGE_THRESHOLDS[mini(stage + 1, 3)])
+	var resonance_value := mini(int(current.resonance), resonance_target)
+	var resonance_title := "共鸣 · 道化圆满" if stage >= 3 else "共鸣 · 至%s" % \
+		AchievementSystemScript.stage_name(stage + 1)
+	var resonance_progress := _progress_row(resonance_title, resonance_value, resonance_target,
+		accent, "ArmoryResonanceProgress")
+	resonance_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_row.add_child(resonance_progress)
+	var charge_progress := _progress_row("显圣蓄能", int(current.charge), 100,
+		Color("74c8d4"), "ArmoryChargeProgress")
+	charge_progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	progress_row.add_child(charge_progress)
+	column.add_child(progress_row)
+	return card
+
+
+func _build_jade_weapon_card(definition: Dictionary, armory: Dictionary,
+		achievement: Dictionary) -> PanelContainer:
+	var weapon_id := str(definition.id)
+	var weapon: Dictionary = armory.weapons[weapon_id]
+	var unlocked := bool(weapon.unlocked)
+	var equipped := unlocked and str(armory.equipped_id) == weapon_id
+	var tier := clampi(int(definition.tier), 0, 2)
+	var tier_color := _achievement_tier_color(tier)
+	var card := _panel(0.28 if unlocked else 0.15, tier_color)
+	card.name = "JadeWeaponCard_%s" % weapon_id
+	card.custom_minimum_size.y = 112
+	var card_style := card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	card_style.content_margin_left = 12
+	card_style.content_margin_right = 12
+	card_style.content_margin_top = 8
+	card_style.content_margin_bottom = 8
+	card_style.shadow_size = 4
+	if not unlocked:
+		card_style.border_color = Color(tier_color, 0.24)
+	card.add_theme_stylebox_override("panel", card_style)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	card.add_child(row)
+	var text_box := VBoxContainer.new()
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_box.add_theme_constant_override("separation", 3)
+	row.add_child(text_box)
+	var state_text := "已共鸣" if equipped else ("已显化" if unlocked else "未显化")
+	text_box.add_child(_label("%s  [%s] %s · %s" % [state_text,
+		AchievementSystemScript.TIER_NAMES[tier], str(definition.name),
+		AchievementSystemScript.stage_name(int(weapon.stage)) if unlocked else _jade_style_name(str(definition.style))],
+		15, tier_color if unlocked else Color(0.63, 0.66, 0.66)))
+	var detail := _label(str(definition.description), 12,
+		Color(0.72, 0.77, 0.77) if unlocked else Color(0.58, 0.62, 0.63))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	detail.max_lines_visible = 2
+	detail.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	text_box.add_child(detail)
+	if unlocked:
+		text_box.add_child(_label("%s · 基础 %s · 共鸣 %d" % [_jade_style_name(str(definition.style)),
+			_jade_bonus_text(definition.bonuses), int(weapon.resonance)], 12, Color("d7be7c")))
+		var button := _button("当前" if equipped else "共鸣", _equip_jade_weapon.bind(weapon_id),
+			not equipped, "", true)
+		button.name = "JadeWeaponButton_%s" % weapon_id
+		button.custom_minimum_size = Vector2(82, 48)
 		button.disabled = equipped
 		if equipped:
 			button.add_theme_color_override("font_disabled_color", Color("f0ddb0"))
-			button.add_theme_stylebox_override("disabled", _button_style(0.30,
-				_achievement_tier_color(int(definition.tier)), 0.78))
-		list.add_child(button)
-	return panel
+			button.add_theme_stylebox_override("disabled", _button_style(0.30, tier_color, 0.78, true))
+		row.add_child(button)
+	else:
+		var progress: Dictionary = AchievementSystemScript.achievement_progress(run_state, achievement)
+		text_box.add_child(_label("解锁 · 成就「%s」 · %s" % [str(achievement.get("name", "未知道痕")),
+			str(progress.get("label", "0 / 1"))], 12, Color(tier_color, 0.72)))
+	return card
+
+
+func _jade_style_name(style_id: String) -> String:
+	return {"slaughter":"杀伐道", "guardian":"守御道", "insight":"问心道", "myriad":"万象道"}.get(
+		style_id, "未定道")
+
+
+func _jade_bonus_text(bonuses: Dictionary) -> String:
+	var text_value := _inventory_bonus_text(bonuses)
+	return text_value if not text_value.is_empty() else "暂无属性加成"
 
 
 func _equip_jade_weapon(weapon_id: String) -> void:
@@ -3200,12 +3392,15 @@ func _section_title(text_value: String) -> Label:
 	return label
 
 
-func _progress_row(title: String, value: int, maximum: int, color: Color) -> Control:
+func _progress_row(title: String, value: int, maximum: int, color: Color,
+		node_name: String = "") -> Control:
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 3)
 	stack.add_child(_label("%s  %d / %d" % [title, value, maximum], 14,
 		Color(0.84, 0.87, 0.87, 0.92)))
 	var bar := ProgressBar.new()
+	if not node_name.is_empty():
+		bar.name = node_name
 	bar.max_value = max(1, maximum)
 	bar.value = clamp(value, 0, maximum)
 	bar.show_percentage = false
