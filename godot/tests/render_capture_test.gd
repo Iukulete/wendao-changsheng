@@ -33,7 +33,51 @@ func _run() -> void:
 	await process_frame
 	root.size = Vector2i(1280, 720)
 	await _settle_frames(4)
+	var menu_viewport := root.get_visible_rect()
+	var menu_scroll := game.find_child("MenuScroll", true, false) as ScrollContainer
+	var menu_grid := game.find_child("MenuResponsiveGrid", true, false) as GridContainer
+	var menu_panel := game.find_child("MenuPanel", true, false) as Control
+	var menu_controls: Array[Control] = [
+		game.find_child("DaoNameInput", true, false) as Control,
+		game.find_child("ContinueButton", true, false) as Control,
+		game.find_child("MenuStartButton", true, false) as Control,
+		game.find_child("LegacyImportButton", true, false) as Control,
+		game.find_child("MenuAudioSettingsButton", true, false) as Control,
+		game.find_child("MenuExitButton", true, false) as Control,
+	]
+	if menu_scroll == null or menu_grid == null or menu_panel == null or menu_grid.columns != 2:
+		failures.append("1280x720主菜单没有启用双栏首屏布局")
+	elif menu_scroll.get_v_scroll_bar().visible or not menu_viewport.encloses(menu_panel.get_global_rect()):
+		failures.append("1280x720主菜单仍需要滚动或标题卡越出首屏：%s" % [menu_panel.get_global_rect()])
+	for control in menu_controls:
+		if control == null or not menu_viewport.encloses(control.get_global_rect()):
+			failures.append("1280x720主菜单关键操作没有完整落在首屏：%s" % [
+				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("menu_1280x720.png"), Vector2i(1280, 720), "主菜单 1280x720")
+	root.size = Vector2i(800, 720)
+	await _settle_frames(4)
+	var narrow_viewport := root.get_visible_rect()
+	var narrow_scroll_bar := menu_scroll.get_v_scroll_bar() if menu_scroll != null else null
+	if menu_grid == null or menu_grid.columns != 1:
+		failures.append("800x720主菜单没有切换到单栏回退布局")
+	elif menu_panel == null or menu_panel.size.x > narrow_viewport.size.x:
+		failures.append("800x720主菜单标题卡发生横向裁切：%s" % [
+			menu_panel.get_global_rect() if menu_panel != null else "missing"])
+	if narrow_scroll_bar == null or not narrow_scroll_bar.visible or \
+			narrow_scroll_bar.max_value <= narrow_scroll_bar.page:
+		failures.append("800x720主菜单没有提供可用的纵向滚动路径")
+	_capture(root, output_root.path_join("menu_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏主菜单顶部 800x720")
+	if menu_scroll != null and narrow_scroll_bar != null:
+		menu_scroll.scroll_vertical = int(narrow_scroll_bar.max_value)
+		await _settle_frames(4)
+		var narrow_exit := game.find_child("MenuExitButton", true, false) as Control
+		if narrow_exit == null or not narrow_viewport.encloses(narrow_exit.get_global_rect()):
+			failures.append("800x720主菜单滚动到底后末端操作仍不可达")
+	_capture(root, output_root.path_join("menu_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏主菜单底部 800x720")
+	root.size = Vector2i(1280, 720)
+	await _settle_frames(4)
 	game.call("_open_audio_settings")
 	await _settle_frames(4)
 	var audio_panel := game.find_child("AudioSettingsPanel", true, false) as Control

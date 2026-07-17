@@ -296,8 +296,8 @@ func _show_menu() -> void:
 		vignette.material.set_shader_parameter("accent", era_accent)
 		vignette.material.set_shader_parameter("tint", Color(0.014, 0.025, 0.045, 0.14))
 
-	# Keep the title card centered whenever it fits, while retaining a real
-	# vertical overflow path on short displays (or with larger system fonts).
+	# Keep every primary desktop action in the first 720p viewport. Narrow or
+	# large-font layouts collapse to one column and retain a real scroll path.
 	var scroll := ScrollContainer.new()
 	scroll.name = "MenuScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -313,39 +313,80 @@ func _show_menu() -> void:
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.add_child(center)
 
-	var menu_panel := _panel(0.84, era_accent)
+	var menu_panel := _panel(0.88, era_accent)
 	menu_panel.name = "MenuPanel"
 	menu_panel.custom_minimum_size = Vector2(590, 0)
 	center.add_child(menu_panel)
-	var column := VBoxContainer.new()
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 10)
-	menu_panel.add_child(column)
 
-	column.add_child(_spacer(2))
+	var layout := GridContainer.new()
+	layout.name = "MenuResponsiveGrid"
+	layout.columns = 2 if screen_host.size.x >= 1040.0 else 1
+	layout.add_theme_constant_override("h_separation", 28)
+	layout.add_theme_constant_override("v_separation", 18)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	menu_panel.add_child(layout)
+	scroll.resized.connect(func() -> void:
+		if is_instance_valid(layout):
+			layout.columns = 2 if scroll.size.x >= 1040.0 else 1
+	)
+
+	var identity_column := VBoxContainer.new()
+	identity_column.name = "MenuIdentityColumn"
+	identity_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	identity_column.add_theme_constant_override("separation", 8)
+	identity_column.custom_minimum_size.x = 390
+	identity_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(identity_column)
+
 	var eyebrow := _label("旧玉纪事 · 神游新篇", 15, Color(era_accent, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
-	column.add_child(eyebrow)
-	var title := _display_label("问道长生", 62, Color("f4e5b7"), HORIZONTAL_ALIGNMENT_CENTER)
+	identity_column.add_child(eyebrow)
+	var title := _display_label("问道长生", 60, Color("f4e5b7"), HORIZONTAL_ALIGNMENT_CENTER)
 	title.add_theme_constant_override("outline_size", 9)
 	title.add_theme_color_override("font_outline_color", Color(0.04, 0.03, 0.02, 0.72))
-	column.add_child(title)
-	column.add_child(_label("山河会老，名字会被误传；只有选择仍在轮回里发光。", 18,
-		Color(0.86, 0.88, 0.87, 0.86), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_spacer(8))
+	identity_column.add_child(title)
+	var promise := _label("山河会老，名字会被误传；\n只有选择仍在轮回里发光。", 17,
+		Color(0.86, 0.88, 0.87, 0.86), HORIZONTAL_ALIGNMENT_CENTER)
+	promise.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	promise.custom_minimum_size.x = 370
+	identity_column.add_child(promise)
+	identity_column.add_child(_spacer(4))
 
 	var seal := DaoCompassScript.new()
-	seal.custom_minimum_size = Vector2(230, 142)
+	seal.name = "MenuDaoCompass"
+	seal.custom_minimum_size = Vector2(250, 176)
 	seal.call("set_stats", player.roots, 0, 4, era_accent)
-	column.add_child(seal)
-	column.add_child(_label("请写下此世道号", 18, Color(era_accent, 0.95), HORIZONTAL_ALIGNMENT_CENTER))
+	identity_column.add_child(seal)
+	var feature_strip := HBoxContainer.new()
+	feature_strip.name = "MenuFeatureStrip"
+	feature_strip.alignment = BoxContainer.ALIGNMENT_CENTER
+	feature_strip.add_theme_constant_override("separation", 7)
+	for feature_text in ["六纪元", "十世轮回", "本地演算"]:
+		feature_strip.add_child(_menu_feature_pill(feature_text))
+	identity_column.add_child(feature_strip)
+	identity_column.add_child(_label("一枚旧玉，记录每一世留下的因果。", 14,
+		Color(0.70, 0.76, 0.77, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+
+	var action_panel := _panel(0.42, era_accent)
+	action_panel.name = "MenuActionPanel"
+	action_panel.custom_minimum_size.x = 474
+	action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(action_panel)
+	var action_column := VBoxContainer.new()
+	action_column.name = "MenuActionColumn"
+	action_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_column.add_theme_constant_override("separation", 8)
+	action_panel.add_child(action_column)
+	action_column.add_child(_section_title("请写下此世道号"))
+	action_column.add_child(_label("道号只属于这一世，旧玉会替你记住。", 14,
+		Color(0.72, 0.77, 0.78, 0.86)))
 	var name_input := LineEdit.new()
 	name_input.name = "DaoNameInput"
 	name_input.placeholder_text = "旧玉会记住这个名字"
 	name_input.text = "云归客" if player.name == "无名" else str(player.name)
 	name_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_input.custom_minimum_size = Vector2(430, 48)
+	name_input.custom_minimum_size = Vector2(430, 46)
 	_style_line_edit(name_input)
-	column.add_child(name_input)
+	action_column.add_child(name_input)
 
 	var save_probe: Dictionary = save_service.call("inspect_save")
 	var can_continue := bool(save_probe.get("ok", false))
@@ -359,44 +400,68 @@ func _show_menu() -> void:
 		]
 	var continue_button := _button(continue_text, _continue_game, true)
 	continue_button.name = "ContinueButton"
-	continue_button.custom_minimum_size = Vector2(430, 52)
+	continue_button.custom_minimum_size = Vector2(430, 48)
 	continue_button.disabled = not can_continue
 	continue_button.tooltip_text = str(save_probe.get("message", "尚无可继续的旧档。"))
-	column.add_child(continue_button)
+	action_column.add_child(continue_button)
 
 	var start_label := "另开新生 · 覆写当前档" if can_continue else "入世 · 开始新生"
 	var start_button := _button(start_label, _start_new_game.bind(name_input), not can_continue)
-	start_button.custom_minimum_size = Vector2(430, 52)
-	column.add_child(start_button)
+	start_button.name = "MenuStartButton"
+	start_button.custom_minimum_size = Vector2(430, 48)
+	action_column.add_child(start_button)
 	var legacy_probe: Dictionary = save_service.call("inspect_legacy_saves")
 	var can_import_legacy := bool(legacy_probe.get("ok", false))
+	var secondary_actions := HBoxContainer.new()
+	secondary_actions.name = "MenuSecondaryActions"
+	secondary_actions.add_theme_constant_override("separation", 8)
+	secondary_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if can_import_legacy:
 		var legacy_latest: Dictionary = legacy_probe.get("latest", {})
-		var import_text := "承接旧版六槽 · %s · %s" % [
-			str(legacy_latest.get("player_name", "旧日之我")),
-			str(legacy_latest.get("era", "未知纪元")),
-		]
-		if can_continue:
-			import_text = "导入旧版六槽并备份当前档 · %s" % str(legacy_latest.get("player_name", "旧日之我"))
+		var import_text := "导入旧版" if can_continue else "承接旧版"
 		var import_button := _button(import_text, _import_legacy_game, false)
 		import_button.name = "LegacyImportButton"
-		import_button.custom_minimum_size = Vector2(430, 48)
-		import_button.tooltip_text = "只读导入最近的旧版 slot_*.txt；源文件不会被修改。"
-		column.add_child(import_button)
-	var audio_button := _button("音律与听觉设置", _open_audio_settings, false)
+		import_button.custom_minimum_size = Vector2(0, 46)
+		import_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		import_button.tooltip_text = "%s · %s。只读导入最近的旧版 slot_*.txt；源文件不会被修改。%s" % [
+			str(legacy_latest.get("player_name", "旧日之我")),
+			str(legacy_latest.get("era", "未知纪元")),
+			"当前主档会先自动备份。" if can_continue else "",
+		]
+		secondary_actions.add_child(import_button)
+	var audio_button := _button("音律设置", _open_audio_settings, false)
 	audio_button.name = "MenuAudioSettingsButton"
-	audio_button.custom_minimum_size = Vector2(430, 48)
-	column.add_child(audio_button)
+	audio_button.custom_minimum_size = Vector2(0, 46)
+	audio_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	secondary_actions.add_child(audio_button)
+	var exit_button := _button("离开游戏", _quit_game, false)
+	exit_button.name = "MenuExitButton"
+	exit_button.custom_minimum_size = Vector2(0, 46)
+	exit_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	secondary_actions.add_child(exit_button)
+	action_column.add_child(secondary_actions)
 	var save_status := menu_notice if not menu_notice.is_empty() else str(save_probe.get("message", ""))
-	column.add_child(_label(save_status, 14,
+	var status_label := _label(save_status, 14,
 		Color("e9c67a") if not can_continue and save_probe.get("code", "") == "corrupt_save" else Color(0.72, 0.76, 0.78, 0.84),
-		HORIZONTAL_ALIGNMENT_CENTER))
+		HORIZONTAL_ALIGNMENT_CENTER)
+	status_label.name = "MenuSaveStatus"
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.custom_minimum_size.x = 430
+	action_column.add_child(status_label)
 	var shortcut_text := "Enter 开始新生  ·  C 续接旧档  ·  O 音律"
 	if can_import_legacy:
 		shortcut_text += "  ·  I 导入旧版"
-	column.add_child(_label(shortcut_text, 14,
-		Color(0.72, 0.76, 0.78, 0.78), HORIZONTAL_ALIGNMENT_CENTER))
+	var shortcut_label := _label(shortcut_text, 13,
+		Color(0.72, 0.76, 0.78, 0.78), HORIZONTAL_ALIGNMENT_CENTER)
+	shortcut_label.name = "MenuShortcutLabel"
+	shortcut_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	shortcut_label.custom_minimum_size.x = 430
+	action_column.add_child(shortcut_label)
 	name_input.grab_focus()
+
+
+func _quit_game() -> void:
+	get_tree().quit()
 
 
 func _start_new_game(name_input: LineEdit) -> void:
@@ -2624,6 +2689,26 @@ func _panel(alpha: float, accent: Color) -> PanelContainer:
 	style.content_margin_bottom = 18
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
+
+
+func _menu_feature_pill(text_value: String) -> PanelContainer:
+	var pill := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(era_accent.darkened(0.72), 0.36)
+	style.border_color = Color(era_accent, 0.38)
+	style.set_border_width_all(1)
+	style.corner_radius_top_left = 12
+	style.corner_radius_top_right = 12
+	style.corner_radius_bottom_left = 12
+	style.corner_radius_bottom_right = 12
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 5
+	style.content_margin_bottom = 5
+	pill.add_theme_stylebox_override("panel", style)
+	pill.add_child(_label(text_value, 13, Color(0.82, 0.85, 0.82, 0.92),
+		HORIZONTAL_ALIGNMENT_CENTER))
+	return pill
 
 
 func _button(text_value: String, callback: Callable, primary: bool,
