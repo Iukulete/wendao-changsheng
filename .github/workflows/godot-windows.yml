@@ -58,12 +58,58 @@ jobs:
         shell: pwsh
         run: ./tools/verify_render.ps1
 
+      - name: Install pinned virtual WASAPI validation endpoint
+        shell: pwsh
+        run: |
+          # VB-CABLE is third-party donationware fetched from its official
+          # origin (https://vb-audio.com/Cable/). It is CI infrastructure only
+          # and is never bundled into the game or uploaded artifact.
+          $url = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
+          $expectedArchiveHash = "B950E39F01AF1D04EA623C8F6D8EB9B6EA5C477C637295FABF20631C85116BFB"
+          $expectedSetupSigner = "A77952D93229D0EC36E2543081EEA7D125732B9C"
+          $expectedCatalogSigner = "9A4A6CFEE73C6B65945FCAA083DFBCC1E9077E7E"
+          $archive = Join-Path $env:RUNNER_TEMP "VBCABLE_Driver_Pack45.zip"
+          $driverDir = Join-Path $env:RUNNER_TEMP "VBCABLE_Driver_Pack45"
+          Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $archive
+          $archiveHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+          if ($archiveHash -ne $expectedArchiveHash) {
+            throw "VB-CABLE archive hash mismatch: $archiveHash"
+          }
+          Expand-Archive -LiteralPath $archive -DestinationPath $driverDir
+          $setup = Join-Path $driverDir "VBCABLE_Setup_x64.exe"
+          $catalog = Join-Path $driverDir "vbaudio_cable64_win10.cat"
+          $setupSignature = Get-AuthenticodeSignature -LiteralPath $setup
+          $catalogSignature = Get-AuthenticodeSignature -LiteralPath $catalog
+          if ($setupSignature.Status -ne "Valid" -or
+              $setupSignature.SignerCertificate.Thumbprint -ne $expectedSetupSigner) {
+            throw "VB-CABLE setup signature is not the pinned publisher signature."
+          }
+          if ($catalogSignature.Status -ne "Valid" -or
+              $catalogSignature.SignerCertificate.Thumbprint -ne $expectedCatalogSigner) {
+            throw "VB-CABLE catalog signature is not the pinned Microsoft hardware signature."
+          }
+          $installer = Start-Process -FilePath $setup -ArgumentList "-i", "-h" `
+            -WindowStyle Hidden -PassThru -Wait
+          if ($installer.ExitCode -ne 0) {
+            throw "VB-CABLE installation failed with exit code $($installer.ExitCode)."
+          }
+          pnputil /scan-devices
+          Restart-Service Audiosrv -Force
+          $deadline = (Get-Date).AddSeconds(30)
+          do {
+            $endpoint = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
+              Where-Object { $_.Status -eq "OK" -and $_.FriendlyName -like "CABLE Input*" } |
+              Select-Object -First 1
+            if (-not $endpoint) { Start-Sleep -Seconds 2 }
+          } until ($endpoint -or (Get-Date) -ge $deadline)
+          if (-not $endpoint) {
+            throw "The pinned CI audio driver installed but exposed no active render endpoint."
+          }
+          Write-Host "Virtual WASAPI render endpoint ready: $($endpoint.FriendlyName)"
+
       - name: Export Windows x86_64 release
         shell: pwsh
-        # GitHub-hosted Windows runners do not expose a stable physical audio
-        # endpoint. Final audio, decoding, gameplay and rendering are gated
-        # above; hardware-backed WASAPI remains mandatory for ProductRelease.
-        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify -SkipAudioDeviceSmoke
+        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify -ProductRelease
 
       - name: Verify release boundary
         shell: pwsh
