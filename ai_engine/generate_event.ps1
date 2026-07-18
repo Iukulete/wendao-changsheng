@@ -1,10 +1,10 @@
 ﻿param(
-    [string]$ReleaseDir = (Join-Path (Split-Path $PSScriptRoot -Parent) "release"),
+    [string]$ReleaseDir = "",
     [string]$Model = "gemma3:4b",
     [string]$ModelPath = "",
     [string]$LoraPath = "",
-    [string]$LlamaCli = (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-completion.exe"),
-    [int]$PortableTimeoutSec = 75,
+    [string]$LlamaCli = "",
+    [int]$PortableTimeoutSec = 120,
     [int]$OllamaTimeoutSec = 90,
     [ValidateSet("auto", "portable", "ollama")]
     [string]$Backend = "portable"
@@ -14,6 +14,11 @@ $ErrorActionPreference = "Stop"
 $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+if ([string]::IsNullOrWhiteSpace($ReleaseDir)) {
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $ReleaseDir = Join-Path (Split-Path -Parent $scriptRoot) "release"
+}
 
 function Resolve-ConfiguredPath {
     param(
@@ -79,7 +84,18 @@ if ([string]::IsNullOrWhiteSpace($LoraPath)) {
 } elseif (-not (Test-Path -LiteralPath $LoraPath)) {
     $LoraPath = Resolve-AutoLoraPath
 }
-$LlamaCli = [System.IO.Path]::GetFullPath($LlamaCli)
+$runtimeOverrideConfigured = -not [string]::IsNullOrWhiteSpace($LlamaCli) -or
+    -not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable("WENDAO_LLAMA_CLI")) -or
+    (Test-Path -LiteralPath (Join-Path $PSScriptRoot "llama_cli_path.txt"))
+$LlamaCli = Resolve-ConfiguredPath `
+    -ExplicitPath $LlamaCli `
+    -EnvName "WENDAO_LLAMA_CLI" `
+    -ConfigFile (Join-Path $PSScriptRoot "llama_cli_path.txt") `
+    -DefaultPath (Join-Path $PSScriptRoot "runtime\vulkan\llama-completion.exe")
+if (-not $runtimeOverrideConfigured -and -not (Test-Path -LiteralPath $LlamaCli)) {
+    $LlamaCli = [System.IO.Path]::GetFullPath(
+        (Join-Path $PSScriptRoot "runtime\llama.cpp\llama-completion.exe"))
+}
 
 $promptPath = Join-Path $ReleaseDir "ai_prompt.txt"
 $eventPath = Join-Path $ReleaseDir "ai_event.txt"
@@ -187,7 +203,10 @@ function Add-ClippedPromptLine {
 function Test-FirstLifePrompt {
     param([string]$PromptText)
     if ([string]::IsNullOrWhiteSpace($PromptText)) { return $false }
-    return $PromptText -match "第一世|第1世|Life:\s*first life|first life|尚无前世记忆|no past-life memory"
+    if ($PromptText -match "(?m)^(因果|世代):[^\r\n]*(第一世|第1世|尚无前世记忆)") {
+        return $true
+    }
+    return $PromptText -match "(?im)^(因果|generation):[^\r\n]*(first life|no past-life memory)"
 }
 
 function Test-FirstLifeMemoryLeak {
@@ -306,12 +325,45 @@ function Build-PortablePrompt {
     return $joined
 }
 
+function Build-CompactPortablePrompt {
+    param([string]$PromptText)
+
+    $sourceLines = @($PromptText -split "`r?`n")
+    $out = New-Object System.Collections.Generic.List[string]
+    Add-ClippedPromptLine $out "生成修仙事件，只输出5行：标题、描述、三个行动选项。" 80
+    Add-ClippedPromptLine $out "标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头；描述20到28个中文字符，只写一个短句。" 100
+    Add-ClippedPromptLine $out "三个选项各2到4个中文字符，不要编号、解释、英文、第二个事件或系统文字。" 100
+    if (Test-FirstLifePrompt $PromptText) {
+        Add-ClippedPromptLine $out "第一世不得写前世、轮回、转世或旧日因果，只能写今生与旧玉异样。" 90
+    }
+
+    foreach ($line in $sourceLines) {
+        if ($line -match "^(玩家|境界名称|因果|年龄|灵根|此世家世|时代纪元|大道特性|寿元压力):") {
+            Add-ClippedPromptLine $out $line 90
+        }
+        if ($out.Count -ge 10) { break }
+    }
+
+    $sectionSpecs = @(
+        @{ Start = "^(人情风波|同世人物):"; Stops = @("^轮回传承:", "^当前世界:", "^最近记忆:"); Max = 2 },
+        @{ Start = "^当前世界:"; Stops = @("^最近记忆:"); Max = 2 },
+        @{ Start = "^最近记忆:"; Stops = @("^严格只输出"); Max = 1 }
+    )
+    foreach ($spec in $sectionSpecs) {
+        foreach ($line in (Get-PromptSectionLines $sourceLines $spec.Start $spec.Stops $spec.Max 90)) {
+            Add-ClippedPromptLine $out $line 90
+        }
+    }
+
+    return ($out | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }) -join "`n"
+}
+
 function Format-RuntimePrompt {
     param([string]$PromptText)
 
     $modelFile = [System.IO.Path]::GetFileName($ModelPath).ToLowerInvariant()
     if ($modelFile -match "gemma-4") {
-        $portablePrompt = Build-PortablePrompt $PromptText
+        $portablePrompt = Build-CompactPortablePrompt $PromptText
         return "<bos><|turn>user`n" + $portablePrompt.Trim() + "`n<turn|>`n<|turn>model`n"
     }
     return $PromptText
@@ -382,10 +434,12 @@ function Invoke-PortableLlama {
     $args = @(
         "-m", $ModelPath,
         "-f", $runtimePromptPath,
-        "-n", "80",
-        "-c", "4096",
-        "--temp", "0.65",
-        "--top-p", "0.85",
+        "-n", "48",
+        "-c", "1024",
+        "-t", ([Math]::Min(10, [Math]::Max(4, [Environment]::ProcessorCount))).ToString(),
+        "-tb", ([Math]::Min(10, [Math]::Max(4, [Environment]::ProcessorCount))).ToString(),
+        "--temp", "0.55",
+        "--top-p", "0.80",
         "--repeat-penalty", "1.08",
         "--reasoning", "off",
         "-no-cnv",
@@ -529,7 +583,8 @@ $errors = @()
 
 if ([string]::IsNullOrWhiteSpace($text) -and ($Backend -eq "auto" -or $Backend -eq "portable")) {
     try {
-        $usedBackend = "portable-llama.cpp:" + [System.IO.Path]::GetFileName($ModelPath)
+        $runtimeKind = if ($LlamaCli -match "(?i)[\\/]vulkan(?:[\\/]|-)") { "vulkan" } else { "cpu" }
+        $usedBackend = "portable-llama.cpp:$runtimeKind/" + [System.IO.Path]::GetFileName($ModelPath)
         $activeLoraPath = $LoraPath
         if (Test-AdapterDisabled $activeLoraPath) {
             $errors += "portable-lora: disabled after previous failure"
@@ -682,7 +737,7 @@ function Get-ContextKeywords {
     if ($PromptText -match "本命至宝初生器灵|本命器物已有朦胧器灵|器灵只能") {
         return @("本命", "器灵", "亲近", "畏惧", "神识", "温养", "器物")
     }
-    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+    if ($PromptText -match "闻迟") {
         return @("灵机", "蒸汽", "工坊", "闻迟", "器痕", "残炉", "本命", "回路")
     }
     if ($PromptText -match "道祖-天道境|万道母鼎|万道本命至宝|多纪元因果归流") {
@@ -697,7 +752,7 @@ function Get-ContextKeywords {
     if ($PromptText -match "先天通天灵宝|先天一气") {
         return @("先天", "通天灵宝", "先天一气", "观宝", "贪念", "器道")
     }
-    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+    if ($PromptText -match "鸿蒙状态\s*[:：].*(未见|见影|留印)|鸿蒙参悟\s*[:：].*(见影|拒绝)|不能认主|不能调用权柄") {
         return @("鸿蒙", "投影", "见影", "拒绝", "权柄", "低境界", "道心")
     }
     if ($PromptText -match "返道拾荒盟|霜裂短剑|废土返道纪|残宗向导|器阁执事|器痕归灵") {
@@ -754,7 +809,7 @@ function Get-RequiredKeywordGroups {
             @{ Label = "器灵情绪"; Words = @("器灵", "亲近", "畏惧", "神识") }
         )
     }
-    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+    if ($PromptText -match "闻迟") {
         return @(
             @{ Label = "灵机工坊"; Words = @("灵机", "蒸汽", "工坊", "闻迟", "回路") },
             @{ Label = "本命器痕"; Words = @("器痕", "残炉", "本命", "器灵") }
@@ -784,7 +839,7 @@ function Get-RequiredKeywordGroups {
             @{ Label = "先天一气"; Words = @("先天一气", "贪念", "观宝") }
         )
     }
-    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+    if ($PromptText -match "鸿蒙状态\s*[:：].*(未见|见影|留印)|鸿蒙参悟\s*[:：].*(见影|拒绝)|不能认主|不能调用权柄") {
         return @(
             @{ Label = "鸿蒙边界"; Words = @("鸿蒙", "投影", "见影") },
             @{ Label = "低境界拒绝"; Words = @("拒绝", "权柄", "低境界", "道心") }
@@ -903,7 +958,7 @@ function New-ContextFallbackEvent {
             Choices = @("安抚器灵", "温养本命", "暂缓驱使")
         }
     }
-    if ($PromptText -match "闻迟|残炉|灵机工坊") {
+    if ($PromptText -match "闻迟") {
         return @{
             Title = "【传承】炉心器痕"
             Description = "闻迟在灵机工坊残炉前收起轻慢，惊疑地听见本命器痕回应你；他劝你别让旧法被拆成回路。"
@@ -924,7 +979,7 @@ function New-ContextFallbackEvent {
             Choices = @("守礼观宝", "请教器道", "制止争夺")
         }
     }
-    if ($PromptText -match "低境界.*鸿蒙|鸿蒙.*低境界|只能见影|不能认主|不能调用权柄") {
+    if ($PromptText -match "鸿蒙状态\s*[:：].*(未见|见影|留印)|鸿蒙参悟\s*[:：].*(见影|拒绝)|不能认主|不能调用权柄") {
         return @{
             Title = "【因果】鸿蒙见影"
             Description = "鸿蒙投影压过识海，又在你伸手前自行退去；低境界承不住权柄，只能把拒绝化作一线悟痕。"
@@ -955,7 +1010,7 @@ function New-ContextFallbackEvent {
     if ($PromptText -match "枯井守盟|灵井枯潮|末法裂变纪|配给执事|仙帝仍会寿尽") {
         return @{
             Title = "【危机】灵井卡名"
-            Description = "赵临借灵井配给卡住试炼名额，笑你五行灵根太慢；旁人等着看笑话，只有账册露出涂改痕迹。"
+            Description = "配给执事借灵井卡住试炼名额，笑你五行灵根太慢；旁人等着看笑话，只有账册露出涂改痕迹。"
             Choices = @("据理争名", "暂忍记账", "请人作证")
         }
     }

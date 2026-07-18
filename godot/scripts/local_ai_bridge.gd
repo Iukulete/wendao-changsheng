@@ -3,7 +3,7 @@ extends Node
 
 signal event_ready(event_data: Dictionary, metadata: Dictionary)
 
-const DEFAULT_TIMEOUT_MS := 60000
+const DEFAULT_TIMEOUT_MS := 120000
 const OUTPUT_TAGS := ["【机缘】", "【危机】", "【奇遇】", "【因果】", "【传承】"]
 const BLOCKED_OUTPUT_MARKERS := [
 	"model", "assistant", "system", "prompt", "genericagent", "provider",
@@ -25,7 +25,7 @@ func probe_runtime(root_override: String = "") -> Dictionary:
 	var root := _project_root(root_override)
 	var ai_root := root.path_join("ai_engine")
 	var model_path := _resolve_model_path(ai_root)
-	var runtime_path := ai_root.path_join("runtime").path_join("llama.cpp").path_join("llama-completion.exe")
+	var runtime_path := _resolve_runtime_path(ai_root)
 	var generator_path := ai_root.path_join("generate_event.ps1")
 	var windows_host := OS.get_name() == "Windows"
 	var ready := windows_host and FileAccess.file_exists(model_path) and \
@@ -73,7 +73,7 @@ func request_event(state: Dictionary, root_override: String = "",
 		if FileAccess.file_exists(stale_path):
 			DirAccess.remove_absolute(stale_path)
 
-	_active_timeout_ms = clampi(timeout_ms, 5000, 90000)
+	_active_timeout_ms = clampi(timeout_ms, 5000, 150000)
 	var portable_timeout_seconds := maxi(5, int((_active_timeout_ms - 2000) / 1000.0))
 	var arguments := PackedStringArray([
 		"-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
@@ -301,7 +301,15 @@ func _summarize_echoes(echoes: Array) -> String:
 func _project_root(root_override: String) -> String:
 	if not root_override.strip_edges().is_empty():
 		return root_override.simplify_path()
-	return ProjectSettings.globalize_path("res://").path_join("..").simplify_path()
+	return resolve_project_root_for_environment(
+		OS.has_feature("editor"), ProjectSettings.globalize_path("res://"), OS.get_executable_path())
+
+
+static func resolve_project_root_for_environment(editor_mode: bool, resource_root: String,
+		executable_path: String) -> String:
+	if editor_mode:
+		return resource_root.path_join("..").simplify_path()
+	return executable_path.get_base_dir().simplify_path()
 
 
 func _resolve_model_path(ai_root: String) -> String:
@@ -313,6 +321,20 @@ func _resolve_model_path(ai_root: String) -> String:
 	if not configured.is_empty():
 		return configured if configured.is_absolute_path() else ai_root.path_join(configured).simplify_path()
 	return ai_root.path_join("models").path_join("gemma-4-E4B_q4_0-it.gguf")
+
+
+func _resolve_runtime_path(ai_root: String) -> String:
+	var environment_path := OS.get_environment("WENDAO_LLAMA_CLI").strip_edges()
+	if not environment_path.is_empty():
+		return environment_path if environment_path.is_absolute_path() else ai_root.path_join(environment_path).simplify_path()
+	var config_path := ai_root.path_join("llama_cli_path.txt")
+	var configured := _read_text(config_path)
+	if not configured.is_empty():
+		return configured if configured.is_absolute_path() else ai_root.path_join(configured).simplify_path()
+	var vulkan_path := ai_root.path_join("runtime").path_join("vulkan").path_join("llama-completion.exe")
+	if FileAccess.file_exists(vulkan_path):
+		return vulkan_path
+	return ai_root.path_join("runtime").path_join("llama.cpp").path_join("llama-completion.exe")
 
 
 func _read_text(path: String) -> String:

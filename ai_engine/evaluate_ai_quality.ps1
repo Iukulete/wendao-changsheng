@@ -1,8 +1,8 @@
 ﻿param(
-    [string]$ReleaseDir = (Join-Path (Split-Path $PSScriptRoot -Parent) "release"),
+    [string]$ReleaseDir = "",
     [ValidateSet("auto", "portable", "ollama")]
     [string]$Backend = "portable",
-    [int]$TimeoutSec = 45
+    [int]$TimeoutSec = 120
 )
 
 $ErrorActionPreference = "Stop"
@@ -10,6 +10,10 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+if ([string]::IsNullOrWhiteSpace($ReleaseDir)) {
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $ReleaseDir = Join-Path (Split-Path -Parent $scriptRoot) "release"
+}
 $ReleaseDir = [System.IO.Path]::GetFullPath($ReleaseDir)
 $EvalRoot = Join-Path $ReleaseDir "ai_eval"
 $Generator = Join-Path $PSScriptRoot "generate_event.ps1"

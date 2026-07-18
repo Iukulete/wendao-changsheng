@@ -137,14 +137,7 @@ jobs:
 
       - name: Verify release boundary
         shell: pwsh
-        run: |
-          $output = "release/godot/windows"
-          if (-not (Test-Path "$output/wendao-changsheng.exe")) { throw "Windows executable missing" }
-          if (-not (Test-Path "$output/wendao-changsheng.pck")) { throw "Godot resource pack missing" }
-          $unexpected = Get-ChildItem $output -Recurse -File | Where-Object {
-            $_.Name -match '\.cpp$|\.h$|\.obj$'
-          }
-          if ($unexpected) { throw "Non-Godot source leaked into the release artifact: $($unexpected.FullName -join ', ')" }
+        run: ./tools/verify_release_bundle.ps1
 
       - name: Upload Godot-only Windows build
         uses: actions/upload-artifact@v4

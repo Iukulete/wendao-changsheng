@@ -12,6 +12,8 @@ func _init() -> void:
 
 func _run() -> void:
 	var test_root := ProjectSettings.globalize_path("res://").path_join("..").path_join(".tmp").path_join("godot-save-tests").path_join("integration").simplify_path()
+	var previous_model_override := OS.get_environment("WENDAO_GGUF_MODEL")
+	OS.set_environment("WENDAO_GGUF_MODEL", test_root.path_join("missing-local-ai-model.gguf"))
 	var service: RefCounted = SaveServiceScript.new("integrationtest", test_root)
 	service.call("clear_slot")
 	DirAccess.remove_absolute(test_root)
@@ -39,7 +41,7 @@ func _run() -> void:
 		"新生立档时必须初始化同世人物")
 	var local_ai_button := game.find_child("LocalAIButton", true, false) as Button
 	_expect(local_ai_button != null and local_ai_button.disabled,
-		"CI 无本地模型时 AI 动作必须明确禁用，不能伪装就绪")
+		"隔离回归缺少本地模型时 AI 动作必须明确禁用，不能伪装就绪")
 	var inventory_button := game.find_child("InventoryButton", true, false) as Button
 	_expect(inventory_button != null and not inventory_button.disabled,
 		"新生必须能进入行囊与炼器界面")
@@ -176,6 +178,10 @@ func _run() -> void:
 
 	service.call("clear_slot")
 	DirAccess.remove_absolute(test_root)
+	if previous_model_override.is_empty():
+		OS.unset_environment("WENDAO_GGUF_MODEL")
+	else:
+		OS.set_environment("WENDAO_GGUF_MODEL", previous_model_override)
 	game.free()
 	if failures.is_empty():
 		print("MAIN_SAVE_INTEGRATION_TEST_OK: menu, autosave, continue and corrupt-save UI passed")

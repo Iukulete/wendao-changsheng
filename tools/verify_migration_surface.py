@@ -11,6 +11,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 PROJECT = ROOT / "godot" / "project.godot"
 VERIFY_SCRIPT = ROOT / "tools" / "verify_godot.ps1"
+BUILD_SCRIPT = ROOT / "tools" / "build_godot.ps1"
+RELEASE_VERIFY_SCRIPT = ROOT / "tools" / "verify_release_bundle.ps1"
+WORKFLOW = ROOT / ".github" / "workflows" / "godot-windows.yml"
 
 RUNTIME_DOMAINS = {
     "game_state": "GameStateSchema",
@@ -45,6 +48,15 @@ REGRESSION_SCRIPTS = (
     "legacy_save_importer_test.gd",
     "main_save_integration_test.gd",
     "ten_life_long_run_test.gd",
+)
+
+RELEASE_SUPPORT_FILES = (
+    "docs/WINDOWS_RELEASE_README.md",
+    "setup-local-ai.bat",
+    "ai_engine/setup_portable_ai.ps1",
+    "ai_engine/generate_event.ps1",
+    "ai_engine/test_local_ai.ps1",
+    "ai_engine/THIRD_PARTY_AI.md",
 )
 
 
@@ -84,6 +96,27 @@ def verify() -> None:
         if test_name not in verifier_text:
             raise RuntimeError(f"{test_name} is not executed by verify_godot.ps1")
 
+    build_text = read(BUILD_SCRIPT)
+    release_verifier_text = read(RELEASE_VERIFY_SCRIPT)
+    workflow_text = read(WORKFLOW)
+    for relative_path in RELEASE_SUPPORT_FILES:
+        read(ROOT / relative_path)
+    for required_bundle_name in (
+        "AGPL-3.0.txt",
+        "WINDOWS_RELEASE_README.md",
+        "setup_portable_ai.ps1",
+        "generate_event.ps1",
+        "test_local_ai.ps1",
+        "checksums.sha256",
+    ):
+        if required_bundle_name not in build_text:
+            raise RuntimeError(f"release build omits product support file: {required_bundle_name}")
+    if "verify_release_bundle.ps1" not in build_text or "verify_release_bundle.ps1" not in workflow_text:
+        raise RuntimeError("release bundle verifier is not enforced locally and in CI")
+    for forbidden_suffix in ("gguf", "safetensors", "zip"):
+        if forbidden_suffix not in release_verifier_text:
+            raise RuntimeError(f"release verifier does not reject on-demand payloads: {forbidden_suffix}")
+
     legacy_patterns = (
         re.compile(r"(?i)(^|/)(CMakeLists\.txt|Makefile|.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx|rc))$"),
         re.compile(r"(?i)^\.github/workflows/(story-art-validation|windows-build(-v06)?)\.yml$"),
@@ -100,7 +133,7 @@ def main() -> int:
     print(
         "MIGRATION_SURFACE_OK: "
         f"{len(RUNTIME_DOMAINS)} runtime domains, {len(REGRESSION_SCRIPTS)} regression entrypoints, "
-        "single Godot main scene, no tracked Win32/C++ source or retired CI"
+        "standalone release support, single Godot main scene, no tracked Win32/C++ source or retired CI"
     )
     return 0
 

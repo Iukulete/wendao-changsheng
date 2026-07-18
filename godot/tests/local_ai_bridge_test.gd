@@ -13,10 +13,34 @@ func _init() -> void:
 func _run() -> void:
 	var bridge := LocalAIBridgeScript.new()
 	root.add_child(bridge)
+	var editor_root := str(LocalAIBridgeScript.resolve_project_root_for_environment(
+		true, "D:/game/godot", "D:/game/release/wendao.exe")).replace("\\", "/")
+	var exported_root := str(LocalAIBridgeScript.resolve_project_root_for_environment(
+		false, "D:/game/release", "D:/bundle/wendao-changsheng.exe")).replace("\\", "/")
+	_expect(editor_root == "D:/game" and exported_root == "D:/bundle",
+		"编辑器必须从工程父目录找 AI，导出包必须从可执行文件同目录找 AI")
 	var state := GameStateScript.create_new_game("观微", 20260716, [6, 7, 6, 7, 6])
 	state.world.npcs = [{
 		"id": "npc_test", "name": "沈照川", "realm": "筑基", "stance": "insight", "alive": true,
 	}]
+
+	var accelerated_root := ProjectSettings.globalize_path("res://").path_join("..").path_join(".tmp").path_join("local-ai-vulkan-probe").simplify_path()
+	DirAccess.make_dir_recursive_absolute(accelerated_root.path_join("ai_engine/runtime/vulkan"))
+	DirAccess.make_dir_recursive_absolute(accelerated_root.path_join("ai_engine/models"))
+	_write_probe_file(accelerated_root.path_join("ai_engine/runtime/vulkan/llama-completion.exe"))
+	_write_probe_file(accelerated_root.path_join("ai_engine/models/gemma-4-E4B_q4_0-it.gguf"))
+	_write_probe_file(accelerated_root.path_join("ai_engine/generate_event.ps1"))
+	var accelerated_probe: Dictionary = bridge.probe_runtime(accelerated_root)
+	_expect(bool(accelerated_probe.ready) and str(accelerated_probe.runtime_path).replace("\\", "/").contains("/runtime/vulkan/"),
+		"存在 Vulkan 后端时必须优先启用加速运行时，不能退回慢速 CPU")
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/runtime/vulkan/llama-completion.exe"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/models/gemma-4-E4B_q4_0-it.gguf"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/generate_event.ps1"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/runtime/vulkan"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/runtime"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/models"))
+	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine"))
+	DirAccess.remove_absolute(accelerated_root)
 
 	var missing_root := ProjectSettings.globalize_path("res://").path_join("..").path_join(".tmp").path_join("missing-ai-runtime").simplify_path()
 	var probe: Dictionary = bridge.probe_runtime(missing_root)
@@ -57,7 +81,7 @@ func _run() -> void:
 
 	bridge.free()
 	if failures.is_empty():
-		print("LOCAL_AI_BRIDGE_TEST_OK: disabled, valid, timeout and illegal-output fallback paths passed")
+		print("LOCAL_AI_BRIDGE_TEST_OK: roots, disabled, valid, timeout and illegal-output fallback paths passed")
 		quit(0)
 	else:
 		for failure in failures:
@@ -68,3 +92,12 @@ func _run() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _write_probe_file(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		failures.append("无法创建本地 AI 路径探针：%s" % path)
+		return
+	file.store_string("probe")
+	file.close()

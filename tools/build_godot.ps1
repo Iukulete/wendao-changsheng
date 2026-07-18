@@ -15,6 +15,8 @@ $OutputDir = Join-Path $Root "release\godot\windows"
 $OutputExe = Join-Path $OutputDir "wendao-changsheng.exe"
 $OutputPck = Join-Path $OutputDir "wendao-changsheng.pck"
 $OutputLicenseDir = Join-Path $OutputDir "licenses"
+$OutputAiDir = Join-Path $OutputDir "ai_engine"
+$ChecksumPath = Join-Path $OutputDir "checksums.sha256"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
 $TempDir = Join-Path $Root ".tmp\godot"
 
@@ -22,7 +24,13 @@ if ($ProductRelease -and $SkipAudioDeviceSmoke) {
     throw "ProductRelease cannot skip the real Windows audio-device smoke test."
 }
 
-New-Item -ItemType Directory -Force -Path $TempDir, $OutputDir | Out-Null
+$releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $Root "release"))
+$resolvedOutputDir = [System.IO.Path]::GetFullPath($OutputDir)
+if (-not $resolvedOutputDir.StartsWith($releaseRoot + [System.IO.Path]::DirectorySeparatorChar,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Refusing to clean unexpected output directory: $resolvedOutputDir"
+}
+New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 $env:TEMP = $TempDir
 $env:TMP = $TempDir
 
@@ -50,7 +58,10 @@ if (-not $SkipVerify) {
     }
 }
 
-Remove-Item -LiteralPath $OutputExe, $OutputPck -Force -ErrorAction SilentlyContinue
+if (Test-Path -LiteralPath $resolvedOutputDir) {
+    Remove-Item -LiteralPath $resolvedOutputDir -Recurse -Force
+}
+New-Item -ItemType Directory -Force -Path $resolvedOutputDir | Out-Null
 Write-Host "Exporting the Windows x86_64 release..."
 & $ConsolePath --headless --path $ProjectDir --export-release "Windows Desktop" $OutputExe
 if ($LASTEXITCODE -ne 0) {
@@ -71,6 +82,8 @@ if ($exeSize -lt 1MB -or $pckSize -lt 1KB) {
 }
 
 New-Item -ItemType Directory -Force -Path $OutputLicenseDir | Out-Null
+Copy-Item -LiteralPath (Join-Path $Root "LICENSE") `
+    -Destination (Join-Path $OutputLicenseDir "AGPL-3.0.txt") -Force
 foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt")) {
     $licenseSource = Join-Path $ProjectDir "art\fonts\$licenseName"
     $licenseTarget = Join-Path $OutputLicenseDir $licenseName
@@ -87,6 +100,20 @@ foreach ($auditSource in @($audioLicenseSource, $audioManifestSource)) {
     }
     Copy-Item -LiteralPath $auditSource -Destination (Join-Path $OutputLicenseDir (Split-Path -Leaf $auditSource)) -Force
 }
+$aiNoticeSource = Join-Path $Root "ai_engine\THIRD_PARTY_AI.md"
+Copy-Item -LiteralPath $aiNoticeSource -Destination (Join-Path $OutputLicenseDir "THIRD_PARTY_AI.md") -Force
+
+New-Item -ItemType Directory -Force -Path $OutputAiDir | Out-Null
+foreach ($aiSupportName in @(
+    "setup_portable_ai.ps1", "generate_event.ps1", "test_local_ai.ps1", "THIRD_PARTY_AI.md"
+)) {
+    Copy-Item -LiteralPath (Join-Path $Root "ai_engine\$aiSupportName") `
+        -Destination (Join-Path $OutputAiDir $aiSupportName) -Force
+}
+Copy-Item -LiteralPath (Join-Path $Root "setup-local-ai.bat") `
+    -Destination (Join-Path $OutputDir "setup-local-ai.bat") -Force
+Copy-Item -LiteralPath (Join-Path $Root "docs\WINDOWS_RELEASE_README.md") `
+    -Destination (Join-Path $OutputDir "README.md") -Force
 
 # Run the actual exported build, while keeping its user-data probe on D:.
 $SmokeDataDir = Join-Path $TempDir "export-smoke-userdata"
@@ -114,6 +141,21 @@ if (-not $SkipAudioDeviceSmoke) {
     }
 } else {
     Write-Host "Skipping the hardware-backed Windows audio-device smoke; this mode is reserved for headless CI."
+}
+
+$checksumLines = @(Get-ChildItem -LiteralPath $OutputDir -Recurse -File |
+    Where-Object { $_.FullName -ne $ChecksumPath } |
+    Sort-Object FullName |
+    ForEach-Object {
+        $relative = $_.FullName.Substring($OutputDir.Length + 1).Replace('\', '/')
+        $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+        "$hash  $relative"
+    })
+[System.IO.File]::WriteAllLines($ChecksumPath, $checksumLines, (New-Object System.Text.UTF8Encoding($false)))
+
+& (Join-Path $PSScriptRoot "verify_release_bundle.ps1") -OutputDir $OutputDir
+if ($LASTEXITCODE -ne 0) {
+    throw "Release bundle validation failed with exit code $LASTEXITCODE."
 }
 
 Write-Host "Godot Windows build complete:"

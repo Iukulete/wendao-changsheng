@@ -1,6 +1,6 @@
 ﻿param(
     [string]$TestDir = "",
-    [int]$TimeoutSec = 75,
+    [int]$TimeoutSec = 120,
     [switch]$KeepFiles
 )
 
