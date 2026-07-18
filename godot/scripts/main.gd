@@ -2385,15 +2385,33 @@ func _show_reincarnation() -> void:
 		_show_menu()
 		return
 	var last_life: Dictionary = lives[-1]
+	var narrow_layout := screen_host.size.x < 1040.0
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.alignment = BoxContainer.ALIGNMENT_CENTER
 	page.add_theme_constant_override("separation", 16)
-	screen_host.add_child(page)
+	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	page.resized.connect(func() -> void:
+		if state == ScreenState.REINCARNATION and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_reincarnation")
+	)
+	if narrow_layout:
+		var page_scroll := ScrollContainer.new()
+		page_scroll.name = "ReincarnationScroll"
+		page_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		page_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		page_scroll.follow_focus = true
+		page_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		page_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		page.custom_minimum_size.y = screen_host.size.y
+		page_scroll.add_child(page)
+		screen_host.add_child(page_scroll)
+	else:
+		screen_host.add_child(page)
 	var card := _panel(0.86, Color("d7bd75"))
 	card.name = "ReincarnationCard"
-	card.custom_minimum_size = Vector2(760, 560)
-	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card.custom_minimum_size = Vector2(0 if narrow_layout else 760, 560)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL if narrow_layout else Control.SIZE_SHRINK_CENTER
 	page.add_child(card)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
@@ -2456,6 +2474,7 @@ func _open_audio_settings() -> void:
 func _show_audio_settings() -> void:
 	state = ScreenState.AUDIO_SETTINGS
 	_clear_screen()
+	var narrow_layout := screen_host.size.x < 1040.0
 	var scroll := ScrollContainer.new()
 	scroll.name = "AudioSettingsScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -2463,6 +2482,10 @@ func _show_audio_settings() -> void:
 	scroll.follow_focus = true
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.resized.connect(func() -> void:
+		if state == ScreenState.AUDIO_SETTINGS and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_audio_settings")
+	)
 	screen_host.add_child(scroll)
 	var center := CenterContainer.new()
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2471,7 +2494,9 @@ func _show_audio_settings() -> void:
 	scroll.add_child(center)
 	var card := _panel(0.90, Color("d8b967"))
 	card.name = "AudioSettingsPanel"
-	card.custom_minimum_size = Vector2(850, 0)
+	card.custom_minimum_size = Vector2(0 if narrow_layout else 850, 0)
+	if narrow_layout:
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	center.add_child(card)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
@@ -2493,25 +2518,26 @@ func _show_audio_settings() -> void:
 	for spec_value in volume_specs:
 		var spec: Array = spec_value
 		column.add_child(_audio_volume_row(str(spec[0]), str(spec[1]), str(spec[2]),
-			str(spec[3]), float(settings.get(spec[0], 100.0))))
+			str(spec[3]), float(settings.get(spec[0], 100.0)), narrow_layout))
 	column.add_child(_divider())
 	column.add_child(_section_title("舒适与无障碍"))
 	var toggle_grid := GridContainer.new()
 	toggle_grid.name = "AudioAccessibilityGrid"
-	toggle_grid.columns = 2
+	toggle_grid.columns = 1 if narrow_layout else 2
+	toggle_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toggle_grid.add_theme_constant_override("h_separation", 12)
 	toggle_grid.add_theme_constant_override("v_separation", 10)
 	column.add_child(toggle_grid)
 	toggle_grid.add_child(_audio_toggle("全局静音", "立即静音全部总线，音量值不会丢失。", "muted",
-		bool(settings.get("muted", false)), "AudioMutedToggle"))
+		bool(settings.get("muted", false)), "AudioMutedToggle", narrow_layout))
 	toggle_grid.add_child(_audio_toggle("失焦时静音", "切换到其他窗口时停止非必要声音。", "mute_unfocused",
-		bool(settings.get("mute_unfocused", true)), "AudioUnfocusedToggle"))
+		bool(settings.get("mute_unfocused", true)), "AudioUnfocusedToggle", narrow_layout))
 	toggle_grid.add_child(_audio_toggle("夜间模式", "压缩动态范围，让低声可辨而强声不扰人。", "night_mode",
-		bool(settings.get("night_mode", false)), "AudioNightToggle"))
+		bool(settings.get("night_mode", false)), "AudioNightToggle", narrow_layout))
 	toggle_grid.add_child(_audio_toggle("减少突发强音", "首领破相、失败与强冲击降低峰值约六分贝。", "reduce_sudden",
-		bool(settings.get("reduce_sudden", false)), "AudioSuddenToggle"))
+		bool(settings.get("reduce_sudden", false)), "AudioSuddenToggle", narrow_layout))
 	toggle_grid.add_child(_audio_toggle("单声道输出", "折叠左右声像；关键信息不会只存在于一侧。", "mono",
-		bool(settings.get("mono", false)), "AudioMonoToggle"))
+		bool(settings.get("mono", false)), "AudioMonoToggle", narrow_layout))
 	column.add_child(_label("运行规格 · 48 kHz 立体声 · Master 安全限幅 -1 dB · 设置保存在本机用户目录",
 		14, Color(0.70, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
 	var actions := HBoxContainer.new()
@@ -2520,21 +2546,23 @@ func _show_audio_settings() -> void:
 	column.add_child(actions)
 	var preview := _button("试听关键反馈", _preview_audio_mix, false)
 	preview.name = "AudioPreviewButton"
-	preview.custom_minimum_size.x = 230
+	preview.custom_minimum_size.x = 0 if narrow_layout else 230
+	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(preview)
 	var close := _button("关闭并返回", _close_audio_settings, true)
 	close.name = "AudioSettingsBackButton"
-	close.custom_minimum_size.x = 230
+	close.custom_minimum_size.x = 0 if narrow_layout else 230
+	close.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(close)
 
 
 func _audio_volume_row(key: String, title: String, description: String,
-		node_name: String, value: float) -> Control:
-	var row := HBoxContainer.new()
+		node_name: String, value: float, compact: bool = false) -> Control:
+	var row: BoxContainer = VBoxContainer.new() if compact else HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	var text_box := VBoxContainer.new()
-	text_box.custom_minimum_size.x = 245
-	row.add_child(text_box)
+	text_box.custom_minimum_size.x = 0 if compact else 245
+	text_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_box.add_child(_label(title, 17, Color("f0e7d2")))
 	text_box.add_child(_label(description, 13, Color(0.70, 0.76, 0.77)))
 	var slider := HSlider.new()
@@ -2545,22 +2573,33 @@ func _audio_volume_row(key: String, title: String, description: String,
 	slider.value = value
 	slider.tick_count = 11
 	slider.ticks_on_borders = true
-	slider.custom_minimum_size = Vector2(420, 38)
+	slider.custom_minimum_size = Vector2(0 if compact else 420, 38)
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.tooltip_text = "%s音量，方向键可逐级调整。" % title
-	row.add_child(slider)
 	var value_label := _label("%d%%" % int(round(value)), 16, Color("e8c878"), HORIZONTAL_ALIGNMENT_RIGHT)
 	value_label.name = "%sValue" % node_name
 	value_label.custom_minimum_size.x = 60
-	row.add_child(value_label)
+	if compact:
+		var heading := HBoxContainer.new()
+		heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		heading.add_child(text_box)
+		heading.add_child(value_label)
+		row.add_child(heading)
+		row.add_child(slider)
+	else:
+		row.add_child(text_box)
+		row.add_child(slider)
+		row.add_child(value_label)
 	slider.value_changed.connect(_on_audio_volume_changed.bind(key, value_label))
 	return row
 
 
 func _audio_toggle(title: String, description: String, key: String,
-		value: bool, node_name: String) -> Control:
+		value: bool, node_name: String, compact: bool = false) -> Control:
 	var panel := _panel(0.46, era_accent)
-	panel.custom_minimum_size = Vector2(380, 82)
+	panel.custom_minimum_size = Vector2(0 if compact else 380, 82)
+	if compact:
+		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 2)
 	panel.add_child(column)

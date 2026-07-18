@@ -87,7 +87,37 @@ func _run() -> void:
 		failures.append("1280x720音频设置没有保持清晰宽度与真实滚动路径")
 	_capture(root, output_root.path_join("audio_settings_1280x720.png"), Vector2i(1280, 720),
 		"音频设置 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_audio_settings")
+	await _settle_frames(4)
+	var narrow_audio_viewport := root.get_visible_rect()
+	var narrow_audio_panel := game.find_child("AudioSettingsPanel", true, false) as Control
+	var narrow_audio_scroll := game.find_child("AudioSettingsScroll", true, false) as ScrollContainer
+	var narrow_audio_grid := game.find_child("AudioAccessibilityGrid", true, false) as GridContainer
+	var narrow_audio_master := game.find_child("AudioMasterSlider", true, false) as Control
+	if narrow_audio_panel == null or narrow_audio_panel.get_global_rect().size.x > narrow_audio_viewport.size.x:
+		failures.append("800x720音律设置面板发生横向裁切：%s" % [
+			narrow_audio_panel.get_global_rect() if narrow_audio_panel != null else "missing"])
+	if narrow_audio_scroll == null or not narrow_audio_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720音律设置没有提供完整的纵向滚动路径")
+	if narrow_audio_grid == null or narrow_audio_grid.columns != 1:
+		failures.append("800x720音律设置无障碍选项没有切换为单列布局")
+	if narrow_audio_master == null or not narrow_audio_viewport.encloses(narrow_audio_master.get_global_rect()):
+		failures.append("800x720音律设置首屏总音量不可达")
+	_capture(root, output_root.path_join("audio_settings_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏音律设置顶部 800x720")
+	if narrow_audio_scroll != null:
+		narrow_audio_scroll.scroll_vertical = int(narrow_audio_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_audio_mono := game.find_child("AudioMonoToggle", true, false) as Control
+	var narrow_audio_back := game.find_child("AudioSettingsBackButton", true, false) as Control
+	for audio_control in [narrow_audio_mono, narrow_audio_back]:
+		if audio_control == null or not narrow_audio_viewport.encloses(audio_control.get_global_rect()):
+			failures.append("800x720音律设置滚动到底后无障碍选项或返回操作不可达")
+	_capture(root, output_root.path_join("audio_settings_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏音律设置底部 800x720")
 	game.call("_close_audio_settings")
+	root.size = Vector2i(1280, 720)
 	await _settle_frames(2)
 	DirAccess.remove_absolute(legacy_source_path)
 	game.call("_show_game")
@@ -366,6 +396,28 @@ func _run() -> void:
 				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("reincarnation_1280x720.png"), Vector2i(1280, 720),
 		"轮回页 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_reincarnation")
+	await _settle_frames(4)
+	var narrow_reincarnation_viewport := root.get_visible_rect()
+	var narrow_reincarnation_scroll := game.find_child("ReincarnationScroll", true, false) as ScrollContainer
+	var narrow_reincarnation_card := game.find_child("ReincarnationCard", true, false) as Control
+	var narrow_reincarnation_input := game.find_child("NextLifeNameInput", true, false) as Control
+	var narrow_reincarnation_button := game.find_child("NextLifeButton", true, false) as Control
+	if narrow_reincarnation_scroll == null or narrow_reincarnation_scroll.horizontal_scroll_mode != \
+			ScrollContainer.SCROLL_MODE_DISABLED:
+		failures.append("800x720轮回页没有提供禁止横向越界的页面容器")
+	if narrow_reincarnation_card == null or \
+			narrow_reincarnation_card.get_global_rect().size.x > narrow_reincarnation_viewport.size.x:
+		failures.append("800x720轮回卡发生横向裁切：%s" % [
+			narrow_reincarnation_card.get_global_rect() if narrow_reincarnation_card != null else "missing"])
+	for narrow_reincarnation_control in [narrow_reincarnation_input, narrow_reincarnation_button]:
+		if narrow_reincarnation_control == null or \
+				not narrow_reincarnation_viewport.encloses(narrow_reincarnation_control.get_global_rect()):
+			failures.append("800x720轮回页新世道号或继续操作不可达")
+	_capture(root, output_root.path_join("reincarnation_narrow_800x720.png"), Vector2i(800, 720),
+		"窄屏轮回页 800x720")
+	root.size = Vector2i(1280, 720)
 	game.set("run_state", auxiliary_state)
 	game.set("current_event", {})
 	game.set("achievement_notice_queue", [])
