@@ -1,6 +1,7 @@
 class_name StorySystem
 extends RefCounted
 
+const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
 const DATA_PATH := "res://data/story_arcs_v1.json"
 const ARC_IDS := ["jade", "sect", "family", "rival"]
 const MAIN_STAGE_COUNT := 4
@@ -22,6 +23,10 @@ static func load_definitions() -> Dictionary:
 
 
 static func validate_definitions() -> Dictionary:
+	var character_art_validation: Dictionary = CharacterArtCatalogScript.validate_catalog()
+	if not bool(character_art_validation.get("ok", false)):
+		return {"ok": false, "code": "invalid_character_art_catalog",
+			"detail": str(character_art_validation.get("code", "unknown"))}
 	var data := load_definitions()
 	if int(data.get("schema_version", 0)) != 1:
 		return {"ok": false, "code": "unsupported_story_schema"}
@@ -37,6 +42,9 @@ static func validate_definitions() -> Dictionary:
 		var arc_id := str(arc.get("id", ""))
 		if not ARC_IDS.has(arc_id) or seen_arcs.has(arc_id):
 			return {"ok": false, "code": "invalid_arc_id"}
+		var arc_art := _resolved_art(arc, {})
+		if not _valid_art_binding(arc_art):
+			return {"ok": false, "code": "invalid_arc_art", "arc_id": arc_id}
 		seen_arcs[arc_id] = true
 		for phase in ["main", "echo"]:
 			var expected := MAIN_STAGE_COUNT if phase == "main" else ECHO_STAGE_COUNT
@@ -51,6 +59,9 @@ static func validate_definitions() -> Dictionary:
 				if node_id.is_empty() or seen_nodes.has(node_id) or str(node.get("title", "")).is_empty() or \
 					str(node.get("description", "")).is_empty() or str(node.get("next", "")).is_empty():
 					return {"ok": false, "code": "invalid_story_node", "arc_id": arc_id}
+				if not _valid_art_binding(_resolved_art(arc, node)):
+					return {"ok": false, "code": "invalid_story_art", "arc_id": arc_id,
+						"node_id": node_id}
 				seen_nodes[node_id] = true
 			var choices_value: Variant = arc.get("%s_choices" % phase, [])
 			if not choices_value is Array or (choices_value as Array).size() != 3:
@@ -247,10 +258,10 @@ static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 		choice["deltas"] = deltas
 		choices.append(choice)
 	node["era"] = str(state.get("current_era", ""))
-	node["scene"] = str(arc.scene)
-	node["portrait"] = str(arc.portrait)
-	node["portrait_name"] = str(arc.portrait_name)
-	node["portrait_title"] = str(arc.portrait_title)
+	var art := _resolved_art(arc, node)
+	for field in ["scene", "portrait", "portrait_name", "portrait_title", "character_id", "motion_profile",
+			"portrait_mode"]:
+		node[field] = str(art.get(field, ""))
 	node["choices"] = choices
 	node["source"] = "story_arc"
 	node["story_arc_id"] = str(arc.id)
@@ -261,6 +272,41 @@ static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 	if phase == "echo" and not legacy.is_empty():
 		node["description"] = "%s\n\n前世定局：%s。" % [str(node.description), legacy]
 	return node
+
+
+static func _resolved_art(arc: Dictionary, story_node: Dictionary) -> Dictionary:
+	var result := {}
+	var fields := ["scene", "portrait", "portrait_name", "portrait_title", "character_id", "motion_profile",
+		"portrait_mode"]
+	for field in fields:
+		result[field] = arc.get(field, "focus" if field == "portrait_mode" else "")
+	var arc_art_value: Variant = arc.get("art", {})
+	if arc_art_value is Dictionary:
+		for field in fields:
+			if (arc_art_value as Dictionary).has(field):
+				result[field] = (arc_art_value as Dictionary)[field]
+	var node_art_value: Variant = story_node.get("art", {})
+	if node_art_value is Dictionary:
+		for field in fields:
+			if (node_art_value as Dictionary).has(field):
+				result[field] = (node_art_value as Dictionary)[field]
+	return result
+
+
+static func _valid_art_binding(art: Dictionary) -> bool:
+	var character_id := str(art.get("character_id", ""))
+	var scene_path := str(art.get("scene", ""))
+	var portrait_path := str(art.get("portrait", ""))
+	var profile_id := str(art.get("motion_profile", ""))
+	var portrait_mode := str(art.get("portrait_mode", "focus"))
+	var portrait_valid := portrait_mode == "scene_only" or \
+		(not portrait_path.is_empty() and ResourceLoader.exists(portrait_path))
+	return not character_id.is_empty() and CharacterArtCatalogScript.has_character(character_id) and \
+		not scene_path.is_empty() and ResourceLoader.exists(scene_path) and \
+		portrait_mode in ["focus", "scene_only"] and portrait_valid and \
+		not str(art.get("portrait_name", "")).is_empty() and \
+		not str(art.get("portrait_title", "")).is_empty() and \
+		not profile_id.is_empty() and CharacterArtCatalogScript.has_motion_profile(profile_id)
 
 
 static func _arc_definition(arc_id: String) -> Dictionary:

@@ -11,6 +11,19 @@ func _init() -> void:
 	_expect(bool(validation.get("ok", false)) and int(validation.get("arc_count", 0)) == 4 and
 		int(validation.get("node_count", 0)) == 28,
 		"剧情数据必须包含四条主线、十六幕今生章节与十二幕二世续章")
+	var staged_art: Dictionary = StorySystemScript._build_event(
+		GameStateScript.create_new_game("分镜校验", 737300, [7, 7, 7, 7, 7]),
+		{"arc_id":"jade", "phase":"main", "stage":0})
+	_expect(str(staged_art.get("character_id", "")) == "protagonist" and
+		str(staged_art.get("motion_profile", "")) == "spectral" and
+		str(staged_art.get("scene", "")).begins_with("res://art/scenes/"),
+		"每一幕必须能够覆盖角色身份、分镜场景与动效档位")
+	var jade_arc: Dictionary = (StorySystemScript.load_definitions().arcs[0] as Dictionary)
+	var scene_only_art: Dictionary = StorySystemScript._resolved_art(jade_arc,
+		{"art":{"portrait_mode":"scene_only", "portrait":""}})
+	_expect(bool(StorySystemScript._valid_art_binding(scene_only_art)) and
+		str(scene_only_art.get("portrait_mode", "")) == "scene_only",
+		"关键剧情必须支持不重复叠加立绘的全幅分镜模式")
 
 	var state := GameStateScript.create_new_game("照卷人", 737373, [7, 7, 7, 7, 7])
 	StorySystemScript.normalize(state)

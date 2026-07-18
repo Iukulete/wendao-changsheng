@@ -17,6 +17,8 @@ const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const AudioDirectorScript = preload("res://scripts/audio_director.gd")
+const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
+const CinematicArtMotionScript = preload("res://scripts/cinematic_art_motion.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -88,7 +90,6 @@ var background: TextureRect
 var vignette: ColorRect
 var ambient: Control
 var screen_host: MarginContainer
-var animated_portrait: TextureRect
 var background_time: float = 0.0
 var era_accent: Color = Color("e4be4c")
 var base_theme: Theme
@@ -168,12 +169,6 @@ func _process(delta: float) -> void:
 		background.offset_top = -28.0 + parallax.y
 		background.offset_right = 34.0 + parallax.x
 		background.offset_bottom = 28.0 + parallax.y
-	if is_instance_valid(animated_portrait):
-		animated_portrait.pivot_offset = animated_portrait.size * 0.5
-		var breath := (sin(background_time * 1.55) + 1.0) * 0.5
-		var scale_value := 1.0 + breath * 0.014
-		animated_portrait.scale = Vector2.ONE * scale_value
-		animated_portrait.rotation = sin(background_time * 0.52) * 0.0035
 	if is_instance_valid(vignette) and vignette.material is ShaderMaterial:
 		vignette.material.set_shader_parameter("pulse", (sin(background_time * 1.1) + 1.0) * 0.5)
 	if not achievement_notice_queue.is_empty() and not is_instance_valid(achievement_toast):
@@ -249,7 +244,6 @@ func _load_events() -> void:
 
 
 func _clear_screen() -> void:
-	animated_portrait = null
 	for child in screen_host.get_children():
 		screen_host.remove_child(child)
 		child.queue_free()
@@ -290,6 +284,17 @@ func _set_background(path: String) -> void:
 		var tween := create_tween()
 		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 		tween.tween_property(background, "modulate", Color.WHITE, 0.72)
+
+
+func _attach_art_motion(target: Control, profile_id: String, layer_mode: int,
+		seed_text: String, allow_offset_motion: bool = true) -> void:
+	var profile: Dictionary = CharacterArtCatalogScript.motion_profile(profile_id)
+	if profile.is_empty():
+		return
+	var rig := CinematicArtMotionScript.new()
+	rig.name = "CinematicArtMotion"
+	target.add_child(rig)
+	rig.call("configure", target, profile, layer_mode, seed_text, allow_offset_motion)
 
 
 func _show_menu() -> void:
@@ -695,7 +700,8 @@ func _build_player_panel() -> Control:
 	portrait.texture = load(PROTAGONIST)
 	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	portrait_frame.add_child(portrait)
-	animated_portrait = portrait
+	_attach_art_motion(portrait, "introspective", CinematicArtMotionScript.LayerMode.PORTRAIT,
+		"protagonist-main")
 
 	var identity_detail := VBoxContainer.new()
 	identity_detail.name = "MainPlayerVitals"
@@ -2233,37 +2239,42 @@ func _build_event_stage(narrow_layout: bool = false) -> Control:
 	stage.clip_contents = true
 	frame.add_child(stage)
 
-	var scene := TextureRect.new()
-	scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scene.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	scene.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	scene.texture = load(str(current_event.get("scene", MENU_SCENE)))
-	scene.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stage.add_child(scene)
-
-	var shade := ColorRect.new()
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.color = Color(0.01, 0.025, 0.045, 0.24)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	stage.add_child(shade)
-
+	var motion_profile_id := str(current_event.get("motion_profile", "restrained"))
+	var motion_seed := str(current_event.get("id", current_event.get("story_arc_id", "event")))
 	var portrait_path := str(current_event.get("portrait", ""))
-	if not portrait_path.is_empty():
+	var portrait_mode := str(current_event.get("portrait_mode", "focus"))
+	if portrait_mode == "scene_only" or portrait_path.is_empty():
+		var scene := TextureRect.new()
+		scene.name = "EventScene"
+		scene.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		scene.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		scene.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		scene.texture = load(str(current_event.get("scene", MENU_SCENE)))
+		scene.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stage.add_child(scene)
+		_attach_art_motion(scene, motion_profile_id, CinematicArtMotionScript.LayerMode.SCENE,
+			"%s-scene" % motion_seed)
+	else:
 		var portrait := TextureRect.new()
-		portrait.anchor_left = 0.39
-		portrait.anchor_top = 0.08
-		portrait.anchor_right = 0.98
-		portrait.anchor_bottom = 0.90
-		portrait.offset_left = 0
-		portrait.offset_top = 0
-		portrait.offset_right = 0
-		portrait.offset_bottom = 0
+		portrait.name = "EventPortrait"
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		portrait.stretch_mode = TextureRect.STRETCH_SCALE
 		portrait.texture = load(portrait_path)
 		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		stage.add_child(portrait)
-		animated_portrait = portrait
+		var focus_y := clampf(float(current_event.get("portrait_focus_y", 0.18)), 0.0, 1.0)
+		stage.resized.connect(func() -> void:
+			_layout_focus_portrait(portrait, stage, focus_y)
+		)
+		call_deferred("_layout_focus_portrait", portrait, stage, focus_y)
+		_attach_art_motion(portrait, motion_profile_id, CinematicArtMotionScript.LayerMode.PORTRAIT,
+			"%s-%s" % [motion_seed, str(current_event.get("character_id", "portrait"))], false)
+
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.01, 0.025, 0.045, 0.16)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage.add_child(shade)
 
 	var caption_panel := ColorRect.new()
 	caption_panel.anchor_left = 0.0
@@ -2284,6 +2295,20 @@ func _build_event_stage(narrow_layout: bool = false) -> Control:
 	caption.add_child(_label(str(current_event.get("portrait_title", "因果入局者")), 14,
 		Color(0.82, 0.86, 0.86, 0.86)))
 	return frame
+
+
+func _layout_focus_portrait(portrait: TextureRect, stage: Control, focus_y: float) -> void:
+	if not is_instance_valid(portrait) or portrait.texture == null or stage.size.x < 1.0 or stage.size.y < 1.0:
+		return
+	var texture_size := portrait.texture.get_size()
+	if texture_size.x < 1.0 or texture_size.y < 1.0:
+		return
+	var cover_scale := maxf(stage.size.x / texture_size.x, stage.size.y / texture_size.y)
+	var rendered_size := texture_size * cover_scale
+	var overflow := rendered_size - stage.size
+	portrait.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	portrait.position = Vector2(-overflow.x * 0.5, -overflow.y * focus_y)
+	portrait.size = rendered_size
 
 
 func _build_event_choices() -> Control:

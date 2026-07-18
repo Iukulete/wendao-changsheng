@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # Feature-branch pushes keep the full Godot regression signal while the
+  # product-art gate stays authoritative for main and pull requests.
+  PRODUCT_RELEASE: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+
 jobs:
   validate-and-export:
     name: Validate and export Godot 4.7.1
@@ -52,7 +57,15 @@ jobs:
 
       - name: Validate project and load main scene
         shell: pwsh
-        run: ./tools/verify_godot.ps1 -NoPrepare -RequireFinalAudio
+        run: |
+          $arguments = @("-NoPrepare")
+          if ($env:PRODUCT_RELEASE -eq "true") {
+            $arguments += "-RequireFinalAudio", "-RequireProductArt"
+            Write-Host "Product release gates enabled for this ref."
+          } else {
+            Write-Host "Development branch validation enabled; product-art gate remains deferred to main/PR."
+          }
+          ./tools/verify_godot.ps1 @arguments
 
       - name: Validate rendered gameplay states
         shell: pwsh
@@ -114,7 +127,12 @@ jobs:
 
       - name: Export Windows x86_64 release
         shell: pwsh
-        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify -ProductRelease
+        run: |
+          if ($env:PRODUCT_RELEASE -eq "true") {
+            ./tools/build_godot.ps1 -NoPrepare -SkipVerify -ProductRelease
+          } else {
+            ./tools/build_godot.ps1 -NoPrepare -SkipVerify
+          }
 
       - name: Verify release boundary
         shell: pwsh

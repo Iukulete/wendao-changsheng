@@ -8,6 +8,8 @@
     "portrait": "res://art/portraits/protagonist_hooded_close.jpg",
     "portrait_name": "门后之影",
     "portrait_title": "旧玉未曾记录的可能",
+    "character_id": "protagonist",
+    "motion_profile": "spectral",
     "choices": [
       {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}, "path_deltas": {"defiance": 3, "insight": 1}},
       {"text": "以旧玉映照门后之影", "outcome": "两枚黑白旧玉在水面重叠，镜湖替你记下了一笔尚未发生的因果。", "deltas": {"karma": 7, "mp": -8}, "path_deltas": {"insight": 4, "bonds": 1}},
@@ -23,6 +25,8 @@
     "portrait": "res://art/portraits/jade_healer.jpg",
     "portrait_name": "无照药师",
     "portrait_title": "灯河桥下 · 记忆换药",
+    "character_id": "chi_yaoqing",
+    "motion_profile": "restrained",
     "choices": [
       {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}, "path_deltas": {"ambition": 3, "insight": 1}},
       {"text": "追问这些记忆的去处", "outcome": "你发现灯河下游有人把记忆炼成可伪造的前世凭证。", "deltas": {"reputation": 7, "enmity": 4}, "path_deltas": {"insight": 3, "defiance": 2}},
@@ -38,6 +42,8 @@
     "portrait": "res://art/portraits/steam_artificer.png",
     "portrait_name": "岑照炉",
     "portrait_title": "百炉城工造师",
+    "character_id": "cen_zhaolu",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "进入炉心重排五行炉压", "outcome": "你让水火两路重新咬合，整列灵轨贴着断崖冲出云海。", "deltas": {"exp": 55, "dao_heart": 3, "hp": -12}, "path_deltas": {"creation": 4, "insight": 1}},
       {"text": "组织凡人与修士分舱疏散", "outcome": "最危险的一节车厢被主动舍弃，所有人都活了下来。", "deltas": {"karma": 9, "reputation": 8}, "path_deltas": {"compassion": 3, "bonds": 3}},
@@ -53,6 +59,8 @@
     "portrait": "res://art/portraits/steam_artificer.png",
     "portrait_name": "岑照炉",
     "portrait_title": "她认得黑匣上的旧编号",
+    "character_id": "cen_zhaolu",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "封场拆匣，验证神识来源", "outcome": "夹层里藏着一名学徒的完整神识，工坊终于承认曾把记忆当作耗材。", "deltas": {"karma": 10, "reputation": 10, "hp": -8}, "path_deltas": {"defiance": 3, "insight": 2}},
       {"text": "替匣中残识赎身", "outcome": "残识转入养魂灯后，第一次说出了自己的名字。", "deltas": {"dao_heart": 7, "spirit_stones": -12}, "path_deltas": {"compassion": 4, "bonds": 2}},
@@ -68,6 +76,8 @@
     "portrait": "res://art/portraits/star_network_cultivator.png",
     "portrait_name": "闻星渡",
     "portrait_title": "星网巡道使",
+    "character_id": "wen_xingdu",
+    "motion_profile": "spectral",
     "choices": [
       {"text": "逐一关闭执念最深的节点", "outcome": "旧人格终于停止轮转，最后一人把旧玉坐标托付给你。", "deltas": {"karma": 12, "dao_heart": 6, "hp": -10}, "path_deltas": {"compassion": 3, "bonds": 2}},
       {"text": "提取残识共同修订的心法", "outcome": "万次失败叠成一条可行周天，却也留下了不属于你的梦。", "deltas": {"exp": 62, "enmity": 3}, "path_deltas": {"insight": 4, "ambition": 2}},
@@ -83,6 +93,8 @@
     "portrait": "res://art/portraits/star_network_cultivator.png",
     "portrait_name": "闻星渡",
     "portrait_title": "她只有一次覆写权限",
+    "character_id": "wen_xingdu",
+    "motion_profile": "confrontation",
     "choices": [
       {"text": "强闯阵列中枢覆写坐标", "outcome": "天剑在云外偏转，你的神识也被反制削去一角。", "deltas": {"exp": 68, "reputation": 11, "hp": -20}, "path_deltas": {"defiance": 4, "creation": 2}},
       {"text": "调动灵轨先撤离全城", "outcome": "最后一艘飞舟离地时，剑光擦过空城屋脊。", "deltas": {"karma": 14, "reputation": 7}, "path_deltas": {"compassion": 4, "bonds": 2}},
@@ -98,6 +110,8 @@
     "portrait": "res://art/portraits/wasteland_pathfinder.png",
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人",
+    "character_id": "shali",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "把战争机偶引入雷暴区", "outcome": "车队换来整夜路程，而机偶从此记住了你的灵压。", "deltas": {"karma": 10, "exp": 46, "hp": -16}, "path_deltas": {"defiance": 3, "compassion": 2}},
       {"text": "用残阵和车架修复旧桥", "outcome": "最后一辆药种车驶过时，桥梁在你身后断成两截。", "deltas": {"reputation": 9, "spirit_stones": 6, "hp": -10}, "path_deltas": {"creation": 4, "bonds": 2}},
@@ -113,6 +127,8 @@
     "portrait": "res://art/portraits/jade_healer.jpg",
     "portrait_name": "迟药青",
     "portrait_title": "无照灵根医师",
+    "character_id": "chi_yaoqing",
+    "motion_profile": "restrained",
     "choices": [
       {"text": "抢救账册，重算真实份额", "outcome": "世家暗扣的灵息被迫归还，配给站第一次向所有人公开库存。", "deltas": {"reputation": 12, "karma": 9, "enmity": 6}, "path_deltas": {"insight": 3, "defiance": 2}},
       {"text": "先稳住镇压阵与人群", "outcome": "没有人死在阵下，但最愤怒的人也记住了你的脸。", "deltas": {"exp": 39, "reputation": 4, "karma": -3}, "path_deltas": {"bonds": 3, "compassion": 1, "defiance": -1}},
@@ -128,6 +144,8 @@
     "portrait": "res://art/portraits/jade_healer.jpg",
     "portrait_name": "迟药青",
     "portrait_title": "她不相信那份自愿契约",
+    "character_id": "chi_yaoqing",
+    "motion_profile": "confrontation",
     "choices": [
       {"text": "查明自愿者背后的灵息债", "outcome": "所谓自愿只是债务换了名字，你替他们解开了强制条款。", "deltas": {"karma": 12, "reputation": 8, "enmity": 5}, "path_deltas": {"insight": 3, "compassion": 3}},
       {"text": "以草木灵性改写药引阵式", "outcome": "寿元消耗降到原来的三成，配方被刻进公共药碑。", "deltas": {"exp": 57, "dao_heart": 4, "hp": -9}, "path_deltas": {"creation": 4, "compassion": 2}},
@@ -140,9 +158,11 @@
     "title": "【仙朝鼎盛】浮空仙城坠落预案",
     "description": "承载百万人的浮空仙城出现龙脉裂隙。皇族要求优先保住上城宫阙，工部则秘密请求你把灵力转向下城承重环。",
     "scene": "res://art/scenes/immortal_dynasty_skycourt.png",
-    "portrait": "res://art/portraits/imperial_sky_inspector.png",
+    "portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 她握着两套预案",
+    "character_id": "pei_zhaowei",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "托住下城承重环", "outcome": "仙城擦着山脉缓缓落地，平民区第一次完整看见地面。", "deltas": {"karma": 16, "reputation": 12, "hp": -24}, "path_deltas": {"compassion": 4, "bonds": 2}},
       {"text": "执行皇族上城预案", "outcome": "宫阙与核心传承保住了，下城的哭声却传了很久。", "deltas": {"spirit_stones": 20, "exp": 48, "karma": -14}, "path_deltas": {"ambition": 4, "compassion": -2, "bonds": -1}},
@@ -155,9 +175,11 @@
     "title": "【镜湖空阙】巡天司封关",
     "description": "巡天司在镜湖深处发现一座不受命籍管辖的无字古门。仙朝准备封湖断路，门后却不断传来失籍百姓呼唤亲人的声音。",
     "scene": "res://art/scenes/void_threshold_temple.png",
-    "portrait": "res://art/portraits/imperial_sky_inspector.png",
+    "portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 她的母亲也没有命籍",
+    "character_id": "pei_zhaowei",
+    "motion_profile": "introspective",
     "choices": [
       {"text": "先入空阙查证门后身份", "outcome": "门后是一处被朝廷抹去的下城避难所，你带回了完整名册。", "deltas": {"reputation": 13, "karma": 12, "hp": -15}, "path_deltas": {"insight": 4, "compassion": 2}},
       {"text": "阻止巡天司封湖七日", "outcome": "数百名失籍者沿断玉路回到现世，也把你的名字带进问审名单。", "deltas": {"karma": 15, "dao_heart": 6, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}},
@@ -173,6 +195,8 @@
     "portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
     "portrait_name": "宁照雪",
     "portrait_title": "守山一脉末徒 · 誓与命之间",
+    "character_id": "ning_zhaoxue",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "助白泽燃丹，先守住山门", "outcome": "兽潮撞碎在古阵之外，白泽却在晨钟前化作一场白雪；幼崽从此不再靠近宗门。", "deltas": {"reputation": 11, "exp": 45, "karma": -7}, "path_deltas": {"bonds": 3, "ambition": 2, "compassion": -1}},
       {"text": "护送白泽与村民穿过后山", "outcome": "宗门外院被兽潮踏毁，数千凡人与一脉灵兽却沿断玉路活了下来。", "deltas": {"karma": 15, "dao_heart": 6, "spirit_stones": -10}, "path_deltas": {"compassion": 4, "defiance": 2}},
@@ -188,6 +212,8 @@
     "portrait": "res://art/portraits/steam_artificer.png",
     "portrait_name": "岑照炉",
     "portrait_title": "百炉城工造师 · 炉灵见证人",
+    "character_id": "cen_zhaolu",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "钉入镇魂铆钉，恢复全城供暖", "outcome": "蒸汽重新漫过铜塔，下城无人冻死；中央灵炉却再也没有发出过那句求救。", "deltas": {"reputation": 9, "spirit_stones": 14, "dao_heart": -5}, "path_deltas": {"ambition": 3, "compassion": 1, "bonds": -2}},
       {"text": "承认炉灵，承担停炉谈判", "outcome": "药圃损失了半季收成，百炉城却签下第一份人与机灵共同遵守的工契。", "deltas": {"karma": 12, "reputation": 7, "enmity": 6}, "path_deltas": {"bonds": 4, "defiance": 2}},
@@ -203,6 +229,8 @@
     "portrait": "res://art/portraits/star_network_cultivator.png",
     "portrait_name": "闻星渡·第七实例",
     "portrait_title": "未经许可的人生 · 边域守灯者",
+    "character_id": "wen_xingdu",
+    "motion_profile": "spectral",
     "choices": [
       {"text": "执行合并，保全全部事故记忆", "outcome": "本体获得了边域三年的见闻，第七实例却在合并前删除了那座小城对她的称呼。", "deltas": {"exp": 67, "reputation": 8, "dao_heart": -4}, "path_deltas": {"insight": 3, "ambition": 2, "bonds": -2}},
       {"text": "伪造故障报告，承认她为独立修士", "outcome": "边域多了一位真正拥有道号的人，你也被道网监察列入高危因果名单。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 9}, "path_deltas": {"defiance": 4, "compassion": 2}},
@@ -218,6 +246,8 @@
     "portrait": "res://art/portraits/wasteland_pathfinder.png",
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人 · 今人与来年",
+    "character_id": "shali",
+    "motion_profile": "introspective",
     "choices": [
       {"text": "把滤心留给绿洲饮水", "outcome": "聚落安稳度过黑雨季，地下种库却在翌日失去最后一点生命信号。", "deltas": {"karma": 10, "reputation": 10, "exp": 28}, "path_deltas": {"compassion": 4, "bonds": 2}},
       {"text": "开启种库，押注未来的春天", "outcome": "古灵植种子重见天日，绿洲却因缺水迁徙，许多人不会原谅这个决定。", "deltas": {"exp": 61, "dao_heart": 5, "reputation": -7}, "path_deltas": {"ambition": 3, "insight": 2, "bonds": -1}},
@@ -233,6 +263,8 @@
     "portrait": "res://art/portraits/final_age_meridian_physician.png",
     "portrait_name": "韩玄素",
     "portrait_title": "经脉契师 · 契书拆解者",
+    "character_id": "han_xuansu",
+    "motion_profile": "restrained",
     "choices": [
       {"text": "公开后门，冻结全部抵押契约", "outcome": "数百条经脉免于被夺，商会也切断了城南灵息，街巷开始计算还能撑几天。", "deltas": {"karma": 13, "reputation": 10, "enmity": 8}, "path_deltas": {"defiance": 4, "bonds": 2}},
       {"text": "暗改阵式，只解救今日到期者", "outcome": "这一批修士平安离开，后门仍潜伏在其他契书中；你换来了继续调查的时间。", "deltas": {"exp": 51, "dao_heart": -2, "spirit_stones": 6}, "path_deltas": {"insight": 3, "creation": 2}},
@@ -245,9 +277,11 @@
     "title": "【仙朝鼎盛】功德雨落向何处",
     "description": "仙朝积攒十年的功德云只够降雨一郡。上城仙田能借此炼成延寿贡丹，下城凡田则正逢百年大旱；巡天司命你在日出前为云阵写下唯一地名。",
     "scene": "res://art/scenes/immortal_dynasty_skycourt.png",
-    "portrait": "res://art/portraits/imperial_sky_inspector.png",
+    "portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 云阵执笔人",
+    "character_id": "pei_zhaowei",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "依诏降雨上城仙田", "outcome": "贡丹如期入库，你获赐丰厚灵石；下城逃荒者却在官道上望见了那场雨。", "deltas": {"spirit_stones": 24, "reputation": 6, "karma": -15}, "path_deltas": {"ambition": 4, "compassion": -2}},
       {"text": "篡改云阵，让雨落向下城", "outcome": "龟裂凡田一夜返青，巡天司也从云阵残留的神识笔迹里找到了你。", "deltas": {"karma": 17, "dao_heart": 7, "enmity": 11}, "path_deltas": {"defiance": 4, "compassion": 2}},
@@ -263,6 +297,8 @@
     "portrait": "res://art/portraits/jade_healer.jpg",
     "portrait_name": "迟药青",
     "portrait_title": "游方医修 · 她不肯把代价写成药效",
+    "character_id": "chi_yaoqing",
+    "motion_profile": "confrontation",
     "choices": [
       {"text": "以自身经脉承接全村伤病", "outcome": "病榻上的呼吸逐渐平稳，所有未署名的痛楚却在你体内找到归处；丹方也因此显出真正的末行。", "deltas": {"karma": 14, "exp": 42, "hp": -24}, "path_deltas": {"compassion": 4, "creation": 2}},
       {"text": "把丹方交给宗门设立药契", "outcome": "疫病得到控制，宗门也把偿还药债的年限写进每户命册；无人再猝死，却有人要用半生还清一次痊愈。", "deltas": {"reputation": 10, "spirit_stones": 14, "karma": -5}, "path_deltas": {"ambition": 3, "creation": 2, "compassion": -1}},
@@ -278,6 +314,8 @@
     "portrait": "res://art/portraits/steam_artificer.png",
     "portrait_name": "岑照炉",
     "portrait_title": "百炉城工造师 · 总闸与工牌都在她手中",
+    "character_id": "cen_zhaolu",
+    "motion_profile": "confrontation",
     "choices": [
       {"text": "落下总闸，站在罢工者一边", "outcome": "十二时辰里没有一座炉膛吞人，药仓却冻坏了最脆弱的一批药胚；工人第一次以自己的名字重写轮班表。", "deltas": {"karma": 9, "reputation": 8, "enmity": 8}, "path_deltas": {"bonds": 4, "defiance": 3}},
       {"text": "维持炉压，先保住城北药仓", "outcome": "药材安然出库，工坊也按约付清伤亡抚恤；只是新名册第一页，很快又出现了一个熟悉的工号。", "deltas": {"spirit_stones": 18, "reputation": 6, "karma": -8}, "path_deltas": {"ambition": 4, "creation": 1, "compassion": -2}},
@@ -293,6 +331,8 @@
     "portrait": "res://art/portraits/star_network_cultivator.png",
     "portrait_name": "闻星渡",
     "portrait_title": "星网巡道使 · 公审记录的第一个见证人",
+    "character_id": "wen_xingdu",
+    "motion_profile": "restrained",
     "choices": [
       {"text": "承认复制体拥有独立人格", "outcome": "复制体获得道号与断开权限，原主人的隐私却随一位独立修士继续活在世上；道网不得不承认契约买不到一个人。", "deltas": {"karma": 13, "dao_heart": 7, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}},
       {"text": "归还记忆并终止复制人格", "outcome": "原主人收回了完整人生，副本在归并前留下最后一段只属于自己的记忆：她拒绝原谅这场审判。", "deltas": {"exp": 58, "reputation": 7, "dao_heart": -5}, "path_deltas": {"insight": 4, "ambition": 2, "bonds": -2}},
@@ -308,6 +348,8 @@
     "portrait": "res://art/portraits/wasteland_pathfinder.png",
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人 · 一口井装不下三种未来",
+    "character_id": "shali",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "把火种送往北坡病营", "outcome": "病营的夜灯撑过整季，钻机却在冻土中锈死；来年开春，活下来的人必须徒步寻找新水源。", "deltas": {"karma": 14, "reputation": 9, "exp": 28}, "path_deltas": {"compassion": 4, "bonds": 2}},
       {"text": "启动净土钻机，寻找下一口井", "outcome": "钻头在地底敲出微弱水声，北坡却有一半帐篷没熬过最冷的七夜；你押中了未来，也记住了代价。", "deltas": {"exp": 65, "dao_heart": 5, "karma": -9}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -2}},
@@ -323,6 +365,8 @@
     "portrait": "res://art/portraits/wasteland_pathfinder.png",
     "portrait_name": "沙砾",
     "portrait_title": "返道火种引路人 · 她背着祖师堂的最后一扇门",
+    "character_id": "shali",
+    "motion_profile": "introspective",
     "choices": [
       {"text": "依旧制复宗，开放藏经室收徒", "outcome": "旧弟子重新点起山门灯，难民中也有人第一次摸到完整功法；祖师堂成了避雨最差、却最不肯拆的一间屋。", "deltas": {"reputation": 11, "exp": 48, "spirit_stones": -8}, "path_deltas": {"bonds": 4, "insight": 2}},
       {"text": "拆掉祖师堂，为难民搭建居所", "outcome": "百余人住进挡雨的新屋，旧弟子把祖牌埋在地基下后离开；他们承认人活下来了，却不承认宗门也活着。", "deltas": {"karma": 13, "reputation": 6, "enmity": 5}, "path_deltas": {"compassion": 4, "creation": 2, "bonds": -2}},
@@ -338,6 +382,8 @@
     "portrait": "res://art/portraits/final_age_meridian_physician.png",
     "portrait_name": "韩玄素",
     "portrait_title": "经脉契师 · 她必须在天亮前封存名单",
+    "character_id": "han_xuansu",
+    "motion_profile": "vigilant",
     "choices": [
       {"text": "按灵根潜力选出十二人", "outcome": "十二条最稳定的周天顺利点亮，世家也承诺继续供给；落选者第一次知道，所谓天资会在童年就替他们关门。", "deltas": {"spirit_stones": 16, "reputation": 7, "karma": -8}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -2}},
       {"text": "采用孩子们的无记名抽签", "outcome": "木签让出身与天资暂时失效，结果却把两名最衰弱的孩子留在名单外；公平没有替你免去悔恨。", "deltas": {"karma": 7, "dao_heart": 5, "enmity": 4}, "path_deltas": {"defiance": 3, "bonds": 3}},
@@ -350,9 +396,11 @@
     "title": "【仙朝鼎盛】下界飞升名额簿",
     "description": "仙朝今年只开放九个下界飞升登记位，等候者却来自三百座小界。巡天司按功德与贡赋排出名单，边界使团要求各界至少一席，黑市阵师则提出把一个命籍拆成三份，让更多人冒险穿过天门。",
     "scene": "res://art/scenes/immortal_dynasty_skycourt.png",
-    "portrait": "res://art/portraits/imperial_sky_inspector.png",
+    "portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
     "portrait_name": "裴照微",
     "portrait_title": "巡天司监察使 · 九枚玉签压着三百座天",
+    "character_id": "pei_zhaowei",
+    "motion_profile": "confrontation",
     "choices": [
       {"text": "依功德榜核发九个名额", "outcome": "天门准时开启，九位积功最深者平安飞升；从未被仙朝记入功德网的小界，仍旧没有名字。", "deltas": {"reputation": 12, "spirit_stones": 20, "karma": -7}, "path_deltas": {"ambition": 4, "insight": 2, "compassion": -1}},
       {"text": "废除贡赋权重，由小界共议九席", "outcome": "最弱的九座小界第一次送出代表，原榜首们却堵住巡天司问责；一套更平等的名单从争执而非圣旨中诞生。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 10}, "path_deltas": {"defiance": 4, "bonds": 3}},

@@ -30,6 +30,22 @@
       "source_type": "generated"
     },
     {
+      "path": "portraits/imperial_sky_inspector_v2.png",
+      "sha256": "dddd45d05fa95ed425ee1569df5bcd711a86b616a8266656092c14526d164ab6",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2553957,
+      "purpose": "裴照微专用巡天司监察使立绘，按事件舞台比例重构图",
+      "eras": ["仙朝鼎盛纪"],
+      "source_type": "generated",
+      "derived_from": "portraits/imperial_sky_inspector.png",
+      "generation_intent": {
+        "concept": "保留裴照微既有身份与仙朝巡天司服装，将过窄全身构图裁为统一2:3角色锚点",
+        "mood": "克制、正式、承担制度压力",
+        "story_use": "功德雨、命籍封关、仙城坠落与飞升名额事件的稳定具名角色立绘"
+      }
+    },
+    {
       "path": "portraits/jade_healer.jpg",
       "sha256": "02f63c971a928a3f971b1aedeaadbc5bc2d1264a8f4634ce1ab8d41642f961a3",
       "width": 1024,

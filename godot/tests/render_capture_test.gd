@@ -5,6 +5,7 @@ const SaveServiceScript = preload("res://scripts/save_service.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
+const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -132,12 +133,16 @@ func _run() -> void:
 				failures.append("1280x720主界面页脚没有完整落在视口内：%s" % [
 					footer.get_global_rect() if footer != null else "missing"])
 			var player_panel := game.find_child("MainPlayerPanel", true, false) as Control
+			var main_portrait := game.find_child("MainPortrait", true, false) as TextureRect
 			var player_compass := game.find_child("PlayerDaoCompass", true, false) as Control
 			var action_panel := game.find_child("GameActionPanel", true, false) as Control
 			var action_grid := game.find_child("GameActionGrid", true, false) as GridContainer
 			if player_panel == null or player_compass == null or action_panel == null or \
 					action_grid == null or action_grid.columns != 2:
 				failures.append("1280x720主界面没有启用无裁切人物栏与双列行动栏")
+			elif main_portrait == null or main_portrait.texture == null or \
+					main_portrait.size.x < 70.0 or main_portrait.size.y < 100.0:
+				failures.append("1280x720主界面男主身份图为空或被动效挤出容器")
 			elif game.find_child("PlayerPanelScroll", true, false) != null or \
 					game.find_child("ActionPanelScroll", true, false) != null:
 				failures.append("1280x720主界面人物或行动栏仍依赖纵向滚动")
@@ -326,6 +331,7 @@ func _run() -> void:
 		"scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
 		"portrait": "res://art/portraits/jade_healer.jpg",
 		"portrait_name": "沈照川", "portrait_title": "镜湖药师 · 旧契守人",
+		"character_id": "chi_yaoqing", "motion_profile": "restrained",
 		"choices": [
 			{"text":"替她验明旧契中的魂息", "deltas":{"exp":18, "dao_heart":2},
 				"path_deltas":{"insight":2}, "outcome":"旧契映出一段被宗门抹去的归魂路。"},
@@ -337,6 +343,13 @@ func _run() -> void:
 	})
 	game.call("_show_event")
 	await _settle_frames(4)
+	var focused_event_stage := game.find_child("EventStage", true, false) as Control
+	if game.find_children("CinematicArtMotion", "Node", true, false).is_empty():
+		failures.append("叙事事件没有启用身份安全的人物微动")
+	if focused_event_stage == null or \
+			focused_event_stage.find_children("*", "TextureRect", true, false).size() != 1 or \
+			game.find_child("EventScene", true, false) != null:
+		failures.append("人物焦点事件仍在舞台内硬贴两张不同图片")
 	var event_controls: Array[Control] = [
 		game.find_child("EventHeader", true, false) as Control,
 		game.find_child("EventStage", true, false) as Control,
@@ -352,6 +365,25 @@ func _run() -> void:
 				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("event_1280x720.png"), Vector2i(1280, 720),
 		"叙事事件 1280x720")
+	var imperial_event: Dictionary = {}
+	for event_value in EventCatalogScript.load_events():
+		if event_value is Dictionary and str((event_value as Dictionary).get("id", "")) == \
+				"imperial_falling_skycourt":
+			imperial_event = (event_value as Dictionary).duplicate(true)
+			break
+	if imperial_event.is_empty():
+		failures.append("无法加载裴照微V2实机验收事件")
+	else:
+		game.set("current_event", imperial_event)
+		game.call("_show_event")
+		await _settle_frames(4)
+		var imperial_portrait := game.find_child("EventPortrait", true, false) as TextureRect
+		if imperial_portrait == null or imperial_portrait.texture == null or \
+				imperial_portrait.texture.resource_path != \
+				"res://art/portraits/imperial_sky_inspector_v2.png":
+			failures.append("裴照微V2没有进入叙事事件舞台")
+		_capture(root, output_root.path_join("event_imperial_v2_1280x720.png"),
+			Vector2i(1280, 720), "裴照微V2叙事事件 1280x720")
 	root.size = Vector2i(800, 720)
 	game.call("_show_event")
 	await _settle_frames(4)

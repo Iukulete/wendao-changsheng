@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$NoPrepare,
-    [switch]$RequireFinalAudio
+    [switch]$RequireFinalAudio,
+    [switch]$RequireProductArt
 )
 
 $ErrorActionPreference = "Stop"
@@ -17,7 +18,11 @@ $env:TEMP = $TempDir
 $env:TMP = $TempDir
 
 Write-Host "Validating the self-contained Godot art inventory..."
-& python -X utf8 (Join-Path $PSScriptRoot "verify_godot_art.py")
+$artArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_godot_art.py"))
+if ($RequireProductArt) {
+    $artArguments += "--release"
+}
+& python @artArguments
 if ($LASTEXITCODE -ne 0) {
     throw "Godot art validation failed with exit code $LASTEXITCODE."
 }
@@ -93,6 +98,7 @@ if ($smokeExitCode -ne 0 -or (($smokeOutput | Out-String) -match '(?m)^(SCRIPT E
 $testScripts = @(
     "res://tests/typography_system_test.gd",
     "res://tests/audio_system_test.gd",
+    "res://tests/character_art_catalog_test.gd",
     "res://tests/game_state_test.gd",
     "res://tests/world_simulation_test.gd",
     "res://tests/story_system_test.gd",

@@ -1,6 +1,7 @@
 class_name EventCatalog
 extends RefCounted
 
+const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
 const DATA_PATH := "res://data/events_v014.json"
 const ERAS := [
 	"古典修仙纪", "灵机蒸汽纪", "星穹道网纪",
@@ -30,6 +31,10 @@ static func load_events() -> Array:
 static func validate_catalog() -> Dictionary:
 	if not _validation_cache.is_empty():
 		return _validation_cache.duplicate(true)
+	var character_art_validation: Dictionary = CharacterArtCatalogScript.validate_catalog()
+	if not bool(character_art_validation.get("ok", false)):
+		return {"ok": false, "code": "invalid_character_art_catalog",
+			"detail": str(character_art_validation.get("code", "unknown"))}
 	var events := load_events()
 	if events.is_empty():
 		return {"ok": false, "code": "empty_event_catalog"}
@@ -55,6 +60,13 @@ static func validate_catalog() -> Dictionary:
 			if not resource_path.begins_with("res://") or not ResourceLoader.exists(resource_path):
 				return {"ok": false, "code": "missing_event_resource", "event_id": event_id,
 					"resource": resource_path}
+		var character_id := str(event.get("character_id", ""))
+		var motion_profile := str(event.get("motion_profile", ""))
+		if not CharacterArtCatalogScript.has_character(character_id):
+			return {"ok": false, "code": "invalid_event_character", "event_id": event_id,
+				"character_id": character_id}
+		if motion_profile.is_empty() or not CharacterArtCatalogScript.has_motion_profile(motion_profile):
+			return {"ok": false, "code": "invalid_event_motion_profile", "event_id": event_id}
 		var choices_value: Variant = event.get("choices", [])
 		if not choices_value is Array or (choices_value as Array).size() != 3:
 			return {"ok": false, "code": "invalid_event_choices", "event_id": event_id}

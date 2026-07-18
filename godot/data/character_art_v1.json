@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "art_direction": {
+    "style": "电影感写实中国修仙，真实材质与克制超自然光效贯穿六个技术时代",
+    "identity_rule": "同一角色跨立绘与分镜必须保持脸型、五官比例、发型基准和核心服装识别点稳定",
+    "wardrobe_rule": "服装必须可穿着、符合行动功能与时代技术，不使用暴露姿势或无叙事理由的身体强调",
+    "forbidden": [
+      "日式和服或明显日系校服",
+      "通用二次元大眼与塑料皮肤",
+      "无意义裸露或胸腰夸张",
+      "画面文字、签名、水印与伪造汉字",
+      "遮住主角全部面部导致身份不可辨识",
+      "同一张脸冒充不同具名角色"
+    ]
+  },
+  "motion_profiles": {
+    "restrained": {
+      "breath_x": 0.0015,
+      "breath_y": 0.004,
+      "sway_radians": 0.0012,
+      "portrait_parallax_px": 2.0,
+      "scene_parallax_px": 5.0,
+      "scene_overscan_px": 10.0,
+      "drift_px": 1.2,
+      "speed": 1.0
+    },
+    "introspective": {
+      "breath_x": 0.0012,
+      "breath_y": 0.0035,
+      "sway_radians": 0.0008,
+      "portrait_parallax_px": 1.5,
+      "scene_parallax_px": 4.0,
+      "scene_overscan_px": 9.0,
+      "drift_px": 0.9,
+      "speed": 0.82
+    },
+    "vigilant": {
+      "breath_x": 0.0018,
+      "breath_y": 0.0045,
+      "sway_radians": 0.001,
+      "portrait_parallax_px": 2.4,
+      "scene_parallax_px": 6.0,
+      "scene_overscan_px": 11.0,
+      "drift_px": 1.0,
+      "speed": 1.08
+    },
+    "confrontation": {
+      "breath_x": 0.002,
+      "breath_y": 0.0048,
+      "sway_radians": 0.0007,
+      "portrait_parallax_px": 2.8,
+      "scene_parallax_px": 6.5,
+      "scene_overscan_px": 12.0,
+      "drift_px": 0.8,
+      "speed": 1.16
+    },
+    "spectral": {
+      "breath_x": 0.001,
+      "breath_y": 0.003,
+      "sway_radians": 0.0015,
+      "portrait_parallax_px": 1.8,
+      "scene_parallax_px": 7.0,
+      "scene_overscan_px": 12.0,
+      "drift_px": 1.8,
+      "speed": 0.68
+    }
+  },
+  "storyboards": [
+    {
+      "id": "jade_first_warmth",
+      "display_name": "旧玉初醒",
+      "brief_section": "S1-01",
+      "target": "res://art/scenes/story_jade_first_warmth_v1.png",
+      "status": "asset_required",
+      "character_ids": ["protagonist"],
+      "motion_profile": "spectral",
+      "portrait_mode": "scene_only",
+      "story_binding": {"arc_id": "jade", "phase": "main", "stage": 0}
+    },
+    {
+      "id": "mirror_lake_gate",
+      "display_name": "镜湖无字门",
+      "brief_section": "S1-02",
+      "target": "res://art/scenes/story_mirror_lake_gate_v1.png",
+      "status": "asset_required",
+      "character_ids": ["protagonist"],
+      "motion_profile": "introspective",
+      "portrait_mode": "scene_only",
+      "story_binding": {"arc_id": "jade", "phase": "main", "stage": 1}
+    },
+    {
+      "id": "zhaoxue_first_challenge",
+      "display_name": "照雪初帖",
+      "brief_section": "S1-03",
+      "target": "res://art/scenes/story_zhaoxue_first_challenge_v1.png",
+      "status": "asset_required",
+      "character_ids": ["protagonist", "jiang_zhaoxue"],
+      "motion_profile": "confrontation",
+      "portrait_mode": "scene_only",
+      "story_binding": {"arc_id": "rival", "phase": "main", "stage": 0}
+    }
+  ],
+  "characters": [
+    {
+      "id": "protagonist",
+      "display_name": "问道人",
+      "aliases": ["门后之影", "玉中旧影"],
+      "narrative_role": "male_protagonist",
+      "current_portrait": "res://art/portraits/protagonist_hooded_close.jpg",
+      "replacement_target": "res://art/portraits/protagonist_canonical_v1.png",
+      "release_status": "identity_anchor_required",
+      "production_priority": 1,
+      "motion_profile": "introspective",
+      "visual_signature": "二十余岁中国男性，清瘦但有行动力量，黑发束起，眼神克制清醒，黑白轮回玉作为跨时代识别点"
+    },
+    {
+      "id": "jiang_zhaoxue",
+      "display_name": "江照雪",
+      "aliases": ["照雪"],
+      "narrative_role": "female_lead",
+      "current_portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+      "replacement_target": "res://art/portraits/jiang_zhaoxue_v1.png",
+      "release_status": "dedicated_anchor_required",
+      "production_priority": 1,
+      "motion_profile": "confrontation",
+      "visual_signature": "二十余岁中国女性剑修，冷静直接，实战束发与浅灰蓝窄袖剑服，眉眼锋利但不妖媚，旧战帖与无饰长剑为识别点"
+    },
+    {
+      "id": "ning_zhaoxue",
+      "display_name": "宁照雪",
+      "aliases": ["守山一脉末徒"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+      "replacement_target": "res://art/portraits/ning_zhaoxue_v1.png",
+      "release_status": "dedicated_anchor_required",
+      "production_priority": 2,
+      "motion_profile": "vigilant",
+      "visual_signature": "年轻守山女剑修，沉静坚韧，深青护肩与旧誓绳结，不与江照雪共享脸型、发式或服装轮廓"
+    },
+    {
+      "id": "chi_yaoqing",
+      "display_name": "迟药青",
+      "aliases": ["无照药师", "游方医修"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/jade_healer.jpg",
+      "replacement_target": "res://art/portraits/chi_yaoqing_v1.png",
+      "release_status": "style_alignment_required",
+      "production_priority": 2,
+      "motion_profile": "restrained",
+      "visual_signature": "三十岁左右中国女性医修，温和但有边界感，耐磨素色窄袖衣与药箱，真实皮肤与劳作痕迹"
+    },
+    {
+      "id": "cen_zhaolu",
+      "display_name": "岑照炉",
+      "aliases": ["百炉城工造师"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/steam_artificer.png",
+      "release_status": "approved",
+      "production_priority": 3,
+      "motion_profile": "vigilant",
+      "visual_signature": "灵机蒸汽纪女工造师，黄铜护具、耐热围领与可用工具构成清晰职业轮廓"
+    },
+    {
+      "id": "wen_xingdu",
+      "display_name": "闻星渡",
+      "aliases": ["闻星渡·第七实例", "星网巡道使"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/star_network_cultivator.png",
+      "replacement_target": "res://art/portraits/wen_xingdu_v1.png",
+      "release_status": "gender_alignment_required",
+      "production_priority": 2,
+      "motion_profile": "spectral",
+      "visual_signature": "星穹道网纪女性巡道使，短束发、道网接口与克制青白光纹，保持人类面部而非全息偶像"
+    },
+    {
+      "id": "shali",
+      "display_name": "沙砾",
+      "aliases": ["返道火种引路人"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/wasteland_pathfinder.png",
+      "release_status": "approved",
+      "production_priority": 3,
+      "motion_profile": "vigilant",
+      "visual_signature": "废土女引路人，防雨披肩、修补护具与火种容器，面部有风沙生活痕迹"
+    },
+    {
+      "id": "pei_zhaowei",
+      "display_name": "裴照微",
+      "aliases": ["巡天司监察使"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
+      "release_status": "approved",
+      "production_priority": 3,
+      "motion_profile": "restrained",
+      "visual_signature": "仙朝女监察使，正式窄袖官服、命籍笔与巡天纹章，权威感来自姿态而非华服堆砌"
+    },
+    {
+      "id": "han_xuansu",
+      "display_name": "韩玄素",
+      "aliases": ["经脉契师"],
+      "narrative_role": "female_supporting",
+      "current_portrait": "res://art/portraits/final_age_meridian_physician.png",
+      "replacement_target": "res://art/portraits/han_xuansu_v1.png",
+      "release_status": "gender_alignment_required",
+      "production_priority": 3,
+      "motion_profile": "restrained",
+      "visual_signature": "成熟末法女契师，医用层叠服、契书夹与可见疲态，专业而不冷漠"
+    },
+    {
+      "id": "sect_lawkeepers",
+      "display_name": "两代执律人",
+      "aliases": ["掌律人"],
+      "narrative_role": "supporting_ensemble",
+      "current_portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+      "replacement_target": "res://art/portraits/sect_lawkeepers_v1.png",
+      "release_status": "storyboard_required",
+      "production_priority": 3,
+      "motion_profile": "restrained",
+      "visual_signature": "两代山门执律者以不同年龄、门规玉简与同一律纹形成关系，不使用单人美型剑修代替群像"
+    },
+    {
+      "id": "family_covenant_holder",
+      "display_name": "祖契持有人",
+      "aliases": ["旧仆", "养育者"],
+      "narrative_role": "supporting_ensemble",
+      "current_portrait": "res://art/portraits/jade_healer.jpg",
+      "replacement_target": "res://art/portraits/family_covenant_holders_v1.png",
+      "release_status": "storyboard_required",
+      "production_priority": 3,
+      "motion_profile": "introspective",
+      "visual_signature": "承担家世线证词的中老年人物群像，以旧信、封名玉简与磨损衣料构成生活可信度"
+    },
+    {
+      "id": "recurring_antagonist",
+      "display_name": "司命执笔",
+      "aliases": ["命籍执笔人"],
+      "narrative_role": "primary_antagonist",
+      "current_portrait": "",
+      "replacement_target": "res://art/portraits/siming_antagonist_v1.png",
+      "release_status": "identity_anchor_required",
+      "production_priority": 1,
+      "motion_profile": "spectral",
+      "visual_signature": "四十岁左右中国男性，克制威严，墨黑官道袍与白玉命笔，不戴夸张面具，危险来自绝对确信与制度权力"
+    }
+  ]
+}
