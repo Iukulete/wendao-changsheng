@@ -569,6 +569,11 @@ func _show_game() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 18)
 	screen_host.add_child(page)
+	var narrow_layout := screen_host.size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.GAME and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_game")
+	)
 	page.add_child(_build_header())
 	if not dungeon_action_feedback.is_empty():
 		var feedback_slot := MarginContainer.new()
@@ -577,18 +582,48 @@ func _show_game() -> void:
 		feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		page.add_child(feedback_slot)
 
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
+	body.name = "GameBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
-	page.add_child(body)
-	body.add_child(_build_player_panel())
-	body.add_child(_build_world_panel())
-	body.add_child(_build_action_panel())
+	if narrow_layout:
+		var body_scroll := ScrollContainer.new()
+		body_scroll.name = "GameBodyScroll"
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		body_scroll.follow_focus = true
+		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body_scroll.add_child(body)
+		page.add_child(body_scroll)
+	else:
+		page.add_child(body)
+	var player_panel := _build_player_panel()
+	var world_panel := _build_world_panel(not narrow_layout)
+	var action_panel := _build_action_panel()
+	if narrow_layout:
+		body.add_child(world_panel)
+		var detail_row := HBoxContainer.new()
+		detail_row.name = "GameNarrowDetailRow"
+		detail_row.add_theme_constant_override("separation", 12)
+		detail_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		player_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail_row.add_child(player_panel)
+		detail_row.add_child(action_panel)
+		body.add_child(detail_row)
+	else:
+		body.add_child(player_panel)
+		body.add_child(world_panel)
+		body.add_child(action_panel)
 
 	var footer := _panel(0.72, era_accent)
 	footer.name = "GameFooter"
 	footer.custom_minimum_size.y = 48
-	var footer_text := _label("[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律  [Esc] 标题",
+	var footer_copy := "1–4 行动  ·  M/I/A/O 功能  ·  Esc 标题" if narrow_layout else \
+		"[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律  [Esc] 标题"
+	var footer_text := _label(footer_copy,
 		16, Color(0.88, 0.91, 0.91, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	footer.add_child(footer_text)
@@ -704,8 +739,9 @@ func _build_player_panel() -> Control:
 	return panel
 
 
-func _build_world_panel() -> Control:
+func _build_world_panel(use_inner_scroll: bool = true) -> Control:
 	var panel := _panel(0.78, era_accent)
+	panel.name = "MainWorldPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
@@ -713,6 +749,7 @@ func _build_world_panel() -> Control:
 	column.add_child(_section_title("山河正在发生"))
 
 	var pulse_card := _panel(0.44, era_accent)
+	pulse_card.name = "MainWorldPulseCard"
 	pulse_card.custom_minimum_size.y = 78
 	var pulse := _label(feedback, 18, Color("f0e7d2"))
 	pulse.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -720,18 +757,23 @@ func _build_world_panel() -> Control:
 	pulse_card.add_child(pulse)
 	column.add_child(pulse_card)
 
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
 	var narrative := RichTextLabel.new()
+	narrative.name = "MainWorldNarrative"
 	narrative.bbcode_enabled = true
 	narrative.fit_content = true
 	narrative.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	narrative.add_theme_font_size_override("normal_font_size", 18)
 	narrative.add_theme_font_size_override("bold_font_size", 20)
 	narrative.text = _world_digest()
-	scroll.add_child(narrative)
+	if use_inner_scroll:
+		var scroll := ScrollContainer.new()
+		scroll.name = "MainWorldScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_child(scroll)
+		scroll.add_child(narrative)
+	else:
+		column.add_child(narrative)
 	return panel
 
 

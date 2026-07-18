@@ -133,6 +133,44 @@ func _run() -> void:
 						action.name if action != null else "missing"])
 		_capture(root, output_root.path_join("main_%dx%d.png" % [viewport_size.x, viewport_size.y]),
 			viewport_size, "主界面 %dx%d" % [viewport_size.x, viewport_size.y])
+	root.size = Vector2i(800, 720)
+	game.call("_show_game")
+	await _settle_frames(4)
+	var narrow_main_viewport := root.get_visible_rect()
+	var narrow_main_scroll := game.find_child("GameBodyScroll", true, false) as ScrollContainer
+	var narrow_main_body := game.find_child("GameBody", true, false) as Control
+	var narrow_main_header := game.find_child("MainHeader", true, false) as Control
+	var narrow_main_footer := game.find_child("GameFooter", true, false) as Control
+	var narrow_world_pulse := game.find_child("MainWorldPulseCard", true, false) as Control
+	if narrow_main_scroll == null or not narrow_main_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720主界面没有提供山河叙事到人物行动区的纵向滚动路径")
+	if game.find_child("MainWorldScroll", true, false) != null:
+		failures.append("800x720主界面仍存在山河叙事与页面级嵌套滚动")
+	if narrow_main_body == null or narrow_main_body.get_global_rect().size.x > narrow_main_viewport.size.x:
+		failures.append("800x720主界面主体发生横向裁切：%s" % [
+			narrow_main_body.get_global_rect() if narrow_main_body != null else "missing"])
+	for fixed_control in [narrow_main_header, narrow_main_footer, narrow_world_pulse]:
+		if fixed_control == null or not narrow_main_viewport.encloses(fixed_control.get_global_rect()):
+			failures.append("800x720主界面固定标题、页脚或山河脉冲不可达")
+	_capture(root, output_root.path_join("main_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏山河主界面顶部 800x720")
+	if narrow_main_scroll != null:
+		narrow_main_scroll.scroll_vertical = int(narrow_main_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_main_detail_row := game.find_child("GameNarrowDetailRow", true, false) as Control
+	var narrow_main_player := game.find_child("MainPlayerPanel", true, false) as Control
+	var narrow_main_actions := game.find_child("GameActionPanel", true, false) as Control
+	for detail_control in [narrow_main_detail_row, narrow_main_player, narrow_main_actions]:
+		if detail_control == null or not narrow_main_viewport.encloses(detail_control.get_global_rect()):
+			failures.append("800x720主界面滚动到底后人物或行动区仍不可达")
+	for action_name in ["MeditateButton", "AdventureButton", "BreakthroughButton", "CombatButton",
+			"LocalAIButton", "InventoryButton", "ArmoryButton", "DungeonButton", "SaveGameButton",
+			"GameAudioSettingsButton", "CycleEraButton", "ReturnToMenuButton"]:
+		var narrow_main_action := game.find_child(action_name, true, false) as Control
+		if narrow_main_action == null or not narrow_main_viewport.encloses(narrow_main_action.get_global_rect()):
+			failures.append("800x720主界面行动入口不可达：%s" % action_name)
+	_capture(root, output_root.path_join("main_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏山河人物与行动 800x720")
 
 	var auxiliary_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
 	root.size = Vector2i(1280, 720)
