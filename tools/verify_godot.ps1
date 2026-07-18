@@ -17,6 +17,12 @@ New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
 $env:TEMP = $TempDir
 $env:TMP = $TempDir
 
+Write-Host "Validating the Godot migration surface and regression wiring..."
+& python -X utf8 (Join-Path $PSScriptRoot "verify_migration_surface.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Godot migration surface validation failed with exit code $LASTEXITCODE."
+}
+
 Write-Host "Validating the self-contained Godot art inventory..."
 $artArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_godot_art.py"))
 if ($RequireProductArt) {
