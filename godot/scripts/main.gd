@@ -1994,6 +1994,11 @@ func _show_event() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
+	var narrow_layout := screen_host.size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.EVENT and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_event")
+	)
 
 	var header := _panel(0.78, era_accent)
 	header.name = "EventHeader"
@@ -2004,12 +2009,24 @@ func _show_event() -> void:
 	header.add_child(header_label)
 	page.add_child(header)
 
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
 	body.name = "EventBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 20)
-	page.add_child(body)
-	body.add_child(_build_event_stage())
+	if narrow_layout:
+		var body_scroll := ScrollContainer.new()
+		body_scroll.name = "EventBodyScroll"
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		body_scroll.follow_focus = true
+		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body_scroll.add_child(body)
+		page.add_child(body_scroll)
+	else:
+		page.add_child(body)
+	body.add_child(_build_event_stage(narrow_layout))
 	body.add_child(_build_event_choices())
 
 	var footer := _label("数字键选择  ·  ESC 暂离此事", 15,
@@ -2018,10 +2035,10 @@ func _show_event() -> void:
 	page.add_child(footer)
 
 
-func _build_event_stage() -> Control:
+func _build_event_stage(narrow_layout: bool = false) -> Control:
 	var frame := _panel(0.38, era_accent)
 	frame.name = "EventStage"
-	frame.custom_minimum_size.x = 515
+	frame.custom_minimum_size = Vector2(0, 360) if narrow_layout else Vector2(515, 0)
 	var stage := Control.new()
 	stage.clip_contents = true
 	frame.add_child(stage)

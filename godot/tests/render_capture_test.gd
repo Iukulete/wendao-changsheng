@@ -284,6 +284,32 @@ func _run() -> void:
 				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("event_1280x720.png"), Vector2i(1280, 720),
 		"叙事事件 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_event")
+	await _settle_frames(4)
+	var narrow_event_viewport := root.get_visible_rect()
+	var narrow_event_scroll := game.find_child("EventBodyScroll", true, false) as ScrollContainer
+	var narrow_event_stage := game.find_child("EventStage", true, false) as Control
+	var narrow_event_footer := game.find_child("EventFooter", true, false) as Control
+	if narrow_event_scroll == null or not narrow_event_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720叙事事件没有提供舞台到抉择区的纵向滚动路径")
+	if narrow_event_stage == null or narrow_event_stage.get_global_rect().size.x > narrow_event_viewport.size.x:
+		failures.append("800x720叙事事件舞台发生横向裁切：%s" % [
+			narrow_event_stage.get_global_rect() if narrow_event_stage != null else "missing"])
+	if narrow_event_footer == null or not narrow_event_viewport.encloses(narrow_event_footer.get_global_rect()):
+		failures.append("800x720叙事事件键盘提示不可达")
+	_capture(root, output_root.path_join("event_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏叙事舞台 800x720")
+	if narrow_event_scroll != null:
+		narrow_event_scroll.scroll_vertical = int(narrow_event_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	for choice_index in range(3):
+		var narrow_choice := game.find_child("EventChoiceButton%d" % choice_index, true, false) as Control
+		if narrow_choice == null or not narrow_event_viewport.encloses(narrow_choice.get_global_rect()):
+			failures.append("800x720叙事事件滚动到底后选择%d仍不可达" % (choice_index + 1))
+	_capture(root, output_root.path_join("event_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏因果抉择 800x720")
+	root.size = Vector2i(1280, 720)
 
 	var reincarnation_state := auxiliary_state.duplicate(true)
 	reincarnation_state.player.age = reincarnation_state.player.lifespan
