@@ -58,14 +58,15 @@ jobs:
       - name: Validate project and load main scene
         shell: pwsh
         run: |
-          $arguments = @("-NoPrepare")
+          $verifyParameters = @{ NoPrepare = $true }
           if ($env:PRODUCT_RELEASE -eq "true") {
-            $arguments += "-RequireFinalAudio", "-RequireProductArt"
+            $verifyParameters.RequireFinalAudio = $true
+            $verifyParameters.RequireProductArt = $true
             Write-Host "Product release gates enabled for this ref."
           } else {
             Write-Host "Development branch validation enabled; product-art gate remains deferred to main/PR."
           }
-          ./tools/verify_godot.ps1 @arguments
+          ./tools/verify_godot.ps1 @verifyParameters
 
       - name: Validate rendered gameplay states
         shell: pwsh
