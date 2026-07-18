@@ -42,6 +42,7 @@ $expected = @(
     "main_1920x1080.png",
     "inventory_1280x720.png",
     "armory_1280x720.png",
+    "armory_narrow_800x720.png",
     "event_1280x720.png",
     "reincarnation_1280x720.png",
     "normal_combat_1280x720.png",

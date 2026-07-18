@@ -208,6 +208,20 @@ func _run() -> void:
 		failures.append("未装备玉兵的操作按钮必须明确写为装备，不能误导为增加共鸣")
 	_capture(root, output_root.path_join("armory_1280x720.png"), Vector2i(1280, 720),
 		"成就玉兵 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_armory")
+	await _settle_frames(4)
+	var narrow_armory_viewport := root.get_visible_rect()
+	var narrow_armory_body := game.find_child("ArmoryBody", true, false) as Control
+	var narrow_armory_back := game.find_child("ArmoryBackButton", true, false) as Control
+	if narrow_armory_body == null or narrow_armory_body.get_global_rect().size.x > narrow_armory_viewport.size.x:
+		failures.append("800x720成就玉兵主体发生横向裁切：%s" % [
+			narrow_armory_body.get_global_rect() if narrow_armory_body != null else "missing"])
+	if narrow_armory_back == null or not narrow_armory_viewport.encloses(narrow_armory_back.get_global_rect()):
+		failures.append("800x720成就玉兵返回入口不可达")
+	_capture(root, output_root.path_join("armory_narrow_800x720.png"), Vector2i(800, 720),
+		"成就玉兵 800x720")
+	root.size = Vector2i(1280, 720)
 
 	game.set("run_state", auxiliary_state.duplicate(true))
 	game.call("_sync_state_views")
