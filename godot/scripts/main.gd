@@ -1425,7 +1425,7 @@ func _show_dungeon_route() -> void:
 				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
 			call_deferred("_show_dungeon_route")
 	)
-	page.add_child(_build_dungeon_header(run, "秘境岔路"))
+	page.add_child(_build_dungeon_header(run, "秘境岔路", narrow_layout))
 	var content_host: Container = page
 	if narrow_layout:
 		var content_scroll := ScrollContainer.new()
@@ -1535,7 +1535,8 @@ func _show_dungeon_combat() -> void:
 				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
 			call_deferred("_show_dungeon_combat")
 	)
-	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn)))
+	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn),
+		narrow_layout))
 	var content_host: Container = page
 	if narrow_layout:
 		var content_scroll := ScrollContainer.new()
@@ -1700,16 +1701,19 @@ func _show_dungeon_combat() -> void:
 	_show_dungeon_action_feedback()
 
 
-func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
+func _build_dungeon_header(run: Dictionary, subtitle: String, narrow_layout: bool = false) -> Control:
 	var header := _panel(0.82, era_accent)
 	header.name = "DungeonHeader"
-	header.custom_minimum_size.y = 86
+	header.custom_minimum_size.y = 112 if narrow_layout else 86
 	var header_style := header.get_theme_stylebox("panel") as StyleBoxFlat
 	header_style.content_margin_top = 10
 	header_style.content_margin_bottom = 10
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 4)
+	header.add_child(content)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
-	header.add_child(row)
+	content.add_child(row)
 	var title := VBoxContainer.new()
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(title)
@@ -1717,8 +1721,14 @@ func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	title.add_child(_label(subtitle, 14, Color(era_accent, 0.90)))
 	var profile_label := _label(DungeonSystemScript.ability_profile_label(run), 14,
 		Color(0.77, 0.83, 0.82))
-	profile_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	title.add_child(profile_label)
+	profile_label.name = "DungeonAbilityProfile"
+	profile_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if narrow_layout:
+		profile_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(profile_label)
+	else:
+		profile_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		title.add_child(profile_label)
 	var rewards: Dictionary = run.rewards
 	row.add_child(_label("暂存修为 %d · 灵石 %d" % [int(rewards.exp), int(rewards.spirit_stones)],
 		15, Color("e7c778"), HORIZONTAL_ALIGNMENT_RIGHT))

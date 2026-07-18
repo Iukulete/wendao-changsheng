@@ -596,6 +596,7 @@ func _run() -> void:
 	var narrow_route_scroll := game.find_child("DungeonRouteScroll", true, false) as ScrollContainer
 	var narrow_route_content := game.find_child("DungeonRouteContent", true, false) as Control
 	var narrow_route_header := game.find_child("DungeonHeader", true, false) as Control
+	var narrow_route_profile := game.find_child("DungeonAbilityProfile", true, false) as Label
 	var narrow_route_footer := game.find_child("DungeonRouteFooter", true, false) as Control
 	var narrow_route_trail := game.find_child("DungeonRouteTrail", true, false) as Control
 	if narrow_route_scroll == null or not narrow_route_scroll.get_v_scroll_bar().visible:
@@ -608,6 +609,9 @@ func _run() -> void:
 	for narrow_route_control in [narrow_route_header, narrow_route_footer, narrow_route_trail]:
 		if narrow_route_control == null or not narrow_route_viewport.encloses(narrow_route_control.get_global_rect()):
 			failures.append("800x720秘境路线页首、页脚或因果图不可达")
+	if narrow_route_profile == null or narrow_route_profile.autowrap_mode == TextServer.AUTOWRAP_OFF or \
+			narrow_route_profile.text_overrun_behavior == TextServer.OVERRUN_TRIM_ELLIPSIS:
+		failures.append("800x720秘境路线仍在截断关键能力来源摘要")
 	_capture(root, output_root.path_join("dungeon_route_narrow_top_800x720.png"), Vector2i(800, 720),
 		"窄屏秘境路线因果图 800x720")
 	if narrow_route_scroll != null:
