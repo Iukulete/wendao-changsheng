@@ -1413,11 +1413,34 @@ func _show_dungeon_route() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 14)
 	screen_host.add_child(page)
+	var narrow_layout := get_viewport_rect().size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.DUNGEON_ROUTE and \
+				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_dungeon_route")
+	)
 	page.add_child(_build_dungeon_header(run, "秘境岔路"))
+	var content_host: Container = page
+	if narrow_layout:
+		var content_scroll := ScrollContainer.new()
+		content_scroll.name = "DungeonRouteScroll"
+		content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		content_scroll.follow_focus = true
+		content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var content := VBoxContainer.new()
+		content.name = "DungeonRouteContent"
+		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.add_theme_constant_override("separation", 14)
+		content_scroll.add_child(content)
+		page.add_child(content_scroll)
+		content_host = content
 
 	var status := HBoxContainer.new()
+	status.name = "DungeonRouteStatus"
 	status.add_theme_constant_override("separation", 14)
-	page.add_child(status)
+	content_host.add_child(status)
 	var stress_color := _dungeon_stress_color(int(run.stress))
 	var vitality := _panel(0.80, stress_color if int(run.stress) >= 60 else era_accent)
 	vitality.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1431,7 +1454,7 @@ func _show_dungeon_route() -> void:
 	vitality_column.add_child(route_stress_label)
 	status.add_child(vitality)
 	var depth_panel := _panel(0.80, era_accent)
-	depth_panel.custom_minimum_size.x = 310
+	depth_panel.custom_minimum_size.x = 260 if narrow_layout else 310
 	var depth_column := VBoxContainer.new()
 	depth_column.alignment = BoxContainer.ALIGNMENT_CENTER
 	depth_panel.add_child(depth_column)
@@ -1443,13 +1466,18 @@ func _show_dungeon_route() -> void:
 		int(run.get("guard_power", 0))], 13, Color(era_accent, 0.86), HORIZONTAL_ALIGNMENT_CENTER))
 	status.add_child(depth_panel)
 
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
+	body.name = "DungeonRouteBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 16)
-	page.add_child(body)
-	body.add_child(_build_dungeon_route_journal(run))
+	content_host.add_child(body)
+	body.add_child(_build_dungeon_route_journal(run, not narrow_layout))
 	var route_panel := _panel(0.86, Color("d5a957"))
-	route_panel.custom_minimum_size.x = 420
+	route_panel.name = "DungeonRouteChoicePanel"
+	route_panel.custom_minimum_size.x = 0 if narrow_layout else 420
+	if narrow_layout:
+		route_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var route_column := VBoxContainer.new()
 	route_column.add_theme_constant_override("separation", 12)
 	route_panel.add_child(route_column)
@@ -1476,8 +1504,10 @@ func _show_dungeon_route() -> void:
 	feedback_slot.custom_minimum_size.y = 54
 	feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	page.add_child(feedback_slot)
-	page.add_child(_label("数字键选择道标 · Esc 撤离", 14, Color(0.76, 0.80, 0.81, 0.82),
-		HORIZONTAL_ALIGNMENT_CENTER))
+	var footer := _label("数字键选择道标 · Esc 撤离", 14, Color(0.76, 0.80, 0.81, 0.82),
+		HORIZONTAL_ALIGNMENT_CENTER)
+	footer.name = "DungeonRouteFooter"
+	page.add_child(footer)
 	_show_dungeon_action_feedback()
 
 
@@ -1493,15 +1523,42 @@ func _show_dungeon_combat() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 12)
 	screen_host.add_child(page)
+	var narrow_layout := get_viewport_rect().size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.DUNGEON_COMBAT and \
+				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_dungeon_combat")
+	)
 	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn)))
+	var content_host: Container = page
+	if narrow_layout:
+		var content_scroll := ScrollContainer.new()
+		content_scroll.name = "DungeonCombatScroll"
+		content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		content_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		content_scroll.follow_focus = true
+		content_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		var content := VBoxContainer.new()
+		content.name = "DungeonCombatBody"
+		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.add_theme_constant_override("separation", 12)
+		content_scroll.add_child(content)
+		page.add_child(content_scroll)
+		content_host = content
 
 	var combat_row := HBoxContainer.new()
-	combat_row.custom_minimum_size.y = 270
+	combat_row.name = "DungeonCombatStatusRow"
+	combat_row.custom_minimum_size.y = 0 if narrow_layout else 270
+	combat_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	combat_row.add_theme_constant_override("separation", 14)
-	page.add_child(combat_row)
+	content_host.add_child(combat_row)
 	var stress_color := _dungeon_stress_color(int(run.stress))
 	var self_panel := _panel(0.84, stress_color if int(run.stress) >= 60 else era_accent)
-	self_panel.custom_minimum_size.x = 260
+	self_panel.name = "DungeonSelfPanel"
+	self_panel.custom_minimum_size.x = 0 if narrow_layout else 260
+	if narrow_layout:
+		self_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var self_column := VBoxContainer.new()
 	self_column.add_theme_constant_override("separation", 8)
 	self_panel.add_child(self_column)
@@ -1516,20 +1573,25 @@ func _show_dungeon_combat() -> void:
 		DungeonSystemScript.energy_cap(battle), int(battle.player_block)], 15, Color("b9d5e8")))
 	self_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
 		int(run.get("guard_power", 0))], 14, Color(era_accent, 0.88)))
-	combat_row.add_child(self_panel)
-	combat_row.add_child(_build_dungeon_log(run))
+	var log_panel := _build_dungeon_log(run, not narrow_layout)
 	var enemy_panel := _panel(0.84, Color("d46b61"))
-	enemy_panel.custom_minimum_size.x = 330
-	var enemy_scroll := ScrollContainer.new()
-	enemy_scroll.name = "DungeonEnemyScroll"
-	enemy_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	enemy_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enemy_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	enemy_panel.add_child(enemy_scroll)
+	enemy_panel.name = "DungeonEnemyPanel"
+	enemy_panel.custom_minimum_size.x = 0 if narrow_layout else 330
+	if narrow_layout:
+		enemy_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var enemy_column := VBoxContainer.new()
 	enemy_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	enemy_column.add_theme_constant_override("separation", 8)
-	enemy_scroll.add_child(enemy_column)
+	if narrow_layout:
+		enemy_panel.add_child(enemy_column)
+	else:
+		var enemy_scroll := ScrollContainer.new()
+		enemy_scroll.name = "DungeonEnemyScroll"
+		enemy_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		enemy_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		enemy_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		enemy_panel.add_child(enemy_scroll)
+		enemy_scroll.add_child(enemy_column)
 	enemy_column.add_child(_section_title(str(battle.enemy_name)))
 	enemy_column.add_child(_progress_row("气血", int(battle.enemy_hp), int(battle.enemy_max_hp), Color("d35f58")))
 	enemy_column.add_child(_label("护体 %d · 虚弱 %d回合" % [int(battle.enemy_block), int(battle.enemy_weak)],
@@ -1561,20 +1623,30 @@ func _show_dungeon_combat() -> void:
 		phase_description.name = "DungeonPhaseDescription"
 		phase_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		enemy_column.add_child(phase_description)
-	combat_row.add_child(enemy_panel)
+	combat_row.add_child(self_panel)
+	if narrow_layout:
+		combat_row.add_child(enemy_panel)
+		content_host.add_child(log_panel)
+	else:
+		combat_row.add_child(log_panel)
+		combat_row.add_child(enemy_panel)
 
-	var hand_scroll := ScrollContainer.new()
-	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	hand_scroll.custom_minimum_size.y = 126
-	hand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(hand_scroll)
+	var hand_host: Container = content_host
+	if not narrow_layout:
+		var hand_scroll := ScrollContainer.new()
+		hand_scroll.name = "DungeonHandScroll"
+		hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		hand_scroll.custom_minimum_size.y = 126
+		hand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		page.add_child(hand_scroll)
+		hand_host = hand_scroll
 	var hand_grid := GridContainer.new()
 	hand_grid.name = "DungeonHandGrid"
-	hand_grid.columns = 5
+	hand_grid.columns = 2 if narrow_layout else 5
 	hand_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hand_grid.add_theme_constant_override("h_separation", 10)
 	hand_grid.add_theme_constant_override("v_separation", 10)
-	hand_scroll.add_child(hand_grid)
+	hand_host.add_child(hand_grid)
 	var hand: Array = battle.hand
 	for index in range(hand.size()):
 		var card: Dictionary = hand[index]
@@ -1587,7 +1659,9 @@ func _show_dungeon_combat() -> void:
 			str(definition.description)],
 			_play_dungeon_card.bind(index), false)
 		card_button.name = "DungeonCardButton%d" % index
-		card_button.custom_minimum_size = Vector2(194, 126)
+		card_button.custom_minimum_size = Vector2(0 if narrow_layout else 194, 126)
+		if narrow_layout:
+			card_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		card_button.add_theme_font_size_override("font_size", 15)
@@ -1607,18 +1681,22 @@ func _show_dungeon_combat() -> void:
 	page.add_child(feedback_slot)
 
 	var actions := HBoxContainer.new()
+	actions.name = "DungeonCombatActions"
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 12)
 	page.add_child(actions)
 	var end_button := _button("结束回合 [E]", _end_dungeon_turn, true)
 	end_button.name = "DungeonEndTurnButton"
 	actions.add_child(end_button)
-	actions.add_child(_button("撤出秘境", _abandon_dungeon, false))
+	var abandon_button := _button("撤出秘境", _abandon_dungeon, false)
+	abandon_button.name = "DungeonCombatAbandonButton"
+	actions.add_child(abandon_button)
 	_show_dungeon_action_feedback()
 
 
 func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	var header := _panel(0.82, era_accent)
+	header.name = "DungeonHeader"
 	header.custom_minimum_size.y = 86
 	var header_style := header.get_theme_stylebox("panel") as StyleBoxFlat
 	header_style.content_margin_top = 10
@@ -1641,26 +1719,32 @@ func _build_dungeon_header(run: Dictionary, subtitle: String) -> Control:
 	return header
 
 
-func _build_dungeon_log(run: Dictionary) -> Control:
+func _build_dungeon_log(run: Dictionary, use_inner_scroll: bool = true) -> Control:
 	var panel := _panel(0.78, era_accent)
+	panel.name = "DungeonLogPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 	column.add_child(_section_title("空阙回声"))
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
 	var log_label := _label("\n".join((run.log as Array).slice(-10)), 15, Color("eee8da"))
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(log_label)
+	if use_inner_scroll:
+		var scroll := ScrollContainer.new()
+		scroll.name = "DungeonLogScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_child(scroll)
+		scroll.add_child(log_label)
+	else:
+		column.add_child(log_label)
 	return panel
 
 
-func _build_dungeon_route_journal(run: Dictionary) -> Control:
+func _build_dungeon_route_journal(run: Dictionary, use_inner_scroll: bool = true) -> Control:
 	var panel := _panel(0.78, era_accent)
+	panel.name = "DungeonRouteJournal"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
@@ -1669,14 +1753,18 @@ func _build_dungeon_route_journal(run: Dictionary) -> Control:
 	column.add_child(_build_dungeon_route_trail(run))
 	column.add_child(_divider())
 	column.add_child(_label("近途回声", 16, Color(era_accent, 0.88)))
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
 	var log_label := _label("\n".join((run.log as Array).slice(-7)), 15, Color("eee8da"))
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(log_label)
+	if use_inner_scroll:
+		var scroll := ScrollContainer.new()
+		scroll.name = "DungeonRouteJournalScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_child(scroll)
+		scroll.add_child(log_label)
+	else:
+		column.add_child(log_label)
 	return panel
 
 

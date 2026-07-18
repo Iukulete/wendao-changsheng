@@ -538,6 +538,46 @@ func _run() -> void:
 			not route_button.text.contains("预示"):
 		failures.append("秘境岔路没有显示可读的四层因果路线与收益风险预示")
 	_capture(root, output_root.path_join("dungeon_route_1440x900.png"), Vector2i(1440, 900), "秘境路线")
+	root.size = Vector2i(800, 720)
+	game.call("_show_dungeon_route")
+	await _settle_frames(4)
+	var narrow_route_viewport := root.get_visible_rect()
+	var narrow_route_scroll := game.find_child("DungeonRouteScroll", true, false) as ScrollContainer
+	var narrow_route_content := game.find_child("DungeonRouteContent", true, false) as Control
+	var narrow_route_header := game.find_child("DungeonHeader", true, false) as Control
+	var narrow_route_footer := game.find_child("DungeonRouteFooter", true, false) as Control
+	var narrow_route_trail := game.find_child("DungeonRouteTrail", true, false) as Control
+	if narrow_route_scroll == null or not narrow_route_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720秘境路线没有提供因果图到选路区的纵向滚动路径")
+	if game.find_child("DungeonRouteJournalScroll", true, false) != null:
+		failures.append("800x720秘境路线仍存在日志与页面级嵌套滚动")
+	if narrow_route_content == null or narrow_route_content.get_global_rect().size.x > narrow_route_viewport.size.x:
+		failures.append("800x720秘境路线主体发生横向裁切：%s" % [
+			narrow_route_content.get_global_rect() if narrow_route_content != null else "missing"])
+	for narrow_route_control in [narrow_route_header, narrow_route_footer, narrow_route_trail]:
+		if narrow_route_control == null or not narrow_route_viewport.encloses(narrow_route_control.get_global_rect()):
+			failures.append("800x720秘境路线页首、页脚或因果图不可达")
+	_capture(root, output_root.path_join("dungeon_route_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏秘境路线因果图 800x720")
+	if narrow_route_scroll != null:
+		for route_choice_index in range((game.get("run_state").dungeon.run.route_choices as Array).size()):
+			var narrow_route_button := game.find_child("DungeonRouteButton%d" % route_choice_index,
+				true, false) as Control
+			if narrow_route_button != null:
+				narrow_route_scroll.ensure_control_visible(narrow_route_button)
+				await _settle_frames(2)
+			if narrow_route_button == null or not narrow_route_viewport.encloses(narrow_route_button.get_global_rect()):
+				failures.append("800x720秘境路线选择不可达：%d" % (route_choice_index + 1))
+		narrow_route_scroll.scroll_vertical = int(narrow_route_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_route_abandon := game.find_child("DungeonAbandonButton", true, false) as Control
+	if narrow_route_abandon == null or not narrow_route_viewport.encloses(narrow_route_abandon.get_global_rect()):
+		failures.append("800x720秘境路线滚动到底后撤离操作不可达")
+	_capture(root, output_root.path_join("dungeon_route_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏秘境路线选择 800x720")
+	root.size = Vector2i(1440, 900)
+	game.call("_show_dungeon_route")
+	await _settle_frames(4)
 	var first_run_state: Dictionary = game.get("run_state")
 	var memory_index := -1
 	var memory_name := ""
@@ -584,6 +624,47 @@ func _run() -> void:
 		game.call("_show_dungeon_combat")
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
+	root.size = Vector2i(800, 720)
+	game.call("_show_dungeon_combat")
+	await _settle_frames(4)
+	var narrow_dungeon_viewport := root.get_visible_rect()
+	var narrow_dungeon_scroll := game.find_child("DungeonCombatScroll", true, false) as ScrollContainer
+	var narrow_dungeon_body := game.find_child("DungeonCombatBody", true, false) as Control
+	var narrow_dungeon_status := game.find_child("DungeonCombatStatusRow", true, false) as Control
+	var narrow_dungeon_header := game.find_child("DungeonHeader", true, false) as Control
+	var narrow_dungeon_actions := game.find_child("DungeonCombatActions", true, false) as Control
+	var narrow_dungeon_hand := game.find_child("DungeonHandGrid", true, false) as GridContainer
+	if narrow_dungeon_scroll == null or not narrow_dungeon_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720秘境战斗没有提供双方状态到两列手牌的纵向滚动路径")
+	if game.find_child("DungeonEnemyScroll", true, false) != null or \
+			game.find_child("DungeonHandScroll", true, false) != null or \
+			game.find_child("DungeonLogScroll", true, false) != null:
+		failures.append("800x720秘境战斗仍存在敌方、日志或手牌嵌套滚动")
+	if narrow_dungeon_body == null or narrow_dungeon_body.get_global_rect().size.x > narrow_dungeon_viewport.size.x:
+		failures.append("800x720秘境战斗主体发生横向裁切：%s" % [
+			narrow_dungeon_body.get_global_rect() if narrow_dungeon_body != null else "missing"])
+	if narrow_dungeon_hand == null or narrow_dungeon_hand.columns != 2:
+		failures.append("800x720秘境战斗手牌没有切换为两列布局")
+	for narrow_dungeon_control in [narrow_dungeon_header, narrow_dungeon_actions, narrow_dungeon_status]:
+		if narrow_dungeon_control == null or not narrow_dungeon_viewport.encloses(narrow_dungeon_control.get_global_rect()):
+			failures.append("800x720秘境战斗页首、固定操作或双方状态不可达")
+	_capture(root, output_root.path_join("dungeon_combat_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏秘境战斗双方状态 800x720")
+	if narrow_dungeon_scroll != null:
+		narrow_dungeon_scroll.scroll_vertical = int(narrow_dungeon_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_dungeon_cards := game.find_children("DungeonCardButton*", "Button", true, false)
+	for narrow_card_value in narrow_dungeon_cards:
+		var narrow_card := narrow_card_value as Control
+		if narrow_card == null or not narrow_dungeon_viewport.encloses(narrow_card.get_global_rect()):
+			failures.append("800x720秘境战斗滚动到底后仍有手牌不可达")
+	for action_name in ["DungeonEndTurnButton", "DungeonCombatAbandonButton"]:
+		var narrow_dungeon_action := game.find_child(action_name, true, false) as Control
+		if narrow_dungeon_action == null or not narrow_dungeon_viewport.encloses(narrow_dungeon_action.get_global_rect()):
+			failures.append("800x720秘境战斗固定操作不可达：%s" % action_name)
+	_capture(root, output_root.path_join("dungeon_combat_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏秘境战斗两列手牌 800x720")
+	root.size = Vector2i(1440, 900)
 	game.set("dungeon_action_feedback", {"kind":"card", "card_name":"今身定锚",
 		"source_kind":"story", "damage":18, "block":10, "hp_delta":0,
 		"stress_delta":-5, "enemy_block_delta":0, "attack_power_delta":0,
