@@ -325,7 +325,7 @@ func play_event(event_id: String, context: Dictionary = {}) -> bool:
 	if not _audio_output_available():
 		# Headless/Dummy runs still validate event resolution and cooldowns, but
 		# must not create playback handles that cannot be mixed or released.
-		_last_played_ms[resolved_id] = now_ms
+		_last_played_ms[resolved_id] = Time.get_ticks_msec()
 		return true
 	var gain_db := float(event.get("gain_db", 0.0)) + float(context.get("gain_db", 0.0))
 	if bool(_settings.get("reduce_sudden", false)) and bool(event.get("sudden", false)):
@@ -340,7 +340,7 @@ func play_event(event_id: String, context: Dictionary = {}) -> bool:
 	player.set_meta("audio_event", resolved_id)
 	player.set_meta("audio_started_ms", now_ms)
 	player.play()
-	_last_played_ms[resolved_id] = now_ms
+	_last_played_ms[resolved_id] = Time.get_ticks_msec()
 	return true
 
 

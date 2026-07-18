@@ -65,6 +65,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -No
 # 屏幕外真实 GL 截图验收，不打开前台窗口
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_render.ps1
 
+# 10,000 局可复现混合自动试玩；默认四分片并行
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_playtest_10k.ps1
+
 # 验证、导出，并执行无设备与屏幕外静音真实音频后端冒烟
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare
 
@@ -74,7 +77,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoP
 
 GitHub Actions 对 `agent/**`、`main` 推送和面向 `main` 的拉取请求执行完整 Godot 回归、真实渲染、Windows 导出和音频设备冒烟，但允许产品美术仍在制作；只有显式手动发布任务会额外强制最终音频与产品美术闸门。开发验证不能把缺失美术误标为产品发布，最终发布也不能绕过 12 项身份/分镜检查。
 
-全量回归包含字体文件与授权哈希、164 个六纪元原创音频素材的格式/哈希/响度/循环/跨纪元差异与变体门禁（含 18 条流式三态配乐、24 条双地点分层声景和 42 条六纪元低频语义终稿）、音乐/声景上下文映射与独立双声部相位切换、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及音频设置、普通战斗、秘境路线和秘境战斗画面。
+全量回归包含字体文件与授权哈希、164 个六纪元原创音频素材的格式/哈希/响度/循环/跨纪元差异与变体门禁（含 18 条流式三态配乐、24 条双地点分层声景和 42 条六纪元低频语义终稿）、音乐/声景上下文映射与独立双声部相位切换、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。独立压力测试以连续唯一种子运行 10,000 局混合流程，失败时报告局号、模式和种子以供单局重放。渲染验收覆盖 `1280x720`、`1440x900`、`1920x1080`，以及音频设置、普通战斗、秘境路线和秘境战斗画面。
 
 ## 项目结构
 
