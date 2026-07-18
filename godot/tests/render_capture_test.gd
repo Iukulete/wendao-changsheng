@@ -203,6 +203,9 @@ func _run() -> void:
 	var invoke_control := game.find_child("ArmoryInvokeButton", true, false) as Button
 	if invoke_control == null or invoke_control.disabled:
 		failures.append("满蓄能玉兵在成就玉兵首屏仍无法显圣")
+	var zhanjie_button := game.find_child("JadeWeaponButton_zhanjie", true, false) as Button
+	if zhanjie_button == null or zhanjie_button.text != "装备":
+		failures.append("未装备玉兵的操作按钮必须明确写为装备，不能误导为增加共鸣")
 	_capture(root, output_root.path_join("armory_1280x720.png"), Vector2i(1280, 720),
 		"成就玉兵 1280x720")
 

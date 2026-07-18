@@ -3118,7 +3118,7 @@ func _build_jade_weapon_card(definition: Dictionary, armory: Dictionary,
 	if unlocked:
 		text_box.add_child(_label("%s · 基础 %s · 共鸣 %d" % [_jade_style_name(str(definition.style)),
 			_jade_bonus_text(definition.bonuses), int(weapon.resonance)], 12, Color("d7be7c")))
-		var button := _button("当前" if equipped else "共鸣", _equip_jade_weapon.bind(weapon_id),
+		var button := _button("当前" if equipped else "装备", _equip_jade_weapon.bind(weapon_id),
 			not equipped, "", true)
 		button.name = "JadeWeaponButton_%s" % weapon_id
 		button.custom_minimum_size = Vector2(82, 48)
