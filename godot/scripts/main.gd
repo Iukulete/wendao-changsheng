@@ -145,6 +145,13 @@ func _run_audio_device_music_smoke() -> void:
 			decisive_voices, dungeon_ambience_voices, rare_cue_ok])
 		return
 	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=4 rare_cue=true")
+	audio_director.shutdown_for_exit()
+	await get_tree().create_timer(0.15).timeout
+	audio_director.queue_free()
+	await get_tree().process_frame
+	await get_tree().create_timer(0.05).timeout
+	print("AUDIO_DEVICE_SHUTDOWN_OK: players_stopped streams_released")
+	get_tree().quit(0)
 
 
 func _process(delta: float) -> void:
@@ -2557,6 +2564,11 @@ func _show_inventory() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
+	var narrow_layout := screen_host.size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.INVENTORY and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_inventory")
+	)
 	page.add_child(_display_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	var notice_card := _panel(0.36, era_accent)
 	notice_card.name = "InventoryNoticeCard"
@@ -2568,19 +2580,35 @@ func _show_inventory() -> void:
 	notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	notice_card.add_child(notice)
 	page.add_child(notice_card)
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
 	body.name = "InventoryBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
-	page.add_child(body)
-	body.add_child(_build_inventory_list())
-	body.add_child(_build_forge_panel())
+	if narrow_layout:
+		var body_scroll := ScrollContainer.new()
+		body_scroll.name = "InventoryBodyScroll"
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		body_scroll.follow_focus = true
+		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body_scroll.add_child(body)
+		page.add_child(body_scroll)
+	else:
+		page.add_child(body)
+	var inventory_panel := _build_inventory_list(not narrow_layout)
+	var forge_panel := _build_forge_panel()
+	if narrow_layout:
+		forge_panel.custom_minimum_size = Vector2(0, 480)
+	body.add_child(inventory_panel)
+	body.add_child(forge_panel)
 	var back_button := _button("返回山河", _show_game, true)
 	back_button.name = "InventoryBackButton"
 	page.add_child(back_button)
 
 
-func _build_inventory_list() -> Control:
+func _build_inventory_list(use_inner_scroll: bool = true) -> Control:
 	var panel := _panel(0.84, era_accent)
 	panel.name = "InventoryListPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -2601,15 +2629,19 @@ func _build_inventory_list() -> Control:
 	loadout.add_child(_inventory_loadout_card("灵物", _equipped_name(str(equipped.relic_id)),
 		Color("b18bd0")))
 	column.add_child(loadout)
-	var scroll := ScrollContainer.new()
-	scroll.name = "InventoryListScroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_child(scroll)
 	var list := VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override("separation", 8)
-	scroll.add_child(list)
+	if use_inner_scroll:
+		var scroll := ScrollContainer.new()
+		scroll.name = "InventoryListScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		column.add_child(scroll)
+		scroll.add_child(list)
+	else:
+		list.name = "InventoryNarrowList"
+		column.add_child(list)
 	for entry_value in inventory.items:
 		var entry: Dictionary = entry_value
 		var item_id := str(entry.item_id)

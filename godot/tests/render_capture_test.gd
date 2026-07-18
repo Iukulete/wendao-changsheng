@@ -160,6 +160,33 @@ func _run() -> void:
 				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("inventory_1280x720.png"), Vector2i(1280, 720),
 		"行囊炼器 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_inventory")
+	await _settle_frames(4)
+	var narrow_inventory_viewport := root.get_visible_rect()
+	var narrow_inventory_scroll := game.find_child("InventoryBodyScroll", true, false) as ScrollContainer
+	var narrow_inventory_panel := game.find_child("InventoryListPanel", true, false) as Control
+	var narrow_inventory_back := game.find_child("InventoryBackButton", true, false) as Control
+	if narrow_inventory_scroll == null or not narrow_inventory_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720行囊炼器没有提供上下分段的纵向滚动路径")
+	if game.find_child("InventoryListScroll", true, false) != null:
+		failures.append("800x720行囊炼器仍存在器物区与页面级嵌套滚动")
+	if narrow_inventory_panel == null or narrow_inventory_panel.get_global_rect().size.x > narrow_inventory_viewport.size.x:
+		failures.append("800x720行囊器物区发生横向裁切：%s" % [
+			narrow_inventory_panel.get_global_rect() if narrow_inventory_panel != null else "missing"])
+	if narrow_inventory_back == null or not narrow_inventory_viewport.encloses(narrow_inventory_back.get_global_rect()):
+		failures.append("800x720行囊炼器返回入口不可达")
+	_capture(root, output_root.path_join("inventory_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏行囊顶部 800x720")
+	if narrow_inventory_scroll != null:
+		narrow_inventory_scroll.scroll_vertical = int(narrow_inventory_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_forge_recipe := game.find_child("ForgeRecipe_spirit_blade", true, false) as Control
+	if narrow_forge_recipe == null or not narrow_inventory_viewport.encloses(narrow_forge_recipe.get_global_rect()):
+		failures.append("800x720行囊滚动到底后炼器操作仍不可达")
+	_capture(root, output_root.path_join("inventory_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏炼器底部 800x720")
+	root.size = Vector2i(1280, 720)
 
 	var armory_state: Dictionary = game.get("run_state")
 	armory_state.player.realm_index = 10

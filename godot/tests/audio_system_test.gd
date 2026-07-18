@@ -25,6 +25,13 @@ func _run() -> void:
 	await _validate_settings_roundtrip(director)
 	await _validate_audio_rng_isolation(director)
 	await _validate_settings_ui()
+	director.call("shutdown_for_exit")
+	director.call("shutdown_for_exit")
+	_expect(int(director.call("debug_active_voice_count")) == 0 and
+		int(director.call("debug_ambience_playing_voice_count")) == 0 and
+		int(director.call("debug_music_playing_voice_count")) == 0 and
+		int(director.call("debug_stream_reference_count")) == 0,
+		"AudioDirector停机必须幂等停止所有声部并释放全部流引用")
 	director.queue_free()
 	await process_frame
 	_restore_settings()

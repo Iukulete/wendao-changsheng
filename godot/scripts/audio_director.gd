@@ -112,6 +112,7 @@ var _music_player: AudioStreamPlayer
 var _music_outgoing_player: AudioStreamPlayer
 var _music_tween: Tween
 var _music_state := ""
+var _shutting_down := false
 
 
 func _ready() -> void:
@@ -130,30 +131,49 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
-	# Explicitly release active playback before the audio server shuts down.
-	# This matters for short headless runs as well as scene replacement.
-	if is_instance_valid(_ambience_player):
-		_ambience_player.stop()
-		_ambience_player.stream = null
-	if is_instance_valid(_ambience_outgoing_player):
-		_ambience_outgoing_player.stop()
-		_ambience_outgoing_player.stream = null
-	if is_instance_valid(_ambience_detail_player):
-		_ambience_detail_player.stop()
-		_ambience_detail_player.stream = null
-	if is_instance_valid(_ambience_detail_outgoing_player):
-		_ambience_detail_outgoing_player.stop()
-		_ambience_detail_outgoing_player.stream = null
-	if is_instance_valid(_music_player):
-		_music_player.stop()
-		_music_player.stream = null
-	if is_instance_valid(_music_outgoing_player):
-		_music_outgoing_player.stop()
-		_music_outgoing_player.stream = null
+	shutdown_for_exit()
+
+
+func shutdown_for_exit() -> void:
+	if _shutting_down:
+		return
+	_shutting_down = true
+	for tween in [_ambience_tween, _ambience_detail_tween, _music_tween]:
+		if is_instance_valid(tween):
+			tween.kill()
+	_ambience_tween = null
+	_ambience_detail_tween = null
+	_music_tween = null
+	for player in [_ambience_player, _ambience_outgoing_player,
+			_ambience_detail_player, _ambience_detail_outgoing_player,
+			_music_player, _music_outgoing_player]:
+		_stop_and_release_player(player)
 	for player in _players:
-		if is_instance_valid(player):
-			player.stop()
-			player.stream = null
+		_stop_and_release_player(player)
+	_last_played_ms.clear()
+
+
+func debug_stream_reference_count() -> int:
+	var count := 0
+	for player in [_ambience_player, _ambience_outgoing_player,
+			_ambience_detail_player, _ambience_detail_outgoing_player,
+			_music_player, _music_outgoing_player]:
+		if is_instance_valid(player) and player.stream != null:
+			count += 1
+	for player in _players:
+		if is_instance_valid(player) and player.stream != null:
+			count += 1
+	return count
+
+
+func _stop_and_release_player(player: AudioStreamPlayer) -> void:
+	if not is_instance_valid(player):
+		return
+	player.stop()
+	player.stream = null
+	player.set_meta("audio_priority", -1)
+	player.set_meta("audio_event", "")
+	player.set_meta("audio_started_ms", 0)
 
 
 func _initialize_runtime() -> void:

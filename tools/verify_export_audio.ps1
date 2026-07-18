@@ -77,4 +77,8 @@ if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pre
     Write-Host $stdout
     throw "The exported build did not complete real-backend Ogg music transitions."
 }
+if ($stdout -notmatch 'AUDIO_DEVICE_SHUTDOWN_OK: players_stopped streams_released') {
+    Write-Host $stdout
+    throw "The exported build did not complete deterministic audio resource shutdown."
+}
 Write-Host "Exported Windows audio-device, dual-player music, and four-player layered soundscape smoke passed off-screen and muted (driver=$driver)."
