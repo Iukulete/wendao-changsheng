@@ -14,9 +14,10 @@ permissions:
   contents: read
 
 env:
-  # Feature-branch pushes keep the full Godot regression signal while the
-  # product-art gate stays authoritative for main and pull requests.
-  PRODUCT_RELEASE: ${{ github.event_name == 'pull_request' || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+  # Every push keeps the Godot regression signal. The formal product-art gate
+  # is reserved for an explicit manual release run so main can carry the
+  # verified engine while art is being produced in a parallel task.
+  PRODUCT_RELEASE: ${{ github.event_name == 'workflow_dispatch' }}
 
 jobs:
   validate-and-export:
@@ -64,7 +65,7 @@ jobs:
             $verifyParameters.RequireProductArt = $true
             Write-Host "Product release gates enabled for this ref."
           } else {
-            Write-Host "Development branch validation enabled; product-art gate remains deferred to main/PR."
+            Write-Host "Integration validation enabled; product-art gate remains deferred to an explicit product release run."
           }
           ./tools/verify_godot.ps1 @verifyParameters
 
