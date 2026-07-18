@@ -51,6 +51,8 @@ $expected = @(
     "reincarnation_1280x720.png",
     "normal_combat_1280x720.png",
     "normal_combat_1440x900.png",
+    "normal_combat_narrow_top_800x720.png",
+    "normal_combat_narrow_bottom_800x720.png",
     "dungeon_route_1440x900.png",
     "dungeon_route_progress_1440x900.png",
     "dungeon_combat_1440x900.png",

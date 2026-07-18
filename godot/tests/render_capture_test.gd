@@ -376,6 +376,43 @@ func _run() -> void:
 	await _settle_frames(4)
 	_capture(root, output_root.path_join("normal_combat_1440x900.png"), Vector2i(1440, 900),
 		"普通战斗 1440x900")
+	root.size = Vector2i(800, 720)
+	game.call("_show_combat")
+	await _settle_frames(4)
+	var narrow_combat_viewport := root.get_visible_rect()
+	var narrow_combat_scroll := game.find_child("CombatBodyScroll", true, false) as ScrollContainer
+	var narrow_combat_body := game.find_child("CombatBody", true, false) as Control
+	var narrow_combat_stage := game.find_child("CombatStage", true, false) as Control
+	var narrow_combat_status_row := game.find_child("CombatNarrowStatusRow", true, false) as Control
+	var narrow_combat_header := game.find_child("CombatHeader", true, false) as Control
+	var narrow_combat_actions := game.find_child("CombatActionBar", true, false) as Control
+	if narrow_combat_scroll == null or not narrow_combat_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720普通战斗没有提供战场到双方详情的纵向滚动路径")
+	if narrow_combat_body == null or narrow_combat_body.get_global_rect().size.x > narrow_combat_viewport.size.x:
+		failures.append("800x720普通战斗主体发生横向裁切：%s" % [
+			narrow_combat_body.get_global_rect() if narrow_combat_body != null else "missing"])
+	if narrow_combat_stage == null or not narrow_combat_viewport.encloses(narrow_combat_stage.get_global_rect()):
+		failures.append("800x720普通战斗首屏没有完整显示交锋舞台")
+	for fixed_control in [narrow_combat_header, narrow_combat_actions]:
+		if fixed_control == null or not narrow_combat_viewport.encloses(fixed_control.get_global_rect()):
+			failures.append("800x720普通战斗固定标题或操作区不可达")
+	for action_name in ["CombatAttackButton", "CombatGuardButton", "CombatSpellButton",
+			"CombatPillButton", "CombatFleeButton"]:
+		var narrow_action := game.find_child(action_name, true, false) as Control
+		if narrow_action == null or not narrow_combat_viewport.encloses(narrow_action.get_global_rect()):
+			failures.append("800x720普通战斗操作不可达：%s" % action_name)
+	_capture(root, output_root.path_join("normal_combat_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏普通战斗舞台 800x720")
+	if narrow_combat_scroll != null:
+		narrow_combat_scroll.scroll_vertical = int(narrow_combat_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_player_panel := game.find_child("CombatPlayerPanel", true, false) as Control
+	var narrow_enemy_panel := game.find_child("CombatEnemyPanel", true, false) as Control
+	for detail_control in [narrow_combat_status_row, narrow_player_panel, narrow_enemy_panel]:
+		if detail_control == null or not narrow_combat_viewport.encloses(detail_control.get_global_rect()):
+			failures.append("800x720普通战斗滚动到底后双方详情仍不可达")
+	_capture(root, output_root.path_join("normal_combat_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏普通战斗双方详情 800x720")
 	game.set("run_state", pre_combat_state)
 	game.call("_sync_state_views")
 	game.call("_show_game")

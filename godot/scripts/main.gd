@@ -983,26 +983,77 @@ func _show_combat() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 16)
 	screen_host.add_child(page)
+	var narrow_layout := screen_host.size.x < 1040.0
+	page.resized.connect(func() -> void:
+		if state == ScreenState.COMBAT and (screen_host.size.x < 1040.0) != narrow_layout:
+			call_deferred("_show_combat")
+	)
 
 	var header := _panel(0.80, era_accent)
+	header.name = "CombatHeader"
 	header.custom_minimum_size.y = 76
 	header.add_child(_display_label("生死战 · 第%d回合 · %s" % [int(battle.turn), current_era], 27,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
 	page.add_child(header)
 
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
 	body.name = "CombatBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
-	page.add_child(body)
-	body.add_child(_build_player_combat_panel(battle, action_forecasts))
-	body.add_child(_build_combat_log(battle, intent_forecast))
-	body.add_child(_build_enemy_panel(battle, intent_forecast))
+	if narrow_layout:
+		var body_scroll := ScrollContainer.new()
+		body_scroll.name = "CombatBodyScroll"
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		body_scroll.follow_focus = true
+		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		body_scroll.add_child(body)
+		page.add_child(body_scroll)
+	else:
+		page.add_child(body)
+	var player_panel := _build_player_combat_panel(battle, action_forecasts)
+	var center_panel := _build_combat_log(battle, intent_forecast, narrow_layout)
+	var enemy_panel := _build_enemy_panel(battle, intent_forecast)
+	if narrow_layout:
+		body.add_child(center_panel)
+		var status_row := HBoxContainer.new()
+		status_row.name = "CombatNarrowStatusRow"
+		status_row.add_theme_constant_override("separation", 12)
+		status_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		player_panel.custom_minimum_size.x = 0
+		player_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		enemy_panel.custom_minimum_size.x = 0
+		enemy_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		status_row.add_child(player_panel)
+		status_row.add_child(enemy_panel)
+		body.add_child(status_row)
+	else:
+		body.add_child(player_panel)
+		body.add_child(center_panel)
+		body.add_child(enemy_panel)
 
-	var actions := HBoxContainer.new()
+	var actions: Container = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
 	actions.name = "CombatActionBar"
-	actions.alignment = BoxContainer.ALIGNMENT_CENTER
-	actions.add_theme_constant_override("separation", 10)
+	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var primary_action_host: Container = actions
+	var secondary_action_host: Container = actions
+	if narrow_layout:
+		actions.add_theme_constant_override("separation", 8)
+		var primary_action_row := HBoxContainer.new()
+		primary_action_row.add_theme_constant_override("separation", 8)
+		primary_action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var secondary_action_row := HBoxContainer.new()
+		secondary_action_row.add_theme_constant_override("separation", 8)
+		secondary_action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		actions.add_child(primary_action_row)
+		actions.add_child(secondary_action_row)
+		primary_action_host = primary_action_row
+		secondary_action_host = secondary_action_row
+	else:
+		(actions as HBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
+		actions.add_theme_constant_override("separation", 10)
 	page.add_child(actions)
 	var attack: Dictionary = action_forecasts.attack
 	var guard: Dictionary = action_forecasts.guard
@@ -1010,40 +1061,46 @@ func _show_combat() -> void:
 	var pill: Dictionary = action_forecasts.pill
 	var flee: Dictionary = action_forecasts.flee
 	var attack_button := _combat_action_button("斩击 %d–%d [1]" % [
-		int(attack.min_damage), int(attack.max_damage)], _resolve_combat_action.bind("attack"), true)
+		int(attack.min_damage), int(attack.max_damage)], _resolve_combat_action.bind("attack"), true,
+		narrow_layout)
 	attack_button.name = "CombatAttackButton"
 	attack_button.tooltip_text = "以攻势对敌，22%概率留下流血。"
-	actions.add_child(attack_button)
+	primary_action_host.add_child(attack_button)
 	var guard_button := _combat_action_button("守势 +%d–%d盾 [2]" % [
-		int(guard.min_shield), int(guard.max_shield)], _resolve_combat_action.bind("guard"), false)
+		int(guard.min_shield), int(guard.max_shield)], _resolve_combat_action.bind("guard"), false,
+		narrow_layout)
 	guard_button.name = "CombatGuardButton"
 	guard_button.tooltip_text = "根据护体强度凝成可抵消本回合伤害的护盾。"
-	actions.add_child(guard_button)
+	primary_action_host.add_child(guard_button)
 	var spell_button := _combat_action_button("术法 %d–%d [3]" % [
-		int(spell.min_damage), int(spell.max_damage)], _resolve_combat_action.bind("spell"), false)
+		int(spell.min_damage), int(spell.max_damage)], _resolve_combat_action.bind("spell"), false,
+		narrow_layout)
 	spell_button.name = "CombatSpellButton"
 	spell_button.disabled = int(battle.player_mp) < CombatSystemScript.SPELL_COST
 	spell_button.tooltip_text = "灵力不足。" if spell_button.disabled else \
 		"消耗%d点灵力，穿透一半护体并施加虚弱。" % CombatSystemScript.SPELL_COST
-	actions.add_child(spell_button)
+	primary_action_host.add_child(spell_button)
 	var pill_button_text := "气血已满 [4]" if int(pill.heal) <= 0 else "服丹 +%d [4]" % int(pill.heal)
 	var pill_button := _combat_action_button(pill_button_text,
-		_resolve_combat_action.bind("pill"), false)
+		_resolve_combat_action.bind("pill"), false, narrow_layout)
 	pill_button.name = "CombatPillButton"
 	pill_button.disabled = int(pill.count) <= 0 or int(pill.heal) <= 0
 	pill_button.tooltip_text = "行囊中没有疗伤丹。" if int(pill.count) <= 0 else \
 		("气血已满，无需消耗疗伤丹。" if int(pill.heal) <= 0 else "消耗1枚疗伤丹，恢复四成气血。")
-	actions.add_child(pill_button)
+	secondary_action_host.add_child(pill_button)
 	var flee_button := _combat_action_button("脱战 %d%% [5]" % int(flee.chance),
-		_resolve_combat_action.bind("flee"), false)
+		_resolve_combat_action.bind("flee"), false, narrow_layout)
 	flee_button.name = "CombatFleeButton"
 	flee_button.tooltip_text = "尝试退出战圈；当前成功率%d%%，拖得越久越低。" % int(flee.chance)
-	actions.add_child(flee_button)
+	secondary_action_host.add_child(flee_button)
 
 
-func _combat_action_button(text_value: String, callback: Callable, primary: bool) -> Button:
+func _combat_action_button(text_value: String, callback: Callable, primary: bool,
+		compact: bool = false) -> Button:
 	var button := _button(text_value, callback, primary, "", true)
-	button.custom_minimum_size = Vector2(158, 48)
+	button.custom_minimum_size = Vector2(0 if compact else 158, 48)
+	if compact:
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return button
 
 
@@ -1120,7 +1177,8 @@ func _build_enemy_panel(battle: Dictionary, forecast: Dictionary) -> Control:
 	return panel
 
 
-func _build_combat_log(battle: Dictionary, forecast: Dictionary) -> Control:
+func _build_combat_log(battle: Dictionary, forecast: Dictionary,
+		compact: bool = false) -> Control:
 	var panel := _panel(0.76, era_accent)
 	panel.name = "CombatCenterPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1161,6 +1219,8 @@ func _build_combat_log(battle: Dictionary, forecast: Dictionary) -> Control:
 	scroll.name = "CombatLogScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if compact:
+		scroll.custom_minimum_size.y = 90
 	column.add_child(scroll)
 	var log_lines: Array[String] = []
 	for log_value in (battle.log as Array).slice(-12):
