@@ -12,7 +12,7 @@ const PLAYER_DELTA_IDS := [
 	"exp", "hp", "mp", "karma", "dao_heart", "reputation", "enmity",
 	"spirit_stones", "pills",
 ]
-const MIN_EVENTS_PER_ERA := 4
+const MIN_EVENTS_PER_ERA := 6
 const AUTHORED_EVENT_COOLDOWN := 4
 
 static var _events_cache: Array = []

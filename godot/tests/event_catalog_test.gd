@@ -16,7 +16,7 @@ func _init() -> void:
 	var era_counts: Dictionary = era_counts_value if era_counts_value is Dictionary else {}
 	for era in EventCatalogScript.ERAS:
 		_expect(int(era_counts.get(era, 0)) >= EventCatalogScript.MIN_EVENTS_PER_ERA,
-			"每个时代必须至少提供四个自由历练事件：%s" % era)
+			"每个时代必须至少提供六个自由历练事件：%s" % era)
 
 	for era_index in range(EventCatalogScript.ERAS.size()):
 		var era: String = EventCatalogScript.ERAS[era_index]

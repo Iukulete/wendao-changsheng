@@ -20,7 +20,7 @@ SUPPORTED_ERAS = {
     "末法裂变纪",
     "仙朝鼎盛纪",
 }
-MIN_EVENTS_PER_ERA = 4
+MIN_EVENTS_PER_ERA = 6
 PATH_DIMENSIONS = {
     "compassion",
     "ambition",

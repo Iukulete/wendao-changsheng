@@ -384,6 +384,25 @@ func _run() -> void:
 			failures.append("裴照微V2没有进入叙事事件舞台")
 		_capture(root, output_root.path_join("event_imperial_v2_1280x720.png"),
 			Vector2i(1280, 720), "裴照微V2叙事事件 1280x720")
+	var expanded_event: Dictionary = {}
+	for event_value in EventCatalogScript.load_events():
+		if event_value is Dictionary and str((event_value as Dictionary).get("id", "")) == \
+				"imperial_siming_order":
+			expanded_event = (event_value as Dictionary).duplicate(true)
+			break
+	if expanded_event.is_empty():
+		failures.append("无法加载扩展后的司命执笔事件")
+	else:
+		game.set("current_event", expanded_event)
+		game.call("_show_event")
+		await _settle_frames(4)
+		var expanded_description := game.find_child("EventDescription", true, false) as Label
+		var expanded_choices := game.find_children("EventChoiceButton*", "Button", true, false)
+		if expanded_description == null or expanded_description.text != str(expanded_event.description) or \
+				expanded_choices.size() != 3:
+			failures.append("扩展事件没有完整进入叙事舞台与三选一交互")
+		_capture(root, output_root.path_join("event_content_expansion_1280x720.png"),
+			Vector2i(1280, 720), "司命执笔扩展事件 1280x720")
 	root.size = Vector2i(800, 720)
 	game.call("_show_event")
 	await _settle_frames(4)
