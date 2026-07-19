@@ -407,6 +407,7 @@
       ],
       "narrative_role": "female_supporting",
       "current_portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
+      "replacement_target": "res://art/portraits/imperial_sky_inspector_v2.png",
       "release_status": "approved",
       "production_priority": 3,
       "motion_profile": "restrained",

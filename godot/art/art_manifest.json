@@ -77,10 +77,10 @@
     },
     {
       "path": "portraits/imperial_sky_inspector.png",
-      "sha256": "dddd45d05fa95ed425ee1569df5bcd711a86b616a8266656092c14526d164ab6",
+      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
       "width": 1024,
       "height": 1536,
-      "bytes": 2553957,
+      "bytes": 2262763,
       "purpose": "仙朝巡天司监察使、命籍审查与空阙封关事件人物立绘",
       "eras": [
         "仙朝鼎盛纪"
@@ -90,20 +90,19 @@
     },
     {
       "path": "portraits/imperial_sky_inspector_v2.png",
-      "sha256": "dddd45d05fa95ed425ee1569df5bcd711a86b616a8266656092c14526d164ab6",
+      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
       "width": 1024,
       "height": 1536,
-      "bytes": 2553957,
-      "purpose": "裴照微专用巡天司监察使立绘，按事件舞台比例重构图",
+      "bytes": 2262763,
+      "purpose": "裴照微产品级身份锚点立绘",
       "eras": [
         "仙朝鼎盛纪"
       ],
       "source_type": "generated",
-      "derived_from": "portraits/imperial_sky_inspector.png",
       "generation_intent": {
-        "concept": "保留裴照微既有身份与仙朝巡天司服装，将过窄全身构图裁为统一2:3角色锚点",
-        "mood": "克制、正式、承担制度压力",
-        "story_use": "功德雨、命籍封关、仙城坠落与飞升名额事件的稳定具名角色立绘"
+        "concept": "裴照微产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
       }
     },
     {
@@ -213,10 +212,10 @@
     },
     {
       "path": "portraits/layers/pei_zhaowei_local_fx.png",
-      "sha256": "126a07113c3ef506adde7eda3ea4249012920999697dfb3130e891e1b7a133f6",
+      "sha256": "78d0571a7b3b2480f7f02983a5c413a789bf40fe6b85c54604ef15bbf71f2e9a",
       "width": 1024,
       "height": 1536,
-      "bytes": 126433,
+      "bytes": 128068,
       "purpose": "裴照微云隙天光、巡天微尘与边缘辉光透明动效层",
       "eras": [
         "仙朝鼎盛纪"

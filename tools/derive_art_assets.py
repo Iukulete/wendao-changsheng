@@ -5,18 +5,19 @@ from __future__ import annotations
 
 import hashlib
 from pathlib import Path
+import shutil
 
 from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
 RECIPES = {
-    "imperial_sky_inspector_v2": {
-        "source": ROOT / "godot" / "art" / "portraits" / "imperial_sky_inspector.png",
-        "output": ROOT / "godot" / "art" / "portraits" / "imperial_sky_inspector_v2.png",
-        "expected_source_size": (887, 1774),
-        "crop": (0, 48, 887, 1378),
+    "imperial_sky_inspector_legacy_alias": {
+        "source": ROOT / "godot" / "art" / "portraits" / "imperial_sky_inspector_v2.png",
+        "output": ROOT / "godot" / "art" / "portraits" / "imperial_sky_inspector.png",
+        "expected_source_size": (1024, 1536),
         "output_size": (1024, 1536),
+        "copy_exact": True,
     },
 }
 
@@ -36,10 +37,13 @@ def main() -> int:
                     f"{recipe_id}: source size changed from {recipe['expected_source_size']} "
                     f"to {source.size}"
                 )
-            derived = source.convert("RGB").crop(recipe["crop"])
-            derived = derived.resize(recipe["output_size"], Image.Resampling.LANCZOS)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            derived.save(output_path, format="PNG", optimize=True, compress_level=9)
+            if recipe.get("copy_exact", False):
+                shutil.copyfile(source_path, output_path)
+            else:
+                derived = source.convert("RGB").crop(recipe["crop"])
+                derived = derived.resize(recipe["output_size"], Image.Resampling.LANCZOS)
+                derived.save(output_path, format="PNG", optimize=True, compress_level=9)
         print(
             f"DERIVED_ART_OK: {recipe_id} {recipe['output_size'][0]}x{recipe['output_size'][1]} "
             f"bytes={output_path.stat().st_size} sha256={sha256(output_path)}"
