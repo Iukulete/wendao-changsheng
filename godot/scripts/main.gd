@@ -19,6 +19,7 @@ const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const AudioDirectorScript = preload("res://scripts/audio_director.gd")
 const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
 const CinematicArtMotionScript = preload("res://scripts/cinematic_art_motion.gd")
+const CharacterArtRigScript = preload("res://scripts/character_art_rig.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -39,7 +40,6 @@ const ERA_SCENES := {
 }
 
 const MENU_SCENE := "res://art/scenes/void_threshold_temple.png"
-const PROTAGONIST := "res://art/portraits/protagonist_hooded_close.jpg"
 const EVENTS_PATH := "res://data/events_v014.json"
 const BODY_FONT_PATH := "res://art/fonts/NotoSansSC-Variable.ttf"
 const DISPLAY_FONT_PATH := "res://art/fonts/NotoSerifSC-Variable.ttf"
@@ -295,6 +295,32 @@ func _attach_art_motion(target: Control, profile_id: String, layer_mode: int,
 	rig.name = "CinematicArtMotion"
 	target.add_child(rig)
 	rig.call("configure", target, profile, layer_mode, seed_text, allow_offset_motion)
+
+
+func _build_character_art_rig(character_id: String, portrait_path: String,
+		profile_id: String, seed_text: String) -> CharacterArtRig:
+	var identity := CharacterArtCatalogScript.character(character_id)
+	var source_path := portrait_path
+	if source_path.is_empty():
+		source_path = str(identity.get("current_portrait", ""))
+	var texture := load(source_path) as Texture2D
+	var rig := CharacterArtRigScript.new() as CharacterArtRig
+	rig.name = "CharacterArtRig"
+	rig.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rig.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var profile := CharacterArtCatalogScript.motion_profile(profile_id)
+	var rig_contract: Dictionary = identity.get("rig_contract", {})
+	var canvas_value: Variant = rig_contract.get("canvas_size", [])
+	var canvas_size := Vector2.ZERO
+	if canvas_value is Array and (canvas_value as Array).size() >= 2:
+		canvas_size = Vector2(float((canvas_value as Array)[0]), float((canvas_value as Array)[1]))
+	var wind_value: Variant = rig_contract.get("wind_axis", [1.0, 0.0])
+	var wind_axis := Vector2(1.0, 0.0)
+	if wind_value is Array and (wind_value as Array).size() >= 2:
+		wind_axis = Vector2(float((wind_value as Array)[0]), float((wind_value as Array)[1]))
+	rig.call("configure", texture, identity.get("layers", []), profile, seed_text,
+		canvas_size, wind_axis)
+	return rig
 
 
 func _show_menu() -> void:
@@ -693,15 +719,12 @@ func _build_player_panel() -> Control:
 	portrait_style.content_margin_bottom = 6
 	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
 	identity_row.add_child(portrait_frame)
-	var portrait := TextureRect.new()
-	portrait.name = "MainPortrait"
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.texture = load(PROTAGONIST)
-	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_frame.add_child(portrait)
-	_attach_art_motion(portrait, "introspective", CinematicArtMotionScript.LayerMode.PORTRAIT,
-		"protagonist-main")
+	var portrait_rig := _build_character_art_rig("protagonist", "",
+		"introspective", "protagonist-main")
+	portrait_rig.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	portrait_frame.add_child(portrait_rig)
+	if portrait_rig.base_portrait != null:
+		portrait_rig.base_portrait.name = "MainPortrait"
 
 	var identity_detail := VBoxContainer.new()
 	identity_detail.name = "MainPlayerVitals"
@@ -2265,20 +2288,19 @@ func _build_event_stage(narrow_layout: bool = false) -> Control:
 		_attach_art_motion(scene, motion_profile_id, CinematicArtMotionScript.LayerMode.SCENE,
 			"%s-scene" % motion_seed)
 	else:
-		var portrait := TextureRect.new()
-		portrait.name = "EventPortrait"
-		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_SCALE
-		portrait.texture = load(portrait_path)
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		stage.add_child(portrait)
+		var portrait_rig := _build_character_art_rig(str(current_event.get("character_id", "")),
+			portrait_path, motion_profile_id,
+			"%s-%s" % [motion_seed, str(current_event.get("character_id", "portrait"))])
+		portrait_rig.name = "CharacterArtRig"
+		stage.add_child(portrait_rig)
+		var portrait := portrait_rig.base_portrait
+		if portrait != null:
+			portrait.name = "EventPortrait"
 		var focus_y := clampf(float(current_event.get("portrait_focus_y", 0.18)), 0.0, 1.0)
 		stage.resized.connect(func() -> void:
-			_layout_focus_portrait(portrait, stage, focus_y)
+			_layout_focus_portrait_rig(portrait_rig, stage, focus_y)
 		)
-		call_deferred("_layout_focus_portrait", portrait, stage, focus_y)
-		_attach_art_motion(portrait, motion_profile_id, CinematicArtMotionScript.LayerMode.PORTRAIT,
-			"%s-%s" % [motion_seed, str(current_event.get("character_id", "portrait"))], false)
+		call_deferred("_layout_focus_portrait_rig", portrait_rig, stage, focus_y)
 
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -2319,6 +2341,19 @@ func _layout_focus_portrait(portrait: TextureRect, stage: Control, focus_y: floa
 	portrait.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	portrait.position = Vector2(-overflow.x * 0.5, -overflow.y * focus_y)
 	portrait.size = rendered_size
+
+
+func _layout_focus_portrait_rig(rig: CharacterArtRig, stage: Control, focus_y: float) -> void:
+	if not is_instance_valid(rig) or rig.base_portrait == null or stage.size.x < 1.0 or stage.size.y < 1.0:
+		return
+	var texture_size := rig.base_portrait.texture.get_size()
+	if texture_size.x < 1.0 or texture_size.y < 1.0:
+		return
+	var cover_scale := maxf(stage.size.x / texture_size.x, stage.size.y / texture_size.y)
+	var rendered_size := texture_size * cover_scale
+	var overflow := rendered_size - stage.size
+	rig.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	rig.set_layout_rect(Vector2(-overflow.x * 0.5, -overflow.y * focus_y), rendered_size)
 
 
 func _build_event_choices() -> Control:

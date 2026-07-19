@@ -35,6 +35,7 @@ REGRESSION_SCRIPTS = (
     "typography_system_test.gd",
     "audio_system_test.gd",
     "character_art_catalog_test.gd",
+    "character_art_rig_test.gd",
     "game_state_test.gd",
     "world_simulation_test.gd",
     "story_system_test.gd",
