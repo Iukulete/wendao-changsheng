@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "asset_set": "wendao-godot-main-v0.14",
   "runtime_root": "res://art",
-  "art_direction": "电影感写实中国修仙；允许不同时代的灵能工业、道法网络、废土与仙朝视觉，但保持同一世界的材质和色彩语言",
+  "art_direction": "顶级2D角色设计结合高端3D/PBR材质与电影光的中国修仙游戏CG；强调独立脸型、服装剪影、职业动作和可分层动效边缘，避免真人剧照感与模板AI脸",
   "source_type_definitions": {
     "generated": "通过图像生成工作流创作并纳入 Godot 新版的资产",
     "curated": "从项目既有策划精选图包中挑选并纳入 Godot 新版的资产"
@@ -10,39 +10,99 @@
   "rights_notice": "本清单只记录技术来源类别、文件完整性与游戏用途，不声明、推定或授予任何版权或许可。发布前仍须由项目维护者完成权利审查。",
   "files": [
     {
-      "path": "portraits/final_age_meridian_physician.png",
-      "sha256": "d76b50f986bef49f899d6ed6d52707345df9a5dd8ebe3cfeb334f247e429b48b",
+      "path": "portraits/chi_yaoqing_v1.png",
+      "sha256": "b1a8759394f598f996de5a47970f45e5b868c1360fc07dfab94386583fddf139",
       "width": 1024,
       "height": 1536,
-      "bytes": 2311263,
+      "bytes": 2450833,
+      "purpose": "迟药青产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "迟药青产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/family_covenant_holders_v1.png",
+      "sha256": "e4fe7a9e88722b916083cae22999a2ada3e7eae61c0de1d96ac7b67f1e013bcf",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2186780,
+      "purpose": "祖契持有人产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "祖契持有人产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/final_age_meridian_physician.png",
+      "sha256": "f6c59cf554ced3c0cc358b49c8bcb69fe6e2be281b9042fba81798215ca85b2c",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2220708,
       "purpose": "成熟末法契师、经脉契约与抵押所制度事件人物立绘",
-      "eras": ["末法裂变纪"],
-      "source_type": "generated"
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/han_xuansu_v1.png"
+    },
+    {
+      "path": "portraits/han_xuansu_v1.png",
+      "sha256": "f6c59cf554ced3c0cc358b49c8bcb69fe6e2be281b9042fba81798215ca85b2c",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2220708,
+      "purpose": "韩玄素产品级身份锚点立绘",
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "韩玄素产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
     },
     {
       "path": "portraits/imperial_sky_inspector.png",
-      "sha256": "869a414b7dd2679060b7d65b7a1358b0798f32dfe59062ee5758da54ef869f81",
-      "width": 887,
-      "height": 1774,
-      "bytes": 2694864,
+      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2262763,
       "purpose": "仙朝巡天司监察使、命籍审查与空阙封关事件人物立绘",
-      "eras": ["仙朝鼎盛纪"],
-      "source_type": "generated"
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/imperial_sky_inspector_v2.png"
     },
     {
       "path": "portraits/imperial_sky_inspector_v2.png",
-      "sha256": "dddd45d05fa95ed425ee1569df5bcd711a86b616a8266656092c14526d164ab6",
+      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
       "width": 1024,
       "height": 1536,
-      "bytes": 2553957,
-      "purpose": "裴照微专用巡天司监察使立绘，按事件舞台比例重构图",
-      "eras": ["仙朝鼎盛纪"],
+      "bytes": 2262763,
+      "purpose": "裴照微产品级身份锚点立绘",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
       "source_type": "generated",
-      "derived_from": "portraits/imperial_sky_inspector.png",
       "generation_intent": {
-        "concept": "保留裴照微既有身份与仙朝巡天司服装，将过窄全身构图裁为统一2:3角色锚点",
-        "mood": "克制、正式、承担制度压力",
-        "story_use": "功德雨、命籍封关、仙城坠落与飞升名额事件的稳定具名角色立绘"
+        "concept": "裴照微产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
       }
     },
     {
@@ -52,8 +112,193 @@
       "height": 1536,
       "bytes": 259089,
       "purpose": "无照药师、灵根医师等医修事件人物立绘",
-      "eras": ["古典修仙纪", "末法裂变纪"],
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
       "source_type": "curated"
+    },
+    {
+      "path": "portraits/jiang_zhaoxue_v1.png",
+      "sha256": "a91ed77bb1b2cff6896d948781501dd42e752e591867f726ea5d085f9969a084",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2512043,
+      "purpose": "江照雪产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "江照雪产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/layers/chi_yaoqing_local_fx.png",
+      "sha256": "b0f7bd2fd2774ba3c8c000cf5b6490f3f6b60afdf14aaf1dd9332f539ebc35ed",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 97190,
+      "purpose": "迟药青灯河药摊蒸汽、药尘与边缘灯光透明动效层",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/chi_yaoqing_v1.png",
+      "generation_intent": {
+        "concept": "避开脸、双手、药碗、铜秤和药箱，只补充边缘蒸汽、药尘与灯河微光",
+        "mood": "灵动、温暖、克制",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/family_covenant_holder_local_fx.png",
+      "sha256": "9997345f5980246e024d6cd83708d96aba7e19a82e920024f385a5e8647b6161",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 96045,
+      "purpose": "祖契持有人雨线、破帘与旧宅微尘透明动效层",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/family_covenant_holders_v1.png",
+      "generation_intent": {
+        "concept": "避开两张脸、所有手、玉简和旧信，只让边缘雨线、破帘与微尘缓动",
+        "mood": "潮湿、安静、压抑",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/han_xuansu_local_fx.png",
+      "sha256": "f4d2363963c9a1e6d8db76ba17104c698439f907131f360bb847337ee3b3fcb4",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 71843,
+      "purpose": "韩玄素审计室冷雾、纸尘与边缘检验微光透明动效层",
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/han_xuansu_v1.png",
+      "generation_intent": {
+        "concept": "避开脸、双手、校准探针、契书板和测量架，只补充边缘冷雾、纸尘与检验微光",
+        "mood": "冷静、精密、克制",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/jiang_zhaoxue_local_fx.png",
+      "sha256": "a7ebcae067a72cf40c36bdefaacdcf00fe84ef46966f819d3aa382d119d62019",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 15513,
+      "purpose": "江照雪同画布局部花瓣、冰蓝微光与动态粒子透明层",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_zhaoxue_v1.png",
+      "generation_intent": {
+        "concept": "避开脸、手与剑柄，只补充边缘花瓣和发饰冷光",
+        "mood": "轻盈、灵动、克制",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/pei_zhaowei_local_fx.png",
+      "sha256": "78d0571a7b3b2480f7f02983a5c413a789bf40fe6b85c54604ef15bbf71f2e9a",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 128068,
+      "purpose": "裴照微云隙天光、巡天微尘与边缘辉光透明动效层",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/imperial_sky_inspector_v2.png",
+      "generation_intent": {
+        "concept": "避开脸、双手、命籍笔和玉册，以外缘云隙天光与微尘强化巡天高空感",
+        "mood": "威严、清冷、克制",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/protagonist_local_fx.png",
+      "sha256": "07489ca7030a373ddb8314300e8a778303fe8710418c900339fa87aa69250461",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 24077,
+      "purpose": "男主同画布局部细雨、轮回玉微光与动态粒子透明层",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/protagonist_canonical_v1.png",
+      "generation_intent": {
+        "concept": "保持兜帽、脸、手与轮回玉位置稳定，仅让雨线和玉光缓动",
+        "mood": "幽冷、神秘、克制",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/layers/sect_lawkeepers_local_fx.png",
+      "sha256": "8f7260734389ae059abe66c2187c6395bb84372cd52c8e424fdfd28c54fef5de",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 81404,
+      "purpose": "两代执律人门外雨线、档案微尘与边缘天光透明动效层",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/sect_lawkeepers_v1.png",
+      "generation_intent": {
+        "concept": "避开两张脸、四只手和共持玉令，只让门外雨线、帘边与档案微尘缓动",
+        "mood": "肃穆、克制、有代际张力",
+        "story_use": "CharacterArtRig local_fx 同画布透明层"
+      }
+    },
+    {
+      "path": "portraits/ning_zhaoxue_v1.png",
+      "sha256": "bf5dfd59df03d09d6f7b6f47686456f6a68d287f2d4a230f98886aa2a9724d48",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2574680,
+      "purpose": "宁照雪产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "宁照雪产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/protagonist_canonical_v1.png",
+      "sha256": "047e17ebd7ce2afad7df74296f07ca90d341fa25d7e85c6e237f2727ff561027",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2189650,
+      "purpose": "问道人产品级身份锚点立绘",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "问道人产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
     },
     {
       "path": "portraits/protagonist_hooded_close.jpg",
@@ -62,7 +307,9 @@
       "height": 1448,
       "bytes": 173686,
       "purpose": "玩家身份、门后之影与默认主角近景立绘",
-      "eras": ["全时代"],
+      "eras": [
+        "全时代"
+      ],
       "source_type": "curated"
     },
     {
@@ -72,8 +319,46 @@
       "height": 1536,
       "bytes": 195561,
       "purpose": "古典剑修及仙朝下城阵师事件人物立绘",
-      "eras": ["古典修仙纪", "仙朝鼎盛纪"],
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
       "source_type": "curated"
+    },
+    {
+      "path": "portraits/sect_lawkeepers_v1.png",
+      "sha256": "8cddf549191a5439c756c5beeb7b69e3c61fb9865415615211238725b59412ea",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2337951,
+      "purpose": "两代执律人产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "两代执律人产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/siming_antagonist_v1.png",
+      "sha256": "a15b7002c398ec8104d0f4a6730679f05790cff1a1e48c358f9b4e3e0a64a137",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2061177,
+      "purpose": "司命执笔产品级身份锚点立绘",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "司命执笔产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
     },
     {
       "path": "portraits/star_network_cultivator.png",
@@ -82,7 +367,9 @@
       "height": 1536,
       "bytes": 2752240,
       "purpose": "星网巡道使、复制神识与轨道剑阵事件人物立绘",
-      "eras": ["星穹道网纪"],
+      "eras": [
+        "星穹道网纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -92,7 +379,9 @@
       "height": 1536,
       "bytes": 2308269,
       "purpose": "灵轨工造师、炉灵与黄铜黑匣事件人物立绘",
-      "eras": ["灵机蒸汽纪"],
+      "eras": [
+        "灵机蒸汽纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -102,8 +391,27 @@
       "height": 1536,
       "bytes": 2818400,
       "purpose": "返道火种引路人与荒原迁徙事件人物立绘",
-      "eras": ["废土返道纪"],
+      "eras": [
+        "废土返道纪"
+      ],
       "source_type": "generated"
+    },
+    {
+      "path": "portraits/wen_xingdu_v1.png",
+      "sha256": "3d919349a5c649bc971bc89c637af4d6ea34793f15441898c129a28aaa0b9a4b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2314679,
+      "purpose": "闻星渡产品级身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "闻星渡产品级身份锚点立绘",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot portraits 运行时资产"
+      }
     },
     {
       "path": "scenes/final_age_spirit_station.png",
@@ -112,7 +420,9 @@
       "height": 1086,
       "bytes": 2499302,
       "purpose": "灵息配给站、经脉抵押与末法城市公共危机场景",
-      "eras": ["末法裂变纪"],
+      "eras": [
+        "末法裂变纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -122,7 +432,9 @@
       "height": 1086,
       "bytes": 2914307,
       "purpose": "浮空仙城、巡天司与功德云制度抉择场景",
-      "eras": ["仙朝鼎盛纪"],
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -132,7 +444,11 @@
       "height": 1086,
       "bytes": 2686124,
       "purpose": "灯河夜市、灵市交易、黑匣竞拍与寿元药引事件场景",
-      "eras": ["古典修仙纪", "灵机蒸汽纪", "末法裂变纪"],
+      "eras": [
+        "古典修仙纪",
+        "灵机蒸汽纪",
+        "末法裂变纪"
+      ],
       "source_type": "generated",
       "generation_intent": {
         "concept": "灯河灵市：夜色水上市集与修仙坊市交叠，古典灯火中嵌入黄铜灵械、灵能终端和若隐若现的道网投影",
@@ -147,7 +463,9 @@
       "height": 1086,
       "bytes": 2672211,
       "purpose": "轨道剑阵误锁与天剑覆写事件场景",
-      "eras": ["星穹道网纪"],
+      "eras": [
+        "星穹道网纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -157,7 +475,9 @@
       "height": 1086,
       "bytes": 2536505,
       "purpose": "神识云海、道网节点与人格分叉事件场景",
-      "eras": ["星穹道网纪"],
+      "eras": [
+        "星穹道网纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -167,7 +487,9 @@
       "height": 1086,
       "bytes": 2575829,
       "purpose": "百炉城、中央灵炉与灵能工业伦理事件场景",
-      "eras": ["灵机蒸汽纪"],
+      "eras": [
+        "灵机蒸汽纪"
+      ],
       "source_type": "generated"
     },
     {
@@ -177,8 +499,61 @@
       "height": 1086,
       "bytes": 2549718,
       "purpose": "云上灵轨、灵压锅炉与工业交通危机场景",
-      "eras": ["灵机蒸汽纪"],
+      "eras": [
+        "灵机蒸汽纪"
+      ],
       "source_type": "generated"
+    },
+    {
+      "path": "scenes/story_jade_first_warmth_v1.png",
+      "sha256": "983cb5e38cd5af082309081c2e768d559856ade3b34d94453136b7323cbf27a3",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2150685,
+      "purpose": "旧玉初醒产品级关键剧情分镜",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "旧玉初醒产品级关键剧情分镜",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot scenes 运行时资产"
+      }
+    },
+    {
+      "path": "scenes/story_mirror_lake_gate_v1.png",
+      "sha256": "6f8e457cec31c611794a92ef7ac20f2f70f37415f15ab226ad27cfa56c14f306",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2065409,
+      "purpose": "镜湖无字门产品级关键剧情分镜",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "镜湖无字门产品级关键剧情分镜",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot scenes 运行时资产"
+      }
+    },
+    {
+      "path": "scenes/story_zhaoxue_first_challenge_v1.png",
+      "sha256": "12f29d7d2e7b374b6094641622d061cbe680cc2be69298dd9c824a08813cc903",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2803608,
+      "purpose": "照雪初帖产品级关键剧情分镜",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "照雪初帖产品级关键剧情分镜",
+        "mood": "经过候选筛选的产品级叙事美术",
+        "story_use": "Godot scenes 运行时资产"
+      }
     },
     {
       "path": "scenes/void_threshold_temple.png",
@@ -187,7 +562,10 @@
       "height": 1086,
       "bytes": 2587920,
       "purpose": "镜湖空阙、无字古门、轮回门槛与命籍之外事件场景",
-      "eras": ["古典修仙纪", "仙朝鼎盛纪"],
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
       "source_type": "generated",
       "generation_intent": {
         "concept": "镜湖空阙：镜面般的湖心通向悬于空阙的无字古门，断玉小径与门后天光暗示未被记录的另一种命途",
@@ -202,7 +580,9 @@
       "height": 1086,
       "bytes": 2538683,
       "purpose": "黑雨迁徙、净雨塔与废土聚落存续事件场景",
-      "eras": ["废土返道纪"],
+      "eras": [
+        "废土返道纪"
+      ],
       "source_type": "generated"
     }
   ]

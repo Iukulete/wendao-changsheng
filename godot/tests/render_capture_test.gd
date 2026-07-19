@@ -327,10 +327,10 @@ func _run() -> void:
 	game.call("_sync_state_views")
 	game.set("current_event", {
 		"id": "render_lantern_healer", "title": "灯河医契",
-		"description": "灯河灵市的药师沈照川拦住你。她手中的旧契记着一名本应死去的散修，而契尾的血印正与你的轮回玉产生同一阵脉动。",
+		"description": "灯河灵市的迟药青拦住你。她手中的旧契记着一名本应死去的散修，而契尾的血印正与你的轮回玉产生同一阵脉动。",
 		"scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
-		"portrait": "res://art/portraits/jade_healer.jpg",
-		"portrait_name": "沈照川", "portrait_title": "镜湖药师 · 旧契守人",
+		"portrait": "res://art/portraits/chi_yaoqing_v1.png",
+		"portrait_name": "迟药青", "portrait_title": "无照药师 · 旧契守人",
 		"character_id": "chi_yaoqing", "motion_profile": "restrained",
 		"choices": [
 			{"text":"替她验明旧契中的魂息", "deltas":{"exp":18, "dao_heart":2},
@@ -344,12 +344,25 @@ func _run() -> void:
 	game.call("_show_event")
 	await _settle_frames(4)
 	var focused_event_stage := game.find_child("EventStage", true, false) as Control
-	if game.find_children("CinematicArtMotion", "Node", true, false).is_empty():
-		failures.append("叙事事件没有启用身份安全的人物微动")
-	if focused_event_stage == null or \
-			focused_event_stage.find_children("*", "TextureRect", true, false).size() != 1 or \
-			game.find_child("EventScene", true, false) != null:
-		failures.append("人物焦点事件仍在舞台内硬贴两张不同图片")
+	var focused_rigs: Array = []
+	if focused_event_stage != null:
+		focused_rigs = focused_event_stage.find_children("CharacterArtRig", "Control", true, false)
+	if focused_rigs.size() != 1:
+		failures.append("人物焦点事件必须只有一个登记过的角色动态容器")
+	if focused_event_stage == null or game.find_child("EventScene", true, false) != null:
+		failures.append("人物焦点事件仍在舞台内硬贴场景图与完整立绘")
+	elif focused_rigs.size() == 1:
+		var focused_rig := focused_rigs[0] as Control
+		var rig_textures := focused_rig.find_children("*", "TextureRect", true, false)
+		var focused_portrait := game.find_child("EventPortrait", true, false) as TextureRect
+		if rig_textures.size() != 2 or focused_portrait == null or focused_portrait.texture == null or \
+				focused_portrait.texture.resource_path != "res://art/portraits/chi_yaoqing_v1.png":
+			failures.append("迟药青焦点事件没有加载产品级身份底图与唯一动态层")
+		for texture_value in rig_textures:
+			var texture_rect := texture_value as TextureRect
+			if texture_rect.name != "EventPortrait" and \
+					not str(texture_rect.name).begins_with("ArtLayer_"):
+				failures.append("人物焦点事件包含未登记的第二张完整立绘：%s" % texture_rect.name)
 	var event_controls: Array[Control] = [
 		game.find_child("EventHeader", true, false) as Control,
 		game.find_child("EventStage", true, false) as Control,
@@ -365,6 +378,75 @@ func _run() -> void:
 				control.name if control != null else "missing"])
 	_capture(root, output_root.path_join("event_1280x720.png"), Vector2i(1280, 720),
 		"叙事事件 1280x720")
+	var lead_capture_specs: Array[Dictionary] = [
+		{
+			"event_id": "classical_void_threshold",
+			"character_id": "protagonist",
+			"portrait_path": "res://art/portraits/protagonist_canonical_v1.png",
+			"capture_name": "event_protagonist_1440x900.png",
+			"label": "男主专用事件 1440x900",
+			"expected_texture_count": 2,
+			"requires_local_fx": true,
+		},
+		{
+			"event_id": "classical_sword_letter",
+			"character_id": "jiang_zhaoxue",
+			"portrait_path": "res://art/portraits/jiang_zhaoxue_v1.png",
+			"capture_name": "event_jiang_zhaoxue_1440x900.png",
+			"label": "江照雪专用事件 1440x900",
+			"expected_texture_count": 2,
+			"requires_local_fx": true,
+		},
+		{
+			"event_id": "classical_mountain_oath",
+			"character_id": "ning_zhaoxue",
+			"portrait_path": "res://art/portraits/ning_zhaoxue_v1.png",
+			"capture_name": "event_ning_zhaoxue_1440x900.png",
+			"label": "宁照雪专用事件 1440x900",
+			"expected_texture_count": 1,
+			"requires_local_fx": false,
+		},
+	]
+	root.size = Vector2i(1440, 900)
+	for capture_spec in lead_capture_specs:
+		var lead_event: Dictionary = {}
+		for event_value in EventCatalogScript.load_events():
+			if event_value is Dictionary and str((event_value as Dictionary).get("id", "")) == \
+					str(capture_spec.event_id):
+				lead_event = (event_value as Dictionary).duplicate(true)
+				break
+		if lead_event.is_empty():
+			failures.append("无法加载%s的专用验收事件" % capture_spec.character_id)
+			continue
+		game.set("current_event", lead_event)
+		game.call("_show_event")
+		await _settle_frames(6)
+		var lead_stage := game.find_child("EventStage", true, false) as Control
+		var lead_portrait := game.find_child("EventPortrait", true, false) as TextureRect
+		var lead_rigs: Array = []
+		if lead_stage != null:
+			lead_rigs = lead_stage.find_children("CharacterArtRig", "Control", true, false)
+		if lead_stage == null or game.find_child("EventScene", true, false) != null or \
+				lead_rigs.size() != 1:
+			failures.append("%s没有保持唯一角色动态容器" % capture_spec.character_id)
+		elif lead_portrait == null or lead_portrait.texture == null or \
+				lead_portrait.texture.resource_path != str(capture_spec.portrait_path):
+			failures.append("%s没有加载指定产品立绘" % capture_spec.character_id)
+		else:
+			var lead_textures: Array = lead_rigs[0].find_children("*", "TextureRect", true, false)
+			if lead_textures.size() != int(capture_spec.expected_texture_count):
+				failures.append("%s包含未登记的完整立绘或重复动态层" % capture_spec.character_id)
+			if bool(capture_spec.requires_local_fx):
+				var fx_layer := lead_rigs[0].find_child("ArtLayer_local_fx", true, false) as TextureRect
+				if fx_layer == null or fx_layer.texture == null or \
+						fx_layer.texture.get_size() != lead_portrait.texture.get_size():
+					failures.append("%s的动态层缺失或与底图画布不一致" % capture_spec.character_id)
+			elif lead_rigs[0].find_child("ArtLayer_*", true, false) != null:
+				failures.append("%s包含未登记的动态层" % capture_spec.character_id)
+		_capture(root, output_root.path_join(str(capture_spec.capture_name)), Vector2i(1440, 900),
+			str(capture_spec.label))
+	root.size = Vector2i(1280, 720)
+	await _settle_frames(4)
 	var imperial_event: Dictionary = {}
 	for event_value in EventCatalogScript.load_events():
 		if event_value is Dictionary and str((event_value as Dictionary).get("id", "")) == \

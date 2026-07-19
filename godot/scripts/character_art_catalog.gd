@@ -2,6 +2,39 @@ class_name CharacterArtCatalog
 extends RefCounted
 
 const DATA_PATH := "res://data/character_art_v1.json"
+const OPEN_REGIONAL_POLICY := "open_regional_palette"
+# Audit probes only: reject a regional label if it is mistakenly written as a blanket negative.
+const REGIONAL_LABEL_GUARD_TOKENS := [
+	"日式", "日系", "和风", "和式", "日本", "韩式", "韩系", "韩国", "日韩",
+	"日漫", "韩漫", "japanese", "korean", "anime", "manga"
+]
+const RIG_LAYER_IDS := ["hair_back", "hair_front", "tassel_or_ribbon", "outer_cloth", "local_fx"]
+const REGIONAL_NARRATIVE_ANCHORS := {
+	"ning_zhaoxue": "海雾关",
+	"chi_yaoqing": "西域商道",
+	"wen_xingdu": "东南海域",
+	"han_xuansu": "高原与南亚",
+}
+const LEAD_VISUAL_CONTRACTS := {
+	"protagonist": {
+		"style_profile": "legacy_xianxia_cg_lead_v1",
+		"reference_portrait": "res://art/portraits/protagonist_hooded_close.jpg",
+		"face_visibility": "hood_conceals_eyes",
+		"must_keep": [
+			"low_forward_hood", "eyes_hidden", "three_quarter_side_or_back_silhouette",
+			"black_teal_brocade_cloak", "deep_teal_tassels", "black_white_reincarnation_jade"
+		]
+	},
+	"jiang_zhaoxue": {
+		"style_profile": "legacy_xianxia_cg_lead_v1",
+		"reference_portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+		"face_visibility": "visible",
+		"must_keep": [
+			"young_beautiful_adult_identity", "long_blue_black_hair", "silver_blue_hair_ornaments",
+			"small_cyan_forehead_ornament", "jade_white_ice_blue_sword_dress", "ornate_silver_blue_sword"
+		]
+	}
+}
 const RELEASE_STATUSES := [
 	"approved",
 	"identity_anchor_required",
@@ -37,6 +70,30 @@ static func validate_catalog() -> Dictionary:
 	var data := load_catalog()
 	if int(data.get("schema_version", 0)) != 1:
 		return {"ok": false, "code": "unsupported_character_art_schema"}
+	var art_direction_value: Variant = data.get("art_direction", {})
+	if not art_direction_value is Dictionary:
+		return {"ok": false, "code": "missing_art_direction"}
+	var art_direction: Dictionary = art_direction_value
+	var regional_value: Variant = art_direction.get("regional_influences", {})
+	if not regional_value is Dictionary:
+		return {"ok": false, "code": "missing_regional_influence_policy"}
+	var regional: Dictionary = regional_value
+	if str(regional.get("policy", "")) != OPEN_REGIONAL_POLICY or \
+			str(regional.get("statement", "")).is_empty() or \
+			str(regional.get("rejection_basis", "")).is_empty():
+		return {"ok": false, "code": "invalid_regional_influence_policy"}
+	var forbidden_value: Variant = art_direction.get("forbidden", [])
+	if not forbidden_value is Array or (forbidden_value as Array).is_empty():
+		return {"ok": false, "code": "missing_art_direction_rules"}
+	var forbidden_text := ""
+	for forbidden_rule in (forbidden_value as Array):
+		if str(forbidden_rule).is_empty():
+			return {"ok": false, "code": "invalid_art_direction_rule"}
+		forbidden_text += "\n" + str(forbidden_rule)
+	var forbidden_text_folded := forbidden_text.to_lower()
+	for regional_token in REGIONAL_LABEL_GUARD_TOKENS:
+		if forbidden_text_folded.contains(str(regional_token).to_lower()):
+			return {"ok": false, "code": "regional_label_blanket_negative"}
 	var profiles_value: Variant = data.get("motion_profiles", {})
 	if not profiles_value is Dictionary or (profiles_value as Dictionary).is_empty():
 		return {"ok": false, "code": "missing_motion_profiles"}
@@ -73,6 +130,70 @@ static func validate_catalog() -> Dictionary:
 			return {"ok": false, "code": "invalid_character_art_status", "character_id": character_id}
 		if str(character.get("visual_signature", "")).is_empty() or int(character.get("production_priority", 0)) not in [1, 2, 3]:
 			return {"ok": false, "code": "incomplete_character_identity", "character_id": character_id}
+		if REGIONAL_NARRATIVE_ANCHORS.has(character_id) and (
+				str(character.get("regional_influence_note", "")).is_empty() or
+				not str(character.get("visual_signature", "")).contains(
+					str(REGIONAL_NARRATIVE_ANCHORS[character_id]))):
+			return {"ok": false, "code": "missing_regional_narrative_rationale",
+				"character_id": character_id}
+		if LEAD_VISUAL_CONTRACTS.has(character_id):
+			var expected_contract: Dictionary = LEAD_VISUAL_CONTRACTS[character_id]
+			var visual_contract_value: Variant = character.get("visual_contract", {})
+			var visual_contract: Dictionary = visual_contract_value if visual_contract_value is Dictionary else {}
+			if str(character.get("style_profile", "")) != str(expected_contract.get("style_profile", "")) or \
+					str(character.get("reference_portrait", "")) != str(expected_contract.get("reference_portrait", "")) or \
+					str(visual_contract.get("face_visibility", "")) != str(expected_contract.get("face_visibility", "")):
+				return {"ok": false, "code": "lead_visual_contract_drift", "character_id": character_id}
+			var required_features: Variant = visual_contract.get("must_keep", [])
+			var rejected_features: Variant = visual_contract.get("must_avoid", [])
+			if not required_features is Array or not rejected_features is Array or (rejected_features as Array).is_empty():
+				return {"ok": false, "code": "incomplete_lead_visual_contract", "character_id": character_id}
+			for feature in (expected_contract.get("must_keep", []) as Array):
+				if not (required_features as Array).has(feature):
+					return {"ok": false, "code": "incomplete_lead_visual_contract", "character_id": character_id}
+			if not ResourceLoader.exists(str(character.get("reference_portrait", ""))):
+				return {"ok": false, "code": "missing_lead_visual_reference", "character_id": character_id}
+			var rig_value: Variant = character.get("rig_contract", {})
+			if not rig_value is Dictionary:
+				return {"ok": false, "code": "missing_rig_contract", "character_id": character_id}
+			var rig_contract: Dictionary = rig_value
+			var canvas_value: Variant = rig_contract.get("canvas_size", [])
+			var wind_value: Variant = rig_contract.get("wind_axis", [])
+			var locked_value: Variant = rig_contract.get("locked_regions", [])
+			var allowed_value: Variant = rig_contract.get("allowed_layers", [])
+			if not canvas_value is Array or (canvas_value as Array).size() != 2 or \
+					float((canvas_value as Array)[0]) <= 0.0 or float((canvas_value as Array)[1]) <= 0.0 or \
+					not wind_value is Array or (wind_value as Array).size() != 2 or \
+					not locked_value is Array or (locked_value as Array).is_empty() or \
+					not allowed_value is Array:
+				return {"ok": false, "code": "invalid_rig_contract", "character_id": character_id}
+			if str(rig_contract.get("layering_rule", "")) != "same_source_same_canvas_rgba_only":
+				return {"ok": false, "code": "invalid_rig_layering_rule", "character_id": character_id}
+			for layer_id_value in (allowed_value as Array):
+				if not RIG_LAYER_IDS.has(str(layer_id_value)):
+					return {"ok": false, "code": "invalid_rig_layer_id", "character_id": character_id}
+			var layers_value: Variant = character.get("layers", [])
+			if not layers_value is Array:
+				return {"ok": false, "code": "invalid_rig_layers", "character_id": character_id}
+			var seen_layer_ids := {}
+			for layer_value in (layers_value as Array):
+				if not layer_value is Dictionary:
+					return {"ok": false, "code": "invalid_rig_layer", "character_id": character_id}
+				var layer: Dictionary = layer_value
+				var layer_id := str(layer.get("id", ""))
+				var layer_path := str(layer.get("path", ""))
+				if not RIG_LAYER_IDS.has(layer_id) or seen_layer_ids.has(layer_id) or \
+						not (allowed_value as Array).has(layer_id) or \
+						not layer_path.begins_with("res://art/portraits/layers/") or \
+						not layer_path.ends_with(".png") or not ResourceLoader.exists(layer_path):
+					return {"ok": false, "code": "invalid_rig_layer", "character_id": character_id,
+						"layer_id": layer_id}
+				var layer_texture := load(layer_path) as Texture2D
+				if layer_texture == null or layer_texture.get_size() != Vector2(float((canvas_value as Array)[0]),
+						float((canvas_value as Array)[1])):
+					return {"ok": false, "code": "rig_layer_canvas_mismatch", "character_id": character_id,
+						"layer_id": layer_id}
+				seen_layer_ids[layer_id] = true
 		var current_portrait := str(character.get("current_portrait", ""))
 		if not current_portrait.is_empty() and not ResourceLoader.exists(current_portrait):
 			return {"ok": false, "code": "missing_character_portrait", "character_id": character_id}
