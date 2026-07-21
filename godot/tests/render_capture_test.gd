@@ -497,6 +497,59 @@ func _run() -> void:
 	_capture(root, output_root.path_join("event_text_only_1280x720.png"), Vector2i(1280, 720),
 		"纯文本目录事件 1280x720")
 
+	game.set("current_event", {
+		"id":"render_result_chapter", "source":"authored_event", "title":"雨夜来书",
+		"description":"一封没有署名的旧信穿过黑雨，停在你掌心。信上只问：你还记得上一世没有救下的人吗？",
+		"choices":[
+			{"text":"拆开信封，读完迟到的名字", "outcome":"雨声盖住远处的钟。你逐字读完，终于知道那场失约并非无人记得。",
+				"deltas":{"dao_heart":2}, "path_deltas":{"bonds":2, "insight":1}},
+			{"text":"把信留到天明", "outcome":"信纸在灯下慢慢回温。", "deltas":{}, "path_deltas":{"insight":1}},
+			{"text":"原样退回黑雨", "outcome":"信封消失在雨幕里。", "deltas":{}, "path_deltas":{"defiance":1}},
+		],
+	})
+	game.call("_show_event")
+	game.call("_resolve_choice", 0)
+	await _settle_frames(4)
+	var result_continue := game.find_child("EventResultContinueButton", true, false) as Control
+	var result_outcome := game.find_child("EventResultOutcome", true, false) as Label
+	if result_continue == null or result_outcome == null or result_outcome.text.is_empty() or \
+			(game.get("current_event") as Dictionary).is_empty() == false:
+		failures.append("事件抉择没有进入可阅读的独立结果页，或已结事件仍残留为当前事件")
+	_capture(root, output_root.path_join("event_result_1280x720.png"), Vector2i(1280, 720),
+		"事件结果页 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_event_result")
+	await _settle_frames(4)
+	var narrow_result_viewport := root.get_visible_rect()
+	var narrow_result_scroll := game.find_child("EventResultScroll", true, false) as ScrollContainer
+	result_continue = game.find_child("EventResultContinueButton", true, false) as Control
+	if narrow_result_scroll == null or narrow_result_scroll.horizontal_scroll_mode != \
+			ScrollContainer.SCROLL_MODE_DISABLED or result_continue == null or \
+			not narrow_result_viewport.encloses(result_continue.get_global_rect()):
+		failures.append("800x720事件结果页没有稳定阅读滚动区或可达的翻页入口")
+	_capture(root, output_root.path_join("event_result_narrow_800x720.png"), Vector2i(800, 720),
+		"窄屏事件结果页 800x720")
+	root.size = Vector2i(1280, 720)
+	game.call("_show_journal")
+	await _settle_frames(4)
+	var journal_chapters := game.find_children("JournalChapter_*", "VBoxContainer", true, false)
+	if journal_chapters.is_empty() or game.find_child("JournalBackButton", true, false) == null:
+		failures.append("命途长卷没有显示已完成章节或明确返回入口")
+	_capture(root, output_root.path_join("journal_1280x720.png"), Vector2i(1280, 720),
+		"命途长卷 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_journal")
+	await _settle_frames(4)
+	var narrow_journal_scroll := game.find_child("JournalScroll", true, false) as ScrollContainer
+	var narrow_journal_back := game.find_child("JournalBackButton", true, false) as Control
+	if narrow_journal_scroll == null or narrow_journal_scroll.horizontal_scroll_mode != \
+			ScrollContainer.SCROLL_MODE_DISABLED or narrow_journal_back == null or \
+			not root.get_visible_rect().encloses(narrow_journal_back.get_global_rect()):
+		failures.append("800x720命途长卷发生横向越界或返回入口不可达")
+	_capture(root, output_root.path_join("journal_narrow_800x720.png"), Vector2i(800, 720),
+		"窄屏命途长卷 800x720")
+	root.size = Vector2i(1280, 720)
+
 	var reincarnation_state := auxiliary_state.duplicate(true)
 	reincarnation_state.player.age = reincarnation_state.player.lifespan
 	game.set("run_state", reincarnation_state)

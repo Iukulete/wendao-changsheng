@@ -109,9 +109,10 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"history": [],
 		},
 		"story": {
-			"story_version": 1,
+			"story_version": 2,
 			"completed_event_ids": [],
 			"life_event_ids": [],
+			"chapter_log": [],
 			"event_cooldowns": {},
 			"active_arcs": {},
 			"arc_progress": {"jade": 0, "sect": 0, "family": 0, "rival": 0},
@@ -282,8 +283,9 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 		"active": false, "run": {}, "history": [],
 	})
 	state["story"] = _merge_defaults(state.get("story", {}), {
-		"story_version": 1,
+		"story_version": 2,
 		"completed_event_ids": [], "life_event_ids": [], "event_cooldowns": {},
+		"chapter_log": [],
 		"active_arcs": {}, "resolved_arcs": [], "unresolved_threads": [],
 		"arc_progress": {"jade": 0, "sect": 0, "family": 0, "rival": 0},
 		"arc_legacies": {}, "arc_echoes": {}, "last_arc_id": "",

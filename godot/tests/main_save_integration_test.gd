@@ -204,6 +204,20 @@ func _run() -> void:
 	var ai_state: Dictionary = (game.get("run_state") as Dictionary).get("ai", {})
 	_expect(str(ai_state.get("last_backend", "")) == "integration-fixture",
 		"本地 AI 后端状态必须随完整存档保存")
+	var resolved_story: Dictionary = (game.get("run_state") as Dictionary).get("story", {})
+	var chapter_log: Array = resolved_story.get("chapter_log", [])
+	_expect(game.find_child("EventResultContinueButton", true, false) != null and
+		(game.get("current_event") as Dictionary).is_empty(),
+		"事件选择后必须先停留在独立结果页，不能立刻跌回按钮墙")
+	_expect(chapter_log.size() == 1 and str((chapter_log[-1] as Dictionary).get("choice", "")).is_empty() == false,
+		"每次事件结算必须写入可持久化的命途长卷")
+	game.call("_show_journal")
+	_expect(game.find_child("JournalBackButton", true, false) != null and
+		game.find_children("JournalChapter_*", "VBoxContainer", true, false).size() >= 1,
+		"命途长卷必须能回看最近章节并提供明确返回入口")
+	game.call("_continue_from_event_result")
+	_expect(game.find_child("JournalButton", true, false) != null,
+		"主界面必须保留随时可达的命途长卷入口")
 	restored_state.player.age = restored_state.player.lifespan
 	var death_save: Dictionary = service.call("save_game", restored_state)
 	_expect(bool(death_save.get("ok", false)), "寿尽状态应能写入以验证续档收尾")

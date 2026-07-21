@@ -456,6 +456,7 @@ func _normalize_nested_state(state: Dictionary) -> void:
 	var story: Dictionary = state.story
 	story["completed_event_ids"] = _bounded_array(story.get("completed_event_ids", []), 2048)
 	story["life_event_ids"] = _bounded_array(story.get("life_event_ids", []), 512)
+	story["chapter_log"] = _bounded_array(story.get("chapter_log", []), StorySystemScript.MAX_CHAPTER_LOG)
 	story["resolved_arcs"] = _bounded_array(story.get("resolved_arcs", []), 256)
 	story["unresolved_threads"] = _bounded_array(story.get("unresolved_threads", []), 128)
 	state["story"] = story

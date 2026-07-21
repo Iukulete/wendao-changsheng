@@ -8,6 +8,7 @@ const MAIN_STAGE_COUNT := 4
 const ECHO_STAGE_COUNT := 3
 const MAX_RESOLVED := 256
 const MAX_THREADS := 128
+const MAX_CHAPTER_LOG := 96
 
 static var _definitions_cache: Dictionary = {}
 
@@ -100,9 +101,10 @@ static func _choice_has_explicit_cost(choice: Dictionary) -> bool:
 static func normalize(state: Dictionary) -> Dictionary:
 	var story_value: Variant = state.get("story", {})
 	var story: Dictionary = story_value.duplicate(true) if story_value is Dictionary else {}
-	story["story_version"] = 1
+	story["story_version"] = 2
 	story["completed_event_ids"] = _bounded_array(story.get("completed_event_ids", []), 2048)
 	story["life_event_ids"] = _bounded_array(story.get("life_event_ids", []), 512)
+	story["chapter_log"] = _normalize_chapter_log(story.get("chapter_log", []))
 	story["resolved_arcs"] = _bounded_array(story.get("resolved_arcs", []), MAX_RESOLVED)
 	story["unresolved_threads"] = _bounded_array(story.get("unresolved_threads", []), MAX_THREADS)
 	story["event_cooldowns"] = _dictionary(story.get("event_cooldowns", {}))
@@ -260,6 +262,71 @@ static func digest(state: Dictionary) -> String:
 	return "｜".join(parts)
 
 
+static func record_chapter(state: Dictionary, event: Dictionary, choice: Dictionary,
+		outcome: String, story_message: String = "", objective_message: String = "",
+		encounter_message: String = "") -> Dictionary:
+	var story := normalize(state)
+	var source := str(event.get("source", "authored_event")).left(48)
+	var arc_name := str(event.get("story_arc_name", _source_name(source))).left(64)
+	var phase := str(event.get("story_phase", "chronicle")).left(24)
+	var stage := int(event.get("story_stage", -1))
+	var chapter_number := int(event.get("chapter_number", stage + 1 if stage >= 0 else \
+		int((state.get("player", {}) as Dictionary).get("total_events", 1))))
+	var chapter_total := int(event.get("chapter_total", 0))
+	var event_turn := maxi(0, int(event.get("turn", state.get("turn", 0))))
+	var entry := {
+		"id": "%s:%d:%d:%d" % [str(event.get("id", source)).left(80),
+			int(state.get("generation", 1)), event_turn, chapter_number],
+		"title": str(event.get("title", "无名因果")).left(160),
+		"choice": str(choice.get("text", "沉默")).left(240),
+		"outcome": outcome.strip_edges().left(1600),
+		"arc_id": str(event.get("story_arc_id", "")).left(48),
+		"arc_name": arc_name,
+		"phase": phase,
+		"stage": stage,
+		"chapter_number": maxi(1, chapter_number),
+		"chapter_total": maxi(0, chapter_total),
+		"generation": clampi(int(state.get("generation", 1)), 1, 100000),
+		"year": maxi(1, int(event.get("world_year",
+			(state.get("world", {}) as Dictionary).get("year", 1)))),
+		"turn": event_turn,
+		"source": source,
+		"story_message": story_message.strip_edges().left(480),
+		"objective_message": objective_message.strip_edges().left(480),
+		"encounter_message": encounter_message.strip_edges().left(480),
+	}
+	var chapters: Array = story.chapter_log
+	chapters.append(entry)
+	story["chapter_log"] = _bounded_array(chapters, MAX_CHAPTER_LOG)
+	state["story"] = story
+	return entry
+
+
+static func recent_chapters(state: Dictionary, maximum: int = 12) -> Array:
+	var chapters: Array = normalize(state).chapter_log
+	var result: Array = []
+	var limit := clampi(maximum, 0, MAX_CHAPTER_LOG)
+	if limit == 0:
+		return result
+	for index in range(chapters.size() - 1, -1, -1):
+		result.append((chapters[index] as Dictionary).duplicate(true))
+		if result.size() >= limit:
+			break
+	return result
+
+
+static func previous_choice_recap(state: Dictionary, event: Dictionary) -> String:
+	var chapters: Array = normalize(state).chapter_log
+	var arc_id := str(event.get("story_arc_id", ""))
+	for index in range(chapters.size() - 1, -1, -1):
+		var entry: Dictionary = chapters[index]
+		if not arc_id.is_empty() and str(entry.get("arc_id", "")) != arc_id:
+			continue
+		return "上回你选择了“%s”。%s" % [str(entry.get("choice", "沉默")),
+			str(entry.get("outcome", "余波仍未散去。")).left(220)]
+	return ""
+
+
 static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 	var arc := _arc_definition(str(selected.arc_id))
 	var phase := str(selected.phase)
@@ -286,6 +353,12 @@ static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 	node["story_arc_name"] = str(arc.name)
 	node["story_phase"] = phase
 	node["story_stage"] = stage
+	node["chapter_number"] = stage + 1
+	node["chapter_total"] = MAIN_STAGE_COUNT if phase == "main" else ECHO_STAGE_COUNT
+	node["chapter_phase_name"] = "今生卷" if phase == "main" else "轮回续章"
+	node["generation"] = int(state.get("generation", 1))
+	node["world_year"] = int((state.get("world", {}) as Dictionary).get("year", 1))
+	node["previous_choice_recap"] = previous_choice_recap(state, node)
 	var legacy := str((state.story.arc_legacies as Dictionary).get(str(arc.id), ""))
 	if phase == "echo" and not legacy.is_empty():
 		node["description"] = "%s\n\n前世定局：%s。" % [str(node.description), legacy]
@@ -353,6 +426,44 @@ static func _update_thread(story: Dictionary, arc_id: String, arc_name: String,
 		threads.append("%s:%s%s推进至%d章，仍待后续。" % [prefix, arc_name,
 			"续章" if phase == "echo" else "主线", progress])
 	story["unresolved_threads"] = _bounded_array(threads, MAX_THREADS)
+
+
+static func _source_name(source: String) -> String:
+	match source:
+		"story_arc": return "命途主卷"
+		"local_ai": return "天机外章"
+		"authored_event": return "山河异闻"
+		_: return "无名纪事"
+
+
+static func _normalize_chapter_log(value: Variant) -> Array:
+	if not value is Array:
+		return []
+	var result: Array = []
+	for entry_value in (value as Array).slice(-MAX_CHAPTER_LOG):
+		if not entry_value is Dictionary:
+			continue
+		var entry: Dictionary = entry_value
+		result.append({
+			"id": str(entry.get("id", "chapter")).left(160),
+			"title": str(entry.get("title", "无名因果")).left(160),
+			"choice": str(entry.get("choice", "沉默")).left(240),
+			"outcome": str(entry.get("outcome", "")).left(1600),
+			"arc_id": str(entry.get("arc_id", "")).left(48),
+			"arc_name": str(entry.get("arc_name", "无名纪事")).left(64),
+			"phase": str(entry.get("phase", "chronicle")).left(24),
+			"stage": int(entry.get("stage", -1)),
+			"chapter_number": maxi(1, int(entry.get("chapter_number", 1))),
+			"chapter_total": maxi(0, int(entry.get("chapter_total", 0))),
+			"generation": clampi(int(entry.get("generation", 1)), 1, 100000),
+			"year": maxi(1, int(entry.get("year", 1))),
+			"turn": maxi(0, int(entry.get("turn", 0))),
+			"source": str(entry.get("source", "authored_event")).left(48),
+			"story_message": str(entry.get("story_message", "")).left(480),
+			"objective_message": str(entry.get("objective_message", "")).left(480),
+			"encounter_message": str(entry.get("encounter_message", "")).left(480),
+		})
+	return result
 
 
 static func _apply_effects(player: Dictionary, effects: Dictionary) -> void:

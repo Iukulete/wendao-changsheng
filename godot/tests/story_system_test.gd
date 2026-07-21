@@ -26,6 +26,26 @@ func _init() -> void:
 	_expect(bool(StorySystemScript._valid_art_binding(scene_only_art)) and
 		str(scene_only_art.get("portrait_mode", "")) == "scene_only",
 		"关键剧情必须支持不重复叠加立绘的全幅分镜模式")
+	var journal_state := GameStateScript.create_new_game("长卷校验", 737301, [7, 7, 7, 7, 7])
+	var journal_event: Dictionary = StorySystemScript._build_event(journal_state,
+		{"arc_id":"jade", "phase":"main", "stage":0})
+	var journal_choice: Dictionary = (journal_event.choices as Array)[0]
+	var journal_entry: Dictionary = StorySystemScript.record_chapter(journal_state, journal_event,
+		journal_choice, str(journal_choice.outcome), "旧玉残卷推进至1/4。", "阶段命途推进。", "敌踪已现。")
+	_expect(str(journal_entry.get("title", "")) == str(journal_event.title) and
+		str(journal_entry.get("choice", "")) == str(journal_choice.text) and
+		int(journal_entry.get("chapter_number", 0)) == 1 and
+		int(journal_entry.get("generation", 0)) == 1 and
+		int(journal_entry.get("year", 0)) == 1 and
+		str(StorySystemScript.previous_choice_recap(journal_state, journal_event)).contains(str(journal_choice.text)),
+		"章节日志必须持久记录标题、选择、结果、卷章、世代、年份并可生成前情摘要")
+	for chapter_index in range(StorySystemScript.MAX_CHAPTER_LOG + 8):
+		journal_event["id"] = "bounded_%d" % chapter_index
+		StorySystemScript.record_chapter(journal_state, journal_event, journal_choice,
+			"第%d条有界章节。" % chapter_index)
+	_expect((journal_state.story.chapter_log as Array).size() == StorySystemScript.MAX_CHAPTER_LOG and
+		str((journal_state.story.chapter_log as Array)[0].id).begins_with("bounded_8"),
+		"命途长卷必须只保留最近96章，不能让长期存档无限膨胀")
 
 	var state := GameStateScript.create_new_game("照卷人", 737373, [7, 7, 7, 7, 7])
 	StorySystemScript.normalize(state)

@@ -67,13 +67,14 @@ const DEFAULT_PLAYER := {
 }
 
 enum ScreenState {
-	MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
+	MENU, GAME, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
 	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE,
 }
 
 var state: ScreenState = ScreenState.MENU
 var current_era: String = "古典修仙纪"
 var current_event: Dictionary = {}
+var current_event_result: Dictionary = {}
 var events: Array = []
 var recent_memories: Array[String] = []
 var feedback: String = "旧玉仍温，今生尚未落笔。"
@@ -135,6 +136,8 @@ func _refresh_screen_layout(expected_state: ScreenState) -> void:
 		ScreenState.DUNGEON_ROUTE: _show_dungeon_route()
 		ScreenState.DUNGEON_COMBAT: _show_dungeon_combat()
 		ScreenState.EVENT: _show_event()
+		ScreenState.EVENT_RESULT: _show_event_result()
+		ScreenState.JOURNAL: _show_journal()
 		ScreenState.REINCARNATION: _show_reincarnation()
 		ScreenState.AUDIO_SETTINGS: _show_audio_settings()
 		ScreenState.INVENTORY: _show_inventory()
@@ -510,6 +513,8 @@ func _start_new_game(name_input: LineEdit) -> void:
 	if dao_name.is_empty():
 		dao_name = "无名客"
 	run_state = GameStateScript.create_new_game(dao_name)
+	current_event = {}
+	current_event_result = {}
 	_sync_state_views()
 	menu_notice = ""
 	_save_current_state("新生命途已立档")
@@ -533,6 +538,7 @@ func _continue_game() -> void:
 	save_notice = str(load_result.get("message", "旧玉已续接上一次命途。"))
 	menu_notice = ""
 	current_event = {}
+	current_event_result = {}
 	if DungeonSystemScript.has_active_run(run_state):
 		_show_dungeon()
 	elif CombatSystemScript.has_active_combat(run_state):
@@ -552,6 +558,7 @@ func _import_legacy_game() -> void:
 	save_notice = str(import_result.get("message", "旧版命途已迁入。"))
 	menu_notice = ""
 	current_event = {}
+	current_event_result = {}
 	_show_game()
 
 
@@ -865,6 +872,10 @@ func _build_action_panel() -> Control:
 	dungeon_button.name = "DungeonButton"
 	dungeon_button.tooltip_text = "进入四层镜湖空阙秘境。"
 	action_grid.add_child(dungeon_button)
+	var journal_button := _main_action_button("玖 · 命途长卷", _show_journal, false)
+	journal_button.name = "JournalButton"
+	journal_button.tooltip_text = "回看已经写下的章节、未竟因果与跨世定局。"
+	action_grid.add_child(journal_button)
 	if int(player.get("realm_index", 0)) >= 19:
 		var transcend_button := _main_action_button("自择轮回", _transcend_life, true)
 		transcend_button.name = "TranscendLifeButton"
@@ -2466,11 +2477,21 @@ func _show_event() -> void:
 
 	var header := _panel(0.78, era_accent)
 	header.name = "EventHeader"
-	header.custom_minimum_size.y = 76
+	header.custom_minimum_size.y = 92
+	var header_column := VBoxContainer.new()
+	header_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	header_column.add_theme_constant_override("separation", 1)
+	header.add_child(header_column)
+	var chapter_meta := _event_chapter_meta(current_event)
+	var chapter_label := _label(str(chapter_meta.get("line", "山河异闻")), 14,
+		Color(era_accent, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
+	chapter_label.name = "EventChapterMeta"
+	header_column.add_child(chapter_label)
 	var header_label := _display_label(str(current_event.get("title", "无名因果")), 29,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER)
 	header_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	header.add_child(header_label)
+	header_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	header_column.add_child(header_label)
 	page.add_child(header)
 
 	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
@@ -2504,6 +2525,30 @@ func _event_uses_dedicated_visual() -> bool:
 	# Catalog and generated events intentionally use the stronger text layout
 	# until they receive event-specific art; shared placeholders are not shown.
 	return str(current_event.get("source", "")) not in ["authored_event", "local_ai"]
+
+
+func _event_chapter_meta(event: Dictionary) -> Dictionary:
+	var source := str(event.get("source", "authored_event"))
+	var arc_name := str(event.get("story_arc_name", event.get("arc_name", {
+		"story_arc": "命途主卷", "local_ai": "天机外章", "authored_event": "山河异闻",
+	}.get(source, "无名纪事"))))
+	var chapter := int(event.get("chapter_number", int(player.get("total_events", 0)) + 1))
+	var total := int(event.get("chapter_total", 0))
+	var phase_name := str(event.get("chapter_phase_name", {
+		"main": "今生卷", "echo": "轮回续章", "chronicle": "纪事",
+	}.get(str(event.get("phase", event.get("story_phase", "chronicle"))), "纪事")))
+	var chapter_text := "第%d章" % maxi(1, chapter)
+	if total > 0:
+		chapter_text += "/%d" % total
+	return {
+		"arc_name": arc_name,
+		"chapter": maxi(1, chapter),
+		"total": maxi(0, total),
+		"line": "%s · %s %s · 第%d世 · 世界第%d年" % [arc_name, phase_name,
+			chapter_text, int(event.get("generation", run_state.get("generation", 1))),
+			int(event.get("world_year", event.get("year",
+				(run_state.get("world", {}) as Dictionary).get("year", 1))))],
+	}
 
 
 func _build_event_stage(narrow_layout: bool = false) -> Control:
@@ -2594,19 +2639,29 @@ func _build_event_choices() -> Control:
 	column.add_theme_constant_override("separation", 14)
 	panel.add_child(column)
 	column.add_child(_label(current_era + " · 因果抉择", 15, Color(era_accent, 0.92)))
+	var recap := str(current_event.get("previous_choice_recap", ""))
+	if recap.is_empty():
+		recap = StorySystemScript.previous_choice_recap(run_state, current_event)
+	if not recap.is_empty():
+		var recap_label := _label("前情 · %s" % recap, 15, Color(0.75, 0.81, 0.80, 0.92))
+		recap_label.name = "EventPreviousChoice"
+		recap_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(recap_label)
 	var description := _label(str(current_event.get("description", "")), 20, Color("f1eee5"))
 	description.name = "EventDescription"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description.custom_minimum_size.y = 150
+	description.custom_minimum_size.y = 128
 	column.add_child(description)
 	column.add_child(_divider())
 
 	var choices: Array = current_event.get("choices", [])
 	for index in range(choices.size()):
 		var choice: Dictionary = choices[index]
-		var delta_hint := _format_delta_hint(choice.get("deltas", {}))
+		var choice_hint := _format_choice_hint(choice)
 		var unavailable_reason := _choice_unavailable_reason(choice)
-		var choice_button := _button("%d  %s\n     %s" % [index + 1, str(choice.get("text", "沉默")), delta_hint],
+		if not unavailable_reason.is_empty():
+			choice_hint = "尚不可选 · %s" % unavailable_reason
+		var choice_button := _button("%d  %s\n     %s" % [index + 1, str(choice.get("text", "沉默")), choice_hint],
 			_resolve_choice.bind(index), false)
 		choice_button.name = "EventChoiceButton%d" % index
 		choice_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -2623,6 +2678,11 @@ func _resolve_choice(index: int) -> void:
 	if index < 0 or index >= choices.size():
 		return
 	var choice: Dictionary = choices[index]
+	if not current_event.has("chapter_number"):
+		current_event["chapter_number"] = int(player.get("total_events", 0)) + 1
+	current_event["generation"] = int(run_state.get("generation", 1))
+	current_event["world_year"] = int((run_state.get("world", {}) as Dictionary).get("year", 1))
+	current_event["turn"] = int(run_state.get("turn", 0))
 	var unavailable_reason := _choice_unavailable_reason(choice)
 	if not unavailable_reason.is_empty():
 		feedback = unavailable_reason
@@ -2641,13 +2701,16 @@ func _resolve_choice(index: int) -> void:
 	player.hp = clamp(int(player.hp), 0, int(player.max_hp))
 	player.exp = max(0, int(player.exp))
 	player.total_events = int(player.get("total_events", 0)) + 1
-	feedback = str(choice.get("outcome", "因果落定，旧玉没有给出解释。"))
+	var outcome := str(choice.get("outcome", "因果落定，旧玉没有给出解释。"))
+	feedback = outcome
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
 	run_state["player"] = player
 	EventCatalogScript.record_resolution(run_state, current_event)
 	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
+	var story_message := ""
 	if bool(story_resolution.get("ok", false)):
-		feedback += "\n\n" + str(story_resolution.get("message", "命途长卷又落下一笔。"))
+		story_message = str(story_resolution.get("message", "命途长卷又落下一笔。"))
+		feedback += "\n\n" + story_message
 		if bool(story_resolution.get("terminal", false)):
 			_add_memory(str(story_resolution.get("message", "一条跨世因果已经定局。")))
 	AchievementSystemScript.add_resonance(run_state, 3, "历练抉择")
@@ -2657,20 +2720,31 @@ func _resolve_choice(index: int) -> void:
 		"local_ai_event" if event_source == "local_ai" else "adventure"
 	var objective_result := _record_objective_action(objective_action)
 	var encounter_offer := EncounterSystemScript.offer_from_choice(run_state, current_event, choice)
+	var encounter_message := ""
 	if bool(encounter_offer.get("ok", false)) and \
 		str(encounter_offer.get("code", "")) == "encounter_offered":
-		objective_result["encounter_message"] = str(encounter_offer.get("message", "敌踪已现。"))
+		encounter_message = str(encounter_offer.get("message", "敌踪已现。"))
+		objective_result["encounter_message"] = encounter_message
 	_sync_state_views()
 	_append_objective_feedback(objective_result)
 	if str(objective_result.get("encounter_message", "")).is_empty() == false:
 		feedback += "\n\n" + str(objective_result.get("encounter_message", ""))
 		run_state["feedback"] = feedback
+	var objective_message := str(objective_result.get("message", ""))
+	var world_message := str(objective_result.get("world_message", ""))
+	if not world_message.is_empty():
+		objective_message += ("\n" if not objective_message.is_empty() else "") + world_message
+	var chapter_entry := StorySystemScript.record_chapter(run_state, current_event, choice,
+		outcome, story_message, objective_message, encounter_message)
+	current_event_result = chapter_entry.duplicate(true)
+	current_event_result["choice_hint"] = _format_choice_hint(choice).trim_prefix("可能回响 · ")
+	current_event_result["full_feedback"] = feedback
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
 		_end_current_life("因果事件中的重创")
 		return
 	_save_current_state("因果抉择已自动封存")
-	_show_game()
+	_show_event_result()
 
 
 func _format_delta_hint(deltas: Dictionary) -> String:
@@ -2686,6 +2760,22 @@ func _format_delta_hint(deltas: Dictionary) -> String:
 	return "可能回响 · " + "  ".join(parts) if not parts.is_empty() else "结果不会立刻显形"
 
 
+func _format_choice_hint(choice: Dictionary) -> String:
+	var result := _format_delta_hint(choice.get("deltas", {}))
+	var path_names := {
+		"compassion": "护生", "ambition": "凌霄", "defiance": "逆命",
+		"insight": "照因", "creation": "造化", "bonds": "众生",
+	}
+	var path_parts: Array[String] = []
+	for path_id in (choice.get("path_deltas", {}) as Dictionary).keys():
+		var value := int((choice.get("path_deltas", {}) as Dictionary)[path_id])
+		if value != 0:
+			path_parts.append("%s%+d" % [str(path_names.get(path_id, path_id)), value])
+	if not path_parts.is_empty():
+		result += " · 道途 " + "  ".join(path_parts)
+	return result
+
+
 func _choice_unavailable_reason(choice: Dictionary) -> String:
 	var deltas: Dictionary = choice.get("deltas", {})
 	var resource_names := {"spirit_stones": "灵石", "pills": "丹药"}
@@ -2694,6 +2784,264 @@ func _choice_unavailable_reason(choice: Dictionary) -> String:
 		if delta < 0 and int(player.get(resource_id, 0)) + delta < 0:
 			return "%s不足，无法作出这个选择。" % str(resource_names[resource_id])
 	return ""
+
+
+func _show_event_result() -> void:
+	state = ScreenState.EVENT_RESULT
+	_set_audio_context("event")
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.name = "EventResultPage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 14)
+	screen_host.add_child(page)
+	var meta := _event_chapter_meta(current_event_result)
+	var header := _panel(0.78, era_accent)
+	header.name = "EventResultHeader"
+	header.custom_minimum_size.y = 104
+	var heading := VBoxContainer.new()
+	heading.alignment = BoxContainer.ALIGNMENT_CENTER
+	heading.add_theme_constant_override("separation", 2)
+	heading.add_child(_label(str(meta.get("line", "命途纪事")), 14,
+		Color(era_accent, 0.94), HORIZONTAL_ALIGNMENT_CENTER))
+	heading.add_child(_display_label("这一页已经写下", 30, Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
+	heading.add_child(_label(str(current_event_result.get("title", "无名因果")), 16,
+		Color(0.84, 0.87, 0.85, 0.94), HORIZONTAL_ALIGNMENT_CENTER))
+	header.add_child(heading)
+	page.add_child(header)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "EventResultScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
+	var reading := _panel(0.86, era_accent)
+	reading.name = "EventResultReading"
+	reading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 12)
+	reading.add_child(content)
+	content.add_child(_label("你选择了", 15, Color(era_accent, 0.92)))
+	var choice_label := _display_label("“%s”" % str(current_event_result.get("choice", "沉默")), 22,
+		Color("f0e7d2"))
+	choice_label.name = "EventResultChoice"
+	choice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(choice_label)
+	content.add_child(_divider())
+	content.add_child(_label("余波", 15, Color(era_accent, 0.92)))
+	var outcome := _label(str(current_event_result.get("outcome", "因果无声落定。")), 21,
+		Color("f3eee3"))
+	outcome.name = "EventResultOutcome"
+	outcome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	content.add_child(outcome)
+	var story_message := str(current_event_result.get("story_message", ""))
+	if not story_message.is_empty():
+		content.add_child(_result_note("命途推进", story_message, Color("d9c98f")))
+	var objective_message := str(current_event_result.get("objective_message", ""))
+	if not objective_message.is_empty():
+		content.add_child(_result_note("阶段命途", objective_message, Color("8fc7b5")))
+	var encounter_message := str(current_event_result.get("encounter_message", ""))
+	if not encounter_message.is_empty():
+		content.add_child(_result_note("敌踪", encounter_message, Color("ef9a78")))
+	content.add_child(_label("数值回响 · %s" % str(current_event_result.get("choice_hint", "结果已写入命途。")),
+		14, Color(0.72, 0.78, 0.79, 0.9)))
+	scroll.add_child(reading)
+
+	var footer := HBoxContainer.new()
+	footer.name = "EventResultFooter"
+	footer.add_theme_constant_override("separation", 10)
+	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var journal_button := _button("查看命途长卷", _show_journal, false)
+	journal_button.name = "EventResultJournalButton"
+	journal_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.add_child(journal_button)
+	var continue_button := _button("翻过此页", _continue_from_event_result, true)
+	continue_button.name = "EventResultContinueButton"
+	continue_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	footer.add_child(continue_button)
+	page.add_child(footer)
+	continue_button.grab_focus()
+
+
+func _result_note(title: String, detail: String, color: Color) -> Control:
+	var note := VBoxContainer.new()
+	note.add_theme_constant_override("separation", 2)
+	note.add_child(_label(title, 14, color))
+	var body := _label(detail, 16, Color(0.82, 0.85, 0.84, 0.92))
+	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.add_child(body)
+	return note
+
+
+func _continue_from_event_result() -> void:
+	current_event_result = {}
+	_show_game()
+
+
+func _show_journal() -> void:
+	state = ScreenState.JOURNAL
+	_set_audio_context("world")
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.name = "JournalPage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 12)
+	screen_host.add_child(page)
+	var header := _panel(0.78, era_accent)
+	header.name = "JournalHeader"
+	header.custom_minimum_size.y = 92
+	var heading := VBoxContainer.new()
+	heading.alignment = BoxContainer.ALIGNMENT_CENTER
+	heading.add_child(_display_label("命途长卷", 31, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	heading.add_child(_label("每一次选择都留下可回看的章节；未竟之事不会因为离开页面而消失。", 15,
+		Color(0.82, 0.85, 0.84, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
+	header.add_child(heading)
+	page.add_child(header)
+	var scroll := ScrollContainer.new()
+	scroll.name = "JournalScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
+	var body := VBoxContainer.new()
+	body.name = "JournalBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 12)
+	var surface := PanelContainer.new()
+	surface.name = "JournalSurface"
+	surface.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var surface_style := StyleBoxFlat.new()
+	surface_style.bg_color = Color(0.025, 0.04, 0.058, 0.88)
+	surface_style.content_margin_left = 24
+	surface_style.content_margin_right = 24
+	surface_style.content_margin_top = 18
+	surface_style.content_margin_bottom = 28
+	surface.add_theme_stylebox_override("panel", surface_style)
+	scroll.add_child(surface)
+	surface.add_child(body)
+	_build_journal_objective(body)
+	_build_journal_threads(body)
+	_build_journal_arcs(body)
+	_build_journal_resolved(body)
+	_build_journal_recent(body)
+	var back := _button("返回山河", _show_game, true)
+	back.name = "JournalBackButton"
+	page.add_child(back)
+	back.grab_focus()
+
+
+func _build_journal_objective(body: VBoxContainer) -> void:
+	body.add_child(_section_title("此世所求"))
+	var summary: Dictionary = ObjectiveSystemScript.summary(run_state)
+	if not bool(summary.get("active", false)):
+		body.add_child(_label("本轮命途尚未择定。回到山河后，先决定接下来八次年轮要追求什么。", 16,
+			Color(0.78, 0.83, 0.82, 0.92)))
+		return
+	body.add_child(_label("%s · 尚余%d次年轮 · 连续践行%d" % [str(summary.get("name", "无名命途")),
+		int(summary.get("remaining_turns", 0)), int(summary.get("streak", 0))], 16,
+		Color(0.86, 0.88, 0.84, 0.95)))
+	body.add_child(_progress_row("道印", int(summary.get("progress", 0)), int(summary.get("target", 1)),
+		Color("8fc7b5")))
+	var recommendation := _label(str(summary.get("recommendation", "继续沿着已经选择的方向行动。")), 14,
+		Color(0.74, 0.80, 0.79, 0.9))
+	recommendation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(recommendation)
+
+
+func _build_journal_threads(body: VBoxContainer) -> void:
+	body.add_child(_section_title("未竟因果"))
+	var threads: Array = (run_state.get("story", {}) as Dictionary).get("unresolved_threads", [])
+	if threads.is_empty():
+		body.add_child(_label("眼下没有悬而未决的主线，山河暂时允许你喘息。", 16,
+			Color(0.76, 0.82, 0.81, 0.9)))
+		return
+	for thread_value in threads.slice(-8):
+		var thread := _journal_thread_text(str(thread_value))
+		body.add_child(_result_note("仍在等待", thread, Color("efb779")))
+
+
+func _build_journal_arcs(body: VBoxContainer) -> void:
+	body.add_child(_section_title("主线时钟"))
+	var story: Dictionary = run_state.get("story", {})
+	var definitions: Dictionary = StorySystemScript.load_definitions()
+	var names := {}
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		names[str(arc.get("id", ""))] = str(arc.get("name", "无名主线"))
+	for arc_id in StorySystemScript.ARC_IDS:
+		var progress := int((story.get("arc_progress", {}) as Dictionary).get(arc_id, 0))
+		var legacy := str((story.get("arc_legacies", {}) as Dictionary).get(arc_id, ""))
+		var echo: Dictionary = (story.get("arc_echoes", {}) as Dictionary).get(arc_id, {})
+		var display_progress := progress
+		var maximum := StorySystemScript.MAIN_STAGE_COUNT
+		var status := "主线 %d/%d" % [progress, maximum]
+		if not legacy.is_empty():
+			display_progress = int(echo.get("stage", 0))
+			maximum = StorySystemScript.ECHO_STAGE_COUNT
+			status = "已定局 · 续章 %d/%d" % [display_progress, maximum]
+		var stack := VBoxContainer.new()
+		stack.add_theme_constant_override("separation", 3)
+		stack.add_child(_label("%s · %s" % [str(names.get(arc_id, arc_id)), status], 15,
+			Color(0.84, 0.87, 0.84, 0.94)))
+		stack.add_child(_progress_row("命途进度", display_progress, maximum, era_accent))
+		if not legacy.is_empty():
+			stack.add_child(_label("跨世定局：%s" % legacy, 14, Color("d9c98f")))
+		body.add_child(stack)
+
+
+func _build_journal_resolved(body: VBoxContainer) -> void:
+	var resolved: Array = (run_state.get("story", {}) as Dictionary).get("resolved_arcs", [])
+	if resolved.is_empty():
+		return
+	body.add_child(_section_title("已成定局"))
+	for resolution_value in resolved.slice(-8):
+		var resolution: Dictionary = resolution_value
+		var phase_name := "今生定局" if str(resolution.get("phase", "main")) == "main" else "续章结论"
+		body.add_child(_result_note("%s · %s" % [str(resolution.get("arc_name", "无名主线")), phase_name],
+			"第%d世：%s" % [int(resolution.get("generation", 1)),
+				str(resolution.get("resolution", "结局未名"))], Color("d9c98f")))
+
+
+func _build_journal_recent(body: VBoxContainer) -> void:
+	body.add_child(_section_title("最近章节"))
+	var chapters: Array = StorySystemScript.recent_chapters(run_state, 12)
+	if chapters.is_empty():
+		body.add_child(_label("你还没有翻开第一章。下一次历练会把新的文字交给你。", 16,
+			Color(0.76, 0.82, 0.81, 0.9)))
+		return
+	for entry_value in chapters:
+		var entry: Dictionary = entry_value
+		var card := VBoxContainer.new()
+		card.name = "JournalChapter_%s" % str(entry.get("id", "chapter")).replace(":", "_")
+		var column := card
+		column.add_theme_constant_override("separation", 4)
+		column.add_child(_label("第%d世 · 世界第%d年 · %s · 第%d章%s" % [
+			int(entry.get("generation", 1)), int(entry.get("year", 1)),
+			str(entry.get("arc_name", "无名纪事")), int(entry.get("chapter_number", 1)),
+			"/%d" % int(entry.get("chapter_total", 0)) if int(entry.get("chapter_total", 0)) > 0 else ""],
+			13, Color(era_accent, 0.9)))
+		column.add_child(_display_label(str(entry.get("title", "无名因果")), 19, Color("f0e7d2")))
+		column.add_child(_label("你选择了“%s”" % str(entry.get("choice", "沉默")), 15,
+			Color(0.83, 0.86, 0.84, 0.94)))
+		var outcome := _label(str(entry.get("outcome", "")), 16, Color(0.78, 0.82, 0.81, 0.92))
+		outcome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(outcome)
+		body.add_child(card)
+		body.add_child(_divider())
+
+
+func _journal_thread_text(thread: String) -> String:
+	var parts := thread.split(":")
+	var visible: Array[String] = []
+	for part in parts:
+		if not str(part).is_empty() and part not in ["story", "jade", "sect", "family", "rival"]:
+			visible.append(str(part))
+	return ":".join(visible) if not visible.is_empty() else thread
 
 
 func _cycle_era() -> void:
@@ -4074,6 +4422,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_M: _enter_dungeon()
 				KEY_I: _show_inventory()
 				KEY_A: _show_armory()
+				KEY_L: _show_journal()
 				KEY_Y: _cycle_jade_weapon()
 				KEY_J: _invoke_jade_weapon()
 				KEY_R:
@@ -4098,6 +4447,14 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			elif event.keycode == KEY_ESCAPE:
 				feedback = "你暂时离开这段因果，但它没有真正结束。"
 				current_event = {}
+				_show_game()
+		ScreenState.EVENT_RESULT:
+			if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_ESCAPE]:
+				_continue_from_event_result()
+			elif event.keycode == KEY_L:
+				_show_journal()
+		ScreenState.JOURNAL:
+			if event.keycode in [KEY_ESCAPE, KEY_L]:
 				_show_game()
 		ScreenState.REINCARNATION:
 			if event.keycode in [KEY_ENTER, KEY_KP_ENTER]:
