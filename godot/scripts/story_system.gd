@@ -66,17 +66,35 @@ static func validate_definitions() -> Dictionary:
 			var choices_value: Variant = arc.get("%s_choices" % phase, [])
 			if not choices_value is Array or (choices_value as Array).size() != 3:
 				return {"ok": false, "code": "invalid_story_choices", "arc_id": arc_id}
+			var costless_choice_count := 0
 			for choice_value in (choices_value as Array):
 				if not choice_value is Dictionary:
 					return {"ok": false, "code": "invalid_story_choice"}
 				var choice: Dictionary = choice_value
 				if str(choice.get("text", "")).is_empty() or str(choice.get("outcome", "")).is_empty() or \
-					not choice.get("deltas", null) is Dictionary or not choice.get("path_deltas", null) is Dictionary or \
-					str(choice.get("resolution", "")).is_empty():
+						not choice.get("deltas", null) is Dictionary or not choice.get("path_deltas", null) is Dictionary or \
+						str(choice.get("resolution", "")).is_empty():
 					return {"ok": false, "code": "invalid_story_choice", "arc_id": arc_id}
+				if not _choice_has_explicit_cost(choice):
+					costless_choice_count += 1
+			if costless_choice_count > 1:
+				return {"ok": false, "code": "imbalanced_story_choices", "arc_id": arc_id,
+					"phase": phase, "costless_choices": costless_choice_count}
 	if seen_arcs.size() != ARC_IDS.size():
 		return {"ok": false, "code": "missing_arc"}
 	return {"ok": true, "code": "valid", "arc_count": seen_arcs.size(), "node_count": seen_nodes.size()}
+
+
+static func _choice_has_explicit_cost(choice: Dictionary) -> bool:
+	var deltas: Dictionary = choice.get("deltas", {})
+	for field in deltas.keys():
+		var value := int(deltas[field])
+		if (str(field) == "enmity" and value > 0) or (str(field) != "enmity" and value < 0):
+			return true
+	for value in (choice.get("path_deltas", {}) as Dictionary).values():
+		if int(value) < 0:
+			return true
+	return false
 
 
 static func normalize(state: Dictionary) -> Dictionary:

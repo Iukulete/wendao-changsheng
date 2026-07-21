@@ -24,12 +24,12 @@
       ],
       "main_choices": [
         {"text": "握玉静听", "outcome": "你允许旧梦提供证词，却要求每一处细节接受今生事实的核验。", "deltas": {"exp": 84, "dao_heart": 3}, "path_deltas": {"insight": 3, "bonds": 1}, "resolution": "旧我为证"},
-        {"text": "以今证旧", "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分。", "deltas": {"exp": 62, "karma": 5}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "今生校旧"},
+        {"text": "以今证旧", "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分。", "deltas": {"exp": 62, "karma": 5}, "path_deltas": {"insight": 2, "defiance": 2, "bonds": -1}, "resolution": "今生校旧"},
         {"text": "封住梦兆", "outcome": "你不销毁过去，只切断它替今生发号施令的权力。", "deltas": {"dao_heart": 6, "hp": -8}, "path_deltas": {"defiance": 3, "ambition": 1}, "resolution": "封梦自持"}
       ],
       "echo_choices": [
         {"text": "承认旧证", "outcome": "两世证词被并排保存，旧我可以作证，却不能越俎代庖。", "deltas": {"exp": 96, "dao_heart": 4}, "path_deltas": {"bonds": 2, "insight": 2}, "resolution": "守证旧我"},
-        {"text": "以今校旧", "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实。", "deltas": {"exp": 74, "karma": 6}, "path_deltas": {"insight": 3, "defiance": 1}, "resolution": "今身定锚"},
+        {"text": "以今校旧", "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实。", "deltas": {"exp": 74, "karma": 6}, "path_deltas": {"insight": 3, "defiance": 1, "bonds": -1}, "resolution": "今身定锚"},
         {"text": "留痕断梦", "outcome": "过去被允许留痕，却永远失去替今生下令的资格。", "deltas": {"dao_heart": 8, "hp": -10}, "path_deltas": {"defiance": 4}, "resolution": "断梦留痕"}
       ],
       "legacy_birth_effects": {"旧我为证": {"exp": 18, "dao_heart": 3}, "今生校旧": {"dao_heart": 5}, "封梦自持": {"dao_heart": 7}},
@@ -58,12 +58,12 @@
       ],
       "main_choices": [
         {"text": "据理受验", "outcome": "你逐条回应质疑，不借天资压人，也不让门规替旁人定罪。", "deltas": {"exp": 82, "reputation": 5}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "守律立道"},
-        {"text": "借师承入局", "outcome": "你承认师承给过机会，却没有把全部责任推给长辈。", "deltas": {"exp": 64, "spirit_stones": 8}, "path_deltas": {"bonds": 3, "ambition": 1}, "resolution": "师承共担"},
+        {"text": "借师承入局", "outcome": "你承认师承给过机会，却没有把全部责任推给长辈。", "deltas": {"exp": 64, "spirit_stones": 8}, "path_deltas": {"bonds": 3, "ambition": 1, "defiance": -1}, "resolution": "师承共担"},
         {"text": "拒绝被定价", "outcome": "你要求把规则与代价写明，第一次以自己的名字站在山门前。", "deltas": {"dao_heart": 6, "reputation": -2}, "path_deltas": {"defiance": 3, "creation": 1}, "resolution": "自立道统"}
       ],
       "echo_choices": [
         {"text": "续写旧律", "outcome": "你保留旧律中真正能护人的部分，并把旧宗也纳入问责。", "deltas": {"exp": 94, "reputation": 7}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "旧律新章"},
-        {"text": "与今门共议", "outcome": "两代山门公开核对权利与代价，道统第一次不再等同于服从。", "deltas": {"spirit_stones": 12, "karma": 5}, "path_deltas": {"bonds": 4}, "resolution": "两代同门"},
+        {"text": "与今门共议", "outcome": "两代山门公开核对权利与代价，道统第一次不再等同于服从。", "deltas": {"spirit_stones": 12, "karma": 5}, "path_deltas": {"bonds": 4, "ambition": -1}, "resolution": "两代同门"},
         {"text": "另立新章", "outcome": "你只承认自己愿意承担的道统，并为它写下可被后人质疑的新章。", "deltas": {"dao_heart": 8, "enmity": 3}, "path_deltas": {"defiance": 3, "creation": 2}, "resolution": "今世开宗"}
       ],
       "legacy_birth_effects": {"守律立道": {"reputation": 5}, "师承共担": {"reputation": 3, "dao_heart": 2}, "自立道统": {"dao_heart": 4, "enmity": 2}},
@@ -92,12 +92,12 @@
       ],
       "main_choices": [
         {"text": "追查旧账", "outcome": "你查清一部分真相，也把一部分债正式记到自己名下。", "deltas": {"exp": 86, "spirit_stones": 8}, "path_deltas": {"insight": 3, "ambition": 1}, "resolution": "承认旧脉"},
-        {"text": "问养育者", "outcome": "你没有越过真正养大你的人，对方终于说出此前不敢说的旧事。", "deltas": {"karma": 8, "reputation": 4}, "path_deltas": {"compassion": 2, "bonds": 3}, "resolution": "护亲问源"},
+        {"text": "问养育者", "outcome": "你没有越过真正养大你的人，对方终于说出此前不敢说的旧事。", "deltas": {"karma": 8, "reputation": 4}, "path_deltas": {"compassion": 2, "bonds": 3, "ambition": -1}, "resolution": "护亲问源"},
         {"text": "不让血脉定命", "outcome": "你保留真相，却拒绝拿祖名换取现成位置。家世从枷锁变成证据。", "deltas": {"dao_heart": 7, "spirit_stones": -4}, "path_deltas": {"defiance": 3, "insight": 1}, "resolution": "断名自立"}
       ],
       "echo_choices": [
         {"text": "连债承脉", "outcome": "你承认祖脉，也把资源背后的旧债写进共同承担的契约。", "deltas": {"spirit_stones": 16, "karma": 4}, "path_deltas": {"bonds": 2, "ambition": 2}, "resolution": "祖脉共担"},
-        {"text": "养恩为先", "outcome": "血脉被留下查证，但真正养育今生的人先得到回答。", "deltas": {"reputation": 9, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2}, "resolution": "养恩为先"},
+        {"text": "养恩为先", "outcome": "血脉被留下查证，但真正养育今生的人先得到回答。", "deltas": {"reputation": 9, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2, "ambition": -1}, "resolution": "养恩为先"},
         {"text": "去名留义", "outcome": "你放下可以换取位置的旧名，只保留仍愿意承担彼此的关系。", "deltas": {"dao_heart": 9, "spirit_stones": -6}, "path_deltas": {"defiance": 3, "compassion": 1}, "resolution": "去名留义"}
       ],
       "legacy_birth_effects": {"承认旧脉": {"family_fame": 10, "family_wealth": 3}, "护亲问源": {"reputation": 3, "family_wealth": 2}, "断名自立": {"dao_heart": 3}},
@@ -126,12 +126,12 @@
       ],
       "main_choices": [
         {"text": "正面接帖", "outcome": "你不借旁人造势，也不把旧怨藏进暗手。江照雪收剑时仍不服，却承认此战值得记住。", "deltas": {"exp": 92, "hp": -10}, "path_deltas": {"ambition": 2, "bonds": 2}, "resolution": "照雪宿敌"},
-        {"text": "同阵合作", "outcome": "你们先拆开真正的危局，再回头算谁多走半步。", "deltas": {"exp": 68, "spirit_stones": 10}, "path_deltas": {"bonds": 3, "creation": 1}, "resolution": "照雪盟友"},
+        {"text": "同阵合作", "outcome": "你们先拆开真正的危局，再回头算谁多走半步。", "deltas": {"exp": 68, "spirit_stones": 10}, "path_deltas": {"bonds": 3, "creation": 1, "ambition": -1}, "resolution": "照雪盟友"},
         {"text": "不以胜负定敌友", "outcome": "你承认争胜，也拒绝让旁人的旧账替你们决定关系。", "deltas": {"dao_heart": 7, "reputation": 3}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "清醒对手"}
       ],
       "echo_choices": [
         {"text": "再决高下", "outcome": "两世未尽的一战有了新约束：只以彼此真正认可的手段争胜。", "deltas": {"exp": 112, "hp": -14}, "path_deltas": {"ambition": 3, "bonds": 1}, "resolution": "再续宿敌"},
-        {"text": "先并肩破局", "outcome": "你们斩断真正操纵战帖的人，再回来计算彼此的胜负。", "deltas": {"spirit_stones": 14, "karma": 6}, "path_deltas": {"bonds": 3, "creation": 2}, "resolution": "并肩照雪"},
+        {"text": "先并肩破局", "outcome": "你们斩断真正操纵战帖的人，再回来计算彼此的胜负。", "deltas": {"spirit_stones": 14, "karma": 6}, "path_deltas": {"bonds": 3, "creation": 2, "ambition": -1}, "resolution": "并肩照雪"},
         {"text": "约定只争道途", "outcome": "你们承认竞争，也共同拒绝把仇怨传给下一世。", "deltas": {"dao_heart": 8, "reputation": 4}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "相争不相害"}
       ],
       "legacy_birth_effects": {"照雪宿敌": {"attack": 3, "enmity": 4}, "照雪盟友": {"defense": 2, "reputation": 4}, "清醒对手": {"attack": 1, "defense": 1, "dao_heart": 3}},

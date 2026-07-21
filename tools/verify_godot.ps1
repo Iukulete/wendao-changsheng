@@ -106,6 +106,8 @@ $testScripts = @(
     "res://tests/audio_system_test.gd",
     "res://tests/character_art_catalog_test.gd",
     "res://tests/game_state_test.gd",
+    "res://tests/objective_system_test.gd",
+    "res://tests/encounter_system_test.gd",
     "res://tests/world_simulation_test.gd",
     "res://tests/story_system_test.gd",
     "res://tests/achievement_system_test.gd",

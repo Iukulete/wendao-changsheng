@@ -28,6 +28,26 @@ const REALMS := [
 	{"id": "heavenly_dao", "name": "道祖-天道境", "phase": "万道归一", "base_lifespan": 1000000},
 ]
 
+const MEDITATION_MODE_IDS := ["steady", "rush", "insight"]
+
+const MEDITATION_MODES := {
+	"steady": {
+		"name": "守一周天",
+		"description": "收束气机，修为稍缓，同时恢复气血与灵力。",
+		"gain_percent": 85,
+	},
+	"rush": {
+		"name": "燃血冲脉",
+		"description": "以气血换取最快积累；气血不足时不可强行运功。",
+		"gain_percent": 145,
+	},
+	"insight": {
+		"name": "引潮悟道",
+		"description": "顺应当年灵潮调整周天，修为随天时浮动并增长道心。",
+		"gain_percent": 0,
+	},
+}
+
 
 static func exp_needed(player: Dictionary) -> int:
 	var realm_index := _realm_index(player)
@@ -50,22 +70,54 @@ static func exp_needed(player: Dictionary) -> int:
 	return unit * level
 
 
-static func meditate(state: Dictionary, roll: int = -1) -> Dictionary:
+static func meditation_preview(state: Dictionary, mode_id: String) -> Dictionary:
+	if not MEDITATION_MODE_IDS.has(mode_id):
+		return {"ok": false, "code": "invalid_meditation_mode"}
+	var player: Dictionary = state.get("player", {})
+	if player.is_empty():
+		return {"ok": false, "code": "missing_player"}
+	var realm_index := _realm_index(player)
+	var minimum_gain := _meditation_gain(player, realm_index, 28, mode_id, state)
+	var maximum_gain := _meditation_gain(player, realm_index, 100, mode_id, state)
+	var max_hp := maxi(1, int(player.get("max_hp", 1)))
+	var hp_cost := maxi(8, int(ceil(float(max_hp) * 0.14))) if mode_id == "rush" else 0
+	var heal := maxi(10, int(ceil(float(max_hp) * 0.12))) if mode_id == "steady" else 0
+	return {
+		"ok": true,
+		"code": "preview_ready",
+		"mode_id": mode_id,
+		"name": str(MEDITATION_MODES[mode_id].name),
+		"description": str(MEDITATION_MODES[mode_id].description),
+		"minimum_gain": minimum_gain,
+		"maximum_gain": maximum_gain,
+		"hp_cost": hp_cost,
+		"heal": heal,
+		"dao_heart_gain": 1 if mode_id == "insight" else 0,
+		"available": mode_id != "rush" or int(player.get("hp", 0)) > hp_cost,
+		"qi_tide": int((state.get("world", {}) as Dictionary).get("qi_tide", 50)),
+	}
+
+
+static func meditate(state: Dictionary, roll: int = -1, mode_id: String = "steady") -> Dictionary:
 	var player: Dictionary = state.get("player", {})
 	if player.is_empty():
 		return {"ok": false, "code": "missing_player"}
 	if bool(state.get("life_closed", false)) or is_dead(state):
 		return {"ok": false, "code": "life_ended", "dead": true}
+	if not MEDITATION_MODE_IDS.has(mode_id):
+		return {"ok": false, "code": "invalid_meditation_mode"}
 	var realm_index := _realm_index(player)
-	var total_root := _root_total(player)
 	var actual_roll := _roll(state, 28, 100) if roll < 0 else clampi(roll, 0, 100)
-	var base_gain := _meditation_base(realm_index) + total_root * _root_scale(realm_index)
-	var variance := int(round(base_gain * (float(actual_roll) - 50.0) / 250.0))
-	var gain: int = maxi(1, base_gain + variance)
-	if _is_balanced(player):
-		gain = int(round(gain * 1.18))
-	elif total_root < 22:
-		gain = int(round(gain * 0.62))
+	var gain := _meditation_gain(player, realm_index, actual_roll, mode_id, state)
+	var max_hp := maxi(1, int(player.get("max_hp", 1)))
+	var hp_cost := maxi(8, int(ceil(float(max_hp) * 0.14))) if mode_id == "rush" else 0
+	if mode_id == "rush" and int(player.get("hp", 0)) <= hp_cost:
+		return {
+			"ok": false,
+			"code": "insufficient_hp",
+			"message": "当前气血不足以承受燃血冲脉，先守一周天或服用丹药。",
+			"required_hp": hp_cost + 1,
+		}
 	player["exp"] = int(player.get("exp", 0)) + gain
 	player["mp"] = mini(int(player.get("max_mp", 0)), int(player.get("mp", 0)) + 5)
 	advance_time(state, 1)
@@ -74,12 +126,31 @@ static func meditate(state: Dictionary, roll: int = -1) -> Dictionary:
 		player["exp"] = int(player.exp) - exp_needed(player)
 		_level_up(player)
 		levels_gained += 1
+	var hp_recovered := 0
+	var dao_heart_gain := 0
+	if mode_id == "steady":
+		var recovery := maxi(10, int(ceil(float(player.get("max_hp", 1)) * 0.12)))
+		var hp_before := int(player.get("hp", 0))
+		player["hp"] = mini(int(player.get("max_hp", 1)), hp_before + recovery)
+		player["mp"] = mini(int(player.get("max_mp", 0)),
+			int(player.get("mp", 0)) + maxi(6, int(player.get("max_mp", 0)) / 6))
+		hp_recovered = int(player.hp) - hp_before
+	elif mode_id == "rush":
+		player["hp"] = maxi(1, int(player.get("hp", 1)) - hp_cost)
+	elif mode_id == "insight":
+		player["dao_heart"] = int(player.get("dao_heart", 0)) + 1
+		dao_heart_gain = 1
 	state["player"] = player
 	return {
 		"ok": true,
 		"code": "meditated",
+		"mode_id": mode_id,
+		"mode_name": str(MEDITATION_MODES[mode_id].name),
 		"gain": gain,
 		"levels_gained": levels_gained,
+		"hp_cost": hp_cost if mode_id == "rush" else 0,
+		"hp_recovered": hp_recovered,
+		"dao_heart_gain": dao_heart_gain,
 		"dead": is_dead(state),
 		"lifespan_pressure": lifespan_pressure(player),
 	}
@@ -234,6 +305,23 @@ static func _meditation_base(realm_index: int) -> int:
 	if realm_index <= 18:
 		return 320 + (realm_index - 10) * 92
 	return 820 + (realm_index - 19) * 260
+
+
+static func _meditation_gain(player: Dictionary, realm_index: int, roll: int,
+		mode_id: String, state: Dictionary) -> int:
+	var total_root := _root_total(player)
+	var base_gain := _meditation_base(realm_index) + total_root * _root_scale(realm_index)
+	var variance := int(round(base_gain * (float(roll) - 50.0) / 250.0))
+	var gain: int = maxi(1, base_gain + variance)
+	if _is_balanced(player):
+		gain = int(round(gain * 1.18))
+	elif total_root < 22:
+		gain = int(round(gain * 0.62))
+	var gain_percent := int((MEDITATION_MODES.get(mode_id, MEDITATION_MODES.steady) as Dictionary).get("gain_percent", 85))
+	if mode_id == "insight":
+		var qi_tide := clampi(int((state.get("world", {}) as Dictionary).get("qi_tide", 50)), 0, 100)
+		gain_percent = 70 + int(qi_tide / 2.0)
+	return maxi(1, int(round(float(gain) * float(gain_percent) / 100.0)))
 
 
 static func _root_scale(realm_index: int) -> int:

@@ -11,9 +11,9 @@
     "character_id": "protagonist",
     "motion_profile": "spectral",
     "choices": [
-      {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}, "path_deltas": {"defiance": 3, "insight": 1}},
+      {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}, "path_deltas": {"defiance": 3, "insight": 1, "bonds": -1}},
       {"text": "以旧玉映照门后之影", "outcome": "两枚黑白旧玉在水面重叠，镜湖替你记下了一笔尚未发生的因果。", "deltas": {"karma": 7, "mp": -8}, "path_deltas": {"insight": 4, "bonds": 1}},
-      {"text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心。", "deltas": {"dao_heart": 6, "reputation": 2}, "path_deltas": {"ambition": 3, "insight": 2}}
+      {"text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心。", "deltas": {"dao_heart": 6, "reputation": 2}, "path_deltas": {"ambition": 3, "insight": 2, "creation": -1}}
     ]
   },
   {
@@ -28,9 +28,9 @@
     "character_id": "chi_yaoqing",
     "motion_profile": "restrained",
     "choices": [
-      {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}, "path_deltas": {"ambition": 3, "insight": 1}},
+      {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}, "path_deltas": {"ambition": 3, "insight": 1, "bonds": -1}},
       {"text": "追问这些记忆的去处", "outcome": "你发现灯河下游有人把记忆炼成可伪造的前世凭证。", "deltas": {"reputation": 7, "enmity": 4}, "path_deltas": {"insight": 3, "defiance": 2}},
-      {"text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；其中一个与你同姓。", "deltas": {"karma": 11, "dao_heart": 5}, "path_deltas": {"compassion": 4, "bonds": 2}}
+      {"text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；其中一个与你同姓。", "deltas": {"karma": 11, "dao_heart": 5}, "path_deltas": {"compassion": 4, "bonds": 2, "ambition": -1}}
     ]
   },
   {
@@ -419,8 +419,8 @@
     "character_id": "protagonist",
     "motion_profile": "introspective",
     "choices": [
-      {"text": "把今生道号刻入名册", "outcome": "玉牌亮起一瞬，显出一条被旧我故意删去的路；你得到线索，也让古门记住了现在的你。", "deltas": {"exp": 51, "reputation": 8}, "path_deltas": {"insight": 3, "ambition": 1}},
-      {"text": "替无名者补回空牌", "outcome": "一百二十枚玉牌同时有了温度，门后没有奖励，只把许多陌生人的归处交给你保管。", "deltas": {"karma": 10, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2}},
+      {"text": "把今生道号刻入名册", "outcome": "玉牌亮起一瞬，显出一条被旧我故意删去的路；你得到线索，也让古门记住了现在的你。", "deltas": {"exp": 51, "reputation": 8}, "path_deltas": {"insight": 3, "ambition": 1, "creation": -1}},
+      {"text": "替无名者补回空牌", "outcome": "一百二十枚玉牌同时有了温度，门后没有奖励，只把许多陌生人的归处交给你保管。", "deltas": {"karma": 10, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2, "defiance": -1, "insight": -1}},
       {"text": "抹去自己的登记痕迹", "outcome": "古门暂时失去对你的定位，代价是旧玉也找不到你；你获得自由，却让下一世少了一条可追的线。", "deltas": {"exp": 30, "hp": -6, "enmity": 5}, "path_deltas": {"defiance": 4, "insight": 1}}
     ]
   },
@@ -487,9 +487,9 @@
     "character_id": "wen_xingdu",
     "motion_profile": "spectral",
     "choices": [
-      {"text": "为它补回一个可撤回的名字", "outcome": "人格获得独立道号和断开权限，第一件事却是请求你不要替它决定要不要继续存在。", "deltas": {"karma": 13, "dao_heart": 5}, "path_deltas": {"compassion": 3, "bonds": 2}},
-      {"text": "把节点隔离，等待原主出现", "outcome": "道网暂时安全，未编目人格却在隔离层里继续替别人完成最后一条维护指令。", "deltas": {"exp": 59, "reputation": 8}, "path_deltas": {"insight": 4, "defiance": 2}},
-      {"text": "公开维护记录与生成来源", "outcome": "所有人都看见它不是一次偶然错误，而是许多被遗忘的请求叠成的回声；道网被迫重新定义责任。", "deltas": {"reputation": 11, "spirit_stones": 7}, "path_deltas": {"creation": 3, "defiance": 2}}
+      {"text": "为它补回一个可撤回的名字", "outcome": "人格获得独立道号和断开权限，第一件事却是请求你不要替它决定要不要继续存在。", "deltas": {"karma": 13, "dao_heart": 5}, "path_deltas": {"compassion": 3, "bonds": 2, "ambition": -1}},
+      {"text": "把节点隔离，等待原主出现", "outcome": "道网暂时安全，未编目人格却在隔离层里继续替别人完成最后一条维护指令。", "deltas": {"exp": 59, "reputation": 8}, "path_deltas": {"insight": 4, "defiance": 2, "bonds": -2}},
+      {"text": "公开维护记录与生成来源", "outcome": "所有人都看见它不是一次偶然错误，而是许多被遗忘的请求叠成的回声；道网被迫重新定义责任。", "deltas": {"reputation": 11, "spirit_stones": 7, "enmity": 5}, "path_deltas": {"creation": 3, "defiance": 2}}
     ]
   },
   {
@@ -572,8 +572,8 @@
     "character_id": "han_xuansu",
     "motion_profile": "restrained",
     "choices": [
-      {"text": "把诊室留给急症患者", "outcome": "短期内没有人能支付完整费用，诊室却在每次夜班后多出一名愿意学习的人。", "deltas": {"karma": 13, "reputation": 7}, "path_deltas": {"compassion": 4, "bonds": 2}},
-      {"text": "训练年轻医师接手", "outcome": "韩玄素把最危险的校准法拆成人人能复核的步骤，诊室终于不再只依赖一张脸。", "deltas": {"exp": 54, "reputation": 9}, "path_deltas": {"creation": 3, "insight": 2}},
+      {"text": "把诊室留给急症患者", "outcome": "短期内没有人能支付完整费用，诊室却在每次夜班后多出一名愿意学习的人。", "deltas": {"karma": 13, "reputation": 7, "spirit_stones": -8}, "path_deltas": {"compassion": 4, "bonds": 2, "ambition": -1}},
+      {"text": "训练年轻医师接手", "outcome": "韩玄素把最危险的校准法拆成人人能复核的步骤，诊室终于不再只依赖一张脸。", "deltas": {"exp": 54, "reputation": 9}, "path_deltas": {"creation": 3, "insight": 2, "defiance": -1}},
       {"text": "接受官署配给，换稳定资源", "outcome": "药材和灵息按时抵达，高阶专诊也按时关门；你得到资源，却失去每天面对所有人的资格。", "deltas": {"spirit_stones": 16, "exp": 48, "karma": -9}, "path_deltas": {"ambition": 4, "defiance": 2, "compassion": -1}}
     ]
   },
@@ -590,7 +590,7 @@
     "motion_profile": "introspective",
     "choices": [
       {"text": "公开空白命印的存在", "outcome": "命籍库被迫开放一层审计权限，许多官员第一次承认天册也会留下空洞。", "deltas": {"reputation": 11, "karma": 13}, "path_deltas": {"defiance": 3, "insight": 2}},
-      {"text": "把命印登记为异常器物", "outcome": "仙朝给你一笔封存功勋，命印则被锁进更深的库房，等待下一次被谁需要。", "deltas": {"spirit_stones": 16, "exp": 52}, "path_deltas": {"ambition": 4, "insight": 1}},
+      {"text": "把命印登记为异常器物", "outcome": "仙朝给你一笔封存功勋，命印则被锁进更深的库房，等待下一次被谁需要。", "deltas": {"spirit_stones": 16, "exp": 52}, "path_deltas": {"ambition": 4, "insight": 1, "compassion": -2, "creation": -1, "defiance": -2}},
       {"text": "请失籍者共同作证", "outcome": "一场公开听证让空白命印不再只属于巡天司，许多沉默的人终于留下自己的版本。", "deltas": {"dao_heart": 6, "enmity": 8}, "path_deltas": {"bonds": 3, "creation": 2}}
     ]
   },

@@ -6,6 +6,7 @@ const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
+const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -128,10 +129,6 @@ func _run() -> void:
 		await _settle_frames(4)
 		if viewport_size == Vector2i(1280, 720):
 			var main_viewport := root.get_visible_rect()
-			var footer := game.find_child("GameFooter", true, false) as Control
-			if footer == null or not root.get_visible_rect().encloses(footer.get_global_rect()):
-				failures.append("1280x720主界面页脚没有完整落在视口内：%s" % [
-					footer.get_global_rect() if footer != null else "missing"])
 			var player_panel := game.find_child("MainPlayerPanel", true, false) as Control
 			var main_portrait := game.find_child("MainPortrait", true, false) as TextureRect
 			var player_compass := game.find_child("PlayerDaoCompass", true, false) as Control
@@ -159,7 +156,6 @@ func _run() -> void:
 				game.find_child("DungeonButton", true, false) as Control,
 				game.find_child("SaveGameButton", true, false) as Control,
 				game.find_child("GameAudioSettingsButton", true, false) as Control,
-				game.find_child("CycleEraButton", true, false) as Control,
 				game.find_child("ReturnToMenuButton", true, false) as Control,
 			]
 			for action in main_actions:
@@ -175,7 +171,6 @@ func _run() -> void:
 	var narrow_main_scroll := game.find_child("GameBodyScroll", true, false) as ScrollContainer
 	var narrow_main_body := game.find_child("GameBody", true, false) as Control
 	var narrow_main_header := game.find_child("MainHeader", true, false) as Control
-	var narrow_main_footer := game.find_child("GameFooter", true, false) as Control
 	var narrow_world_pulse := game.find_child("MainWorldPulseCard", true, false) as Control
 	if narrow_main_scroll == null or not narrow_main_scroll.get_v_scroll_bar().visible:
 		failures.append("800x720主界面没有提供山河叙事到人物行动区的纵向滚动路径")
@@ -184,9 +179,9 @@ func _run() -> void:
 	if narrow_main_body == null or narrow_main_body.get_global_rect().size.x > narrow_main_viewport.size.x:
 		failures.append("800x720主界面主体发生横向裁切：%s" % [
 			narrow_main_body.get_global_rect() if narrow_main_body != null else "missing"])
-	for fixed_control in [narrow_main_header, narrow_main_footer, narrow_world_pulse]:
+	for fixed_control in [narrow_main_header, narrow_world_pulse]:
 		if fixed_control == null or not narrow_main_viewport.encloses(fixed_control.get_global_rect()):
-			failures.append("800x720主界面固定标题、页脚或山河脉冲不可达")
+			failures.append("800x720主界面固定标题或山河脉冲不可达")
 	_capture(root, output_root.path_join("main_narrow_top_800x720.png"), Vector2i(800, 720),
 		"窄屏山河主界面顶部 800x720")
 	if narrow_main_scroll != null:
@@ -200,12 +195,74 @@ func _run() -> void:
 			failures.append("800x720主界面滚动到底后人物或行动区仍不可达")
 	for action_name in ["MeditateButton", "AdventureButton", "BreakthroughButton", "CombatButton",
 			"LocalAIButton", "InventoryButton", "ArmoryButton", "DungeonButton", "SaveGameButton",
-			"GameAudioSettingsButton", "CycleEraButton", "ReturnToMenuButton"]:
+			"GameAudioSettingsButton", "ReturnToMenuButton"]:
 		var narrow_main_action := game.find_child(action_name, true, false) as Control
 		if narrow_main_action == null or not narrow_main_viewport.encloses(narrow_main_action.get_global_rect()):
 			failures.append("800x720主界面行动入口不可达：%s" % action_name)
 	_capture(root, output_root.path_join("main_narrow_bottom_800x720.png"), Vector2i(800, 720),
 		"窄屏山河人物与行动 800x720")
+
+	root.size = Vector2i(1280, 720)
+	game.call("_show_objective_selection")
+	await _settle_frames(4)
+	var objective_viewport := root.get_visible_rect()
+	for objective_id in ["cultivation", "world", "battle"]:
+		var objective_button := game.find_child("ObjectiveOptionButton_%s" % objective_id,
+			true, false) as Control
+		if objective_button == null or not objective_viewport.encloses(objective_button.get_global_rect()):
+			failures.append("1280x720阶段命途选项不可达：%s" % objective_id)
+	_capture(root, output_root.path_join("objective_1280x720.png"), Vector2i(1280, 720),
+		"阶段命途选择 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_objective_selection")
+	await _settle_frames(4)
+	var objective_options := game.find_child("ObjectiveOptions", true, false) as Control
+	var narrow_objective_scroll := objective_options.get_parent() as ScrollContainer \
+		if objective_options != null else null
+	if narrow_objective_scroll == null or not narrow_objective_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720阶段命途选择没有提供纵向滚动路径")
+	_capture(root, output_root.path_join("objective_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏阶段命途顶部 800x720")
+	if narrow_objective_scroll != null:
+		narrow_objective_scroll.scroll_vertical = int(narrow_objective_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_battle_objective := game.find_child("ObjectiveOptionButton_battle", true, false) as Control
+	if narrow_battle_objective == null or not root.get_visible_rect().encloses(narrow_battle_objective.get_global_rect()):
+		failures.append("800x720阶段命途滚动到底后实战选项仍不可达")
+	_capture(root, output_root.path_join("objective_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏阶段命途底部 800x720")
+	game.call("_select_objective", "cultivation")
+	root.size = Vector2i(1280, 720)
+	game.call("_show_cultivation")
+	await _settle_frames(4)
+	var cultivation_viewport := root.get_visible_rect()
+	for mode_id in ["steady", "rush", "insight"]:
+		var mode_button := game.find_child("CultivationModeButton_%s" % mode_id, true, false) as Control
+		if mode_button == null or not cultivation_viewport.encloses(mode_button.get_global_rect()):
+			failures.append("1280x720运功选项不可达：%s" % mode_id)
+	_capture(root, output_root.path_join("cultivation_1280x720.png"), Vector2i(1280, 720),
+		"三式运功 1280x720")
+	root.size = Vector2i(800, 720)
+	game.call("_show_cultivation")
+	await _settle_frames(4)
+	var cultivation_choices := game.find_child("CultivationChoices", true, false) as Control
+	var narrow_cultivation_scroll := cultivation_choices.get_parent() as ScrollContainer \
+		if cultivation_choices != null else null
+	if narrow_cultivation_scroll == null or not narrow_cultivation_scroll.get_v_scroll_bar().visible:
+		failures.append("800x720运功选择没有提供纵向滚动路径")
+	_capture(root, output_root.path_join("cultivation_narrow_top_800x720.png"), Vector2i(800, 720),
+		"窄屏运功顶部 800x720")
+	if narrow_cultivation_scroll != null:
+		narrow_cultivation_scroll.scroll_vertical = int(narrow_cultivation_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var narrow_insight_mode := game.find_child("CultivationModeButton_insight", true, false) as Control
+	if narrow_insight_mode == null or not root.get_visible_rect().encloses(narrow_insight_mode.get_global_rect()):
+		failures.append("800x720运功选择滚动到底后引潮悟道仍不可达")
+	_capture(root, output_root.path_join("cultivation_narrow_bottom_800x720.png"), Vector2i(800, 720),
+		"窄屏运功底部 800x720")
+	root.size = Vector2i(1280, 720)
+	game.call("_show_game")
+	await _settle_frames(2)
 
 	var auxiliary_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
 	root.size = Vector2i(1280, 720)
@@ -429,6 +486,16 @@ func _run() -> void:
 	_capture(root, output_root.path_join("event_narrow_bottom_800x720.png"), Vector2i(800, 720),
 		"窄屏因果抉择 800x720")
 	root.size = Vector2i(1280, 720)
+	var text_only_event := EventCatalogScript.select_event(game.get("run_state"),
+		str((game.get("run_state") as Dictionary).get("current_era", "古典修仙纪")))
+	game.set("current_event", text_only_event)
+	game.call("_show_event")
+	await _settle_frames(4)
+	if game.find_child("EventStage", true, false) != null or \
+		game.find_children("EventChoiceButton*", "Button", true, false).size() != 3:
+		failures.append("无专属美术的目录事件必须使用纯文本三选一版式，不能复用占位图")
+	_capture(root, output_root.path_join("event_text_only_1280x720.png"), Vector2i(1280, 720),
+		"纯文本目录事件 1280x720")
 
 	var reincarnation_state := auxiliary_state.duplicate(true)
 	reincarnation_state.player.age = reincarnation_state.player.lifespan
@@ -478,6 +545,8 @@ func _run() -> void:
 
 	var pre_combat_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
 	root.size = Vector2i(1280, 720)
+	EncounterSystemScript.offer(game.get("run_state"), "render", "渲染敌踪",
+		"用于验收有上下文的普通战斗入口。")
 	game.call("_start_combat")
 	await _settle_frames(4)
 	var combat_viewport := root.get_visible_rect()

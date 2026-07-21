@@ -112,6 +112,13 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	for _year in range(years_between):
 		WorldSimulationScript.advance_year(state)
 	world = state.world
+	var current_era_id := str(state.get("current_era_id", "classical"))
+	var era_index := GameStateScript.ERA_IDS.find(current_era_id)
+	if era_index < 0:
+		era_index = 0
+	var next_era_id: String = str(GameStateScript.ERA_IDS[(era_index + 1) % GameStateScript.ERA_IDS.size()])
+	var era_transition: Dictionary = WorldSimulationScript.transition_era(state, next_era_id)
+	world = state.world
 	var history: Array = world.get("history", [])
 	history.append("%s陨落%d年后，第%d世在同一片山河中睁眼。" % [
 		str(last_life.get("name", "前世")), years_between, next_generation])
@@ -141,7 +148,7 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	return {
 		"ok": true, "code": "next_life_started", "generation": next_generation,
 		"years_between": years_between, "inherited_echoes": inherited_echoes,
-		"inventory_result": inventory_result,
+		"inventory_result": inventory_result, "era_transition": era_transition,
 	}
 
 

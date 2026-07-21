@@ -13,6 +13,8 @@ const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const CombatStageScript = preload("res://scripts/combat_stage.gd")
 const DungeonFeedbackLayerScript = preload("res://scripts/dungeon_feedback_layer.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
+const ObjectiveSystemScript = preload("res://scripts/objective_system.gd")
+const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
@@ -66,7 +68,7 @@ const DEFAULT_PLAYER := {
 
 enum ScreenState {
 	MENU, GAME, EVENT, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
-	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS,
+	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE,
 }
 
 var state: ScreenState = ScreenState.MENU
@@ -124,6 +126,20 @@ func _ready() -> void:
 		call_deferred("_run_audio_device_music_smoke")
 
 
+func _refresh_screen_layout(expected_state: ScreenState) -> void:
+	if state != expected_state:
+		return
+	match expected_state:
+		ScreenState.GAME: _show_game()
+		ScreenState.COMBAT: _show_combat()
+		ScreenState.DUNGEON_ROUTE: _show_dungeon_route()
+		ScreenState.DUNGEON_COMBAT: _show_dungeon_combat()
+		ScreenState.EVENT: _show_event()
+		ScreenState.REINCARNATION: _show_reincarnation()
+		ScreenState.AUDIO_SETTINGS: _show_audio_settings()
+		ScreenState.INVENTORY: _show_inventory()
+
+
 func _run_audio_device_music_smoke() -> void:
 	# The exported-product smoke uses the real Windows audio backend while the
 	# persisted Master bus is muted.  Exercise both context and era transitions
@@ -178,10 +194,10 @@ func _process(delta: float) -> void:
 func _build_theme() -> void:
 	var body_base := load(BODY_FONT_PATH) as Font
 	var display_base := load(DISPLAY_FONT_PATH) as Font
-	body_font = _font_variation(body_base, 500)
-	body_medium_font = _font_variation(body_base, 600)
-	body_semibold_font = _font_variation(body_base, 700)
-	display_font = _font_variation(display_base, 620)
+	body_font = _font_variation(body_base, 650)
+	body_medium_font = _font_variation(body_base, 700)
+	body_semibold_font = _font_variation(body_base, 800)
+	display_font = _font_variation(display_base, 650)
 	base_theme = Theme.new()
 	base_theme.default_font = body_font
 	base_theme.default_font_size = 18
@@ -423,6 +439,18 @@ func _show_menu() -> void:
 	start_button.name = "MenuStartButton"
 	start_button.custom_minimum_size = Vector2(430, 48)
 	action_column.add_child(start_button)
+	name_input.text_submitted.connect(func(_submitted_text: String) -> void:
+		_start_new_game(name_input)
+	)
+	if can_continue:
+		name_input.focus_next = continue_button.get_path()
+		continue_button.focus_previous = name_input.get_path()
+		continue_button.focus_next = start_button.get_path()
+		start_button.focus_previous = continue_button.get_path()
+	else:
+		continue_button.focus_mode = Control.FOCUS_NONE
+		name_input.focus_next = start_button.get_path()
+		start_button.focus_previous = name_input.get_path()
 	var legacy_probe: Dictionary = save_service.call("inspect_legacy_saves")
 	var can_import_legacy := bool(legacy_probe.get("ok", false))
 	var secondary_actions := HBoxContainer.new()
@@ -485,7 +513,7 @@ func _start_new_game(name_input: LineEdit) -> void:
 	_sync_state_views()
 	menu_notice = ""
 	_save_current_state("新生命途已立档")
-	_show_game()
+	_show_objective_selection()
 
 
 func _continue_game() -> void:
@@ -534,6 +562,8 @@ func _sync_state_views() -> void:
 	CombatSystemScript.normalize(run_state)
 	DungeonSystemScript.normalize(run_state)
 	StorySystemScript.normalize(run_state)
+	ObjectiveSystemScript.normalize(run_state)
+	EncounterSystemScript.normalize(run_state)
 	AchievementSystemScript.normalize(run_state)
 	AchievementSystemScript.check_progress(run_state)
 	_collect_achievement_notices()
@@ -577,7 +607,7 @@ func _show_game() -> void:
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
 		if state == ScreenState.GAME and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_game")
+			call_deferred("_refresh_screen_layout", ScreenState.GAME)
 	)
 	page.add_child(_build_header())
 	if not dungeon_action_feedback.is_empty():
@@ -623,16 +653,6 @@ func _show_game() -> void:
 		body.add_child(world_panel)
 		body.add_child(action_panel)
 
-	var footer := _panel(0.72, era_accent)
-	footer.name = "GameFooter"
-	footer.custom_minimum_size.y = 48
-	var footer_copy := "1–4 行动  ·  M/I/A/O 功能  ·  Esc 标题" if narrow_layout else \
-		"[1] 修炼  [2] 历练  [3] 突破  [4] 迎战  [M] 秘境  [I] 行囊  [A] 玉兵  [O] 音律  [Esc] 标题"
-	var footer_text := _label(footer_copy,
-		16, Color(0.88, 0.91, 0.91, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
-	footer_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	footer.add_child(footer_text)
-	page.add_child(footer)
 	_show_dungeon_action_feedback()
 
 
@@ -794,6 +814,8 @@ func _build_action_panel() -> Control:
 	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
 	column.add_child(_section_title("此刻可行"))
+	column.add_child(_build_objective_section())
+	column.add_child(_divider())
 	var action_grid := GridContainer.new()
 	action_grid.name = "GameActionGrid"
 	action_grid.columns = 2
@@ -801,9 +823,9 @@ func _build_action_panel() -> Control:
 	action_grid.add_theme_constant_override("h_separation", 8)
 	action_grid.add_theme_constant_override("v_separation", 8)
 	column.add_child(action_grid)
-	var meditate_button := _main_action_button("壹 · 修炼", _meditate, true)
+	var meditate_button := _main_action_button("壹 · 修炼", _show_cultivation, true)
 	meditate_button.name = "MeditateButton"
-	meditate_button.tooltip_text = "运转周天，推进修为与世界年史。"
+	meditate_button.tooltip_text = "选择守一、燃血或引潮三种运功法，推进修为与世界年史。"
 	action_grid.add_child(meditate_button)
 	var adventure_button := _main_action_button("贰 · 历练", _open_adventure, true)
 	adventure_button.name = "AdventureButton"
@@ -811,11 +833,20 @@ func _build_action_panel() -> Control:
 	action_grid.add_child(adventure_button)
 	var breakthrough_button := _main_action_button("叁 · 破境", _breakthrough, false)
 	breakthrough_button.name = "BreakthroughButton"
-	breakthrough_button.tooltip_text = "叩问当前大境瓶颈。"
+	var breakthrough_readiness: Dictionary = CultivationScript.can_breakthrough(player)
+	breakthrough_button.disabled = not bool(breakthrough_readiness.get("ok", false))
+	breakthrough_button.tooltip_text = "叩问当前大境瓶颈。" if not breakthrough_button.disabled else \
+		str(breakthrough_readiness.get("message", "当前瓶颈尚未形成。"))
 	action_grid.add_child(breakthrough_button)
-	var combat_button := _main_action_button("肆 · 迎战", _start_combat, false)
+	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
+	var combat_button := _main_action_button(
+		"肆 · 迎战" if bool(encounter.get("active", false)) else "肆 · 暂无敌踪",
+		_start_combat, false)
 	combat_button.name = "CombatButton"
-	combat_button.tooltip_text = "踏入凶地，迎接可读意图的生死战。"
+	combat_button.disabled = not bool(encounter.get("active", false))
+	combat_button.tooltip_text = ("%s · 尚余%d次年轮" % [
+		str(encounter.get("detail", "敌踪已现。")), int(encounter.get("remaining_turns", 0))]) \
+		if not combat_button.disabled else "先在历练与世界事件中发现敌踪；战斗不再凭空反复出现。"
 	action_grid.add_child(combat_button)
 	var ai_button := _main_action_button("伍 · 问天机", _request_ai_event, false)
 	ai_button.name = "LocalAIButton"
@@ -846,19 +877,198 @@ func _build_action_panel() -> Control:
 	var audio_button := _main_action_button("音律设置", _open_audio_settings, false)
 	audio_button.name = "GameAudioSettingsButton"
 	action_grid.add_child(audio_button)
-	var era_button := _main_action_button("观测纪元", _cycle_era, false)
-	era_button.name = "CycleEraButton"
-	era_button.tooltip_text = "开发观测：切换下一纪元的事件、色彩与声景。"
-	action_grid.add_child(era_button)
 	var menu_button := _main_action_button("返回标题", _return_to_menu, false)
 	menu_button.name = "ReturnToMenuButton"
 	menu_button.tooltip_text = "安全封存当前命途并返回标题。"
 	action_grid.add_child(menu_button)
-	var note := _label("数字键行动 · M 秘境 · I 行囊 · A 玉兵 · O 音律", 12,
-		Color(0.76, 0.80, 0.81, 0.78), HORIZONTAL_ALIGNMENT_CENTER)
-	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(note)
 	return panel
+
+
+func _build_objective_section() -> Control:
+	var column := VBoxContainer.new()
+	column.name = "ObjectiveSection"
+	column.add_theme_constant_override("separation", 5)
+	var summary: Dictionary = ObjectiveSystemScript.summary(run_state)
+	if not bool(summary.get("active", false)):
+		var status := "上一轮已经圆满" if str(summary.get("last_result", "")) == "completed" else \
+			"尚未择定本轮命途"
+		column.add_child(_label("阶段命途 · %s" % status, 14, Color("e8c87f")))
+		column.add_child(_label("从修炼、入世或实战中选择一个八回合目标，让每次行动形成连贯计划。",
+			12, Color(0.77, 0.81, 0.81, 0.92)))
+		var choose_button := _button("择定本轮命途", _show_objective_selection, true, "", true)
+		choose_button.name = "ChooseObjectiveButton"
+		choose_button.custom_minimum_size.y = 42
+		column.add_child(choose_button)
+		return column
+	column.add_child(_label("阶段命途 · %s" % str(summary.name), 15, Color("e8c87f")))
+	column.add_child(_progress_row("道印", int(summary.progress), int(summary.target), Color("8fc7b5")))
+	column.add_child(_label("余 %d 次年轮 · 连续践行 %d" % [
+		int(summary.remaining_turns), int(summary.streak)], 12, Color(0.78, 0.83, 0.83, 0.92)))
+	var recommendation := _label(str(summary.recommendation), 12, Color(0.72, 0.77, 0.78, 0.88))
+	recommendation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(recommendation)
+	return column
+
+
+func _show_objective_selection() -> void:
+	state = ScreenState.OBJECTIVE
+	_set_audio_context("world")
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 18)
+	screen_host.add_child(page)
+	var heading := _panel(0.82, era_accent)
+	heading.custom_minimum_size.y = 104
+	var heading_column := VBoxContainer.new()
+	heading_column.add_child(_display_label("择定本轮问道", 30, Color("f4e5b7")))
+	heading_column.add_child(_label("选择不是职业锁定。八次年轮内完成目标即可得偿，未完成只会中断连续践行。",
+		15, Color(0.82, 0.85, 0.84, 0.94)))
+	heading.add_child(heading_column)
+	page.add_child(heading)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
+	var options: BoxContainer = VBoxContainer.new() if screen_host.size.x < 1040.0 else HBoxContainer.new()
+	options.name = "ObjectiveOptions"
+	options.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	options.add_theme_constant_override("separation", 14)
+	scroll.add_child(options)
+	var first_button: Button
+	for index in range(ObjectiveSystemScript.OBJECTIVE_IDS.size()):
+		var objective_id: String = ObjectiveSystemScript.OBJECTIVE_IDS[index]
+		var option := _build_objective_option(objective_id, index + 1)
+		options.add_child(option)
+		if first_button == null:
+			first_button = option.find_child("ObjectiveOptionButton_%s" % objective_id, true, false) as Button
+	var back := _button("返回山河", _show_game, false)
+	back.name = "ObjectiveBackButton"
+	back.custom_minimum_size.y = 46
+	page.add_child(back)
+	if first_button != null:
+		first_button.grab_focus()
+
+
+func _build_objective_option(objective_id: String, number: int) -> PanelContainer:
+	var definition: Dictionary = ObjectiveSystemScript.definition(objective_id)
+	var card := _panel(0.84, era_accent)
+	card.name = "ObjectiveOption_%s" % objective_id
+	card.custom_minimum_size = Vector2(0, 250)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	card.add_child(column)
+	column.add_child(_label("%d · %s" % [number, str(definition.name)], 22, Color("f0ddb1")))
+	var tagline := _label(str(definition.tagline), 16, Color("edf0ea"))
+	tagline.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tagline.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(tagline)
+	var recommendation := _label(str(definition.recommendation), 14, Color(0.72, 0.80, 0.80, 0.92))
+	recommendation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(recommendation)
+	var reward := _label("圆满所得 · %s" % ObjectiveSystemScript.reward_text(objective_id, run_state),
+		14, Color("8fc7b5"))
+	reward.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(reward)
+	var choose := _button("立下此愿", _select_objective.bind(objective_id), true)
+	choose.name = "ObjectiveOptionButton_%s" % objective_id
+	choose.custom_minimum_size.y = 48
+	column.add_child(choose)
+	return card
+
+
+func _select_objective(objective_id: String) -> void:
+	var result: Dictionary = ObjectiveSystemScript.choose(run_state, objective_id)
+	if not bool(result.get("ok", false)):
+		feedback = "当前命途仍在践行，不能无代价改立新愿。"
+		_show_game()
+		return
+	feedback = str(result.get("message", "阶段命途已经择定。"))
+	_add_memory("第%d年，你立下阶段命途【%s】。" % [
+		int((run_state.get("world", {}) as Dictionary).get("year", 1)),
+		str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id))])
+	_save_current_state("阶段命途已自动封存")
+	_show_game()
+
+
+func _show_cultivation() -> void:
+	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
+		_end_current_life(_current_death_cause())
+		return
+	state = ScreenState.CULTIVATION
+	_set_audio_context("world")
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 18)
+	screen_host.add_child(page)
+	var heading := _panel(0.82, era_accent)
+	heading.custom_minimum_size.y = 110
+	var heading_column := VBoxContainer.new()
+	heading_column.add_child(_display_label("运转周天", 30, Color("f4e5b7")))
+	heading_column.add_child(_label("%s %d层 · 气血 %d/%d · 灵潮 %d" % [
+		str(player.realm), int(player.level), int(player.hp), int(player.max_hp),
+		int((run_state.get("world", {}) as Dictionary).get("qi_tide", 50))],
+		15, Color(0.82, 0.86, 0.85, 0.94)))
+	heading.add_child(heading_column)
+	page.add_child(heading)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
+	var choices: BoxContainer = VBoxContainer.new() if screen_host.size.x < 1040.0 else HBoxContainer.new()
+	choices.name = "CultivationChoices"
+	choices.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	choices.add_theme_constant_override("separation", 14)
+	scroll.add_child(choices)
+	var first_button: Button
+	for index in range(CultivationScript.MEDITATION_MODE_IDS.size()):
+		var mode_id: String = CultivationScript.MEDITATION_MODE_IDS[index]
+		var option := _build_cultivation_option(mode_id, index + 1)
+		choices.add_child(option)
+		if first_button == null:
+			first_button = option.find_child("CultivationModeButton_%s" % mode_id, true, false) as Button
+	var back := _button("暂不运功", _show_game, false)
+	back.name = "CultivationBackButton"
+	back.custom_minimum_size.y = 46
+	page.add_child(back)
+	if first_button != null:
+		first_button.grab_focus()
+
+
+func _build_cultivation_option(mode_id: String, number: int) -> PanelContainer:
+	var preview: Dictionary = CultivationScript.meditation_preview(run_state, mode_id)
+	var card := _panel(0.84, era_accent)
+	card.name = "CultivationMode_%s" % mode_id
+	card.custom_minimum_size = Vector2(0, 252)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 10)
+	card.add_child(column)
+	column.add_child(_label("%d · %s" % [number, str(preview.name)], 22, Color("f0ddb1")))
+	var description := _label(str(preview.description), 16, Color("edf0ea"))
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(description)
+	column.add_child(_label("预计修为 +%d～%d" % [
+		int(preview.minimum_gain), int(preview.maximum_gain)], 16, Color("8fc7b5")))
+	var consequence := "恢复气血，补充灵力"
+	if mode_id == "rush":
+		consequence = "气血 -%d" % int(preview.hp_cost)
+	elif mode_id == "insight":
+		consequence = "道心 +1 · 灵潮越盛，修为越高"
+	column.add_child(_label(consequence, 14,
+		Color("dc8278") if mode_id == "rush" else Color("d9c98f")))
+	var choose := _button("按此法运功", _resolve_meditation.bind(mode_id), true)
+	choose.name = "CultivationModeButton_%s" % mode_id
+	choose.custom_minimum_size.y = 48
+	choose.disabled = not bool(preview.get("available", true))
+	choose.tooltip_text = "气血至少需要 %d。" % (int(preview.hp_cost) + 1) if choose.disabled else ""
+	column.add_child(choose)
+	return card
 
 
 func _main_action_button(text_value: String, callback: Callable, primary: bool) -> Button:
@@ -912,12 +1122,19 @@ func _world_digest() -> String:
 			break
 	if npc_lines.is_empty():
 		npc_lines = "- 旧人皆已隐入年史。\n"
+	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
+	var encounter_line := "当前没有可追索敌踪；先历练、卷入因果，再决定是否迎战。"
+	if bool(encounter.get("active", false)):
+		encounter_line = "[color=#ef9a78][b]%s[/b][/color] · 尚余%d次年轮\n%s" % [
+			str(encounter.get("title", "无名敌踪")), int(encounter.get("remaining_turns", 0)),
+			str(encounter.get("detail", "杀机仍在山河间游移。"))]
 	return "[color=#%s][font_size=22][b]%s[/b][/font_size][/color]\n\n%s\n\n" % [
 		era_accent.to_html(false), current_era, era_line] + \
 		"[color=#d9c98f][b]天地脉象[/b][/color]\n" + \
 		"世界第%d年 · 灵潮%d · 稳定%d · 纪元压力%d\n%s\n\n" % [
 			int(world.get("year", 1)), int(world.get("qi_tide", 50)),
 			int(world.get("stability", 65)), int(world.get("era_pressure", 0)), annual_line] + \
+		"[color=#d9c98f][b]当前敌情[/b][/color]\n" + encounter_line + "\n\n" + \
 		"[color=#d9c98f][b]势力消长[/b][/color]\n" + faction_lines + "\n" + \
 		"[color=#d9c98f][b]同世之人[/b][/color]\n" + npc_lines + "\n" + \
 		"[color=#d9c98f][b]命途长卷[/b][/color]\n" + StorySystemScript.digest(run_state) + "\n\n" + \
@@ -935,27 +1152,43 @@ func _faction_name(faction_id: String, factions: Array) -> String:
 
 
 func _meditate() -> void:
-	var result: Dictionary = CultivationScript.meditate(run_state)
+	_resolve_meditation("steady")
+
+
+func _resolve_meditation(mode_id: String) -> void:
+	var result: Dictionary = CultivationScript.meditate(run_state, -1, mode_id)
 	if not bool(result.get("ok", false)):
 		if str(result.get("code", "")) == "life_ended":
 			_end_current_life(_current_death_cause())
 			return
 		feedback = str(result.get("message", "此刻无法运转周天。"))
-		_show_game()
+		_show_cultivation()
 		return
 	_sync_state_views()
 	var gain := int(result.get("gain", 0))
-	var level_note := "，连破%d层" % int(result.get("levels_gained", 0)) if int(result.get("levels_gained", 0)) > 0 else ""
-	feedback = "你在%s的灵机中运转周天，修为 +%d%s。" % [current_era, gain, level_note]
-	_add_memory("第%d年，你在%s打坐，命途罗盘的%s位微微发亮。" % [
+	var levels_gained := int(result.get("levels_gained", 0))
+	var level_note := "，连破%d层" % levels_gained if levels_gained > 0 else ""
+	var consequence := ""
+	if mode_id == "steady":
+		consequence = "，气血恢复 %d" % int(result.get("hp_recovered", 0))
+	elif mode_id == "rush":
+		consequence = "，气血消耗 %d" % int(result.get("hp_cost", 0))
+	elif mode_id == "insight":
+		consequence = "，道心 +%d" % int(result.get("dao_heart_gain", 0))
+	feedback = "你以【%s】运转周天，修为 +%d%s%s。" % [
+		str(result.get("mode_name", "守一周天")), gain, level_note, consequence]
+	_add_memory("第%d年，你在%s以%s运功，命途罗盘的%s位微微发亮。" % [
 		int((run_state.world as Dictionary).get("year", 1)), current_era,
+		str(result.get("mode_name", "守一周天")),
 		["火", "水", "木", "金", "土"][int(run_state.rng_cursor) % 5]])
 	if bool(result.get("dead", false)):
 		_end_current_life("寿元耗尽")
 		return
 	AchievementSystemScript.add_resonance(run_state,
-		2 + int(result.get("levels_gained", 0)) * 2, "周天修炼")
+		2 + levels_gained * 2, "周天修炼")
+	var objective_result := _record_objective_action("meditate_%s" % mode_id)
 	_sync_state_views()
+	_append_objective_feedback(objective_result)
 	_save_current_state("周天已自动封存")
 	_show_game()
 
@@ -977,7 +1210,11 @@ func _breakthrough() -> void:
 			_add_memory("一次破境失败留下了真实伤势，也让你看清当前道途的缺口。")
 		AchievementSystemScript.add_resonance(run_state,
 			8 if bool(result.get("success", false)) else 2, "叩问瓶颈")
+		var objective_action := "breakthrough_success" if bool(result.get("success", false)) else \
+			"breakthrough_failure"
+		var objective_result := _record_objective_action(objective_action)
 		_sync_state_views()
+		_append_objective_feedback(objective_result)
 		if bool(result.get("dead", false)):
 			_end_current_life("破境反噬")
 			return
@@ -1006,11 +1243,24 @@ func _start_combat() -> void:
 	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
 		_end_current_life(_current_death_cause())
 		return
+	var expiry: Dictionary = EncounterSystemScript.expire_if_needed(run_state)
+	if bool(expiry.get("expired", false)):
+		feedback = str(expiry.get("message", "敌踪已经消散。"))
+		_sync_state_views()
+		_save_current_state("敌踪变化已自动封存")
+		_show_game()
+		return
+	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
+	if not bool(encounter.get("active", false)):
+		feedback = "当前山河没有可追索敌踪。先去历练，让选择引来真实对手。"
+		_show_game()
+		return
 	var result: Dictionary = CombatSystemScript.start_combat(run_state)
 	if not bool(result.get("ok", false)):
 		feedback = "山道上的杀机没有凝成可辨认的战局。"
 		_show_game()
 		return
+	EncounterSystemScript.consume(run_state)
 	feedback = "%s拦住去路，你已看清它的第一道意图。" % str((result.battle as Dictionary).enemy_name)
 	_save_current_state("战局已自动封存")
 	_show_combat()
@@ -1034,7 +1284,7 @@ func _show_combat() -> void:
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
 		if state == ScreenState.COMBAT and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_combat")
+			call_deferred("_refresh_screen_layout", ScreenState.COMBAT)
 	)
 
 	var header := _panel(0.80, era_accent)
@@ -1368,6 +1618,9 @@ func _resolve_combat_action(action: String) -> void:
 			int(rewards.get("spirit_stones", 0))]
 		_add_memory("第%d年，你看穿%s的意图并在正面交锋中取胜。" % [
 			int((run_state.world as Dictionary).get("year", 1)), str(battle.get("enemy_name", "强敌"))])
+		var objective_result := _record_objective_action("combat_victory")
+		_sync_state_views()
+		_append_objective_feedback(objective_result)
 		if CultivationScript.is_dead(run_state):
 			_end_current_life("胜战后寿元耗尽")
 			return
@@ -1423,7 +1676,7 @@ func _show_dungeon_route() -> void:
 	page.resized.connect(func() -> void:
 		if state == ScreenState.DUNGEON_ROUTE and \
 				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_dungeon_route")
+			call_deferred("_refresh_screen_layout", ScreenState.DUNGEON_ROUTE)
 	)
 	page.add_child(_build_dungeon_header(run, "秘境岔路", narrow_layout))
 	var content_host: Container = page
@@ -1533,7 +1786,7 @@ func _show_dungeon_combat() -> void:
 	page.resized.connect(func() -> void:
 		if state == ScreenState.DUNGEON_COMBAT and \
 				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_dungeon_combat")
+			call_deferred("_refresh_screen_layout", ScreenState.DUNGEON_COMBAT)
 	)
 	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn),
 		narrow_layout))
@@ -2107,6 +2360,11 @@ func _finalize_dungeon_exit(result: Dictionary, save_reason: String,
 		feedback = "你主动退出空阙，秘境中的临时能力牌随门影散去。"
 	_add_memory("第%d年，你从%s归来：%s。" % [int((run_state.world as Dictionary).get("year", 1)),
 		str(run.get("name", "镜湖秘境")), outcome])
+	var objective_action := "dungeon_completed" if outcome == "completed" else \
+		"dungeon_defeat" if outcome == "defeat" else "dungeon_abandoned"
+	var objective_result := _record_objective_action(objective_action)
+	_sync_state_views()
+	_append_objective_feedback(objective_result)
 	if CultivationScript.is_dead(run_state):
 		_end_current_life("秘境归来后寿元耗尽")
 		return
@@ -2203,7 +2461,7 @@ func _show_event() -> void:
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
 		if state == ScreenState.EVENT and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_event")
+			call_deferred("_refresh_screen_layout", ScreenState.EVENT)
 	)
 
 	var header := _panel(0.78, era_accent)
@@ -2232,13 +2490,20 @@ func _show_event() -> void:
 		page.add_child(body_scroll)
 	else:
 		page.add_child(body)
-	body.add_child(_build_event_stage(narrow_layout))
+	if _event_uses_dedicated_visual():
+		body.add_child(_build_event_stage(narrow_layout))
 	body.add_child(_build_event_choices())
 
 	var footer := _label("数字键选择  ·  ESC 暂离此事", 15,
 		Color(0.78, 0.82, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER)
 	footer.name = "EventFooter"
 	page.add_child(footer)
+
+
+func _event_uses_dedicated_visual() -> bool:
+	# Catalog and generated events intentionally use the stronger text layout
+	# until they receive event-specific art; shared placeholders are not shown.
+	return str(current_event.get("source", "")) not in ["authored_event", "local_ai"]
 
 
 func _build_event_stage(narrow_layout: bool = false) -> Control:
@@ -2387,7 +2652,19 @@ func _resolve_choice(index: int) -> void:
 			_add_memory(str(story_resolution.get("message", "一条跨世因果已经定局。")))
 	AchievementSystemScript.add_resonance(run_state, 3, "历练抉择")
 	CultivationScript.advance_time(run_state, 1)
+	var event_source := str(current_event.get("source", ""))
+	var objective_action := "story_event" if event_source == "story_arc" else \
+		"local_ai_event" if event_source == "local_ai" else "adventure"
+	var objective_result := _record_objective_action(objective_action)
+	var encounter_offer := EncounterSystemScript.offer_from_choice(run_state, current_event, choice)
+	if bool(encounter_offer.get("ok", false)) and \
+		str(encounter_offer.get("code", "")) == "encounter_offered":
+		objective_result["encounter_message"] = str(encounter_offer.get("message", "敌踪已现。"))
 	_sync_state_views()
+	_append_objective_feedback(objective_result)
+	if str(objective_result.get("encounter_message", "")).is_empty() == false:
+		feedback += "\n\n" + str(objective_result.get("encounter_message", ""))
+		run_state["feedback"] = feedback
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
 		_end_current_life("因果事件中的重创")
@@ -2459,6 +2736,33 @@ func _save_current_state(reason: String) -> bool:
 	return false
 
 
+func _record_objective_action(action_id: String) -> Dictionary:
+	_commit_state_views()
+	var encounter_result: Dictionary = EncounterSystemScript.expire_if_needed(run_state)
+	var result: Dictionary = ObjectiveSystemScript.record_action(run_state, action_id)
+	if bool(encounter_result.get("expired", false)):
+		result["world_message"] = str(encounter_result.get("message", "敌踪已经消散。"))
+	if bool(result.get("completed", false)):
+		var objective_id := str(result.get("objective_id", ""))
+		_add_memory("阶段命途【%s】圆满，连续践行被旧玉记下。" %
+			str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id)))
+	elif bool(result.get("missed", false)):
+		var objective_id := str(result.get("objective_id", ""))
+		_add_memory("阶段命途【%s】逾期，连续践行归零。" %
+			str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id)))
+	return result
+
+
+func _append_objective_feedback(result: Dictionary) -> void:
+	var message := str(result.get("message", ""))
+	if not message.is_empty():
+		feedback += "\n\n" + message
+	var world_message := str(result.get("world_message", ""))
+	if not world_message.is_empty():
+		feedback += "\n\n" + world_message
+	run_state["feedback"] = feedback
+
+
 func _add_memory(text: String) -> void:
 	recent_memories.append(text)
 	while recent_memories.size() > 12:
@@ -2516,7 +2820,7 @@ func _show_reincarnation() -> void:
 	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	page.resized.connect(func() -> void:
 		if state == ScreenState.REINCARNATION and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_reincarnation")
+			call_deferred("_refresh_screen_layout", ScreenState.REINCARNATION)
 	)
 	if narrow_layout:
 		var page_scroll := ScrollContainer.new()
@@ -2607,7 +2911,7 @@ func _show_audio_settings() -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.resized.connect(func() -> void:
 		if state == ScreenState.AUDIO_SETTINGS and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_audio_settings")
+			call_deferred("_refresh_screen_layout", ScreenState.AUDIO_SETTINGS)
 	)
 	screen_host.add_child(scroll)
 	var center := CenterContainer.new()
@@ -2848,7 +3152,7 @@ func _show_inventory() -> void:
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
 		if state == ScreenState.INVENTORY and (screen_host.size.x < 1040.0) != narrow_layout:
-			call_deferred("_show_inventory")
+			call_deferred("_refresh_screen_layout", ScreenState.INVENTORY)
 	)
 	page.add_child(_display_label("行囊与炼器", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	var notice_card := _panel(0.36, era_accent)
@@ -3615,7 +3919,7 @@ func _button(text_value: String, callback: Callable, primary: bool,
 	button.custom_minimum_size.y = 44 if compact else 50
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 15 if compact else 17)
+	button.add_theme_font_size_override("font_size", 15 if compact else 18)
 	button.add_theme_color_override("font_color", Color("f4eee0"))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	var normal := _button_style(0.18 if not primary else 0.31, era_accent, 0.44, compact)
@@ -3682,11 +3986,13 @@ func _style_line_edit(edit: LineEdit) -> void:
 
 
 func _label(text_value: String, font_size: int = 18, color: Color = Color.WHITE,
-	alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+		alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
+	var readable_color := color
+	readable_color.a = maxf(readable_color.a, 0.84)
+	label.add_theme_color_override("font_color", readable_color)
 	label.horizontal_alignment = alignment
 	return label
 
@@ -3749,7 +4055,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	match state:
 		ScreenState.MENU:
-			if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_1]:
+			if event.keycode == KEY_1:
 				var input := screen_host.find_child("DaoNameInput", true, false) as LineEdit
 				if input:
 					_start_new_game(input)
@@ -3761,7 +4067,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_open_audio_settings()
 		ScreenState.GAME:
 			match event.keycode:
-				KEY_1: _meditate()
+				KEY_1: _show_cultivation()
 				KEY_2: _open_adventure()
 				KEY_3: _breakthrough()
 				KEY_4: _start_combat()
@@ -3773,10 +4079,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_R:
 					if int(player.get("realm_index", 0)) >= 19:
 						_transcend_life()
-				KEY_TAB: _cycle_era()
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _return_to_menu()
+		ScreenState.CULTIVATION:
+			if event.keycode >= KEY_1 and event.keycode <= KEY_3:
+				_resolve_meditation(str(CultivationScript.MEDITATION_MODE_IDS[int(event.keycode - KEY_1)]))
+			elif event.keycode == KEY_ESCAPE:
+				_show_game()
+		ScreenState.OBJECTIVE:
+			if event.keycode >= KEY_1 and event.keycode <= KEY_3:
+				_select_objective(str(ObjectiveSystemScript.OBJECTIVE_IDS[int(event.keycode - KEY_1)]))
+			elif event.keycode == KEY_ESCAPE:
+				_show_game()
 		ScreenState.EVENT:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_9:
 				_resolve_choice(int(event.keycode - KEY_1))

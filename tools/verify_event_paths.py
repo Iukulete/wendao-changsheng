@@ -44,6 +44,8 @@ EVENT_TEXT_FIELDS = ("title", "description", "portrait_name", "portrait_title")
 RESOURCE_FIELDS = ("scene", "portrait")
 MIN_DELTA = -4
 MAX_DELTA = 4
+MAX_COSTLESS_CHOICES_PER_EVENT = 1
+MIN_NEGATIVE_COVERAGE_PER_PATH = 2
 
 
 def fail(message: str) -> None:
@@ -78,6 +80,7 @@ def main() -> int:
     positive_coverage: Counter[str] = Counter()
     negative_coverage: Counter[str] = Counter()
     choice_count = 0
+    costless_choice_count = 0
 
     for event_index, event in enumerate(events):
         if not isinstance(event, dict):
@@ -100,6 +103,7 @@ def main() -> int:
         if not isinstance(choices, list) or len(choices) != 3:
             fail(f"{event_id}: choices must contain exactly three entries")
 
+        event_costless_choices = 0
         for choice_index, choice in enumerate(choices):
             choice_count += 1
             location = f"{event_id}.choices[{choice_index}]"
@@ -116,6 +120,11 @@ def main() -> int:
             for delta_id, delta in deltas.items():
                 if isinstance(delta, bool) or not isinstance(delta, int):
                     fail(f"{location}.deltas.{delta_id} must be an integer")
+            has_player_cost = any(
+                (delta_id == "enmity" and delta > 0)
+                or (delta_id != "enmity" and delta < 0)
+                for delta_id, delta in deltas.items()
+            )
             path_deltas = choice.get("path_deltas")
             if not isinstance(path_deltas, dict) or not path_deltas:
                 fail(f"{location} must define non-empty path_deltas")
@@ -125,6 +134,7 @@ def main() -> int:
                 fail(f"{location} contains unknown paths: {sorted(unknown_paths)}")
 
             has_positive_delta = False
+            has_path_cost = False
             for path_id, delta in path_deltas.items():
                 if isinstance(delta, bool) or not isinstance(delta, int):
                     fail(f"{location}.{path_id} must be an integer")
@@ -138,8 +148,18 @@ def main() -> int:
                     positive_coverage[path_id] += 1
                 else:
                     negative_coverage[path_id] += 1
+                    has_path_cost = True
             if not has_positive_delta:
                 fail(f"{location} must advance at least one path")
+            if not has_player_cost and not has_path_cost:
+                event_costless_choices += 1
+                costless_choice_count += 1
+
+        if event_costless_choices > MAX_COSTLESS_CHOICES_PER_EVENT:
+            fail(
+                f"{event_id} offers {event_costless_choices} costless choices; "
+                f"at most {MAX_COSTLESS_CHOICES_PER_EVENT} may avoid an explicit trade-off"
+            )
 
     missing_eras = SUPPORTED_ERAS - set(era_counts)
     if missing_eras:
@@ -160,6 +180,16 @@ def main() -> int:
         fail(f"paths never advanced by any choice: {sorted(missing_positive_paths)}")
     if not negative_coverage:
         fail("catalog must contain at least one consequential path trade-off")
+    weak_negative_paths = {
+        path_id: negative_coverage[path_id]
+        for path_id in sorted(PATH_DIMENSIONS)
+        if negative_coverage[path_id] < MIN_NEGATIVE_COVERAGE_PER_PATH
+    }
+    if weak_negative_paths:
+        fail(
+            "every path needs recurring trade-offs, below minimum "
+            f"{MIN_NEGATIVE_COVERAGE_PER_PATH}: {weak_negative_paths}"
+        )
 
     coverage = ", ".join(
         f"{path_id}=+{positive_coverage[path_id]}/-{negative_coverage[path_id]}"
@@ -167,7 +197,8 @@ def main() -> int:
     )
     print(
         f"Event path validation passed: {len(events)} events, "
-        f"{choice_count} choices, six eras >= {MIN_EVENTS_PER_ERA}; {coverage}"
+        f"{choice_count} choices ({costless_choice_count} costless), "
+        f"six eras >= {MIN_EVENTS_PER_ERA}; {coverage}"
     )
     return 0
 

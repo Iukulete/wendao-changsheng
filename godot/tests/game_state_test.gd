@@ -25,6 +25,29 @@ func _init() -> void:
 		"第一年必须生成可持续演化的势力与人物")
 	_expect(state.world.has("last_year_summary"), "修炼推进的年份必须写入世界年史")
 
+	var mode_state := GameStateScript.create_new_game("行功者", 20260721, [7, 7, 7, 7, 7])
+	mode_state.player.level = 9
+	mode_state.player.hp = 60
+	var steady_preview: Dictionary = CultivationScript.meditation_preview(mode_state, "steady")
+	var rush_preview: Dictionary = CultivationScript.meditation_preview(mode_state, "rush")
+	var insight_preview: Dictionary = CultivationScript.meditation_preview(mode_state, "insight")
+	_expect(int(rush_preview.minimum_gain) > int(steady_preview.minimum_gain) and
+		int(rush_preview.hp_cost) > 0 and int(insight_preview.dao_heart_gain) == 1,
+		"三种运功法必须在预览中呈现真实不同的收益与代价")
+	var hp_before_steady := int(mode_state.player.hp)
+	var steady_result: Dictionary = CultivationScript.meditate(mode_state, 50, "steady")
+	_expect(int(mode_state.player.hp) > hp_before_steady and int(steady_result.hp_recovered) > 0,
+		"守一周天必须实际恢复受损气血")
+	var hp_before_rush := int(mode_state.player.hp)
+	var rush_result: Dictionary = CultivationScript.meditate(mode_state, 50, "rush")
+	_expect(int(rush_result.gain) > int(steady_result.gain) and
+		int(mode_state.player.hp) < hp_before_rush,
+		"燃血冲脉必须用可见气血成本换取更高修为")
+	var heart_before := int(mode_state.player.dao_heart)
+	var insight_result: Dictionary = CultivationScript.meditate(mode_state, 50, "insight")
+	_expect(int(insight_result.dao_heart_gain) == 1 and int(mode_state.player.dao_heart) == heart_before + 1,
+		"引潮悟道必须真实增长道心，而非只有文案差异")
+
 	state.player.level = 9
 	state.player.exp = 9999
 	var ready: Dictionary = CultivationScript.can_breakthrough(state.player)
@@ -43,11 +66,15 @@ func _init() -> void:
 	_expect((state.legacy.past_lives as Array).size() == 1, "前世记录必须进入持久轮回状态")
 	_expect(str(state.legacy.past_lives[0].dao_id) == "insight", "最强道途维度必须塑造前世道痕")
 	var world_year_before := int(state.world.year)
+	var era_before := str(state.current_era_id)
 	var next_life: Dictionary = ReincarnationScript.begin_next_life(state, "问镜")
 	_expect(bool(next_life.get("ok", false)), "已封存的一世必须能进入下一世")
 	_expect(int(state.generation) == 2 and int(state.legacy.generation) == 2,
 		"轮回代数必须一致推进")
 	_expect(int(state.world.year) > world_year_before, "转世期间世界必须继续前进")
+	_expect(str(state.current_era_id) != era_before and
+		str(state.current_era) == str(GameStateScript.ERA_NAMES[state.current_era_id]),
+		"轮回必须自然推进纪元，不能依赖产品界面的开发切换按钮")
 	_expect((state.world.annual_summaries as Array).size() > 1,
 		"轮回间隔必须逐年演算世界，而不是只修改年份")
 	_expect((state.legacy.inherited_echoes as Array).size() > 0, "下一世必须继承可解释的前世回响")

@@ -28,7 +28,8 @@ func _init() -> void:
 	_expect(_loaded_exp(first_load) == 37, "修为应完整恢复")
 	var first_state: Dictionary = first_load.get("state", {})
 	_expect(int(first_state.get("schema_version", 0)) == 2, "v1 形状快照保存后必须升级为 v2")
-	_expect(first_state.has("legacy") and first_state.has("world") and first_state.has("story"),
+	_expect(first_state.has("legacy") and first_state.has("world") and first_state.has("story") and
+		first_state.has("objective") and first_state.has("encounter"),
 		"升级后的存档必须包含完整运行时状态")
 
 	var second := _snapshot("第二世", "星穹道网纪", 88, ["第二次记忆", "星网回响"])

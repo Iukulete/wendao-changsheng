@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SaveServiceScript = preload("res://scripts/save_service.gd")
+const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 var failures: Array[String] = []
@@ -26,14 +27,25 @@ func _run() -> void:
 
 	var name_input := game.find_child("DaoNameInput", true, false) as LineEdit
 	_expect(name_input != null, "新生菜单应存在道号输入框")
+	var empty_continue_button := game.find_child("ContinueButton", true, false) as Button
+	_expect(empty_continue_button != null and empty_continue_button.disabled and
+		empty_continue_button.focus_mode == Control.FOCUS_NONE,
+		"无存档时禁用的续接按钮必须退出键盘焦点链")
 	_expect(game.find_child("LegacyImportButton", true, false) != null,
 		"发现有效 SAVE_V4/V5 六槽旧录时菜单必须提供只读导入入口")
 	DirAccess.remove_absolute(legacy_source_path)
 	if name_input != null:
 		name_input.text = "归档真人"
-		game.call("_start_new_game", name_input)
+		name_input.text_submitted.emit(name_input.text)
+		await process_frame
 
-	_expect(FileAccess.file_exists(str(service.call("get_save_path"))), "开始新生应立即创建主档")
+	_expect(FileAccess.file_exists(str(service.call("get_save_path"))),
+		"道号输入框按 Enter 提交后应立即创建主档")
+	_expect(game.find_child("ObjectiveOptionButton_cultivation", true, false) != null and
+		game.find_child("ObjectiveOptionButton_world", true, false) != null and
+		game.find_child("ObjectiveOptionButton_battle", true, false) != null,
+		"新生立档后必须先择定阶段命途，不能直接掉进无目标按钮列表")
+	game.call("_select_objective", "cultivation")
 	var initialized_state: Dictionary = game.get("run_state")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("factions", []) as Array).size() >= 3,
 		"新生立档时必须初始化时代势力")
@@ -46,18 +58,34 @@ func _run() -> void:
 	_expect(inventory_button != null and not inventory_button.disabled,
 		"新生必须能进入行囊与炼器界面")
 	var combat_button := game.find_child("CombatButton", true, false) as Button
-	_expect(combat_button != null and not combat_button.disabled,
-		"新生必须能从主界面进入确定性战斗")
+	_expect(combat_button != null and combat_button.disabled,
+		"新生没有敌踪时普通战斗必须禁用，不能成为无限常亮的提款入口")
 	var return_button := game.find_child("ReturnToMenuButton", true, false) as Button
 	_expect(return_button != null and not return_button.disabled,
 		"主界面必须提供安全封存并返回标题的入口")
 	if return_button != null:
+		var saved_year := 7
+		initialized_state.world.year = saved_year
+		initialized_state.turn = saved_year - 1
 		game.set("feedback", "返回标题自动封存验收")
 		return_button.emit_signal("pressed")
 		await process_frame
-		_expect(game.find_child("DaoNameInput", true, false) != null,
+		name_input = game.find_child("DaoNameInput", true, false) as LineEdit
+		var focused_continue_button := game.find_child("ContinueButton", true, false) as Button
+		_expect(name_input != null,
 			"返回标题动作必须回到可交互菜单")
-		game.call("_continue_game")
+		if name_input != null and focused_continue_button != null:
+			name_input.grab_focus()
+			await process_frame
+			await _press_key(KEY_TAB)
+			_expect(focused_continue_button.has_focus(),
+				"已有存档时从道号输入框按 Tab 必须聚焦续接按钮")
+			await _press_key(KEY_ENTER)
+		var keyboard_restored_state: Dictionary = game.get("run_state")
+		_expect(game.find_child("MeditateButton", true, false) != null,
+			"续接按钮获得焦点后按 Enter 必须进入主界面")
+		_expect(int((keyboard_restored_state.get("world", {}) as Dictionary).get("year", 0)) == saved_year,
+			"续接按钮的 Enter 不得同时触发新生并覆写当前存档")
 		_expect(str(game.get("feedback")) == "返回标题自动封存验收",
 			"返回标题前必须原子保存当前命途，续接后不能丢失反馈状态")
 	var armory_button := game.find_child("ArmoryButton", true, false) as Button
@@ -67,6 +95,17 @@ func _run() -> void:
 	_expect(game.find_child("ArmoryBackButton", true, false) != null,
 		"玉藏兵界面必须提供明确返回动作")
 	game.call("_show_game")
+	game.call("_show_cultivation")
+	_expect(game.find_child("CultivationModeButton_steady", true, false) != null and
+		game.find_child("CultivationModeButton_rush", true, false) != null and
+		game.find_child("CultivationModeButton_insight", true, false) != null,
+		"修炼必须展开三种有真实收益与代价的运功法")
+	var cultivation_turn_before := int((game.get("run_state") as Dictionary).get("turn", 0))
+	game.call("_resolve_meditation", "insight")
+	var cultivated_state: Dictionary = game.get("run_state")
+	_expect(int(cultivated_state.turn) == cultivation_turn_before + 1 and
+		int((cultivated_state.objective as Dictionary).get("progress", 0)) == 3,
+		"运功选择必须推进世界时间和当前阶段命途")
 	var dungeon_button := game.find_child("DungeonButton", true, false) as Button
 	_expect(dungeon_button != null and not dungeon_button.disabled,
 		"镜湖秘境必须是主线之外的明确可选入口")
@@ -100,6 +139,11 @@ func _run() -> void:
 	_expect(game.find_child("InventoryBackButton", true, false) != null,
 		"行囊界面必须提供明确返回动作")
 	game.call("_show_game")
+	EncounterSystemScript.offer(game.get("run_state"), "integration", "回归敌踪", "用于验证战斗入口只在有敌情时开放。")
+	game.call("_show_game")
+	combat_button = game.find_child("CombatButton", true, false) as Button
+	_expect(combat_button != null and not combat_button.disabled,
+		"事件产生敌踪后普通战斗入口必须限时开放")
 	game.call("_start_combat")
 	var active_combat_state: Dictionary = game.get("run_state")
 	_expect(bool((active_combat_state.get("combat", {}) as Dictionary).get("active", false)),
@@ -199,6 +243,19 @@ func _write_text(path: String, contents: String) -> void:
 		return
 	file.store_string(contents)
 	file.close()
+
+
+func _press_key(keycode: Key) -> void:
+	var pressed := InputEventKey.new()
+	pressed.keycode = keycode
+	pressed.pressed = true
+	Input.parse_input_event(pressed)
+	await process_frame
+	var released := InputEventKey.new()
+	released.keycode = keycode
+	released.pressed = false
+	Input.parse_input_event(released)
+	await process_frame
 
 
 func _minimal_legacy_save() -> String:

@@ -4,6 +4,8 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 
 var failures: Array[String] = []
+var main_trigger_points: Array[int] = []
+var echo_trigger_points: Array[int] = []
 
 
 func _init() -> void:
@@ -35,8 +37,10 @@ func _init() -> void:
 	state = GameStateScript.create_new_game("照卷人", 737373, [7, 7, 7, 7, 7])
 	StorySystemScript.normalize(state)
 
-	var main_events := _advance_until(state, false, 120)
+	var main_events := _advance_until(state, false, 120, main_trigger_points)
 	_expect(main_events == 16, "四条今生主线必须各推进四幕且不重复刷已完成节点")
+	_expect(_pacing_is_healthy(main_trigger_points, 16, 48),
+		"今生主线必须保持至少两次普通抉择的呼吸间隔，并在48次事件内收束")
 	for arc_id in StorySystemScript.ARC_IDS:
 		_expect(int(state.story.arc_progress[arc_id]) == StorySystemScript.MAIN_STAGE_COUNT,
 			"今生主线必须收束到4/4：%s" % arc_id)
@@ -56,8 +60,10 @@ func _init() -> void:
 		"跨世定局加成必须在每一世仅应用一次")
 
 	state.story.next_arc_event_at = 0
-	var echo_events := _advance_until(state, true, 120)
+	var echo_events := _advance_until(state, true, 120, echo_trigger_points)
 	_expect(echo_events == 12, "第二世必须完整运行四条三幕定局续章")
+	_expect(_pacing_is_healthy(echo_trigger_points, 12, 36),
+		"二世续章必须保持至少两次普通抉择的呼吸间隔，并在36次事件内收束")
 	for arc_id in StorySystemScript.ARC_IDS:
 		var echo: Dictionary = state.story.arc_echoes[arc_id]
 		_expect(int(echo.stage) == StorySystemScript.ECHO_STAGE_COUNT and not str(echo.resolution).is_empty(),
@@ -68,6 +74,10 @@ func _init() -> void:
 		"已经定局的剧情不得残留为未竟因果")
 
 	if failures.is_empty():
+		print("STORY_PACING: main=%s echo=%s" % [
+			JSON.stringify(_pacing_summary(main_trigger_points)),
+			JSON.stringify(_pacing_summary(echo_trigger_points)),
+		])
 		print("STORY_SYSTEM_TEST_OK: 4x4 main arcs, 4x3 second-life echoes, persistence and birth effects passed")
 		quit(0)
 	else:
@@ -76,7 +86,8 @@ func _init() -> void:
 		quit(1)
 
 
-func _advance_until(state: Dictionary, echo_phase: bool, limit: int) -> int:
+func _advance_until(state: Dictionary, echo_phase: bool, limit: int,
+		trigger_points: Array[int]) -> int:
 	var resolved_events := 0
 	for _step in range(limit):
 		var event: Dictionary = StorySystemScript.next_event(state)
@@ -86,6 +97,7 @@ func _advance_until(state: Dictionary, echo_phase: bool, limit: int) -> int:
 		if (str(event.story_phase) == "echo") != echo_phase:
 			state.player.total_events = int(state.player.total_events) + 1
 			continue
+		trigger_points.append(int(state.player.total_events))
 		state.player.total_events = int(state.player.total_events) + 1
 		var result: Dictionary = StorySystemScript.resolve_choice(state, event, resolved_events % 3)
 		_expect(bool(result.get("ok", false)), "有效剧情节点必须能够解析选择")
@@ -93,6 +105,30 @@ func _advance_until(state: Dictionary, echo_phase: bool, limit: int) -> int:
 		if _phase_complete(state, echo_phase):
 			break
 	return resolved_events
+
+
+func _pacing_is_healthy(trigger_points: Array[int], expected_count: int,
+		maximum_final_event: int) -> bool:
+	if trigger_points.size() != expected_count or trigger_points.is_empty() or \
+			trigger_points[-1] > maximum_final_event:
+		return false
+	for index in range(1, trigger_points.size()):
+		if trigger_points[index] - trigger_points[index - 1] < 2:
+			return false
+	return true
+
+
+func _pacing_summary(trigger_points: Array[int]) -> Dictionary:
+	var gaps: Array[int] = []
+	for index in range(1, trigger_points.size()):
+		gaps.append(trigger_points[index] - trigger_points[index - 1])
+	return {
+		"chapters": trigger_points.size(),
+		"first_event": trigger_points[0] if not trigger_points.is_empty() else -1,
+		"last_event": trigger_points[-1] if not trigger_points.is_empty() else -1,
+		"minimum_gap": gaps.min() if not gaps.is_empty() else 0,
+		"maximum_gap": gaps.max() if not gaps.is_empty() else 0,
+	}
 
 
 func _phase_complete(state: Dictionary, echo_phase: bool) -> bool:
