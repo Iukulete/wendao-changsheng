@@ -61,10 +61,11 @@ func _init() -> void:
 	state.player.total_events = 24
 	state.player.age = state.player.lifespan
 	_expect(CultivationScript.is_dead(state), "道祖前寿元耗尽必须结束当前一世")
-	var closed: Dictionary = ReincarnationScript.close_life(state, "寿元耗尽")
+	var closed: Dictionary = ReincarnationScript.close_life(state, "寿元耗尽", 1)
 	_expect(bool(closed.get("ok", false)), "死亡必须形成前世记录")
 	_expect((state.legacy.past_lives as Array).size() == 1, "前世记录必须进入持久轮回状态")
 	_expect(str(state.legacy.past_lives[0].dao_id) == "insight", "最强道途维度必须塑造前世道痕")
+	_expect(bool((closed.rebirth as Dictionary).triggered), "测试用低命数必须确定触发死亡后的轮回")
 	var world_year_before := int(state.world.year)
 	var era_before := str(state.current_era_id)
 	var next_life: Dictionary = ReincarnationScript.begin_next_life(state, "问镜")
@@ -79,6 +80,16 @@ func _init() -> void:
 		"轮回间隔必须逐年演算世界，而不是只修改年份")
 	_expect((state.legacy.inherited_echoes as Array).size() > 0, "下一世必须继承可解释的前世回响")
 	_expect(not bool(state.life_closed), "下一世开始后生命状态必须重新打开")
+
+	var ended_without_rebirth := GameStateScript.create_new_game("命尽者", 20260717, [5, 5, 5, 5, 5])
+	ended_without_rebirth.player.age = ended_without_rebirth.player.lifespan
+	var failed_rebirth: Dictionary = ReincarnationScript.close_life(ended_without_rebirth, "寿元耗尽", 100)
+	_expect(not bool((failed_rebirth.rebirth as Dictionary).triggered) and
+		str(ended_without_rebirth.ending_state) == "lineage_ended",
+		"高命数必须覆盖轮回未触发的真正终局")
+	var forbidden_next: Dictionary = ReincarnationScript.begin_next_life(ended_without_rebirth, "不应出生")
+	_expect(str(forbidden_next.get("code", "")) == "rebirth_not_triggered",
+		"轮回未触发时不得靠继续按钮直接进入下一世")
 
 	var migrated := GameStateScript.ensure_v2({
 		"current_era": "星穹道网纪",

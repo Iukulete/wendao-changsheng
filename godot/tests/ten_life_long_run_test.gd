@@ -88,12 +88,12 @@ func _run_ten_lives(state: Dictionary) -> Dictionary:
 			state.player.dao_heart = 120
 			_cultivate_to_realm(state, 20)
 			AchievementSystemScript.check_progress(state)
-			cause = "证道圆满，自择轮回"
+			cause = "天劫余波中身陨"
 		else:
 			var remaining := maxi(0, int(state.player.lifespan) - int(state.player.age))
 			CultivationScript.advance_time(state, remaining)
 			_expect(CultivationScript.is_dead(state), "第%d世必须真实走到寿元终点" % life_number)
-		var closed: Dictionary = ReincarnationScript.close_life(state, cause)
+		var closed: Dictionary = ReincarnationScript.close_life(state, cause, 1)
 		_expect(bool(closed.get("ok", false)), "第%d世必须能封存为前世" % life_number)
 		AchievementSystemScript.check_progress(state)
 		if life_number < 10:

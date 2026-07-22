@@ -133,10 +133,10 @@ func _run() -> void:
 			var main_portrait := game.find_child("MainPortrait", true, false) as TextureRect
 			var player_compass := game.find_child("PlayerDaoCompass", true, false) as Control
 			var action_panel := game.find_child("GameActionPanel", true, false) as Control
-			var action_grid := game.find_child("GameActionGrid", true, false) as GridContainer
+			var action_grid := game.find_child("ChapterActionList", true, false) as VBoxContainer
 			if player_panel == null or player_compass == null or action_panel == null or \
-					action_grid == null or action_grid.columns != 2:
-				failures.append("1280x720主界面没有启用无裁切人物栏与双列行动栏")
+					action_grid == null:
+				failures.append("1280x720主界面没有启用无裁切人物栏与章节行动栏")
 			elif main_portrait == null or main_portrait.texture == null or \
 					main_portrait.size.x < 70.0 or main_portrait.size.y < 100.0:
 				failures.append("1280x720主界面男主身份图为空或被动效挤出容器")
@@ -146,17 +146,12 @@ func _run() -> void:
 			elif not main_viewport.encloses(player_compass.get_global_rect()):
 				failures.append("1280x720主界面命途罗盘没有完整落在首屏")
 			var main_actions: Array[Control] = [
+				game.find_child("ChapterPrimaryButton", true, false) as Control,
 				game.find_child("MeditateButton", true, false) as Control,
-				game.find_child("AdventureButton", true, false) as Control,
-				game.find_child("BreakthroughButton", true, false) as Control,
-				game.find_child("CombatButton", true, false) as Control,
-				game.find_child("LocalAIButton", true, false) as Control,
 				game.find_child("InventoryButton", true, false) as Control,
 				game.find_child("ArmoryButton", true, false) as Control,
-				game.find_child("DungeonButton", true, false) as Control,
-				game.find_child("SaveGameButton", true, false) as Control,
-				game.find_child("GameAudioSettingsButton", true, false) as Control,
-				game.find_child("ReturnToMenuButton", true, false) as Control,
+				game.find_child("JournalButton", true, false) as Control,
+				game.find_child("SystemMenuButton", true, false) as Control,
 			]
 			for action in main_actions:
 				if action == null or not main_viewport.encloses(action.get_global_rect()):
@@ -193,9 +188,8 @@ func _run() -> void:
 	for detail_control in [narrow_main_detail_row, narrow_main_player, narrow_main_actions]:
 		if detail_control == null or not narrow_main_viewport.encloses(detail_control.get_global_rect()):
 			failures.append("800x720主界面滚动到底后人物或行动区仍不可达")
-	for action_name in ["MeditateButton", "AdventureButton", "BreakthroughButton", "CombatButton",
-			"LocalAIButton", "InventoryButton", "ArmoryButton", "DungeonButton", "SaveGameButton",
-			"GameAudioSettingsButton", "ReturnToMenuButton"]:
+	for action_name in ["ChapterPrimaryButton", "MeditateButton", "InventoryButton", "ArmoryButton",
+			"JournalButton", "SystemMenuButton"]:
 		var narrow_main_action := game.find_child(action_name, true, false) as Control
 		if narrow_main_action == null or not narrow_main_viewport.encloses(narrow_main_action.get_global_rect()):
 			failures.append("800x720主界面行动入口不可达：%s" % action_name)
@@ -554,7 +548,7 @@ func _run() -> void:
 	reincarnation_state.player.age = reincarnation_state.player.lifespan
 	game.set("run_state", reincarnation_state)
 	game.call("_sync_state_views")
-	game.call("_end_current_life", "寿元耗尽")
+	game.call("_end_current_life", "寿元耗尽", 1)
 	await _settle_frames(4)
 	var reincarnation_controls: Array[Control] = [
 		game.find_child("ReincarnationCard", true, false) as Control,

@@ -228,6 +228,12 @@ static func normalize(state: Dictionary) -> Dictionary:
 	var dungeon: Dictionary = value.duplicate(true) if value is Dictionary else {}
 	dungeon["active"] = bool(dungeon.get("active", false))
 	dungeon["history"] = _bounded_array(dungeon.get("history", []), MAX_HISTORY)
+	dungeon["clues"] = clampi(int(dungeon.get("clues", 0)), 0, 9)
+	dungeon["clue_source"] = str(dungeon.get("clue_source", "")).left(160)
+	var entered_generation := int(dungeon.get("last_entered_generation",
+		dungeon.get("last_completed_generation", 0)))
+	dungeon["last_entered_generation"] = clampi(entered_generation, 0, 100000)
+	dungeon.erase("last_completed_generation")
 	var run_value: Variant = dungeon.get("run", {})
 	var run: Dictionary = run_value.duplicate(true) if run_value is Dictionary else {}
 	if bool(dungeon.active):
@@ -249,6 +255,12 @@ static func start(state: Dictionary, dungeon_id: String = "mirror_lake") -> Dict
 		return {"ok": false, "code": "dungeon_already_active", "run": dungeon.run}
 	if bool((state.get("combat", {}) as Dictionary).get("active", false)):
 		return {"ok": false, "code": "combat_active"}
+	if int(dungeon.get("last_entered_generation", 0)) == int(state.get("generation", 1)):
+		return {"ok": false, "code": "dungeon_already_resolved_this_life",
+			"message": "此世已经踏入过镜湖空阙；无论胜败或撤离，古门都不会再次开启。"}
+	if int(dungeon.get("clues", 0)) <= 0:
+		return {"ok": false, "code": "missing_dungeon_clue",
+			"message": "镜湖入口没有显形。先在当前章节中取得秘境线索。"}
 	var definition := _dungeon_definition(dungeon_id)
 	if definition.is_empty():
 		return {"ok": false, "code": "unknown_dungeon"}
@@ -274,8 +286,24 @@ static func start(state: Dictionary, dungeon_id: String = "mirror_lake") -> Dict
 	_generate_route(state, run)
 	dungeon["active"] = true
 	dungeon["run"] = run
+	dungeon["clues"] = maxi(0, int(dungeon.get("clues", 0)) - 1)
+	dungeon["last_entered_generation"] = int(state.get("generation", 1))
 	state["dungeon"] = dungeon
 	return {"ok": true, "code": "dungeon_started", "run": run}
+
+
+static func grant_clue(state: Dictionary, source: String) -> Dictionary:
+	var dungeon := normalize(state)
+	if int(dungeon.get("last_entered_generation", 0)) == int(state.get("generation", 1)):
+		return {"ok": true, "code": "dungeon_resolved", "granted": false}
+	if int(dungeon.get("clues", 0)) > 0:
+		return {"ok": true, "code": "clue_already_held", "granted": false,
+			"clues": int(dungeon.clues)}
+	dungeon["clues"] = 1
+	dungeon["clue_source"] = source.left(160)
+	state["dungeon"] = dungeon
+	return {"ok": true, "code": "dungeon_clue_granted", "granted": true,
+		"clues": 1, "message": "秘境线索已显形：%s。镜湖入口将为这一世开启一次。" % source}
 
 
 static func choose_route(state: Dictionary, choice_index: int) -> Dictionary:

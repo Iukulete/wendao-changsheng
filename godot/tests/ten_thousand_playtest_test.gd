@@ -202,6 +202,7 @@ func _play_one(index: int, mode: int) -> Dictionary:
 
 	if mode == 1 or mode == 4 or mode == 5:
 		if not CultivationScript.is_dead(state):
+			DungeonSystemScript.grant_clue(state, "自动试玩章节线索")
 			var dungeon_start := DungeonSystemScript.start(state)
 			if not bool(dungeon_start.get("ok", false)):
 				return _fail("dungeon_start", dungeon_start)
@@ -251,7 +252,7 @@ func _play_one(index: int, mode: int) -> Dictionary:
 		var player: Dictionary = state.player
 		player["age"] = int(player.get("lifespan", 1))
 		state["player"] = player
-		var closed := ReincarnationScript.close_life(state, "自动试玩轮回压力")
+		var closed := ReincarnationScript.close_life(state, "自动试玩轮回压力", 1)
 		if not bool(closed.get("ok", false)):
 			return _fail("close_life", closed)
 		var next := ReincarnationScript.begin_next_life(state, "试玩续世%d" % (index + 2))

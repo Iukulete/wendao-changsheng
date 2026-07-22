@@ -518,7 +518,7 @@ func _start_new_game(name_input: LineEdit) -> void:
 	_sync_state_views()
 	menu_notice = ""
 	_save_current_state("新生命途已立档")
-	_show_objective_selection()
+	_open_adventure()
 
 
 func _continue_game() -> void:
@@ -820,79 +820,100 @@ func _build_action_panel() -> Control:
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
 	panel.add_child(column)
-	column.add_child(_section_title("此刻可行"))
-	column.add_child(_build_objective_section())
+	column.add_child(_section_title("当前章节"))
+	column.add_child(_build_chapter_direction())
 	column.add_child(_divider())
-	var action_grid := GridContainer.new()
-	action_grid.name = "GameActionGrid"
-	action_grid.columns = 2
+	var action_grid := VBoxContainer.new()
+	action_grid.name = "ChapterActionList"
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	action_grid.add_theme_constant_override("h_separation", 8)
-	action_grid.add_theme_constant_override("v_separation", 8)
+	action_grid.add_theme_constant_override("separation", 8)
 	column.add_child(action_grid)
-	var meditate_button := _main_action_button("壹 · 修炼", _show_cultivation, true)
-	meditate_button.name = "MeditateButton"
-	meditate_button.tooltip_text = "选择守一、燃血或引潮三种运功法，推进修为与世界年史。"
-	action_grid.add_child(meditate_button)
-	var adventure_button := _main_action_button("贰 · 历练", _open_adventure, true)
-	adventure_button.name = "AdventureButton"
-	adventure_button.tooltip_text = "踏入时代事件与命途长卷。"
-	action_grid.add_child(adventure_button)
-	var breakthrough_button := _main_action_button("叁 · 破境", _breakthrough, false)
-	breakthrough_button.name = "BreakthroughButton"
-	var breakthrough_readiness: Dictionary = CultivationScript.can_breakthrough(player)
-	breakthrough_button.disabled = not bool(breakthrough_readiness.get("ok", false))
-	breakthrough_button.tooltip_text = "叩问当前大境瓶颈。" if not breakthrough_button.disabled else \
-		str(breakthrough_readiness.get("message", "当前瓶颈尚未形成。"))
-	action_grid.add_child(breakthrough_button)
+	var story_ready := not StorySystemScript.next_event(run_state.duplicate(true)).is_empty()
 	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
-	var combat_button := _main_action_button(
-		"肆 · 迎战" if bool(encounter.get("active", false)) else "肆 · 暂无敌踪",
-		_start_combat, false)
-	combat_button.name = "CombatButton"
-	combat_button.disabled = not bool(encounter.get("active", false))
-	combat_button.tooltip_text = ("%s · 尚余%d次年轮" % [
-		str(encounter.get("detail", "敌踪已现。")), int(encounter.get("remaining_turns", 0))]) \
-		if not combat_button.disabled else "先在历练与世界事件中发现敌踪；战斗不再凭空反复出现。"
-	action_grid.add_child(combat_button)
-	var ai_button := _main_action_button("伍 · 问天机", _request_ai_event, false)
-	ai_button.name = "LocalAIButton"
-	ai_button.disabled = not _local_model_ready() or ai_bridge.call("is_busy")
-	ai_button.tooltip_text = "本地模型与 llama.cpp 运行时尚未就绪。" if ai_button.disabled else ""
-	action_grid.add_child(ai_button)
-	var inventory_button := _main_action_button("陆 · 行囊", _show_inventory, false)
-	inventory_button.name = "InventoryButton"
-	inventory_button.tooltip_text = "查看物品、装备、材料与炼器。"
-	action_grid.add_child(inventory_button)
-	var armory_button := _main_action_button("柒 · 玉兵", _show_armory, false)
-	armory_button.name = "ArmoryButton"
-	armory_button.tooltip_text = "查看成就、轮回玉兵与前世传承。"
-	action_grid.add_child(armory_button)
-	var dungeon_button := _main_action_button("捌 · 秘境", _enter_dungeon, false)
-	dungeon_button.name = "DungeonButton"
-	dungeon_button.tooltip_text = "进入四层镜湖空阙秘境。"
-	action_grid.add_child(dungeon_button)
-	var journal_button := _main_action_button("玖 · 命途长卷", _show_journal, false)
-	journal_button.name = "JournalButton"
-	journal_button.tooltip_text = "回看已经写下的章节、未竟因果与跨世定局。"
-	action_grid.add_child(journal_button)
-	if int(player.get("realm_index", 0)) >= 19:
-		var transcend_button := _main_action_button("自择轮回", _transcend_life, true)
-		transcend_button.name = "TranscendLifeButton"
-		transcend_button.tooltip_text = "证道圆满后主动结束此世。"
-		action_grid.add_child(transcend_button)
-	var save_button := _main_action_button("封存此世", _manual_save, false)
-	save_button.name = "SaveGameButton"
-	save_button.tooltip_text = "立即以原子写入封存当前进度。"
-	action_grid.add_child(save_button)
-	var audio_button := _main_action_button("音律设置", _open_audio_settings, false)
-	audio_button.name = "GameAudioSettingsButton"
-	action_grid.add_child(audio_button)
-	var menu_button := _main_action_button("返回标题", _return_to_menu, false)
-	menu_button.name = "ReturnToMenuButton"
-	menu_button.tooltip_text = "安全封存当前命途并返回标题。"
-	action_grid.add_child(menu_button)
+	var primary_text := "继续当前章"
+	var primary_callback := _open_adventure
+	if bool(encounter.get("active", false)):
+		primary_text = "回应敌踪 · %s" % str(encounter.get("title", "无名追兵"))
+		primary_callback = _start_combat
+	elif not story_ready:
+		primary_text = "追索下一处因果"
+	var adventure_button := _main_action_button(primary_text, primary_callback, true)
+	adventure_button.name = "ChapterPrimaryButton"
+	adventure_button.tooltip_text = str(encounter.get("detail", "让当前卷继续向前，而不是在大厅里盲点功能。"))
+	action_grid.add_child(adventure_button)
+	var meditate_button := _main_action_button("章前准备 · 调息修炼", _show_cultivation, false)
+	meditate_button.name = "MeditateButton"
+	meditate_button.tooltip_text = "为即将发生的章节积累修为、道心或气血；准备也会推进时间。"
+	action_grid.add_child(meditate_button)
+	var breakthrough_readiness: Dictionary = CultivationScript.can_breakthrough(player)
+	if bool(breakthrough_readiness.get("ok", false)):
+		var breakthrough_button := _main_action_button("关键准备 · 叩问瓶颈", _breakthrough, false)
+		breakthrough_button.name = "BreakthroughButton"
+		breakthrough_button.tooltip_text = "境界突破已经成熟；它会改变后续危机的胜算。"
+		action_grid.add_child(breakthrough_button)
+	var dungeon: Dictionary = run_state.get("dungeon", {})
+	if int(dungeon.get("clues", 0)) > 0 and int(dungeon.get("last_entered_generation", 0)) != int(run_state.get("generation", 1)):
+		var dungeon_button := _main_action_button("线索已明 · 踏入镜湖空阙", _enter_dungeon, false)
+		dungeon_button.name = "DungeonButton"
+		dungeon_button.tooltip_text = "来源：%s。此世只开放一次，胜败都会写入长卷。" % str(dungeon.get("clue_source", "当前因果"))
+		action_grid.add_child(dungeon_button)
+	column.add_child(_divider())
+	column.add_child(_build_secondary_navigation())
 	return panel
+
+
+func _build_chapter_direction() -> Control:
+	var box := VBoxContainer.new()
+	box.name = "ChapterDirection"
+	box.add_theme_constant_override("separation", 5)
+	var next_event := StorySystemScript.next_event(run_state.duplicate(true))
+	var encounter := EncounterSystemScript.summary(run_state)
+	var title := "山河尚有一页未写"
+	var hook := "追索下一处因果；修炼、战斗与秘境都会作为故事中的手段出现。"
+	if bool(encounter.get("active", false)):
+		title = "危机逼近 · %s" % str(encounter.get("title", "无名敌踪"))
+		hook = "%s · 尚余%d次年轮，回应或拖延都会改变山河。" % [
+			str(encounter.get("detail", "敌意已经显形。")), int(encounter.get("remaining_turns", 0))]
+	elif not next_event.is_empty():
+		title = str(next_event.get("title", "命途下一章"))
+		hook = str(next_event.get("description", "下一页正在等待你的选择。")).left(170)
+	box.add_child(_label(title, 17, Color("e8c87f")))
+	var hook_label := _label(hook, 14, Color(0.80, 0.84, 0.83, 0.94))
+	hook_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(hook_label)
+	var story := StorySystemScript.normalize(run_state)
+	var threads: Array = story.get("unresolved_threads", [])
+	if not threads.is_empty():
+		var thread_label := _label("未竟 · %s" % str(threads[-1]).split(":")[-1], 12,
+			Color(0.72, 0.78, 0.78, 0.9))
+		thread_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		box.add_child(thread_label)
+	return box
+
+
+func _build_secondary_navigation() -> Control:
+	var grid := GridContainer.new()
+	grid.name = "SecondaryNavigation"
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 7)
+	grid.add_theme_constant_override("v_separation", 7)
+	var entries := [
+		["准备", _show_inventory, "InventoryButton"],
+		["传承", _show_armory, "ArmoryButton"],
+		["长卷", _show_journal, "JournalButton"],
+		["系统", _open_system_menu, "SystemMenuButton"],
+	]
+	for entry_value in entries:
+		var entry: Array = entry_value
+		var button := _button(str(entry[0]), entry[1], false, "", true)
+		button.name = str(entry[2])
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(button)
+	return grid
+
+
+func _open_system_menu() -> void:
+	_show_audio_settings()
 
 
 func _build_objective_section() -> Control:
@@ -1653,7 +1674,7 @@ func _enter_dungeon() -> void:
 		return
 	var result: Dictionary = DungeonSystemScript.start(run_state, "mirror_lake")
 	if not bool(result.get("ok", false)):
-		feedback = "镜湖空阙没有形成稳定入口。"
+		feedback = str(result.get("message", "镜湖空阙没有形成稳定入口。"))
 		_show_game()
 		return
 	feedback = "无字古门在镜湖中央开启，你的功法化为一组可调度的临时灵诀。"
@@ -2725,6 +2746,12 @@ func _resolve_choice(index: int) -> void:
 		str(encounter_offer.get("code", "")) == "encounter_offered":
 		encounter_message = str(encounter_offer.get("message", "敌踪已现。"))
 		objective_result["encounter_message"] = encounter_message
+	var clue_result: Dictionary = DungeonSystemScript.grant_clue(run_state,
+		"%s · %s" % [str(current_event.get("title", "无名因果")), str(choice.get("text", "沉默"))])
+	if bool(clue_result.get("granted", false)):
+		var clue_message := str(clue_result.get("message", "秘境线索已显形。"))
+		feedback += "\n\n" + clue_message
+		objective_result["world_message"] = clue_message
 	_sync_state_views()
 	_append_objective_feedback(objective_result)
 	if str(objective_result.get("encounter_message", "")).is_empty() == false:
@@ -3118,9 +3145,9 @@ func _add_memory(text: String) -> void:
 	run_state["recent_memories"] = recent_memories.duplicate()
 
 
-func _end_current_life(cause: String) -> void:
+func _end_current_life(cause: String, rebirth_roll: int = -1) -> void:
 	_commit_state_views()
-	var result: Dictionary = ReincarnationScript.close_life(run_state, cause)
+	var result: Dictionary = ReincarnationScript.close_life(run_state, cause, rebirth_roll)
 	if not bool(result.get("ok", false)) and str(result.get("code", "")) != "already_closed":
 		feedback = "旧玉无法封存此世，轮回暂时停在门外。"
 		_show_game()
@@ -3128,16 +3155,6 @@ func _end_current_life(cause: String) -> void:
 	_sync_state_views()
 	_save_current_state("此世终章已封存")
 	_show_reincarnation()
-
-
-func _transcend_life() -> void:
-	if int(player.get("realm_index", 0)) < 19:
-		feedback = "此世大道尚未圆满，轮回玉不会提前收束命途。"
-		_show_game()
-		return
-	_add_memory("你在%s留下完整道痕，并主动让今身归入轮回。" % str(player.realm))
-	_end_current_life("证道圆满，自择轮回")
-
 
 func _current_death_cause() -> String:
 	if int(player.get("hp", 0)) <= 0:
@@ -3160,6 +3177,10 @@ func _show_reincarnation() -> void:
 		_show_menu()
 		return
 	var last_life: Dictionary = lives[-1]
+	var verdict: Dictionary = legacy.get("last_rebirth_verdict", {})
+	if int(verdict.get("generation", -1)) != int(run_state.get("generation", 1)):
+		verdict = ReincarnationScript.judge_rebirth(run_state)
+	var rebirth_triggered := bool(verdict.get("triggered", false))
 	var narrow_layout := screen_host.size.x < 1040.0
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -3191,7 +3212,9 @@ func _show_reincarnation() -> void:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
 	card.add_child(column)
-	column.add_child(_display_label("此世已尽，道痕未灭", 34, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_display_label(
+		"此世已尽，轮回玉重新亮起" if rebirth_triggered else "此世已尽，轮回未启",
+		34, Color("f0d99c") if rebirth_triggered else Color("d8b5aa"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("第%d世 · %s · %s %d层 · 享年%d" % [
 		int(last_life.get("generation", 1)), str(last_life.get("name", "无名")),
 		str(last_life.get("realm", "凡人")), int(last_life.get("level", 1)),
@@ -3200,6 +3223,10 @@ func _show_reincarnation() -> void:
 	column.add_child(_label("死因 · %s\n道途归结 · %s" % [
 		str(last_life.get("cause_of_death", "命数已尽")), str(last_life.get("dao_name", "本我大道"))],
 		17, Color(0.78, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
+	column.add_child(_label("轮回判定 · %d%% · 命数 %d/100 · %s" % [
+		int(verdict.get("chance", 0)), int(verdict.get("roll", 0)),
+		"旧玉接住了这一缕神魂" if rebirth_triggered else "这一世的神魂归于天地"],
+		16, Color("cfd8c1") if rebirth_triggered else Color("d8b5aa"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_divider())
 	column.add_child(_section_title("将被下一世听见的回响"))
 	var echoes: Array = last_life.get("echoes", [])
@@ -3214,19 +3241,36 @@ func _show_reincarnation() -> void:
 			echo_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			column.add_child(echo_label)
 	column.add_child(_spacer(6))
-	var name_input := LineEdit.new()
-	name_input.name = "NextLifeNameInput"
-	name_input.placeholder_text = "为第%d世写下道号" % (int(run_state.get("generation", 1)) + 1)
-	name_input.max_length = 32
-	name_input.custom_minimum_size.y = 48
-	_style_line_edit(name_input)
-	column.add_child(name_input)
-	var next_life_button := _button("步入下一世", _begin_next_life.bind(name_input), true)
-	next_life_button.name = "NextLifeButton"
-	column.add_child(next_life_button)
-	column.add_child(_label("世界不会重置：旧人会老去，宗门会兴衰，未竟因果会换一副面孔回来。",
-		14, Color(0.72, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
-	name_input.grab_focus()
+	if rebirth_triggered:
+		var name_input := LineEdit.new()
+		name_input.name = "NextLifeNameInput"
+		name_input.placeholder_text = "为第%d世写下道号" % (int(run_state.get("generation", 1)) + 1)
+		name_input.max_length = 32
+		name_input.custom_minimum_size.y = 48
+		_style_line_edit(name_input)
+		column.add_child(name_input)
+		var next_life_button := _button("循着心跳醒入下一世", _begin_next_life.bind(name_input), true)
+		next_life_button.name = "NextLifeButton"
+		column.add_child(next_life_button)
+		column.add_child(_label("世界不会重置：旧人会老去，宗门会兴衰，未竟因果会换一副面孔回来。",
+			14, Color(0.72, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
+		name_input.grab_focus()
+	else:
+		var ending_text := _label("没有按钮可以让死亡反悔。此生命途、许诺与遗憾仍留在长卷中；若再开一局，天地会给出另一条路。",
+			17, Color("ddd2c2"), HORIZONTAL_ALIGNMENT_CENTER)
+		ending_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		column.add_child(ending_text)
+		var ending_actions := HBoxContainer.new()
+		ending_actions.add_theme_constant_override("separation", 12)
+		var journal_button := _button("回看此生命途", _show_journal, false)
+		journal_button.name = "EndingJournalButton"
+		journal_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ending_actions.add_child(journal_button)
+		var menu_button := _button("返回标题", _return_to_menu, true)
+		menu_button.name = "EndingMenuButton"
+		menu_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		ending_actions.add_child(menu_button)
+		column.add_child(ending_actions)
 
 
 func _begin_next_life(name_input: LineEdit) -> void:
@@ -4425,9 +4469,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_L: _show_journal()
 				KEY_Y: _cycle_jade_weapon()
 				KEY_J: _invoke_jade_weapon()
-				KEY_R:
-					if int(player.get("realm_index", 0)) >= 19:
-						_transcend_life()
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _return_to_menu()

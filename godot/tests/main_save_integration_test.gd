@@ -41,34 +41,29 @@ func _run() -> void:
 
 	_expect(FileAccess.file_exists(str(service.call("get_save_path"))),
 		"道号输入框按 Enter 提交后应立即创建主档")
-	_expect(game.find_child("ObjectiveOptionButton_cultivation", true, false) != null and
-		game.find_child("ObjectiveOptionButton_world", true, false) != null and
-		game.find_child("ObjectiveOptionButton_battle", true, false) != null,
-		"新生立档后必须先择定阶段命途，不能直接掉进无目标按钮列表")
-	game.call("_select_objective", "cultivation")
+	_expect(game.find_child("EventChoiceButton0", true, false) != null,
+		"新生立档后必须直接进入故事引子，而不是阶段积分目标或按钮大厅")
+	game.call("_resolve_choice", 0)
+	game.call("_continue_from_event_result")
 	var initialized_state: Dictionary = game.get("run_state")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("factions", []) as Array).size() >= 3,
 		"新生立档时必须初始化时代势力")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("npcs", []) as Array).size() >= 6,
 		"新生立档时必须初始化同世人物")
-	var local_ai_button := game.find_child("LocalAIButton", true, false) as Button
-	_expect(local_ai_button != null and local_ai_button.disabled,
-		"隔离回归缺少本地模型时 AI 动作必须明确禁用，不能伪装就绪")
+	_expect(game.find_child("LocalAIButton", true, false) == null,
+		"本地模型不得作为主界面常驻动作打断小说式章节流程")
 	var inventory_button := game.find_child("InventoryButton", true, false) as Button
 	_expect(inventory_button != null and not inventory_button.disabled,
 		"新生必须能进入行囊与炼器界面")
-	var combat_button := game.find_child("CombatButton", true, false) as Button
-	_expect(combat_button != null and combat_button.disabled,
-		"新生没有敌踪时普通战斗必须禁用，不能成为无限常亮的提款入口")
-	var return_button := game.find_child("ReturnToMenuButton", true, false) as Button
-	_expect(return_button != null and not return_button.disabled,
-		"主界面必须提供安全封存并返回标题的入口")
-	if return_button != null:
+	var chapter_button := game.find_child("ChapterPrimaryButton", true, false) as Button
+	_expect(chapter_button != null and not chapter_button.disabled,
+		"主界面必须只有一个明确的章节推进主动作")
+	if chapter_button != null:
 		var saved_year := 7
 		initialized_state.world.year = saved_year
 		initialized_state.turn = saved_year - 1
 		game.set("feedback", "返回标题自动封存验收")
-		return_button.emit_signal("pressed")
+		game.call("_return_to_menu")
 		await process_frame
 		name_input = game.find_child("DaoNameInput", true, false) as LineEdit
 		var focused_continue_button := game.find_child("ContinueButton", true, false) as Button
@@ -104,11 +99,11 @@ func _run() -> void:
 	game.call("_resolve_meditation", "insight")
 	var cultivated_state: Dictionary = game.get("run_state")
 	_expect(int(cultivated_state.turn) == cultivation_turn_before + 1 and
-		int((cultivated_state.objective as Dictionary).get("progress", 0)) == 3,
-		"运功选择必须推进世界时间和当前阶段命途")
+		int((cultivated_state.player as Dictionary).get("dao_heart", 0)) > 0,
+		"运功选择必须推进世界时间并产生可带入章节的真实构筑收益")
 	var dungeon_button := game.find_child("DungeonButton", true, false) as Button
 	_expect(dungeon_button != null and not dungeon_button.disabled,
-		"镜湖秘境必须是主线之外的明确可选入口")
+		"事件取得线索后，镜湖秘境才应成为一次性的情境入口")
 	game.call("_enter_dungeon")
 	var active_dungeon_state: Dictionary = game.get("run_state")
 	_expect(bool((active_dungeon_state.get("dungeon", {}) as Dictionary).get("active", false)),
@@ -133,17 +128,17 @@ func _run() -> void:
 	game.call("_abandon_dungeon")
 	var exited_dungeon_state: Dictionary = game.get("run_state")
 	_expect(not bool((exited_dungeon_state.get("dungeon", {}) as Dictionary).get("active", true)) and
-		game.find_child("DungeonButton", true, false) != null,
-		"撤离秘境必须回到原有主线且不替换普通战斗入口")
+		game.find_child("ChapterPrimaryButton", true, false) != null,
+		"撤离秘境必须回到原有章节主线，秘境入口不得常亮")
 	game.call("_show_inventory")
 	_expect(game.find_child("InventoryBackButton", true, false) != null,
 		"行囊界面必须提供明确返回动作")
 	game.call("_show_game")
 	EncounterSystemScript.offer(game.get("run_state"), "integration", "回归敌踪", "用于验证战斗入口只在有敌情时开放。")
 	game.call("_show_game")
-	combat_button = game.find_child("CombatButton", true, false) as Button
-	_expect(combat_button != null and not combat_button.disabled,
-		"事件产生敌踪后普通战斗入口必须限时开放")
+	chapter_button = game.find_child("ChapterPrimaryButton", true, false) as Button
+	_expect(chapter_button != null and chapter_button.text.contains("回应敌踪"),
+		"事件产生敌踪后，章节主动作必须转化为限时回应而非多出常亮战斗按钮")
 	game.call("_start_combat")
 	var active_combat_state: Dictionary = game.get("run_state")
 	_expect(bool((active_combat_state.get("combat", {}) as Dictionary).get("active", false)),
@@ -209,7 +204,7 @@ func _run() -> void:
 	_expect(game.find_child("EventResultContinueButton", true, false) != null and
 		(game.get("current_event") as Dictionary).is_empty(),
 		"事件选择后必须先停留在独立结果页，不能立刻跌回按钮墙")
-	_expect(chapter_log.size() == 1 and str((chapter_log[-1] as Dictionary).get("choice", "")).is_empty() == false,
+	_expect(chapter_log.size() >= 2 and str((chapter_log[-1] as Dictionary).get("choice", "")).is_empty() == false,
 		"每次事件结算必须写入可持久化的命途长卷")
 	game.call("_show_journal")
 	_expect(game.find_child("JournalBackButton", true, false) != null and

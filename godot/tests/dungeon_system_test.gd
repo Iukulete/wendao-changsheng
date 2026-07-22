@@ -35,6 +35,7 @@ func _init() -> void:
 	_expect(mapped_resolutions == 24 and mapped_story_cards.size() == 12,
 		"四条主线的今生与续章结论必须形成24对12的稳定能力映射")
 	var base := GameStateScript.create_new_game("入梦人", 969696, [8, 8, 8, 8, 8])
+	DungeonSystemScript.grant_clue(base, "秘境系统回归测试")
 	base.player.max_hp = 1200
 	base.player.hp = 1200
 	base.player.attack = 180
@@ -43,6 +44,15 @@ func _init() -> void:
 	var start_a: Dictionary = DungeonSystemScript.start(first)
 	var start_b: Dictionary = DungeonSystemScript.start(second)
 	_expect(start_a == start_b and first == second, "相同状态必须生成相同秘境牌组与路线")
+	var reentry_probe := base.duplicate(true)
+	DungeonSystemScript.start(reentry_probe)
+	var abandoned_generation := int(reentry_probe.generation)
+	DungeonSystemScript.abandon(reentry_probe)
+	DungeonSystemScript.grant_clue(reentry_probe, "不应再次取得的线索")
+	var blocked_reentry: Dictionary = DungeonSystemScript.start(reentry_probe)
+	_expect(int(reentry_probe.dungeon.last_entered_generation) == abandoned_generation and
+		str(blocked_reentry.get("code", "")) == "dungeon_already_resolved_this_life",
+		"秘境必须进入即消耗此世机会，撤离后也不能重复刷取")
 	_expect((first.dungeon.run.deck as Array).size() >= 11 and
 		(first.dungeon.run.route_choices as Array).size() >= 1 and
 		(first.dungeon.run.route_history as Array).is_empty(),
@@ -471,6 +481,7 @@ func _init() -> void:
 
 func _start_boss(era_id: String, seed_value: int) -> Dictionary:
 	var state := GameStateScript.create_new_game("法则见证人", seed_value, [8, 8, 8, 8, 8])
+	DungeonSystemScript.grant_clue(state, "时代首领回归测试")
 	state.current_era_id = era_id
 	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
 	state.player.max_hp = 1200
@@ -492,6 +503,7 @@ func _start_boss(era_id: String, seed_value: int) -> Dictionary:
 
 func _start_normal(era_id: String, seed_value: int) -> Dictionary:
 	var state := GameStateScript.create_new_game("心魔见证人", seed_value, [8, 8, 8, 8, 8])
+	DungeonSystemScript.grant_clue(state, "时代心魔回归测试")
 	state.current_era_id = era_id
 	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
 	state.player.max_hp = 1200
@@ -508,6 +520,7 @@ func _start_normal(era_id: String, seed_value: int) -> Dictionary:
 
 func _start_elite(era_id: String, seed_value: int) -> Dictionary:
 	var state := GameStateScript.create_new_game("被动见证人", seed_value, [8, 8, 8, 8, 8])
+	DungeonSystemScript.grant_clue(state, "时代精英回归测试")
 	state.current_era_id = era_id
 	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
 	state.player.max_hp = 1200
@@ -551,6 +564,7 @@ func _set_boss_intent(state: Dictionary, intent: String) -> void:
 
 func _resolve_noncombat(era_id: String, node_type: String, seed_value: int) -> Dictionary:
 	var state := GameStateScript.create_new_game("道标见证人", seed_value, [8, 8, 8, 8, 8])
+	DungeonSystemScript.grant_clue(state, "时代道标回归测试")
 	state.current_era_id = era_id
 	state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, "古典修仙纪"))
 	state.player.max_hp = 1000

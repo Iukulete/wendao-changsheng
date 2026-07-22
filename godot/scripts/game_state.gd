@@ -107,6 +107,9 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"active": false,
 			"run": {},
 			"history": [],
+			"clues": 0,
+			"clue_source": "",
+			"last_entered_generation": 0,
 		},
 		"story": {
 			"story_version": 2,
@@ -166,6 +169,7 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 		],
 		"feedback": "镜湖古门在你写下道号的那一刻开启。",
 		"life_closed": false,
+		"ending_state": "",
 	}
 
 
@@ -235,6 +239,7 @@ static func create_legacy_state() -> Dictionary:
 			"equipped_id": "",
 			"notices": [],
 		},
+		"last_rebirth_verdict": {},
 	}
 
 
@@ -280,8 +285,15 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 		"active": false, "current": {}, "history": [],
 	})
 	state["dungeon"] = _merge_defaults(state.get("dungeon", {}), {
-		"active": false, "run": {}, "history": [],
+		"active": false, "run": {}, "history": [], "clues": 0,
+		"clue_source": "", "last_entered_generation": 0,
 	})
+	var dungeon_state: Dictionary = state.dungeon
+	if int(dungeon_state.get("last_entered_generation", 0)) == 0 and \
+			int(dungeon_state.get("last_completed_generation", 0)) > 0:
+		dungeon_state["last_entered_generation"] = int(dungeon_state.last_completed_generation)
+	dungeon_state.erase("last_completed_generation")
+	state["dungeon"] = dungeon_state
 	state["story"] = _merge_defaults(state.get("story", {}), {
 		"story_version": 2,
 		"completed_event_ids": [], "life_event_ids": [], "event_cooldowns": {},
@@ -296,6 +308,7 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 		"last_backend": "", "request_count": 0, "fallback_count": 0,
 	})
 	state["life_closed"] = bool(state.get("life_closed", false))
+	state["ending_state"] = str(state.get("ending_state", "")).left(32)
 	var source_player: Dictionary = state.get("player", {})
 	state["player"] = ensure_player_v2(source_player)
 	return state
