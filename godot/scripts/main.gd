@@ -7,10 +7,10 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const CultivationScript = preload("res://scripts/cultivation_system.gd")
 const ReincarnationScript = preload("res://scripts/reincarnation_system.gd")
 const WorldSimulationScript = preload("res://scripts/world_simulation.gd")
-const LocalAIBridgeScript = preload("res://scripts/local_ai_bridge.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const CombatStageScript = preload("res://scripts/combat_stage.gd")
+const DungeonDuelStageScript = preload("res://scripts/dungeon_duel_stage.gd")
 const DungeonFeedbackLayerScript = preload("res://scripts/dungeon_feedback_layer.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
 const ObjectiveSystemScript = preload("res://scripts/objective_system.gd")
@@ -21,6 +21,7 @@ const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const AudioDirectorScript = preload("res://scripts/audio_director.gd")
 const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
 const CinematicArtMotionScript = preload("res://scripts/cinematic_art_motion.gd")
+const NarrativeConsequenceScript = preload("res://scripts/narrative_consequence_system.gd")
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -55,7 +56,7 @@ const DEFAULT_PLAYER := {
 	"max_hp": 100,
 	"mp": 42,
 	"max_mp": 42,
-	"age": 16,
+	"age": 18,
 	"lifespan": 88,
 	"spirit_stones": 12,
 	"pills": 0,
@@ -67,7 +68,7 @@ const DEFAULT_PLAYER := {
 }
 
 enum ScreenState {
-	MENU, GAME, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, AI_PENDING, INVENTORY, COMBAT, ARMORY,
+	MENU, GAME, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, INVENTORY, COMBAT, ARMORY,
 	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE,
 }
 
@@ -85,7 +86,6 @@ var inventory_notice: String = "器物、材料与装备变化会立即封存。
 var run_state: Dictionary = {}
 var player: Dictionary = {}
 var save_service: RefCounted = SaveServiceScript.new()
-var ai_bridge: Node
 var audio_director: Node
 var audio_return_state: ScreenState = ScreenState.MENU
 
@@ -103,6 +103,8 @@ var display_font: Font
 var achievement_notice_queue: Array[Dictionary] = []
 var achievement_toast: Control
 var dungeon_action_feedback: Dictionary = {}
+var combat_input_locked: bool = false
+var combat_feedback_sequence: int = 0
 
 
 func _ready() -> void:
@@ -113,9 +115,6 @@ func _ready() -> void:
 	if audio_smoke_requested:
 		print("AUDIO_DEVICE_SMOKE_READY: driver=%s display=%s" % [
 			AudioServer.get_driver_name(), DisplayServer.get_name()])
-	ai_bridge = LocalAIBridgeScript.new()
-	add_child(ai_bridge)
-	ai_bridge.connect("event_ready", _on_ai_event_ready)
 	if run_state.is_empty():
 		run_state = GameStateScript.create_new_game("无名", 1, DEFAULT_PLAYER.roots)
 	_sync_state_views()
@@ -159,12 +158,12 @@ func _run_audio_device_music_smoke() -> void:
 	var decisive_voices := int(audio_director.debug_music_playing_voice_count())
 	var rare_cue_ok := bool(audio_director.play_event("dungeon.boss_enter"))
 	if (audio_director.get_era() != "steam" or audio_director.get_music_state() != "decisive" or
-			pressure_voices != 2 or decisive_voices != 2 or dungeon_ambience_voices != 4 or not rare_cue_ok):
+			pressure_voices != 2 or decisive_voices != 2 or dungeon_ambience_voices != 1 or not rare_cue_ok):
 		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d ambience_voices=%d rare_cue=%s" % [
 			audio_director.get_era(), audio_director.get_music_state(), pressure_voices,
 			decisive_voices, dungeon_ambience_voices, rare_cue_ok])
 		return
-	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=4 rare_cue=true")
+	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=1 rare_cue=true")
 	audio_director.shutdown_for_exit()
 	await get_tree().create_timer(0.15).timeout
 	audio_director.queue_free()
@@ -197,10 +196,10 @@ func _process(delta: float) -> void:
 func _build_theme() -> void:
 	var body_base := load(BODY_FONT_PATH) as Font
 	var display_base := load(DISPLAY_FONT_PATH) as Font
-	body_font = _font_variation(body_base, 650)
-	body_medium_font = _font_variation(body_base, 700)
-	body_semibold_font = _font_variation(body_base, 800)
-	display_font = _font_variation(display_base, 650)
+	body_font = _font_variation(body_base, 740)
+	body_medium_font = _font_variation(body_base, 790)
+	body_semibold_font = _font_variation(body_base, 870)
+	display_font = _font_variation(display_base, 700)
 	base_theme = Theme.new()
 	base_theme.default_font = body_font
 	base_theme.default_font_size = 18
@@ -392,7 +391,7 @@ func _show_menu() -> void:
 	feature_strip.name = "MenuFeatureStrip"
 	feature_strip.alignment = BoxContainer.ALIGNMENT_CENTER
 	feature_strip.add_theme_constant_override("separation", 7)
-	for feature_text in ["六纪元", "十世轮回", "本地演算"]:
+	for feature_text in ["六纪元", "十世轮回", "分歧长卷"]:
 		feature_strip.add_child(_menu_feature_pill(feature_text))
 	identity_column.add_child(feature_strip)
 	identity_column.add_child(_label("一枚旧玉，记录每一世留下的因果。", 14,
@@ -678,13 +677,11 @@ func _build_header() -> Control:
 		int(run_state.get("generation", 1)), current_era,
 		int((run_state.get("world", {}) as Dictionary).get("year", 1))], 15,
 		Color(era_accent, 0.92)))
-	var ai_ready := _local_model_ready()
-	var ai_text := "本地天机已就绪" if ai_ready else "规则事件运行中"
 	var status_box := VBoxContainer.new()
 	status_box.custom_minimum_size.x = 280
 	status_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(status_box)
-	status_box.add_child(_label(ai_text, 15, Color("9ad8c7") if ai_ready else Color("c9c2a8"),
+	status_box.add_child(_label("长卷随章节自动封存", 15, Color("c9c2a8"),
 		HORIZONTAL_ALIGNMENT_RIGHT))
 	status_box.add_child(_label(save_notice, 13,
 		Color("df776c") if save_notice.begins_with("保存失败") else Color(era_accent, 0.88),
@@ -755,7 +752,8 @@ func _build_player_panel() -> Control:
 		int(player.karma), int(player.dao_heart), int(player.reputation), int(player.enmity)],
 		13, Color(0.85, 0.87, 0.88, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("寿元 %d/%d（%s）  灵石 %d   丹药 %d" % [
-		int(player.age), int(player.lifespan), CultivationScript.lifespan_pressure(player),
+		int(player.get("age", 18)), int(player.get("lifespan", 88)),
+		CultivationScript.lifespan_pressure(player),
 		int(player.spirit_stones),
 		int(player.pills) + ItemSystemScript.count(run_state, "healing_pill")],
 		13, Color(0.72, 0.78, 0.80, 0.90), HORIZONTAL_ALIGNMENT_CENTER))
@@ -888,6 +886,15 @@ func _build_chapter_direction() -> Control:
 			Color(0.72, 0.78, 0.78, 0.9))
 		thread_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(thread_label)
+	var characters: Array = CharacterArtCatalogScript.story_characters()
+	var relationship_text := NarrativeConsequenceScript.relationship_summary(run_state, characters)
+	var obligation_text := NarrativeConsequenceScript.open_obligation_summary(run_state, characters)
+	var consequence_label := _label("牵系 · %s\n未偿 · %s" % [
+		relationship_text.left(72), obligation_text.left(88)], 12,
+		Color(0.70, 0.78, 0.78, 0.90))
+	consequence_label.name = "ChapterConsequenceSummary"
+	consequence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(consequence_label)
 	return box
 
 
@@ -1147,7 +1154,7 @@ func _world_digest() -> String:
 		var relation_suffix := " · 旧谊%+d" % imported_relation if imported_relation != 0 else ""
 		npc_lines += "- %s · %s · %d岁 · %s%s\n" % [
 			str(npc.get("name", "无名客")), str(npc.get("realm", "凡人")),
-			int(npc.get("age", 0)), _faction_name(str(npc.get("faction_id", "")), factions),
+			int(npc.get("age", 18)), _faction_name(str(npc.get("faction_id", "")), factions),
 			relation_suffix]
 		visible_npcs += 1
 		if visible_npcs >= 4:
@@ -1292,7 +1299,6 @@ func _start_combat() -> void:
 		feedback = "山道上的杀机没有凝成可辨认的战局。"
 		_show_game()
 		return
-	EncounterSystemScript.consume(run_state)
 	feedback = "%s拦住去路，你已看清它的第一道意图。" % str((result.battle as Dictionary).enemy_name)
 	_save_current_state("战局已自动封存")
 	_show_combat()
@@ -1309,9 +1315,11 @@ func _show_combat() -> void:
 	var battle: Dictionary = run_state.combat.current
 	var intent_forecast: Dictionary = CombatSystemScript.intent_forecast(battle)
 	var action_forecasts: Dictionary = CombatSystemScript.action_forecasts(run_state, battle)
+	var technique_forecasts: Array = CombatSystemScript.technique_forecasts(run_state, battle)
 	var page := VBoxContainer.new()
+	page.name = "CombatPage"
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	page.add_theme_constant_override("separation", 16)
+	page.add_theme_constant_override("separation", 8)
 	screen_host.add_child(page)
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
@@ -1319,248 +1327,790 @@ func _show_combat() -> void:
 			call_deferred("_refresh_screen_layout", ScreenState.COMBAT)
 	)
 
-	var header := _panel(0.80, era_accent)
-	header.name = "CombatHeader"
-	header.custom_minimum_size.y = 76
-	header.add_child(_display_label("生死战 · 第%d回合 · %s" % [int(battle.turn), current_era], 27,
-		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
-	page.add_child(header)
+	var objective: Dictionary = CombatSystemScript.battle_objective(battle)
+	page.add_child(_build_combat_header(battle, objective))
+	page.add_child(_build_combat_status_band(battle))
 
-	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
-	body.name = "CombatBody"
-	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_theme_constant_override("separation", 18)
-	if narrow_layout:
-		var body_scroll := ScrollContainer.new()
-		body_scroll.name = "CombatBodyScroll"
-		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		body_scroll.follow_focus = true
-		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		body_scroll.add_child(body)
-		page.add_child(body_scroll)
-	else:
-		page.add_child(body)
-	var player_panel := _build_player_combat_panel(battle, action_forecasts)
-	var center_panel := _build_combat_log(battle, intent_forecast, narrow_layout)
-	var enemy_panel := _build_enemy_panel(battle, intent_forecast)
-	if narrow_layout:
-		body.add_child(center_panel)
-		var status_row := HBoxContainer.new()
-		status_row.name = "CombatNarrowStatusRow"
-		status_row.add_theme_constant_override("separation", 12)
-		status_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		player_panel.custom_minimum_size.x = 0
-		player_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		enemy_panel.custom_minimum_size.x = 0
-		enemy_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		status_row.add_child(player_panel)
-		status_row.add_child(enemy_panel)
-		body.add_child(status_row)
-	else:
-		body.add_child(player_panel)
-		body.add_child(center_panel)
-		body.add_child(enemy_panel)
+	var arena_row := HBoxContainer.new()
+	arena_row.name = "CombatArenaRow"
+	arena_row.custom_minimum_size.y = 218
+	arena_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	arena_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	arena_row.add_theme_constant_override("separation", 10)
+	page.add_child(arena_row)
 
-	var actions: Container = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
-	actions.name = "CombatActionBar"
-	actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var primary_action_host: Container = actions
-	var secondary_action_host: Container = actions
-	if narrow_layout:
-		actions.add_theme_constant_override("separation", 8)
-		var primary_action_row := HBoxContainer.new()
-		primary_action_row.add_theme_constant_override("separation", 8)
-		primary_action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var secondary_action_row := HBoxContainer.new()
-		secondary_action_row.add_theme_constant_override("separation", 8)
-		secondary_action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		actions.add_child(primary_action_row)
-		actions.add_child(secondary_action_row)
-		primary_action_host = primary_action_row
-		secondary_action_host = secondary_action_row
-	else:
-		(actions as HBoxContainer).alignment = BoxContainer.ALIGNMENT_CENTER
-		actions.add_theme_constant_override("separation", 10)
-	page.add_child(actions)
-	var attack: Dictionary = action_forecasts.attack
-	var guard: Dictionary = action_forecasts.guard
-	var spell: Dictionary = action_forecasts.spell
-	var pill: Dictionary = action_forecasts.pill
-	var flee: Dictionary = action_forecasts.flee
-	var attack_button := _combat_action_button("斩击 %d–%d [1]" % [
-		int(attack.min_damage), int(attack.max_damage)], _resolve_combat_action.bind("attack"), true,
-		narrow_layout)
-	attack_button.name = "CombatAttackButton"
-	attack_button.tooltip_text = "以攻势对敌，22%概率留下流血。"
-	primary_action_host.add_child(attack_button)
-	var guard_button := _combat_action_button("守势 +%d–%d盾 [2]" % [
-		int(guard.min_shield), int(guard.max_shield)], _resolve_combat_action.bind("guard"), false,
-		narrow_layout)
-	guard_button.name = "CombatGuardButton"
-	guard_button.tooltip_text = "根据护体强度凝成可抵消本回合伤害的护盾。"
-	primary_action_host.add_child(guard_button)
-	var spell_button := _combat_action_button("术法 %d–%d [3]" % [
-		int(spell.min_damage), int(spell.max_damage)], _resolve_combat_action.bind("spell"), false,
-		narrow_layout)
-	spell_button.name = "CombatSpellButton"
-	spell_button.disabled = int(battle.player_mp) < CombatSystemScript.SPELL_COST
-	spell_button.tooltip_text = "灵力不足。" if spell_button.disabled else \
-		"消耗%d点灵力，穿透一半护体并施加虚弱。" % CombatSystemScript.SPELL_COST
-	primary_action_host.add_child(spell_button)
-	var pill_button_text := "气血已满 [4]" if int(pill.heal) <= 0 else "服丹 +%d [4]" % int(pill.heal)
-	var pill_button := _combat_action_button(pill_button_text,
-		_resolve_combat_action.bind("pill"), false, narrow_layout)
-	pill_button.name = "CombatPillButton"
-	pill_button.disabled = int(pill.count) <= 0 or int(pill.heal) <= 0
-	pill_button.tooltip_text = "行囊中没有疗伤丹。" if int(pill.count) <= 0 else \
-		("气血已满，无需消耗疗伤丹。" if int(pill.heal) <= 0 else "消耗1枚疗伤丹，恢复四成气血。")
-	secondary_action_host.add_child(pill_button)
-	var flee_button := _combat_action_button("脱战 %d%% [5]" % int(flee.chance),
-		_resolve_combat_action.bind("flee"), false, narrow_layout)
-	flee_button.name = "CombatFleeButton"
-	flee_button.tooltip_text = "尝试退出战圈；当前成功率%d%%，拖得越久越低。" % int(flee.chance)
-	secondary_action_host.add_child(flee_button)
-
-
-func _combat_action_button(text_value: String, callback: Callable, primary: bool,
-		compact: bool = false) -> Button:
-	var button := _button(text_value, callback, primary, "", true)
-	button.custom_minimum_size = Vector2(0 if compact else 158, 48)
-	if compact:
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return button
-
-
-func _build_player_combat_panel(battle: Dictionary, forecasts: Dictionary) -> Control:
-	var panel := _build_combatant_panel("此世之我", int(battle.player_hp), int(battle.player_max_hp),
-		int(battle.player_mp), int(battle.player_max_mp), int(battle.player_attack),
-		int(battle.player_defense), battle.player_statuses, false)
-	panel.name = "CombatPlayerPanel"
-	var column := panel.get_child(0) as VBoxContainer
-	column.add_child(_divider())
-	column.add_child(_section_title("本回合筹码"))
-	var attack: Dictionary = forecasts.attack
-	var guard: Dictionary = forecasts.guard
-	var spell: Dictionary = forecasts.spell
-	var pill: Dictionary = forecasts.pill
-	var flee: Dictionary = forecasts.flee
-	var offense := _label("斩击 %d–%d\n术法 %d–%d" % [
-		int(attack.min_damage), int(attack.max_damage),
-		int(spell.min_damage), int(spell.max_damage)], 14, Color("e7d7a5"))
-	offense.name = "CombatPlayerDamageForecast"
-	offense.add_theme_constant_override("line_spacing", 5)
-	column.add_child(offense)
-	var healing_text := "已满" if int(pill.heal) <= 0 else "+%d" % int(pill.heal)
-	var defense := _label("守势 +%d–%d 护盾\n疗伤 %s · 余丹 %d" % [
-		int(guard.min_shield), int(guard.max_shield), healing_text, int(pill.count)],
-		14, Color(0.72, 0.83, 0.86))
-	defense.add_theme_constant_override("line_spacing", 5)
-	column.add_child(defense)
-	column.add_child(_label("脱战概率 %d%%" % int(flee.chance), 14,
-		Color(0.78, 0.80, 0.78)))
-	return panel
-
-
-func _build_combatant_panel(title: String, hp: int, max_hp: int, mp: int, max_mp: int,
-		attack: int, defense: int, statuses: Dictionary, enemy_side: bool) -> Control:
-	var panel := _panel(0.82, Color("d46b61") if enemy_side else era_accent)
-	panel.custom_minimum_size.x = 255
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
-	panel.add_child(column)
-	column.add_child(_section_title(title))
-	column.add_child(_progress_row("气血", hp, max_hp, Color("c95858")))
-	if not enemy_side:
-		column.add_child(_progress_row("灵力", mp, max_mp, Color("538fc2")))
-	column.add_child(_label("攻势 %d  ·  护体 %d" % [attack, defense], 15,
-		Color(0.82, 0.85, 0.84)))
-	column.add_child(_label(_combat_status_text(statuses), 15, Color(0.82, 0.84, 0.82)))
-	return panel
-
-
-func _build_enemy_panel(battle: Dictionary, forecast: Dictionary) -> Control:
-	var panel := _build_combatant_panel(str(battle.enemy_name), int(battle.enemy_hp),
-		int(battle.enemy_max_hp), 0, 0, int(battle.enemy_attack), int(battle.enemy_defense),
-		battle.enemy_statuses, true)
-	panel.name = "CombatEnemyPanel"
-	var column := panel.get_child(0) as VBoxContainer
-	column.add_child(_divider())
-	column.add_child(_label("下一意图", 14, Color(0.72, 0.76, 0.76)))
-	column.add_child(_label(CombatSystemScript.intent_label(battle), 22, Color("ef9a78"),
-		HORIZONTAL_ALIGNMENT_CENTER))
-	var threat_color := _combat_threat_color(str(forecast.get("threat", "常规")))
-	column.add_child(_label("威胁 · %s" % str(forecast.get("threat", "常规")), 14,
-		threat_color, HORIZONTAL_ALIGNMENT_CENTER))
-	var range_label := _label(_combat_forecast_range_text(forecast), 18, Color("f2d6b5"),
-		HORIZONTAL_ALIGNMENT_CENTER)
-	range_label.name = "CombatEnemyForecast"
-	column.add_child(range_label)
-	if not str(forecast.get("status", "")).is_empty():
-		column.add_child(_label("附带 · %s" % str(forecast.status), 14,
-			Color("d99aba"), HORIZONTAL_ALIGNMENT_CENTER))
-	var detail := _label(CombatSystemScript.intent_description(battle), 14, Color(0.82, 0.80, 0.76))
-	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	column.add_child(detail)
-	return panel
-
-
-func _build_combat_log(battle: Dictionary, forecast: Dictionary,
-		compact: bool = false) -> Control:
-	var panel := _panel(0.76, era_accent)
-	panel.name = "CombatCenterPanel"
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
-	panel.add_child(column)
+	var stage_frame := _panel(0.46, era_accent)
+	stage_frame.name = "CombatStageFrame"
+	stage_frame.custom_minimum_size.x = 270 if narrow_layout else 390
+	stage_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stage_frame.size_flags_stretch_ratio = 0.82
+	var stage_style := stage_frame.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	stage_style.content_margin_left = 0
+	stage_style.content_margin_right = 0
+	stage_style.content_margin_top = 0
+	stage_style.content_margin_bottom = 0
+	stage_style.corner_radius_top_left = 6
+	stage_style.corner_radius_top_right = 6
+	stage_style.corner_radius_bottom_left = 6
+	stage_style.corner_radius_bottom_right = 6
+	stage_frame.add_theme_stylebox_override("panel", stage_style)
 	var combat_stage: Control = CombatStageScript.new()
 	combat_stage.name = "CombatStage"
 	combat_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	combat_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	combat_stage.call("configure", battle, era_accent)
-	column.add_child(combat_stage)
-	var forecast_card := _panel(0.38, _combat_threat_color(str(forecast.get("threat", "常规"))))
+	stage_frame.add_child(combat_stage)
+	arena_row.add_child(stage_frame)
+
+	var tactics := _build_combat_tactics_panel(battle, intent_forecast, objective, narrow_layout)
+	tactics.size_flags_stretch_ratio = 1.18
+	arena_row.add_child(tactics)
+	page.add_child(_build_combat_action_deck(battle, action_forecasts, technique_forecasts,
+		intent_forecast, objective))
+
+
+func _build_combat_header(battle: Dictionary, objective: Dictionary) -> Control:
+	var header := _panel(0.82, era_accent)
+	header.name = "CombatHeader"
+	header.custom_minimum_size.y = 68
+	var style := header.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 14
+	style.content_margin_right = 12
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	header.add_theme_stylebox_override("panel", style)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	header.add_child(row)
+	var title_stack := VBoxContainer.new()
+	title_stack.custom_minimum_size.x = 165
+	title_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_stack.add_theme_constant_override("separation", 0)
+	var round_label := _display_label("第%d回合" % int(battle.turn), 23, Color("f5e7bd"))
+	round_label.name = "CombatRoundTitle"
+	title_stack.add_child(round_label)
+	var era_label := _label(current_era, 12, Color(era_accent, 0.88))
+	era_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_stack.add_child(era_label)
+	row.add_child(title_stack)
+
+	var context := VBoxContainer.new()
+	context.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	context.alignment = BoxContainer.ALIGNMENT_CENTER
+	context.add_theme_constant_override("separation", 1)
+	var motivation := str(objective.get("motivation", "")).strip_edges()
+	if motivation.is_empty():
+		motivation = "%s已封住你的去路。" % str(battle.get("enemy_name", "来敌"))
+	var motive_label := _label("敌踪 · %s" % motivation, 12, Color(0.72, 0.79, 0.79, 0.90))
+	motive_label.name = "CombatEnemyMotive"
+	motive_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	context.add_child(motive_label)
+	var stakes := str(objective.get("stakes", "")).strip_edges()
+	if stakes.is_empty():
+		stakes = "压住来敌，活着把这一段因果带回去。"
+	var stakes_label := _label("此战所争 · %s" % stakes, 14, Color(0.90, 0.89, 0.82, 0.98))
+	stakes_label.name = "CombatStoryStakes"
+	stakes_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stakes_label.max_lines_visible = 2
+	context.add_child(stakes_label)
+	row.add_child(context)
+	var log_button := _button("实录", _open_combat_log_overlay, false, "", true)
+	log_button.name = "CombatLogButton"
+	log_button.custom_minimum_size = Vector2(70, 38)
+	row.add_child(log_button)
+	return header
+
+
+func _build_combat_status_band(battle: Dictionary) -> Control:
+	var band := _panel(0.72, Color("7aa9b5"))
+	band.name = "CombatStatusBand"
+	band.custom_minimum_size.y = 84
+	var style := band.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	band.add_theme_stylebox_override("panel", style)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	band.add_child(row)
+	var player_status := _build_combatant_status_block("此世之我", battle, false)
+	player_status.name = "CombatPlayerStatus"
+	row.add_child(player_status)
+	var divider := VSeparator.new()
+	divider.add_theme_constant_override("separation", 8)
+	row.add_child(divider)
+	var enemy_status := _build_combatant_status_block(str(battle.get("enemy_name", "来敌")), battle, true)
+	enemy_status.name = "CombatEnemyStatus"
+	row.add_child(enemy_status)
+	return band
+
+
+func _build_combatant_status_block(title: String, battle: Dictionary, enemy_side: bool) -> Control:
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_stretch_ratio = 1.0
+	column.add_theme_constant_override("separation", 3)
+	var hp := int(battle.get("enemy_hp" if enemy_side else "player_hp", 0))
+	var max_hp := int(battle.get("enemy_max_hp" if enemy_side else "player_max_hp", 1))
+	var attack := int(battle.get("enemy_attack" if enemy_side else "player_attack", 0))
+	var defense := int(battle.get("enemy_defense" if enemy_side else "player_defense", 0))
+	var statuses_value: Variant = battle.get("enemy_statuses" if enemy_side else "player_statuses", {})
+	var statuses: Dictionary = statuses_value if statuses_value is Dictionary else {}
+	var title_row := HBoxContainer.new()
+	var name_label := _label(title, 17, Color("ef9a78") if enemy_side else Color("f0d37e"))
+	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_row.add_child(name_label)
+	var summary := _label("攻 %d · 护 %d · %s" % [attack, defense, _combat_status_text(statuses)], 12,
+		Color(0.76, 0.81, 0.81), HORIZONTAL_ALIGNMENT_RIGHT)
+	summary.name = "CombatEnemyStatusSummary" if enemy_side else "CombatPlayerStatusSummary"
+	summary.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	title_row.add_child(summary)
+	column.add_child(title_row)
+	column.add_child(_combat_resource_track("气血", hp, max_hp, Color("c95858"),
+		"CombatEnemyHPBar" if enemy_side else "CombatPlayerHPBar"))
+	if enemy_side:
+		var phase_text := "二相 · %s" % str(battle.get("phase_title", "换势")) \
+			if bool(battle.get("second_phase_active", false)) else "气机尚在前半"
+		var phase_label := _label(phase_text, 12,
+			Color("ef8a72") if bool(battle.get("second_phase_active", false)) else Color(0.68, 0.74, 0.75))
+		phase_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		column.add_child(phase_label)
+	else:
+		column.add_child(_combat_resource_track("灵力", int(battle.get("player_mp", 0)),
+			int(battle.get("player_max_mp", 1)), Color("538fc2"), "CombatPlayerMPBar"))
+	return column
+
+
+func _combat_resource_track(title: String, value: int, maximum: int, color: Color,
+		node_name: String) -> Control:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	var value_label := _label("%s %d/%d" % [title, value, maximum], 12, Color(0.80, 0.84, 0.84))
+	value_label.custom_minimum_size.x = 102
+	row.add_child(value_label)
+	var bar := ProgressBar.new()
+	bar.name = node_name
+	bar.max_value = max(1, maximum)
+	bar.value = clamp(value, 0, maximum)
+	bar.show_percentage = false
+	bar.custom_minimum_size.y = 7
+	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var background_style := StyleBoxFlat.new()
+	background_style.bg_color = Color(0.08, 0.10, 0.13, 0.86)
+	background_style.corner_radius_top_left = 3
+	background_style.corner_radius_top_right = 3
+	background_style.corner_radius_bottom_left = 3
+	background_style.corner_radius_bottom_right = 3
+	var fill_style := background_style.duplicate() as StyleBoxFlat
+	fill_style.bg_color = Color(color, 0.92)
+	bar.add_theme_stylebox_override("background", background_style)
+	bar.add_theme_stylebox_override("fill", fill_style)
+	row.add_child(bar)
+	return row
+
+
+func _build_combat_action_deck(battle: Dictionary, forecasts: Dictionary,
+		technique_forecasts: Array, intent_forecast: Dictionary, objective: Dictionary) -> Control:
+	var deck := _panel(0.76, era_accent)
+	deck.name = "CombatActionDeck"
+	var style := deck.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 7
+	style.content_margin_bottom = 7
+	deck.add_theme_stylebox_override("panel", style)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 6)
+	deck.add_child(stack)
+	var primary_row := HBoxContainer.new()
+	primary_row.name = "CombatPrimaryActions"
+	primary_row.add_theme_constant_override("separation", 7)
+	primary_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(primary_row)
+	for technique_index in range(technique_forecasts.size()):
+		var forecast_value: Variant = technique_forecasts[technique_index]
+		if not forecast_value is Dictionary:
+			continue
+		var forecast: Dictionary = forecast_value
+		primary_row.add_child(_combat_technique_card(forecast, technique_index, battle,
+			objective, intent_forecast))
+
+	var utility_row := HBoxContainer.new()
+	utility_row.name = "CombatUtilityActions"
+	utility_row.add_theme_constant_override("separation", 7)
+	utility_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(utility_row)
+	var pill: Dictionary = forecasts.get("pill", {})
+	var pill_state := "气血已满" if int(pill.get("heal", 0)) <= 0 else \
+		"恢复 %d · 余 %d枚" % [int(pill.get("heal", 0)), int(pill.get("count", 0))]
+	var pill_button := _combat_utility_button("服丹", pill_state,
+		str(pill.get("counter_role", "utility")), _resolve_combat_action.bind("pill"))
+	pill_button.name = "CombatPillButton"
+	var pill_available := int(pill.get("count", 0)) > 0 and int(pill.get("heal", 0)) > 0
+	pill_button.set_meta("combat_available", pill_available)
+	pill_button.disabled = combat_input_locked or not pill_available
+	pill_button.tooltip_text = "行囊中没有疗伤丹。" if int(pill.get("count", 0)) <= 0 else \
+		("气血已满，无需消耗疗伤丹。" if int(pill.get("heal", 0)) <= 0 else \
+		"消耗1枚疗伤丹，恢复四成气血；已有破势节拍不会丢失。")
+	utility_row.add_child(pill_button)
+	var flee: Dictionary = forecasts.get("flee", {})
+	var flee_button := _combat_utility_button("撤离战圈", "成功率 %d%% · 失败保拍" % int(flee.get("chance", 0)),
+		str(flee.get("counter_role", "withdraw")), _resolve_combat_action.bind("flee"))
+	flee_button.name = "CombatFleeButton"
+	flee_button.set_meta("combat_available", true)
+	flee_button.disabled = combat_input_locked
+	flee_button.tooltip_text = "尝试退出战圈；拖得越久，成功率越低。\n%s" % \
+		str(objective.get("escape_consequence", "未分胜负，这段敌意仍会留在山河里。"))
+	utility_row.add_child(flee_button)
+	return deck
+
+
+func _combat_technique_card(forecast: Dictionary, technique_index: int, battle: Dictionary,
+		objective: Dictionary, intent_forecast: Dictionary) -> Button:
+	var technique_id := str(forecast.get("id", ""))
+	var base_action := str(forecast.get("base_action", "spell"))
+	var slot_id := str(forecast.get("slot", "turn"))
+	var role := str(forecast.get("counter_role", "unsuitable"))
+	var slot_title := str({
+		"pressure": "压制", "guard": "守势", "turn": "转机",
+	}.get(slot_id, "应变"))
+	var timing_title := str({
+		"action": "行招", "reaction": "应招", "follow_up": "回气",
+	}.get(str(forecast.get("timing", "action")), "行招"))
+	var title := str(forecast.get("name", "未名战技"))
+	if bool(objective.get("ready", false)) and base_action in ["attack", "spell"] and \
+			int(forecast.get("max_damage", 0)) > 0:
+		title += " · 破势"
+	var description := str(forecast.get("description", "")).strip_edges()
+	var prediction := _combat_technique_prediction(forecast)
+	var resource := _combat_technique_resource(forecast)
+	var rhythm := _combat_rhythm_card_line(role, int(objective.get("progress", 0)),
+		int(objective.get("target", 3)))
+	var signature_note := _combat_action_signature_note(forecast)
+	if not signature_note.is_empty():
+		rhythm += " · " + signature_note
+	var button := _button("", _resolve_combat_technique.bind(technique_id),
+		role == "recommended", "", true)
+	button.name = str({
+		"pressure": "CombatPressureButton",
+		"guard": "CombatGuardButton",
+		"turn": "CombatTurnButton",
+	}.get(slot_id, "CombatTechniqueButton%d" % technique_index))
+	button.set_meta("technique_id", technique_id)
+	button.set_meta("technique_slot", slot_id)
+	button.custom_minimum_size = Vector2(0, 108)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.clip_contents = true
+	var role_color := _combat_role_color(role)
+	button.add_theme_stylebox_override("normal", _button_style(0.18, role_color, 0.62, true))
+	button.add_theme_stylebox_override("hover", _button_style(0.36, role_color, 0.98, true))
+	button.add_theme_stylebox_override("focus", _button_style(0.36, role_color, 0.98, true))
+	button.add_theme_stylebox_override("pressed", _button_style(0.50, role_color, 1.0, true))
+	var technique_available := bool(forecast.get("available", true))
+	button.set_meta("combat_available", technique_available)
+	button.disabled = combat_input_locked or not technique_available
+	if button.disabled:
+		button.add_theme_stylebox_override("disabled", _button_style(0.10,
+			Color("6f7478"), 0.28, true))
+
+	var content := MarginContainer.new()
+	content.name = "CombatTechniqueContent"
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.add_theme_constant_override("margin_left", 12)
+	content.add_theme_constant_override("margin_right", 12)
+	content.add_theme_constant_override("margin_top", 8)
+	content.add_theme_constant_override("margin_bottom", 8)
+	button.add_child(content)
+	var column := VBoxContainer.new()
+	column.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	column.add_theme_constant_override("separation", 2)
+	content.add_child(column)
+	var header := HBoxContainer.new()
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_theme_constant_override("separation", 8)
+	column.add_child(header)
+	var slot_label := _label("%d  %s · %s" % [technique_index + 1, slot_title, timing_title],
+		11, Color(role_color, 0.98))
+	slot_label.name = "CombatTechniqueSlotLabel"
+	slot_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	slot_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(slot_label)
+	var cost_label := _label(resource, 11,
+		Color("efc66e") if int(forecast.get("mp_cost", 0)) > 0 else Color(0.67, 0.74, 0.74),
+		HORIZONTAL_ALIGNMENT_RIGHT)
+	cost_label.name = "CombatTechniqueCostLabel"
+	cost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(cost_label)
+	var name_label := _display_label(title, 17, Color("f3e3b9"))
+	name_label.name = "CombatTechniqueNameLabel"
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(name_label)
+	var description_label := _label(description, 11, Color(0.70, 0.75, 0.74, 0.94))
+	description_label.name = "CombatTechniqueDescriptionLabel"
+	description_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	description_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	column.add_child(description_label)
+	var footer := HBoxContainer.new()
+	footer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	footer.add_theme_constant_override("separation", 8)
+	column.add_child(footer)
+	var effect_label := _label(prediction, 12, Color(0.84, 0.87, 0.84))
+	effect_label.name = "CombatTechniqueEffectLabel"
+	effect_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	effect_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	effect_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	footer.add_child(effect_label)
+	var rhythm_label := _label(rhythm, 11, Color(role_color, 0.96),
+		HORIZONTAL_ALIGNMENT_RIGHT)
+	rhythm_label.name = "CombatTechniqueRhythmLabel"
+	rhythm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rhythm_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	footer.add_child(rhythm_label)
+	if button.disabled:
+		content.modulate = Color(0.68, 0.70, 0.70, 0.82)
+	var blocked_reason := str(forecast.get("blocked_reason", "")).strip_edges()
+	if button.disabled and blocked_reason.is_empty():
+		blocked_reason = "当前不可施展"
+	var tooltip_lines: Array[String] = []
+	if button.disabled:
+		tooltip_lines.append("当前不可施展：%s" % blocked_reason)
+	if not description.is_empty():
+		tooltip_lines.append(description)
+	tooltip_lines.append(_combat_rhythm_detail(base_action, role, intent_forecast))
+	button.tooltip_text = "\n".join(tooltip_lines)
+	return button
+
+
+func _combat_technique_prediction(forecast: Dictionary) -> String:
+	var effects: Array[String] = []
+	if int(forecast.get("max_damage", 0)) > 0:
+		effects.append("伤害 %d–%d" % [int(forecast.get("min_damage", 0)),
+			int(forecast.get("max_damage", 0))])
+	if int(forecast.get("shield", 0)) > 0:
+		effects.append("护盾 +%d" % int(forecast.get("shield", 0)))
+	if int(forecast.get("heal", 0)) > 0:
+		effects.append("气血 +%d" % int(forecast.get("heal", 0)))
+	if int(forecast.get("mp_gain", 0)) > 0:
+		effects.append("灵力 +%d" % int(forecast.get("mp_gain", 0)))
+	var status_value: Variant = (forecast.get("effects", {}) as Dictionary).get("status", {})
+	if status_value is Dictionary and not (status_value as Dictionary).is_empty():
+		var status: Dictionary = status_value
+		var status_name := str({
+			"bleed": "流血", "weak": "虚弱", "shield": "护体",
+		}.get(str(status.get("id", "")), "状态"))
+		effects.append("%s %d回合" % [status_name, int(status.get("duration", 1))])
+	return " · ".join(effects) if not effects.is_empty() else "调息换势"
+
+
+func _combat_technique_resource(forecast: Dictionary) -> String:
+	var cost := int(forecast.get("mp_cost", forecast.get("cost", 0)))
+	return "灵力 %d" % cost if cost > 0 else "无消耗"
+
+
+func _combat_action_card(action_id: String, forecast: Dictionary, battle: Dictionary,
+		objective: Dictionary, intent_forecast: Dictionary) -> Button:
+	var role := str(forecast.get("counter_role", "unsuitable"))
+	var title := CombatSystemScript.action_name(action_id)
+	var prediction := _combat_action_prediction(action_id, forecast)
+	var resource := _combat_action_resource(action_id, forecast)
+	var rhythm := _combat_rhythm_card_line(role, int(objective.get("progress", 0)),
+		int(objective.get("target", 3)))
+	var signature_note := _combat_action_signature_note(forecast)
+	if not signature_note.is_empty():
+		rhythm += " · " + signature_note
+	if bool(objective.get("ready", false)) and action_id in ["attack", "spell"]:
+		title += " · 破势"
+	var button := _button("%s\n%s · %s\n%s" % [title, prediction, resource, rhythm],
+		_resolve_combat_action.bind(action_id), role == "recommended", "", true)
+	button.custom_minimum_size = Vector2(0, 96)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	button.add_theme_font_size_override("font_size", 14)
+	var role_color := _combat_role_color(role)
+	button.add_theme_stylebox_override("normal", _button_style(0.20, role_color, 0.62, true))
+	button.add_theme_stylebox_override("hover", _button_style(0.38, role_color, 0.96, true))
+	button.add_theme_stylebox_override("focus", _button_style(0.38, role_color, 0.96, true))
+	button.add_theme_stylebox_override("pressed", _button_style(0.52, role_color, 1.0, true))
+	var available := bool(forecast.get("available", true))
+	var mp_cost := int(forecast.get("mp_cost", 0))
+	button.disabled = not available or (action_id == "spell" and int(battle.get("player_mp", 0)) < mp_cost)
+	if button.disabled:
+		button.add_theme_color_override("font_disabled_color", Color(0.64, 0.67, 0.67, 0.90))
+		button.add_theme_stylebox_override("disabled", _button_style(0.10, Color("6f7478"), 0.28, true))
+	var blocked_reason := str(forecast.get("blocked_reason", "")).strip_edges()
+	if button.disabled and blocked_reason.is_empty():
+		blocked_reason = "灵力不足"
+	button.tooltip_text = ("当前不可施展：%s\n" % blocked_reason if button.disabled else "") + \
+		_combat_rhythm_detail(action_id, role, intent_forecast)
+	return button
+
+
+func _combat_utility_button(title: String, detail: String, role: String,
+		callback: Callable) -> Button:
+	var button := _button("%s · %s" % [title, detail], callback, false, "", true)
+	button.custom_minimum_size = Vector2(0, 40)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 13)
+	var role_color := _combat_role_color(role)
+	button.add_theme_stylebox_override("normal", _button_style(0.15, role_color, 0.40, true))
+	button.add_theme_stylebox_override("hover", _button_style(0.30, role_color, 0.84, true))
+	button.add_theme_stylebox_override("focus", _button_style(0.30, role_color, 0.84, true))
+	return button
+
+
+func _combat_action_prediction(action_id: String, forecast: Dictionary) -> String:
+	if action_id == "guard":
+		return "护盾 +%d–%d" % [int(forecast.get("min_shield", 0)), int(forecast.get("max_shield", 0))]
+	return "伤害 %d–%d" % [int(forecast.get("min_damage", 0)), int(forecast.get("max_damage", 0))]
+
+
+func _combat_action_resource(action_id: String, forecast: Dictionary) -> String:
+	var costs: Array[String] = []
+	var mp_cost := int(forecast.get("mp_cost", 0))
+	var extra_mp_cost := int(forecast.get("extra_mp_cost", 0))
+	if mp_cost > 0:
+		costs.append("灵力 %d" % mp_cost)
+	elif extra_mp_cost > 0:
+		costs.append("灵力税 %d" % extra_mp_cost)
+	var hp_cost := int(forecast.get("signature_hp_cost", 0))
+	if hp_cost > 0:
+		costs.append("触律失血 %d" % hp_cost)
+	if not bool(forecast.get("available", true)):
+		costs.append(str(forecast.get("blocked_reason", "当前封禁")))
+	return " · ".join(costs) if not costs.is_empty() else "无消耗"
+
+
+func _combat_rhythm_card_line(role: String, progress: int, target: int) -> String:
+	return str({
+		"recommended": "进势 · 破绽 %d/%d" % [mini(target, progress + 1), target],
+		"alternative": "保拍 · 维持 %d/%d" % [progress, target],
+		"utility": "保拍 · 维持 %d/%d" % [progress, target],
+		"withdraw": "离场 · 失败保拍",
+		"unsuitable": "断势 · 连势归零",
+	}.get(role, "断势 · 连势归零"))
+
+
+func _combat_action_signature_note(forecast: Dictionary) -> String:
+	var notes: Array[String] = []
+	var power := int(forecast.get("signature_power_percent", 100))
+	if power < 100:
+		notes.append("威力 %d%%" % power)
+	if int(forecast.get("enemy_shield_gain", 0)) > 0:
+		notes.append("敌盾 +%d" % int(forecast.enemy_shield_gain))
+	var heat := int(forecast.get("heat_delta", 0))
+	if heat != 0:
+		notes.append("炉压 %+d" % heat)
+	if int(forecast.get("bleed_clear", 0)) > 0:
+		notes.append("流血 -%d" % int(forecast.bleed_clear))
+	if int(forecast.get("silence_clear", 0)) > 0:
+		notes.append("寂印 -%d" % int(forecast.silence_clear))
+	return " · ".join(notes)
+
+
+func _combat_role_color(role: String) -> Color:
+	return {
+		"recommended": Color("d7b85a"),
+		"alternative": Color("62aebc"),
+		"utility": Color("78959a"),
+		"withdraw": Color("8c8176"),
+		"unsuitable": Color("aa625e"),
+	}.get(role, era_accent)
+
+
+func _combat_rhythm_detail(action_id: String, role: String, forecast: Dictionary) -> String:
+	if role == "recommended":
+		return "节拍：推进破势一拍。%s" % str(forecast.get("recommended_text", ""))
+	if role == "alternative":
+		return "节拍：保住当前进度，但不推进。%s" % str(forecast.get("alternative_text", ""))
+	if role == "utility":
+		return "节拍：%s不会推进，也不会打断当前进度。" % CombatSystemScript.action_name(action_id)
+	if role == "withdraw":
+		return "节拍：脱战失败时保留当前进度；成功则结束交锋。"
+	return "节拍：这一手与当前敌意失配，会打断已经积累的进度。"
+
+
+func _build_combat_tactics_panel(battle: Dictionary, forecast: Dictionary,
+		objective: Dictionary, compact: bool = false) -> Control:
+	var panel := _panel(0.80, _combat_threat_color(str(forecast.get("threat", "常规"))))
+	panel.name = "CombatTacticsPanel"
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	style.content_margin_left = 13
+	style.content_margin_right = 13
+	style.content_margin_top = 10
+	style.content_margin_bottom = 9
+	panel.add_theme_stylebox_override("panel", style)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 5)
+	panel.add_child(column)
+
+	var signature := VBoxContainer.new()
+	signature.name = "CombatSignaturePanel"
+	signature.add_theme_constant_override("separation", 2)
+	column.add_child(signature)
+	var signature_header := HBoxContainer.new()
+	var signature_title := _label(str(objective.get("signature_title", "临阵换势")), 17,
+		Color("ef9a78"))
+	signature_title.name = "CombatSignatureTitle"
+	signature_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	signature_header.add_child(signature_title)
+	var phase_active := bool(battle.get("second_phase_active", false))
+	var phase_pending := bool(battle.get("phase_shift_pending", false))
+	var phase_text := "第二阶段" if phase_active else "换势将至" if phase_pending else "第一阶段"
+	var phase_label := _label(phase_text, 12,
+		Color("ef7867") if phase_active else Color(0.72, 0.77, 0.76), HORIZONTAL_ALIGNMENT_RIGHT)
+	phase_label.name = "CombatPhaseState"
+	signature_header.add_child(phase_label)
+	signature.add_child(signature_header)
+	var signature_status := _label(str(objective.get("signature_status", "敌势尚未显出变化。")),
+		12, Color(era_accent, 0.92))
+	signature_status.name = "CombatSignatureStatus"
+	signature_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	signature.add_child(signature_status)
+	var rule := _label(str(objective.get("signature_rule", "敌人会在半血后改变招路。")), 12,
+		Color(0.79, 0.82, 0.80))
+	rule.name = "CombatSignatureRule"
+	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	rule.max_lines_visible = 2
+	signature.add_child(rule)
+	if phase_active or phase_pending:
+		var phase_rule := _label("换势 · %s" % str(objective.get("signature_phase_rule", "后半程招路已经改变。")),
+			12, Color("e88972"))
+		phase_rule.name = "CombatSignaturePhaseRule"
+		phase_rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		phase_rule.max_lines_visible = 2
+		signature.add_child(phase_rule)
+	column.add_child(_divider())
+
+	var forecast_card := VBoxContainer.new()
 	forecast_card.name = "CombatForecastCard"
-	forecast_card.custom_minimum_size.y = 82
+	forecast_card.add_theme_constant_override("separation", 2)
+	column.add_child(forecast_card)
 	var forecast_row := HBoxContainer.new()
-	forecast_row.add_theme_constant_override("separation", 18)
+	forecast_row.add_theme_constant_override("separation", 10)
 	forecast_card.add_child(forecast_row)
-	var forecast_summary := VBoxContainer.new()
-	forecast_summary.custom_minimum_size.x = 190
-	forecast_summary.add_child(_label("敌意测算 · %s" % str(forecast.get("threat", "常规")),
-		14, _combat_threat_color(str(forecast.get("threat", "常规")))))
-	var forecast_range := _label(_combat_forecast_range_text(forecast), 20, Color("f3dfbc"))
-	forecast_range.name = "CombatForecastRange"
-	forecast_summary.add_child(forecast_range)
-	forecast_row.add_child(forecast_summary)
-	var counterplay := _label(str(forecast.get("counter", "先看清敌意，再决定这一回合。")),
-		14, Color(0.82, 0.84, 0.82))
+	var intent_name := _label("敌意 · %s" % CombatSystemScript.intent_label(battle), 18, Color("f0b08b"))
+	intent_name.name = "CombatIntentName"
+	intent_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	forecast_row.add_child(intent_name)
+	var threat_color := _combat_threat_color(str(forecast.get("threat", "常规")))
+	var range_label := _label("%s · %s" % [str(forecast.get("threat", "常规")),
+		_combat_forecast_range_text(forecast)], 14, threat_color, HORIZONTAL_ALIGNMENT_RIGHT)
+	range_label.name = "CombatForecastRange"
+	forecast_row.add_child(range_label)
+	var counterplay := _label("应对线索 · %s" % str(forecast.get("counter",
+		"先看清敌意，再决定这一回合。")), 12, Color(0.78, 0.82, 0.81))
 	counterplay.name = "CombatCounterplay"
 	counterplay.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	counterplay.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	counterplay.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	forecast_row.add_child(counterplay)
-	column.add_child(forecast_card)
-	column.add_child(_build_combat_intent_timeline(battle))
+	counterplay.max_lines_visible = 2
+	forecast_card.add_child(counterplay)
+	var intent_effect := _combat_intent_signature_effect(forecast)
+	if not intent_effect.is_empty():
+		var effect_label := _label(intent_effect, 12, Color("d99aba"))
+		effect_label.name = "CombatIntentSignatureEffect"
+		effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		forecast_card.add_child(effect_label)
+	forecast_card.add_child(_build_combat_intent_timeline(battle))
 	column.add_child(_divider())
-	column.add_child(_section_title("交锋实录"))
+	column.add_child(_build_combat_objective_card(objective))
+
+	var recent_lines := _combat_event_lines(battle, true)
+	if not compact and not recent_lines.is_empty():
+		var latest := _label("上一拍\n%s" % "\n".join(recent_lines), 11,
+			Color(0.65, 0.70, 0.70))
+		latest.name = "CombatLogPreview"
+		latest.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		latest.max_lines_visible = 4
+		column.add_child(latest)
+	return panel
+
+
+func _combat_intent_signature_effect(forecast: Dictionary) -> String:
+	if int(forecast.get("mp_loss", 0)) > 0:
+		var mp_loss := int(forecast.mp_loss)
+		return "签名生效 · 抽走%d点灵力%s" % [mp_loss,
+			"，并化作等量敌盾" if bool(forecast.get("shield_gain_equals_mp_loss", false)) else ""]
+	if int(forecast.get("shield_plunder_max", 0)) > 0:
+		return "签名生效 · 至多夺走%d点护盾" % int(forecast.shield_plunder_max)
+	if int(forecast.get("overheat_multiplier_percent", 0)) > 0:
+		return "签名生效 · 过热攻势为%d%%" % int(forecast.overheat_multiplier_percent)
+	if int(forecast.get("blood_scent_multiplier_percent", 0)) > 0:
+		return "签名生效 · 闻血追击为%d%%" % int(forecast.blood_scent_multiplier_percent)
+	if int(forecast.get("shield_pierce_percent", 0)) > 0:
+		return "签名生效 · 穿透%d%%现有护盾" % int(forecast.shield_pierce_percent)
+	if not str(forecast.get("next_edict_action", "")).is_empty():
+		return "当前禁令 · 不可使%s" % CombatSystemScript.action_name(str(forecast.next_edict_action))
+	return ""
+
+
+func _open_combat_log_overlay() -> void:
+	if not CombatSystemScript.has_active_combat(run_state) or \
+		is_instance_valid(screen_host.find_child("CombatLogOverlay", true, false)):
+		return
+	var battle: Dictionary = run_state.combat.current
+	var overlay := Control.new()
+	overlay.name = "CombatLogOverlay"
+	overlay.z_index = 180
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	screen_host.add_child(overlay)
+	var scrim := ColorRect.new()
+	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scrim.color = Color(0.005, 0.01, 0.018, 0.86)
+	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	overlay.add_child(scrim)
+	var dialog := _panel(0.98, era_accent)
+	dialog.name = "CombatLogDialog"
+	dialog.anchor_left = 0.12
+	dialog.anchor_top = 0.10
+	dialog.anchor_right = 0.88
+	dialog.anchor_bottom = 0.90
+	dialog.offset_left = 0
+	dialog.offset_top = 0
+	dialog.offset_right = 0
+	dialog.offset_bottom = 0
+	overlay.add_child(dialog)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", 10)
+	dialog.add_child(stack)
+	var title_row := HBoxContainer.new()
+	var title := _display_label("交锋实录", 24, Color("f3dfb3"))
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(title)
+	var close_button := _button("收起", _close_combat_log_overlay, false, "", true)
+	close_button.name = "CombatLogCloseButton"
+	close_button.custom_minimum_size = Vector2(82, 40)
+	title_row.add_child(close_button)
+	stack.add_child(title_row)
+	stack.add_child(_label("%s · 第%d回合 · %s" % [str(battle.get("enemy_name", "来敌")),
+		int(battle.get("turn", 1)), str(battle.get("signature_title", "临阵换势"))], 13,
+		Color(era_accent, 0.88)))
+	stack.add_child(_divider())
 	var scroll := ScrollContainer.new()
 	scroll.name = "CombatLogScroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	if compact:
-		scroll.custom_minimum_size.y = 90
-	column.add_child(scroll)
-	var log_lines: Array[String] = []
-	for log_value in (battle.log as Array).slice(-12):
-		log_lines.append("· %s" % str(log_value))
-	var log_label := _label("\n".join(log_lines), 16, Color("eee8da"))
+	stack.add_child(scroll)
+	var log_lines := _combat_event_lines(battle, false)
+	if log_lines.is_empty():
+		log_lines.append("· 双方尚未出手。")
+	var log_label := _label("\n\n".join(log_lines), 15, Color("e8e4da"))
 	log_label.name = "CombatLogLabel"
 	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(log_label)
-	return panel
+
+
+func _close_combat_log_overlay() -> void:
+	var overlay := screen_host.find_child("CombatLogOverlay", true, false)
+	if is_instance_valid(overlay):
+		overlay.queue_free()
+
+
+func _combat_event_lines(battle: Dictionary, latest_only: bool) -> Array[String]:
+	var lines: Array[String] = []
+	var history_value: Variant = battle.get("event_history", [])
+	var history: Array = history_value if history_value is Array else []
+	if not history.is_empty():
+		var first_index := history.size() - 1 if latest_only else 0
+		for event_index in range(first_index, history.size()):
+			var event_value: Variant = history[event_index]
+			if not event_value is Dictionary:
+				continue
+			var combat_event: Dictionary = event_value
+			if not latest_only:
+				lines.append("第%d回合 · %s" % [int(combat_event.get("turn", event_index + 1)),
+					_combat_event_action_name(combat_event)])
+			var steps_value: Variant = combat_event.get("steps", [])
+			var steps: Array = steps_value if steps_value is Array else []
+			for step_value in steps:
+				if not step_value is Dictionary:
+					continue
+				var step: Dictionary = step_value
+				var kind := str(step.get("kind", "note"))
+				var cue := str(step.get("cue", ""))
+				var meaningful := kind in ["damage", "shield", "heal", "resource", "status",
+					"signature", "counter", "phase_shift", "outcome"]
+				meaningful = meaningful or (kind == "intent" and cue == "combat_next_intent")
+				meaningful = meaningful or (kind == "action" and cue in ["combat_flee", "combat_flee_blocked"])
+				var step_text := str(step.get("text", "")).strip_edges()
+				if not meaningful or step_text.is_empty():
+					continue
+				var actor_label := str({"player": "我方", "enemy": "敌方", "system": "战局"}.get(
+					str(step.get("actor", "system")), "战局"))
+				lines.append("· %s · %s" % [actor_label, step_text])
+		if latest_only and lines.size() > 3:
+			var recent: Array[String] = []
+			for line_index in range(lines.size() - 3, lines.size()):
+				recent.append(lines[line_index])
+			return recent
+	if not lines.is_empty():
+		return lines
+	# Legacy active battles may predate structured traces. They remain readable
+	# until the next resolved turn creates an event_history entry.
+	var legacy_value: Variant = battle.get("log", [])
+	var legacy: Array = legacy_value if legacy_value is Array else []
+	var legacy_start := maxi(0, legacy.size() - (3 if latest_only else legacy.size()))
+	for log_index in range(legacy_start, legacy.size()):
+		lines.append("· %s" % str(legacy[log_index]))
+	return lines
+
+
+func _combat_event_action_name(combat_event: Dictionary) -> String:
+	var action_id := str(combat_event.get("action_id", "attack"))
+	for technique_value in CombatSystemScript.technique_slots(run_state):
+		if not technique_value is Dictionary:
+			continue
+		var technique: Dictionary = technique_value
+		if str(technique.get("id", "")) == action_id:
+			return str(technique.get("name", "战技"))
+	return CombatSystemScript.action_name(action_id)
+
+
+func _build_combat_objective_card(objective: Dictionary) -> Control:
+	var ready := bool(objective.get("ready", false))
+	var card := VBoxContainer.new()
+	card.name = "CombatObjectiveCard"
+	card.add_theme_constant_override("separation", 3)
+	var row := HBoxContainer.new()
+	card.add_child(row)
+	var progress := _label("%s · %d/%d" % [str(objective.get("title", "三拍破势")),
+		int(objective.progress), int(objective.target)], 15,
+		Color("f2d28a") if ready else Color(era_accent, 0.96))
+	progress.name = "CombatCounterProgress"
+	progress.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(progress)
+	var state_label := _label("破势已成" if ready else "连势推进", 12,
+		Color("efc76f") if ready else Color(0.69, 0.77, 0.77), HORIZONTAL_ALIGNMENT_RIGHT)
+	row.add_child(state_label)
+	var progress_bar := ProgressBar.new()
+	progress_bar.name = "CombatCounterBar"
+	progress_bar.max_value = max(1, int(objective.get("target", 3)))
+	progress_bar.value = int(objective.get("progress", 0))
+	progress_bar.show_percentage = false
+	progress_bar.custom_minimum_size.y = 6
+	var bar_background := StyleBoxFlat.new()
+	bar_background.bg_color = Color(0.09, 0.11, 0.14, 0.86)
+	var bar_fill := bar_background.duplicate() as StyleBoxFlat
+	bar_fill.bg_color = Color("e0b95e") if ready else Color(era_accent, 0.80)
+	progress_bar.add_theme_stylebox_override("background", bar_background)
+	progress_bar.add_theme_stylebox_override("fill", bar_fill)
+	card.add_child(progress_bar)
+	var status_label := _label(str(objective.get("status", "看清三手，等破绽自己露出来。")), 12,
+		Color(0.75, 0.80, 0.79, 0.94))
+	status_label.name = "CombatCounterStatus"
+	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	status_label.max_lines_visible = 2
+	card.add_child(status_label)
+	return card
 
 
 func _build_combat_intent_timeline(battle: Dictionary) -> HBoxContainer:
@@ -1576,17 +2126,21 @@ func _build_combat_intent_timeline(battle: Dictionary) -> HBoxContainer:
 		var intent_panel := _panel(0.28 if offset == 0 else 0.18,
 			Color("ef8a68") if offset == 0 else era_accent)
 		intent_panel.name = "CombatIntentStep%d" % offset
-		intent_panel.custom_minimum_size.y = 50
+		intent_panel.custom_minimum_size.y = 32
 		intent_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var intent_style := intent_panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
-		intent_style.content_margin_left = 8
-		intent_style.content_margin_right = 8
-		intent_style.content_margin_top = 5
-		intent_style.content_margin_bottom = 5
-		intent_style.shadow_size = 4
+		intent_style.content_margin_left = 5
+		intent_style.content_margin_right = 5
+		intent_style.content_margin_top = 3
+		intent_style.content_margin_bottom = 3
+		intent_style.shadow_size = 0
+		intent_style.corner_radius_top_left = 4
+		intent_style.corner_radius_top_right = 4
+		intent_style.corner_radius_bottom_left = 4
+		intent_style.corner_radius_bottom_right = 4
 		intent_panel.add_theme_stylebox_override("panel", intent_style)
 		intent_panel.add_child(_label("%s · %s" % [prefixes[offset],
-			CombatSystemScript.intent_name(intent_id)], 13,
+			CombatSystemScript.intent_name(intent_id)], 11,
 			Color("f1d4b7") if offset == 0 else Color(0.74, 0.78, 0.78, 0.86),
 			HORIZONTAL_ALIGNMENT_CENTER))
 		timeline.add_child(intent_panel)
@@ -1623,23 +2177,53 @@ func _combat_status_text(statuses: Dictionary) -> String:
 
 
 func _resolve_combat_action(action: String) -> void:
-	var result: Dictionary = CombatSystemScript.perform_action(run_state, action)
+	if combat_input_locked:
+		return
+	_resolve_combat_result(action, CombatSystemScript.perform_action(run_state, action))
+
+
+func _resolve_combat_technique(technique_id: String) -> void:
+	if combat_input_locked:
+		return
+	_resolve_combat_result(technique_id,
+		CombatSystemScript.perform_technique(run_state, technique_id))
+
+
+func _resolve_combat_technique_slot(slot_index: int) -> void:
+	if combat_input_locked:
+		return
+	var slots: Array = CombatSystemScript.technique_slots(run_state)
+	if slot_index < 0 or slot_index >= slots.size() or not slots[slot_index] is Dictionary:
+		feedback = "这一式尚未纳入当前战技构筑。"
+		_show_combat()
+		return
+	_resolve_combat_technique(str((slots[slot_index] as Dictionary).get("id", "")))
+
+
+func _resolve_combat_result(action: String, result: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		feedback = str({
 			"insufficient_mp": "灵力不足，术式未能成形。",
 			"no_healing_pill": "行囊中已无疗伤丹。",
 			"hp_full": "气血已满，旧玉阻止你浪费疗伤丹。",
+			"technique_not_in_loadout": "这一式不在当前构筑中。",
+			"signature_action_blocked": str(result.get("message", "敌方规则封住了这一式。")),
 		}.get(str(result.get("code", "")), "这一行动未能落入战局。"))
 		_show_combat()
 		return
 	_play_combat_action_audio(action, result)
 	_sync_state_views()
 	if str(result.get("code", "")) != "combat_finished":
+		var feedback_duration := 0.72 if bool(result.get("second_phase_triggered", false)) or \
+			bool(result.get("second_phase_shifted", false)) else 0.38
+		_begin_combat_feedback_lock(feedback_duration)
 		_save_current_state("战斗回合已自动封存")
 		_show_combat()
 		return
+	_release_combat_feedback_lock()
 	var outcome := str(result.get("outcome", "escaped"))
 	var battle: Dictionary = result.get("battle", {})
+	var story_consequence := str(result.get("story_consequence", "")).strip_edges()
 	if outcome == "victory":
 		var rewards: Dictionary = result.get("rewards", {})
 		AchievementSystemScript.add_resonance(run_state, 6, "正面胜战")
@@ -1648,8 +2232,12 @@ func _resolve_combat_action(action: String) -> void:
 		feedback = "你击败%s，修为 +%d、灵石 +%d，并取得一份战利材料。" % [
 			str(battle.get("enemy_name", "强敌")), int(rewards.get("exp", 0)),
 			int(rewards.get("spirit_stones", 0))]
+		if not story_consequence.is_empty():
+			feedback += "\n\n" + story_consequence
 		_add_memory("第%d年，你看穿%s的意图并在正面交锋中取胜。" % [
 			int((run_state.world as Dictionary).get("year", 1)), str(battle.get("enemy_name", "强敌"))])
+		if not story_consequence.is_empty():
+			_add_memory(story_consequence)
 		var objective_result := _record_objective_action("combat_victory")
 		_sync_state_views()
 		_append_objective_feedback(objective_result)
@@ -1661,11 +2249,46 @@ func _resolve_combat_action(action: String) -> void:
 		return
 	if outcome == "defeat":
 		feedback = "你败于%s，此世气血归零。" % str(battle.get("enemy_name", "强敌"))
-		_end_current_life("战败身陨：%s" % str(battle.get("enemy_name", "强敌")))
+		if not story_consequence.is_empty():
+			feedback += "\n\n" + story_consequence
+		_end_current_life("战败身陨：%s%s" % [str(battle.get("enemy_name", "强敌")),
+			"；%s" % story_consequence if not story_consequence.is_empty() else ""])
 		return
 	feedback = "你脱离了与%s的战圈，未分胜负。" % str(battle.get("enemy_name", "强敌"))
+	if not story_consequence.is_empty():
+		feedback += "\n\n" + story_consequence
+		_add_memory(story_consequence)
 	_save_current_state("脱战结果已自动封存")
 	_show_game()
+
+
+func _begin_combat_feedback_lock(duration_seconds: float) -> void:
+	combat_feedback_sequence += 1
+	var sequence := combat_feedback_sequence
+	combat_input_locked = true
+	get_tree().create_timer(maxf(0.12, duration_seconds)).timeout.connect(func() -> void:
+		if sequence != combat_feedback_sequence:
+			return
+		combat_input_locked = false
+		_apply_combat_input_lock()
+	)
+
+
+func _release_combat_feedback_lock() -> void:
+	combat_feedback_sequence += 1
+	combat_input_locked = false
+	_apply_combat_input_lock()
+
+
+func _apply_combat_input_lock() -> void:
+	if not is_instance_valid(screen_host):
+		return
+	for button_value in screen_host.find_children("Combat*Button", "Button", true, false):
+		if not button_value is Button:
+			continue
+		var button := button_value as Button
+		if button.has_meta("combat_available"):
+			button.disabled = combat_input_locked or not bool(button.get_meta("combat_available"))
 
 
 func _enter_dungeon() -> void:
@@ -1733,7 +2356,7 @@ func _show_dungeon_route() -> void:
 	status.add_theme_constant_override("separation", 14)
 	content_host.add_child(status)
 	var stress_color := _dungeon_stress_color(int(run.stress))
-	var vitality := _panel(0.80, stress_color if int(run.stress) >= 60 else era_accent)
+	var vitality := _dungeon_surface(stress_color if int(run.stress) >= 60 else era_accent)
 	vitality.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var vitality_column := VBoxContainer.new()
 	vitality_column.add_theme_constant_override("separation", 7)
@@ -1744,7 +2367,7 @@ func _show_dungeon_route() -> void:
 	route_stress_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vitality_column.add_child(route_stress_label)
 	status.add_child(vitality)
-	var depth_panel := _panel(0.80, era_accent)
+	var depth_panel := _dungeon_surface(era_accent)
 	depth_panel.custom_minimum_size.x = 260 if narrow_layout else 310
 	var depth_column := VBoxContainer.new()
 	depth_column.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1764,7 +2387,7 @@ func _show_dungeon_route() -> void:
 	body.add_theme_constant_override("separation", 16)
 	content_host.add_child(body)
 	body.add_child(_build_dungeon_route_journal(run, not narrow_layout))
-	var route_panel := _panel(0.86, Color("d5a957"))
+	var route_panel := _dungeon_surface(Color("6b9ba8"), true)
 	route_panel.name = "DungeonRouteChoicePanel"
 	route_panel.custom_minimum_size.x = 0 if narrow_layout else 420
 	if narrow_layout:
@@ -1776,14 +2399,18 @@ func _show_dungeon_route() -> void:
 	var routes: Array = run.route_choices
 	for index in range(routes.size()):
 		var node: Dictionary = routes[index]
-		var route_button := _button("%d · %s 〔%s〕\n%s\n预示 · %s" % [index + 1, str(node.name),
-			str(node.danger), str(node.get("description", "前路因果未明。")),
+		var route_button := _button("%d · %s\n%s\n%s" % [index + 1,
+			_dungeon_route_action(node), str(node.get("description", "前路因果未明。")),
 			_dungeon_route_preview(node)],
 			_choose_dungeon_route.bind(index), index == 0)
 		route_button.name = "DungeonRouteButton%d" % index
 		route_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		route_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		route_button.custom_minimum_size.y = 122
+		route_button.custom_minimum_size.y = 112
+		var node_color := _dungeon_route_type_color(str(node.get("type", "memory")))
+		route_button.add_theme_stylebox_override("normal", _button_style(0.17, node_color, 0.44))
+		route_button.add_theme_stylebox_override("hover", _button_style(0.33, node_color, 0.88))
+		route_button.add_theme_stylebox_override("focus", _button_style(0.33, node_color, 0.88))
 		route_column.add_child(route_button)
 	route_column.add_child(_spacer(6))
 	var abandon_button := _button("撤出秘境", _abandon_dungeon, false)
@@ -1814,10 +2441,12 @@ func _show_dungeon_combat() -> void:
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	page.add_theme_constant_override("separation", 12)
 	screen_host.add_child(page)
-	var narrow_layout := get_viewport_rect().size.x < 1040.0
+	var viewport_size := get_viewport_rect().size
+	var narrow_layout := viewport_size.x < 1040.0 or viewport_size.y < 820.0
 	page.resized.connect(func() -> void:
 		if state == ScreenState.DUNGEON_COMBAT and \
-				(get_viewport_rect().size.x < 1040.0) != narrow_layout:
+				(get_viewport_rect().size.x < 1040.0 or
+				get_viewport_rect().size.y < 820.0) != narrow_layout:
 			call_deferred("_refresh_screen_layout", ScreenState.DUNGEON_COMBAT)
 	)
 	page.add_child(_build_dungeon_header(run, "能力交锋 · 第%d回合" % int(battle.turn),
@@ -1841,12 +2470,12 @@ func _show_dungeon_combat() -> void:
 
 	var combat_row := HBoxContainer.new()
 	combat_row.name = "DungeonCombatStatusRow"
-	combat_row.custom_minimum_size.y = 0 if narrow_layout else 270
+	combat_row.custom_minimum_size.y = 0 if narrow_layout else 332
 	combat_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	combat_row.add_theme_constant_override("separation", 14)
 	content_host.add_child(combat_row)
 	var stress_color := _dungeon_stress_color(int(run.stress))
-	var self_panel := _panel(0.84, stress_color if int(run.stress) >= 60 else era_accent)
+	var self_panel := _dungeon_surface(stress_color if int(run.stress) >= 60 else Color("6696a6"))
 	self_panel.name = "DungeonSelfPanel"
 	self_panel.custom_minimum_size.x = 0 if narrow_layout else 260
 	if narrow_layout:
@@ -1865,8 +2494,8 @@ func _show_dungeon_combat() -> void:
 		DungeonSystemScript.energy_cap(battle), int(battle.player_block)], 15, Color("b9d5e8")))
 	self_column.add_child(_label("器诀 +%d · 护诀 +%d" % [int(run.get("attack_power", 0)),
 		int(run.get("guard_power", 0))], 14, Color(era_accent, 0.88)))
-	var log_panel := _build_dungeon_log(run, not narrow_layout)
-	var enemy_panel := _panel(0.84, Color("d46b61"))
+	var log_panel := _build_dungeon_log(run, battle, narrow_layout)
+	var enemy_panel := _dungeon_surface(Color("d46b61"), str(battle.get("rank", "combat")) == "boss")
 	enemy_panel.name = "DungeonEnemyPanel"
 	enemy_panel.custom_minimum_size.x = 0 if narrow_layout else 330
 	if narrow_layout:
@@ -1875,22 +2504,41 @@ func _show_dungeon_combat() -> void:
 	enemy_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	enemy_column.add_theme_constant_override("separation", 8)
 	if narrow_layout:
-		enemy_panel.add_child(enemy_column)
+		# Keep one outer dungeon scroll on narrow screens. The clipped viewport
+		# prevents long boss rules from pushing cards and feedback off-screen.
+		var enemy_viewport := Control.new()
+		enemy_viewport.name = "DungeonEnemyViewport"
+		enemy_viewport.clip_contents = true
+		enemy_viewport.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		enemy_viewport.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		enemy_panel.add_child(enemy_viewport)
+		enemy_column.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		enemy_viewport.add_child(enemy_column)
 	else:
 		var enemy_scroll := ScrollContainer.new()
 		enemy_scroll.name = "DungeonEnemyScroll"
 		enemy_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		enemy_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 		enemy_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		enemy_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		enemy_scroll.follow_focus = true
 		enemy_panel.add_child(enemy_scroll)
 		enemy_scroll.add_child(enemy_column)
 	enemy_column.add_child(_section_title(str(battle.enemy_name)))
 	enemy_column.add_child(_progress_row("气血", int(battle.enemy_hp), int(battle.enemy_max_hp), Color("d35f58")))
 	enemy_column.add_child(_label("护体 %d · 虚弱 %d回合" % [int(battle.enemy_block), int(battle.enemy_weak)],
 		14, Color(0.78, 0.81, 0.81)))
-	enemy_column.add_child(_label("下一意图", 14, Color(0.68, 0.72, 0.73)))
-	enemy_column.add_child(_label(DungeonSystemScript.intent_label(str(battle.intent)), 21,
-		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER))
+	var intent_preview := DungeonSystemScript.intent_preview(battle)
+	enemy_column.add_child(_label("下一意图", 12, Color(0.68, 0.72, 0.73)))
+	var intent_name := _display_label("%s  %d %s" % [str(intent_preview.title),
+		int(intent_preview.value), str(intent_preview.unit)], 21,
+		Color("ef9a78"), HORIZONTAL_ALIGNMENT_CENTER)
+	intent_name.name = "DungeonIntentName"
+	enemy_column.add_child(intent_name)
+	var intent_detail := _label(str(intent_preview.detail), 13, Color(0.83, 0.80, 0.75))
+	intent_detail.name = "DungeonIntentDetail"
+	intent_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	enemy_column.add_child(intent_detail)
 	var rule_value: Variant = battle.get("trait", {})
 	if rule_value is Dictionary and not (rule_value as Dictionary).is_empty():
 		var rule: Dictionary = rule_value
@@ -1946,22 +2594,30 @@ func _show_dungeon_combat() -> void:
 		var upgrade := int(card.get("upgrade", 0))
 		var source_name := str(card.get("source_name", "既有功法"))
 		var source_kind := str(card.get("source_kind", "foundation"))
-		var card_button := _button("%d  %s%s\n源·%s  ·  灵力 %d\n%s" % [index + 1, str(definition.name),
+		var card_button := _button("%d  %s%s\n%s · 灵力 %d\n%s\n%s" % [index + 1, str(definition.name),
 			" +%d" % upgrade if upgrade > 0 else "", source_name, int(definition.cost),
+			DungeonSystemScript.card_effect_summary(definition, upgrade),
 			str(definition.description)],
 			_play_dungeon_card.bind(index), false)
 		card_button.name = "DungeonCardButton%d" % index
-		card_button.custom_minimum_size = Vector2(0 if narrow_layout else 194, 126)
+		card_button.custom_minimum_size = Vector2(0 if narrow_layout else 194, 136 if narrow_layout else 142)
 		if narrow_layout:
 			card_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		# Ability cards are primary decisions, so keep their copy centered on an
+		# opaque surface instead of letting the scene art compete with the text.
+		card_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		card_button.add_theme_font_size_override("font_size", 15)
+		card_button.add_theme_font_size_override("font_size", 16)
+		card_button.add_theme_color_override("font_color", Color("f5eee0"))
+		card_button.add_theme_color_override("font_hover_color", Color.WHITE)
+		card_button.add_theme_color_override("font_pressed_color", Color("fff6d6"))
+		card_button.add_theme_color_override("font_disabled_color", Color("9da7a8"))
 		var source_color := _ability_source_color(source_kind)
-		card_button.add_theme_stylebox_override("normal", _button_style(0.22, source_color, 0.56))
-		card_button.add_theme_stylebox_override("hover", _button_style(0.38, source_color, 0.94))
-		card_button.add_theme_stylebox_override("focus", _button_style(0.38, source_color, 0.94))
-		card_button.add_theme_stylebox_override("pressed", _button_style(0.52, source_color, 1.0))
+		card_button.add_theme_stylebox_override("normal", _dungeon_card_style(source_color, "normal"))
+		card_button.add_theme_stylebox_override("hover", _dungeon_card_style(source_color, "hover"))
+		card_button.add_theme_stylebox_override("focus", _dungeon_card_style(source_color, "hover"))
+		card_button.add_theme_stylebox_override("pressed", _dungeon_card_style(source_color, "pressed"))
+		card_button.add_theme_stylebox_override("disabled", _dungeon_card_style(source_color, "disabled"))
 		card_button.disabled = int(definition.cost) > int(battle.energy)
 		card_button.tooltip_text = "当前灵力不足。" if card_button.disabled else \
 			"能力来源：%s\n%s" % [source_name, str(definition.description)]
@@ -1970,7 +2626,10 @@ func _show_dungeon_combat() -> void:
 	feedback_slot.name = "DungeonFeedbackSlot"
 	feedback_slot.custom_minimum_size.y = 50
 	feedback_slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	page.add_child(feedback_slot)
+	if narrow_layout:
+		content_host.add_child(feedback_slot)
+	else:
+		page.add_child(feedback_slot)
 
 	var actions := HBoxContainer.new()
 	actions.name = "DungeonCombatActions"
@@ -1987,7 +2646,7 @@ func _show_dungeon_combat() -> void:
 
 
 func _build_dungeon_header(run: Dictionary, subtitle: String, narrow_layout: bool = false) -> Control:
-	var header := _panel(0.82, era_accent)
+	var header := _dungeon_surface(era_accent, true)
 	header.name = "DungeonHeader"
 	header.custom_minimum_size.y = 112 if narrow_layout else 86
 	var header_style := header.get_theme_stylebox("panel") as StyleBoxFlat
@@ -2020,33 +2679,99 @@ func _build_dungeon_header(run: Dictionary, subtitle: String, narrow_layout: boo
 	return header
 
 
-func _build_dungeon_log(run: Dictionary, use_inner_scroll: bool = true) -> Control:
-	var panel := _panel(0.78, era_accent)
+func _build_dungeon_log(run: Dictionary, battle: Dictionary, narrow_layout: bool = false) -> Control:
+	# The center is a readable combat stage, not a second scrolling transcript.
+	var panel := MarginContainer.new()
 	panel.name = "DungeonLogPanel"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_constant_override("margin_left", 2)
+	panel.add_theme_constant_override("margin_right", 2)
+	var arena := _dungeon_surface(Color("6b9ba8"), true)
+	arena.name = "DungeonArenaStage"
+	arena.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	arena.custom_minimum_size.y = 310 if narrow_layout else 292
+	panel.add_child(arena)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 8)
-	panel.add_child(column)
-	column.add_child(_section_title("空阙回声"))
-	var log_label := _label("\n".join((run.log as Array).slice(-10)), 15, Color("eee8da"))
-	log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	log_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if use_inner_scroll:
-		var scroll := ScrollContainer.new()
-		scroll.name = "DungeonLogScroll"
-		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		column.add_child(scroll)
-		scroll.add_child(log_label)
-	else:
-		column.add_child(log_label)
+	arena.add_child(column)
+	var title_row := HBoxContainer.new()
+	var round_label := _label("交锋中轴", 15, Color("d7e2df"))
+	round_label.name = "DungeonArenaTitle"
+	title_row.add_child(round_label)
+	title_row.add_spacer(false)
+	title_row.add_child(_label("第 %d 回合" % int(battle.get("turn", 1)), 14,
+		Color(0.69, 0.78, 0.79), HORIZONTAL_ALIGNMENT_RIGHT))
+	column.add_child(title_row)
+	var duel_stage: Control = DungeonDuelStageScript.new()
+	duel_stage.name = "DungeonDuelStage"
+	duel_stage.custom_minimum_size.y = 126 if narrow_layout else 118
+	duel_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	duel_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	duel_stage.call("configure", run, battle, era_accent)
+	column.add_child(duel_stage)
+	var matchup := HBoxContainer.new()
+	matchup.name = "DungeonArenaMatchup"
+	matchup.add_theme_constant_override("separation", 10)
+	matchup.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var player_mark := _label("我方\n气血 %d" % int(run.get("hp", 0)), 16,
+		Color("b5d2db"), HORIZONTAL_ALIGNMENT_CENTER)
+	player_mark.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	matchup.add_child(player_mark)
+	matchup.add_child(_display_label("VS", 20, Color("d9b66c"), HORIZONTAL_ALIGNMENT_CENTER))
+	var enemy_mark := _label("%s\n气血 %d" % [str(battle.get("enemy_name", "秘境异影")),
+		int(battle.get("enemy_hp", 0))], 16, Color("e3b2a6"), HORIZONTAL_ALIGNMENT_CENTER)
+	enemy_mark.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	matchup.add_child(enemy_mark)
+	column.add_child(matchup)
+	var preview: Dictionary = DungeonSystemScript.intent_preview(battle)
+	var intent_band := MarginContainer.new()
+	intent_band.name = "DungeonIntentPanel"
+	intent_band.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	intent_band.add_theme_constant_override("margin_top", 4)
+	intent_band.add_theme_constant_override("margin_bottom", 4)
+	var intent_column := VBoxContainer.new()
+	intent_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	intent_band.add_child(intent_column)
+	intent_column.add_child(_label("敌意锁定", 11, Color(0.76, 0.77, 0.73), HORIZONTAL_ALIGNMENT_CENTER))
+	intent_column.add_child(_display_label("%s  ·  %d %s" % [str(preview.title), int(preview.value),
+		str(preview.unit)], 18, Color("f0b181"), HORIZONTAL_ALIGNMENT_CENTER))
+	var detail := _label(str(preview.detail), 12, Color(0.84, 0.82, 0.77), HORIZONTAL_ALIGNMENT_CENTER)
+	detail.name = "DungeonIntentForecast"
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intent_column.add_child(detail)
+	column.add_child(intent_band)
+	column.add_child(_build_dungeon_intent_timeline(battle))
+	var tape := _label(" · ".join((run.get("log", []) as Array).slice(-2)), 12,
+		Color(0.60, 0.68, 0.69, 0.84))
+	tape.name = "DungeonBattleTape"
+	tape.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(tape)
 	return panel
 
 
+func _build_dungeon_intent_timeline(battle: Dictionary) -> Control:
+	var timeline := HBoxContainer.new()
+	timeline.name = "DungeonIntentTimeline"
+	timeline.add_theme_constant_override("separation", 6)
+	var cycle: Array = battle.get("intent_cycle", ["strike"])
+	var current := int(battle.get("intent_index", 0))
+	for offset in range(mini(3, cycle.size())):
+		var intent_id := str(cycle[(current + offset) % cycle.size()])
+		var marker := _label(("当前  " if offset == 0 else "随后  ") + DungeonSystemScript.intent_label(intent_id),
+			11, Color("e3b67f") if offset == 0 else Color(0.61, 0.68, 0.69),
+			HORIZONTAL_ALIGNMENT_CENTER)
+		marker.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		marker.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		timeline.add_child(marker)
+	return timeline
+
+
 func _build_dungeon_route_journal(run: Dictionary, use_inner_scroll: bool = true) -> Control:
-	var panel := _panel(0.78, era_accent)
+	var panel := VBoxContainer.new()
 	panel.name = "DungeonRouteJournal"
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_theme_constant_override("separation", 10)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
 	panel.add_child(column)
@@ -2143,23 +2868,31 @@ func _dungeon_route_type_color(node_type: String) -> Color:
 func _dungeon_route_preview(node: Dictionary) -> String:
 	var node_type := str(node.get("type", "memory"))
 	if node_type == "combat":
-		return "时代敌手 · 胜后暂存修为与灵石"
+		return "雾里传来兵刃声，旧剑意正等一个先动的人。"
 	if node_type == "elite":
-		return "时代被动强敌 · 高额修为与灵石"
+		return "石阶一层层压低灵台，守誓者不会给你第二次试探。"
 	if node_type == "boss":
-		return "半血转相 · 击破后结算整座秘境"
-	var effects: Dictionary = node.get("effects", {})
-	var notes: Array[String] = []
-	if node_type == "memory": notes.append("映出一式角色能力")
-	if node_type == "forge": notes.append("随机强化一式灵诀")
-	if int(effects.get("heal_percent", 0)) > 0:
-		notes.append("气血+%d%%" % int(effects.heal_percent))
-	if int(effects.get("calm", 0)) > 0: notes.append("压力-%d" % int(effects.calm))
-	if int(effects.get("stress", 0)) > 0: notes.append("压力+%d" % int(effects.stress))
-	if int(effects.get("hp_cost", 0)) > 0: notes.append("气血-%d" % int(effects.hp_cost))
-	if int(effects.get("attack_power", 0)) > 0: notes.append("器诀+%d" % int(effects.attack_power))
-	if int(effects.get("guard_power", 0)) > 0: notes.append("护诀+%d" % int(effects.guard_power))
-	return " · ".join(notes) if not notes.is_empty() else "结果随时代规则显化"
+		return "门后站着从未作出选择的你，门缝里没有退路的回声。"
+	if node_type == "memory":
+		return "残碑没有功法，只有你走过的经脉；触碰它会唤醒谁，尚未可知。"
+	if node_type == "forge":
+		return "玉台上的火还亮着，能磨一式灵诀，也会留下新的纹路。"
+	if node_type == "rest":
+		return "泉声替你梳开一段心魔，短暂的安静不会替你停住时间。"
+	return "前路的回声尚未落定，走近才能知道它要你付出什么。"
+
+
+func _dungeon_route_action(node: Dictionary) -> String:
+	var node_type := str(node.get("type", "memory"))
+	var node_name := str(node.get("name", "无名道标"))
+	return {
+		"combat": "踏上%s" % node_name,
+		"elite": "沿%s继续向上" % node_name,
+		"boss": "推开%s" % node_name,
+		"memory": "伸手触碰%s" % node_name,
+		"forge": "走近%s的余火" % node_name,
+		"rest": "在%s旁停步" % node_name,
+	}.get(node_type, "走近%s" % node_name)
 
 
 func _dungeon_stress_color(stress: int) -> Color:
@@ -2225,10 +2958,13 @@ func _show_dungeon_action_feedback() -> void:
 	var summary := _dungeon_feedback_summary(action_feedback)
 	if summary.is_empty():
 		return
-	var label := _label(summary, 23, Color(feedback_color, 0.98), HORIZONTAL_ALIGNMENT_CENTER)
+	var label := _label(summary, 17, Color(feedback_color, 0.98), HORIZONTAL_ALIGNMENT_CENTER)
 	label.name = "DungeonFeedbackSummary"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_constant_override("outline_size", 7)
+	label.custom_minimum_size.y = 38
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.add_theme_constant_override("outline_size", 4)
 	label.add_theme_color_override("font_outline_color", Color(0.015, 0.02, 0.03, 0.94))
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var slot := screen_host.find_child("DungeonFeedbackSlot", true, false) as Control
@@ -2412,71 +3148,6 @@ func _dungeon_scene_path(dungeon_id: String) -> String:
 		if str(definition.id) == dungeon_id:
 			return str(definition.scene)
 	return MENU_SCENE
-
-
-func _request_ai_event() -> void:
-	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
-		_end_current_life(_current_death_cause())
-		return
-	var request: Dictionary = ai_bridge.call("request_event", run_state)
-	var ai_state: Dictionary = run_state.get("ai", {})
-	ai_state["request_count"] = int(ai_state.get("request_count", 0)) + 1
-	if bool(request.get("pending", false)):
-		ai_state["last_status"] = "pending"
-		run_state["ai"] = ai_state
-		_show_ai_pending()
-		return
-	ai_state["last_status"] = str(request.get("code", "runtime_unavailable"))
-	ai_state["fallback_count"] = int(ai_state.get("fallback_count", 0)) + 1
-	run_state["ai"] = ai_state
-	current_event = request.get("event", ai_bridge.call("fallback_event", run_state, "本地天机不可用"))
-	feedback = "本地天机未能启动，规则因果已无缝接管。"
-	_show_event()
-
-
-func _show_ai_pending() -> void:
-	state = ScreenState.AI_PENDING
-	_clear_screen()
-	_apply_era_visuals()
-	var page := VBoxContainer.new()
-	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	page.alignment = BoxContainer.ALIGNMENT_CENTER
-	page.add_theme_constant_override("separation", 18)
-	screen_host.add_child(page)
-	var panel := _panel(0.86, era_accent)
-	panel.custom_minimum_size = Vector2(640, 310)
-	panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	page.add_child(panel)
-	var column := VBoxContainer.new()
-	column.alignment = BoxContainer.ALIGNMENT_CENTER
-	column.add_theme_constant_override("separation", 20)
-	panel.add_child(column)
-	column.add_child(_display_label("本地天机正在推演", 30, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_label("旧玉正把此世人物、山河年史与未竟因果送入本机模型。",
-		17, Color(0.82, 0.84, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
-	column.add_child(_button("收回神识", _cancel_ai_request, false))
-
-
-func _cancel_ai_request() -> void:
-	ai_bridge.call("cancel")
-	var ai_state: Dictionary = run_state.get("ai", {})
-	ai_state["last_status"] = "cancelled"
-	run_state["ai"] = ai_state
-	feedback = "你收回神识，本地推演没有改变任何因果。"
-	_show_game()
-
-
-func _on_ai_event_ready(event_data: Dictionary, metadata: Dictionary) -> void:
-	var ai_state: Dictionary = run_state.get("ai", {})
-	ai_state["last_status"] = str(metadata.get("code", "completed"))
-	ai_state["last_backend"] = str(metadata.get("backend", "portable-local"))
-	if bool(metadata.get("fallback", false)):
-		ai_state["fallback_count"] = int(ai_state.get("fallback_count", 0)) + 1
-	run_state["ai"] = ai_state
-	current_event = event_data
-	feedback = "本地天机已落成一段可选择的因果。" if not bool(metadata.get("fallback", false)) else \
-		"本地天机未通过校验，规则因果已无缝接管。"
-	_show_event()
 
 
 func _show_event() -> void:
@@ -2678,19 +3349,22 @@ func _build_event_choices() -> Control:
 	var choices: Array = current_event.get("choices", [])
 	for index in range(choices.size()):
 		var choice: Dictionary = choices[index]
-		var choice_hint := _format_choice_hint(choice)
 		var unavailable_reason := _choice_unavailable_reason(choice)
-		if not unavailable_reason.is_empty():
-			choice_hint = "尚不可选 · %s" % unavailable_reason
-		var choice_button := _button("%d  %s\n     %s" % [index + 1, str(choice.get("text", "沉默")), choice_hint],
+		var choice_button := _button("%d  %s" % [index + 1, str(choice.get("text", "沉默"))],
 			_resolve_choice.bind(index), false)
 		choice_button.name = "EventChoiceButton%d" % index
 		choice_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		choice_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		choice_button.custom_minimum_size.y = 88
+		choice_button.custom_minimum_size.y = 64
 		choice_button.disabled = not unavailable_reason.is_empty()
 		choice_button.tooltip_text = unavailable_reason
 		column.add_child(choice_button)
+		if not unavailable_reason.is_empty():
+			var reason_label := _label("此路未开 · %s" % unavailable_reason, 12,
+				Color(0.78, 0.68, 0.65, 0.94))
+			reason_label.name = "EventChoiceUnavailableReason%d" % index
+			reason_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			column.add_child(reason_label)
 	return panel
 
 
@@ -2726,7 +3400,7 @@ func _resolve_choice(index: int) -> void:
 	feedback = outcome
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
 	run_state["player"] = player
-	EventCatalogScript.record_resolution(run_state, current_event)
+	EventCatalogScript.record_resolution(run_state, current_event, choice)
 	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
 	var story_message := ""
 	if bool(story_resolution.get("ok", false)):
@@ -2746,12 +3420,13 @@ func _resolve_choice(index: int) -> void:
 		str(encounter_offer.get("code", "")) == "encounter_offered":
 		encounter_message = str(encounter_offer.get("message", "敌踪已现。"))
 		objective_result["encounter_message"] = encounter_message
-	var clue_result: Dictionary = DungeonSystemScript.grant_clue(run_state,
-		"%s · %s" % [str(current_event.get("title", "无名因果")), str(choice.get("text", "沉默"))])
-	if bool(clue_result.get("granted", false)):
-		var clue_message := str(clue_result.get("message", "秘境线索已显形。"))
-		feedback += "\n\n" + clue_message
-		objective_result["world_message"] = clue_message
+	if _choice_grants_dungeon_clue(choice):
+		var clue_result: Dictionary = DungeonSystemScript.grant_clue(run_state,
+			"%s · %s" % [str(current_event.get("title", "无名因果")), str(choice.get("text", "沉默"))])
+		if bool(clue_result.get("granted", false)):
+			var clue_message := str(clue_result.get("message", "秘境线索已显形。"))
+			feedback += "\n\n" + clue_message
+			objective_result["world_message"] = clue_message
 	_sync_state_views()
 	_append_objective_feedback(objective_result)
 	if str(objective_result.get("encounter_message", "")).is_empty() == false:
@@ -2764,7 +3439,7 @@ func _resolve_choice(index: int) -> void:
 	var chapter_entry := StorySystemScript.record_chapter(run_state, current_event, choice,
 		outcome, story_message, objective_message, encounter_message)
 	current_event_result = chapter_entry.duplicate(true)
-	current_event_result["choice_hint"] = _format_choice_hint(choice).trim_prefix("可能回响 · ")
+	current_event_result["world_message"] = world_message
 	current_event_result["full_feedback"] = feedback
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
@@ -2773,37 +3448,17 @@ func _resolve_choice(index: int) -> void:
 	_save_current_state("因果抉择已自动封存")
 	_show_event_result()
 
-
-func _format_delta_hint(deltas: Dictionary) -> String:
-	var names := {
-		"exp": "修为", "hp": "气血", "mp": "灵力", "karma": "因果",
-		"dao_heart": "道心", "reputation": "名望", "enmity": "仇怨",
-		"spirit_stones": "灵石", "pills": "丹药",
-	}
-	var parts: Array[String] = []
-	for key in deltas.keys():
-		var value := int(deltas[key])
-		parts.append("%s%+d" % [str(names.get(key, key)), value])
-	return "可能回响 · " + "  ".join(parts) if not parts.is_empty() else "结果不会立刻显形"
-
-
-func _format_choice_hint(choice: Dictionary) -> String:
-	var result := _format_delta_hint(choice.get("deltas", {}))
-	var path_names := {
-		"compassion": "护生", "ambition": "凌霄", "defiance": "逆命",
-		"insight": "照因", "creation": "造化", "bonds": "众生",
-	}
-	var path_parts: Array[String] = []
-	for path_id in (choice.get("path_deltas", {}) as Dictionary).keys():
-		var value := int((choice.get("path_deltas", {}) as Dictionary)[path_id])
-		if value != 0:
-			path_parts.append("%s%+d" % [str(path_names.get(path_id, path_id)), value])
-	if not path_parts.is_empty():
-		result += " · 道途 " + "  ".join(path_parts)
-	return result
-
-
 func _choice_unavailable_reason(choice: Dictionary) -> String:
+	# Authored story nodes provide availability from the consequence system. Keep
+	# that decision authoritative, while legacy/catalog events still receive a
+	# small local resource check.
+	var declared_reason := str(choice.get("unavailable_reason", "")).strip_edges()
+	if choice.has("available"):
+		if bool(choice.get("available", true)):
+			return ""
+		return declared_reason if not declared_reason.is_empty() else "此前的因果尚未走到这里。"
+	if not declared_reason.is_empty():
+		return declared_reason
 	var deltas: Dictionary = choice.get("deltas", {})
 	var resource_names := {"spirit_stones": "灵石", "pills": "丹药"}
 	for resource_id in resource_names.keys():
@@ -2811,6 +3466,12 @@ func _choice_unavailable_reason(choice: Dictionary) -> String:
 		if delta < 0 and int(player.get(resource_id, 0)) + delta < 0:
 			return "%s不足，无法作出这个选择。" % str(resource_names[resource_id])
 	return ""
+
+
+func _choice_grants_dungeon_clue(choice: Dictionary) -> bool:
+	if bool(choice.get("dungeon_clue", false)):
+		return true
+	return int(choice.get("dungeon_clues", 0)) > 0
 
 
 func _show_event_result() -> void:
@@ -2866,15 +3527,13 @@ func _show_event_result() -> void:
 	content.add_child(outcome)
 	var story_message := str(current_event_result.get("story_message", ""))
 	if not story_message.is_empty():
-		content.add_child(_result_note("命途推进", story_message, Color("d9c98f")))
-	var objective_message := str(current_event_result.get("objective_message", ""))
-	if not objective_message.is_empty():
-		content.add_child(_result_note("阶段命途", objective_message, Color("8fc7b5")))
+		content.add_child(_result_note("长卷余音", story_message, Color("d9c98f")))
+	var world_message := str(current_event_result.get("world_message", ""))
+	if not world_message.is_empty():
+		content.add_child(_result_note("山河回声", world_message, Color("8fc7b5")))
 	var encounter_message := str(current_event_result.get("encounter_message", ""))
 	if not encounter_message.is_empty():
 		content.add_child(_result_note("敌踪", encounter_message, Color("ef9a78")))
-	content.add_child(_label("数值回响 · %s" % str(current_event_result.get("choice_hint", "结果已写入命途。")),
-		14, Color(0.72, 0.78, 0.79, 0.9)))
 	scroll.add_child(reading)
 
 	var footer := HBoxContainer.new()
@@ -3063,6 +3722,14 @@ func _build_journal_recent(body: VBoxContainer) -> void:
 
 
 func _journal_thread_text(thread: String) -> String:
+	# Storage keeps stable prefixes for migration and cleanup; the journal only
+	# exposes the authored thread text, never internal arc/thread identifiers.
+	if thread.begins_with("side:") or thread.begins_with("story:"):
+		var first_separator := thread.find(":")
+		var second_separator := thread.find(":", first_separator + 1)
+		if second_separator >= 0:
+			var authored_text := thread.substr(second_separator + 1)
+			return authored_text.trim_prefix(":").strip_edges()
 	var parts := thread.split(":")
 	var visible: Array[String] = []
 	for part in parts:
@@ -3218,7 +3885,7 @@ func _show_reincarnation() -> void:
 	column.add_child(_label("第%d世 · %s · %s %d层 · 享年%d" % [
 		int(last_life.get("generation", 1)), str(last_life.get("name", "无名")),
 		str(last_life.get("realm", "凡人")), int(last_life.get("level", 1)),
-		int(last_life.get("age_at_death", 16))],
+		int(last_life.get("age_at_death", 18))],
 		18, Color(0.86, 0.87, 0.85), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_label("死因 · %s\n道途归结 · %s" % [
 		str(last_life.get("cause_of_death", "命数已尽")), str(last_life.get("dao_name", "本我大道"))],
@@ -3493,6 +4160,18 @@ func _play_combat_action_audio(action: String, result: Dictionary) -> void:
 		"attack": "combat.impact", "guard": "combat.guard", "spell": "combat.spell",
 		"pill": "ui.confirm", "flee": "ui.cancel",
 	}.get(action, "ui.confirm"))
+	var event_value: Variant = result.get("event", {})
+	if event_value is Dictionary:
+		var event: Dictionary = event_value
+		var steps_value: Variant = event.get("steps", [])
+		if steps_value is Array:
+			for step_value in (steps_value as Array):
+				if not step_value is Dictionary:
+					continue
+				var cue := str((step_value as Dictionary).get("cue", ""))
+				if cue in ["combat.impact", "combat.guard", "combat.spell"]:
+					event_id = cue
+					break
 	audio_director.call("play_event", event_id)
 
 
@@ -4201,13 +4880,6 @@ func _equipped_name(reference_id: String) -> String:
 	return "失落"
 
 
-func _local_model_ready() -> bool:
-	if not is_instance_valid(ai_bridge):
-		return false
-	var probe: Dictionary = ai_bridge.call("probe_runtime")
-	return bool(probe.get("ready", false))
-
-
 func _collect_achievement_notices() -> void:
 	for notice_value in AchievementSystemScript.consume_notices(run_state):
 		if notice_value is Dictionary:
@@ -4266,13 +4938,15 @@ func _achievement_tier_color(tier: int) -> Color:
 func _panel(alpha: float, accent: Color) -> PanelContainer:
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.035, 0.055, 0.078, alpha)
-	style.border_color = Color(accent, 0.58)
+	# Surfaces establish hierarchy; era color is reserved for active states and headings.
+	style.bg_color = Color(0.018, 0.030, 0.045, clampf(alpha, 0.62, 0.94))
+	style.border_color = Color(0.28, 0.35, 0.39, 0.46)
 	style.set_border_width_all(1)
-	style.corner_radius_top_left = 12
-	style.corner_radius_top_right = 12
-	style.corner_radius_bottom_left = 12
-	style.corner_radius_bottom_right = 12
+	style.border_width_top = 2
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
 	style.shadow_color = Color(0, 0, 0, 0.42)
 	style.shadow_size = 12
 	style.shadow_offset = Vector2(0, 6)
@@ -4284,16 +4958,38 @@ func _panel(alpha: float, accent: Color) -> PanelContainer:
 	return panel
 
 
+func _dungeon_surface(accent: Color, emphasis: bool = false) -> PanelContainer:
+	var panel := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.012, 0.024, 0.035, 0.90 if emphasis else 0.82)
+	style.border_color = Color(accent, 0.44 if emphasis else 0.26)
+	style.set_border_width_all(1)
+	style.border_width_top = 3 if emphasis else 1
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	style.shadow_color = Color(0, 0, 0, 0.48 if emphasis else 0.28)
+	style.shadow_size = 10 if emphasis else 4
+	style.shadow_offset = Vector2(0, 4)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	panel.add_theme_stylebox_override("panel", style)
+	return panel
+
+
 func _menu_feature_pill(text_value: String) -> PanelContainer:
 	var pill := PanelContainer.new()
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(era_accent.darkened(0.72), 0.36)
 	style.border_color = Color(era_accent, 0.38)
 	style.set_border_width_all(1)
-	style.corner_radius_top_left = 12
-	style.corner_radius_top_right = 12
-	style.corner_radius_bottom_left = 12
-	style.corner_radius_bottom_right = 12
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 5
@@ -4344,18 +5040,51 @@ func _is_cancel_action(text_value: String) -> bool:
 func _button_style(alpha: float, accent: Color, border_alpha: float,
 		compact: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(accent.darkened(0.68), alpha)
-	style.border_color = Color(accent, border_alpha)
+	var muted_accent := accent.lerp(Color("7b8589"), 0.62)
+	style.bg_color = Color(accent.darkened(0.86), minf(alpha, 0.48))
+	style.border_color = Color(muted_accent, minf(border_alpha, 0.58))
 	style.set_border_width_all(1)
-	style.border_width_left = 4
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
+	style.border_width_left = 2
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
 	style.content_margin_left = 9 if compact else 18
 	style.content_margin_right = 9 if compact else 18
 	style.content_margin_top = 7 if compact else 10
 	style.content_margin_bottom = 7 if compact else 10
+	return style
+
+
+func _dungeon_card_style(accent: Color, state: String) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	var surface := Color(0.025, 0.043, 0.060, 0.97)
+	match state:
+		"hover":
+			surface = Color(0.075, 0.125, 0.145, 0.98)
+		"pressed":
+			surface = Color(0.105, 0.145, 0.155, 0.99)
+		"disabled":
+			surface = Color(0.022, 0.032, 0.042, 0.95)
+	style.bg_color = surface
+	var border_mix := accent.lerp(Color("a8b1ad"), 0.30)
+	var border_alpha := 0.82
+	if state == "disabled":
+		border_alpha = 0.36
+	style.border_color = Color(border_mix, border_alpha)
+	style.set_border_width_all(1)
+	style.border_width_top = 2
+	style.corner_radius_top_left = 7
+	style.corner_radius_top_right = 7
+	style.corner_radius_bottom_left = 7
+	style.corner_radius_bottom_right = 7
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.58)
+	style.shadow_size = 8 if state != "disabled" else 4
+	style.shadow_offset = Vector2(0, 3)
+	style.content_margin_left = 12
+	style.content_margin_right = 12
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
 	return style
 
 
@@ -4364,10 +5093,10 @@ func _style_line_edit(edit: LineEdit) -> void:
 	normal.bg_color = Color(0.02, 0.035, 0.055, 0.92)
 	normal.border_color = Color(era_accent, 0.64)
 	normal.set_border_width_all(1)
-	normal.corner_radius_top_left = 8
-	normal.corner_radius_top_right = 8
-	normal.corner_radius_bottom_left = 8
-	normal.corner_radius_bottom_right = 8
+	normal.corner_radius_top_left = 6
+	normal.corner_radius_top_right = 6
+	normal.corner_radius_bottom_left = 6
+	normal.corner_radius_bottom_right = 6
 	normal.content_margin_left = 18
 	normal.content_margin_right = 18
 	edit.add_theme_stylebox_override("normal", normal)
@@ -4459,16 +5188,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				_open_audio_settings()
 		ScreenState.GAME:
 			match event.keycode:
-				KEY_1: _show_cultivation()
-				KEY_2: _open_adventure()
-				KEY_3: _breakthrough()
-				KEY_4: _start_combat()
-				KEY_M: _enter_dungeon()
 				KEY_I: _show_inventory()
 				KEY_A: _show_armory()
 				KEY_L: _show_journal()
-				KEY_Y: _cycle_jade_weapon()
-				KEY_J: _invoke_jade_weapon()
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _return_to_menu()
@@ -4502,9 +5224,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				var input := screen_host.find_child("NextLifeNameInput", true, false) as LineEdit
 				if input:
 					_begin_next_life(input)
-		ScreenState.AI_PENDING:
-			if event.keycode == KEY_ESCAPE:
-				_cancel_ai_request()
 		ScreenState.INVENTORY:
 			if event.keycode in [KEY_ESCAPE, KEY_I]:
 				_show_game()
@@ -4514,11 +5233,18 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_Y: _cycle_jade_weapon()
 				KEY_J: _invoke_jade_weapon()
 		ScreenState.COMBAT:
+			var combat_log_overlay := screen_host.find_child("CombatLogOverlay", true, false)
+			if is_instance_valid(combat_log_overlay):
+				if event.keycode in [KEY_ESCAPE, KEY_L]:
+					_close_combat_log_overlay()
+				get_viewport().set_input_as_handled()
+				return
 			match event.keycode:
-				KEY_1: _resolve_combat_action("attack")
-				KEY_2: _resolve_combat_action("guard")
-				KEY_3: _resolve_combat_action("spell")
+				KEY_1: _resolve_combat_technique_slot(0)
+				KEY_2: _resolve_combat_technique_slot(1)
+				KEY_3: _resolve_combat_technique_slot(2)
 				KEY_4: _resolve_combat_action("pill")
+				KEY_L: _open_combat_log_overlay()
 				KEY_5, KEY_ESCAPE: _resolve_combat_action("flee")
 		ScreenState.DUNGEON_ROUTE:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_3:

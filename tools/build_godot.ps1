@@ -15,7 +15,6 @@ $OutputDir = Join-Path $Root "release\godot\windows"
 $OutputExe = Join-Path $OutputDir "wendao-changsheng.exe"
 $OutputPck = Join-Path $OutputDir "wendao-changsheng.pck"
 $OutputLicenseDir = Join-Path $OutputDir "licenses"
-$OutputAiDir = Join-Path $OutputDir "ai_engine"
 $ChecksumPath = Join-Path $OutputDir "checksums.sha256"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
 $TempDir = Join-Path $Root ".tmp\godot"
@@ -93,25 +92,25 @@ foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt")) {
     Copy-Item -LiteralPath $licenseSource -Destination $licenseTarget -Force
 }
 $audioLicenseSource = Join-Path $ProjectDir "audio\LICENSE-AUDIO.txt"
-$audioManifestSource = Join-Path $ProjectDir "audio\audio_manifest_v1.json"
+$audioManifestSource = Join-Path $ProjectDir "audio\audio_manifest_v2.json"
 foreach ($auditSource in @($audioLicenseSource, $audioManifestSource)) {
     if (-not (Test-Path -LiteralPath $auditSource)) {
         throw "Bundled audio audit file is missing: $auditSource"
     }
     Copy-Item -LiteralPath $auditSource -Destination (Join-Path $OutputLicenseDir (Split-Path -Leaf $auditSource)) -Force
 }
-$aiNoticeSource = Join-Path $Root "ai_engine\THIRD_PARTY_AI.md"
-Copy-Item -LiteralPath $aiNoticeSource -Destination (Join-Path $OutputLicenseDir "THIRD_PARTY_AI.md") -Force
-
-New-Item -ItemType Directory -Force -Path $OutputAiDir | Out-Null
-foreach ($aiSupportName in @(
-    "setup_portable_ai.ps1", "generate_event.ps1", "test_local_ai.ps1", "THIRD_PARTY_AI.md"
-)) {
-    Copy-Item -LiteralPath (Join-Path $Root "ai_engine\$aiSupportName") `
-        -Destination (Join-Path $OutputAiDir $aiSupportName) -Force
+$audioThirdPartyLicenseDir = Join-Path $ProjectDir "audio\licenses"
+if (-not (Test-Path -LiteralPath $audioThirdPartyLicenseDir -PathType Container)) {
+    throw "Bundled third-party audio license directory is missing: $audioThirdPartyLicenseDir"
 }
-Copy-Item -LiteralPath (Join-Path $Root "setup-local-ai.bat") `
-    -Destination (Join-Path $OutputDir "setup-local-ai.bat") -Force
+$audioThirdPartyLicenses = @(Get-ChildItem -LiteralPath $audioThirdPartyLicenseDir -File -Filter "*.txt")
+if ($audioThirdPartyLicenses.Count -lt 3) {
+    throw "Bundled third-party audio license notices are incomplete: $audioThirdPartyLicenseDir"
+}
+foreach ($licenseFile in $audioThirdPartyLicenses) {
+    Copy-Item -LiteralPath $licenseFile.FullName `
+        -Destination (Join-Path $OutputLicenseDir $licenseFile.Name) -Force
+}
 Copy-Item -LiteralPath (Join-Path $Root "docs\WINDOWS_RELEASE_README.md") `
     -Destination (Join-Path $OutputDir "README.md") -Force
 

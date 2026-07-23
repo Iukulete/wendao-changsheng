@@ -744,6 +744,47 @@ static func intent_label(intent: String) -> String:
 	return str({"strike": "迅击", "heavy": "蓄势重击", "guard": "结界护体", "stress": "心魔低语"}.get(intent, "未知意图"))
 
 
+static func intent_preview(battle: Dictionary) -> Dictionary:
+	var intent := str(battle.get("intent", "strike"))
+	var attack := int(battle.get("enemy_attack", 0))
+	if intent == "heavy":
+		attack = int(round(attack * 1.55))
+	if int(battle.get("enemy_weak", 0)) > 0:
+		attack = attack * 75 / 100
+	var block := maxi(5, int(battle.get("enemy_attack", 0)) / 2)
+	return {
+		"id": intent,
+		"title": intent_label(intent),
+		"value": block if intent == "guard" else 18 if intent == "stress" else attack,
+		"unit": "护体" if intent == "guard" else "压力" if intent == "stress" else "伤害上限",
+		"detail": {
+			"guard": "敌方收束气机并建立护体，下一轮更难击穿。",
+			"stress": "心魔压力将直接上升，逼近临界时会污染牌组。",
+			"heavy": "高威胁重击；当前护体会先抵消伤害。",
+		}.get(intent, "直接进攻；当前护体会先抵消伤害。"),
+		"threat": "critical" if intent == "heavy" else "pressure" if intent == "stress" else "guard" if intent == "guard" else "attack",
+	}
+
+
+static func card_effect_summary(definition: Dictionary, upgrade: int = 0) -> String:
+	var effects: Dictionary = definition.get("effects", {})
+	var scale := 100 + clampi(upgrade, 0, 2) * 30
+	var parts: Array[String] = []
+	var scaled_keys := {"attack":"伤害", "block":"护体", "heal":"回复"}
+	for effect_id in ["attack", "block", "heal"]:
+		var value := int(effects.get(effect_id, 0)) * scale / 100
+		if value > 0:
+			parts.append("%s %d" % [str(scaled_keys[effect_id]), value])
+	for effect_id in ["energy", "weak", "power", "stress", "calm", "draw"]:
+		var value := int(effects.get(effect_id, 0))
+		if value == 0:
+			continue
+		var label := str({"energy":"灵力", "weak":"虚弱", "power":"器诀", "stress":"压力",
+			"calm":"镇心", "draw":"抽牌"}[effect_id])
+		parts.append("%s %s%d" % [label, "+" if effect_id in ["energy", "power", "stress"] else "", value])
+	return " · ".join(parts) if not parts.is_empty() else "转移战势"
+
+
 static func _starting_deck(state: Dictionary) -> Dictionary:
 	var run_seed := {"card_counter": 0}
 	var profile := _build_ability_profile(state)

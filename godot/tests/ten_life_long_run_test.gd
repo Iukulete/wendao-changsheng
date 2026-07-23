@@ -4,6 +4,7 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const CultivationScript = preload("res://scripts/cultivation_system.gd")
 const ReincarnationScript = preload("res://scripts/reincarnation_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
+const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
 const SaveServiceScript = preload("res://scripts/save_service.gd")
 
@@ -122,6 +123,9 @@ func _cultivate_to_realm(state: Dictionary, target_realm: int) -> void:
 
 func _cause_combat_death(state: Dictionary, label: String) -> String:
 	state.player.hp = 1
+	EncounterSystemScript.offer(state, "ten_life_test", label, "用于验证战败后的轮回闭环。", 3,
+		{"enemy_id": "immortal_unchained_duelist", "enemy_name": "不系仙客",
+			"stakes": "这一世的修行将以一场真正的战败收束。"})
 	var started: Dictionary = CombatSystemScript.start_combat(state, "immortal_unchained_duelist")
 	_expect(bool(started.get("ok", false)), "%s必须能进入致命战斗" % label)
 	var result: Dictionary = CombatSystemScript.auto_resolve(state)

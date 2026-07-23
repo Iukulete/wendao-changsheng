@@ -43,7 +43,7 @@ static func close_life(state: Dictionary, cause: String, rebirth_roll: int = -1)
 		"realm_index": int(player.get("realm_index", 0)),
 		"realm": str(player.get("realm", "凡人")),
 		"level": int(player.get("level", 1)),
-		"age_at_death": int(player.get("age", 16)),
+		"age_at_death": int(player.get("age", 18)),
 		"cause_of_death": cause.left(160),
 		"karma": int(player.get("karma", 0)),
 		"total_events": int(player.get("total_events", 0)),

@@ -1,8 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 3,
+  "characters": [
+    {"id": "protagonist", "name": "问道人", "age": 21},
+    {"id": "jiang_zhaoxue", "name": "江照雪", "age": 22},
+    {"id": "sect_lawkeepers", "name": "两代执律人", "age": 35},
+    {"id": "family_covenant_holder", "name": "祖契持有人", "age": 46},
+    {"id": "jade_echo", "name": "旧玉回声", "age": 30}
+  ],
   "arcs": [
     {
       "id": "jade",
+      "entry_node_id": "jade_main_1",
+      "echo_entry_node_id": "jade_echo_1",
       "name": "旧玉",
       "scene": "res://art/scenes/void_threshold_temple.png",
       "portrait": "res://art/portraits/protagonist_hooded_close.jpg",
@@ -12,31 +21,377 @@
       "motion_profile": "introspective",
       "portrait_mode": "focus",
       "main": [
-        {"id": "jade_main_1", "title": "【旧玉·一】夜半微温", "description": "夜半醒来，黑白旧玉第一次在无人触碰时自行发温。窗纸上映出两道互不相容的影子：一道像今生，一道像尚未发生的死局。", "next": "jade_main_2", "art": {"motion_profile": "spectral"}},
-        {"id": "jade_main_2", "title": "【旧玉·二】镜中旧名", "description": "旧玉把你的脸映成一个陌生旧名。那名字没有完整记忆，只有近乎本能的警惕，像有人曾用它欠下无法结清的因果。", "next": "jade_main_3", "art": {"motion_profile": "introspective"}},
-        {"id": "jade_main_3", "title": "【旧玉·三】生死回响", "description": "一次险境后，旧玉没有替你挡灾，只把生死之间那一瞬完整留住。它保存的不是答案，而是每次取舍留下的轮廓。", "next": "jade_main_4", "art": {"motion_profile": "vigilant"}},
-        {"id": "jade_main_4", "title": "【旧玉·终】不借旧我", "description": "旧玉终于托起足够多的回响，像要让过去替你决定今生。真正的终局，是决定哪些旧意可以留下，哪些必须止于此世。", "next": "legacy", "art": {"motion_profile": "confrontation"}}
+        {
+          "id": "jade_main_1",
+          "title": "旧玉·一｜夜半微温",
+          "description": "夜半醒来，黑白旧玉在无人触碰时自行发热。窗纸上浮出两道影子：一道像今生，一道像尚未发生的死局。",
+          "art": {"motion_profile": "spectral"},
+          "choices": [
+            {
+              "id": "jade_m1_witness",
+              "target_node_id": "jade_main_2",
+              "route_id": "jade_witness",
+              "text": "让旧玉把话说完",
+              "outcome": "你允许回声提供证词，却要求每一处细节都接受今生事实的核验。",
+              "deltas": {"exp": 84, "dao_heart": 3},
+              "path_deltas": {"insight": 3, "bonds": 1},
+              "flags_add": ["jade_witness_open"],
+              "relationship_deltas": {"jade_echo": {"trust": 6, "respect": 3, "stance": "等待被核验"}},
+              "promises_add": [{"id": "jade_promise_record", "text": "每一道旧梦都要留下可核验的证据。", "character_id": "jade_echo"}]
+            },
+            {
+              "id": "jade_m1_anchor",
+              "target_node_id": "jade_main_2",
+              "route_id": "jade_anchor",
+              "text": "拿今生逐句校验",
+              "outcome": "你把梦兆和现实并排写下，只保留能够解释当下的部分，纸上的温度因此慢慢降下来。",
+              "deltas": {"exp": 62, "karma": 5},
+              "path_deltas": {"insight": 2, "defiance": 2, "bonds": -1},
+              "flags_add": ["jade_present_anchor"],
+              "relationship_deltas": {"jade_echo": {"trust": -2, "respect": 6, "stance": "接受审问"}},
+              "debts_add": [{"id": "jade_debt_reality", "text": "你欠今生一份不会被旧梦改写的证词。", "character_id": "jade_echo"}]
+            },
+            {
+              "id": "jade_m1_seal",
+              "target_node_id": "jade_main_3",
+              "route_id": "jade_seal",
+              "text": "封住替你发令的梦",
+              "outcome": "你不销毁过去，只切断它替今生发号施令的权力；封印落下时，旧玉在掌心留下灼痕。",
+              "deltas": {"dao_heart": 6, "hp": -8},
+              "path_deltas": {"defiance": 3, "ambition": 1},
+              "flags_add": ["jade_dream_sealed"],
+              "relationship_deltas": {"jade_echo": {"coercion": 8, "agency": -4, "stance": "被迫沉默"}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_add": ["dream_wound"],
+              "delayed_echoes": [{"id": "jade_seal_aftershock", "after_chapters": 2, "text": "封印下传来一次短促的敲击：旧玉没有消失，只是在等你决定是否回头。", "effects": {"flags_add": ["jade_aftershock"], "relationship_deltas": {"jade_echo": {"coercion": -2, "agency": 2}}}}]
+            }
+          ]
+        },
+        {
+          "id": "jade_main_2",
+          "title": "旧玉·二｜镜中旧名",
+          "description": "旧玉把你的脸映成一个陌生旧名。那名字没有完整记忆，只有近乎本能的警惕，像有人曾用它欠下无法结清的因果。",
+          "route_variants": {
+            "jade_witness": {"title": "证词先行", "description": "回声按你约定逐项报出地点与见证人，报到一处与你今生记忆重合的门槛。"},
+            "jade_anchor": {"title": "今生作锚", "description": "你把旧名拆成可验证的年月与伤痕，镜中影子承认其中一半细节是伪造。"},
+            "jade_seal": {"title": "封印反噬", "description": "封印挡住了命令，却把旧名的疼痛留在你的经脉里；每一次呼吸都像重新逃离那间不存在的牢室。"}
+          },
+          "art": {"motion_profile": "introspective"},
+          "choices": [
+            {
+              "id": "jade_m2_witness",
+              "target_node_id": "jade_main_3",
+              "route_id": "jade_witness",
+              "text": "追问旧名的见证人",
+              "outcome": "你让回声先说出证人的名字，再允许自己相信其中一部分；一条可回访的旧路由此成形。",
+              "deltas": {"exp": 86, "reputation": 2},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["jade_witness_trail"],
+              "relationship_deltas": {"jade_echo": {"trust": 5, "respect": 2}},
+              "promises_resolve": ["jade_promise_record"],
+              "dungeon_clue": true,
+              "delayed_echoes": [{"id": "jade_witness_note", "after_chapters": 2, "text": "一枚旧印从镜背脱落，背面刻着那名见证人的现世住址。", "effects": {"flags_add": ["jade_witness_address"]}}]
+            },
+            {
+              "id": "jade_m2_anchor",
+              "target_node_id": "jade_main_3",
+              "route_id": "jade_anchor",
+              "text": "只记录能复核的伤痕",
+              "outcome": "你拒绝替旧名补齐缺失的故事，改以现世伤痕校对每一次回响；假的部分因此失去重量。",
+              "deltas": {"exp": 70, "karma": 4},
+              "path_deltas": {"insight": 2, "defiance": 2, "bonds": -1},
+              "flags_add": ["jade_anchor_method"],
+              "relationship_deltas": {"jade_echo": {"respect": 5, "dependency": -3}},
+              "debts_resolve": ["jade_debt_reality"],
+              "debts_add": [{"id": "jade_anchor_debt", "text": "你答应只为眼前活着的人承担解释。", "character_id": "jade_echo"}]
+            },
+            {
+              "id": "jade_m2_seal",
+              "target_node_id": "jade_main_3",
+              "route_id": "jade_seal",
+              "text": "沿灼痕撕开封印",
+              "outcome": "你以疼痛换取一瞬清醒，旧名的主人在梦里逼近；你没有屈服，却把一段创伤带回了白昼。",
+              "deltas": {"dao_heart": 5, "hp": -12, "enmity": 2},
+              "path_deltas": {"defiance": 4, "insight": 1},
+              "flags_add": ["jade_wound_recalled"],
+              "relationship_deltas": {"jade_echo": {"coercion": 4, "corruption": 5, "agency": -2}},
+              "content_tags": ["coercion", "trauma", "corruption"],
+              "statuses_add": ["echo_burn"],
+              "delayed_echoes": [{"id": "jade_wound_dream", "after_chapters": 1, "text": "你在醒来前听见锁链落地的声音，却找不到锁链究竟锁着谁。", "effects": {"flags_add": ["jade_lock_memory"], "relationship_deltas": {"jade_echo": {"corruption": 3}}}}]
+            }
+          ]
+        },
+        {
+          "id": "jade_main_3",
+          "title": "旧玉·三｜生死回响",
+          "description": "一次险境后，旧玉没有替你挡灾，只把刀锋停在喉前的那一瞬留下；你回看时，能认出每个选择的重量。",
+          "route_variants": {
+            "jade_witness": {"title": "让证词承担重量", "description": "你带着见证人的地址回到旧门，回声承认它删过一段对自己不利的证词。"},
+            "jade_anchor": {"title": "把回响放回当下", "description": "你用今生同伴的名字标记每道幻听，旧玉再也不能把陌生人的命运伪装成你的命令。"},
+            "jade_seal": {"title": "从创伤中脱身", "description": "灼痕在夜里复燃，你沿着它留下的路径找到出口；逃离之后，沉默也不等于服从。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "jade_m3_witness",
+              "target_node_id": "jade_main_4",
+              "route_id": "jade_witness",
+              "text": "把删去的证词补回来",
+              "outcome": "你逼回被抹掉的那一页，承认旧我也会害怕；完整记录让两人坐到一张桌边。",
+              "deltas": {"exp": 88, "reputation": 4},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["jade_full_testimony"],
+              "relationship_deltas": {"jade_echo": {"trust": 7, "respect": 4, "agency": 3}}
+            },
+            {
+              "id": "jade_m3_anchor",
+              "target_node_id": "jade_main_4",
+              "route_id": "jade_anchor",
+              "text": "请今生的人共同作证",
+              "outcome": "你把回响交给活着的人复述，旧玉失去独占解释权，现实替你守住记忆。",
+              "deltas": {"karma": 8, "exp": 64},
+              "path_deltas": {"bonds": 3, "insight": 2, "defiance": -1},
+              "flags_add": ["jade_living_witnesses"],
+              "relationship_deltas": {"jade_echo": {"trust": 2, "dependency": -5, "agency": 5}},
+              "debts_resolve": ["jade_anchor_debt"],
+              "promises_add": [{"id": "jade_living_promise", "text": "不让任何回声单独替活人作决定。", "character_id": "jade_echo"}]
+            },
+            {
+              "id": "jade_m3_seal",
+              "target_node_id": "jade_main_4",
+              "route_id": "jade_seal",
+              "text": "烧掉最深的一段梦",
+              "outcome": "你烧掉最深处的门牌，代价是短暂失去一段自己的来路；灰烬里却出现了可以走出去的方向。",
+              "deltas": {"dao_heart": 7, "hp": -14},
+              "path_deltas": {"defiance": 4, "ambition": 1},
+              "flags_add": ["jade_escape_marked"],
+              "relationship_deltas": {"jade_echo": {"coercion": -6, "corruption": 7, "agency": 8}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "statuses_add": ["scarred_memory"],
+              "statuses_remove": ["dream_wound", "echo_burn"]
+            }
+          ]
+        },
+        {
+          "id": "jade_main_4",
+          "title": "旧玉·终｜不借旧我",
+          "description": "旧玉托起足够多的回响，过去的声音压向今生。终局落在手里的选择：哪些旧意留下，哪些止于此世。",
+          "route_variants": {
+            "jade_witness": {"title": "旧我为证", "description": "完整证词摆在门前，旧我愿意作证，却承认裁决权属于现在的你。"},
+            "jade_anchor": {"title": "今生校旧", "description": "今生的名字压住镜面，旧玉只能留下能被现实解释的部分。"},
+            "jade_seal": {"title": "封梦自持", "description": "你带着伤痕站在封印外，拒绝把创伤交还给那个曾经囚住你的影子。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "jade_m4_witness",
+              "terminal": true,
+              "route_id": "jade_witness",
+              "text": "让旧我作为证人留下",
+              "outcome": "你保存旧我证词，却写下明确边界：它可以提醒你曾经是谁，不能替你决定要成为什么人。",
+              "deltas": {"exp": 96, "dao_heart": 4},
+              "path_deltas": {"bonds": 2, "insight": 2},
+              "flags_add": ["jade_legacy_witness"],
+              "relationship_deltas": {"jade_echo": {"trust": 8, "respect": 6, "agency": 6}},
+              "resolution": "旧我为证"
+            },
+            {
+              "id": "jade_m4_anchor",
+              "terminal": true,
+              "route_id": "jade_anchor",
+              "text": "以今生校定旧梦",
+              "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分；旧玉成为档案，不能成为主人。",
+              "deltas": {"exp": 74, "karma": 6},
+              "path_deltas": {"insight": 3, "defiance": 1, "bonds": -1},
+              "flags_add": ["jade_legacy_anchored"],
+              "relationship_deltas": {"jade_echo": {"trust": 3, "respect": 8, "dependency": -8}},
+              "promises_resolve": ["jade_living_promise"],
+              "resolution": "今生校旧"
+            },
+            {
+              "id": "jade_m4_seal",
+              "terminal": true,
+              "route_id": "jade_seal",
+              "text": "把梦兆封回旧玉",
+              "outcome": "你不销毁过去，只切断它替今生发号施令的权力；封印合拢，灼痕提醒你自由曾经有过代价。",
+              "deltas": {"dao_heart": 8, "hp": -10},
+              "path_deltas": {"defiance": 4},
+              "flags_add": ["jade_legacy_sealed"],
+              "relationship_deltas": {"jade_echo": {"coercion": -8, "corruption": 4, "agency": 10, "stance": "被边界驯服"}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_remove": ["dream_wound", "echo_burn", "scarred_memory"],
+              "resolution": "封梦自持"
+            }
+          ]
+        }
       ],
       "echo": [
-        {"id": "jade_echo_1", "title": "【定局续章·旧玉一】旧梦证词", "description": "轮回玉吐出一段可被现实核验的旧梦。梦里的人认得你，今生的人却说那段往事根本不存在。", "next": "jade_echo_2", "art": {"motion_profile": "spectral"}},
-        {"id": "jade_echo_2", "title": "【定局续章·旧玉二】伪忆歧路", "description": "两段互相矛盾的记忆同时显真。真正危险的不是忘记过去，而是把一段伪忆当成自己的意志。", "next": "jade_echo_3", "art": {"motion_profile": "spectral"}},
-        {"id": "jade_echo_3", "title": "【定局续章·旧玉终】玉中自证", "description": "旧玉把前世证词与今生经历并列放在面前。你必须决定谁能作证，谁只能留下痕迹。", "next": "resolution", "art": {"motion_profile": "confrontation"}}
+        {
+          "id": "jade_echo_1",
+          "title": "定局续章·旧玉一｜旧梦证词",
+          "description": "轮回玉吐出一段可以被现实核验的旧梦。梦里的人认得你，今生的人却说那段往事根本不存在。",
+          "route_variants": {
+            "jade_witness": {"title": "证词回返", "description": "你曾让旧我作证，新的梦便带着见证人的口吻回来，等待你完成未尽的核验。"},
+            "jade_anchor": {"title": "锚点回返", "description": "今生的记录先于梦境展开，旧玉只能从你留下的现实坐标开始叙述。"},
+            "jade_seal": {"title": "封印回返", "description": "封印松动一线，旧梦试图把你拖回囚室；出口的方向仍留在灼痕里。"}
+          },
+          "art": {"motion_profile": "spectral"},
+          "choices": [
+            {
+              "id": "jade_e1_witness",
+              "target_node_id": "jade_echo_2",
+              "route_id": "jade_witness",
+              "text": "承认旧梦可以作证",
+              "outcome": "两世证词被并排保存，旧我可以作证，却不能越过今生替你裁决。",
+              "deltas": {"exp": 96, "dao_heart": 4},
+              "path_deltas": {"bonds": 2, "insight": 2},
+              "flags_add": ["jade_echo_witness"],
+              "relationship_deltas": {"jade_echo": {"trust": 7, "respect": 5}}
+            },
+            {
+              "id": "jade_e1_anchor",
+              "target_node_id": "jade_echo_2",
+              "route_id": "jade_anchor",
+              "text": "让今生先回答",
+              "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实的门。",
+              "deltas": {"exp": 74, "karma": 6},
+              "path_deltas": {"insight": 3, "defiance": 1, "bonds": -1},
+              "flags_add": ["jade_echo_anchor"],
+              "relationship_deltas": {"jade_echo": {"respect": 8, "dependency": -4}}
+            },
+            {
+              "id": "jade_e1_seal",
+              "target_node_id": "jade_echo_3",
+              "route_id": "jade_seal",
+              "text": "留下伤痕，断开梦门",
+              "outcome": "过去被允许留下伤痕，却永远失去替今生下令的资格；你从梦门另一侧走回白昼。",
+              "deltas": {"dao_heart": 8, "hp": -10},
+              "path_deltas": {"defiance": 4},
+              "flags_add": ["jade_echo_scar"],
+              "relationship_deltas": {"jade_echo": {"coercion": -7, "corruption": 3, "agency": 9}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "statuses_remove": ["dream_wound", "echo_burn"]
+            }
+          ]
+        },
+        {
+          "id": "jade_echo_2",
+          "title": "定局续章·旧玉二｜伪忆死路",
+          "description": "两段互相矛盾的记忆同时显真。危险在于把伪忆当成自己的意志。",
+          "route_variants": {
+            "jade_witness": {"title": "让伪证现形", "description": "旧我证词中出现一处无法解释的空白，你必须决定是否把它公开给所有见证人。"},
+            "jade_anchor": {"title": "回到现实坐标", "description": "你用今生的伤口和名字逐一定位伪忆，梦境开始承认自己并不完整。"},
+            "jade_seal": {"title": "死路中的出口", "description": "伪忆把封印伪装成牢门，你沿着创伤留下的反光找到一条只容一人通过的缝隙。"}
+          },
+          "art": {"motion_profile": "spectral"},
+          "choices": [
+            {
+              "id": "jade_e2_witness",
+              "target_node_id": "jade_echo_3",
+              "route_id": "jade_witness",
+              "text": "公开伪证的空白",
+              "outcome": "你让所有见证人看见旧我曾经隐瞒的部分，证词因此变重，也能被质疑。",
+              "deltas": {"exp": 102, "reputation": 5},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["jade_echo_gap_public"],
+              "relationship_deltas": {"jade_echo": {"trust": 5, "respect": 7, "agency": 4}}
+            },
+            {
+              "id": "jade_e2_anchor",
+              "target_node_id": "jade_echo_3",
+              "route_id": "jade_anchor",
+              "text": "以现实重排记忆",
+              "outcome": "你把矛盾记忆按今生发生顺序重排，无法解释的部分标作未知，留白留在那里。",
+              "deltas": {"exp": 82, "karma": 6},
+              "path_deltas": {"insight": 4, "defiance": 1, "bonds": -1},
+              "flags_add": ["jade_echo_reordered"],
+              "relationship_deltas": {"jade_echo": {"respect": 6, "dependency": -6}}
+            },
+            {
+              "id": "jade_e2_seal",
+              "target_node_id": "jade_echo_3",
+              "route_id": "jade_seal",
+              "text": "撕开伪忆的锁",
+              "outcome": "你承受一轮旧伤反噬，撕开伪忆伪装的锁；逃出的只有继续醒着的权利。",
+              "deltas": {"dao_heart": 9, "hp": -14, "enmity": 2},
+              "path_deltas": {"defiance": 4, "ambition": 1},
+              "flags_add": ["jade_echo_escape"],
+              "relationship_deltas": {"jade_echo": {"coercion": -6, "corruption": 6, "agency": 8}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "statuses_add": ["echo_residue"],
+              "statuses_remove": ["scarred_memory"]
+            }
+          ]
+        },
+        {
+          "id": "jade_echo_3",
+          "title": "定局续章·旧玉终｜玉中自证",
+          "description": "旧玉把前世证词与今生经历并排放在你面前。你必须决定谁能作证，谁只能留下痕迹。",
+          "route_variants": {
+            "jade_witness": {"title": "旧我仍可作证", "description": "见证人的名字都在场，旧我等待你给它一个不会越界的席位。"},
+            "jade_anchor": {"title": "今生成为定锚", "description": "现实记录完整闭合，旧玉只剩一件需要由你亲自签名的档案。"},
+            "jade_seal": {"title": "伤痕止于此", "description": "封印与出口同时亮起，你可以带走伤痕，也可以让它在此处终止。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "jade_e3_witness",
+              "terminal": true,
+              "route_id": "jade_witness",
+              "text": "让旧我作证但不作主",
+              "outcome": "两世证词被完整保存，旧我获得见证席位，却失去替你下令的权力。",
+              "deltas": {"exp": 110, "dao_heart": 5},
+              "path_deltas": {"bonds": 3, "insight": 2},
+              "flags_add": ["jade_resolution_witness"],
+              "relationship_deltas": {"jade_echo": {"trust": 9, "respect": 8, "agency": 8}},
+              "resolution": "守证旧我"
+            },
+            {
+              "id": "jade_e3_anchor",
+              "terminal": true,
+              "route_id": "jade_anchor",
+              "text": "把今生写成最终锚点",
+              "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过你亲手留下的现实记录。",
+              "deltas": {"exp": 86, "karma": 7},
+              "path_deltas": {"insight": 4, "defiance": 1, "bonds": -1},
+              "flags_add": ["jade_resolution_anchor"],
+              "relationship_deltas": {"jade_echo": {"respect": 9, "dependency": -9, "agency": 8}},
+              "resolution": "今身定锚"
+            },
+            {
+              "id": "jade_e3_seal",
+              "terminal": true,
+              "route_id": "jade_seal",
+              "text": "让伤痕止于旧玉",
+              "outcome": "你把伤痕与伪忆一并留在玉中，带着清醒走出梦门；过去不能借痛苦召回你。",
+              "deltas": {"dao_heart": 10, "hp": -12},
+              "path_deltas": {"defiance": 5},
+              "flags_add": ["jade_resolution_scar"],
+              "relationship_deltas": {"jade_echo": {"coercion": -9, "corruption": 3, "agency": 10}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_remove": ["echo_residue", "dream_wound", "echo_burn"],
+              "resolution": "断梦留痕"
+            }
+          ]
+        }
       ],
-      "main_choices": [
-        {"text": "握玉静听", "outcome": "你允许旧梦提供证词，却要求每一处细节接受今生事实的核验。", "deltas": {"exp": 84, "dao_heart": 3}, "path_deltas": {"insight": 3, "bonds": 1}, "resolution": "旧我为证"},
-        {"text": "以今证旧", "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分。", "deltas": {"exp": 62, "karma": 5}, "path_deltas": {"insight": 2, "defiance": 2, "bonds": -1}, "resolution": "今生校旧"},
-        {"text": "封住梦兆", "outcome": "你不销毁过去，只切断它替今生发号施令的权力。", "deltas": {"dao_heart": 6, "hp": -8}, "path_deltas": {"defiance": 3, "ambition": 1}, "resolution": "封梦自持"}
-      ],
-      "echo_choices": [
-        {"text": "承认旧证", "outcome": "两世证词被并排保存，旧我可以作证，却不能越俎代庖。", "deltas": {"exp": 96, "dao_heart": 4}, "path_deltas": {"bonds": 2, "insight": 2}, "resolution": "守证旧我"},
-        {"text": "以今校旧", "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实。", "deltas": {"exp": 74, "karma": 6}, "path_deltas": {"insight": 3, "defiance": 1, "bonds": -1}, "resolution": "今身定锚"},
-        {"text": "留痕断梦", "outcome": "过去被允许留痕，却永远失去替今生下令的资格。", "deltas": {"dao_heart": 8, "hp": -10}, "path_deltas": {"defiance": 4}, "resolution": "断梦留痕"}
-      ],
+      "main_route_resolutions": {
+        "jade_witness": "旧我为证",
+        "jade_anchor": "今生校旧",
+        "jade_seal": "封梦自持"
+      },
+      "echo_route_resolutions": {
+        "jade_witness": "守证旧我",
+        "jade_anchor": "今身定锚",
+        "jade_seal": "断梦留痕"
+      },
       "legacy_birth_effects": {"旧我为证": {"exp": 18, "dao_heart": 3}, "今生校旧": {"dao_heart": 5}, "封梦自持": {"dao_heart": 7}},
       "echo_birth_effects": {"守证旧我": {"exp": 15}, "今身定锚": {"dao_heart": 2}, "断梦留痕": {"dao_heart": 3}}
     },
     {
       "id": "sect",
+      "entry_node_id": "sect_main_1",
+      "echo_entry_node_id": "sect_echo_1",
       "name": "山门",
       "scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
       "portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
@@ -46,31 +401,437 @@
       "motion_profile": "restrained",
       "portrait_mode": "focus",
       "main": [
-        {"id": "sect_main_1", "title": "【山门·一】测灵余波", "description": "测灵台上的结果已经传遍山门。有人把你当成值得下注的苗子，也有人认为你的家世、旧玉与灵根都该先被审查。", "next": "sect_main_2", "art": {"motion_profile": "restrained"}},
-        {"id": "sect_main_2", "title": "【山门·二】外院名额", "description": "外院名额忽然少了一席，执事说是资源不足，几名同辈却知道有人在用名额试你的软硬。", "next": "sect_main_3", "art": {"motion_profile": "vigilant"}},
-        {"id": "sect_main_3", "title": "【山门·三】掌律问心", "description": "掌律玉简把早年的每次选择串成一份问心案卷。一脉长老要证明你只是靠师承庇护才走到今天。", "next": "sect_main_4", "art": {"motion_profile": "confrontation"}},
-        {"id": "sect_main_4", "title": "【山门·终】自择道统", "description": "山门愿意给你更高的位置，代价是让某一脉替你定义道途。走到这一步，你必须决定自己属于谁，又不属于谁。", "next": "legacy", "art": {"motion_profile": "restrained"}}
+        {
+          "id": "sect_main_1",
+          "title": "山门·一｜测灵余波",
+          "description": "测灵台上的结果已经传遍山门。有人把你当成值得下注的苗子，也有人认为你的家世、旧玉与灵根都该先被审查。",
+          "art": {"motion_profile": "restrained"},
+          "choices": [
+            {
+              "id": "sect_m1_reform",
+              "target_node_id": "sect_main_2",
+              "route_id": "sect_reform",
+              "text": "请执律堂公开审查条目",
+              "outcome": "你把传闻变成一张可以逐项回答的清单，也迫使执律人对每个问题留下署名。",
+              "deltas": {"exp": 82, "reputation": 5, "enmity": 3},
+              "path_deltas": {"insight": 2, "bonds": 2},
+              "flags_add": ["sect_review_public"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 7, "trust": 2, "stance": "接受公开问责"}},
+              "promises_add": [{"id": "sect_promise_open_record", "text": "每一次审查都要留下可供弟子复核的记录。", "character_id": "sect_lawkeepers"}]
+            },
+            {
+              "id": "sect_m1_compromise",
+              "target_node_id": "sect_main_2",
+              "route_id": "sect_compromise",
+              "text": "请师长一同到场作证",
+              "outcome": "你承认师承给过庇护，也要求长辈当面说明他们愿意承担的那一份责任。",
+              "deltas": {"exp": 64, "spirit_stones": 8},
+              "path_deltas": {"bonds": 3, "ambition": 1, "defiance": -1},
+              "flags_add": ["sect_mentor_present"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 5, "respect": 3, "dependency": 2}},
+              "debts_add": [{"id": "sect_debt_mentor", "text": "师承替你担保一次，你要亲自补齐被省略的事实。", "character_id": "sect_lawkeepers"}]
+            },
+            {
+              "id": "sect_m1_escape",
+              "target_node_id": "sect_main_3",
+              "route_id": "sect_escape",
+              "text": "拒绝进入无名禁闭室",
+              "outcome": "你挡住落锁的门，逼问禁闭期限和申诉方式；缚灵索随即从两侧落下，门外弟子都看见了这场强押。",
+              "deltas": {"dao_heart": 6, "hp": -8, "reputation": -2},
+              "path_deltas": {"defiance": 3, "creation": 1},
+              "flags_add": ["sect_cell_exposed"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": -5, "respect": 5, "coercion": 8, "agency": -3, "stance": "公开对峙"}},
+              "content_tags": ["captivity", "coercion", "trauma", "escape"],
+              "combat_trigger": true,
+              "encounter": {
+                "encounter_id": "story_sect_gate_disciples",
+                "base_enemy_id": "immortal_sky_enforcer",
+                "enemy_name": "封门执律弟子",
+                "encounter_tier": "normal",
+                "motivation": "你挡住禁闭室落锁时，两名执律弟子催动缚灵索，要在众目睽睽下将你押进无名牢房。",
+                "stakes": "身后的门一旦合拢，审查将没有期限，目睹此事的弟子也会被迫沉默。",
+                "victory_consequence": "缚灵索被斩断，禁闭室仍敞着，众人终于看清门后的无名囚室。",
+                "defeat_consequence": "你被拖进禁闭室，伤势压垮此世，门外只剩一地断裂的证词。",
+                "escape_consequence": "你冲出执律堂，却没能拆掉禁闭室；守门人开始清理目击者。"
+              },
+              "statuses_add": ["discipline_wound"],
+              "delayed_echoes": [{"id": "sect_cell_knock", "after_chapters": 2, "text": "夜里有人从禁闭室旧墙后敲出三短一长的求救声。", "effects": {"flags_add": ["sect_hidden_prisoner"], "relationship_deltas": {"sect_lawkeepers": {"coercion": 3}}}}]
+            }
+          ]
+        },
+        {
+          "id": "sect_main_2",
+          "title": "山门·二｜外院名额",
+          "description": "外院名额忽然少了一席，执事说是资源不足，几名同辈却知道有人在用名额试你的软硬。",
+          "route_variants": {
+            "sect_reform": {"title": "账册上的空席", "description": "公开审查让名额变动留下了墨迹，你沿签名找到一笔从未对弟子说明的资源调拨。"},
+            "sect_compromise": {"title": "担保后的空席", "description": "师长愿意替你补上名额，却提醒你接受之后便欠下新的人情。"},
+            "sect_escape": {"title": "禁闭室外的空席", "description": "你公开禁闭室后，自己的名字从外院名单消失；那张空席成了山门对你的第二道锁。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "sect_m2_reform",
+              "target_node_id": "sect_main_3",
+              "route_id": "sect_reform",
+              "text": "核对名额与资源账册",
+              "outcome": "你和落选弟子逐页核账，找出三次未公示的调拨；执事不得不把标准贴上外院门墙。",
+              "deltas": {"exp": 86, "reputation": 6, "enmity": 4},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["sect_quota_audited"],
+              "promises_resolve": ["sect_promise_open_record"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 6, "trust": 2}}
+            },
+            {
+              "id": "sect_m2_compromise",
+              "target_node_id": "sect_main_3",
+              "route_id": "sect_compromise",
+              "text": "把担保换成公开考核",
+              "outcome": "你把补来的席位拆成公开考核，所有候补者同场抽签。末轮钟响后，录取榜连同每项分数贴在外院门墙，师长只在见证栏落款。",
+              "deltas": {"exp": 70},
+              "path_deltas": {"bonds": 4, "ambition": -1},
+              "flags_add": ["sect_shared_trial"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 7, "respect": 3, "dependency": -2}},
+              "promises_add": [{"id": "sect_promise_candidates", "text": "考核结束前，不让任何候补者因出身被提前除名。", "character_id": "sect_lawkeepers"}],
+              "promises_resolve": ["sect_promise_candidates"]
+            },
+            {
+              "id": "sect_m2_escape",
+              "target_node_id": "sect_main_3",
+              "route_id": "sect_escape",
+              "text": "带候补者闯进公示堂",
+              "outcome": "你撞开公示堂封门，把空白名单挂到钟楼下。名字刚重现，护堂阵便封死出口，监令从阵眼现身。",
+              "deltas": {"dao_heart": 7, "hp": -12, "enmity": 5},
+              "path_deltas": {"defiance": 4, "creation": 1},
+              "flags_add": ["sect_quota_breached"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": -4, "respect": 7, "coercion": 5, "corruption": 4}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "combat_trigger": true,
+              "encounter": {
+                "encounter_id": "story_sect_hall_overseer",
+                "base_enemy_id": "classical_oath_breaker",
+                "enemy_name": "护堂监令",
+                "encounter_tier": "elite",
+                "motivation": "你揭出的空白名册会掀开调拨黑账，护堂监令催动大阵，要在钟声停下前夺回原册。",
+                "stakes": "名册若被夺，候补者会再次无名，现场证词也会被改写成闯堂罪状。",
+                "victory_consequence": "阵眼熄灭，名单留在钟楼，每一名被抹去的候补者都能取回记录。",
+                "defeat_consequence": "监令夺回名单，你被护堂阵绞断经脉，此世倒在公示堂门前。",
+                "escape_consequence": "你护住候补者撤走，却没能带出原册；监令连夜重封了调拨黑账。"
+              },
+              "statuses_add": ["law_brand"],
+              "delayed_echoes": [{"id": "sect_brand_whisper", "after_chapters": 1, "text": "戒律烙印在夜里发亮，低声教你如何用这套阵法反过来锁住执律人。", "effects": {"flags_add": ["sect_corrupt_method_known"], "relationship_deltas": {"sect_lawkeepers": {"corruption": 5}}}}]
+            }
+          ]
+        },
+        {
+          "id": "sect_main_3",
+          "title": "山门·三｜掌律问心",
+          "description": "掌律玉简把早年的每次选择串成一份问心案卷。一脉长老要证明你只是靠师承庇护才走到今天。",
+          "route_variants": {
+            "sect_reform": {"title": "让执律者也入卷", "description": "你带来调拨账册，要求审问者先说明谁批准了每一项隐秘规则。"},
+            "sect_compromise": {"title": "案卷共担", "description": "候补考核留下了所有人的署名，师长不能替你独自回答，也无法替你独自背罪。"},
+            "sect_escape": {"title": "烙印下的问心", "description": "戒律烙印试图逼你说出预设供词，你在疼痛里看清了阵法后门和那个诱人的反锁方法。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "sect_m3_reform",
+              "target_node_id": "sect_main_4",
+              "route_id": "sect_reform",
+              "text": "把执律者写入案卷",
+              "outcome": "你逐条回应质疑，也把每位审问者的决定写进卷宗；问心从单向审判变成了相互负责。",
+              "deltas": {"exp": 90, "reputation": 7, "enmity": 4},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["sect_mutual_accountability"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 8, "trust": 4, "agency": 3}}
+            },
+            {
+              "id": "sect_m3_compromise",
+              "target_node_id": "sect_main_4",
+              "route_id": "sect_compromise",
+              "text": "让师长先陈述他的责任",
+              "outcome": "师长承认曾替你挡下一次不公，也承认庇护掩住了制度本身的问题；你接过剩下那份责任。",
+              "deltas": {"karma": 8, "reputation": 4},
+              "path_deltas": {"bonds": 4, "insight": 1, "defiance": -1},
+              "flags_add": ["sect_shared_account"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 8, "respect": 4, "dependency": -3}},
+              "debts_resolve": ["sect_debt_mentor"],
+              "debts_add": [{"id": "sect_debt_repair", "text": "你与师长一起承担修订外院制度的后续。", "character_id": "sect_lawkeepers"}]
+            },
+            {
+              "id": "sect_m3_escape",
+              "target_node_id": "sect_main_4",
+              "route_id": "sect_escape",
+              "text": "折断烙印，拒绝预设供词",
+              "outcome": "你宁可让烙印灼穿皮肉，也不沿它给出的答案开口；反锁口诀被你记住，却没有立刻用在别人身上。",
+              "deltas": {"dao_heart": 8, "hp": -14},
+              "path_deltas": {"defiance": 4, "creation": 2},
+              "flags_add": ["sect_brand_broken"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": -2, "respect": 8, "coercion": -5, "corruption": 7, "agency": 8}},
+              "dungeon_clue": true,
+              "content_tags": ["coercion", "captivity", "trauma", "escape", "corruption"],
+              "statuses_remove": ["discipline_wound", "law_brand"],
+              "statuses_add": ["broken_law_scar"]
+            }
+          ]
+        },
+        {
+          "id": "sect_main_4",
+          "title": "山门·终｜自择道统",
+          "description": "山门愿意给你更高的位置，代价是让某一脉替你定义道途。走到这一步，你必须决定自己属于谁，又不属于谁。",
+          "route_variants": {
+            "sect_reform": {"title": "在旧门内立新律", "description": "公开卷宗已传遍外院，你可以留下，把问责写成每个人都能使用的门规。"},
+            "sect_compromise": {"title": "师承不替你作答", "description": "师长与你并肩站在殿上，他愿意共担来路，也愿意接受你走出他的影子。"},
+            "sect_escape": {"title": "带着伤痕走出山门", "description": "断裂烙印落在掌中，你可以用它反锁所有审问者，也可以把这套囚人的阵法止于自己。"}
+          },
+          "art": {"motion_profile": "restrained"},
+          "choices": [
+            {
+              "id": "sect_m4_reform",
+              "terminal": true,
+              "route_id": "sect_reform",
+              "text": "留下并重写问责门规",
+              "outcome": "你接受席位，却让规则与代价公开；执律者和受审者的名字都写进一份案卷。",
+              "deltas": {"exp": 98, "reputation": 8, "enmity": 4},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["sect_legacy_reform"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 10, "trust": 6, "agency": 5}},
+              "resolution": "守律立道"
+            },
+            {
+              "id": "sect_m4_compromise",
+              "terminal": true,
+              "route_id": "sect_compromise",
+              "text": "与师承共同承担旧错",
+              "outcome": "你承认师承给过机会，也让长辈在新章上署名；庇护不等于免罪，责任由双方承担。",
+              "deltas": {"exp": 78},
+              "path_deltas": {"bonds": 4, "ambition": 1, "defiance": -1},
+              "flags_add": ["sect_legacy_shared"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 10, "respect": 6, "dependency": -5}},
+              "debts_resolve": ["sect_debt_repair"],
+              "resolution": "师承共担"
+            },
+            {
+              "id": "sect_m4_escape",
+              "terminal": true,
+              "route_id": "sect_escape",
+              "text": "毁去反锁口诀后离山",
+              "outcome": "你毁去反锁口诀，带着完整证据走向山门；最后一道守山令在石阶上亮起，昔日执律人已列阵等候。",
+              "deltas": {"dao_heart": 10, "reputation": -3, "enmity": 5},
+              "path_deltas": {"defiance": 4, "creation": 3},
+              "relationship_deltas": {"sect_lawkeepers": {"trust": -3, "respect": 10, "coercion": -8, "corruption": -4, "agency": 10}},
+              "content_tags": ["captivity", "trauma", "escape"],
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["sect_legacy_independent"]},
+                "escaped": {"flags_add": ["sect_legacy_escape_blocked"]},
+                "expired": {"flags_add": ["sect_legacy_escape_delayed"]}
+              },
+              "encounter": {
+                "encounter_id": "story_sect_lawkeeper",
+                "base_enemy_id": "classical_fate_registrar",
+                "enemy_name": "守山执律首座",
+                "encounter_tier": "boss",
+                "rematch_key": "sect_lawkeeper_last_gate",
+                "motivation": "首座奉命截回反锁口诀与问心案卷，山门不允许一名受审者带着完整证据离开。",
+                "stakes": "若证据被焚，禁闭室与烙印只会变成无人能复核的传闻，你也失去自立道统的根基。",
+                "victory_consequence": "守山令碎在石阶上，你带着案卷走出山门，为新道统留下第一条边界。",
+                "defeat_consequence": "案卷被投入律火，你倒在山门之内，此世最终仍被旧律写成罪名。",
+                "escape_consequence": "你保住性命退回后山，却遗失半卷证据；离山之路仍被守山令封着。"
+              },
+              "statuses_remove": ["law_brand", "broken_law_scar"],
+              "resolution": "自立道统"
+            }
+          ]
+        }
       ],
       "echo": [
-        {"id": "sect_echo_1", "title": "【定局续章·山门一】旧宗来使", "description": "前世山门派来一名今生从未见过的使者，手里却有只属于旧约的印记。", "next": "sect_echo_2", "art": {"motion_profile": "vigilant"}},
-        {"id": "sect_echo_2", "title": "【定局续章·山门二】两代门规", "description": "旧门规与今世山门的制度发生冲突。两边都声称是在保护你，也都想借你证明自己更正统。", "next": "sect_echo_3", "art": {"motion_profile": "confrontation"}},
-        {"id": "sect_echo_3", "title": "【定局续章·山门终】道统归属", "description": "两代山门同时要求明确归属。真正的问题不是选哪块牌匾，而是谁有权替你解释道统。", "next": "resolution", "art": {"motion_profile": "restrained"}}
+        {
+          "id": "sect_echo_1",
+          "title": "定局续章·山门一｜旧宗来使",
+          "description": "前世山门派来一名今生从未见过的使者，手里却有只属于旧约的印记。",
+          "route_variants": {
+            "sect_reform": {"title": "旧律来问新章", "description": "使者先翻开你修订的问责卷宗，旧宗似乎更在意这套规则会不会传回前世。"},
+            "sect_compromise": {"title": "两代担保同时到场", "description": "使者带着旧师承的担保，你今生的长辈也来到门前，两份庇护此刻不能互相替代。"},
+            "sect_escape": {"title": "旧牢门追到今生", "description": "使者腕上有与你伤痕相同的戒律印，他声称旧宗有权把离门弟子带回受审。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "sect_e1_reform",
+              "target_node_id": "sect_echo_2",
+              "route_id": "sect_reform",
+              "text": "请使者按新章公开陈述",
+              "outcome": "你给使者一席，却要求他的权利与代价先写上墙；旧宗在今世规则下开口。",
+              "deltas": {"exp": 94, "reputation": 7, "enmity": 3},
+              "path_deltas": {"insight": 2, "bonds": 2},
+              "flags_add": ["sect_echo_public_hearing"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 7, "trust": 3}}
+            },
+            {
+              "id": "sect_e1_compromise",
+              "target_node_id": "sect_echo_2",
+              "route_id": "sect_compromise",
+              "text": "让两代师长交换担保",
+              "outcome": "你把两份担保放在一张案桌上，要求双方说明愿意承担什么，而非能从你身上取走什么。",
+              "deltas": {"karma": 6},
+              "path_deltas": {"bonds": 4, "ambition": -1},
+              "flags_add": ["sect_echo_guarantees_joined"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 8, "respect": 4}},
+              "promises_add": [{"id": "sect_echo_promise_mediation", "text": "两代山门争议必须在弟子可旁听的场合处理。", "character_id": "sect_lawkeepers"}]
+            },
+            {
+              "id": "sect_e1_escape",
+              "target_node_id": "sect_echo_3",
+              "route_id": "sect_escape",
+              "text": "当众解除使者的拘押印",
+              "outcome": "你折断旧宗的拘押印，把同样受困的使者从命令里放出来；他没有立刻感谢，只把牢门位置交给你。",
+              "deltas": {"dao_heart": 9, "hp": -12, "enmity": 5},
+              "path_deltas": {"defiance": 4, "creation": 2},
+              "flags_add": ["sect_echo_envoy_freed"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 2, "respect": 8, "coercion": -5, "agency": 7}},
+              "content_tags": ["captivity", "coercion", "trauma", "escape"],
+              "statuses_add": ["old_sect_mark"]
+            }
+          ]
+        },
+        {
+          "id": "sect_echo_2",
+          "title": "定局续章·山门二｜两代门规",
+          "description": "旧门规与今世山门的制度发生冲突。两边都声称是在保护你，也都想借你证明自己更正统。",
+          "route_variants": {
+            "sect_reform": {"title": "两套规则同受审", "description": "公开听证已经聚满弟子，两代执律人只能逐条解释各自的规则为何存在。"},
+            "sect_compromise": {"title": "担保人的案桌", "description": "两代师长都在案桌边，他们必须承认庇护若不受约束，也会成为另一种占有。"},
+            "sect_escape": {"title": "牢门名单", "description": "获释使者带来一份跨世拘押名单，其中既有叛徒，也有从未得到申诉机会的人。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "sect_e2_reform",
+              "target_node_id": "sect_echo_3",
+              "route_id": "sect_reform",
+              "text": "逐条保留能保护人的规则",
+              "outcome": "你删除只服务权位的条款，保留能防止滥权的部分；两代门规接受同一标准。",
+              "deltas": {"exp": 102, "reputation": 8, "enmity": 4},
+              "path_deltas": {"insight": 3, "bonds": 2},
+              "flags_add": ["sect_echo_rules_reconciled"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 9, "trust": 5, "agency": 4}}
+            },
+            {
+              "id": "sect_e2_compromise",
+              "target_node_id": "sect_echo_3",
+              "route_id": "sect_compromise",
+              "text": "让两代山门赔偿",
+              "outcome": "两代山门把补偿金和药材搬到外院，失去名额者逐一按印领回；日落前，账册只剩三处无人落款。",
+              "deltas": {"karma": 8},
+              "path_deltas": {"bonds": 4, "compassion": 2, "ambition": -1},
+              "flags_add": ["sect_echo_reparations"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 9, "respect": 6, "dependency": -4}},
+              "promises_resolve": ["sect_echo_promise_mediation"],
+              "debts_add": [{"id": "sect_echo_debt_reparations", "text": "赔偿名单尚有三人未找到。", "character_id": "sect_lawkeepers"}]
+            },
+            {
+              "id": "sect_e2_escape",
+              "target_node_id": "sect_echo_3",
+              "route_id": "sect_escape",
+              "text": "打开名单上的旧牢门",
+              "outcome": "第一扇牢门刚被破开，走出的旧囚便抬起刻满戒律的手臂；他早已被塑成看守，身后还有人等你带走。",
+              "deltas": {"dao_heart": 10, "hp": -16, "enmity": 6},
+              "path_deltas": {"defiance": 4, "compassion": 2},
+              "relationship_deltas": {"sect_lawkeepers": {"coercion": -7, "corruption": 6, "agency": 9, "respect": 7}},
+              "content_tags": ["captivity", "coercion", "trauma", "escape", "corruption"],
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["sect_echo_cells_opened"]},
+                "escaped": {"flags_add": ["sect_echo_partial_rescue"]},
+                "expired": {"flags_add": ["sect_echo_cells_resealed"]}
+              },
+              "encounter": {
+                "encounter_id": "story_sect_old_jailer",
+                "base_enemy_id": "final_age_silent_cultivator",
+                "enemy_name": "戒律旧看守",
+                "encounter_tier": "elite",
+                "motivation": "戒律已抹去旧囚的姓名，只剩守门命令；他拦在牢道中央，不许任何人越过身后。",
+                "stakes": "他身后的牢门正在重新合拢，尚未获救的人会连同名字一起被封回旧宗。",
+                "victory_consequence": "戒律刻痕熄灭，看守第一次想起自己的名字，也替你打开余下牢门。",
+                "defeat_consequence": "戒律沿伤口刻进神识，你倒在牢道中，成为门前下一具无名躯壳。",
+                "escape_consequence": "你带出最靠近出口的伤者，却只能眼看余下牢门重新锁死。"
+              },
+              "statuses_remove": ["old_sect_mark"],
+              "statuses_add": ["warden_memory"]
+            }
+          ]
+        },
+        {
+          "id": "sect_echo_3",
+          "title": "定局续章·山门终｜道统归山",
+          "description": "两代山门同时要求明确归属。问题落在谁有权替你解释道统。",
+          "route_variants": {
+            "sect_reform": {"title": "旧律写成新章", "description": "两套门规都已完成公开修订，你要决定这份新章由谁保存、又由谁质疑。"},
+            "sect_compromise": {"title": "两代同门", "description": "赔偿名单和担保都摆在殿前，两代山门无法只谈恩义而避开责任。"},
+            "sect_escape": {"title": "在山外开宗", "description": "旧牢门已经打开，你带着获释者和伤痕站在山外，第一条新章将决定你是否重演旧宗。"}
+          },
+          "art": {"motion_profile": "restrained"},
+          "choices": [
+            {
+              "id": "sect_e3_reform",
+              "terminal": true,
+              "route_id": "sect_reform",
+              "text": "把新章交给所有弟子复核",
+              "outcome": "旧律中能护人的部分被保留，执律者也被纳入问责；新章不属于某一位长老。",
+              "deltas": {"exp": 112, "reputation": 9, "enmity": 4},
+              "path_deltas": {"insight": 3, "bonds": 3},
+              "flags_add": ["sect_resolution_new_law"],
+              "relationship_deltas": {"sect_lawkeepers": {"respect": 10, "trust": 8, "agency": 7}},
+              "resolution": "旧律新章"
+            },
+            {
+              "id": "sect_e3_compromise",
+              "terminal": true,
+              "route_id": "sect_compromise",
+              "text": "让两代山门署名",
+              "outcome": "守门弟子带回最后三人的住址。两代山门上门交清药费与误失的灵石，三张收据摊在殿前，由当事人亲手按印。",
+              "deltas": {"karma": 9},
+              "path_deltas": {"bonds": 5, "ambition": -1},
+              "flags_add": ["sect_resolution_two_generations"],
+              "relationship_deltas": {"sect_lawkeepers": {"trust": 10, "respect": 8, "dependency": -6}},
+              "debts_resolve": ["sect_echo_debt_reparations"],
+              "resolution": "两代同门"
+            },
+            {
+              "id": "sect_e3_escape",
+              "terminal": true,
+              "route_id": "sect_escape",
+              "text": "在山外写下第一条新章",
+              "outcome": "你只承认自己愿意承担的道统，第一条便是不以囚禁换取忠诚；伤痕留下，牢门到此为止。",
+              "deltas": {"dao_heart": 11, "enmity": 5},
+              "path_deltas": {"defiance": 4, "creation": 3},
+              "flags_add": ["sect_resolution_new_foundation"],
+              "relationship_deltas": {"sect_lawkeepers": {"coercion": -9, "corruption": -5, "agency": 10, "respect": 9}},
+              "content_tags": ["captivity", "trauma", "escape"],
+              "statuses_remove": ["warden_memory", "old_sect_mark"],
+              "resolution": "今世开宗"
+            }
+          ]
+        }
       ],
-      "main_choices": [
-        {"text": "据理受验", "outcome": "你逐条回应质疑，不借天资压人，也不让门规替旁人定罪。", "deltas": {"exp": 82, "reputation": 5}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "守律立道"},
-        {"text": "借师承入局", "outcome": "你承认师承给过机会，却没有把全部责任推给长辈。", "deltas": {"exp": 64, "spirit_stones": 8}, "path_deltas": {"bonds": 3, "ambition": 1, "defiance": -1}, "resolution": "师承共担"},
-        {"text": "拒绝被定价", "outcome": "你要求把规则与代价写明，第一次以自己的名字站在山门前。", "deltas": {"dao_heart": 6, "reputation": -2}, "path_deltas": {"defiance": 3, "creation": 1}, "resolution": "自立道统"}
-      ],
-      "echo_choices": [
-        {"text": "续写旧律", "outcome": "你保留旧律中真正能护人的部分，并把旧宗也纳入问责。", "deltas": {"exp": 94, "reputation": 7}, "path_deltas": {"insight": 2, "bonds": 2}, "resolution": "旧律新章"},
-        {"text": "与今门共议", "outcome": "两代山门公开核对权利与代价，道统第一次不再等同于服从。", "deltas": {"spirit_stones": 12, "karma": 5}, "path_deltas": {"bonds": 4, "ambition": -1}, "resolution": "两代同门"},
-        {"text": "另立新章", "outcome": "你只承认自己愿意承担的道统，并为它写下可被后人质疑的新章。", "deltas": {"dao_heart": 8, "enmity": 3}, "path_deltas": {"defiance": 3, "creation": 2}, "resolution": "今世开宗"}
-      ],
+      "main_route_resolutions": {
+        "sect_reform": "守律立道",
+        "sect_compromise": "师承共担",
+        "sect_escape": "自立道统"
+      },
+      "echo_route_resolutions": {
+        "sect_reform": "旧律新章",
+        "sect_compromise": "两代同门",
+        "sect_escape": "今世开宗"
+      },
       "legacy_birth_effects": {"守律立道": {"reputation": 5}, "师承共担": {"reputation": 3, "dao_heart": 2}, "自立道统": {"dao_heart": 4, "enmity": 2}},
       "echo_birth_effects": {"旧律新章": {"reputation": 2}, "两代同门": {"reputation": 1, "dao_heart": 1}, "今世开宗": {"dao_heart": 2}}
     },
     {
       "id": "family",
+      "entry_node_id": "family_main_1",
+      "echo_entry_node_id": "family_echo_1",
       "name": "家世",
       "scene": "res://art/scenes/lantern_river_spirit_bazaar.png",
       "portrait": "res://art/portraits/jade_healer.jpg",
@@ -80,31 +841,390 @@
       "motion_profile": "introspective",
       "portrait_mode": "focus",
       "main": [
-        {"id": "family_main_1", "title": "【家世·一】旧仆来信", "description": "一封没有署名的旧信送到手中，字迹像家中长辈，又像多年不曾露面的旧仆。信里只写：不要让旁人先替你认祖。", "next": "family_main_2", "art": {"motion_profile": "introspective"}},
-        {"id": "family_main_2", "title": "【家世·二】封名玉简", "description": "家中封存的玉简被人送来，里面记着一个被抹去的名字，也记着养育者曾替你挡下的第一场灾。", "next": "family_main_3", "art": {"motion_profile": "spectral"}},
-        {"id": "family_main_3", "title": "【家世·三】旧宅暗门", "description": "旧宅地基下露出一扇暗门。门后不是宝库，而是家族曾经选错边、欠下债、又拼命藏住你的证据。", "next": "family_main_4", "art": {"motion_profile": "vigilant"}},
-        {"id": "family_main_4", "title": "【家世·终】认或不认", "description": "身世真相足以改变名望、资源和仇家。可血脉只能解释你从哪里来，不能替你决定要成为谁。", "next": "legacy", "art": {"motion_profile": "confrontation"}}
+        {
+          "id": "family_main_1",
+          "title": "家世·一｜旧仆来信",
+          "description": "一封没有署名的旧信送到手中，字迹像家中长辈，又像多年不曾露面的旧仆。信里只写：不要让旁人先替你认祖。",
+          "art": {"motion_profile": "introspective"},
+          "choices": [
+            {
+              "id": "family_m1_truth",
+              "target_node_id": "family_main_2",
+              "route_id": "family_truth",
+              "text": "循纸墨查出寄信人",
+              "outcome": "你从旧纸的药香查到一间停用驿舍，寄信人留下半本可以核验的族账。",
+              "deltas": {"exp": 86, "spirit_stones": 8, "enmity": 3},
+              "path_deltas": {"insight": 3, "ambition": 1},
+              "flags_add": ["family_sender_traced"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 2, "respect": 6, "stance": "等待你查账"}},
+              "debts_add": [{"id": "family_debt_half_ledger", "text": "半本族账里有三笔欠款仍无人承担。", "character_id": "family_covenant_holder"}]
+            },
+            {
+              "id": "family_m1_care",
+              "target_node_id": "family_main_2",
+              "route_id": "family_care",
+              "text": "先把信交给养育者",
+              "outcome": "你没有越过养大你的人。对方沉默很久，拿出一枚从未解释过的护身扣。",
+              "deltas": {"karma": 8, "reputation": 4},
+              "path_deltas": {"compassion": 2, "bonds": 3, "ambition": -1},
+              "flags_add": ["family_caregiver_consulted"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 5, "respect": 2, "dependency": -2}},
+              "promises_add": [{"id": "family_promise_caregiver", "text": "查清来处之前，先保护养育者不被旧族牵连。", "character_id": "family_covenant_holder"}]
+            },
+            {
+              "id": "family_m1_break",
+              "target_node_id": "family_main_3",
+              "route_id": "family_break",
+              "text": "拒绝信中的认祖时限",
+              "outcome": "你烧掉要求三日内赴约的契纸，血印反咬进掌心；灰烬尚未落地，院墙外已经响起追索铜铃。",
+              "deltas": {"dao_heart": 7, "hp": -9, "reputation": -2},
+              "path_deltas": {"defiance": 3, "insight": 1},
+              "flags_add": ["family_summons_refused"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": -4, "respect": 5, "coercion": 7, "agency": -3}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "combat_trigger": true,
+              "encounter": {
+                "encounter_id": "story_family_covenant_tracker",
+                "base_enemy_id": "steam_debt_collector",
+                "enemy_name": "祖契追索使",
+                "encounter_tier": "elite",
+                "motivation": "契纸焚毁惊动祖契，追索使循着掌心血印赶来，要在天亮前把你押回族祠。",
+                "stakes": "一旦被带走，认祖会在无人作证时完成，养育你的人也会因藏匿血脉获罪。",
+                "victory_consequence": "追索铜铃被击碎，血印暂时失去方向，来使遗落的路引指向族谱上没有的旧宅。",
+                "defeat_consequence": "血索贯穿经脉，你被拖向族祠，此世没能走出那封旧信写下的期限。",
+                "escape_consequence": "你甩开追索使，却没能抹去血印；下一声铜铃已经转向养育者的住处。"
+              },
+              "statuses_add": ["blood_contract_wound"],
+              "delayed_echoes": [{"id": "family_blood_call", "after_chapters": 2, "text": "被烧毁的血印在雨水里重新显形，指向一座族谱上不存在的旧宅。", "effects": {"flags_add": ["family_hidden_house_found"], "relationship_deltas": {"family_covenant_holder": {"coercion": 3}}}}]
+            }
+          ]
+        },
+        {
+          "id": "family_main_2",
+          "title": "家世·二｜封名玉简",
+          "description": "家中封存的玉简被人送来，里面记着一个被抹去的名字，也记着养育者曾替你挡下的第一场灾。",
+          "route_variants": {
+            "family_truth": {"title": "族账里的缺名", "description": "半本族账与玉简严丝合缝，那个被抹去的名字曾经领走一笔足以改写家运的资源。"},
+            "family_care": {"title": "护身扣打开玉简", "description": "养育者的护身扣解开第一层封印，玉简里先露出一封托孤书，祖名写在背面。"},
+            "family_break": {"title": "血印追上玉简", "description": "掌心伤口让玉简自行开启，契印试图把被抹去的名字直接烙成你的身份。"}
+          },
+          "art": {"motion_profile": "spectral"},
+          "choices": [
+            {
+              "id": "family_m2_truth",
+              "target_node_id": "family_main_3",
+              "route_id": "family_truth",
+              "text": "复原被抹去的领用记录",
+              "outcome": "你还原资源去向，发现旧名留下恩惠，也留下债务；每一笔来处都落回账册。",
+              "deltas": {"exp": 90, "spirit_stones": 10, "enmity": 4},
+              "path_deltas": {"insight": 3, "ambition": 2},
+              "flags_add": ["family_ledger_restored"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 4, "respect": 7}},
+              "debts_add": [{"id": "family_debt_old_resources", "text": "旧名领走的资源曾让另一支族人失去药材。", "character_id": "family_covenant_holder"}]
+            },
+            {
+              "id": "family_m2_care",
+              "target_node_id": "family_main_3",
+              "route_id": "family_care",
+              "text": "与养育者一起读托孤书",
+              "outcome": "你们逐句读完托孤书，养育者说出那场灾难；血脉真相没有抹去二十年的日常。",
+              "deltas": {"karma": 9, "dao_heart": 4},
+              "path_deltas": {"compassion": 3, "bonds": 3, "ambition": -1},
+              "flags_add": ["family_foster_truth_shared"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 7, "respect": 4, "dependency": -3}}
+            },
+            {
+              "id": "family_m2_break",
+              "target_node_id": "family_main_3",
+              "route_id": "family_break",
+              "text": "剥离强行认名的血印",
+              "outcome": "你把血印从神识边缘一寸寸剥离，短暂失去对旧名的记忆，却保住了回答或拒绝的余地。",
+              "deltas": {"dao_heart": 8, "hp": -12},
+              "path_deltas": {"defiance": 4, "insight": 1},
+              "flags_add": ["family_name_brand_removed"],
+              "relationship_deltas": {"family_covenant_holder": {"coercion": -4, "corruption": 5, "agency": 6, "respect": 6}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "statuses_remove": ["blood_contract_wound"],
+              "statuses_add": ["blood_echo_scar"],
+              "delayed_echoes": [{"id": "family_name_whisper", "after_chapters": 1, "text": "失去的旧名在梦中诱你用祖契夺回所有资源，声音温和得几乎像自己的念头。", "effects": {"flags_add": ["family_corrupt_claim_known"], "relationship_deltas": {"family_covenant_holder": {"corruption": 6}}}}]
+            }
+          ]
+        },
+        {
+          "id": "family_main_3",
+          "title": "家世·三｜旧宅暗门",
+          "description": "旧宅地基下露出一扇暗门。门后堆着家族选错边、欠下债、又拼命藏住你的证据。",
+          "route_variants": {
+            "family_truth": {"title": "族账指向暗门", "description": "复原账册上的最后一笔正好标注在地基下，你将看到旧名的资源究竟从谁手里取得。"},
+            "family_care": {"title": "托孤书里的暗门", "description": "托孤书提醒你先敲三次门，里面有人一直等养育者亲口确认你平安长大。"},
+            "family_break": {"title": "旧名诱你夺门", "description": "祖契在门外低语，只要接受旧名，整间暗室都会承认你为主人；血痕却记得这种承认没有问过你。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "family_m3_truth",
+              "target_node_id": "family_main_4",
+              "route_id": "family_truth",
+              "text": "清点暗室里的债与证据",
+              "outcome": "你把资源、伤亡与受益人逐项登记，承认其中一部分债确实会随血脉来到你面前。",
+              "deltas": {"exp": 94, "spirit_stones": 12, "enmity": 4},
+              "path_deltas": {"insight": 4, "ambition": 1},
+              "flags_add": ["family_darkroom_audited"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 6, "respect": 8}},
+              "dungeon_clue": true,
+              "debts_add": [{"id": "family_debt_darkroom", "text": "暗室名册上的幸存者仍需得到赔偿与说明。", "character_id": "family_covenant_holder"}]
+            },
+            {
+              "id": "family_m3_care",
+              "target_node_id": "family_main_4",
+              "route_id": "family_care",
+              "text": "先让暗室见证人出来",
+              "outcome": "你挡住祖契持有人，先割断暗室门上的契绳。见证人踏出门槛时，养育者扶着门框没有催问；族人直到她点头才被放进来。",
+              "deltas": {"karma": 11, "hp": -8},
+              "path_deltas": {"compassion": 4, "bonds": 3},
+              "flags_add": ["family_witness_freed"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 9, "respect": 5, "coercion": -3, "agency": 5}},
+              "content_tags": ["captivity", "trauma", "escape"],
+              "promises_resolve": ["family_promise_caregiver"],
+              "promises_add": [{"id": "family_promise_witness", "text": "见证人可以自行决定何时、向谁讲述旧事。", "character_id": "family_covenant_holder"}]
+            },
+            {
+              "id": "family_m3_break",
+              "target_node_id": "family_main_4",
+              "route_id": "family_break",
+              "text": "毁掉认主祭台",
+              "outcome": "你拒绝接受祭台递来的控制权，将认主阵连同夺回一切的诱惑一起击碎；祖契反噬在经脉里留下黑痕。",
+              "deltas": {"dao_heart": 9, "hp": -16, "reputation": -3},
+              "path_deltas": {"defiance": 4, "creation": 2},
+              "flags_add": ["family_master_altar_broken"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": -2, "respect": 9, "coercion": -6, "corruption": 8, "agency": 9}},
+              "content_tags": ["coercion", "captivity", "trauma", "escape", "corruption"],
+              "statuses_add": ["ancestral_corruption_scar"],
+              "statuses_remove": ["blood_echo_scar"]
+            }
+          ]
+        },
+        {
+          "id": "family_main_4",
+          "title": "家世·终｜认或不认",
+          "description": "身世真相足以改变名望、资源和仇家。可血脉只能解释你从哪里来，不能替你决定要成为谁。",
+          "route_variants": {
+            "family_truth": {"title": "连同旧债承认来处", "description": "账册已经完整，荣耀与债务写在一页；你可以承认血脉，却得连账一起接下。"},
+            "family_care": {"title": "养恩先于祖名", "description": "见证人与养育者都在场，族谱越不过陪你长大的人。"},
+            "family_break": {"title": "黑痕之外的名字", "description": "认主祭台已毁，祖契仍以力量诱你回头；掌心的黑痕证明自由和恶堕不会因一句拒绝消失。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "family_m4_truth",
+              "terminal": true,
+              "route_id": "family_truth",
+              "text": "承认血脉并接下旧账",
+              "outcome": "你认下祖脉，也把资源背后的旧债正式记到自己名下；族谱把恩惠与代价写在一行。",
+              "deltas": {"exp": 104, "spirit_stones": 10, "enmity": 5},
+              "path_deltas": {"insight": 3, "ambition": 2},
+              "flags_add": ["family_legacy_lineage"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 8, "respect": 9, "agency": 5}},
+              "resolution": "承认旧脉"
+            },
+            {
+              "id": "family_m4_care",
+              "terminal": true,
+              "route_id": "family_care",
+              "text": "请养育者先为你作证",
+              "outcome": "血脉真相被保留，但养大你的人先得到回答；祖名只能加入关系，不能覆盖关系。",
+              "deltas": {"karma": 12, "reputation": 6},
+              "path_deltas": {"compassion": 3, "bonds": 4, "ambition": -1},
+              "flags_add": ["family_legacy_caregiver"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 10, "respect": 7, "dependency": -6}},
+              "resolution": "护亲问源"
+            },
+            {
+              "id": "family_m4_break",
+              "terminal": true,
+              "route_id": "family_break",
+              "text": "留下证据，拒绝继承祖名",
+              "outcome": "你保留真相，却拒绝拿祖名换取现成位置；黑痕仍需疗愈，却已不替你作主。",
+              "deltas": {"dao_heart": 11, "reputation": -2},
+              "path_deltas": {"defiance": 4, "insight": 1},
+              "flags_add": ["family_legacy_independent"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": -2, "respect": 10, "coercion": -8, "corruption": -4, "agency": 10}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_remove": ["blood_contract_wound", "ancestral_corruption_scar"],
+              "resolution": "断名自立"
+            }
+          ]
+        }
       ],
       "echo": [
-        {"id": "family_echo_1", "title": "【定局续章·家世一】祖契来人", "description": "祖契中的人循着前世定局找到今生。他们带来资源，也带来一份必须有人承担的旧债。", "next": "family_echo_2", "art": {"motion_profile": "vigilant"}},
-        {"id": "family_echo_2", "title": "【定局续章·家世二】养恩与血脉", "description": "血脉证据与养育之恩被摆到同一张案上。任何一方被轻易抹去，都会让另一方变成新的枷锁。", "next": "family_echo_3", "art": {"motion_profile": "introspective"}},
-        {"id": "family_echo_3", "title": "【定局续章·家世终】旧名裁决", "description": "旧名、祖脉和养育者共同到场。你要留下的不只是姓氏，而是一套今后仍能承担后果的关系。", "next": "resolution", "art": {"motion_profile": "confrontation"}}
+        {
+          "id": "family_echo_1",
+          "title": "定局续章·家世一｜祖契来人",
+          "description": "祖契中的人循着前世定局找到今生。他们带来资源，也带来一份必须有人承担的旧债。",
+          "route_variants": {
+            "family_truth": {"title": "债与血脉一同到场", "description": "来人先递上完整族账，显然知道你不会接受只谈荣耀的认祖。"},
+            "family_care": {"title": "祖契先拜访养育者", "description": "来人站在养育者门外，等一场迟了两世的道歉。"},
+            "family_break": {"title": "旧名跨世追索", "description": "祖契沿着已经褪去的黑痕找到你，来人声称只要重新认名，所有痛苦都能换成权力。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "family_e1_truth",
+              "target_node_id": "family_echo_2",
+              "route_id": "family_truth",
+              "text": "把资源和旧债一并登记",
+              "outcome": "你接过族账，却让每一份资源与对应债务同时入册；来人不能用恩惠遮住代价。",
+              "deltas": {"spirit_stones": 16, "karma": 4, "enmity": 3},
+              "path_deltas": {"bonds": 2, "ambition": 2},
+              "flags_add": ["family_echo_debt_registered"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 6, "respect": 8}}
+            },
+            {
+              "id": "family_e1_care",
+              "target_node_id": "family_echo_2",
+              "route_id": "family_care",
+              "text": "请来人先向养育者说明",
+              "outcome": "血脉被留下查证，养育今生的人先听到完整说明，也保有拒绝原谅的权利。",
+              "deltas": {"reputation": 9, "dao_heart": 4},
+              "path_deltas": {"compassion": 3, "bonds": 2, "ambition": -1},
+              "flags_add": ["family_echo_caregiver_first"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 9, "respect": 5, "dependency": -3}},
+              "promises_resolve": ["family_promise_caregiver"]
+            },
+            {
+              "id": "family_e1_break",
+              "target_node_id": "family_echo_3",
+              "route_id": "family_break",
+              "text": "拒绝用旧名换取资源",
+              "outcome": "你把旧名和三张债券一并退回族库，账房当场改回原族名下；这些旧债留在原族名下，不向你和养育者追讨。",
+              "deltas": {"dao_heart": 9},
+              "path_deltas": {"defiance": 3, "compassion": 1},
+              "flags_add": ["family_echo_name_refused"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": -2, "respect": 8, "coercion": -5, "agency": 7}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "debts_forgive": ["family_debt_half_ledger", "family_debt_old_resources", "family_debt_darkroom"]
+            }
+          ]
+        },
+        {
+          "id": "family_echo_2",
+          "title": "定局续章·家世二｜养恩与血脉",
+          "description": "血脉证据与养育之恩被摆到一张案上。任一方被抹去，另一方都会变成新的枷锁。",
+          "route_variants": {
+            "family_truth": {"title": "完整族账的代价", "description": "你发现一笔旧债由养育者替祖脉偿还多年，两种关系在账册前相遇。"},
+            "family_care": {"title": "道歉之后仍有边界", "description": "养育者听完说明，却不愿被称作祖契的恩人；他只要求今后无人替你决定称呼。"},
+            "family_break": {"title": "旧名伪装成你的声音", "description": "被拒绝的旧名在梦里模仿你的念头，诱你把所有关系都切断，以免再次被谁握住。"}
+          },
+          "art": {"motion_profile": "introspective"},
+          "choices": [
+            {
+              "id": "family_e2_truth",
+              "target_node_id": "family_echo_3",
+              "route_id": "family_truth",
+              "text": "补记养育者代偿的年月",
+              "outcome": "你把被族谱省略的年月补回账册，血脉因此获得来处，也失去独占功劳的资格。",
+              "deltas": {"exp": 104, "reputation": 8, "enmity": 3},
+              "path_deltas": {"insight": 3, "bonds": 3},
+              "flags_add": ["family_echo_care_debt_recorded"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 8, "respect": 9}}
+            },
+            {
+              "id": "family_e2_care",
+              "target_node_id": "family_echo_3",
+              "route_id": "family_care",
+              "text": "让养育者自行决定称呼",
+              "outcome": "你没有用恩情要求亲近，对方也不必靠牺牲证明关系；一声普通称呼比族谱更稳。",
+              "deltas": {"karma": 11},
+              "path_deltas": {"compassion": 4, "bonds": 4, "ambition": -1},
+              "flags_add": ["family_echo_names_chosen"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 10, "respect": 6, "dependency": -7, "agency": 5}}
+            },
+            {
+              "id": "family_e2_break",
+              "target_node_id": "family_echo_3",
+              "route_id": "family_break",
+              "text": "从伪声中叫回自己的名字",
+              "outcome": "你承认自己仍会害怕被关系束缚，却没有顺从旧名切断所有牵挂；恶堕的低语失去了一处藏身地。",
+              "deltas": {"dao_heart": 10, "hp": -12},
+              "path_deltas": {"defiance": 4, "bonds": 1},
+              "flags_add": ["family_echo_self_named"],
+              "relationship_deltas": {"family_covenant_holder": {"coercion": -6, "corruption": -5, "agency": 9, "trust": 3}},
+              "content_tags": ["coercion", "trauma", "escape", "corruption"],
+              "statuses_remove": ["ancestral_corruption_scar"]
+            }
+          ]
+        },
+        {
+          "id": "family_echo_3",
+          "title": "定局续章·家世终｜旧名裁决",
+          "description": "旧名、祖脉和养育者都已到场。你要留下姓氏，也要写下今后承担后果的办法。",
+          "route_variants": {
+            "family_truth": {"title": "祖脉共担", "description": "完整账册放在所有人面前，承认祖脉也意味着承认由它带来的长期责任。"},
+            "family_care": {"title": "养恩为先", "description": "养育者站在你选择的位置上，祖契必须先尊重这段已经活过多年的关系。"},
+            "family_break": {"title": "去名留义", "description": "旧名最后一次许诺力量，你握住今生关系留下的线，决定哪些要割断，哪些不必因恐惧而消失。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "family_e3_truth",
+              "terminal": true,
+              "route_id": "family_truth",
+              "text": "签下共担祖契",
+              "outcome": "你从祖库拨出三笔欠款，补齐旁支药材，又把暗室幸存者的赔偿送到本人手中。余下族产才登记到你名下，三份收讫印并排压在新契上。",
+              "deltas": {"spirit_stones": 18, "karma": 6, "enmity": 3},
+              "path_deltas": {"bonds": 3, "ambition": 2},
+              "flags_add": ["family_resolution_lineage"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 10, "respect": 10, "agency": 7}},
+              "debts_resolve": ["family_debt_half_ledger", "family_debt_old_resources", "family_debt_darkroom"],
+              "resolution": "祖脉共担"
+            },
+            {
+              "id": "family_e3_care",
+              "terminal": true,
+              "route_id": "family_care",
+              "text": "请养育者先落下名字",
+              "outcome": "养育者先在家谱旁写下二十年的日常，暗室见证人自己选定座位和开口时辰。她说完后收走证词副本，没有人伸手阻拦。",
+              "deltas": {"reputation": 11, "dao_heart": 5},
+              "path_deltas": {"compassion": 4, "bonds": 4, "ambition": -1},
+              "flags_add": ["family_resolution_care"],
+              "relationship_deltas": {"family_covenant_holder": {"trust": 10, "respect": 8, "dependency": -8, "agency": 8}},
+              "promises_resolve": ["family_promise_witness"],
+              "resolution": "养恩为先"
+            },
+            {
+              "id": "family_e3_break",
+              "terminal": true,
+              "route_id": "family_break",
+              "text": "放下旧名，保留自愿关系",
+              "outcome": "你放下可以换取位置的旧名，只保留仍愿意承担彼此的关系；创伤没有被美化，也不替你作主。",
+              "deltas": {"dao_heart": 12},
+              "path_deltas": {"defiance": 4, "compassion": 2},
+              "flags_add": ["family_resolution_free_bonds"],
+              "relationship_deltas": {"family_covenant_holder": {"coercion": -9, "corruption": -8, "agency": 10, "trust": 5, "respect": 10}},
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_remove": ["blood_contract_wound", "blood_echo_scar", "ancestral_corruption_scar"],
+              "resolution": "去名留义"
+            }
+          ]
+        }
       ],
-      "main_choices": [
-        {"text": "追查旧账", "outcome": "你查清一部分真相，也把一部分债正式记到自己名下。", "deltas": {"exp": 86, "spirit_stones": 8}, "path_deltas": {"insight": 3, "ambition": 1}, "resolution": "承认旧脉"},
-        {"text": "问养育者", "outcome": "你没有越过真正养大你的人，对方终于说出此前不敢说的旧事。", "deltas": {"karma": 8, "reputation": 4}, "path_deltas": {"compassion": 2, "bonds": 3, "ambition": -1}, "resolution": "护亲问源"},
-        {"text": "不让血脉定命", "outcome": "你保留真相，却拒绝拿祖名换取现成位置。家世从枷锁变成证据。", "deltas": {"dao_heart": 7, "spirit_stones": -4}, "path_deltas": {"defiance": 3, "insight": 1}, "resolution": "断名自立"}
-      ],
-      "echo_choices": [
-        {"text": "连债承脉", "outcome": "你承认祖脉，也把资源背后的旧债写进共同承担的契约。", "deltas": {"spirit_stones": 16, "karma": 4}, "path_deltas": {"bonds": 2, "ambition": 2}, "resolution": "祖脉共担"},
-        {"text": "养恩为先", "outcome": "血脉被留下查证，但真正养育今生的人先得到回答。", "deltas": {"reputation": 9, "dao_heart": 4}, "path_deltas": {"compassion": 3, "bonds": 2, "ambition": -1}, "resolution": "养恩为先"},
-        {"text": "去名留义", "outcome": "你放下可以换取位置的旧名，只保留仍愿意承担彼此的关系。", "deltas": {"dao_heart": 9, "spirit_stones": -6}, "path_deltas": {"defiance": 3, "compassion": 1}, "resolution": "去名留义"}
-      ],
+      "main_route_resolutions": {
+        "family_truth": "承认旧脉",
+        "family_care": "护亲问源",
+        "family_break": "断名自立"
+      },
+      "echo_route_resolutions": {
+        "family_truth": "祖脉共担",
+        "family_care": "养恩为先",
+        "family_break": "去名留义"
+      },
       "legacy_birth_effects": {"承认旧脉": {"family_fame": 10, "family_wealth": 3}, "护亲问源": {"reputation": 3, "family_wealth": 2}, "断名自立": {"dao_heart": 3}},
       "echo_birth_effects": {"祖脉共担": {"family_wealth": 1}, "养恩为先": {"reputation": 2}, "去名留义": {"dao_heart": 2}}
     },
     {
       "id": "rival",
+      "entry_node_id": "rival_main_1",
+      "echo_entry_node_id": "rival_echo_1",
       "name": "战帖",
       "scene": "res://art/scenes/orbital_sword_array.png",
       "portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
@@ -114,26 +1234,432 @@
       "motion_profile": "confrontation",
       "portrait_mode": "focus",
       "main": [
-        {"id": "rival_main_1", "title": "【战帖·一】照雪初帖", "description": "江照雪递来第一封正式战帖。她没有暗算，也没有客套，只写明地点、时辰和一句：别让长辈替你接剑。", "next": "rival_main_2", "art": {"motion_profile": "confrontation"}},
-        {"id": "rival_main_2", "title": "【战帖·二】同阵争先", "description": "秘境阵门将你与江照雪锁进同一支队伍。谁都想先拿机缘，可真正危险逼近时，胜负与活命必须重新排序。", "next": "rival_main_3", "art": {"motion_profile": "vigilant"}},
-        {"id": "rival_main_3", "title": "【战帖·三】江氏旧账", "description": "江氏旧账被人翻出，战帖背后多了一层家族压力。她可以借此踩下你，也可能先斩断自家递来的暗箭。", "next": "rival_main_4", "art": {"motion_profile": "confrontation"}},
-        {"id": "rival_main_4", "title": "【战帖·终】敌友由我", "description": "数次争胜后，你们都知道对方不是可以轻易抹去的人。最后一帖不只问谁赢，而是问往后如何相见。", "next": "legacy", "art": {"motion_profile": "restrained"}}
+        {
+          "id": "rival_main_1",
+          "title": "战帖·一｜照雪初帖",
+          "description": "江照雪递来第一封正式战帖。她没有暗算，也没有客套，只写明地点、时辰和一句：别让长辈替你接剑。",
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "rival_m1_duel",
+              "target_node_id": "rival_main_2",
+              "route_id": "rival_duel",
+              "text": "独自赴约，正面接剑",
+              "outcome": "你没有借旁人造势。三十七招后，两柄剑同时停在半寸之外，她收剑时仍不服，却把你的名字写进战帖正面。",
+              "deltas": {"exp": 92, "hp": -10},
+              "path_deltas": {"ambition": 2, "bonds": 2},
+              "flags_add": ["rival_first_duel_honored"],
+              "relationship_deltas": {"jiang_zhaoxue": {"respect": 9, "trust": 2, "desire": 1, "stance": "认可的对手"}},
+              "promises_add": [{"id": "rival_promise_clean_duel", "text": "下一次交锋仍由彼此亲自决定规则。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_m1_alliance",
+              "target_node_id": "rival_main_2",
+              "route_id": "rival_alliance",
+              "text": "先问战帖背后的追兵",
+              "outcome": "她承认战帖也在试探你会不会被旧账牵着拔剑，并交出一张有人跟踪她的路线图。",
+              "deltas": {"exp": 68, "spirit_stones": 10, "enmity": 3},
+              "path_deltas": {"bonds": 3, "creation": 1, "ambition": -1},
+              "flags_add": ["rival_hunters_revealed"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 7, "respect": 5, "agency": 3, "stance": "暂时并肩"}},
+              "debts_add": [{"id": "rival_debt_hunters", "text": "江照雪替你引开过一次追兵，这笔人情仍待回应。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_m1_boundaries",
+              "target_node_id": "rival_main_3",
+              "route_id": "rival_boundaries",
+              "text": "烧掉战帖，改写交锋条件",
+              "outcome": "你拒绝按旁人写好的时辰拔剑，只留下新的地点和一句：我们争道途，不替旧族演仇怨。",
+              "deltas": {"dao_heart": 7, "reputation": 3, "enmity": 3},
+              "path_deltas": {"insight": 2, "defiance": 2},
+              "flags_add": ["rival_terms_rewritten"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 4, "respect": 8, "coercion": -2, "agency": 5, "stance": "边界清楚的对手"}},
+              "delayed_echoes": [{"id": "rival_ash_reply", "after_chapters": 2, "text": "江照雪把战帖灰烬装进信封寄回，只添了一行：新地点我认，旧账不认。", "effects": {"flags_add": ["rival_terms_accepted"], "relationship_deltas": {"jiang_zhaoxue": {"trust": 4, "respect": 3}}}}]
+            }
+          ]
+        },
+        {
+          "id": "rival_main_2",
+          "title": "战帖·二｜同阵争关",
+          "description": "秘境阵门将你与江照雪锁进一支队伍。谁都想先拿机缘，可危险逼近时，胜负与活命必须重新排序。",
+          "route_variants": {
+            "rival_duel": {"title": "三十七招后的并肩", "description": "她用你上一战露出的破绽替你挡开阵刃，又立刻提醒：这份人情要在出阵后用剑还。"},
+            "rival_alliance": {"title": "追兵进入秘境", "description": "路线图上的追兵封住出口，你们背靠背站定，先前那笔引敌之情现在有了偿还机会。"},
+            "rival_boundaries": {"title": "新条件下的同阵", "description": "她接受了你改写的条件，入阵前先与你划定资源、救援和停手信号，旁人插不进你们的规则。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "rival_m2_duel",
+              "target_node_id": "rival_main_3",
+              "route_id": "rival_duel",
+              "text": "以背后相托换出阵一战",
+              "outcome": "你们各守一侧阵眼，不争眼前机缘；出阵时她把战帖按在石上，要求把没打完的三招补齐。",
+              "deltas": {"exp": 96, "hp": -12},
+              "path_deltas": {"ambition": 3, "bonds": 2},
+              "flags_add": ["rival_back_to_back_duel"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 6, "respect": 8, "desire": 1}},
+              "promises_resolve": ["rival_promise_clean_duel"],
+              "promises_add": [{"id": "rival_promise_three_moves", "text": "出阵之后补完未尽的三招。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_m2_alliance",
+              "target_node_id": "rival_main_3",
+              "route_id": "rival_alliance",
+              "text": "与她合力反追追兵",
+              "outcome": "你们故意留下假路，把追兵引进失衡阵眼；江照雪封住退路，家书缺页就在领头人的腰间。",
+              "deltas": {"exp": 78, "spirit_stones": 12, "enmity": 5},
+              "path_deltas": {"bonds": 4, "creation": 2, "ambition": -1},
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 9, "respect": 6, "agency": 4, "stance": "可以托付后背"}},
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["rival_hunters_countered"]},
+                "escaped": {"flags_add": ["rival_letter_page_lost"]},
+                "expired": {"flags_add": ["rival_hunters_scattered"]}
+              },
+              "encounter": {
+                "encounter_id": "story_rival_jiang_pursuer",
+                "base_enemy_id": "classical_oath_breaker",
+                "enemy_name": "持残页的江氏追兵",
+                "encounter_tier": "normal",
+                "motivation": "领头人识破假路后拔出锁脉刃，宁可毁掉家书，也不肯让江照雪取回旧账证据。",
+                "stakes": "阵眼随时会崩塌；若不能迅速夺回残页，你们会和证据一起被埋进秘境。",
+                "victory_consequence": "追兵败退，家书残页回到江照雪手中，你们沿预留阵眼一同离开。",
+                "defeat_consequence": "失衡阵吞没退路，你倒在锁脉刃下，残页也被投入阵火。",
+                "escape_consequence": "你们赶在阵毁前脱身，却只能看着追兵带走残页，旧账仍握在江氏手里。"
+              },
+              "debts_resolve": ["rival_debt_hunters"],
+              "debts_add": [{"id": "rival_debt_family_letter", "text": "她的家书仍有一页被追兵带走。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_m2_boundaries",
+              "target_node_id": "rival_main_3",
+              "route_id": "rival_boundaries",
+              "text": "按停手信号轮换阵眼",
+              "outcome": "你们严格按约定换位，没有人借救援制造亏欠；出阵后每一份资源和伤势都对得上先前的规则。",
+              "deltas": {"dao_heart": 8, "reputation": 4, "hp": -8},
+              "path_deltas": {"insight": 3, "defiance": 2},
+              "flags_add": ["rival_boundaries_proven"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 7, "respect": 9, "coercion": -3, "agency": 6}}
+            }
+          ]
+        },
+        {
+          "id": "rival_main_3",
+          "title": "战帖·三｜江氏旧债",
+          "description": "江氏旧账被人翻出，战帖背后多了一层家族压力。她可以借此逼你低头，也可能先斩断自家递来的暗箭。",
+          "route_variants": {
+            "rival_duel": {"title": "三招之前的旧债", "description": "她按约赴战，却先把族中逼她取胜的血契放在剑旁：不毁掉它，这一战便不只属于你们。"},
+            "rival_alliance": {"title": "家书缺页回到江氏", "description": "被夺的家书缺页正在族老手中，他们以此逼她把你引进一场必败的围杀。"},
+            "rival_boundaries": {"title": "旧账越过边界", "description": "江氏拒绝承认你们的交锋条件，试图用她的族契和你的旧玉同时锁定胜负。"}
+          },
+          "art": {"motion_profile": "confrontation"},
+          "choices": [
+            {
+              "id": "rival_m3_duel",
+              "target_node_id": "rival_main_4",
+              "route_id": "rival_duel",
+              "text": "先斩血契，再补完三招",
+              "outcome": "你们同时出剑劈开血契，反噬落在两人肩上；三招照旧完成，胜负不替江氏服务。",
+              "deltas": {"exp": 104, "hp": -16, "enmity": 5},
+              "path_deltas": {"ambition": 3, "bonds": 2},
+              "flags_add": ["rival_blood_contract_cut"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 7, "respect": 10, "coercion": -5, "agency": 7}},
+              "promises_resolve": ["rival_promise_three_moves"],
+              "content_tags": ["coercion", "trauma", "escape"],
+              "statuses_add": ["shared_sword_scar"]
+            },
+            {
+              "id": "rival_m3_alliance",
+              "target_node_id": "rival_main_4",
+              "route_id": "rival_alliance",
+              "text": "陪她取回家书缺页",
+              "outcome": "你们潜入族库取回缺页，也找到操纵战帖的完整证据；唯一出口亮起伏杀阵，江照雪拔剑守住退路。",
+              "deltas": {"exp": 88, "spirit_stones": -8, "enmity": 7},
+              "path_deltas": {"bonds": 4, "creation": 2},
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 7, "desire": 3, "agency": 5}},
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["rival_family_evidence_recovered"]},
+                "escaped": {"flags_add": ["rival_family_evidence_incomplete"]},
+                "expired": {"flags_add": ["rival_family_vault_resealed"]}
+              },
+              "encounter": {
+                "encounter_id": "story_rival_jiang_ambush_leader",
+                "base_enemy_id": "immortal_unchained_duelist",
+                "enemy_name": "江氏伏杀领队",
+                "encounter_tier": "elite",
+                "motivation": "伏杀领队奉族老密令守住库门，要焚毁家书与战帖证据，再把闯库罪名留给江照雪。",
+                "stakes": "原件若毁，她将永远无法证明战帖曾被操纵，而你们也会被困死在封库阵中。",
+                "victory_consequence": "伏杀阵被破，完整证据带出族库，江照雪亲手保管家书原页。",
+                "defeat_consequence": "库门在身后合拢，证据投入阵火，你倒在无人承认的伏杀里。",
+                "escape_consequence": "你们从暗渠退走，只带出一份残缺拓本；族老仍能否认最关键的落款。"
+              },
+              "dungeon_clue": true,
+              "debts_resolve": ["rival_debt_family_letter"],
+              "promises_add": [{"id": "rival_promise_evidence", "text": "证据公开之前，两人都不单独承担江氏追责。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_m3_boundaries",
+              "target_node_id": "rival_main_4",
+              "route_id": "rival_boundaries",
+              "text": "当众宣读彼此的交锋边界",
+              "outcome": "你们在江氏族老面前逐条宣读约定，拒绝血契、旧玉或长辈替任何一方同意；围观弟子记下了全文。",
+              "deltas": {"dao_heart": 9, "reputation": 7, "enmity": 6},
+              "path_deltas": {"insight": 3, "defiance": 3},
+              "flags_add": ["rival_boundaries_public"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 8, "respect": 10, "coercion": -6, "agency": 8}},
+              "content_tags": ["coercion", "trauma", "escape"]
+            }
+          ]
+        },
+        {
+          "id": "rival_main_4",
+          "title": "战帖·终｜敌友由我",
+          "description": "数次争胜后，你们都知道对方无法轻易抹去。最后一帖只问往后如何相见。",
+          "route_variants": {
+            "rival_duel": {"title": "只属于彼此的一战", "description": "血契已断，约定的三招也有了结果；江照雪重新递帖，这一次纸上只有她自己的名字。"},
+            "rival_alliance": {"title": "证据公开前的选择", "description": "江氏追责逼近，你们掌握一份证据和一条退路；她等你决定并肩是否止于今夜。"},
+            "rival_boundaries": {"title": "由你们命名关系", "description": "公开边界得到许多弟子响应，旧族再难替你们定义敌友；剩下的名字由双方认可。"}
+          },
+          "art": {"motion_profile": "restrained"},
+          "choices": [
+            {
+              "id": "rival_m4_duel",
+              "terminal": true,
+              "route_id": "rival_duel",
+              "text": "收下只署她名的战帖",
+              "outcome": "你们约定以后仍可相争，只以彼此认可的手段决胜；宿敌由你们亲自命名，不受家族支配。",
+              "deltas": {"exp": 116, "hp": -14},
+              "path_deltas": {"ambition": 3, "bonds": 1},
+              "flags_add": ["rival_legacy_duel"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 7, "respect": 10, "desire": 2, "agency": 8, "stance": "自选的宿敌"}},
+              "resolution": "照雪宿敌"
+            },
+            {
+              "id": "rival_m4_alliance",
+              "terminal": true,
+              "route_id": "rival_alliance",
+              "text": "与她公开江氏证据",
+              "outcome": "你们一同承担追责，把操纵战帖的人推到众目之下；灯火下，盟约写明可以拒绝，也可以再次相约。",
+              "deltas": {"exp": 92, "spirit_stones": -2, "enmity": 8},
+              "path_deltas": {"bonds": 5, "creation": 2},
+              "flags_add": ["rival_legacy_alliance"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 9, "desire": 4, "agency": 8, "stance": "彼此选择的盟友"}},
+              "promises_resolve": ["rival_promise_evidence"],
+              "resolution": "照雪盟友"
+            },
+            {
+              "id": "rival_m4_boundaries",
+              "terminal": true,
+              "route_id": "rival_boundaries",
+              "text": "把交锋边界写进新帖",
+              "outcome": "你们承认争胜，也拒绝让旁人的旧账替你们决定关系；新帖允许赴约，也允许不赴约。",
+              "deltas": {"dao_heart": 10, "reputation": 6, "enmity": 3},
+              "path_deltas": {"insight": 3, "defiance": 3},
+              "flags_add": ["rival_legacy_clear_rivalry"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 9, "respect": 10, "coercion": -8, "agency": 10, "stance": "清醒的对手"}},
+              "resolution": "清醒对手"
+            }
+          ]
+        }
       ],
       "echo": [
-        {"id": "rival_echo_1", "title": "【定局续章·战帖一】照雪再逢", "description": "江照雪在另一世再次递帖。她记不得全部旧事，却准确写出了只有你们才懂的落款。", "next": "rival_echo_2", "art": {"motion_profile": "spectral"}},
-        {"id": "rival_echo_2", "title": "【定局续章·战帖二】共同危局", "description": "一场更大的危局迫使你们先并肩。旧约究竟是宿敌、盟友还是清醒对手，将在真正危险中接受检验。", "next": "rival_echo_3", "art": {"motion_profile": "vigilant"}},
-        {"id": "rival_echo_3", "title": "【定局续章·战帖终】旧约新解", "description": "危局已解，最后一帖重新落到手中。两世争胜后，你们必须给这段关系一个不靠旁人定义的名字。", "next": "resolution", "art": {"motion_profile": "restrained"}}
+        {
+          "id": "rival_echo_1",
+          "title": "定局续章·战帖一｜照雪再邀",
+          "description": "江照雪在另一世再次递帖。她记不得全部旧事，却准确写出了只有你们才懂的落款。",
+          "route_variants": {
+            "rival_duel": {"title": "宿敌落款", "description": "落款沿用只属于彼此的规则，她还在帖角补上那道并列剑痕，证明旧约没有被家族篡改。"},
+            "rival_alliance": {"title": "盟约落款", "description": "落款旁夹着上一世公开证据的残页，她显然记得你们曾经一起承担过什么。"},
+            "rival_boundaries": {"title": "可拒绝的战帖", "description": "帖子第一行仍写着你可以不来，最后一行却坦白她希望你来；边界让邀请成为邀请。"}
+          },
+          "art": {"motion_profile": "spectral"},
+          "choices": [
+            {
+              "id": "rival_e1_duel",
+              "target_node_id": "rival_echo_2",
+              "route_id": "rival_duel",
+              "text": "按旧约重开一战",
+              "outcome": "两世未尽的一战有了新约束：只以彼此认可的手段争胜，任何旧族都不得代为加码。",
+              "deltas": {"exp": 112, "hp": -14},
+              "path_deltas": {"ambition": 3, "bonds": 1},
+              "flags_add": ["rival_echo_duel_renewed"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 7, "respect": 10, "desire": 2, "agency": 8}}
+            },
+            {
+              "id": "rival_e1_alliance",
+              "target_node_id": "rival_echo_2",
+              "route_id": "rival_alliance",
+              "text": "带残页与她并肩赴约",
+              "outcome": "你把残页放到约战石上，墨迹立刻化作追踪阵；操纵者踏出雪幕，江照雪已经与你并肩拔剑。",
+              "deltas": {"karma": 7, "enmity": 6},
+              "path_deltas": {"bonds": 4, "creation": 2, "ambition": -1},
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 8, "desire": 4, "agency": 8}},
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["rival_echo_alliance_renewed"]},
+                "escaped": {"flags_add": ["rival_echo_tracking_unbroken"]},
+                "expired": {"flags_add": ["rival_echo_manipulator_withdrew"]}
+              },
+              "encounter": {
+                "encounter_id": "story_rival_page_manipulator",
+                "base_enemy_id": "star_void_daemon",
+                "enemy_name": "残页操纵者",
+                "encounter_tier": "elite",
+                "motivation": "操纵者借残页定位两世约战之地，试图重写落款，让你们再次替旧族互相消耗。",
+                "stakes": "追踪阵一旦闭合，今生战帖也会受他驱使，江照雪将失去亲自决定赴约的权利。",
+                "victory_consequence": "追踪阵被斩断，残页恢复空白，旧盟约只能由你们亲手重写。",
+                "defeat_consequence": "落款化成锁印，你倒在约战石前，此世又被旧族写回既定死局。",
+                "escape_consequence": "你们离开约战石保住性命，操纵者却带走残页，下一封战帖仍可能被他动手脚。"
+              }
+            },
+            {
+              "id": "rival_e1_boundaries",
+              "target_node_id": "rival_echo_3",
+              "route_id": "rival_boundaries",
+              "text": "赴约前重申停手信号",
+              "outcome": "你接受邀请，也再次确认任何一方都能停手；她把信号刻在剑鞘内侧，旧族再无借口替她继续。",
+              "deltas": {"dao_heart": 9, "reputation": 5, "enmity": 3},
+              "path_deltas": {"insight": 2, "defiance": 3},
+              "flags_add": ["rival_echo_boundaries_renewed"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 9, "respect": 10, "coercion": -7, "agency": 10}}
+            }
+          ]
+        },
+        {
+          "id": "rival_echo_2",
+          "title": "定局续章·战帖二｜危局",
+          "description": "一场更大的危局迫使你们先并肩。旧约究竟是宿敌、盟友还是清醒对手，将在危险中接受检验。",
+          "route_variants": {
+            "rival_duel": {"title": "宿敌守住彼此退路", "description": "敌阵抹去了所有战帖，江照雪却凭并列剑痕找到你，把唯一退路留到决斗之后。"},
+            "rival_alliance": {"title": "残页揭出幕后主使", "description": "公开证据的残页与阵纹重合，你们找到跨世操纵战帖的源头。"},
+            "rival_boundaries": {"title": "停手信号穿过危局", "description": "她在阵中发出停手信号，提醒你们别用自毁证明信任。"}
+          },
+          "art": {"motion_profile": "vigilant"},
+          "choices": [
+            {
+              "id": "rival_e2_duel",
+              "target_node_id": "rival_echo_3",
+              "route_id": "rival_duel",
+              "text": "并肩破阵后兑现决斗",
+              "outcome": "你们先活着走出危局，再在晨雪里补完一战；胜者没有索取服从，只收下下一封战帖。",
+              "deltas": {"exp": 124, "hp": -18},
+              "path_deltas": {"ambition": 4, "bonds": 2},
+              "flags_add": ["rival_echo_duel_after_survival"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 8, "respect": 10, "desire": 2, "coercion": -2, "agency": 8}}
+            },
+            {
+              "id": "rival_e2_alliance",
+              "target_node_id": "rival_echo_3",
+              "route_id": "rival_alliance",
+              "text": "与她一同截断操纵阵枢",
+              "outcome": "你们各守一半阵枢，任何一方松手都会让另一方受创；核心开始崩裂时，最后一名主使从阵后现身。",
+              "deltas": {"exp": 98, "hp": -10, "enmity": 8},
+              "path_deltas": {"bonds": 5, "creation": 3},
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 9, "desire": 6, "agency": 8}},
+              "combat_trigger": true,
+              "combat_outcomes": {
+                "victory": {"flags_add": ["rival_echo_core_destroyed"]},
+                "escaped": {"flags_add": ["rival_echo_core_abandoned"]},
+                "expired": {"flags_add": ["rival_echo_core_reclaimed"]}
+              },
+              "encounter": {
+                "encounter_id": "story_rival_twin_array_master",
+                "base_enemy_id": "star_ghost_archivist",
+                "enemy_name": "双生阵枢主使",
+                "encounter_tier": "boss",
+                "rematch_key": "rival_twin_array_master",
+                "ally_support_id": "jiang_zhaoxue",
+                "ally_support_name": "江照雪",
+                "support_effect": "enemy_weak",
+                "motivation": "主使要夺回阵枢控制权，把你们重新钉进彼此牵制的位置，直到其中一人先松手。",
+                "stakes": "任何一边失守，反噬都会先落在另一人身上；主使也会借阵崩抹去全部操纵痕迹。",
+                "victory_consequence": "最后一道剑光截断阵枢，主使失去退路，江照雪与你仍站在各自的位置。",
+                "defeat_consequence": "阵枢同时反噬，你倒在崩裂的核心前，主使带着两世操纵记录离开。",
+                "escape_consequence": "你们按同一声口令撤手脱离，却只能留下仍在运转的阵枢与逃走的主使。"
+              },
+              "promises_add": [{"id": "rival_echo_promise_aftercare", "text": "阵伤痊愈前，彼此不得独自去追最后一名主使。", "character_id": "jiang_zhaoxue"}]
+            },
+            {
+              "id": "rival_e2_boundaries",
+              "target_node_id": "rival_echo_3",
+              "route_id": "rival_boundaries",
+              "text": "按停手信号撤出死阵",
+              "outcome": "你们放弃唾手可得的战果，在阵毁前同时撤离；没有人靠牺牲自己逼另一人背上亏欠。",
+              "deltas": {"dao_heart": 10, "reputation": 6, "hp": -10},
+              "path_deltas": {"insight": 3, "defiance": 3},
+              "flags_add": ["rival_echo_safe_withdrawal"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 10, "dependency": -4, "coercion": -7, "agency": 10}}
+            }
+          ]
+        },
+        {
+          "id": "rival_echo_3",
+          "title": "定局续章·战帖终｜旧约新解",
+          "description": "危局已解，最后一帖重新落到手中。两世争胜后，你们必须给这段关系一个不靠旁人定义的名字。",
+          "route_variants": {
+            "rival_duel": {"title": "再续宿敌", "description": "晨雪上的剑痕并列延伸，最后一帖邀请你把这场自愿的竞争留到下一次相见。"},
+            "rival_alliance": {"title": "并肩之后的长夜", "description": "幕后阵枢已经熄灭，追责与阵伤都暂时停在门外；江照雪先问你愿不愿留下，再问明晨是否仍要比剑。"},
+            "rival_boundaries": {"title": "相争不相害", "description": "停手信号被刻进新帖，你们可以相争、同行或各自离开，无需用伤害证明关系真实。"}
+          },
+          "art": {"motion_profile": "restrained"},
+          "choices": [
+            {
+              "id": "rival_e3_duel",
+              "terminal": true,
+              "route_id": "rival_duel",
+              "text": "签下只属于彼此的下一帖",
+              "outcome": "你们承认会继续争胜，也承认任何一场胜负都不能要求对方服从；宿敌因此成为双方反复选择的名字。",
+              "deltas": {"exp": 132, "hp": -16},
+              "path_deltas": {"ambition": 4, "bonds": 2},
+              "flags_add": ["rival_resolution_duel"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 9, "respect": 10, "desire": 3, "agency": 10, "stance": "再续宿敌"}},
+              "resolution": "再续宿敌"
+            },
+            {
+              "id": "rival_e3_alliance",
+              "terminal": true,
+              "route_id": "rival_alliance",
+              "text": "留下，等天亮再谈胜负",
+              "outcome": "你们再次确认双方都能随时止步，随后灯火熄灭。天亮时，两柄剑仍并排放在门边，没有任何一方替另一方作答。",
+              "deltas": {"dao_heart": 8},
+              "path_deltas": {"bonds": 5, "compassion": 2},
+              "flags_add": ["rival_resolution_alliance"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 9, "desire": 8, "agency": 10, "coercion": -8, "stance": "并肩照雪"}},
+              "promises_resolve": ["rival_echo_promise_aftercare"],
+              "content_tags": ["romance", "intimacy"],
+              "consent": "affirmative",
+              "content_mode": "fade_to_black",
+              "participants": ["player", "jiang_zhaoxue"],
+              "requires": {"relationship": {"jiang_zhaoxue": {"trust": 35, "agency": 70, "max_coercion": 0}}},
+              "resolution": "并肩照雪"
+            },
+            {
+              "id": "rival_e3_boundaries",
+              "terminal": true,
+              "route_id": "rival_boundaries",
+              "text": "把自由来去写入最终战帖",
+              "outcome": "你们承认竞争，也拒绝把仇怨传给下一世；最终战帖留下赴约、停手与离开的同等权利。",
+              "deltas": {"dao_heart": 11, "reputation": 7, "enmity": 3},
+              "path_deltas": {"insight": 3, "defiance": 3},
+              "flags_add": ["rival_resolution_boundaries"],
+              "relationship_deltas": {"jiang_zhaoxue": {"trust": 10, "respect": 10, "coercion": -10, "dependency": -5, "agency": 10, "stance": "相争不相害"}},
+              "resolution": "相争不相害"
+            }
+          ]
+        }
       ],
-      "main_choices": [
-        {"text": "正面接帖", "outcome": "你不借旁人造势，也不把旧怨藏进暗手。江照雪收剑时仍不服，却承认此战值得记住。", "deltas": {"exp": 92, "hp": -10}, "path_deltas": {"ambition": 2, "bonds": 2}, "resolution": "照雪宿敌"},
-        {"text": "同阵合作", "outcome": "你们先拆开真正的危局，再回头算谁多走半步。", "deltas": {"exp": 68, "spirit_stones": 10}, "path_deltas": {"bonds": 3, "creation": 1, "ambition": -1}, "resolution": "照雪盟友"},
-        {"text": "不以胜负定敌友", "outcome": "你承认争胜，也拒绝让旁人的旧账替你们决定关系。", "deltas": {"dao_heart": 7, "reputation": 3}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "清醒对手"}
-      ],
-      "echo_choices": [
-        {"text": "再决高下", "outcome": "两世未尽的一战有了新约束：只以彼此真正认可的手段争胜。", "deltas": {"exp": 112, "hp": -14}, "path_deltas": {"ambition": 3, "bonds": 1}, "resolution": "再续宿敌"},
-        {"text": "先并肩破局", "outcome": "你们斩断真正操纵战帖的人，再回来计算彼此的胜负。", "deltas": {"spirit_stones": 14, "karma": 6}, "path_deltas": {"bonds": 3, "creation": 2, "ambition": -1}, "resolution": "并肩照雪"},
-        {"text": "约定只争道途", "outcome": "你们承认竞争，也共同拒绝把仇怨传给下一世。", "deltas": {"dao_heart": 8, "reputation": 4}, "path_deltas": {"insight": 2, "defiance": 2}, "resolution": "相争不相害"}
-      ],
+      "main_route_resolutions": {
+        "rival_duel": "照雪宿敌",
+        "rival_alliance": "照雪盟友",
+        "rival_boundaries": "清醒对手"
+      },
+      "echo_route_resolutions": {
+        "rival_duel": "再续宿敌",
+        "rival_alliance": "并肩照雪",
+        "rival_boundaries": "相争不相害"
+      },
       "legacy_birth_effects": {"照雪宿敌": {"attack": 3, "enmity": 4}, "照雪盟友": {"defense": 2, "reputation": 4}, "清醒对手": {"attack": 1, "defense": 1, "dao_heart": 3}},
       "echo_birth_effects": {"再续宿敌": {"attack": 1}, "并肩照雪": {"defense": 1}, "相争不相害": {"dao_heart": 1}}
     }

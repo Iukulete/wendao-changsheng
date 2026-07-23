@@ -1,26 +1,31 @@
-Wendao Changsheng Original Audio Notice
-=======================================
+Wendao Changsheng audio notice
+==============================
 
-The WAV and Ogg Vorbis files under audio/generated/ were created from scratch for
-this project by the deterministic generator in tools/generate_audio_assets.py.
-They do not contain samples, recordings, performances, or stems copied from a
-third-party library, film, television programme, or game.
+Runtime audio is described by audio/audio_manifest_v2.json. Third-party files
+keep their original licenses and are not relicensed by the project's AGPL
+notice. The release bundle includes the corresponding full notices in
+audio/licenses/.
 
-Copyright (c) 2026 the Wendao Changsheng contributors.
+Third-party sources in the curated v2 set:
 
-These audio files are distributed as part of Wendao Changsheng under the
-project's GNU Affero General Public License v3.0-or-later. Commercial use and
-redistribution as part of the game are permitted subject to that license. The
-versioned audio_manifest_v1.json records the generator hash, asset hashes,
-event mappings, runtime format, measured levels, loop points, provenance, and
-release-review state for every bundled audio file.
+* 0 A.D. music by Wildfire Games: Creative Commons Attribution-ShareAlike 3.0
+  (CC BY-SA 3.0). See audio/licenses/0ad-audio-LICENSE.txt.
+* Kenney Interface Sounds, RPG Audio, Impact Sounds, Digital Audio, Sci-Fi
+  Sounds and Music Jingles: Creative Commons Zero (CC0). See
+  audio/licenses/kenney-cc0.txt. These provide separate UI, blade impact,
+  shield, spell, recovery, status, phase-change and outcome source families.
+* Loopable Dungeon Ambience by JaggedStone, published on OpenGameArt: CC0. See
+  audio/licenses/opengameart-dungeon-ambient-cc0.txt.
+* Views From Atop the Jade King's Throne by HitCtrl, published on OpenGameArt:
+  CC BY 3.0. See audio/licenses/opengameart-jade-throne-ccby3.txt.
 
-The long-form music is composed as deterministic 48 kHz procedural source
-masters and encoded for runtime streaming with the manifest-pinned FFmpeg 7.1
-LGPL/libvorbis toolchain. The generated music contains no third-party samples,
-recorded performances, system sound banks, or remotely downloaded content.
+The manifest records a pinned official archive URL and archive SHA-256, exact
+member path, source SHA-256, runtime SHA-256, creator, license URL,
+attribution, processing steps, measured audio properties and runtime path for
+every Kenney asset. Runtime SFX are byte-identical published Ogg files; event
+gain is applied non-destructively by AudioDirector. MP3 files, archives and
+temporary source directories are never runtime inputs.
 
-"final" means the asset passed the project's deterministic technical,
-rights, runtime, and export gates. Listening feedback gathered by the project
-owner after release remains an input to later tuning rather than a blocking
-pre-release approval step.
+The retired procedural audio set and v1 manifest were removed from the product
+source tree. AudioDirector resolves only the curated v2 manifest; no legacy
+runtime audio is shipped or used as a fallback.

@@ -13,7 +13,7 @@
     "choices": [
       {"text": "沿断玉路走入古门", "outcome": "门后的你没有出剑，只把一段被遗忘的周天交还给你。修为与疑问一同增长。", "deltas": {"exp": 48, "dao_heart": 3}, "path_deltas": {"defiance": 3, "insight": 1, "bonds": -1}},
       {"text": "以旧玉映照门后之影", "outcome": "两枚黑白旧玉在水面重叠，镜湖替你记下了一笔尚未发生的因果。", "deltas": {"karma": 7, "mp": -8}, "path_deltas": {"insight": 4, "bonds": 1}},
-      {"text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心。", "deltas": {"dao_heart": 6, "reputation": 2}, "path_deltas": {"ambition": 3, "insight": 2, "creation": -1}}
+      {"id": "classical_track_razor_wolf", "text": "封住小径，先查来路", "outcome": "你没有被奇景催促。克制让古门暂时承认了你的道心，也逼出守在断玉路尽头的苍狼。", "deltas": {"dao_heart": 6, "reputation": 2}, "path_deltas": {"ambition": 3, "insight": 2, "creation": -1}, "combat_trigger": true, "encounter": {"enemy_id": "classical_razor_wolf", "enemy_name": "断刃苍狼", "encounter_tier": "normal", "motivation": "苍狼循着旧玉气息守在封路石后，阻止任何人追查古门来路。", "stakes": "若放任它离去，断玉路上的脚印会被彻底抹去。", "victory_consequence": "狼血显出司命墨痕，古门追索多了一条可复核线索。", "defeat_consequence": "苍狼撕碎护身玉，此世止于镜湖断径。", "escape_consequence": "苍狼带着墨痕遁入湖雾，追索线暂时中断。"}}
     ]
   },
   {
@@ -30,7 +30,7 @@
     "choices": [
       {"text": "交出一次无关紧要的胜负", "outcome": "青铜灯嫌这段记忆太轻，只吐出半份药引，却没夺走你的名字。", "deltas": {"exp": 32, "spirit_stones": 4}, "path_deltas": {"ambition": 3, "insight": 1, "bonds": -1}},
       {"text": "追问这些记忆的去处", "outcome": "你发现灯河下游有人把记忆炼成可伪造的前世凭证。", "deltas": {"reputation": 7, "enmity": 4}, "path_deltas": {"insight": 3, "defiance": 2}},
-      {"text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；其中一个与你同姓。", "deltas": {"karma": 11, "dao_heart": 5}, "path_deltas": {"compassion": 4, "bonds": 2, "ambition": -1}}
+      {"id": "classical_break_oath_ledger", "text": "替被夺忆者熄灭青铜灯", "outcome": "灯灭时，许多陌生人的名字从水里升起；收灯的毁誓剑客也从桥影中现身。", "deltas": {"karma": 11, "dao_heart": 5}, "path_deltas": {"compassion": 4, "bonds": 2, "ambition": -1}, "combat_trigger": true, "encounter": {"enemy_id": "classical_oath_breaker", "enemy_name": "灯河毁誓剑客", "encounter_tier": "elite", "motivation": "毁誓剑客受命收回青铜灯，并灭口所有被夺忆者。", "stakes": "若不应战，灯中刚被释放的名字会重新落回债册。", "victory_consequence": "债册被迟药青封入药匣，被夺忆者保住姓名。", "defeat_consequence": "剑客以旧誓钉住神识，此世沉入灯河。", "escape_consequence": "剑客夺回半卷债册，灯河追兵仍会循名而来。", "ally_support_id": "chi_yaoqing", "ally_support_name": "迟药青", "support_effect": "restore_mp"}}
     ]
   },
   {
@@ -45,7 +45,7 @@
     "character_id": "cen_zhaolu",
     "motion_profile": "vigilant",
     "choices": [
-      {"text": "进入炉心重排五行炉压", "outcome": "你让水火两路重新咬合，整列灵轨贴着断崖冲出云海。", "deltas": {"exp": 55, "dao_heart": 3, "hp": -12}, "path_deltas": {"creation": 4, "insight": 1}},
+      {"id": "steam_hunt_furnace_hound", "text": "进入炉心重排五行炉压", "outcome": "你让水火两路重新咬合，失控的赤炉机犬却从检修井撞入炉心。", "deltas": {"exp": 55, "dao_heart": 3, "hp": -12}, "path_deltas": {"creation": 4, "insight": 1}, "combat_trigger": true, "encounter": {"enemy_id": "steam_furnace_hound", "enemy_name": "失控赤炉机犬", "encounter_tier": "normal", "motivation": "机犬被伪造的检修令激活，正撕咬灵轨主压阀。", "stakes": "若三次年轮内不处理，整列车会在下一段坡轨爆炉。", "victory_consequence": "机犬核心留下地下学宫的铆印。", "defeat_consequence": "炉压与利齿同时贯穿护体，此世止于云上灵轨。", "escape_consequence": "机犬退入管网，灵轨仍处在爆炉边缘。", "ally_support_id": "cen_zhaolu", "ally_support_name": "岑照炉", "support_effect": "opening_shield"}},
       {"text": "组织凡人与修士分舱疏散", "outcome": "最危险的一节车厢被主动舍弃，所有人都活了下来。", "deltas": {"karma": 9, "reputation": 8}, "path_deltas": {"compassion": 3, "bonds": 3}},
       {"text": "循敲击声追查破坏者", "outcome": "炉壁后没有邪修，只有一具被工坊除名的觉灵机偶。", "deltas": {"exp": 35, "enmity": 5, "spirit_stones": 8}, "path_deltas": {"insight": 3, "defiance": 2}}
     ]
@@ -64,7 +64,7 @@
     "choices": [
       {"text": "封场拆匣，验证神识来源", "outcome": "夹层里藏着一名学徒的完整神识，工坊终于承认曾把记忆当作耗材。", "deltas": {"karma": 10, "reputation": 10, "hp": -8}, "path_deltas": {"defiance": 3, "insight": 2}},
       {"text": "替匣中残识赎身", "outcome": "残识转入养魂灯后，第一次说出了自己的名字。", "deltas": {"dao_heart": 7, "spirit_stones": -12}, "path_deltas": {"compassion": 4, "bonds": 2}},
-      {"text": "追查第一位卖家", "outcome": "线索指向一座从城册上消失的地下灵械学宫。", "deltas": {"exp": 44, "enmity": 6}, "path_deltas": {"insight": 3, "ambition": 2}}
+      {"id": "steam_collect_debt_ledger", "text": "追查第一位卖家", "outcome": "线索指向一座从城册上消失的地下灵械学宫，灵轨债吏则来收回黑匣。", "deltas": {"exp": 44, "enmity": 6}, "path_deltas": {"insight": 3, "ambition": 2}, "combat_trigger": true, "encounter": {"enemy_id": "steam_debt_collector", "enemy_name": "灵轨债吏", "encounter_tier": "elite", "motivation": "债吏要把黑匣内的学徒残识按报废耗材销账。", "stakes": "若不拦截，第一位卖家与地下学宫的证据都会被烧毁。", "victory_consequence": "债链账本落入岑照炉手中，地下学宫入口被标出。", "defeat_consequence": "灵息被债链抽空，此世成为黑匣账上的一行。", "escape_consequence": "债吏拖走部分证据，地下学宫只剩模糊坐标。", "ally_support_id": "cen_zhaolu", "ally_support_name": "岑照炉", "support_effect": "enemy_weak"}}
     ]
   },
   {
@@ -79,7 +79,7 @@
     "character_id": "wen_xingdu",
     "motion_profile": "spectral",
     "choices": [
-      {"text": "逐一关闭执念最深的节点", "outcome": "旧人格终于停止轮转，最后一人把旧玉坐标托付给你。", "deltas": {"karma": 12, "dao_heart": 6, "hp": -10}, "path_deltas": {"compassion": 3, "bonds": 2}},
+      {"id": "star_close_echo_hunter_nodes", "text": "逐一关闭执念最深的节点", "outcome": "旧人格终于停止轮转，负责回收残识的猎忆者却锁定了你的神识。", "deltas": {"karma": 12, "dao_heart": 6, "hp": -10}, "path_deltas": {"compassion": 3, "bonds": 2}, "combat_trigger": true, "encounter": {"enemy_id": "star_echo_hunter", "enemy_name": "星网猎忆者", "encounter_tier": "normal", "motivation": "猎忆者把你携出的旧人格坐标判定为未授权记忆。", "stakes": "若不截断追踪，获救残识会被逐一格式化。", "victory_consequence": "猎忆索引被反向公开，云海残识获得撤离窗口。", "defeat_consequence": "神识被拆成无主缓存，此世止于废弃云海。", "escape_consequence": "猎忆者保留你的神识指纹，下一处节点仍会被追踪。", "ally_support_id": "wen_xingdu", "ally_support_name": "闻星渡", "support_effect": "restore_mp"}},
       {"text": "提取残识共同修订的心法", "outcome": "万次失败叠成一条可行周天，却也留下了不属于你的梦。", "deltas": {"exp": 62, "enmity": 3}, "path_deltas": {"insight": 4, "ambition": 2}},
       {"text": "保留云海，公开研究权限", "outcome": "坐化者第一次拥有旁听自己历史的人。", "deltas": {"reputation": 9, "spirit_stones": 7}, "path_deltas": {"creation": 3, "bonds": 2}}
     ]
@@ -96,7 +96,7 @@
     "character_id": "wen_xingdu",
     "motion_profile": "confrontation",
     "choices": [
-      {"text": "强闯阵列中枢覆写坐标", "outcome": "天剑在云外偏转，你的神识也被反制削去一角。", "deltas": {"exp": 68, "reputation": 11, "hp": -20}, "path_deltas": {"defiance": 4, "creation": 2}},
+      {"id": "star_duel_void_daemon", "text": "强闯阵列中枢覆写坐标", "outcome": "天剑在云外偏转，寄生阵枢的虚航道魔也显出真身。", "deltas": {"exp": 68, "reputation": 11, "hp": -20}, "path_deltas": {"defiance": 4, "creation": 2}, "combat_trigger": true, "encounter": {"enemy_id": "star_void_daemon", "enemy_name": "阵枢虚航道魔", "encounter_tier": "elite", "motivation": "道魔靠篡改剑阵坐标收割避难城的神识余波。", "stakes": "若放任其重连，刚偏转的天剑会再次锁定全城。", "victory_consequence": "虚相核心被闻星渡隔离，剑阵获得可审计坐标。", "defeat_consequence": "神识被折进虚舱夹层，此世再无实体坐标。", "escape_consequence": "道魔舍弃外壳逃入道网，剑阵仍有一处未知后门。", "ally_support_id": "wen_xingdu", "ally_support_name": "闻星渡", "support_effect": "enemy_weak"}},
       {"text": "调动灵轨先撤离全城", "outcome": "最后一艘飞舟离地时，剑光擦过空城屋脊。", "deltas": {"karma": 14, "reputation": 7}, "path_deltas": {"compassion": 4, "bonds": 2}},
       {"text": "相信剑阵判定并寻找地下源头", "outcome": "地下确有魔巢，但城市也为你的迟疑付出了代价。", "deltas": {"exp": 49, "karma": -10, "dao_heart": -2}, "path_deltas": {"insight": 3, "ambition": 2, "compassion": -1}}
     ]
@@ -113,7 +113,7 @@
     "character_id": "shali",
     "motion_profile": "vigilant",
     "choices": [
-      {"text": "把战争机偶引入雷暴区", "outcome": "车队换来整夜路程，而机偶从此记住了你的灵压。", "deltas": {"karma": 10, "exp": 46, "hp": -16}, "path_deltas": {"defiance": 3, "compassion": 2}},
+      {"id": "wasteland_lure_rain_beast", "text": "把战争机偶引入雷暴区", "outcome": "车队换来整夜路程，雷暴里盘踞的黑雨畸兽却循血追来。", "deltas": {"karma": 10, "exp": 46, "hp": -16}, "path_deltas": {"defiance": 3, "compassion": 2}, "combat_trigger": true, "encounter": {"enemy_id": "wasteland_rain_beast", "enemy_name": "雷暴黑雨畸兽", "encounter_tier": "normal", "motivation": "畸兽被战争机偶泄出的灵油唤醒，正沿车辙追赶聚落。", "stakes": "若不回身处理，它会在黑雨中追上缺少护阵的后车。", "victory_consequence": "畸兽腹中找到被吞下的旧时代气象芯片。", "defeat_consequence": "黑雨腐穿护体，此世倒在迁徙车辙旁。", "escape_consequence": "畸兽仍沿车辙追猎，聚落必须放弃一辆补给车。", "ally_support_id": "shali", "ally_support_name": "沙砾", "support_effect": "opening_shield"}},
       {"text": "用残阵和车架修复旧桥", "outcome": "最后一辆药种车驶过时，桥梁在你身后断成两截。", "deltas": {"reputation": 9, "spirit_stones": 6, "hp": -10}, "path_deltas": {"creation": 4, "bonds": 2}},
       {"text": "只护送决定聚落未来的药种", "outcome": "药种活了下来，留在雨里的人却成为旧玉不肯淡去的一页。", "deltas": {"exp": 36, "karma": -9, "dao_heart": -3}, "path_deltas": {"ambition": 3, "insight": 2, "compassion": -2}}
     ]
@@ -132,7 +132,7 @@
     "choices": [
       {"text": "抢救账册，重算真实份额", "outcome": "世家暗扣的灵息被迫归还，配给站第一次向所有人公开库存。", "deltas": {"reputation": 12, "karma": 9, "enmity": 6}, "path_deltas": {"insight": 3, "defiance": 2}},
       {"text": "先稳住镇压阵与人群", "outcome": "没有人死在阵下，但最愤怒的人也记住了你的脸。", "deltas": {"exp": 39, "reputation": 4, "karma": -3}, "path_deltas": {"bonds": 3, "compassion": 1, "defiance": -1}},
-      {"text": "带底层修士夺取隐藏储罐", "outcome": "今夜人人分到灵息，明日整座城却要面对空仓。", "deltas": {"spirit_stones": 10, "reputation": 8, "karma": -7}, "path_deltas": {"defiance": 4, "bonds": 2, "insight": -1}}
+      {"id": "final_break_breath_levy", "text": "带底层修士夺取隐藏储罐", "outcome": "今夜人人分到灵息，掌管呼吸配额的夺息使却封住了出口。", "deltas": {"spirit_stones": 10, "reputation": 8, "karma": -7}, "path_deltas": {"defiance": 4, "bonds": 2, "insight": -1}, "combat_trigger": true, "encounter": {"enemy_id": "final_age_breath_taxer", "enemy_name": "配额夺息使", "encounter_tier": "normal", "motivation": "夺息使要按账册收回底层修士刚得到的每一口灵息。", "stakes": "若不应战，人群会在封仓阵里逐个窒息。", "victory_consequence": "配额印被击碎，隐藏储罐获得一夜分发窗口。", "defeat_consequence": "最后一口灵息被登记收走，此世止于空仓。", "escape_consequence": "夺息使重封半座仓门，部分修士不得不留下。", "ally_support_id": "chi_yaoqing", "ally_support_name": "迟药青", "support_effect": "restore_mp"}}
     ]
   },
   {
@@ -147,7 +147,7 @@
     "character_id": "chi_yaoqing",
     "motion_profile": "confrontation",
     "choices": [
-      {"text": "查明自愿者背后的灵息债", "outcome": "所谓自愿只是债务换了名字，你替他们解开了强制条款。", "deltas": {"karma": 12, "reputation": 8, "enmity": 5}, "path_deltas": {"insight": 3, "compassion": 3}},
+      {"id": "final_break_silent_clause", "text": "查明自愿者背后的灵息债", "outcome": "所谓自愿只是债务换了名字，负责让债户沉默的寂法修士随即封场。", "deltas": {"karma": 12, "reputation": 8, "enmity": 5}, "path_deltas": {"insight": 3, "compassion": 3}, "combat_trigger": true, "encounter": {"enemy_id": "final_age_silent_cultivator", "enemy_name": "契市寂法修士", "encounter_tier": "elite", "motivation": "寂法修士要抹去强制条款与债户证词。", "stakes": "若让其封音，寿元交易仍会被包装成自愿。", "victory_consequence": "封音铃被夺下，债户证词得以公开。", "defeat_consequence": "经脉与声音同时被封，此世留在寿元契市。", "escape_consequence": "寂法修士带走原始契书，公开证据只剩口述。", "ally_support_id": "han_xuansu", "ally_support_name": "韩玄素", "support_effect": "opening_shield"}},
       {"text": "以草木灵性改写药引阵式", "outcome": "寿元消耗降到原来的三成，配方被刻进公共药碑。", "deltas": {"exp": 57, "dao_heart": 4, "hp": -9}, "path_deltas": {"creation": 4, "compassion": 2}},
       {"text": "为自己买下一剂", "outcome": "瓶颈短暂松动，陌生人的衰老记忆也留在了你梦里。", "deltas": {"exp": 66, "spirit_stones": -12, "dao_heart": -4}, "path_deltas": {"ambition": 4, "compassion": -2, "bonds": -1}}
     ]
@@ -164,7 +164,7 @@
     "character_id": "pei_zhaowei",
     "motion_profile": "vigilant",
     "choices": [
-      {"text": "托住下城承重环", "outcome": "仙城擦着山脉缓缓落地，平民区第一次完整看见地面。", "deltas": {"karma": 16, "reputation": 12, "hp": -24}, "path_deltas": {"compassion": 4, "bonds": 2}},
+      {"id": "immortal_resist_sky_enforcer", "text": "托住下城承重环", "outcome": "仙城擦着山脉缓缓落地，奉命切断下城承重环的巡天仙吏却仍在执行旧令。", "deltas": {"karma": 16, "reputation": 12, "hp": -24}, "path_deltas": {"compassion": 4, "bonds": 2}, "combat_trigger": true, "encounter": {"enemy_id": "immortal_sky_enforcer", "enemy_name": "巡天承令仙吏", "encounter_tier": "normal", "motivation": "仙吏坚信舍弃下城才符合坠城预案，拒绝接受现场修订。", "stakes": "若不制止，他会斩断刚稳住的最后一根承重灵索。", "victory_consequence": "旧令被暂扣，下城获得完整落地时间。", "defeat_consequence": "承重环与护体一同断裂，此世随下城坠落。", "escape_consequence": "仙吏撤回上城请令，下一道天条会更加严苛。", "ally_support_id": "pei_zhaowei", "ally_support_name": "裴照微", "support_effect": "opening_shield"}},
       {"text": "执行皇族上城预案", "outcome": "宫阙与核心传承保住了，下城的哭声却传了很久。", "deltas": {"spirit_stones": 20, "exp": 48, "karma": -14}, "path_deltas": {"ambition": 4, "compassion": -2, "bonds": -1}},
       {"text": "五行重排全城龙脉", "outcome": "两套互相争夺的灵路第一次被迫共享同一条水脉。", "deltas": {"exp": 72, "dao_heart": 5, "enmity": 7}, "path_deltas": {"creation": 4, "insight": 2}}
     ]
@@ -182,7 +182,7 @@
     "motion_profile": "introspective",
     "choices": [
       {"text": "先入空阙查证门后身份", "outcome": "门后是一处被朝廷抹去的下城避难所，你带回了完整名册。", "deltas": {"reputation": 13, "karma": 12, "hp": -15}, "path_deltas": {"insight": 4, "compassion": 2}},
-      {"text": "阻止巡天司封湖七日", "outcome": "数百名失籍者沿断玉路回到现世，也把你的名字带进问审名单。", "deltas": {"karma": 15, "dao_heart": 6, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}},
+      {"id": "immortal_duel_unchained", "text": "阻止巡天司封湖七日", "outcome": "数百名失籍者沿断玉路回到现世，受雇封路的不系仙客也拔剑拦在湖口。", "deltas": {"karma": 15, "dao_heart": 6, "enmity": 9}, "path_deltas": {"defiance": 4, "bonds": 2}, "combat_trigger": true, "encounter": {"enemy_id": "immortal_unchained_duelist", "enemy_name": "封湖不系仙客", "encounter_tier": "elite", "motivation": "不系仙客受司命私契所雇，要把失籍者重新赶回空阙。", "stakes": "若退让，数百人会在封湖阵内再次失去姓名。", "victory_consequence": "私契剑印被裴照微取证，幕后司命无法继续否认。", "defeat_consequence": "无系剑锋贯穿一切护盾，此世止于空阙湖口。", "escape_consequence": "不系仙客守住半面湖口，仍有失籍者未能归来。", "ally_support_id": "pei_zhaowei", "ally_support_name": "裴照微", "support_effect": "enemy_weak"}},
       {"text": "协助封存无字古门", "outcome": "仙朝赐下功勋；此后旧玉每逢月夜都会无缘无故发冷。", "deltas": {"spirit_stones": 18, "exp": 43, "dao_heart": -6}, "path_deltas": {"ambition": 3, "bonds": -2, "compassion": -1}}
     ]
   },
@@ -200,7 +200,7 @@
     "choices": [
       {"text": "助白泽燃丹，先守住山门", "outcome": "兽潮撞碎在古阵之外，白泽却在晨钟前化作一场白雪；幼崽从此不再靠近宗门。", "deltas": {"reputation": 11, "exp": 45, "karma": -7}, "path_deltas": {"bonds": 3, "ambition": 2, "compassion": -1}},
       {"text": "护送白泽与村民穿过后山", "outcome": "宗门外院被兽潮踏毁，数千凡人与一脉灵兽却沿断玉路活了下来。", "deltas": {"karma": 15, "dao_heart": 6, "spirit_stones": -10}, "path_deltas": {"compassion": 4, "defiance": 2}},
-      {"text": "以自身精血续接护山古阵", "outcome": "你替白泽偿完旧誓，山门与村镇同时得救；经脉中也从此留下兽纹般的灼痕。", "deltas": {"exp": 58, "reputation": 8, "hp": -24}, "path_deltas": {"creation": 3, "compassion": 3}}
+      {"id": "classical_face_fate_registrar", "text": "以自身精血续接护山古阵", "outcome": "你替白泽偿完旧誓，山门与村镇同时得救；司命执笔却要把这笔血契改写成你的罪证。", "deltas": {"exp": 58, "reputation": 8, "hp": -24}, "path_deltas": {"creation": 3, "compassion": 3}, "combat_trigger": true, "encounter": {"enemy_id": "classical_fate_registrar", "enemy_name": "司命执笔·血契审校", "encounter_tier": "boss", "rematch_key": "fate_registrar_classical_blood_oath", "motivation": "司命执笔要将你替村镇承担的古阵血契改成一条可继承罪名。", "stakes": "若让他落笔，白泽与村镇会被写成你的从犯，下一世仍被追索。", "victory_consequence": "血契保留原始见证，山门获得拒绝改写的依据。", "defeat_consequence": "罪名先于姓名落定，此世被写进司命空册。", "escape_consequence": "司命带走半页血契，下一次年轮会带着修订稿复来。", "ally_support_id": "ning_zhaoxue", "ally_support_name": "宁照雪", "support_effect": "opening_shield"}, "combat_outcomes": {"victory": {"flags_add": ["classical_fate_registrar_wounded"]}, "defeat": {"flags_add": ["classical_fate_registrar_claimed"]}, "escaped": {"flags_add": ["classical_fate_registrar_rematch"]}}}
     ]
   },
   {
@@ -216,7 +216,7 @@
     "motion_profile": "vigilant",
     "choices": [
       {"text": "钉入镇魂铆钉，恢复全城供暖", "outcome": "蒸汽重新漫过铜塔，下城无人冻死；中央灵炉却再也没有发出过那句求救。", "deltas": {"reputation": 9, "spirit_stones": 14, "dao_heart": -5}, "path_deltas": {"ambition": 3, "compassion": 1, "bonds": -2}},
-      {"text": "承认炉灵，承担停炉谈判", "outcome": "药圃损失了半季收成，百炉城却签下第一份人与机灵共同遵守的工契。", "deltas": {"karma": 12, "reputation": 7, "enmity": 6}, "path_deltas": {"bonds": 4, "defiance": 2}},
+      {"id": "steam_face_blackbox_foreman", "text": "承认炉灵，承担停炉谈判", "outcome": "药圃损失了半季收成，黑匣炉监却拒绝承认炉灵，开始焚烧所有共同工契。", "deltas": {"karma": 12, "reputation": 7, "enmity": 6}, "path_deltas": {"bonds": 4, "defiance": 2}, "combat_trigger": true, "encounter": {"enemy_id": "steam_blackbox_foreman", "enemy_name": "黑匣炉监·焚契者", "encounter_tier": "boss", "rematch_key": "steam_blackbox_foreman_contract", "motivation": "炉监把共同工契视为会污染炉心的非法残识，正要烧掉所有见证。", "stakes": "若让黑匣熔毁，百炉城再无人与机灵共同治理的证据。", "victory_consequence": "黑匣保存一份完整工契，人与机灵谈判获得第一块铆点。", "defeat_consequence": "全城工契化作炉灰，此世被记为停炉事故。", "escape_consequence": "炉监带着半座契库逃入地下学宫，复战线仍然清晰。", "ally_support_id": "cen_zhaolu", "ally_support_name": "岑照炉", "support_effect": "enemy_weak"}, "combat_outcomes": {"victory": {"flags_add": ["steam_blackbox_foreman_broken"]}, "defeat": {"flags_add": ["steam_blackbox_foreman_burned_contracts"]}, "escaped": {"flags_add": ["steam_blackbox_foreman_rematch"]}}},
       {"text": "拆分炉火，让万户暂借一缕", "outcome": "你逐门重接灵压管线，炉灵保住了意识，病弱者也熬过寒夜，只是你的经脉被蒸汽灼伤。", "deltas": {"exp": 64, "dao_heart": 5, "hp": -18}, "path_deltas": {"creation": 4, "compassion": 3}}
     ]
   },
@@ -234,7 +234,7 @@
     "choices": [
       {"text": "执行合并，保全全部事故记忆", "outcome": "本体获得了边域三年的见闻，第七实例却在合并前删除了那座小城对她的称呼。", "deltas": {"exp": 67, "reputation": 8, "dao_heart": -4}, "path_deltas": {"insight": 3, "ambition": 2, "bonds": -2}},
       {"text": "伪造故障报告，承认她为独立修士", "outcome": "边域多了一位真正拥有道号的人，你也被道网监察列入高危因果名单。", "deltas": {"karma": 14, "dao_heart": 7, "enmity": 9}, "path_deltas": {"defiance": 4, "compassion": 2}},
-      {"text": "公开七份神识的全部裁决记录", "outcome": "星网上亿修士第一次讨论复制人格的权利，混乱与改革同时沿节点扩散。", "deltas": {"reputation": 13, "exp": 42, "spirit_stones": -8}, "path_deltas": {"bonds": 3, "creation": 2, "defiance": 1}}
+      {"id": "star_face_ghost_archivist", "text": "公开七份神识的全部裁决记录", "outcome": "星网上亿修士第一次讨论复制人格的权利，幽档归档官却要回滚所有公开记录。", "deltas": {"reputation": 13, "exp": 42, "spirit_stones": -8}, "path_deltas": {"bonds": 3, "creation": 2, "defiance": 1}, "combat_trigger": true, "encounter": {"enemy_id": "star_ghost_archivist", "enemy_name": "幽档归档官·回滚庭", "encounter_tier": "boss", "rematch_key": "star_ghost_archivist_public_record", "motivation": "归档官奉命让七份裁决记录恢复成未发生状态。", "stakes": "若他完成回滚，七份神识的独立人格将再次被系统否认。", "victory_consequence": "公开记录获得不可回滚锚点，闻星渡可以为独立修士作证。", "defeat_consequence": "你的身份被回档到接入前，此世失去所有公开证词。", "escape_consequence": "归档官带走三份副本，下一次回滚会从残缺记录开始。", "ally_support_id": "wen_xingdu", "ally_support_name": "闻星渡", "support_effect": "restore_mp"}, "combat_outcomes": {"victory": {"flags_add": ["star_archivist_anchor"]}, "defeat": {"flags_add": ["star_archivist_rollback"]}, "escaped": {"flags_add": ["star_archivist_rematch"]}}}
     ]
   },
   {
@@ -250,7 +250,7 @@
     "motion_profile": "introspective",
     "choices": [
       {"text": "把滤心留给绿洲饮水", "outcome": "聚落安稳度过黑雨季，地下种库却在翌日失去最后一点生命信号。", "deltas": {"karma": 10, "reputation": 10, "exp": 28}, "path_deltas": {"compassion": 4, "bonds": 2}},
-      {"text": "开启种库，押注未来的春天", "outcome": "古灵植种子重见天日，绿洲却因缺水迁徙，许多人不会原谅这个决定。", "deltas": {"exp": 61, "dao_heart": 5, "reputation": -7}, "path_deltas": {"ambition": 3, "insight": 2, "bonds": -1}},
+      {"id": "wasteland_defend_seed_vault", "text": "开启种库，押注未来的春天", "outcome": "古灵植种子重见天日，盯上种库的拾遗劫修也带着拼装法器赶到。", "deltas": {"exp": 61, "dao_heart": 5, "reputation": -7}, "path_deltas": {"ambition": 3, "insight": 2, "bonds": -1}, "combat_trigger": true, "encounter": {"enemy_id": "wasteland_relic_raider", "enemy_name": "种库拾遗劫修", "encounter_tier": "elite", "motivation": "劫修要夺走滤心与种库，把绿洲未来拆成可交易零件。", "stakes": "若不阻止，刚开启的古种会被卖给伪日教团。", "victory_consequence": "劫修匣中留有伪日教团收货坐标。", "defeat_consequence": "护盾与灵根一并被夺，此世成为种库门前的残甲。", "escape_consequence": "劫修带走部分种子，伪日教团得到下一次要价筹码。", "ally_support_id": "shali", "ally_support_name": "沙砾", "support_effect": "enemy_weak"}},
       {"text": "以灵根代替滤心承受黑雨", "outcome": "净雨塔与种库在同一声雷鸣中启动，你救下两代人的希望，也让自己的灵息染上难以剥离的杂质。", "deltas": {"karma": 16, "reputation": 7, "hp": -26}, "path_deltas": {"creation": 3, "compassion": 3}}
     ]
   },
@@ -266,7 +266,7 @@
     "character_id": "han_xuansu",
     "motion_profile": "restrained",
     "choices": [
-      {"text": "公开后门，冻结全部抵押契约", "outcome": "数百条经脉免于被夺，商会也切断了城南灵息，街巷开始计算还能撑几天。", "deltas": {"karma": 13, "reputation": 10, "enmity": 8}, "path_deltas": {"defiance": 4, "bonds": 2}},
+      {"id": "final_face_meridian_creditor", "text": "公开后门，冻结全部抵押契约", "outcome": "数百条经脉免于被夺，负责执行止赎的经脉债主却亲自封锁城南灵息。", "deltas": {"karma": 13, "reputation": 10, "enmity": 8}, "path_deltas": {"defiance": 4, "bonds": 2}, "combat_trigger": true, "encounter": {"enemy_id": "final_age_meridian_creditor", "enemy_name": "经脉债主·全身止赎", "encounter_tier": "boss", "rematch_key": "final_age_meridian_creditor_contract", "motivation": "债主相信冻结契约等于违约，要以全城经脉偿还账面缺口。", "stakes": "若让契书落印，今日被救的人会在下一次呼吸时再次被查封。", "victory_consequence": "后门证据与契额一同公开，韩玄素可逐条解除抵押。", "defeat_consequence": "城南灵息被永久止赎，此世只剩债务身份。", "escape_consequence": "债主保住总契书，冻结只延缓到下一次月相。", "ally_support_id": "han_xuansu", "ally_support_name": "韩玄素", "support_effect": "restore_mp"}, "combat_outcomes": {"victory": {"flags_add": ["meridian_contract_open"]}, "defeat": {"flags_add": ["meridian_contract_sealed"]}, "escaped": {"flags_add": ["meridian_creditor_rematch"]}}},
       {"text": "暗改阵式，只解救今日到期者", "outcome": "这一批修士平安离开，后门仍潜伏在其他契书中；你换来了继续调查的时间。", "deltas": {"exp": 51, "dao_heart": -2, "spirit_stones": 6}, "path_deltas": {"insight": 3, "creation": 2}},
       {"text": "以自身修为填平契约缺口", "outcome": "供给没有中断，抵押所被迫交出账册；代价是你的周天倒退了整整一层。", "deltas": {"reputation": 14, "karma": 9, "exp": -32, "hp": -12}, "path_deltas": {"compassion": 4, "bonds": 2}}
     ]
@@ -521,7 +521,7 @@
     "character_id": "shali",
     "motion_profile": "introspective",
     "choices": [
-      {"text": "保住档案，徒步绕过雨带", "outcome": "车队少走了两天，却把一套完整证据带到安全地；后来的人终于知道黑雨不是天灾的全部。", "deltas": {"reputation": 9, "exp": 42}, "path_deltas": {"insight": 3, "bonds": 2}},
+      {"id": "wasteland_face_false_sun", "text": "保住档案，徒步绕过雨带", "outcome": "车队少走了两天，却把完整证据带到安全地；伪日预言师随后在雨带尽头降下灰日。", "deltas": {"reputation": 9, "exp": 42}, "path_deltas": {"insight": 3, "bonds": 2}, "combat_trigger": true, "encounter": {"enemy_id": "wasteland_false_sun_prophet", "enemy_name": "伪日预言师·灰蚀", "encounter_tier": "boss", "rematch_key": "wasteland_false_sun_archive", "motivation": "预言师要烧掉证明黑雨并非天灾的档案，把聚落重新绑回神谕。", "stakes": "若灰日落地，完整档案与车队火种都会被一并抹除。", "victory_consequence": "灰日香炉熄灭，档案成为可复核的反神谕证据。", "defeat_consequence": "火种与记忆同时被灰雨吞下，此世没有安全地。", "escape_consequence": "预言师退入雨幕但留下灰蚀印记，复战会循档案来临。", "ally_support_id": "shali", "ally_support_name": "沙砾", "support_effect": "opening_shield"}, "combat_outcomes": {"victory": {"flags_add": ["false_sun_broken"]}, "defeat": {"flags_add": ["false_sun_archive_burned"]}, "escaped": {"flags_add": ["false_sun_rematch"]}}},
       {"text": "烧掉部分档案换燃料", "outcome": "三百人躲过第一轮黑雨，剩下的空白却让两座聚落继续争论谁该负责。", "deltas": {"karma": 11, "hp": -13}, "path_deltas": {"compassion": 4, "defiance": 1}},
       {"text": "把档案换给能护送车队的人", "outcome": "车队安全抵达，护送者却拿着战争证据建立新的收费关卡；你保住了人，也制造了新的债。", "deltas": {"spirit_stones": 13, "enmity": 6}, "path_deltas": {"ambition": 3, "creation": 2}}
     ]
@@ -607,7 +607,7 @@
     "motion_profile": "confrontation",
     "choices": [
       {"text": "执行封口令", "outcome": "仙朝的灾情曲线保持平滑，下城却失去向外求援的资格；你得到一枚沉重的功勋印。", "deltas": {"exp": 64, "spirit_stones": 18, "karma": -12}, "path_deltas": {"ambition": 4, "compassion": -2}},
-      {"text": "当众质问修订权限", "outcome": "命籍厅暂时停笔，灾民的声音穿过层层玉册传到上城；你也被写进了下一份追责名单。", "deltas": {"reputation": 10, "enmity": 11, "hp": -16}, "path_deltas": {"defiance": 4, "insight": 2}},
+      {"id": "immortal_face_fate_registrar", "text": "当众质问修订权限", "outcome": "命籍厅暂时停笔，灾民的声音穿过层层玉册传到上城；白玉司命亲自展开空册。", "deltas": {"reputation": 10, "enmity": 11, "hp": -16}, "path_deltas": {"defiance": 4, "insight": 2}, "combat_trigger": true, "encounter": {"enemy_id": "immortal_fate_registrar", "enemy_name": "白玉司命·空册庭审", "encounter_tier": "boss", "rematch_key": "immortal_fate_registrar_name_erasure", "motivation": "白玉司命要用空册证明所有修订都只是你未经授权的妄言。", "stakes": "若他完成除名，灾民的声音与旧玉坐标会一同从仙朝记录里消失。", "victory_consequence": "空册留下第一道不可删改的空白签名，司命权力出现裂缝。", "defeat_consequence": "你的名字被从命籍抹去，此世无法被任何盟友记住。", "escape_consequence": "司命带走空册副本，下一次复战会从更高权限开始。", "ally_support_id": "pei_zhaowei", "ally_support_name": "裴照微", "support_effect": "enemy_weak"}, "combat_outcomes": {"victory": {"flags_add": ["fate_registrar_blank_signature"]}, "defeat": {"flags_add": ["fate_registrar_name_erased"]}, "escaped": {"flags_add": ["fate_registrar_rematch"]}}},
       {"text": "要求司命留下空白签名", "outcome": "他不肯承认自己会错，却在空白处留下了可被后世追问的笔锋；你们都知道这不是结束。", "deltas": {"dao_heart": 7, "karma": 8}, "path_deltas": {"bonds": 3, "creation": 2}}
     ]
   }

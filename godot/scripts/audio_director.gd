@@ -2,6 +2,7 @@ extends Node
 class_name AudioDirector
 
 const SETTINGS_PATH := "user://audio_settings.cfg"
+const MANIFEST_PATH := "res://audio/audio_manifest_v2.json"
 const BUS_NAMES: PackedStringArray = ["Master", "Music", "Ambience", "SFX", "UI", "VO"]
 const SFX_POOL_SIZE := 12
 const UI_POOL_SIZE := 4
@@ -47,54 +48,21 @@ const CONTEXT_MUSIC_STATES := {
 	"reincarnation": "exploration",
 }
 
-const EVENTS := {
-	"ui.confirm": {"files": ["ui_confirm", "ui_confirm_02", "ui_confirm_03", "ui_confirm_04"], "bus": "UI", "gain_db": -11.0,
-		"priority": 20, "cooldown_ms": 55, "max_instances": 2},
-	"ui.cancel": {"files": ["ui_cancel", "ui_cancel_02", "ui_cancel_03", "ui_cancel_04"], "bus": "UI", "gain_db": -10.0,
-		"priority": 22, "cooldown_ms": 70, "max_instances": 2},
-	"dungeon.card": {"files": ["card_cast", "card_cast_02", "card_cast_03", "card_cast_04"], "bus": "SFX", "gain_db": -5.0,
-		"priority": 42, "cooldown_ms": 45, "max_instances": 3},
-	"combat.spell": {"files": ["card_cast", "card_cast_02", "card_cast_03", "card_cast_04"], "bus": "SFX", "gain_db": -6.0,
-		"priority": 42, "cooldown_ms": 80, "max_instances": 2},
-	"combat.impact": {"files": ["impact", "impact_02", "impact_03", "impact_04"], "bus": "SFX", "gain_db": -4.0,
-		"priority": 55, "cooldown_ms": 65, "max_instances": 3, "sudden": true},
-	"dungeon.impact": {"files": ["impact", "impact_02", "impact_03", "impact_04"], "bus": "SFX", "gain_db": -4.0,
-		"priority": 56, "cooldown_ms": 65, "max_instances": 3, "sudden": true},
-	"combat.guard": {"files": ["guard", "guard_02", "guard_03", "guard_04"], "bus": "SFX", "gain_db": -5.5,
-		"priority": 48, "cooldown_ms": 90, "max_instances": 2},
-	"dungeon.guard": {"files": ["guard", "guard_02", "guard_03", "guard_04"], "bus": "SFX", "gain_db": -5.5,
-		"priority": 48, "cooldown_ms": 90, "max_instances": 2},
-	"dungeon.stress": {"files": ["stress"], "bus": "SFX", "gain_db": -9.0,
-		"priority": 58, "cooldown_ms": 260, "max_instances": 1},
-	"dungeon.heart": {"files": ["heart_awaken"], "bus": "SFX", "gain_db": -7.0,
-		"priority": 72, "cooldown_ms": 900, "max_instances": 1, "sudden": true},
-	"dungeon.elite_enter": {"files": ["elite_enter"], "bus": "SFX", "gain_db": -4.0,
-		"priority": 76, "cooldown_ms": 1200, "max_instances": 1, "sudden": true},
-	"dungeon.boss_enter": {"files": ["boss_enter"], "bus": "SFX", "gain_db": -3.0,
-		"priority": 88, "cooldown_ms": 1500, "max_instances": 1, "sudden": true},
-	"dungeon.phase_break": {"files": ["phase_break"], "bus": "SFX", "gain_db": -5.0,
-		"priority": 92, "cooldown_ms": 1100, "max_instances": 1, "sudden": true},
-	"dungeon.victory": {"files": ["victory"], "bus": "SFX", "gain_db": -5.0,
-		"priority": 82, "cooldown_ms": 1000, "max_instances": 1},
-	"combat.victory": {"files": ["victory"], "bus": "SFX", "gain_db": -6.0,
-		"priority": 80, "cooldown_ms": 1000, "max_instances": 1},
-	"dungeon.defeat": {"files": ["defeat"], "bus": "SFX", "gain_db": -8.0,
-		"priority": 86, "cooldown_ms": 1000, "max_instances": 1, "sudden": true},
-	"combat.defeat": {"files": ["defeat"], "bus": "SFX", "gain_db": -8.0,
-		"priority": 84, "cooldown_ms": 1000, "max_instances": 1, "sudden": true},
-	"reincarnation.enter": {"files": ["heart_awaken"], "bus": "SFX", "gain_db": -9.0,
-		"priority": 78, "cooldown_ms": 1600, "max_instances": 1},
-}
-
 const EVENT_ALIASES := {
 	"ui_confirm": "ui.confirm", "ui_cancel": "ui.cancel", "card_cast": "dungeon.card",
 	"impact": "dungeon.impact", "guard": "dungeon.guard", "stress": "dungeon.stress",
 	"heart_awaken": "dungeon.heart", "elite_enter": "dungeon.elite_enter",
 	"boss_enter": "dungeon.boss_enter", "phase_break": "dungeon.phase_break",
 	"victory": "dungeon.victory", "defeat": "dungeon.defeat",
+	"heal": "combat.heal", "recover": "combat.recover", "status": "combat.status",
 }
 
 var _settings: Dictionary = DEFAULT_SETTINGS.duplicate(true)
+var _manifest: Dictionary = {}
+var _assets_by_id: Dictionary = {}
+var _events: Dictionary = {}
+var _music_playlists: Dictionary = {}
+var _soundscapes: Dictionary = {}
 var _context := "menu"
 var _era_id := "classical"
 var _initialized := false
@@ -112,6 +80,9 @@ var _music_player: AudioStreamPlayer
 var _music_outgoing_player: AudioStreamPlayer
 var _music_tween: Tween
 var _music_state := ""
+var _current_music_asset_id := ""
+var _music_playlist_positions: Dictionary = {}
+var _last_music_start_position := 0.0
 var _shutting_down := false
 
 
@@ -173,6 +144,7 @@ func _stop_and_release_player(player: AudioStreamPlayer) -> void:
 	player.stream = null
 	player.set_meta("audio_priority", -1)
 	player.set_meta("audio_event", "")
+	player.set_meta("audio_asset_id", "")
 	player.set_meta("audio_started_ms", 0)
 
 
@@ -180,6 +152,7 @@ func _initialize_runtime() -> void:
 	if _initialized:
 		return
 	_initialized = true
+	_load_manifest()
 	_ambience_player = AudioStreamPlayer.new()
 	_ambience_player.name = "AmbienceLoop"
 	_ambience_player.bus = &"Ambience"
@@ -199,10 +172,12 @@ func _initialize_runtime() -> void:
 	_music_player = AudioStreamPlayer.new()
 	_music_player.name = "MusicLoop"
 	_music_player.bus = &"Music"
+	_music_player.finished.connect(_on_music_finished.bind(_music_player))
 	add_child(_music_player)
 	_music_outgoing_player = AudioStreamPlayer.new()
 	_music_outgoing_player.name = "MusicCrossfade"
 	_music_outgoing_player.bus = &"Music"
+	_music_outgoing_player.finished.connect(_on_music_finished.bind(_music_outgoing_player))
 	add_child(_music_outgoing_player)
 	for index in range(SFX_POOL_SIZE + UI_POOL_SIZE):
 		var player := AudioStreamPlayer.new()
@@ -213,6 +188,36 @@ func _initialize_runtime() -> void:
 		player.set_meta("audio_started_ms", 0)
 		add_child(player)
 		_players.append(player)
+
+
+func _load_manifest() -> void:
+	_manifest = {}
+	_assets_by_id = {}
+	_events = {}
+	_music_playlists = {}
+	_soundscapes = {}
+	if not FileAccess.file_exists(MANIFEST_PATH):
+		push_error("Audio manifest missing: %s" % MANIFEST_PATH)
+		return
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))
+	if not parsed is Dictionary:
+		push_error("Audio manifest is not a JSON object: %s" % MANIFEST_PATH)
+		return
+	_manifest = parsed as Dictionary
+	if int(_manifest.get("version", 0)) != 2:
+		push_error("Unsupported audio manifest version: %s" % str(_manifest.get("version", "missing")))
+		_manifest = {}
+		return
+	_events = (_manifest.get("events", {}) as Dictionary).duplicate(true)
+	_music_playlists = (_manifest.get("music_playlists", {}) as Dictionary).duplicate(true)
+	_soundscapes = (_manifest.get("soundscapes", {}) as Dictionary).duplicate(true)
+	for entry_value in (_manifest.get("assets", []) as Array):
+		if not entry_value is Dictionary:
+			continue
+		var entry := (entry_value as Dictionary).duplicate(true)
+		var asset_id := str(entry.get("id", ""))
+		if not asset_id.is_empty():
+			_assets_by_id[asset_id] = entry
 
 
 func load_settings() -> void:
@@ -271,7 +276,7 @@ func set_context(context_id: String) -> void:
 	var next_music_state := str(CONTEXT_MUSIC_STATES.get(_context, "exploration"))
 	if _music_state != next_music_state:
 		_music_state = next_music_state
-		_switch_music_for_state_or_era()
+		_switch_music_for_state_or_era(true)
 	else:
 		_start_music_if_needed()
 
@@ -288,7 +293,7 @@ func set_era(era_id: String) -> void:
 	_era_id = era_id
 	_initialize_runtime()
 	_switch_ambience_for_era()
-	_switch_music_for_state_or_era()
+	_switch_music_for_state_or_era(false)
 
 
 func get_era() -> String:
@@ -302,9 +307,9 @@ func get_music_state() -> String:
 func play_event(event_id: String, context: Dictionary = {}) -> bool:
 	_initialize_runtime()
 	var resolved_id := str(EVENT_ALIASES.get(event_id, event_id))
-	if not EVENTS.has(resolved_id):
+	if not _events.has(resolved_id):
 		return false
-	var event: Dictionary = EVENTS[resolved_id]
+	var event: Dictionary = _events[resolved_id]
 	var now_ms := Time.get_ticks_msec()
 	var cooldown_ms := int(event.get("cooldown_ms", 0))
 	if now_ms - int(_last_played_ms.get(resolved_id, -cooldown_ms - 1)) < cooldown_ms:
@@ -315,11 +320,12 @@ func play_event(event_id: String, context: Dictionary = {}) -> bool:
 	var player := _acquire_player(str(event.get("bus", "SFX")), priority)
 	if player == null:
 		return false
-	var files: Array = event.get("files", [])
-	if files.is_empty():
+	var asset_ids: Array = event.get("asset_ids", [])
+	if asset_ids.is_empty():
 		return false
-	var variant_index := _next_variant_index(resolved_id, files.size())
-	var stream := _load_audio_stream(str(files[variant_index]))
+	var variant_index := _next_variant_index(resolved_id, asset_ids.size())
+	var asset_id := str(asset_ids[variant_index])
+	var stream := _load_audio_stream(asset_id)
 	if stream == null:
 		return false
 	if not _audio_output_available():
@@ -338,6 +344,7 @@ func play_event(event_id: String, context: Dictionary = {}) -> bool:
 	player.volume_db = gain_db
 	player.set_meta("audio_priority", priority)
 	player.set_meta("audio_event", resolved_id)
+	player.set_meta("audio_asset_id", asset_id)
 	player.set_meta("audio_started_ms", now_ms)
 	player.play()
 	_last_played_ms[resolved_id] = Time.get_ticks_msec()
@@ -346,7 +353,7 @@ func play_event(event_id: String, context: Dictionary = {}) -> bool:
 
 func event_ids() -> PackedStringArray:
 	var ids := PackedStringArray()
-	for event_id in EVENTS.keys():
+	for event_id in _events.keys():
 		ids.append(str(event_id))
 	ids.sort()
 	return ids
@@ -403,13 +410,80 @@ func debug_music_crossfade_seconds() -> float:
 
 func debug_event_variant_count(event_id: String) -> int:
 	var resolved_id := str(EVENT_ALIASES.get(event_id, event_id))
-	if not EVENTS.has(resolved_id):
+	if not _events.has(resolved_id):
 		return 0
-	return (EVENTS[resolved_id].get("files", []) as Array).size()
+	return (_events[resolved_id].get("asset_ids", []) as Array).size()
+
+
+func debug_event_asset_ids(event_id: String) -> PackedStringArray:
+	_initialize_runtime()
+	var resolved_id := str(EVENT_ALIASES.get(event_id, event_id))
+	var result := PackedStringArray()
+	if not _events.has(resolved_id):
+		return result
+	for asset_id in (_events[resolved_id].get("asset_ids", []) as Array):
+		result.append(str(asset_id))
+	return result
+
+
+func debug_event_semantic_category(event_id: String) -> String:
+	_initialize_runtime()
+	var resolved_id := str(EVENT_ALIASES.get(event_id, event_id))
+	return str((_events.get(resolved_id, {}) as Dictionary).get("semantic_category", ""))
 
 
 func debug_resolved_asset_path(asset_id: String) -> String:
+	_initialize_runtime()
 	return _resolve_audio_path(asset_id)
+
+
+func debug_manifest_version() -> int:
+	_initialize_runtime()
+	return int(_manifest.get("version", 0))
+
+
+func debug_current_music_asset_id() -> String:
+	return _current_music_asset_id
+
+
+func debug_last_music_start_position() -> float:
+	return _last_music_start_position
+
+
+func debug_asset_loop_enabled(asset_id: String) -> bool:
+	_initialize_runtime()
+	return bool((_assets_by_id.get(asset_id, {}) as Dictionary).get("loop", false))
+
+
+func debug_loaded_stream_loop_enabled(asset_id: String) -> bool:
+	_initialize_runtime()
+	var stream := _load_audio_stream(asset_id)
+	if stream is AudioStreamOggVorbis:
+		return (stream as AudioStreamOggVorbis).loop
+	if stream is AudioStreamWAV:
+		return (stream as AudioStreamWAV).loop_mode != AudioStreamWAV.LOOP_DISABLED
+	return false
+
+
+func debug_music_playlist(state: String) -> PackedStringArray:
+	_initialize_runtime()
+	var result := PackedStringArray()
+	for asset_id in (_music_playlists.get(state, []) as Array):
+		result.append(str(asset_id))
+	return result
+
+
+func debug_advance_music_playlist() -> String:
+	if _music_state.is_empty():
+		_music_state = str(CONTEXT_MUSIC_STATES.get(_context, "exploration"))
+	_current_music_asset_id = _next_music_asset_id(_music_state)
+	_last_music_start_position = 0.0
+	return _current_music_asset_id
+
+
+func debug_transition_start_position(from_asset_id: String, to_asset_id: String,
+		previous_position: float) -> float:
+	return _transition_start_position(from_asset_id, to_asset_id, previous_position)
 
 
 func debug_reset_cooldowns() -> void:
@@ -486,36 +560,48 @@ func _apply_master_effects() -> void:
 func _start_ambience_if_needed() -> void:
 	if not _audio_output_available():
 		return
-	if is_instance_valid(_ambience_player) and not _ambience_player.playing:
-		var bed_stream := _looping_stream(_ambience_asset_id("bed"))
-		if bed_stream != null:
-			_ambience_player.stream = bed_stream
-			_ambience_player.volume_db = _ambience_target_db()
-			_ambience_player.play()
-	if is_instance_valid(_ambience_detail_player) and not _ambience_detail_player.playing:
-		var detail_stream := _looping_stream(_ambience_asset_id("weather_points"))
-		if detail_stream != null:
-			_ambience_detail_player.stream = detail_stream
-			_ambience_detail_player.volume_db = _ambience_detail_target_db()
-			_ambience_detail_player.play()
+	_start_ambience_layer_if_needed(_ambience_player, _ambience_asset_id("bed"),
+		_ambience_target_db())
+	_start_ambience_layer_if_needed(_ambience_detail_player, _ambience_asset_id("detail"),
+		_ambience_detail_target_db())
+
+
+func _start_ambience_layer_if_needed(player: AudioStreamPlayer, asset_id: String,
+		target_db: float) -> void:
+	if not is_instance_valid(player) or asset_id.is_empty() or player.playing:
+		return
+	var stream := _load_audio_stream(asset_id)
+	if stream == null:
+		return
+	player.stream = stream
+	player.volume_db = target_db
+	player.set_meta("audio_asset_id", asset_id)
+	player.play(0.0)
 
 
 func _switch_ambience_for_era() -> void:
 	if not _audio_output_available():
 		return
-	var bed_stream := _looping_stream(_ambience_asset_id("bed"))
-	var detail_stream := _looping_stream(_ambience_asset_id("weather_points"))
-	if bed_stream == null or detail_stream == null:
-		return
-	if (not is_instance_valid(_ambience_player) or not _ambience_player.playing or
-			not is_instance_valid(_ambience_detail_player) or not _ambience_detail_player.playing):
-		_start_ambience_if_needed()
-		return
-	_switch_ambience_bed(bed_stream)
-	_switch_ambience_detail(detail_stream)
+	_switch_ambience_bed(_ambience_asset_id("bed"))
+	_switch_ambience_detail(_ambience_asset_id("detail"))
 
 
-func _switch_ambience_bed(stream: AudioStream) -> void:
+func _switch_ambience_bed(asset_id: String) -> void:
+	if asset_id.is_empty():
+		_release_ambience_bed()
+		return
+	if (_ambience_player.playing and
+			str(_ambience_player.get_meta("audio_asset_id", "")) == asset_id):
+		return
+	var stream := _load_audio_stream(asset_id)
+	if stream == null:
+		return
+	if not _ambience_player.playing:
+		_ambience_player.stream = stream
+		_ambience_player.volume_db = _ambience_target_db()
+		_ambience_player.set_meta("audio_asset_id", asset_id)
+		_ambience_player.play(0.0)
+		return
 	if is_instance_valid(_ambience_tween):
 		_ambience_tween.kill()
 		_ambience_tween = null
@@ -528,13 +614,14 @@ func _switch_ambience_bed(stream: AudioStream) -> void:
 		_ambience_outgoing_player.stream = null
 	var previous := _ambience_player
 	var incoming := _ambience_outgoing_player
-	var phase_seconds := previous.get_playback_position()
-	if stream.get_length() > 0.0:
-		phase_seconds = fposmod(phase_seconds, stream.get_length())
+	var previous_asset_id := str(previous.get_meta("audio_asset_id", ""))
+	var start_position := _transition_start_position(previous_asset_id, asset_id,
+		previous.get_playback_position())
 	previous.volume_db = _ambience_target_db()
 	incoming.stream = stream
 	incoming.volume_db = SILENCE_DB
-	incoming.play(phase_seconds)
+	incoming.set_meta("audio_asset_id", asset_id)
+	incoming.play(start_position)
 	_ambience_player = incoming
 	_ambience_outgoing_player = previous
 	_ambience_tween = create_tween().set_parallel(true)
@@ -550,12 +637,28 @@ func _finish_ambience_crossfade(previous: AudioStreamPlayer, incoming: AudioStre
 	if is_instance_valid(previous):
 		previous.stop()
 		previous.stream = null
+		previous.set_meta("audio_asset_id", "")
 	if _ambience_player == incoming:
 		_ambience_outgoing_player = previous
 	_ambience_tween = null
 
 
-func _switch_ambience_detail(stream: AudioStream) -> void:
+func _switch_ambience_detail(asset_id: String) -> void:
+	if asset_id.is_empty():
+		_release_ambience_detail()
+		return
+	if (_ambience_detail_player.playing and
+			str(_ambience_detail_player.get_meta("audio_asset_id", "")) == asset_id):
+		return
+	var stream := _load_audio_stream(asset_id)
+	if stream == null:
+		return
+	if not _ambience_detail_player.playing:
+		_ambience_detail_player.stream = stream
+		_ambience_detail_player.volume_db = _ambience_detail_target_db()
+		_ambience_detail_player.set_meta("audio_asset_id", asset_id)
+		_ambience_detail_player.play(0.0)
+		return
 	if is_instance_valid(_ambience_detail_tween):
 		_ambience_detail_tween.kill()
 		_ambience_detail_tween = null
@@ -568,13 +671,14 @@ func _switch_ambience_detail(stream: AudioStream) -> void:
 		_ambience_detail_outgoing_player.stream = null
 	var previous := _ambience_detail_player
 	var incoming := _ambience_detail_outgoing_player
-	var phase_seconds := previous.get_playback_position()
-	if stream.get_length() > 0.0:
-		phase_seconds = fposmod(phase_seconds, stream.get_length())
+	var previous_asset_id := str(previous.get_meta("audio_asset_id", ""))
+	var start_position := _transition_start_position(previous_asset_id, asset_id,
+		previous.get_playback_position())
 	previous.volume_db = _ambience_detail_target_db()
 	incoming.stream = stream
 	incoming.volume_db = SILENCE_DB
-	incoming.play(phase_seconds)
+	incoming.set_meta("audio_asset_id", asset_id)
+	incoming.play(start_position)
 	_ambience_detail_player = incoming
 	_ambience_detail_outgoing_player = previous
 	_ambience_detail_tween = create_tween().set_parallel(true)
@@ -591,9 +695,26 @@ func _finish_ambience_detail_crossfade(previous: AudioStreamPlayer, incoming: Au
 	if is_instance_valid(previous):
 		previous.stop()
 		previous.stream = null
+		previous.set_meta("audio_asset_id", "")
 	if _ambience_detail_player == incoming:
 		_ambience_detail_outgoing_player = previous
 	_ambience_detail_tween = null
+
+
+func _release_ambience_bed() -> void:
+	if is_instance_valid(_ambience_tween):
+		_ambience_tween.kill()
+		_ambience_tween = null
+	_stop_and_release_player(_ambience_player)
+	_stop_and_release_player(_ambience_outgoing_player)
+
+
+func _release_ambience_detail() -> void:
+	if is_instance_valid(_ambience_detail_tween):
+		_ambience_detail_tween.kill()
+		_ambience_detail_tween = null
+	_stop_and_release_player(_ambience_detail_player)
+	_stop_and_release_player(_ambience_detail_outgoing_player)
 
 
 func _start_music_if_needed() -> void:
@@ -601,22 +722,36 @@ func _start_music_if_needed() -> void:
 		return
 	if _music_state.is_empty():
 		_music_state = str(CONTEXT_MUSIC_STATES.get(_context, "exploration"))
-	var stream := _looping_stream(_music_asset_id())
+	var playlist: Array = _music_playlists.get(_music_state, [])
+	if _current_music_asset_id.is_empty() or _current_music_asset_id not in playlist:
+		_current_music_asset_id = _next_music_asset_id(_music_state)
+	var stream := _load_audio_stream(_current_music_asset_id)
 	if stream == null:
 		return
 	_music_player.stream = stream
 	_music_player.volume_db = 0.0
-	_music_player.play()
+	_music_player.set_meta("audio_asset_id", _current_music_asset_id)
+	_last_music_start_position = 0.0
+	_music_player.play(0.0)
 
 
-func _switch_music_for_state_or_era() -> void:
+func _switch_music_for_state_or_era(force_transition: bool = true) -> void:
 	if not _audio_output_available():
 		return
-	var stream := _looping_stream(_music_asset_id())
-	if stream == null:
-		return
 	if not is_instance_valid(_music_player) or not _music_player.playing:
+		_current_music_asset_id = ""
 		_start_music_if_needed()
+		return
+	var playlist: Array = _music_playlists.get(_music_state, [])
+	if not force_transition and _current_music_asset_id in playlist:
+		return
+	var next_asset_id := _next_music_asset_id(_music_state, _current_music_asset_id)
+	if next_asset_id.is_empty():
+		return
+	if next_asset_id == _current_music_asset_id:
+		return
+	var stream := _load_audio_stream(next_asset_id)
+	if stream == null:
 		return
 	# A context can change again before a previous fade finishes.  Keep the
 	# louder voice as the timing reference and deterministically release the
@@ -633,19 +768,17 @@ func _switch_music_for_state_or_era() -> void:
 		_music_outgoing_player.stream = null
 	var previous := _music_player
 	var incoming := _music_outgoing_player
-	var phase_seconds := previous.get_playback_position()
-	if previous.stream != null and previous.stream.get_length() > 0.0:
-		phase_seconds = fposmod(phase_seconds, previous.stream.get_length())
-	if stream.get_length() > 0.0:
-		phase_seconds = fposmod(phase_seconds, stream.get_length())
 	previous.volume_db = 0.0
 	incoming.stream = stream
 	incoming.volume_db = SILENCE_DB
-	incoming.play(phase_seconds)
+	incoming.set_meta("audio_asset_id", next_asset_id)
+	_last_music_start_position = 0.0
+	incoming.play(0.0)
 	# Swap immediately: the named active player always represents the target
 	# state even while the old state is still fading out.
 	_music_player = incoming
 	_music_outgoing_player = previous
+	_current_music_asset_id = next_asset_id
 	_music_tween = create_tween().set_parallel(true)
 	_music_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	_music_tween.tween_property(previous, "volume_db", SILENCE_DB,
@@ -659,25 +792,19 @@ func _finish_music_crossfade(previous: AudioStreamPlayer, incoming: AudioStreamP
 	if is_instance_valid(previous):
 		previous.stop()
 		previous.stream = null
+		previous.set_meta("audio_asset_id", "")
 	if _music_player == incoming:
 		_music_outgoing_player = previous
 	_music_tween = null
 
 
-func _looping_stream(asset_id: String) -> AudioStream:
-	var stream := _load_audio_stream(asset_id)
-	if stream is AudioStreamWAV and (stream as AudioStreamWAV).loop_mode == AudioStreamWAV.LOOP_DISABLED:
-		stream = stream.duplicate()
-		var wave := stream as AudioStreamWAV
-		wave.loop_mode = AudioStreamWAV.LOOP_FORWARD
-		wave.loop_begin = 0
-		wave.loop_end = maxi(1, int(round(wave.get_length() * 48000.0)))
-	elif stream is AudioStreamOggVorbis and not (stream as AudioStreamOggVorbis).loop:
-		stream = stream.duplicate()
-		var vorbis := stream as AudioStreamOggVorbis
-		vorbis.loop = true
-		vorbis.loop_offset = 0.0
-	return stream
+func _on_music_finished(player: AudioStreamPlayer) -> void:
+	if _shutting_down or player != _music_player:
+		return
+	player.stream = null
+	player.set_meta("audio_asset_id", "")
+	_current_music_asset_id = ""
+	call_deferred("_start_music_if_needed")
 
 
 func _ambience_target_db() -> float:
@@ -693,7 +820,25 @@ func _load_audio_stream(asset_id: String) -> AudioStream:
 	var path := _resolve_audio_path(asset_id)
 	if path.is_empty():
 		return null
-	return ResourceLoader.load(path) as AudioStream
+	var source := ResourceLoader.load(path) as AudioStream
+	if source == null:
+		return null
+	var stream := source.duplicate() as AudioStream
+	var entry: Dictionary = _assets_by_id.get(asset_id, {})
+	var should_loop := bool(entry.get("loop", false))
+	if stream is AudioStreamWAV:
+		var wave := stream as AudioStreamWAV
+		wave.loop_mode = AudioStreamWAV.LOOP_FORWARD if should_loop else AudioStreamWAV.LOOP_DISABLED
+		if should_loop:
+			wave.loop_begin = int(entry.get("loop_start_sample", 0))
+			wave.loop_end = int(entry.get("loop_end_sample", maxi(1,
+				int(round(wave.get_length() * float(entry.get("sample_rate", 48000)))))))
+	elif stream is AudioStreamOggVorbis:
+		var vorbis := stream as AudioStreamOggVorbis
+		vorbis.loop = should_loop
+		vorbis.loop_offset = (float(entry.get("loop_start_sample", 0)) /
+			maxf(1.0, float(entry.get("sample_rate", 48000)))) if should_loop else 0.0
+	return stream
 
 
 func _soundscape_location_for_context(context_id: String) -> String:
@@ -702,44 +847,50 @@ func _soundscape_location_for_context(context_id: String) -> String:
 
 func _ambience_asset_id(layer: String) -> String:
 	var location := _soundscape_location_for_context(_context)
-	if layer == "weather_points":
-		return "%s_%s_detail" % [_era_id, location]
-	if location == "dungeon":
-		return "%s_dungeon_ambience" % _era_id
-	return "classical_ambience" if _era_id == "classical" else "%s_ambience" % _era_id
+	var soundscape: Dictionary = _soundscapes.get(location, {})
+	var manifest_layer := "detail" if layer in ["detail", "weather_points"] else "bed"
+	return str(soundscape.get(manifest_layer, ""))
 
 
 func _music_asset_id() -> String:
-	return "music_%s" % ("exploration" if _music_state.is_empty() else _music_state)
+	if not _current_music_asset_id.is_empty():
+		return _current_music_asset_id
+	var state := "exploration" if _music_state.is_empty() else _music_state
+	var playlist: Array = _music_playlists.get(state, [])
+	return "" if playlist.is_empty() else str(playlist[0])
+
+
+func _next_music_asset_id(state: String, avoid_asset_id: String = "") -> String:
+	var playlist: Array = _music_playlists.get(state, [])
+	if playlist.is_empty():
+		return ""
+	var start := int(_music_playlist_positions.get(state, 0)) % playlist.size()
+	for offset in range(playlist.size()):
+		var index := (start + offset) % playlist.size()
+		var candidate := str(playlist[index])
+		if candidate == avoid_asset_id and playlist.size() > 1:
+			continue
+		_music_playlist_positions[state] = (index + 1) % playlist.size()
+		return candidate
+	return str(playlist[start])
+
+
+func _transition_start_position(from_asset_id: String, to_asset_id: String,
+		previous_position: float) -> float:
+	var from_entry: Dictionary = _assets_by_id.get(from_asset_id, {})
+	var to_entry: Dictionary = _assets_by_id.get(to_asset_id, {})
+	var from_group := str(from_entry.get("sync_group", ""))
+	var to_group := str(to_entry.get("sync_group", ""))
+	if from_group.is_empty() or from_group != to_group:
+		return 0.0
+	var duration := float(to_entry.get("duration", 0.0))
+	return fposmod(previous_position, duration) if duration > 0.0 else 0.0
 
 
 func _resolve_audio_path(asset_id: String) -> String:
-	var candidates: PackedStringArray = []
-	if asset_id.begins_with("music_"):
-		var state := asset_id.trim_prefix("music_")
-		if state in ["exploration", "pressure", "decisive"]:
-			candidates.append("res://audio/generated/%s/%s.ogg" % [_era_id, asset_id])
-			if _era_id != "classical":
-				candidates.append("res://audio/generated/classical/%s.ogg" % asset_id)
-	elif asset_id.ends_with("_ambience") or asset_id.ends_with("_detail"):
-		var soundscape_era := "classical" if asset_id == "classical_ambience" else ""
-		if soundscape_era.is_empty():
-			for candidate_era in ERA_IDS:
-				if asset_id.begins_with("%s_" % candidate_era):
-					soundscape_era = candidate_era
-					break
-		if not soundscape_era.is_empty():
-			candidates.append("res://audio/generated/%s/%s.ogg" % [soundscape_era, asset_id])
-	else:
-		candidates.append("res://audio/generated/%s/%s.wav" % [_era_id, asset_id])
-		# UI semantics intentionally stay shared.  Every gameplay and narrative
-		# cue is release-gated per era and must never silently fall back.
-		if _era_id != "classical" and asset_id.begins_with("ui_"):
-			candidates.append("res://audio/generated/classical/%s.wav" % asset_id)
-	for path in candidates:
-		if ResourceLoader.exists(path):
-			return path
-	return ""
+	var entry: Dictionary = _assets_by_id.get(asset_id, {})
+	var path := str(entry.get("runtime_path", ""))
+	return path if not path.is_empty() and ResourceLoader.exists(path) else ""
 
 
 func _audio_output_available() -> bool:

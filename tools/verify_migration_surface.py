@@ -50,7 +50,7 @@ REGRESSION_SCRIPTS = (
     "ten_life_long_run_test.gd",
 )
 
-RELEASE_SUPPORT_FILES = (
+DEVELOPMENT_SUPPORT_FILES = (
     "docs/WINDOWS_RELEASE_README.md",
     "setup-local-ai.bat",
     "ai_engine/setup_portable_ai.ps1",
@@ -99,14 +99,11 @@ def verify() -> None:
     build_text = read(BUILD_SCRIPT)
     release_verifier_text = read(RELEASE_VERIFY_SCRIPT)
     workflow_text = read(WORKFLOW)
-    for relative_path in RELEASE_SUPPORT_FILES:
+    for relative_path in DEVELOPMENT_SUPPORT_FILES:
         read(ROOT / relative_path)
     for required_bundle_name in (
         "AGPL-3.0.txt",
         "WINDOWS_RELEASE_README.md",
-        "setup_portable_ai.ps1",
-        "generate_event.ps1",
-        "test_local_ai.ps1",
         "checksums.sha256",
     ):
         if required_bundle_name not in build_text:

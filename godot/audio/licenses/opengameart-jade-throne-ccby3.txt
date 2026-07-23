@@ -1,0 +1,13 @@
+Views From Atop the Jade King's Throne
+======================================
+
+Creator: HitCtrl
+Source: https://opengameart.org/content/views-from-atop-the-jade-kings-throne
+License: Creative Commons Attribution 3.0 (CC BY 3.0)
+License text: https://creativecommons.org/licenses/by/3.0/legalcode
+
+The source page permits commercial use and redistribution under CC BY 3.0.
+The game runtime version was resampled to 48 kHz stereo, loudness-normalized,
+and encoded as Ogg Vorbis. The audio manifest records both source and runtime
+SHA-256 hashes. Credit must retain the creator name, source link, license link,
+and a note that the runtime file was modified.

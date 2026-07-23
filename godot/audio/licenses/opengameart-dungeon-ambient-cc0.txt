@@ -1,0 +1,17 @@
+Loopable Dungeon Ambience: CC0 notice
+=====================================
+
+Title: Loopable Dungeon Ambience
+Author: JaggedStone
+Source page:
+https://opengameart.org/content/loopable-dungeon-ambience
+Runtime source file:
+https://opengameart.org/sites/default/files/dungeon_ambient_1_0.ogg
+
+The OpenGameArt page marks this work as CC0. The CC0 legal code and deed are
+available at:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+This project retains the author's name and source URL even though CC0 does not
+require attribution. The manifest records the source SHA-256 and the runtime
+loop setting.

@@ -24,6 +24,12 @@ func _run() -> void:
 	var game := MainScene.instantiate()
 	game.set("save_service", service)
 	root.add_child(game)
+	var initial_player: Dictionary = game.get("player")
+	_expect(int(initial_player.get("age", 0)) == 18,
+		"主界面新生与缺省年龄必须从18岁开始")
+	var ui_body_font := game.get("body_font") as FontVariation
+	_expect(ui_body_font != null and int(ui_body_font.variation_opentype.get("wght", 0)) >= 700,
+		"正文主题必须使用略加粗的可读字重")
 
 	var name_input := game.find_child("DaoNameInput", true, false) as LineEdit
 	_expect(name_input != null, "新生菜单应存在道号输入框")
@@ -43,7 +49,32 @@ func _run() -> void:
 		"道号输入框按 Enter 提交后应立即创建主档")
 	_expect(game.find_child("EventChoiceButton0", true, false) != null,
 		"新生立档后必须直接进入故事引子，而不是阶段积分目标或按钮大厅")
+	var opening_event: Dictionary = game.get("current_event")
+	var opening_choices: Array = opening_event.get("choices", [])
+	if opening_choices.size() >= 2:
+		(opening_choices[0] as Dictionary)["dungeon_clue"] = true
+		(opening_choices[1] as Dictionary)["available"] = false
+		(opening_choices[1] as Dictionary)["unavailable_reason"] = "你尚未得到她的信任。"
+		opening_event["choices"] = opening_choices
+		game.set("current_event", opening_event)
+		game.call("_show_event")
+	var opening_button := game.find_child("EventChoiceButton0", true, false) as Button
+	_expect(opening_button != null and not opening_button.text.contains("可能回响") and
+		not opening_button.text.contains("道途") and not opening_button.text.contains("未知风险"),
+		"事件按钮只能显示角色要采取的自然语言行动，不得泄露攻略数值或未知风险标签")
+	var unavailable_button := game.find_child("EventChoiceButton1", true, false) as Button
+	_expect(unavailable_button != null and unavailable_button.disabled and
+		unavailable_button.tooltip_text == "你尚未得到她的信任。" and
+		game.find_child("EventChoiceUnavailableReason1", true, false) != null,
+		"作者给出的选择可用性和不可选原因必须优先进入UI")
+	_expect(not bool(game.call("_choice_grants_dungeon_clue", {"dungeon_clue": false,
+		"dungeon_clues": 0})) and bool(game.call("_choice_grants_dungeon_clue",
+		{"dungeon_clues": 1})),
+		"秘境线索只能由显式标记的剧情选择触发")
 	game.call("_resolve_choice", 0)
+	_expect(not _contains_label_text(game, "数值回响") and
+		not _contains_label_text(game, "阶段命途"),
+		"事件结果页不得把数值增减或阶段积分包装成攻略式回响")
 	game.call("_continue_from_event_result")
 	var initialized_state: Dictionary = game.get("run_state")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("factions", []) as Array).size() >= 3,
@@ -52,6 +83,8 @@ func _run() -> void:
 		"新生立档时必须初始化同世人物")
 	_expect(game.find_child("LocalAIButton", true, false) == null,
 		"本地模型不得作为主界面常驻动作打断小说式章节流程")
+	_expect(game.find_child("ChapterConsequenceSummary", true, false) != null,
+		"当前章节处境必须显示人物牵系与未偿承诺摘要")
 	var inventory_button := game.find_child("InventoryButton", true, false) as Button
 	_expect(inventory_button != null and not inventory_button.disabled,
 		"新生必须能进入行囊与炼器界面")
@@ -143,26 +176,42 @@ func _run() -> void:
 	var active_combat_state: Dictionary = game.get("run_state")
 	_expect(bool((active_combat_state.get("combat", {}) as Dictionary).get("active", false)),
 		"开始战斗必须写入可保存的进行中战局")
-	_expect(game.find_child("CombatAttackButton", true, false) != null,
-		"战斗界面必须提供明确的攻击行动")
+	_expect(game.find_child("CombatPressureButton", true, false) != null,
+		"战斗界面必须提供明确的压制战技")
+	_expect(game.find_child("CombatObjectiveCard", true, false) != null and
+		game.find_child("CombatCounterProgress", true, false) != null,
+		"战斗界面必须把三拍短目标和当前进度放在首屏")
 	active_combat_state.combat.current.enemy_hp = 1
 	active_combat_state.combat.current.enemy_defense = 0
 	active_combat_state.combat.current.player_attack = 999
 	game.call("_save_current_state", "测试战局断点")
 	game.call("_show_menu")
 	game.call("_continue_game")
-	_expect(game.find_child("CombatAttackButton", true, false) != null,
+	var restored_pressure_button := game.find_child("CombatPressureButton", true, false) as Button
+	_expect(restored_pressure_button != null,
 		"续接存档必须直接恢复进行中的战斗，而不是绕回主界面")
-	game.call("_resolve_combat_action", "attack")
+	var restored_technique_id := str(restored_pressure_button.get_meta("technique_id", "")) \
+		if restored_pressure_button != null else ""
+	game.call("_resolve_combat_technique", restored_technique_id)
 	var finished_combat_state: Dictionary = game.get("run_state")
 	_expect(not bool((finished_combat_state.get("combat", {}) as Dictionary).get("active", true)),
 		"胜利后必须结束进行中的战斗状态")
 	_expect(((finished_combat_state.combat as Dictionary).get("history", []) as Array).size() == 1,
 		"战斗结果必须写入有界战史")
+	var combat_history: Array = (finished_combat_state.combat as Dictionary).get("history", [])
+	_expect(not combat_history.is_empty() and not restored_technique_id.is_empty() and \
+			int(((combat_history.back() as Dictionary).get("technique_counts", {}) as Dictionary).get(
+				restored_technique_id, 0)) == 1,
+		"战技卡点击必须记录当前装备化战技，而不是回退为旧版基础攻击")
 	var player_before: Dictionary = game.get("player")
 	var blocked_choice := {"deltas": {"spirit_stones": -int(player_before.spirit_stones) - 1}}
 	_expect(not str(game.call("_choice_unavailable_reason", blocked_choice)).is_empty(),
 		"资源不足的付费选择必须在应用负数前被拒绝")
+	var authored_blocked_choice := {"available": false,
+		"unavailable_reason": "旧约尚未履行。",
+		"deltas": {"spirit_stones": -int(player_before.spirit_stones) - 99}}
+	_expect(str(game.call("_choice_unavailable_reason", authored_blocked_choice)) == "旧约尚未履行。",
+		"剧情定义的不可选原因必须优先于UI自行推测的资源原因")
 	var exp_before := int(player_before.get("exp", 0))
 	var level_before := int(player_before.get("level", 1))
 	var age_before := int(player_before.get("age", 0))
@@ -189,16 +238,11 @@ func _run() -> void:
 		"保存读取必须保留已经推进的世界时间")
 	_expect((restored_state.world as Dictionary).has("last_year_summary"),
 		"保存读取必须保留年度世界摘要")
-	var ai_bridge: Node = game.get("ai_bridge")
-	var ai_fixture := "【因果】镜湖来书\n沈照川从年史暗页里找到一封未署名的来书，墨痕正随你的道心明灭，等你决定如何回应。\n替人守信\n照见墨痕\n借书破局"
-	var ai_resolution: Dictionary = ai_bridge.call("resolve_generated_text", ai_fixture, restored_state, "integration-fixture")
-	game.call("_on_ai_event_ready", ai_resolution.event, {"code": "generated", "backend": "integration-fixture", "fallback": false})
-	_expect(str((game.get("current_event") as Dictionary).get("source", "")) == "local_ai",
-		"合法本地 AI 输出必须进入同一结构化事件界面")
+	game.call("_open_adventure")
+	var continued_event: Dictionary = game.get("current_event")
+	_expect(str(continued_event.get("source", "")) == "story_arc",
+		"续接后必须回到作者编排的下一章，不能由AI随机事件改写主流程")
 	game.call("_resolve_choice", 0)
-	var ai_state: Dictionary = (game.get("run_state") as Dictionary).get("ai", {})
-	_expect(str(ai_state.get("last_backend", "")) == "integration-fixture",
-		"本地 AI 后端状态必须随完整存档保存")
 	var resolved_story: Dictionary = (game.get("run_state") as Dictionary).get("story", {})
 	var chapter_log: Array = resolved_story.get("chapter_log", [])
 	_expect(game.find_child("EventResultContinueButton", true, false) != null and
@@ -210,6 +254,18 @@ func _run() -> void:
 	_expect(game.find_child("JournalBackButton", true, false) != null and
 		game.find_children("JournalChapter_*", "VBoxContainer", true, false).size() >= 1,
 		"命途长卷必须能回看最近章节并提供明确返回入口")
+	var visible_side_thread := str(game.call("_journal_thread_text",
+		"side:lantern_rescue:《灯河旧契》推进至第1/3章，余波尚未落定。"))
+	var visible_story_thread := str(game.call("_journal_thread_text",
+		"story:jade::旧玉主线推进至1章，仍待后续。"))
+	_expect(not visible_side_thread.contains("side:") and
+		not visible_side_thread.contains("lantern_rescue") and
+		visible_side_thread.begins_with("《灯河旧契》"),
+		"命途长卷不得把外篇内部 side 标识暴露给玩家")
+	_expect(not visible_story_thread.contains("story:") and
+		not visible_story_thread.contains("jade") and
+		visible_story_thread.begins_with("旧玉主线"),
+		"命途长卷不得把主线内部 arc 标识暴露给玩家")
 	game.call("_continue_from_event_result")
 	_expect(game.find_child("JournalButton", true, false) != null,
 		"主界面必须保留随时可达的命途长卷入口")
@@ -281,3 +337,11 @@ func _minimal_legacy_save() -> String:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _contains_label_text(parent: Node, fragment: String) -> bool:
+	for node_value in parent.find_children("*", "Label", true, false):
+		var label := node_value as Label
+		if label != null and label.text.contains(fragment):
+			return true
+	return false

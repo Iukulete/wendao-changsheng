@@ -2,6 +2,7 @@ extends SceneTree
 
 const AudioDirectorScript = preload("res://scripts/audio_director.gd")
 const GameStateScript = preload("res://scripts/game_state.gd")
+const MANIFEST_PATH := "res://audio/audio_manifest_v2.json"
 const SETTINGS_PATH := "user://audio_settings.cfg"
 
 var failures: Array[String] = []
@@ -21,7 +22,7 @@ func _run() -> void:
 	root.add_child(director)
 	await process_frame
 	_validate_director(director)
-	_validate_manifest_events(director)
+	_validate_manifest(director)
 	await _validate_settings_roundtrip(director)
 	await _validate_audio_rng_isolation(director)
 	await _validate_settings_ui()
@@ -31,12 +32,12 @@ func _run() -> void:
 		int(director.call("debug_ambience_playing_voice_count")) == 0 and
 		int(director.call("debug_music_playing_voice_count")) == 0 and
 		int(director.call("debug_stream_reference_count")) == 0,
-		"AudioDirector停机必须幂等停止所有声部并释放全部流引用")
+		"AudioDirector shutdown must be idempotent and release every stream")
 	director.queue_free()
 	await process_frame
 	_restore_settings()
 	if failures.is_empty():
-		print("AUDIO_SYSTEM_TEST_OK: six-era routing, synchronized three-state music, two-location layered soundscapes, era-exclusive rare cues, crossfades, buses, pool, settings, accessibility and audio RNG isolation verified")
+		print("AUDIO_SYSTEM_TEST_OK: curated manifest v2, non-loop playlists, manifest-only ambience looping, shared era routing, buses, settings and RNG isolation verified")
 		quit(0)
 	else:
 		for failure in failures:
@@ -46,11 +47,12 @@ func _run() -> void:
 
 func _validate_bus_layout() -> void:
 	var expected := ["Master", "Music", "Ambience", "SFX", "UI", "VO"]
-	_expect(AudioServer.bus_count == expected.size(), "总线数量必须恰好覆盖六类产品音频")
+	_expect(AudioServer.bus_count == expected.size(), "audio bus count must cover six product buses")
 	for index in range(mini(AudioServer.bus_count, expected.size())):
-		_expect(AudioServer.get_bus_name(index) == expected[index], "总线顺序或名称错误：%s" % expected[index])
+		_expect(AudioServer.get_bus_name(index) == expected[index],
+			"audio bus order/name mismatch: %s" % expected[index])
 		if index > 0:
-			_expect(AudioServer.get_bus_send(index) == &"Master", "%s必须汇入Master" % expected[index])
+			_expect(AudioServer.get_bus_send(index) == &"Master", "%s must feed Master" % expected[index])
 	var master := AudioServer.get_bus_index(&"Master")
 	var has_limiter := false
 	var has_compressor := false
@@ -61,147 +63,207 @@ func _validate_bus_layout() -> void:
 		has_compressor = has_compressor or effect is AudioEffectCompressor
 		has_stereo_accessibility = has_stereo_accessibility or effect is AudioEffectStereoEnhance
 	_expect(has_limiter and has_compressor and has_stereo_accessibility,
-		"Master必须同时拥有安全限幅、夜间动态与单声道辅助处理")
+		"Master must retain limiter, night dynamics and mono accessibility processing")
 
 
 func _validate_director(director: Node) -> void:
+	_expect(int(director.call("debug_manifest_version")) == 2,
+		"AudioDirector must load curated manifest v2")
 	var ids: PackedStringArray = director.call("event_ids")
 	for required in ["ui.confirm", "ui.cancel", "combat.impact", "dungeon.card",
-		"dungeon.heart", "dungeon.elite_enter", "dungeon.boss_enter", "dungeon.phase_break",
-		"dungeon.victory", "dungeon.defeat", "reincarnation.enter"]:
-		_expect(required in ids, "AudioDirector缺少稳定事件：%s" % required)
-	_expect(int(director.call("debug_pool_size")) == 16, "必须提供12个SFX与4个UI复用声部")
+			"dungeon.heart", "dungeon.elite_enter", "dungeon.boss_enter",
+			"dungeon.phase_break", "dungeon.victory", "dungeon.defeat",
+			"reincarnation.enter", "combat.spell", "combat.guard", "combat.recover",
+			"combat.heal", "combat.status", "combat.victory", "combat.defeat"]:
+		_expect(required in ids, "AudioDirector is missing stable event: %s" % required)
+	_expect(int(director.call("debug_pool_size")) == 16,
+		"AudioDirector must retain twelve SFX and four UI pooled voices")
 	_expect(int(director.call("debug_ambience_voice_count")) == 4 and
 		float(director.call("debug_ambience_crossfade_seconds")) >= 1.0,
-		"地点声景的底床与天气点声必须各有独立双声部，不能硬切循环")
+		"soundscape bed/detail layers must retain independent crossfade voices")
 	_expect(int(director.call("debug_music_voice_count")) == 2 and
 		float(director.call("debug_music_crossfade_seconds")) >= 1.5,
-		"音乐必须使用独立双声部和产品级交叉淡化，不能硬切状态或纪元")
-	for repeated_event in ["ui.confirm", "ui.cancel", "dungeon.card", "dungeon.impact", "dungeon.guard"]:
-		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 4,
-			"高频事件必须至少有四个轮换变体：%s" % repeated_event)
+		"music state changes must retain two-voice crossfading")
+	for repeated_event in ["ui.confirm", "ui.cancel", "dungeon.card", "combat.impact", "combat.guard"]:
+		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 3,
+			"high-frequency event needs at least three curated variants: %s" % repeated_event)
+	for repeated_event in ["combat.recover", "combat.heal", "combat.status"]:
+		_expect(int(director.call("debug_event_variant_count", repeated_event)) >= 2,
+			"recovery/status event needs at least two curated variants: %s" % repeated_event)
+	var semantic_categories := {
+		"combat.impact": "weapon_impact",
+		"combat.guard": "shield_guard",
+		"combat.spell": "spell_cast",
+		"combat.recover": "recovery",
+		"combat.status": "status",
+		"dungeon.phase_break": "phase_change",
+		"combat.victory": "victory",
+		"combat.defeat": "defeat",
+	}
+	var semantic_assets := {}
+	for event_id in semantic_categories:
+		_expect(str(director.call("debug_event_semantic_category", event_id)) ==
+			str(semantic_categories[event_id]),
+			"combat event semantic category mismatch: %s" % event_id)
+		var event_assets: PackedStringArray = director.call("debug_event_asset_ids", event_id)
+		_expect(not event_assets.is_empty(), "semantic event must resolve assets: %s" % event_id)
+		for asset_id in event_assets:
+			_expect(not semantic_assets.has(asset_id),
+				"distinct semantic categories must not share an asset: %s" % asset_id)
+			semantic_assets[asset_id] = event_id
+
+	var stable_paths := {
+		"music": str(director.call("debug_resolved_asset_path", "music_sunrise")),
+		"ambience": str(director.call("debug_resolved_asset_path", "ambience_dungeon_loop")),
+		"ui": str(director.call("debug_resolved_asset_path", "sfx_ui_confirm_01")),
+	}
+	for path_value in stable_paths.values():
+		_expect(not str(path_value).is_empty() and ResourceLoader.exists(str(path_value)),
+			"curated runtime asset must resolve through manifest: %s" % str(path_value))
 	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
 		director.call("set_era", era_id)
-		var event_path := str(director.call("debug_resolved_asset_path", "card_cast"))
-		var ambience_id := "classical_ambience" if era_id == "classical" else "%s_ambience" % era_id
-		var ambience_path := str(director.call("debug_resolved_asset_path", ambience_id))
-		_expect(str(director.call("get_era")) == era_id and
-			event_path.contains("/generated/%s/" % era_id) and
-			ambience_path.contains("/generated/%s/" % era_id) and
-			ResourceLoader.exists(event_path) and ResourceLoader.exists(ambience_path),
-			"纪元必须解析自己的高频交互材质与环境底床：%s" % era_id)
-		for rare_asset_id in ["stress", "heart_awaken", "elite_enter", "boss_enter",
-				"phase_break", "victory", "defeat"]:
-			var rare_path := str(director.call("debug_resolved_asset_path", rare_asset_id))
-			_expect(rare_path.contains("/generated/%s/%s.wav" % [era_id, rare_asset_id]) and
-				ResourceLoader.load(rare_path) is AudioStreamWAV,
-				"压力、轮回、精英、首领、破相与结算必须解析纪元专属终稿：%s/%s" % [era_id, rare_asset_id])
-		var ui_path := str(director.call("debug_resolved_asset_path", "ui_confirm"))
-		_expect(ui_path.contains("/generated/classical/ui_confirm.wav"),
-			"共享UI语义必须稳定解析古典公共素材")
-		var soundscape_ids := [
-			"classical_ambience" if era_id == "classical" else "%s_ambience" % era_id,
-			"%s_world_detail" % era_id,
-			"%s_dungeon_ambience" % era_id,
-			"%s_dungeon_detail" % era_id,
-		]
-		for soundscape_id in soundscape_ids:
-			var soundscape_path := str(director.call("debug_resolved_asset_path", soundscape_id))
-			var soundscape_stream := ResourceLoader.load(soundscape_path)
-			_expect(soundscape_path.contains("/generated/%s/" % era_id) and
-				soundscape_path.ends_with(".ogg") and soundscape_stream is AudioStreamOggVorbis and
-				(soundscape_stream as AudioStreamOggVorbis).loop and
-				is_equal_approx((soundscape_stream as AudioStreamOggVorbis).get_length(), 64.0),
-				"每个纪元必须解码世界/秘境的底床与天气点声层：%s/%s" % [era_id, soundscape_id])
-		for state in ["exploration", "pressure", "decisive"]:
-			var music_path := str(director.call("debug_resolved_asset_path", "music_%s" % state))
-			var music_stream := ResourceLoader.load(music_path)
-			_expect(music_path.contains("/generated/%s/music_%s.ogg" % [era_id, state]) and
-				music_stream is AudioStreamOggVorbis and
-				(music_stream as AudioStreamOggVorbis).loop and
-				is_equal_approx((music_stream as AudioStreamOggVorbis).get_length(), 64.0),
-				"每个纪元必须解析并解码自己的64秒流式音乐：%s/%s" % [era_id, state])
-	_expect(not bool(director.call("play_event", "missing.event")), "未知事件必须安静降级")
+		_expect(str(director.call("get_era")) == era_id,
+			"valid era must remain selected: %s" % era_id)
+		_expect(str(director.call("debug_resolved_asset_path", "music_sunrise")) == stable_paths.music and
+			str(director.call("debug_resolved_asset_path", "ambience_dungeon_loop")) == stable_paths.ambience and
+			str(director.call("debug_resolved_asset_path", "sfx_ui_confirm_01")) == stable_paths.ui,
+			"all eras must share the curated manifest paths without legacy fallback: %s" % era_id)
+
 	director.call("set_context", "boss")
-	_expect(str(director.call("get_context")) == "boss" and
-		str(director.call("get_music_state")) == "decisive" and
+	_expect(str(director.call("get_music_state")) == "decisive" and
 		str(director.call("debug_soundscape_location")) == "dungeon",
-		"首领上下文必须进入决战音乐和秘境声景")
+		"boss context must map to decisive music and dungeon soundscape")
 	director.call("set_context", "combat")
 	_expect(str(director.call("get_music_state")) == "pressure" and
 		str(director.call("debug_soundscape_location")) == "world",
-		"普通战斗上下文必须进入压力音乐和世界声景")
+		"combat context must map to pressure music and world soundscape")
 	director.call("set_context", "event")
-	_expect(str(director.call("get_music_state")) == "exploration", "事件与阅读上下文必须回到探索音乐")
+	_expect(str(director.call("get_music_state")) == "exploration",
+		"reading/event context must return to exploration music")
 	director.call("set_context", "not-a-context")
 	_expect(str(director.call("get_context")) == "world" and
-		str(director.call("get_music_state")) == "exploration", "非法上下文必须稳定回退世界探索混音")
+		str(director.call("get_music_state")) == "exploration",
+		"unknown context must fall back to world/exploration")
 	director.call("set_era", "not-an-era")
-	_expect(str(director.call("get_era")) == "classical", "非法纪元必须稳定回退到古典声音语言")
+	_expect(str(director.call("get_era")) == "classical",
+		"unknown era must fall back to classical without changing asset paths")
+
+	var exploration: PackedStringArray = director.call("debug_music_playlist", "exploration")
+	_expect(exploration.size() >= 3, "exploration playlist needs at least three long-form tracks")
+	director.call("set_context", "world")
+	var first_track := str(director.call("debug_advance_music_playlist"))
+	var second_track := str(director.call("debug_advance_music_playlist"))
+	_expect(first_track in exploration and second_track in exploration and first_track != second_track,
+		"playlist advancement must be deterministic and rotate within the active state")
+	_expect(is_zero_approx(float(director.call("debug_last_music_start_position"))) and
+		is_zero_approx(float(director.call("debug_transition_start_position",
+			"music_sunrise", "music_eastern_dreams", 57.0))),
+		"independent non-loop music must start at zero and never inherit playback phase")
+
+	_expect(not bool(director.call("play_event", "missing.event")),
+		"unknown audio event must fail quietly")
 	director.call("debug_reset_cooldowns")
 	var first := bool(director.call("play_event", "ui.confirm"))
 	var second := bool(director.call("play_event", "ui.confirm"))
-	_expect(first and not second, "UI高频事件必须执行防抖冷却")
+	_expect(first and not second, "UI event cooldown must remain active in Dummy/headless runs")
 	director.call("debug_reset_cooldowns")
-	_expect(bool(director.call("play_event", "ui.confirm")), "清除冷却后事件必须可再次解析")
+	_expect(bool(director.call("play_event", "ui_confirm")),
+		"legacy event aliases must continue resolving through manifest v2")
+	director.call("debug_reset_cooldowns")
+	_expect(bool(director.call("play_event", "heal")) and
+		str(director.call("debug_event_semantic_category", "heal")) == "recovery",
+		"gameplay recovery aliases must resolve to the dedicated recovery category")
 
 
-func _validate_manifest_events(director: Node) -> void:
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://audio/audio_manifest_v1.json"))
-	_expect(parsed is Dictionary, "音频manifest必须是有效JSON对象")
+func _validate_manifest(director: Node) -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))
+	_expect(parsed is Dictionary, "audio manifest v2 must be valid JSON")
 	if not parsed is Dictionary:
 		return
+	var manifest := parsed as Dictionary
+	_expect(int(manifest.get("version", 0)) == 2 and
+		str(manifest.get("schema", "")) == "curated-audio-v2",
+		"audio manifest must declare the curated v2 schema")
+	var assets_by_id := {}
+	var music_count := 0
+	var ambience_count := 0
+	var sfx_count := 0
+	for asset_value in (manifest.get("assets", []) as Array):
+		_expect(asset_value is Dictionary, "every manifest asset must be an object")
+		if not asset_value is Dictionary:
+			continue
+		var asset := asset_value as Dictionary
+		var asset_id := str(asset.get("id", ""))
+		_expect(not asset_id.is_empty() and not assets_by_id.has(asset_id),
+			"manifest asset IDs must be non-empty and unique: %s" % asset_id)
+		assets_by_id[asset_id] = asset
+		var runtime_path := str(asset.get("runtime_path", ""))
+		_expect(runtime_path.begins_with("res://audio/") and ResourceLoader.exists(runtime_path),
+			"manifest runtime path must stay inside audio root and resolve: %s" % runtime_path)
+		_expect(str(asset.get("sha256", "")).length() == 64 and
+			str(asset.get("source_sha256", "")).length() == 64 and
+			str(asset.get("source_url", "")).begins_with("https://") and
+			not str(asset.get("creator", "")).is_empty() and
+			not str(asset.get("attribution_text", "")).is_empty() and
+			FileAccess.file_exists(str(asset.get("license_file", ""))),
+			"asset provenance must include hashes, HTTPS source, creator, attribution and license: %s" % asset_id)
+		_expect(bool(asset.get("commercial_use", false)) and
+			bool(asset.get("redistribution_in_game", false)) and
+			str(asset.get("release_state", "")) == "final",
+			"runtime asset must be commercially redistributable and final: %s" % asset_id)
+		var stream := ResourceLoader.load(runtime_path)
+		_expect(stream is AudioStreamOggVorbis,
+			"all curated runtime assets must decode as Ogg Vorbis: %s" % asset_id)
+		if stream is AudioStreamOggVorbis:
+			_expect(not (stream as AudioStreamOggVorbis).loop,
+				"Ogg importer must remain non-looping; runtime manifest owns loop policy: %s" % asset_id)
+		var role := str(asset.get("role", ""))
+		if role == "music":
+			music_count += 1
+			_expect(not bool(asset.get("loop", true)) and asset.get("loop_start_sample") == null and
+				asset.get("loop_end_sample") == null and float(asset.get("duration", 0.0)) > 90.0,
+				"long-form music must be non-looping with null loop points: %s" % asset_id)
+			_expect(not bool(director.call("debug_loaded_stream_loop_enabled", asset_id)),
+				"runtime must not force curated music into a loop: %s" % asset_id)
+		elif role == "ambience":
+			ambience_count += 1
+			_expect(bool(asset.get("loop", false)) and int(asset.get("loop_end_sample", 0)) > 0,
+				"ambience loop range must be explicit in manifest: %s" % asset_id)
+			_expect(bool(director.call("debug_loaded_stream_loop_enabled", asset_id)),
+				"runtime duplicate must enable looping only for manifest-loop ambience: %s" % asset_id)
+		if str(asset.get("kind", "")) == "sfx":
+			sfx_count += 1
+	_expect(music_count >= 6 and ambience_count >= 2 and sfx_count >= 24 and sfx_count <= 32,
+		"curated set must contain 6+ music, 2+ ambience and 24-32 selected SFX")
+
+	var playlists: Dictionary = manifest.get("music_playlists", {})
+	for state in ["exploration", "pressure", "decisive"]:
+		var playlist: Array = playlists.get(state, [])
+		var minimum_variants := 3 if state in ["exploration", "pressure"] else 2
+		_expect(playlist.size() >= minimum_variants,
+			"music playlist needs curated variants: %s" % state)
+		for asset_id_value in playlist:
+			var asset_id := str(asset_id_value)
+			_expect(assets_by_id.has(asset_id) and
+				str((assets_by_id.get(asset_id, {}) as Dictionary).get("role", "")) == "music",
+				"playlist must reference a registered music asset: %s/%s" % [state, asset_id])
+	var soundscapes: Dictionary = manifest.get("soundscapes", {})
+	for location in ["world", "dungeon"]:
+		var soundscape: Dictionary = soundscapes.get(location, {})
+		var bed_id := str(soundscape.get("bed", ""))
+		_expect(assets_by_id.has(bed_id) and bool((assets_by_id[bed_id] as Dictionary).get("loop", false)),
+			"soundscape bed must reference a registered loop asset: %s" % location)
+	_expect(str((soundscapes.get("world", {}) as Dictionary).get("bed", "")) !=
+		str((soundscapes.get("dungeon", {}) as Dictionary).get("bed", "")),
+		"world and dungeon must have distinct ambience beds")
 	var registered: PackedStringArray = director.call("event_ids")
-	var era_event_counts := {}
-	var era_ambience_counts := {}
-	var era_music_counts := {}
-	var era_soundscape_counts := {}
-	var music_sync: Dictionary = (parsed as Dictionary).get("music_sync", {})
-	_expect(float(music_sync.get("duration_seconds", 0.0)) == 64.0 and
-		int(music_sync.get("tempo_bpm", 0)) == 120 and
-		(music_sync.get("states", []) as Array).size() == 3,
-		"音乐manifest必须声明统一的64秒、120 BPM三状态同步契约")
-	var soundscape_contract: Dictionary = (parsed as Dictionary).get("soundscape_contract", {})
-	_expect(float(soundscape_contract.get("duration_seconds", 0.0)) == 64.0 and
-		int(soundscape_contract.get("per_era_asset_count", 0)) == 4,
-		"声景manifest必须声明每纪元四条世界/秘境双层契约")
-	for asset_value in ((parsed as Dictionary).get("assets", []) as Array):
-		var asset: Dictionary = asset_value
-		if str(asset.get("kind", "")) == "soundscape":
-			for era_value in (asset.get("era_ids", []) as Array):
-				var soundscape_key := "%s:%s:%s" % [str(era_value),
-					str(asset.get("soundscape_location", "")), str(asset.get("soundscape_layer", ""))]
-				era_soundscape_counts[soundscape_key] = int(era_soundscape_counts.get(soundscape_key, 0)) + 1
-		for event_value in (asset.get("event_ids", []) as Array):
-			var event_id := str(event_value)
-			if not event_id.begins_with("context.") and not event_id.begins_with("music."):
-				_expect(event_id in registered, "manifest引用了未注册事件：%s" % event_id)
-			for era_value in (asset.get("era_ids", []) as Array):
-				var era_id := str(era_value)
-				var key := "%s:%s" % [era_id, event_id]
-				era_event_counts[key] = int(era_event_counts.get(key, 0)) + 1
-				if event_id == "context.world" and str(asset.get("role", "")) == "ambience":
-					era_ambience_counts[era_id] = int(era_ambience_counts.get(era_id, 0)) + 1
-				if event_id.begins_with("music.") and str(asset.get("role", "")) == "music":
-					era_music_counts[key] = int(era_music_counts.get(key, 0)) + 1
-	for era_id in ["classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty"]:
-		for event_id in ["dungeon.card", "combat.impact", "combat.guard"]:
-			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) >= 4,
-				"每个纪元的高频事件必须拥有四个独立资产：%s/%s" % [era_id, event_id])
-		for event_id in ["dungeon.stress", "dungeon.heart", "dungeon.elite_enter",
-				"dungeon.boss_enter", "dungeon.phase_break", "dungeon.victory",
-				"dungeon.defeat", "reincarnation.enter", "combat.victory", "combat.defeat"]:
-			_expect(int(era_event_counts.get("%s:%s" % [era_id, event_id], 0)) == 1,
-				"每个纪元的低频叙事与战斗事件必须恰好拥有一套专属终稿：%s/%s" % [era_id, event_id])
-		_expect(int(era_ambience_counts.get(era_id, 0)) == 1,
-			"每个纪元必须恰好登记一套世界环境底床：%s" % era_id)
-		for state in ["exploration", "pressure", "decisive"]:
-			_expect(int(era_music_counts.get("%s:music.%s" % [era_id, state], 0)) == 1,
-				"每个纪元必须恰好登记一套三状态音乐：%s/%s" % [era_id, state])
-		for location in ["world", "dungeon"]:
-			for layer in ["bed", "weather_points"]:
-				_expect(int(era_soundscape_counts.get("%s:%s:%s" % [era_id, location, layer], 0)) == 1,
-					"每个纪元必须恰好登记世界/秘境底床与天气点声：%s/%s/%s" % [era_id, location, layer])
+	for event_id_value in (manifest.get("events", {}) as Dictionary).keys():
+		var event_id := str(event_id_value)
+		_expect(event_id in registered, "manifest event must be exposed by AudioDirector: %s" % event_id)
+		var event: Dictionary = (manifest.get("events", {}) as Dictionary).get(event_id, {})
+		for asset_id_value in (event.get("asset_ids", []) as Array):
+			_expect(assets_by_id.has(str(asset_id_value)),
+				"manifest event references an unknown asset: %s/%s" % [event_id, str(asset_id_value)])
 
 
 func _validate_settings_roundtrip(director: Node) -> void:
@@ -216,7 +278,8 @@ func _validate_settings_roundtrip(director: Node) -> void:
 	await process_frame
 	var restored: Dictionary = second.call("get_settings")
 	_expect(is_equal_approx(float(restored.master), 43.0) and bool(restored.night_mode) and
-		bool(restored.reduce_sudden) and bool(restored.mono), "音量与听觉辅助选项必须通过配置往返")
+		bool(restored.reduce_sudden) and bool(restored.mono),
+		"audio volume and accessibility settings must round-trip through ConfigFile")
 	var master := AudioServer.get_bus_index(&"Master")
 	var compressor_enabled := false
 	var mono_enabled := false
@@ -226,30 +289,32 @@ func _validate_settings_roundtrip(director: Node) -> void:
 			compressor_enabled = AudioServer.is_bus_effect_enabled(master, effect_index)
 		elif effect is AudioEffectStereoEnhance:
 			mono_enabled = is_zero_approx((effect as AudioEffectStereoEnhance).pan_pullout)
-	_expect(compressor_enabled and mono_enabled, "夜间模式与单声道必须实际作用于Master处理链")
+	_expect(compressor_enabled and mono_enabled,
+		"night mode and mono accessibility must affect the Master processing chain")
+	second.call("shutdown_for_exit")
 	second.queue_free()
 	await process_frame
 
 
 func _validate_audio_rng_isolation(director: Node) -> void:
-	var game_state: Dictionary = GameStateScript.create_new_game("听雨人", 718001, [7, 7, 7, 7, 7])
+	var game_state: Dictionary = GameStateScript.create_new_game("Audio RNG Test", 718001, [7, 7, 7, 7, 7])
 	var gameplay_cursor := int(game_state.get("rng_cursor", -1))
 	var audio_cursor_before := int(director.call("debug_audio_cursor"))
 	for event_id in ["dungeon.card", "dungeon.impact", "dungeon.guard", "dungeon.stress"]:
 		director.call("debug_reset_cooldowns")
 		director.call("play_event", event_id)
 	_expect(int(game_state.get("rng_cursor", -1)) == gameplay_cursor,
-		"声音变体绝不能消耗或写入玩法rng_cursor")
+		"audio variation must never consume gameplay RNG")
 	_expect(int(director.call("debug_audio_cursor")) >= audio_cursor_before + 4,
-		"声音变体必须使用独立游标")
+		"audio variation must use its independent cursor")
 	_expect(int(director.call("debug_active_voice_count")) <= int(director.call("debug_pool_size")),
-		"并发播放不得突破池上限")
+		"concurrent playback must never exceed the voice pool")
 	await process_frame
 
 
 func _validate_settings_ui() -> void:
 	var scene := load("res://scenes/main.tscn") as PackedScene
-	_expect(scene != null, "主场景必须可加载")
+	_expect(scene != null, "main scene must remain loadable")
 	if scene == null:
 		return
 	var main: Control = scene.instantiate()
@@ -261,17 +326,20 @@ func _validate_settings_ui() -> void:
 	main.call("_set_audio_context", "world")
 	var runtime_director: Node = main.get("audio_director")
 	_expect(runtime_director != null and str(runtime_director.call("get_era")) == "steam",
-		"主场景切换纪元时必须同步切换AudioDirector声音语言")
+		"main scene era changes must still synchronize AudioDirector")
 	main.call("_open_audio_settings")
 	await process_frame
 	for node_name in ["AudioMasterSlider", "AudioMusicSlider", "AudioAmbienceSlider", "AudioSFXSlider",
-		"AudioUISlider", "AudioVOSlider", "AudioMutedToggle", "AudioUnfocusedToggle", "AudioNightToggle",
-		"AudioSuddenToggle", "AudioMonoToggle", "AudioPreviewButton", "AudioSettingsBackButton"]:
-		_expect(main.find_child(node_name, true, false) != null, "音频设置缺少可访问控件：%s" % node_name)
+			"AudioUISlider", "AudioVOSlider", "AudioMutedToggle", "AudioUnfocusedToggle",
+			"AudioNightToggle", "AudioSuddenToggle", "AudioMonoToggle", "AudioPreviewButton",
+			"AudioSettingsBackButton"]:
+		_expect(main.find_child(node_name, true, false) != null,
+			"audio settings is missing accessible control: %s" % node_name)
 	var panel := main.find_child("AudioSettingsPanel", true, false) as Control
 	var scroll := main.find_child("AudioSettingsScroll", true, false) as ScrollContainer
-	_expect(panel != null and scroll != null and scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
-		"音频设置必须在短窗口中保留真实滚动路径")
+	_expect(panel != null and scroll != null and
+		scroll.vertical_scroll_mode == ScrollContainer.SCROLL_MODE_AUTO,
+		"audio settings must retain a real scroll path on short windows")
 	main.queue_free()
 	await process_frame
 

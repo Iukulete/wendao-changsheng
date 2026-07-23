@@ -28,6 +28,10 @@ func _init() -> void:
 	_expect(str(antagonist.get("narrative_role", "")) == "primary_antagonist" and
 		str(antagonist.get("visual_signature", "")).length() >= 24,
 		"主反派必须拥有独立身份与视觉锚点规范")
+	for story_character_value in CharacterArtCatalogScript.story_characters():
+		var story_character: Dictionary = story_character_value
+		_expect(int(story_character.get("age", 0)) >= 18,
+			"具名叙事角色必须明确成年：%s" % str(story_character.get("id", "")))
 	for blocker_value in (validation.get("release_blockers", []) as Array):
 		var blocker: Dictionary = CharacterArtCatalogScript.character(str(blocker_value))
 		_expect(str(blocker.get("replacement_target", "")).begins_with("res://art/portraits/") and

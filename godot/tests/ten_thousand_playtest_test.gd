@@ -64,6 +64,7 @@ func _run() -> void:
 		if local_index > 0 and local_index % 500 == 0:
 			print("PLAYTEST_PROGRESS: %d/%d offset=%d failures=%d" % [
 				local_index, run_count, run_offset, failures.size()])
+	_assert_combat_coverage()
 	var elapsed_seconds := float(Time.get_ticks_usec() - started_usec) / 1000000.0
 	save_service.call("clear_slot")
 	DirAccess.remove_absolute(save_root)
@@ -182,7 +183,6 @@ func _play_one(index: int, mode: int) -> Dictionary:
 			var combat_start := CombatSystemScript.start_combat(state)
 			if not bool(combat_start.get("ok", false)):
 				return _fail("combat_start", combat_start)
-			EncounterSystemScript.consume(state)
 			_increment(telemetry, "encounters_engaged")
 			var combat_result := CombatSystemScript.auto_resolve(state, 128)
 			var combat_outcome := str(combat_result.get("outcome", ""))
@@ -298,7 +298,7 @@ func _resolve_event(state: Dictionary, event: Dictionary, choice_index: int) -> 
 	player["exp"] = maxi(0, int(player.get("exp", 0)))
 	player["total_events"] = int(player.get("total_events", 0)) + 1
 	state["player"] = player
-	var record := EventCatalogScript.record_resolution(state, event)
+	var record := EventCatalogScript.record_resolution(state, event, choice)
 	if not bool(record.get("ok", false)):
 		return _fail("event_record", record)
 	var story_result := StorySystemScript.resolve_choice(state, event, choice_index)
@@ -394,6 +394,11 @@ func _new_telemetry() -> Dictionary:
 		"combat_near_deaths": 0,
 		"combat_turn_total_by_root": {},
 		"combat_hp_loss_basis_points_by_root": {},
+		"combat_action_counts": {},
+		"combat_counter_role_counts": {},
+		"combat_counter_completions": 0,
+		"combat_counter_bursts_used": 0,
+		"combat_second_phase_triggers": 0,
 		"dungeon_outcomes": {},
 		"dungeon_outcomes_by_root": {},
 		"objective_completions": {},
@@ -478,8 +483,46 @@ func _record_combat_pressure(result: Dictionary, root_cohort: String) -> void:
 		int(telemetry.combat_hp_loss_basis_points_total) + loss_basis_points
 	_increment(telemetry.combat_turn_total_by_root, root_cohort, turns)
 	_increment(telemetry.combat_hp_loss_basis_points_by_root, root_cohort, loss_basis_points)
+	for action_id in (battle.get("action_counts", {}) as Dictionary):
+		_increment(telemetry.combat_action_counts, str(action_id),
+			int((battle.action_counts as Dictionary).get(action_id, 0)))
+	for role_id in (battle.get("counter_role_counts", {}) as Dictionary):
+		_increment(telemetry.combat_counter_role_counts, str(role_id),
+			int((battle.counter_role_counts as Dictionary).get(role_id, 0)))
+	_increment(telemetry, "combat_counter_completions",
+		int(battle.get("counter_completions", 0)))
+	_increment(telemetry, "combat_counter_bursts_used",
+		int(battle.get("counter_bursts_used", 0)))
+	_increment(telemetry, "combat_second_phase_triggers",
+		int(battle.get("second_phase_trigger_count", 0)))
 	if remaining_hp * 4 <= max_hp:
 		_increment(telemetry, "combat_near_deaths")
+
+
+func _assert_combat_coverage() -> void:
+	if run_count < 60:
+		return
+	var combat_attempts := 0
+	for value in (telemetry.get("combat_outcomes", {}) as Dictionary).values():
+		combat_attempts += int(value)
+	if combat_attempts <= 0:
+		return
+	var role_counts: Dictionary = telemetry.get("combat_counter_role_counts", {})
+	var required := {
+		"recommended_actions": int(role_counts.get("recommended", 0)),
+		"alternative_actions": int(role_counts.get("alternative", 0)),
+		"counter_completions": int(telemetry.get("combat_counter_completions", 0)),
+		"counter_bursts_used": int(telemetry.get("combat_counter_bursts_used", 0)),
+		"second_phase_triggers": int(telemetry.get("combat_second_phase_triggers", 0)),
+	}
+	for metric in required:
+		if int(required[metric]) > 0:
+			continue
+		var code := "coverage_combat_%s" % metric
+		failure_counts[code] = int(failure_counts.get(code, 0)) + 1
+		if failures.size() < 64:
+			failures.append("offset=%d runs=%d code=%s telemetry=%s" % [
+				run_offset, run_count, code, JSON.stringify(required)])
 
 
 func _increment(counter: Dictionary, key: String, amount: int = 1) -> void:

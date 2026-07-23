@@ -73,7 +73,7 @@ if ($stdout -notmatch 'AUDIO_DEVICE_SMOKE_READY: driver=(.+) display=windows') {
     throw "The exported build did not report a live Windows audio/display backend."
 }
 $driver = $Matches[1].Trim()
-if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=4 rare_cue=true') {
+if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=1 rare_cue=true') {
     Write-Host $stdout
     throw "The exported build did not complete real-backend Ogg music transitions."
 }
@@ -81,4 +81,4 @@ if ($stdout -notmatch 'AUDIO_DEVICE_SHUTDOWN_OK: players_stopped streams_release
     Write-Host $stdout
     throw "The exported build did not complete deterministic audio resource shutdown."
 }
-Write-Host "Exported Windows audio-device, dual-player music, and four-player layered soundscape smoke passed off-screen and muted (driver=$driver)."
+Write-Host "Exported Windows audio-device, dual-player music, and shared ambience-bed smoke passed off-screen and muted (driver=$driver)."

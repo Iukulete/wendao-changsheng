@@ -28,12 +28,12 @@ release\godot\windows\wendao-changsheng.exe
 - 势力、NPC、关系、灵潮、稳定度与纪元压力按年确定性演化，轮回后世界继续前进。
 - 四条四阶段主线与四条三阶段跨世续章；事件以卷名、章节、前情和正文组织，选择后先阅读独立结果页，再由玩家主动翻页。最近 96 章会写入可回看的命途长卷，并与未竟因果、阶段目标、主线时钟和跨世定局一起保存。
 - 物品、消耗品、装备、锻造、16 项成就、16 件永久玉兵、觉醒、蓄能与显圣。
-- 可复现的普通战斗，包含敌方意图、招式、状态、奖励和中途存档恢复。
+- 可复现的普通战斗只由有期限的敌踪引入；战前先说明所争之物，回合中公开敌方意图、伤害区间与三拍破势节奏，胜利、撤离和战败都回到叙事与存档闭环。
 - 可选的镜湖秘境构筑玩法。进入副本时，当前境界、主次道途、人物羁绊强度、装备、玉兵、前世记忆、四条主线定局与心魔会即时投影成带来源的能力牌组；续章会深化已有定局能力，而非增加外部收藏。六个时代拥有不同路线事件、压力临界心魔、精英被动和不能被爆发跳过的半血首领第二相，并以程序化施法轨迹、精英与首领显形、受击光痕、破相扩散环及击破结算反馈真实战斗结果。它不是独立卡包，也不替代主线修仙循环。
-- 秘境岔路拥有可存档的四层因果路线图：已选道标会保留名称、类型与层数，当前分岔直接预示战斗风险、恢复、压力、强化与结算收益，旧存档缺少路线历史时可无损补齐。
-- 六个纪元各有独立的探索、压力、决战三态配乐，以及世界/秘境两地点的底床和天气点声双层声景；所有长循环均为 64 秒流式 Ogg，战斗、首领、地点和纪元切换通过独立双声部按当前相位平滑过渡。施法、命中与护体各有四套可轮换时代材质，压力、觉醒/轮回、精英、首领、破相、胜利和失败也都使用纪元专属终稿；只有不承载世界身份的 UI 语义保持公共素材。
+- 秘境岔路拥有可存档的四层因果路线图：已选道标会保留名称与层数；眼前选项只写角色将采取的行动，并以环境、声音和人物感受暗示前路，不直接揭示节点类型、数值收益或未知风险。旧存档缺少路线历史时可无损补齐。
+- 音频由 5 首 0 A.D. 开源配乐、1 首 OpenGameArt CC BY 配乐、2 条独立环境声与 27 条 Kenney CC0 音效组成；探索、压力和决战播放列表分别至少包含 3、3、2 首长曲，世界与秘境不再共用同一环境床。剑击、护盾、术法、治疗/回气、状态、换相和胜败使用互不复用的声源类别。曲目自然播完后轮换，场景切换时平滑过渡。来源、许可证、官方归档哈希、逐资产哈希与测量记录均随仓库分发，运行时不会回退到旧版程序合成素材。
 - 产品标题使用随包分发的 Noto Serif SC，正文、按钮、数值与能力说明使用 Noto Sans SC；720p 不缩小关键文字，短屏通过响应式布局和独立滚动保持清晰。
-- 本地 AI 事件桥只调用本机进程，固定到兼容的 Gemma 4 revision、问道 LoRA 与 llama.cpp b10066 Vulkan 运行时；安装后必须通过一次真实五行推演，输出再经过结构与内容校验，禁用、超时和非法输出都会回退到内置事件。独立 Windows 包自带按需安装器，但不夹带 5 GiB 模型或训练数据。
+- 主线和战斗不依赖 AI 随机生成；作者编排的事件、章节和结果是玩家实际游玩的唯一内容源。仓库仍保留本地 AI 桥与离线评测脚本，供开发阶段做降级回归和文本检查，但 Windows 成品不携带模型、下载器或 AI 安装器。
 
 ## 旧版存档
 
@@ -54,13 +54,11 @@ Godot 新版可只读导入旧 Win32 版的 `SAVE_V4` 与 `SAVE_V5` 六槽存档
 # 首次准备固定版本的便携 Godot 与官方 Windows 导出模板
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_godot.ps1
 
-# 仅在重新生成原创音频时：准备哈希锁定的本地 FFmpeg，并固定 NumPy 版本
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\prepare_audio_encoder.ps1
-python -m pip install -r .\tools\audio-requirements.txt
-python -X utf8 .\tools\generate_audio_assets.py
+# 新版音频资源已随仓库提供；校验 35 条精选 Ogg、来源哈希与许可证
+python -X utf8 .\tools\verify_audio_assets.py --require-final
 
 # 美术/音频清单、资源导入、主场景和全部确定性回归
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -NoPrepare
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_godot.ps1 -NoPrepare -RequireFinalAudio
 
 # 屏幕外真实 GL 截图验收，不打开前台窗口
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_render.ps1
@@ -71,19 +69,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\run_playtest_10k.ps1
 # 验证、导出，并执行无设备与屏幕外静音真实音频后端冒烟
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare
 
-# 最终替换 main 前的产品发布构建；任何 prototype 或 production_candidate 都会使其失败
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare -ProductRelease
+# 新版发布候选构建；产品美术门禁由美术负责人确认后再加 -ProductRelease
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\build_godot.ps1 -NoPrepare
 ```
 
-GitHub Actions 对 `agent/**`、`main` 推送和面向 `main` 的拉取请求执行完整 Godot 回归、真实渲染、Windows 导出和音频设备冒烟，但允许产品美术仍在制作；只有显式手动发布任务会额外强制最终音频与产品美术闸门。开发验证不能把缺失美术误标为产品发布，最终发布也不能绕过 12 项身份/分镜检查。
+GitHub Actions 对 `agent/**`、`main` 推送和面向 `main` 的拉取请求执行完整 Godot 回归、真实渲染、Windows 导出和音频设备冒烟，但允许产品美术仍在制作；只有显式手动发布任务会额外强制最终音频与产品美术闸门。开发验证不能把缺失美术误标为产品发布，最终发布也不能绕过当前 13 项身份/分镜检查。
 
-全量回归包含字体文件与授权哈希、164 个六纪元原创音频素材的格式/哈希/响度/循环/跨纪元差异与变体门禁（含 18 条流式三态配乐、24 条双地点分层声景和 42 条六纪元低频语义终稿）、音乐/声景上下文映射与独立双声部相位切换、音频设置与独立随机游标、存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。独立压力测试以连续唯一种子运行 10,000 局混合流程，失败时报告局号、模式和种子以供单局重放。52 张真实渲染验收覆盖 `800x720`、`1280x720`、`1440x900`、`1920x1080`，以及事件正文、事件结果、命途长卷、音频设置、普通战斗、秘境路线和秘境战斗画面。
+全量回归包含字体文件与授权哈希、35 条精选 Ogg（6 首音乐、2 条环境床、27 条 CC0 音效）的格式/哈希/响度/循环、语义隔离与许可证门禁、音乐/声景上下文映射、音频设置与存档损坏恢复、旧六槽只读导入、本地 AI 四路径、物品、战斗、剧情、角色能力牌组、秘境和确定性十世长局。独立压力测试以连续唯一种子运行 10,000 局混合流程，失败时报告局号、模式和种子以供单局重放。52 张真实渲染验收覆盖 `800x720`、`1280x720`、`1440x900`、`1920x1080`，以及事件正文、事件结果、命途长卷、音频设置、普通战斗、秘境路线和秘境战斗画面。
 
 ## 项目结构
 
 ```text
 godot/                    唯一游戏工程、数据、美术、脚本和测试
-ai_engine/                新版本地 AI 运行、模型准备与评测工具
+ai_engine/                仅供开发验收的本地 AI 桥、模型准备与评测工具（不进成品）
 docs/                     产品边界、迁移记录与后续方向
 tools/                    Godot 准备、验证、渲染和构建工具
 .github/workflows/        唯一 Godot Windows CI

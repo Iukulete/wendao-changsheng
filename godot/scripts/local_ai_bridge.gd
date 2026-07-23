@@ -260,7 +260,7 @@ func build_prompt(state: Dictionary) -> String:
 		"模型只负责叙事措辞，不决定数值、奖励、死亡或存档。不要解释规则。",
 		"玩家: %s" % str(player.get("name", "无名客")).left(32),
 		"境界名称: %s%d层" % [str(player.get("realm", "凡人")).left(24), int(player.get("level", 1))],
-		"年龄: %d/%d" % [int(player.get("age", 16)), int(player.get("lifespan", 80))],
+		"年龄: %d/%d" % [int(player.get("age", 18)), int(player.get("lifespan", 80))],
 		"时代纪元: %s；世界第%d年；灵潮%d；稳定%d；纪元压力%d。" % [
 			str(state.get("current_era", "古典修仙纪")).left(32), int(world.get("year", 1)),
 			int(world.get("qi_tide", 50)), int(world.get("stability", 65)), int(world.get("era_pressure", 0))],

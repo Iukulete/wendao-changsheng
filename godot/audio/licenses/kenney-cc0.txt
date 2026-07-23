@@ -1,0 +1,21 @@
+Kenney audio assets: CC0 notice
+================================
+
+The selected files came from these official Kenney packages:
+
+* Interface Sounds: https://kenney.nl/assets/interface-sounds
+* RPG Audio: https://kenney.nl/assets/rpg-audio
+* Impact Sounds: https://kenney.nl/assets/impact-sounds
+* Digital Audio: https://kenney.nl/assets/digital-audio
+* Sci-Fi Sounds: https://kenney.nl/assets/sci-fi-sounds
+* Music Jingles: https://kenney.nl/assets/music-jingles
+
+The package License.txt files state that the assets are released under the
+Creative Commons Zero (CC0) dedication:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+The assets may be used in personal and commercial projects. Credit to Kenney
+or https://www.kenney.nl/ is not mandatory, but this project keeps the credit
+for traceability. The manifest `source_packages` lock records every official
+archive URL and archive SHA-256. Each asset also records its exact archive
+member path, source SHA-256 and byte-identical runtime SHA-256.

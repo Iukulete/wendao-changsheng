@@ -14,12 +14,13 @@ func _init() -> void:
 		"v2 状态必须覆盖轮回、世界、物品与剧情")
 	_expect(str(state.player.realm_id) == "mortal" and int(state.player.realm_index) == 0,
 		"新生必须从稳定境界 ID 开始")
+	_expect(int(state.player.age) == 18, "新角色必须明确成年，成年关系内容不得绑定未成年人")
 	_expect((state.player.path as Dictionary).size() == 6, "道途必须包含六个可持续维度")
 
 	var first_gain: Dictionary = CultivationScript.meditate(state, 50)
 	_expect(bool(first_gain.get("ok", false)) and int(first_gain.get("gain", 0)) > 0,
 		"修炼必须推进修为")
-	_expect(int(state.player.age) == 17 and int(state.world.year) == 2,
+	_expect(int(state.player.age) == 19 and int(state.world.year) == 2,
 		"修炼必须同时推进角色寿元与世界时间")
 	_expect((state.world.factions as Array).size() >= 3 and (state.world.npcs as Array).size() >= 6,
 		"第一年必须生成可持续演化的势力与人物")
@@ -130,7 +131,7 @@ func _init() -> void:
 		str(forbidden_breakthrough.get("code", "")) == "life_ended",
 		"寿尽后不得再靠突破复活")
 	_expect(str(ended_state.player.realm_id) == realm_before, "被拒绝的死后突破不得改变境界")
-	ended_state.player.age = 16
+	ended_state.player.age = 18
 	ended_state.life_closed = true
 	var closed_breakthrough: Dictionary = CultivationScript.attempt_breakthrough(ended_state, 1)
 	_expect(str(closed_breakthrough.get("code", "")) == "life_ended",

@@ -12,6 +12,8 @@ const MainScene = preload("res://scenes/main.tscn")
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
 
 var failures: Array[String] = []
+var pixel_capture_supported := true
+var pixel_capture_skip_reported := false
 
 
 func _init() -> void:
@@ -593,29 +595,89 @@ func _run() -> void:
 	var pre_combat_state: Dictionary = (game.get("run_state") as Dictionary).duplicate(true)
 	root.size = Vector2i(1280, 720)
 	EncounterSystemScript.offer(game.get("run_state"), "render", "渲染敌踪",
-		"用于验收有上下文的普通战斗入口。")
+		"用于验收有上下文的普通战斗入口。", 3, {
+			"enemy_id": "classical_razor_wolf", "enemy_name": "断刃苍狼",
+			"motivation": "它循着灯河边的血迹追了过来。",
+			"stakes": "若让它越过石桥，守灯人的归路会被截断。",
+			"escape_consequence": "石桥暂时失守，这笔血债仍要回来清算。",
+		})
 	game.call("_start_combat")
 	await _settle_frames(4)
 	var combat_viewport := root.get_visible_rect()
-	var combat_player_panel := game.find_child("CombatPlayerPanel", true, false) as Control
-	var combat_enemy_panel := game.find_child("CombatEnemyPanel", true, false) as Control
+	var combat_header := game.find_child("CombatHeader", true, false) as Control
+	var combat_status_band := game.find_child("CombatStatusBand", true, false) as Control
+	var combat_player_status := game.find_child("CombatPlayerStatus", true, false) as Control
+	var combat_enemy_status := game.find_child("CombatEnemyStatus", true, false) as Control
+	var combat_stage := game.find_child("CombatStage", true, false) as Control
+	var combat_tactics := game.find_child("CombatTacticsPanel", true, false) as Control
+	var combat_signature_title := game.find_child("CombatSignatureTitle", true, false) as Label
+	var combat_signature_rule := game.find_child("CombatSignatureRule", true, false) as Label
+	var combat_signature_status := game.find_child("CombatSignatureStatus", true, false) as Label
 	var combat_forecast_card := game.find_child("CombatForecastCard", true, false) as Control
 	var combat_forecast_range := game.find_child("CombatForecastRange", true, false) as Label
 	var combat_counterplay := game.find_child("CombatCounterplay", true, false) as Label
 	var combat_timeline := game.find_child("CombatIntentTimeline", true, false) as HBoxContainer
-	var combat_player_forecast := game.find_child("CombatPlayerDamageForecast", true, false) as Label
-	if combat_player_panel == null or combat_enemy_panel == null or combat_forecast_card == null or \
+	var combat_story_stakes := game.find_child("CombatStoryStakes", true, false) as Label
+	var combat_objective := game.find_child("CombatObjectiveCard", true, false) as Control
+	var combat_counter_progress := game.find_child("CombatCounterProgress", true, false) as Label
+	var combat_action_deck := game.find_child("CombatActionDeck", true, false) as Control
+	if combat_header == null or combat_status_band == null or combat_player_status == null or \
+			combat_enemy_status == null or combat_stage == null or combat_tactics == null or \
+			combat_signature_title == null or combat_signature_rule == null or \
+			combat_signature_status == null or combat_forecast_card == null or \
 			combat_forecast_range == null or combat_counterplay == null or combat_timeline == null or \
-			combat_player_forecast == null:
-		failures.append("1280x720普通战斗缺少规则驱动的双方预测与战术卡")
+			combat_story_stakes == null or combat_objective == null or combat_counter_progress == null or \
+			combat_action_deck == null:
+		failures.append("1280x720普通战斗缺少单流战场、敌方签名或稳定战技区")
 	elif combat_timeline.get_child_count() < 3 or not combat_forecast_range.text.contains("预计") or \
-			combat_counterplay.text.is_empty() or not combat_player_forecast.text.contains("斩击"):
-		failures.append("1280x720普通战斗没有显示三步意图轮转与行动收益")
+			not combat_counterplay.text.contains("应对线索") or \
+			combat_counterplay.text.contains("推荐") or combat_counterplay.text.contains("备选") or \
+			not combat_signature_title.text.contains("嗅血追猎") or \
+			not combat_signature_rule.text.contains("流血") or combat_signature_status.text.is_empty() or \
+			not combat_story_stakes.text.contains("守灯人的归路") or \
+			not combat_counter_progress.text.contains("0/3"):
+		failures.append("1280x720普通战斗没有显示剧情赌注、敌人规则、三步意图与破势进度")
+	if game.find_child("CombatPlayerPanel", true, false) != null or \
+			game.find_child("CombatEnemyPanel", true, false) != null:
+		failures.append("普通战斗仍保留与顶部重复的左右大型状态面板")
+	var pressure_technique := game.find_child("CombatPressureButton", true, false) as Button
+	var guard_technique := game.find_child("CombatGuardButton", true, false) as Button
+	var turn_technique := game.find_child("CombatTurnButton", true, false) as Button
+	var pressure_slot := pressure_technique.find_child("CombatTechniqueSlotLabel", true, false) as Label \
+		if pressure_technique != null else null
+	var pressure_name := pressure_technique.find_child("CombatTechniqueNameLabel", true, false) as Label \
+		if pressure_technique != null else null
+	var pressure_effect := pressure_technique.find_child("CombatTechniqueEffectLabel", true, false) as Label \
+		if pressure_technique != null else null
+	var pressure_rhythm := pressure_technique.find_child("CombatTechniqueRhythmLabel", true, false) as Label \
+		if pressure_technique != null else null
+	var guard_slot := guard_technique.find_child("CombatTechniqueSlotLabel", true, false) as Label \
+		if guard_technique != null else null
+	var guard_effect := guard_technique.find_child("CombatTechniqueEffectLabel", true, false) as Label \
+		if guard_technique != null else null
+	var guard_rhythm := guard_technique.find_child("CombatTechniqueRhythmLabel", true, false) as Label \
+		if guard_technique != null else null
+	var turn_slot := turn_technique.find_child("CombatTechniqueSlotLabel", true, false) as Label \
+		if turn_technique != null else null
+	var turn_effect := turn_technique.find_child("CombatTechniqueEffectLabel", true, false) as Label \
+		if turn_technique != null else null
+	var turn_rhythm := turn_technique.find_child("CombatTechniqueRhythmLabel", true, false) as Label \
+		if turn_technique != null else null
+	if pressure_technique == null or guard_technique == null or turn_technique == null or \
+			pressure_slot == null or pressure_name == null or pressure_effect == null or \
+			pressure_rhythm == null or guard_slot == null or guard_effect == null or \
+			guard_rhythm == null or turn_slot == null or turn_effect == null or turn_rhythm == null or \
+			not pressure_slot.text.contains("压制") or pressure_name.text.is_empty() or \
+			not pressure_effect.text.contains("伤害") or not pressure_rhythm.text.contains("进势") or \
+			not guard_slot.text.contains("守势") or not guard_effect.text.contains("护盾") or \
+			not guard_rhythm.text.contains("保拍") or not turn_slot.text.contains("转机") or \
+			not turn_effect.text.contains("灵力") or not turn_rhythm.text.contains("保拍"):
+		failures.append("普通战斗战技卡没有显示装备化名称、招式叙述、预测、资源及节拍结果")
 	var combat_controls: Array[Control] = [
-		combat_player_panel, combat_enemy_panel, combat_forecast_card, combat_timeline,
-		game.find_child("CombatAttackButton", true, false) as Control,
+		combat_header, combat_status_band, combat_stage, combat_tactics, combat_action_deck,
+		game.find_child("CombatPressureButton", true, false) as Control,
 		game.find_child("CombatGuardButton", true, false) as Control,
-		game.find_child("CombatSpellButton", true, false) as Control,
+		game.find_child("CombatTurnButton", true, false) as Control,
 		game.find_child("CombatPillButton", true, false) as Control,
 		game.find_child("CombatFleeButton", true, false) as Control,
 	]
@@ -630,46 +692,72 @@ func _run() -> void:
 	_capture(root, output_root.path_join("normal_combat_1280x720.png"), Vector2i(1280, 720),
 		"普通战斗 1280x720")
 	root.size = Vector2i(1440, 900)
+	var burst_combat_state: Dictionary = game.get("run_state")
+	burst_combat_state.combat.current.counter_chain = 3
+	burst_combat_state.combat.current.counter_burst_ready = true
+	burst_combat_state.combat.current.second_phase_active = true
+	burst_combat_state.combat.current.intent_cycle = \
+		(burst_combat_state.combat.current.second_phase_cycle as Array).duplicate()
+	burst_combat_state.combat.current.intent_index = 0
+	burst_combat_state.combat.current.intent = str(
+		burst_combat_state.combat.current.intent_cycle[0])
+	game.set("run_state", burst_combat_state)
+	game.call("_show_combat")
 	await _settle_frames(4)
+	var burst_pressure_button := game.find_child("CombatPressureButton", true, false) as Button
+	var burst_pressure_name := burst_pressure_button.find_child("CombatTechniqueNameLabel", true,
+		false) as Label if burst_pressure_button != null else null
+	if burst_pressure_name == null or not burst_pressure_name.text.contains("破势"):
+		failures.append("破势完成后，进攻按钮没有在点击前显示已经计入的爆发")
+	var combat_phase_state := game.find_child("CombatPhaseState", true, false) as Label
+	var combat_phase_rule := game.find_child("CombatSignaturePhaseRule", true, false) as Label
+	if combat_phase_state == null or not combat_phase_state.text.contains("第二阶段") or \
+			combat_phase_rule == null or not combat_phase_rule.text.contains("五成"):
+		failures.append("普通战斗进入第二阶段后没有显示换势状态与敌人二相规则")
 	_capture(root, output_root.path_join("normal_combat_1440x900.png"), Vector2i(1440, 900),
 		"普通战斗 1440x900")
 	root.size = Vector2i(800, 720)
 	game.call("_show_combat")
 	await _settle_frames(4)
 	var narrow_combat_viewport := root.get_visible_rect()
-	var narrow_combat_scroll := game.find_child("CombatBodyScroll", true, false) as ScrollContainer
-	var narrow_combat_body := game.find_child("CombatBody", true, false) as Control
+	var narrow_combat_arena := game.find_child("CombatArenaRow", true, false) as Control
 	var narrow_combat_stage := game.find_child("CombatStage", true, false) as Control
-	var narrow_combat_status_row := game.find_child("CombatNarrowStatusRow", true, false) as Control
 	var narrow_combat_header := game.find_child("CombatHeader", true, false) as Control
-	var narrow_combat_actions := game.find_child("CombatActionBar", true, false) as Control
-	if narrow_combat_scroll == null or not narrow_combat_scroll.get_v_scroll_bar().visible:
-		failures.append("800x720普通战斗没有提供战场到双方详情的纵向滚动路径")
-	if narrow_combat_body == null or narrow_combat_body.get_global_rect().size.x > narrow_combat_viewport.size.x:
-		failures.append("800x720普通战斗主体发生横向裁切：%s" % [
-			narrow_combat_body.get_global_rect() if narrow_combat_body != null else "missing"])
-	if narrow_combat_stage == null or not narrow_combat_viewport.encloses(narrow_combat_stage.get_global_rect()):
-		failures.append("800x720普通战斗首屏没有完整显示交锋舞台")
-	for fixed_control in [narrow_combat_header, narrow_combat_actions]:
+	var narrow_combat_status := game.find_child("CombatStatusBand", true, false) as Control
+	var narrow_combat_tactics := game.find_child("CombatTacticsPanel", true, false) as Control
+	var narrow_combat_actions := game.find_child("CombatActionDeck", true, false) as Control
+	for fixed_control in [narrow_combat_header, narrow_combat_status, narrow_combat_arena,
+			narrow_combat_stage, narrow_combat_tactics, narrow_combat_actions]:
 		if fixed_control == null or not narrow_combat_viewport.encloses(fixed_control.get_global_rect()):
-			failures.append("800x720普通战斗固定标题或操作区不可达")
-	for action_name in ["CombatAttackButton", "CombatGuardButton", "CombatSpellButton",
+			failures.append("800x720普通战斗的标题、状态、战场、规则或战技区不可达：%s" % [
+				fixed_control.name if fixed_control != null else "missing"])
+	if narrow_combat_arena != null and \
+			narrow_combat_arena.get_global_rect().size.x > narrow_combat_viewport.size.x:
+		failures.append("800x720普通战斗战场与规则区发生横向裁切")
+	for action_name in ["CombatPressureButton", "CombatGuardButton", "CombatTurnButton",
 			"CombatPillButton", "CombatFleeButton"]:
-		var narrow_action := game.find_child(action_name, true, false) as Control
+		var narrow_action := game.find_child(action_name, true, false) as Button
 		if narrow_action == null or not narrow_combat_viewport.encloses(narrow_action.get_global_rect()):
 			failures.append("800x720普通战斗操作不可达：%s" % action_name)
+		elif action_name in ["CombatPressureButton", "CombatGuardButton", "CombatTurnButton"] and \
+				(narrow_action.size.y < 90.0 or narrow_action.size.x < 180.0):
+			failures.append("800x720普通战斗主战技没有维持稳定可读尺寸：%s %s" % [
+				action_name, narrow_action.size])
 	_capture(root, output_root.path_join("normal_combat_narrow_top_800x720.png"), Vector2i(800, 720),
-		"窄屏普通战斗舞台 800x720")
-	if narrow_combat_scroll != null:
-		narrow_combat_scroll.scroll_vertical = int(narrow_combat_scroll.get_v_scroll_bar().max_value)
-		await _settle_frames(4)
-	var narrow_player_panel := game.find_child("CombatPlayerPanel", true, false) as Control
-	var narrow_enemy_panel := game.find_child("CombatEnemyPanel", true, false) as Control
-	for detail_control in [narrow_combat_status_row, narrow_player_panel, narrow_enemy_panel]:
-		if detail_control == null or not narrow_combat_viewport.encloses(detail_control.get_global_rect()):
-			failures.append("800x720普通战斗滚动到底后双方详情仍不可达")
+		"窄屏普通战斗完整决策面 800x720")
+	game.call("_open_combat_log_overlay")
+	await _settle_frames(4)
+	var narrow_log_overlay := game.find_child("CombatLogOverlay", true, false) as Control
+	var narrow_log_dialog := game.find_child("CombatLogDialog", true, false) as Control
+	var narrow_log_label := game.find_child("CombatLogLabel", true, false) as Label
+	var narrow_log_close := game.find_child("CombatLogCloseButton", true, false) as Button
+	for log_control in [narrow_log_overlay, narrow_log_dialog, narrow_log_label, narrow_log_close]:
+		if log_control == null or not narrow_combat_viewport.encloses(log_control.get_global_rect()):
+			failures.append("800x720普通战斗交锋实录不可查或无法关闭")
 	_capture(root, output_root.path_join("normal_combat_narrow_bottom_800x720.png"), Vector2i(800, 720),
-		"窄屏普通战斗双方详情 800x720")
+		"窄屏普通战斗交锋实录 800x720")
+	game.call("_close_combat_log_overlay")
+	await _settle_frames(2)
 	game.set("run_state", pre_combat_state)
 	game.call("_sync_state_views")
 	game.call("_show_game")
@@ -697,13 +785,28 @@ func _run() -> void:
 		"family":{"stage":3, "resolution":"去名留义"},
 		"rival":{"stage":3, "resolution":"相争不相害"},
 	}
+	DungeonSystemScript.grant_clue(dungeon_state, "渲染验收显式秘境线索")
 	game.call("_enter_dungeon")
 	await _settle_frames(4)
 	var route_trail := game.find_child("DungeonRouteTrail", true, false) as Control
 	var route_button := game.find_child("DungeonRouteButton0", true, false) as Button
+	var forbidden_route_labels := ["预示", "未知风险", "胜后", "败后", "压力-", "线索 ·", "〔"]
+	var route_label_leaks := false
+	for route_choice_index in range((game.get("run_state").dungeon.run.route_choices as Array).size()):
+		var route_candidate := game.find_child("DungeonRouteButton%d" % route_choice_index,
+			true, false) as Button
+		if route_candidate != null:
+			for forbidden_label in forbidden_route_labels:
+				if route_candidate.text.contains(str(forbidden_label)):
+					route_label_leaks = true
+	var route_uses_action_language := false
+	if route_button != null:
+		for action_word in ["踏上", "继续向上", "推开", "伸手触碰", "走近", "旁停步"]:
+			if route_button.text.contains(action_word):
+				route_uses_action_language = true
 	if route_trail == null or route_trail.size.x < 500.0 or route_button == null or \
-			not route_button.text.contains("预示"):
-		failures.append("秘境岔路没有显示可读的四层因果路线与收益风险预示")
+			not route_uses_action_language or route_label_leaks:
+		failures.append("秘境岔路没有使用自然行动句和含蓄正文，或仍泄露系统类型/结果标签")
 	_capture(root, output_root.path_join("dungeon_route_1440x900.png"), Vector2i(1440, 900), "秘境路线")
 	root.size = Vector2i(800, 720)
 	game.call("_show_dungeon_route")
@@ -794,6 +897,18 @@ func _run() -> void:
 		game.set("run_state", combat_state)
 		game.call("_show_dungeon_combat")
 	await _settle_frames(4)
+	var dungeon_arena := game.find_child("DungeonArenaStage", true, false) as Control
+	var dungeon_intent := game.find_child("DungeonIntentPanel", true, false) as Control
+	var dungeon_forecast := game.find_child("DungeonIntentForecast", true, false) as Label
+	var dungeon_card := game.find_child("DungeonCardButton0", true, false) as Button
+	if dungeon_arena == null or dungeon_intent == null or dungeon_forecast == null or \
+			dungeon_card == null or dungeon_arena.size.x < 300.0 or dungeon_arena.size.y < 180.0 or \
+			not dungeon_arena.get_global_rect().encloses(dungeon_intent.get_global_rect()) or \
+			dungeon_forecast.autowrap_mode == TextServer.AUTOWRAP_OFF or \
+			not dungeon_card.text.contains("灵力") or \
+			(not dungeon_card.text.contains("伤害") and not dungeon_card.text.contains("护体") and \
+				not dungeon_card.text.contains("回复") and not dungeon_card.text.contains("镇心")):
+		failures.append("秘境战斗缺少可读战术舞台、量化敌意或语义化能力牌面")
 	_capture(root, output_root.path_join("dungeon_combat_1440x900.png"), Vector2i(1440, 900), "秘境能力战斗")
 	root.size = Vector2i(800, 720)
 	game.call("_show_dungeon_combat")
@@ -930,12 +1045,55 @@ func _run() -> void:
 	var compact_end := game.find_child("DungeonEndTurnButton", true, false) as Control
 	var compact_trait := game.find_child("DungeonTraitDescription", true, false) as Label
 	var compact_phase := game.find_child("DungeonPhaseDescription", true, false) as Label
+	var compact_scroll := game.find_child("DungeonCombatScroll", true, false) as ScrollContainer
+	if compact_scroll != null:
+		compact_scroll.scroll_vertical = int(compact_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var compact_cards := game.find_children("DungeonCardButton*", "Button", true, false)
+	var compact_viewport := root.get_visible_rect()
+	var compact_actions: Array[Control] = [
+		compact_end,
+		game.find_child("DungeonCombatAbandonButton", true, false) as Control,
+	]
+	var compact_geometry_failed := false
+	var compact_scroll_end := compact_scroll.get_v_scroll_bar().max_value - \
+		compact_scroll.get_v_scroll_bar().page if compact_scroll != null else 0.0
+	if compact_scroll == null or not compact_scroll.get_v_scroll_bar().visible or \
+			compact_scroll.scroll_vertical < compact_scroll_end - 1.0:
+		compact_geometry_failed = true
+		failures.append("1280x720秘境反馈验收没有滚动到可见的决策区底部")
+	if compact_cards.size() < 5:
+		compact_geometry_failed = true
+		failures.append("1280x720秘境战斗手牌数量不足，无法验收最后一排卡牌")
+	if compact_summary == null or not compact_summary.visible or \
+			not compact_viewport.encloses(compact_summary.get_global_rect()):
+		compact_geometry_failed = true
+		failures.append("1280x720秘境反馈摘要在底部决策区不可见")
+	if compact_summary != null:
+		for compact_card_value in compact_cards:
+			var compact_card_control := compact_card_value as Control
+			if compact_card_control == null or not compact_card_control.visible or \
+					not compact_viewport.encloses(compact_card_control.get_global_rect()):
+				compact_geometry_failed = true
+				failures.append("1280x720秘境滚动到底后手牌仍不可见：%s" % [
+					compact_card_control.name if compact_card_control != null else "missing"])
+			elif compact_summary.get_global_rect().intersects(compact_card_control.get_global_rect()):
+				compact_geometry_failed = true
+				failures.append("1280x720秘境反馈摘要与手牌发生交叠：%s" % compact_card_control.name)
+	for compact_action in compact_actions:
+		if compact_action == null or not compact_action.visible or \
+				not compact_viewport.encloses(compact_action.get_global_rect()):
+			compact_geometry_failed = true
+			failures.append("1280x720秘境固定操作不可见：%s" % [
+				compact_action.name if compact_action != null else "missing"])
+		elif compact_summary != null and compact_summary.get_global_rect().intersects(
+				compact_action.get_global_rect()):
+			compact_geometry_failed = true
+			failures.append("1280x720秘境反馈摘要与固定操作发生交叠：%s" % compact_action.name)
 	if compact_summary == null or compact_card == null or compact_end == null or \
 			compact_trait == null or compact_phase == null or \
 			compact_trait.get_theme_font_size("font_size") < 15 or \
-			compact_phase.get_theme_font_size("font_size") < 15 or \
-			compact_summary.get_global_rect().intersects(compact_card.get_global_rect()) or \
-			compact_summary.get_global_rect().intersects(compact_end.get_global_rect()):
+			compact_phase.get_theme_font_size("font_size") < 15 or compact_geometry_failed:
 		failures.append("1280x720秘境反馈与手牌或操作按钮发生交叠")
 	_capture(root, output_root.path_join("dungeon_feedback_1280x720.png"), Vector2i(1280, 720),
 		"秘境反馈紧凑布局")
@@ -971,7 +1129,10 @@ func _run() -> void:
 	DirAccess.remove_absolute(save_root)
 	game.free()
 	if failures.is_empty():
-		print("RENDER_CAPTURE_TEST_OK: abilities, encounters, heart demons, boss phases and victory feedback are nonblank")
+		if pixel_capture_supported:
+			print("RENDER_CAPTURE_TEST_OK: geometry passed and rendered captures are nonblank")
+		else:
+			print("RENDER_CAPTURE_GEOMETRY_TEST_OK: all viewport gates passed; dummy headless backend has no texture RID")
 		quit(0)
 	else:
 		for failure in failures:
@@ -980,7 +1141,15 @@ func _run() -> void:
 
 
 func _capture(viewport: Viewport, path: String, expected_size: Vector2i, label: String) -> void:
-	var image := viewport.get_texture().get_image()
+	if DisplayServer.get_name() == "headless":
+		RenderingServer.force_draw(false, 0.0)
+		pixel_capture_supported = false
+		if not pixel_capture_skip_reported:
+			pixel_capture_skip_reported = true
+			print("RENDER_CAPTURE_PIXELS_SKIPPED: Windows headless DisplayServer uses the dummy rendering backend")
+		return
+	var viewport_texture := viewport.get_texture()
+	var image := viewport_texture.get_image()
 	if image == null or image.is_empty():
 		failures.append("%s没有生成图像" % label)
 		return
@@ -1007,7 +1176,10 @@ func _capture(viewport: Viewport, path: String, expected_size: Vector2i, label: 
 func _settle_frames(count: int) -> void:
 	for _index in range(count):
 		await process_frame
-	await RenderingServer.frame_post_draw
+		if DisplayServer.get_name() == "headless":
+			RenderingServer.force_draw(false, 0.0)
+	if DisplayServer.get_name() != "headless":
+		await RenderingServer.frame_post_draw
 
 
 func _write_text(path: String, contents: String) -> void:

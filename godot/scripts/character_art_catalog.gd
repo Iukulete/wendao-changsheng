@@ -67,7 +67,8 @@ static func validate_catalog() -> Dictionary:
 		var role := str(character.get("narrative_role", ""))
 		var status := str(character.get("release_status", ""))
 		var profile_id := str(character.get("motion_profile", ""))
-		if character_id.is_empty() or seen_ids.has(character_id) or display_name.is_empty() or role.is_empty():
+		var age := int(character.get("narrative_age", 0))
+		if character_id.is_empty() or seen_ids.has(character_id) or display_name.is_empty() or role.is_empty() or age < 18:
 			return {"ok": false, "code": "invalid_character_identity", "character_id": character_id}
 		if not RELEASE_STATUSES.has(status) or not profiles.has(profile_id):
 			return {"ok": false, "code": "invalid_character_art_status", "character_id": character_id}
@@ -142,6 +143,20 @@ static func character(character_id: String) -> Dictionary:
 
 static func has_character(character_id: String) -> bool:
 	return not character(character_id).is_empty()
+
+
+static func story_characters() -> Array:
+	var result: Array = []
+	for value in (load_catalog().get("characters", []) as Array):
+		if not value is Dictionary:
+			continue
+		var character_value: Dictionary = value
+		result.append({
+			"id": str(character_value.get("id", "")),
+			"name": str(character_value.get("display_name", "")),
+			"age": int(character_value.get("narrative_age", 18)),
+		})
+	return result
 
 
 static func motion_profile(profile_id: String) -> Dictionary:

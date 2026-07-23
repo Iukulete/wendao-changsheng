@@ -1,0 +1,22 @@
+0 A.D. audio license
+====================
+
+The files in this directory are Copyright (C) 2009 Wildfire Games.
+
+These files are licensed under the Creative Commons Attribution-Share Alike 3.0
+(CC BY-SA 3.0) license:
+https://creativecommons.org/licenses/by-sa/3.0/
+
+You may use, modify and distribute these files for commercial and
+non-commercial purposes. If you distribute one of these files, include:
+
+* a link to the CC BY-SA 3.0 license;
+* the name "Wildfire Games" as the original author; and
+* a link to https://www.wildfiregames.com/.
+
+Any modification of the files remains available under CC BY-SA 3.0. The
+Wendao Changsheng manifest identifies the source commit, source hash and the
+runtime conversion/normalization applied to each file.
+
+Source repository:
+https://github.com/0ad/0ad/tree/61a3b9507d974084e6badb88a0826bd89a6d5b8b/binaries/data/mods/public/audio

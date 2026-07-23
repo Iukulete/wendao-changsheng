@@ -1,5 +1,7 @@
 # v0.18 产品级音频方向
 
+> 历史文档，已由 `docs/audio_asset_migration_v019.md` 和 `godot/audio/audio_manifest_v2.json` 取代。文中的 164 条程序合成素材、v1 清单和六纪元独占声景不再属于当前产品，也不应据此恢复旧资源。
+
 ## 目标
 
 《问道长生》的声音不是持续铺满的背景装饰，而是世界状态、人物行动和玩家选择的第二条信息通道。成品需要在长时间游玩中保持清晰、克制和可辨认：重要反馈能在混合中立即被听见，不重要的层主动让位，静默也被当作叙事手段。
@@ -8,10 +10,10 @@
 
 ## 当前基线
 
-- 当前仓库已经建立 `default_bus_layout.tres`、常驻 `AudioDirector`、独立设置页、版本化授权清单和 164 个可复现的六纪元原创运行时素材；每个纪元都有独立的探索、压力、决战三态配乐，以及世界/秘境两地点的底床和天气点声双层声景；出牌、命中与护体各有 4 个独立时代变体，压力、觉醒/轮回、精英、首领、破相、胜利和失败七类低频语义也各有六纪元专属终稿。
-- 18 条流式 Ogg 配乐采用统一的 64 秒、120 BPM、32 小节和采样边界；`menu/world/event/reincarnation` 映射探索态，`combat/dungeon` 映射压力态，`boss` 映射决战态。双音乐声部从当前播放相位进入并进行 1.75 秒交叉淡化，纪元切换沿用同一同步契约。
-- 24 条声景同样采用 64 秒流式 Ogg；`menu/world/event/combat/reincarnation` 消费世界双层，`dungeon/boss` 消费秘境双层，地点与纪元变化会同时交叉淡化底床和天气点声，长环境内容不再以短 PCM 常驻内存。
-- 当前素材已通过 48 kHz 运行时格式、SHA-256、峰值、RMS、DC 偏移、跨纪元/跨状态/跨地点内容差异、Ogg 页与最终 granule、循环接缝和 Godot 实际解码门禁，并按项目发布政策标记为 `final`；`build_godot.ps1 -ProductRelease` 会主动拒绝任何重新混入的 `prototype_only` 或 `production_candidate`。
+- 旧版方案曾规划 164 个可复现的六纪元素材与大量时代变体；该规模验证了音频契约，但已被当前 v2 精选资源集取代。现行产品只以 `audio_manifest_v2.json` 中登记的实际文件为准。
+- 旧方案的 18 条配乐和 24 条双层声景只保留作设计档案，不属于当前产品，也不应重新生成或回填。
+- 当前产品以 `godot/audio/audio_manifest_v2.json` 为唯一运行时契约：6 首长篇配乐、2 条独立环境床和 27 条 CC0 音效；探索、压力和决战播放列表的最低曲目数分别为 3、3、2，世界与秘境不共用环境床。剑击、护盾、术法、治疗/回气、状态、换相、胜负结算分别使用互斥声源类别。非循环曲目自然结束后确定性轮换，只有 manifest 标记的环境床允许循环。
+- v2 资源已通过 48 kHz、SHA-256、峰值、Ogg 结构、Godot 解码、许可证和发布边界门禁；`build_godot.ps1 -ProductRelease` 会拒绝旧 v1 清单、`audio/generated` 和未登记文件。
 - 所有当前接入玩法的世界身份语义均禁止跨纪元静默回退；只有确认/返回等不承载世界身份的 UI 反馈共享公共素材。后续地点和事件扩展继续沿用已经冻结的双层声景与纪元专属语义契约。
 - 当前玩法已经能返回普通战斗、秘境出牌、护体、受击、压力、心魔、首领破相与结算等结构化结果；声音应消费这些结果，不从按钮文字、提示文案或画面颜色反推玩法状态。
 - 第一阶段不得把临时素材当成最终素材提交。占位音频若确有开发需要，必须明确标为 `prototype_only`，且发布验证应拒绝打包。
@@ -176,7 +178,7 @@ AudioDirector.save_settings() -> void
 
 ## 授权 manifest
 
-所有进入 `res://audio/` 的资产都必须先登记到版本化的 `res://audio/audio_manifest_v1.json`。manifest 是构建输入和发布审计依据，不是事后补写的素材表。
+所有进入 `res://audio/` 的资产都必须先登记到版本化的 `res://audio/audio_manifest_v2.json`。manifest 是构建输入和发布审计依据，不是事后补写的素材表。
 
 每条记录至少包含：
 
@@ -220,7 +222,7 @@ AudioDirector.save_settings() -> void
 CI 和本地完整构建至少执行以下检查：
 
 1. 校验 `default_bus_layout.tres` 中总线名称、父子关系、默认增益和必要效果；禁止运行时脚本创建未登记总线。
-2. 校验 `audio_manifest_v1.json` 的 schema、唯一 `asset_id`、路径存在性、SHA-256、事件引用、时代 ID、授权字段和 `release_state`。
+2. 校验 `audio_manifest_v2.json` 的 schema、唯一 `asset_id`、路径存在性、SHA-256、事件引用、时代 ID、授权字段和 `release_state`。
 3. 反向扫描 `res://audio/`，任何未登记文件、孤立 manifest 记录、MP3、错误采样率、意外多声道或原始供应商文件都使检查失败。
 4. 扫描 GDScript，除 `AudioDirector` 及其测试外不得直接实例化或播放 `AudioStreamPlayer`；所有调用的事件 ID 必须在事件目录登记。
 5. 以 headless Godot 导入并加载所有音频资源、总线和 `AudioDirector`，验证缺失资源不会阻断主场景、存档、读档或测试退出。

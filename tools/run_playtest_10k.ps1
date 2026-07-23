@@ -78,9 +78,11 @@ try {
 		if (-not [string]::IsNullOrWhiteSpace($stderrText)) {
 			Write-Host $stderrText
 		}
+		$hasRuntimeErrors = ($stdoutText + "`n" + $stderrText) -match '(?m)^(SCRIPT ERROR:|ERROR:)'
 		if ($exitCode -ne 0 -or
+				$hasRuntimeErrors -or
 				-not $stdoutText.Contains("TEN_THOUSAND_PLAYTEST_OK: $($entry.Count) ")) {
-			throw "Playtest shard failed: offset=$($entry.Offset) exit=$exitCode"
+			throw "Playtest shard failed: offset=$($entry.Offset) exit=$exitCode runtimeErrors=$hasRuntimeErrors"
 		}
 		$summaryLine = @($stdoutText -split "`r?`n" | Where-Object {
 			$_.StartsWith("PLAYTEST_SUMMARY: ")
@@ -100,6 +102,9 @@ try {
 		combat_turn_total = 0L
 		combat_hp_loss_basis_points_total = 0L
 		combat_near_deaths = 0L
+		combat_counter_completions = 0L
+		combat_counter_bursts_used = 0L
+		combat_second_phase_triggers = 0L
 		story_triggers = 0L
 		story_trigger_event_total = 0L
 		story_stage_total = 0L
@@ -113,6 +118,8 @@ try {
 		combat_outcomes_by_root = @{}
 		combat_turn_total_by_root = @{}
 		combat_hp_loss_basis_points_by_root = @{}
+		combat_action_counts = @{}
+		combat_counter_role_counts = @{}
 		dungeon_outcomes = @{}
 		dungeon_outcomes_by_root = @{}
 		root_cohort_sessions = @{}
@@ -131,7 +138,9 @@ try {
 		foreach ($field in @(
 			"sessions", "natural_deaths", "reincarnations", "ai_fallbacks",
 			"save_roundtrips", "choice_availability_fallbacks", "combat_turn_total",
-			"combat_hp_loss_basis_points_total", "combat_near_deaths", "story_triggers",
+			"combat_hp_loss_basis_points_total", "combat_near_deaths",
+			"combat_counter_completions", "combat_counter_bursts_used",
+			"combat_second_phase_triggers", "story_triggers",
 			"story_trigger_event_total", "story_stage_total", "final_year_total"
 		)) {
 			$batchTelemetry[$field] = [long]$batchTelemetry[$field] + [long]$telemetry.$field
@@ -140,7 +149,8 @@ try {
 			"event_resolutions", "choice_positions", "event_choice_counts",
 			"offered_choice_profiles", "selected_choice_profiles", "combat_outcomes",
 			"combat_outcomes_by_root", "combat_turn_total_by_root",
-			"combat_hp_loss_basis_points_by_root", "dungeon_outcomes", "dungeon_outcomes_by_root",
+			"combat_hp_loss_basis_points_by_root", "combat_action_counts",
+			"combat_counter_role_counts", "dungeon_outcomes", "dungeon_outcomes_by_root",
 			"root_cohort_sessions", "final_resource_totals", "final_path_totals"
 		)) {
 			Add-NumericProperties $batchTelemetry[$field] $telemetry.$field
@@ -158,6 +168,12 @@ try {
 		combat_hp_loss = if ($combatAttempts -gt 0) {
 			[Math]::Round([double]$batchTelemetry.combat_hp_loss_basis_points_total /
 				$combatAttempts / 10000.0, 6)
+		} else { 0.0 }
+		counter_completions_per_combat = if ($combatAttempts -gt 0) {
+			[Math]::Round([double]$batchTelemetry.combat_counter_completions / $combatAttempts, 3)
+		} else { 0.0 }
+		counter_bursts_used_per_combat = if ($combatAttempts -gt 0) {
+			[Math]::Round([double]$batchTelemetry.combat_counter_bursts_used / $combatAttempts, 3)
 		} else { 0.0 }
 		resources = @{}
 		paths = @{}
@@ -177,6 +193,9 @@ try {
 		} else { 0.0 }
 		combat_near_death = if ($combatAttempts -gt 0) {
 			[Math]::Round([double]$batchTelemetry.combat_near_deaths / $combatAttempts, 6)
+		} else { 0.0 }
+		combat_second_phase = if ($combatAttempts -gt 0) {
+			[Math]::Round([double]$batchTelemetry.combat_second_phase_triggers / $combatAttempts, 6)
 		} else { 0.0 }
 		dungeon_completion = if ($dungeonAttempts -gt 0) {
 			[Math]::Round([double]$batchTelemetry.dungeon_outcomes.completed / $dungeonAttempts, 6)

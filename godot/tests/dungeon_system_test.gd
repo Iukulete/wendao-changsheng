@@ -23,13 +23,14 @@ func _init() -> void:
 	for arc_value in (StorySystemScript.load_definitions().get("arcs", []) as Array):
 		var arc: Dictionary = arc_value
 		for phase in ["main", "echo"]:
-			for choice_value in (arc.get("%s_choices" % phase, []) as Array):
-				var choice: Dictionary = choice_value
+			var route_resolutions: Dictionary = arc.get("%s_route_resolutions" % phase, {})
+			for resolution_value in route_resolutions.values():
+				var resolution := str(resolution_value)
 				var projection := DungeonSystemScript.story_projection_for_resolution(
-					str(arc.id), str(choice.resolution))
+					str(arc.id), resolution)
 				_expect(not projection.is_empty() and
 					not DungeonSystemScript.card_definition(str(projection.get("card_id", ""))).is_empty(),
-					"真实剧情结论必须映射到有效角色能力：%s/%s" % [arc.id, choice.resolution])
+					"真实剧情结论必须映射到有效角色能力：%s/%s" % [arc.id, resolution])
 				mapped_resolutions += 1
 				mapped_story_cards[str(projection.get("card_id", ""))] = true
 	_expect(mapped_resolutions == 24 and mapped_story_cards.size() == 12,
@@ -402,6 +403,16 @@ func _init() -> void:
 		"副本战斗必须以5张手牌、3点灵力和公开敌方意图开始")
 	_expect(not DungeonSystemScript.intent_label(str(first.dungeon.run.battle.intent)).is_empty(),
 		"副本敌人必须公开下一行动意图")
+	var visible_intent: Dictionary = DungeonSystemScript.intent_preview(first.dungeon.run.battle)
+	var visible_card: Dictionary = DungeonSystemScript.card_definition(
+		str(first.dungeon.run.battle.hand[0].card_id))
+	_expect(not str(visible_intent.get("title", "")).is_empty() and
+		int(visible_intent.get("value", -1)) >= 0 and
+		not str(visible_intent.get("detail", "")).is_empty(),
+		"副本意图必须提供可用于产品界面的名称、数值与后果解释")
+	_expect(not DungeonSystemScript.card_effect_summary(visible_card,
+		int(first.dungeon.run.battle.hand[0].get("upgrade", 0))).is_empty(),
+		"副本牌面必须提供无需解析描述文本的效果摘要")
 
 	var heart_card_ids := {}
 	var heart_states := {}

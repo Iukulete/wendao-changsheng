@@ -112,7 +112,7 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"last_entered_generation": 0,
 		},
 		"story": {
-			"story_version": 2,
+			"story_version": 5,
 			"completed_event_ids": [],
 			"life_event_ids": [],
 			"chapter_log": [],
@@ -122,10 +122,29 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"arc_legacies": {},
 			"arc_echoes": {},
 			"last_arc_id": "",
+			"active_arc_id": "",
 			"next_arc_event_at": 0,
 			"birth_effects_applied_generation": 0,
 			"resolved_arcs": [],
 			"unresolved_threads": [],
+			"choice_count": 0,
+			"route_history": {},
+			"route_scores": {},
+			"flags": {},
+			"promises": [],
+			"debts": [],
+			"relationships": {},
+			"faction_standings": {},
+			"pending_echoes": [],
+			"pending_combat_consequences": [],
+			"combat_consequence_history": [],
+			"delivered_echoes": [],
+			"last_echoes": [],
+			"side_thread_progress": {},
+			"side_active_threads": {},
+			"side_route_scores": {},
+			"side_chapter_count": 0,
+			"last_authored_context": {},
 		},
 		"objective": {
 			"version": 1,
@@ -190,7 +209,7 @@ static func create_player(dao_name: String, seed_value: int, root_values: Array 
 		"max_hp": 100 + total_root * 5,
 		"mp": 50 + total_root * 3,
 		"max_mp": 50 + total_root * 3,
-		"age": 16,
+		"age": 18,
 		"lifespan": 60 + total_root,
 		"spirit_stones": 10,
 		"pills": 0,
@@ -295,13 +314,19 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 	dungeon_state.erase("last_completed_generation")
 	state["dungeon"] = dungeon_state
 	state["story"] = _merge_defaults(state.get("story", {}), {
-		"story_version": 2,
+		"story_version": 5,
 		"completed_event_ids": [], "life_event_ids": [], "event_cooldowns": {},
 		"chapter_log": [],
 		"active_arcs": {}, "resolved_arcs": [], "unresolved_threads": [],
 		"arc_progress": {"jade": 0, "sect": 0, "family": 0, "rival": 0},
-		"arc_legacies": {}, "arc_echoes": {}, "last_arc_id": "",
+		"arc_legacies": {}, "arc_echoes": {}, "last_arc_id": "", "active_arc_id": "",
 		"next_arc_event_at": 0, "birth_effects_applied_generation": 0,
+		"choice_count": 0, "route_history": {}, "route_scores": {}, "flags": {},
+		"promises": [], "debts": [], "relationships": {}, "faction_standings": {},
+		"pending_echoes": [], "delivered_echoes": [], "last_echoes": [],
+		"pending_combat_consequences": [], "combat_consequence_history": [],
+		"side_thread_progress": {}, "side_active_threads": {}, "side_route_scores": {},
+		"side_chapter_count": 0, "last_authored_context": {},
 	})
 	state["ai"] = _merge_defaults(state.get("ai", {}), {
 		"enabled": true, "local_only": true, "last_status": "not_requested",
@@ -320,7 +345,7 @@ static func migrate_v1(snapshot: Dictionary) -> Dictionary:
 	var seed_value := hash("%s:%s:%s" % [
 		str(source_player.get("name", "旧档修士")),
 		str(snapshot.get("current_era", ERA_NAMES.classical)),
-		int(source_player.get("age", 16)),
+		int(source_player.get("age", 18)),
 	]) & 0x7fffffff
 	var state := create_new_game(str(source_player.get("name", "旧档修士")), seed_value, roots)
 	var upgraded_player: Dictionary = state.player
@@ -374,6 +399,8 @@ static func ensure_player_v2(source: Dictionary) -> Dictionary:
 	player["realm_index"] = realm_index
 	player["realm_id"] = REALM_IDS[realm_index]
 	player["realm"] = REALM_NAMES[realm_index]
+	# All authored relationship content starts from an explicitly adult player.
+	player["age"] = maxi(18, int(player.get("age", 18)))
 	player["attack"] = int(player.get("attack", player.get("attack_power", 10)))
 	player["defense"] = int(player.get("defense", 5))
 	player["total_events"] = max(0, int(player.get("total_events", 0)))
