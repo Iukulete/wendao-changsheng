@@ -387,6 +387,13 @@ func debug_ambience_playing_voice_count() -> int:
 		int(is_instance_valid(_ambience_detail_outgoing_player) and _ambience_detail_outgoing_player.playing))
 
 
+func debug_ambience_stream_reference_count() -> int:
+	return (int(is_instance_valid(_ambience_player) and _ambience_player.stream != null) +
+		int(is_instance_valid(_ambience_outgoing_player) and _ambience_outgoing_player.stream != null) +
+		int(is_instance_valid(_ambience_detail_player) and _ambience_detail_player.stream != null) +
+		int(is_instance_valid(_ambience_detail_outgoing_player) and _ambience_detail_outgoing_player.stream != null))
+
+
 func debug_soundscape_location() -> String:
 	return _soundscape_location_for_context(_context)
 

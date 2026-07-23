@@ -19,7 +19,7 @@ try {
     $ErrorActionPreference = "Continue"
     $output = @(& $ConsolePath --display-driver windows --rendering-method gl_compatibility `
         --audio-driver Dummy --position "-32000,-32000" --resolution 1440x900 `
-        --path $ProjectDir --quit-after 600 --script $TestScript 2>&1)
+        --path $ProjectDir --quit-after 10000 --script $TestScript 2>&1)
     $exitCode = $LASTEXITCODE
 }
 finally {

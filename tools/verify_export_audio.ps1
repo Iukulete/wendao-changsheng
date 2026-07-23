@@ -49,9 +49,10 @@ try {
     # Audio is muted in the persisted game settings before launch, while the
     # real default audio driver and playback lifecycle are still exercised.
     $process = Start-Process -FilePath $ExePath -WorkingDirectory (Split-Path $ExePath) `
-        -ArgumentList "--verbose", "--display-driver", "windows", `
+        -ArgumentList "--verbose", "--audio-driver", "WASAPI", `
+            "--display-driver", "windows", `
             "--rendering-method", "gl_compatibility", "--position", "-32000,-32000", `
-            "--resolution", "640x360", "--quit-after", "60", "--", "--audio-smoke" `
+            "--resolution", "640x360", "--quit-after", "600", "--", "--audio-smoke" `
         -WindowStyle Hidden -RedirectStandardOutput $StdoutPath `
         -RedirectStandardError $StderrPath -PassThru -Wait
 }
@@ -68,12 +69,12 @@ if ($process.ExitCode -ne 0 -or $stdout -match '(?m)^(SCRIPT ERROR|ERROR):' -or
     Write-Host $stderr
     throw "Off-screen exported audio-device smoke failed with exit code $($process.ExitCode)."
 }
-if ($stdout -notmatch 'AUDIO_DEVICE_SMOKE_READY: driver=(.+) display=windows') {
+if ($stdout -notmatch 'AUDIO_DEVICE_SMOKE_READY: driver=WASAPI display=windows') {
     Write-Host $stdout
-    throw "The exported build did not report a live Windows audio/display backend."
+    throw "The exported build did not report a live WASAPI/Windows backend."
 }
-$driver = $Matches[1].Trim()
-if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=1 rare_cue=true') {
+$driver = "WASAPI"
+if ($stdout -notmatch 'AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_transition_voices=2 ambience_transition_streams=2 ambience_settled_voices=1 ambience_settled_streams=1 rare_cue=true') {
     Write-Host $stdout
     throw "The exported build did not complete real-backend Ogg music transitions."
 }

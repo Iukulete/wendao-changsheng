@@ -30,6 +30,7 @@ func _run() -> void:
 	director.call("shutdown_for_exit")
 	_expect(int(director.call("debug_active_voice_count")) == 0 and
 		int(director.call("debug_ambience_playing_voice_count")) == 0 and
+		int(director.call("debug_ambience_stream_reference_count")) == 0 and
 		int(director.call("debug_music_playing_voice_count")) == 0 and
 		int(director.call("debug_stream_reference_count")) == 0,
 		"AudioDirector shutdown must be idempotent and release every stream")

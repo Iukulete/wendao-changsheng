@@ -150,20 +150,27 @@ func _run_audio_device_music_smoke() -> void:
 	audio_director.set_context("dungeon")
 	await get_tree().process_frame
 	var pressure_voices := int(audio_director.debug_music_playing_voice_count())
-	var dungeon_ambience_voices := int(audio_director.debug_ambience_playing_voice_count())
+	var ambience_transition_voices := int(audio_director.debug_ambience_playing_voice_count())
+	var ambience_transition_streams := int(audio_director.debug_ambience_stream_reference_count())
 	audio_director.set_era("steam")
 	await get_tree().process_frame
 	audio_director.set_context("boss")
 	await get_tree().process_frame
 	var decisive_voices := int(audio_director.debug_music_playing_voice_count())
 	var rare_cue_ok := bool(audio_director.play_event("dungeon.boss_enter"))
+	await get_tree().create_timer(float(audio_director.debug_ambience_crossfade_seconds()) + 0.1).timeout
+	var ambience_settled_voices := int(audio_director.debug_ambience_playing_voice_count())
+	var ambience_settled_streams := int(audio_director.debug_ambience_stream_reference_count())
 	if (audio_director.get_era() != "steam" or audio_director.get_music_state() != "decisive" or
-			pressure_voices != 2 or decisive_voices != 2 or dungeon_ambience_voices != 1 or not rare_cue_ok):
-		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d ambience_voices=%d rare_cue=%s" % [
+			pressure_voices != 2 or decisive_voices != 2 or
+			ambience_transition_voices != 2 or ambience_transition_streams != 2 or
+			ambience_settled_voices != 1 or ambience_settled_streams != 1 or not rare_cue_ok):
+		push_error("AUDIO_DEVICE_MUSIC_SMOKE_FAILED: era=%s state=%s pressure_voices=%d decisive_voices=%d ambience_transition_voices=%d ambience_transition_streams=%d ambience_settled_voices=%d ambience_settled_streams=%d rare_cue=%s" % [
 			audio_director.get_era(), audio_director.get_music_state(), pressure_voices,
-			decisive_voices, dungeon_ambience_voices, rare_cue_ok])
+			decisive_voices, ambience_transition_voices, ambience_transition_streams,
+			ambience_settled_voices, ambience_settled_streams, rare_cue_ok])
 		return
-	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_voices=1 rare_cue=true")
+	print("AUDIO_DEVICE_MUSIC_SMOKE_OK: era=steam state=decisive pressure_voices=2 decisive_voices=2 ambience_transition_voices=2 ambience_transition_streams=2 ambience_settled_voices=1 ambience_settled_streams=1 rare_cue=true")
 	audio_director.shutdown_for_exit()
 	await get_tree().create_timer(0.15).timeout
 	audio_director.queue_free()
