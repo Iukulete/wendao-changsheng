@@ -362,6 +362,14 @@ func _test_jade_story_clarity(definitions: Dictionary) -> void:
 	for opaque_term in ["回响", "定锚", "命途", "因果", "牵系", "未偿", "伪忆", "梦兆", "旧我"]:
 		_expect(not combined.contains(opaque_term),
 			"旧玉玩家文案不得用未解释的抽象词：%s" % opaque_term)
+	var all_story_text: Array[String] = []
+	_collect_jade_visible_text(definitions.get("arcs", []), all_story_text)
+	var all_combined := "\n".join(all_story_text)
+	for awkward_fragment in ["相信其中任何人", "把传闻变成一张", "名字刚重现",
+			"血脉因此获得来处", "祖名只能加入关系", "自由和恶堕不会因",
+			"引敌之情", "宿敌因此成为双方反复选择的名字"]:
+		_expect(not all_combined.contains(awkward_fragment),
+			"主线文案出现指代不清或抽象拼接：%s" % awkward_fragment)
 
 
 func _collect_jade_visible_text(value: Variant, output: Array[String]) -> void:

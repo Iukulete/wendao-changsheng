@@ -212,7 +212,7 @@ static func offer_from_choice(state: Dictionary, event: Dictionary,
 	if not should_offer:
 		return {"ok": true, "code": "choice_left_no_enemy", "offered": false}
 	var enemy := _encounter_enemy(state, event, choice, explicit)
-	var event_title := str(event.get("title", "无名因果")).trim_prefix("【").left(48)
+	var event_title := str(event.get("title", "未命名事件")).trim_prefix("【").left(48)
 	var choice_text := str(choice.get("text", "沉默")).left(80)
 	var enemy_name := str(explicit.get("enemy_name", enemy.get("name", "无名追兵"))).left(64)
 	var legacy_enemy_id := str(explicit.get("enemy_id", "")).strip_edges()

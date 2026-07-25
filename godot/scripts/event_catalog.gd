@@ -334,7 +334,7 @@ static func _record_side_resolution(state: Dictionary, story: Dictionary,
 		_record_side_route(story, thread_id, choice)
 	story["last_authored_context"] = {
 		"event_id": str(event.get("id", "")).left(96),
-		"title": str(event.get("title", "山河异闻")).left(96),
+		"title": str(event.get("title", "时代事件")).left(96),
 		"choice": str(choice.get("text", "")).left(120),
 		"outcome": str(choice.get("outcome", "")).left(280),
 		"thread_id": thread_id.left(64),

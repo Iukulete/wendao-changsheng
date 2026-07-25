@@ -421,7 +421,7 @@ static func resolve_choice(state: Dictionary, event: Dictionary, choice_index: i
 			resolution = NarrativeConsequenceScript.route_resolution(story,
 				arc, arc_id, phase)
 			if resolution.is_empty():
-				resolution = str(choice.get("resolution", "未竟之局"))
+				resolution = str(choice.get("resolution", "尚未确定结局"))
 			story.arc_legacies[arc_id] = resolution
 	else:
 		var echo: Dictionary = (story.arc_echoes as Dictionary).get(arc_id,
@@ -432,7 +432,7 @@ static func resolve_choice(state: Dictionary, event: Dictionary, choice_index: i
 			resolution = NarrativeConsequenceScript.route_resolution(story,
 				arc, arc_id, phase)
 			if resolution.is_empty():
-				resolution = str(choice.get("resolution", "未竟之局"))
+				resolution = str(choice.get("resolution", "尚未确定结局"))
 			echo["resolution"] = resolution
 		story.arc_echoes[arc_id] = echo
 	story["last_arc_id"] = arc_id
@@ -453,10 +453,10 @@ static func resolve_choice(state: Dictionary, event: Dictionary, choice_index: i
 			"turn": int(state.get("turn", 0))})
 		story["resolved_arcs"] = _bounded_array(resolved, MAX_RESOLVED)
 	state["story"] = story
-	var label := "今生定局" if phase == "main" else "轮回续章"
-	var message := "《%s》节点「%s」已经落笔。" % [arc_name, current_node_id]
+	var label := "主线结局" if phase == "main" else "续章结局"
+	var message := "《%s》的本章剧情已经推进。" % arc_name
 	if terminal:
-		message = "《%s》%s：%s。" % [arc_name, label, resolution]
+		message = "《%s》已经结束。%s：%s。" % [arc_name, label, resolution]
 	return {"ok": true, "code": "story_resolved", "terminal": terminal,
 		"phase": phase, "arc_id": arc_id, "resolution": resolution, "message": message,
 		"route_id": str(consequence_result.get("route_id", "")),
@@ -477,7 +477,7 @@ static func apply_birth_legacies(state: Dictionary) -> Dictionary:
 		if not legacy_tag.is_empty():
 			var effects: Dictionary = (arc.get("legacy_birth_effects", {}) as Dictionary).get(legacy_tag, {})
 			_apply_effects(player, effects)
-			notes.append("%s定局·%s" % [str(arc.name), legacy_tag])
+			notes.append("%s主线结局：%s" % [str(arc.name), legacy_tag])
 		var echo: Dictionary = (story.arc_echoes as Dictionary).get(arc_id, {})
 		var echo_tag := str(echo.get("resolution", ""))
 		if not echo_tag.is_empty():
@@ -528,7 +528,7 @@ static func record_chapter(state: Dictionary, event: Dictionary, choice: Diction
 	var entry := {
 		"id": "%s:%d:%d:%d" % [str(event.get("id", source)).left(80),
 			int(state.get("generation", 1)), event_turn, chapter_number],
-		"title": str(event.get("title", "无名因果")).left(160),
+		"title": str(event.get("title", "未命名事件")).left(160),
 		"choice": str(choice.get("text", "沉默")).left(240),
 		"outcome": outcome.strip_edges().left(1600),
 		"arc_id": str(event.get("story_arc_id", "")).left(48),
@@ -627,14 +627,14 @@ static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 	node["story_stage"] = stage
 	node["chapter_number"] = stage + 1
 	node["chapter_total"] = nodes.size()
-	node["chapter_phase_name"] = "今生卷" if phase == "main" else "轮回续章"
+	node["chapter_phase_name"] = "今生主线" if phase == "main" else "转世续章"
 	node["generation"] = int(state.get("generation", 1))
 	node["world_year"] = int((state.get("world", {}) as Dictionary).get("year", 1))
 	node["previous_choice_recap"] = previous_choice_recap(state, node)
 	node["previous_route_id"] = previous_route
 	var legacy := str((state.story.arc_legacies as Dictionary).get(str(arc.id), ""))
 	if phase == "echo" and not legacy.is_empty():
-		node["description"] = "%s\n\n前世定局：%s。" % [str(node.description), legacy]
+		node["description"] = "%s\n\n上一世的选择：%s。" % [str(node.description), legacy]
 	return node
 
 
@@ -826,10 +826,10 @@ static func _update_thread(story: Dictionary, arc_id: String, arc_name: String,
 
 static func _source_name(source: String) -> String:
 	match source:
-		"story_arc": return "命途主卷"
-		"local_ai": return "天机外章"
-		"authored_event": return "山河异闻"
-		_: return "无名纪事"
+		"story_arc": return "剧情主线"
+		"local_ai": return "随机支线"
+		"authored_event": return "时代事件"
+		_: return "事件记录"
 
 
 static func _normalize_chapter_log(value: Variant) -> Array:
@@ -842,11 +842,11 @@ static func _normalize_chapter_log(value: Variant) -> Array:
 		var entry: Dictionary = entry_value
 		result.append({
 			"id": str(entry.get("id", "chapter")).left(160),
-			"title": str(entry.get("title", "无名因果")).left(160),
+			"title": str(entry.get("title", "未命名事件")).left(160),
 			"choice": str(entry.get("choice", "沉默")).left(240),
 			"outcome": str(entry.get("outcome", "")).left(1600),
 			"arc_id": str(entry.get("arc_id", "")).left(48),
-			"arc_name": str(entry.get("arc_name", "无名纪事")).left(64),
+			"arc_name": str(entry.get("arc_name", "事件记录")).left(64),
 			"phase": str(entry.get("phase", "chronicle")).left(24),
 			"stage": int(entry.get("stage", -1)),
 			"chapter_number": maxi(1, int(entry.get("chapter_number", 1))),

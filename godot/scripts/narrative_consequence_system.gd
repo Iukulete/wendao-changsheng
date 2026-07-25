@@ -319,7 +319,7 @@ static func route_resolution(story: Dictionary, arc: Dictionary, arc_id: String,
 				_last_route_index(history, best_route)):
 			best_route = route_id
 			best_score = score
-	return str(mapping.get(best_route, "未竟之局"))
+	return str(mapping.get(best_route, "尚未确定结局"))
 
 
 static func last_route_for_arc(state: Dictionary, arc_id: String,

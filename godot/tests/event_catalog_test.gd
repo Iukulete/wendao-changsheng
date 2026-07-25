@@ -16,6 +16,7 @@ func _init() -> void:
 		"事件目录必须满足六时代最低内容配额")
 	_expect(int(validation.get("thread_count", 0)) == 12,
 		"三十六个自由历练事件必须编排为十二条三章外篇")
+	_test_plain_language()
 	var era_counts_value: Variant = validation.get("era_counts", {})
 	var era_counts: Dictionary = era_counts_value if era_counts_value is Dictionary else {}
 	for era in EventCatalogScript.ERAS:
@@ -145,6 +146,16 @@ func _test_combat_content_density() -> void:
 		var tiers: Dictionary = tier_sets[era]
 		_expect(tiers.has("normal") and tiers.has("elite") and tiers.has("boss"),
 			"每个纪元必须同时有普通敌、精英与剧情首领：%s" % era)
+
+
+func _test_plain_language() -> void:
+	var catalog_text := JSON.stringify(EventCatalogScript.load_events())
+	for awkward_fragment in ["尚未发生的因果", "成为旧玉不肯淡去的一页",
+			"第一块铆点", "高危因果名单", "寿元账上多出一道",
+			"只依赖一张脸", "名字拥有同样重量", "天册也会留下空洞",
+			"旧玉回声暂时合流", "空白签名"]:
+		_expect(not catalog_text.contains(awkward_fragment),
+			"时代事件出现无法直接复述的抽象文案：%s" % awkward_fragment)
 
 
 func _numeric_dictionary_equal(left: Dictionary, right: Dictionary) -> bool:

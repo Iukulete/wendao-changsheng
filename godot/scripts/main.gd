@@ -3235,7 +3235,7 @@ func _show_event() -> void:
 	header_column.add_theme_constant_override("separation", 1)
 	header.add_child(header_column)
 	var chapter_meta := _event_chapter_meta(current_event)
-	var chapter_label := _label(str(chapter_meta.get("line", "山河异闻")), 14,
+	var chapter_label := _label(str(chapter_meta.get("line", "时代事件")), 14,
 		Color(era_accent, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	chapter_label.name = "EventChapterMeta"
 	header_column.add_child(chapter_label)
@@ -3282,8 +3282,8 @@ func _event_uses_dedicated_visual() -> bool:
 func _event_chapter_meta(event: Dictionary) -> Dictionary:
 	var source := str(event.get("source", "authored_event"))
 	var arc_name := str(event.get("story_arc_name", event.get("arc_name", {
-		"story_arc": "剧情主线", "local_ai": "随机支线", "authored_event": "山河异闻",
-	}.get(source, "无名纪事"))))
+		"story_arc": "剧情主线", "local_ai": "随机支线", "authored_event": "时代事件",
+	}.get(source, "事件记录"))))
 	var chapter := int(event.get("chapter_number", int(player.get("total_events", 0)) + 1))
 	var total := int(event.get("chapter_total", 0))
 	var phase_name := str(event.get("chapter_phase_name", {
@@ -3759,7 +3759,7 @@ func _build_journal_resolved(body: VBoxContainer) -> void:
 	body.add_child(_section_title("已成定局"))
 	for resolution_value in resolved.slice(-8):
 		var resolution: Dictionary = resolution_value
-		var phase_name := "今生定局" if str(resolution.get("phase", "main")) == "main" else "续章结论"
+		var phase_name := "主线结局" if str(resolution.get("phase", "main")) == "main" else "续章结局"
 		body.add_child(_result_note("%s · %s" % [str(resolution.get("arc_name", "无名主线")), phase_name],
 			"第%d世：%s" % [int(resolution.get("generation", 1)),
 				str(resolution.get("resolution", "结局未名"))], Color("d9c98f")))
@@ -3780,7 +3780,7 @@ func _build_journal_recent(body: VBoxContainer) -> void:
 		column.add_theme_constant_override("separation", 4)
 		column.add_child(_label("第%d世 · 世界第%d年 · %s · 第%d章%s" % [
 			int(entry.get("generation", 1)), int(entry.get("year", 1)),
-			str(entry.get("arc_name", "无名纪事")), int(entry.get("chapter_number", 1)),
+			str(entry.get("arc_name", "事件记录")), int(entry.get("chapter_number", 1)),
 			"/%d" % int(entry.get("chapter_total", 0)) if int(entry.get("chapter_total", 0)) > 0 else ""],
 			13, Color(era_accent, 0.9)))
 		column.add_child(_display_label(str(entry.get("title", "未命名事件")), 19, Color("f0e7d2")))
