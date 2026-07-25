@@ -43,7 +43,7 @@
     {"id":"mirror_lake","name":"镜湖空阙秘境","max_depth":4,"scene":"res://art/scenes/void_threshold_temple.png","reward_material":"fate_thread"}
   ],
   "story_projections": {
-    "jade":{"name":"旧玉","resolutions":{"旧我为证":"old_self_witness","守证旧我":"old_self_witness","今生校旧":"present_anchor","今身定锚":"present_anchor","封梦自持":"dream_seal","断梦留痕":"dream_seal"}},
+    "jade":{"name":"旧玉","resolutions":{"保留前世证词":"old_self_witness","前世记忆仅供参考":"old_self_witness","只信今生证据":"present_anchor","现实证据优先":"present_anchor","封存前世记忆":"dream_seal","永久关闭旧玉":"dream_seal"}},
     "sect":{"name":"山门","resolutions":{"守律立道":"law_inscription","旧律新章":"law_inscription","师承共担":"lineage_burden","两代同门":"lineage_burden","自立道统":"founding_doctrine","今世开宗":"founding_doctrine"}},
     "family":{"name":"家世","resolutions":{"承认旧脉":"ancestral_covenant","祖脉共担":"ancestral_covenant","护亲问源":"nurture_first","养恩为先":"nurture_first","断名自立":"nameless_duty","去名留义":"nameless_duty"}},
     "rival":{"name":"战帖","resolutions":{"照雪宿敌":"snow_duel","再续宿敌":"snow_duel","照雪盟友":"shoulder_snow","并肩照雪":"shoulder_snow","清醒对手":"lucid_rivalry","相争不相害":"lucid_rivalry"}}

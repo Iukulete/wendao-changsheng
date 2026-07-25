@@ -30,6 +30,7 @@ func _init() -> void:
 	_test_choice_visibility_and_enabled_state(definitions)
 	_test_legacy_stage_cursor_migration()
 	_test_prose_repetition(definitions)
+	_test_jade_story_clarity(definitions)
 	_test_resource_reachability(definitions)
 	_test_authored_obligation_lifecycle(definitions)
 
@@ -331,6 +332,52 @@ func _test_prose_repetition(definitions: Dictionary) -> void:
 			"正文模板词%s超过上限：%d/%d" % [term, count, int(PROSE_TERM_LIMITS[term])])
 	print("STORY_PROSE_STATS: units=%d baseline=%s current=%s" % [
 		text_units.size(), JSON.stringify(PROSE_BASELINE_COUNTS), JSON.stringify(current)])
+
+
+func _test_jade_story_clarity(definitions: Dictionary) -> void:
+	var jade: Dictionary = {}
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		if str(arc.get("id", "")) == "jade":
+			jade = arc
+			break
+	_expect(not jade.is_empty(), "旧玉剧情必须存在")
+	if jade.is_empty():
+		return
+	var opening: Dictionary = (jade.get("main", []) as Array)[0]
+	var opening_description := str(opening.get("description", ""))
+	_expect(opening_description.contains("保存着前世记忆") and
+		opening_description.contains("可能残缺") and opening_description.contains("可能被人改过"),
+		"旧玉开场必须直接说明用途，以及记忆可能残缺或被篡改")
+	var opening_choices: Array = opening.get("choices", [])
+	_expect(opening_choices.size() == 3 and
+		str((opening_choices[0] as Dictionary).get("text", "")).contains("按线索调查") and
+		str((opening_choices[1] as Dictionary).get("text", "")).contains("现实") and
+		str((opening_choices[2] as Dictionary).get("text", "")).contains("封住"),
+		"旧玉开场的三个选项必须直接说明调查、现实核对和封存的区别")
+	var visible_text: Array[String] = []
+	_collect_jade_visible_text(jade.get("main", []), visible_text)
+	_collect_jade_visible_text(jade.get("echo", []), visible_text)
+	var combined := "\n".join(visible_text)
+	for opaque_term in ["回响", "定锚", "命途", "因果", "牵系", "未偿", "伪忆", "梦兆", "旧我"]:
+		_expect(not combined.contains(opaque_term),
+			"旧玉玩家文案不得用未解释的抽象词：%s" % opaque_term)
+
+
+func _collect_jade_visible_text(value: Variant, output: Array[String]) -> void:
+	if value is Array:
+		for item in value as Array:
+			_collect_jade_visible_text(item, output)
+		return
+	if not value is Dictionary:
+		return
+	var dictionary: Dictionary = value
+	for key in dictionary.keys():
+		var item: Variant = dictionary[key]
+		if str(key) in ["title", "description", "text", "outcome", "resolution", "stance"] and \
+				item is String:
+			output.append(str(item))
+		_collect_jade_visible_text(item, output)
 
 
 func _collect_prose_units(value: Variant, output: Array[String]) -> void:

@@ -32,19 +32,19 @@
       "id": "jade",
       "entry_node_id": "jade_main_1",
       "echo_entry_node_id": "jade_echo_1",
-      "name": "旧玉",
+      "name": "旧玉记忆",
       "scene": "res://art/scenes/void_threshold_temple.png",
       "portrait": "res://art/portraits/protagonist_canonical_v1.png",
-      "portrait_name": "玉中旧影",
-      "portrait_title": "只保存选择，不替今生作答",
+      "portrait_name": "前世残影",
+      "portrait_title": "这些记忆可能残缺，也可能是假的",
       "character_id": "protagonist",
       "motion_profile": "introspective",
       "portrait_mode": "focus",
       "main": [
         {
           "id": "jade_main_1",
-          "title": "旧玉·一｜夜半微温",
-          "description": "夜半醒来，黑白旧玉在无人触碰时自行发热。窗纸上浮出两道影子：一道像今生，一道像尚未发生的死局。",
+          "title": "旧玉·一｜陌生的记忆",
+          "description": "半夜，随身的黑白旧玉突然发热，一段不属于你的记忆出现在脑中。你这才知道：旧玉保存着前世记忆，但内容可能残缺，也可能被人改过。",
           "art": {
             "motion_profile": "spectral"
           },
@@ -53,8 +53,8 @@
               "id": "jade_m1_witness",
               "target_node_id": "jade_main_2",
               "route_id": "jade_witness",
-              "text": "让旧玉把话说完",
-              "outcome": "你允许回声提供证词，却要求每一处细节都接受今生事实的核验。",
+              "text": "先看完，再按线索调查",
+              "outcome": "你决定先看完这段记忆，把它当作调查线索，但不会在找到证据前相信其中任何人。",
               "deltas": {
                 "exp": 84,
                 "dao_heart": 3
@@ -70,13 +70,13 @@
                 "jade_echo": {
                   "trust": 6,
                   "respect": 3,
-                  "stance": "等待被核验"
+                  "stance": "等待查证"
                 }
               },
               "promises_add": [
                 {
                   "id": "jade_promise_record",
-                  "text": "每一道旧梦都要留下可核验的证据。",
+                  "text": "旧玉里的每段记忆，都要找到现实证据才能相信。",
                   "character_id": "jade_echo"
                 }
               ]
@@ -85,8 +85,8 @@
               "id": "jade_m1_anchor",
               "target_node_id": "jade_main_2",
               "route_id": "jade_anchor",
-              "text": "拿今生逐句校验",
-              "outcome": "你把梦兆和现实并排写下，只保留能够解释当下的部分，纸上的温度因此慢慢降下来。",
+              "text": "先和现实逐项核对",
+              "outcome": "你把记忆中的人、地点和时间全部写下，只保留能与现实对上的部分。旧玉的温度慢慢降了下来。",
               "deltas": {
                 "exp": 62,
                 "karma": 5
@@ -109,7 +109,7 @@
               "debts_add": [
                 {
                   "id": "jade_debt_reality",
-                  "text": "你欠今生一份不会被旧梦改写的证词。",
+                  "text": "没有现实证据，就不把旧玉里的内容当真。",
                   "character_id": "jade_echo"
                 }
               ]
@@ -118,8 +118,8 @@
               "id": "jade_m1_seal",
               "target_node_id": "jade_main_3",
               "route_id": "jade_seal",
-              "text": "封住替你发令的梦",
-              "outcome": "你不销毁过去，只切断它替今生发号施令的权力；封印落下时，旧玉在掌心留下灼痕。",
+              "text": "立刻封住这些记忆",
+              "outcome": "你不想让来历不明的记忆影响自己，于是立刻封住旧玉。封印成功了，但旧玉在你掌心留下一道灼伤。",
               "deltas": {
                 "dao_heart": 6,
                 "hp": -8
@@ -150,7 +150,7 @@
                 {
                   "id": "jade_seal_aftershock",
                   "after_chapters": 2,
-                  "text": "封印下传来一次短促的敲击：旧玉没有消失，只是在等你决定是否回头。",
+                  "text": "两章之后，旧玉在封印下震动了一次。里面的记忆没有消失，只是暂时无法影响你。",
                   "effects": {
                     "flags_add": [
                       "jade_aftershock"
@@ -169,20 +169,20 @@
         },
         {
           "id": "jade_main_2",
-          "title": "旧玉·二｜镜中旧名",
-          "description": "旧玉把你的脸映成一个陌生旧名。那名字没有完整记忆，只有近乎本能的警惕，像有人曾用它欠下无法结清的因果。",
+          "title": "旧玉·二｜记忆里的名字",
+          "description": "旧玉再次发热。你在记忆里看见一张和自己相似的脸，还听见一个陌生名字。画面缺了很多段，其中一半细节甚至互相矛盾。",
           "route_variants": {
             "jade_witness": {
-              "title": "证词先行",
-              "description": "回声按你约定逐项报出地点与见证人，报到一处与你今生记忆重合的门槛。"
+              "title": "按线索调查",
+              "description": "旧玉给出了一个地点和一名见证人。其中那个地点，你今生确实去过。"
             },
             "jade_anchor": {
-              "title": "今生作锚",
-              "description": "你把旧名拆成可验证的年月与伤痕，镜中影子承认其中一半细节是伪造。"
+              "title": "核对记忆真假",
+              "description": "你逐项核对时间和伤痕，确认这段记忆里至少有一半细节是假的。"
             },
             "jade_seal": {
-              "title": "封印反噬",
-              "description": "封印挡住了命令，却把旧名的疼痛留在你的经脉里；每一次呼吸都像重新逃离那间不存在的牢室。"
+              "title": "封印出现裂缝",
+              "description": "封印挡住了记忆，却没能隔绝疼痛。你开始反复感到自己被锁在一间牢房里，但那间牢房是否真实存在还无法确定。"
             }
           },
           "art": {
@@ -193,8 +193,8 @@
               "id": "jade_m2_witness",
               "target_node_id": "jade_main_3",
               "route_id": "jade_witness",
-              "text": "追问旧名的见证人",
-              "outcome": "你让回声先说出证人的名字，再允许自己相信其中一部分；一条可回访的旧路由此成形。",
+              "text": "去找记忆中的见证人",
+              "outcome": "你记下见证人的名字和地点，准备亲自去问。在对方证实以前，这段前世记忆仍然只是一条线索。",
               "deltas": {
                 "exp": 86,
                 "reputation": 2
@@ -220,7 +220,7 @@
                 {
                   "id": "jade_witness_note",
                   "after_chapters": 2,
-                  "text": "一枚旧印从镜背脱落，背面刻着那名见证人的现世住址。",
+                  "text": "两章之后，一枚小印从旧玉背面脱落，上面刻着那名见证人现在的住址。",
                   "effects": {
                     "flags_add": [
                       "jade_witness_address"
@@ -233,8 +233,8 @@
               "id": "jade_m2_anchor",
               "target_node_id": "jade_main_3",
               "route_id": "jade_anchor",
-              "text": "只记录能复核的伤痕",
-              "outcome": "你拒绝替旧名补齐缺失的故事，改以现世伤痕校对每一次回响；假的部分因此失去重量。",
+              "text": "只相信能查证的部分",
+              "outcome": "你不再猜测缺失的内容，只记录能与现实对上的部分。那些自相矛盾的画面很快变淡了。",
               "deltas": {
                 "exp": 70,
                 "karma": 4
@@ -259,7 +259,7 @@
               "debts_add": [
                 {
                   "id": "jade_anchor_debt",
-                  "text": "你答应只为眼前活着的人承担解释。",
+                  "text": "只为今生真实发生的事负责。",
                   "character_id": "jade_echo"
                 }
               ]
@@ -268,8 +268,8 @@
               "id": "jade_m2_seal",
               "target_node_id": "jade_main_3",
               "route_id": "jade_seal",
-              "text": "沿灼痕撕开封印",
-              "outcome": "你以疼痛换取一瞬清醒，旧名的主人在梦里逼近；你没有屈服，却把一段创伤带回了白昼。",
+              "text": "忍痛加固封印",
+              "outcome": "你忍着掌心剧痛加固封印。那段记忆没能控制你，但你醒来后仍会感到牢房和锁链带来的恐惧。",
               "deltas": {
                 "dao_heart": 5,
                 "hp": -12,
@@ -301,7 +301,7 @@
                 {
                   "id": "jade_wound_dream",
                   "after_chapters": 1,
-                  "text": "你在醒来前听见锁链落地的声音，却找不到锁链究竟锁着谁。",
+                  "text": "下一章开始前，你又梦见锁链落地。你仍不知道那是谁的经历，也不知道这段记忆是真是假。",
                   "effects": {
                     "flags_add": [
                       "jade_lock_memory"
@@ -319,20 +319,20 @@
         },
         {
           "id": "jade_main_3",
-          "title": "旧玉·三｜生死回响",
-          "description": "一次险境后，旧玉没有替你挡灾，只把刀锋停在喉前的那一瞬留下；你回看时，能认出每个选择的重量。",
+          "title": "旧玉·三｜被删掉的真相",
+          "description": "调查继续后，你发现旧玉里的记忆被人删改过。被删掉的部分与一场袭击有关，也可能说明是谁故意把这些记忆留给了你。",
           "route_variants": {
             "jade_witness": {
-              "title": "让证词承担重量",
-              "description": "你带着见证人的地址回到旧门，回声承认它删过一段对自己不利的证词。"
+              "title": "见证人说出隐情",
+              "description": "你找到记忆中的见证人。对方承认，当年的口供删掉了一段对前世不利的内容。"
             },
             "jade_anchor": {
-              "title": "把回响放回当下",
-              "description": "你用今生同伴的名字标记每道幻听，旧玉再也不能把陌生人的命运伪装成你的命令。"
+              "title": "请今生同伴核对",
+              "description": "你把所有记忆交给今生的同伴核对。有人帮你确认事实，也有人指出其中明显的漏洞。"
             },
             "jade_seal": {
-              "title": "从创伤中脱身",
-              "description": "灼痕在夜里复燃，你沿着它留下的路径找到出口；逃离之后，沉默也不等于服从。"
+              "title": "摆脱记忆控制",
+              "description": "封印再次松动，那段牢房记忆试图夺走你的身体。你必须彻底切断它的影响。"
             }
           },
           "art": {
@@ -343,8 +343,8 @@
               "id": "jade_m3_witness",
               "target_node_id": "jade_main_4",
               "route_id": "jade_witness",
-              "text": "把删去的证词补回来",
-              "outcome": "你逼回被抹掉的那一页，承认旧我也会害怕；完整记录让两人坐到一张桌边。",
+              "text": "让见证人补全口供",
+              "outcome": "见证人补上了被删掉的内容：你的前世并非无辜，也曾因害怕而隐瞒真相。这份口供现在可以继续查证。",
               "deltas": {
                 "exp": 88,
                 "reputation": 4
@@ -368,8 +368,8 @@
               "id": "jade_m3_anchor",
               "target_node_id": "jade_main_4",
               "route_id": "jade_anchor",
-              "text": "请今生的人共同作证",
-              "outcome": "你把回响交给活着的人复述，旧玉失去独占解释权，现实替你守住记忆。",
+              "text": "请同伴一起核对记忆",
+              "outcome": "你让同伴分别复述自己确认过的事实。旧玉不再是唯一的信息来源，也就无法继续用假记忆误导你。",
               "deltas": {
                 "karma": 8,
                 "exp": 64
@@ -395,7 +395,7 @@
               "promises_add": [
                 {
                   "id": "jade_living_promise",
-                  "text": "不让任何回声单独替活人作决定。",
+                  "text": "不让任何前世记忆替今生的人作决定。",
                   "character_id": "jade_echo"
                 }
               ]
@@ -404,8 +404,8 @@
               "id": "jade_m3_seal",
               "target_node_id": "jade_main_4",
               "route_id": "jade_seal",
-              "text": "烧掉最深的一段梦",
-              "outcome": "你烧掉最深处的门牌，代价是短暂失去一段自己的来路；灰烬里却出现了可以走出去的方向。",
+              "text": "彻底删除牢房记忆",
+              "outcome": "你强行删除了那段牢房记忆，暂时也忘记了一部分与它相连的往事。作为交换，它再也不能控制你。",
               "deltas": {
                 "dao_heart": 7,
                 "hp": -14
@@ -442,20 +442,20 @@
         },
         {
           "id": "jade_main_4",
-          "title": "旧玉·终｜不借旧我",
-          "description": "旧玉托起足够多的回响，过去的声音压向今生。终局落在手里的选择：哪些旧意留下，哪些止于此世。",
+          "title": "旧玉·终｜由今生决定",
+          "description": "你已经确认：旧玉保存了前世记忆，但其中既有真相，也有谎言。现在要决定的是，今后如何处理这些记忆。",
           "route_variants": {
             "jade_witness": {
-              "title": "旧我为证",
-              "description": "完整证词摆在门前，旧我愿意作证，却承认裁决权属于现在的你。"
+              "title": "保留前世证词",
+              "description": "你会保留已经查到证据的前世记忆，继续把它们当作调查资料。最终决定仍由现在的你来做。"
             },
             "jade_anchor": {
-              "title": "今生校旧",
-              "description": "今生的名字压住镜面，旧玉只能留下能被现实解释的部分。"
+              "title": "只信今生证据",
+              "description": "你只保留能被今生的人证、物证确认的内容，其余全部标记为不可信。"
             },
             "jade_seal": {
-              "title": "封梦自持",
-              "description": "你带着伤痕站在封印外，拒绝把创伤交还给那个曾经囚住你的影子。"
+              "title": "封存前世记忆",
+              "description": "你决定封存全部前世记忆。它们可以继续存在，但不能再进入你的意识或控制身体。"
             }
           },
           "art": {
@@ -466,8 +466,8 @@
               "id": "jade_m4_witness",
               "terminal": true,
               "route_id": "jade_witness",
-              "text": "让旧我作为证人留下",
-              "outcome": "你保存旧我证词，却写下明确边界：它可以提醒你曾经是谁，不能替你决定要成为什么人。",
+              "text": "保留已查证的前世记忆",
+              "outcome": "你保存了已经查证的前世记忆。它们可以提供线索，提醒你前世做过什么，但不能替你决定今生要成为什么人。",
               "deltas": {
                 "exp": 96,
                 "dao_heart": 4
@@ -486,14 +486,14 @@
                   "agency": 6
                 }
               },
-              "resolution": "旧我为证"
+              "resolution": "保留前世证词"
             },
             {
               "id": "jade_m4_anchor",
               "terminal": true,
               "route_id": "jade_anchor",
-              "text": "以今生校定旧梦",
-              "outcome": "你逐条比对梦兆与现实，只保留能够解释当下的部分；旧玉成为档案，不能成为主人。",
+              "text": "只保留现实能证明的内容",
+              "outcome": "你逐条核对前世记忆，只保留有现实证据的内容。旧玉从此只是一份资料，不能再影响你的判断。",
               "deltas": {
                 "exp": 74,
                 "karma": 6
@@ -516,14 +516,14 @@
               "promises_resolve": [
                 "jade_living_promise"
               ],
-              "resolution": "今生校旧"
+              "resolution": "只信今生证据"
             },
             {
               "id": "jade_m4_seal",
               "terminal": true,
               "route_id": "jade_seal",
-              "text": "把梦兆封回旧玉",
-              "outcome": "你不销毁过去，只切断它替今生发号施令的权力；封印合拢，灼痕提醒你自由曾经有过代价。",
+              "text": "永久封存前世记忆",
+              "outcome": "你没有销毁前世记忆，只是永久切断它们与你意识的联系。封印合拢后，你终于能按自己的意愿生活。",
               "deltas": {
                 "dao_heart": 8,
                 "hp": -10
@@ -539,7 +539,7 @@
                   "coercion": -8,
                   "corruption": 4,
                   "agency": 10,
-                  "stance": "被边界驯服"
+                  "stance": "无法再干涉今生"
                 }
               },
               "content_tags": [
@@ -552,7 +552,7 @@
                 "echo_burn",
                 "scarred_memory"
               ],
-              "resolution": "封梦自持"
+              "resolution": "封存前世记忆"
             }
           ]
         }
@@ -560,20 +560,20 @@
       "echo": [
         {
           "id": "jade_echo_1",
-          "title": "定局续章·旧玉一｜旧梦证词",
-          "description": "轮回玉吐出一段可以被现实核验的旧梦。梦里的人认得你，今生的人却说那段往事根本不存在。",
+          "title": "旧玉续章·一｜不存在的往事",
+          "description": "转世后，旧玉又放出一段前世记忆。记忆里的人认得你，但你找到的当事人却说，这件事从未发生过。至少有一方在说谎。",
           "route_variants": {
             "jade_witness": {
-              "title": "证词回返",
-              "description": "你曾让旧我作证，新的梦便带着见证人的口吻回来，等待你完成未尽的核验。"
+              "title": "继续调查前世证词",
+              "description": "上一世，你选择保留前世证词。这一次，旧玉给出了新的见证人，你可以继续查证。"
             },
             "jade_anchor": {
-              "title": "锚点回返",
-              "description": "今生的记录先于梦境展开，旧玉只能从你留下的现实坐标开始叙述。"
+              "title": "先查今生记录",
+              "description": "上一世，你选择只信现实证据。因此这段记忆必须先和今生的记录对上，才值得继续调查。"
             },
             "jade_seal": {
-              "title": "封印回返",
-              "description": "封印松动一线，旧梦试图把你拖回囚室；出口的方向仍留在灼痕里。"
+              "title": "封印再次松动",
+              "description": "上一世的封印出现裂缝，那段牢房记忆再次试图控制你。你必须决定是否重新封住它。"
             }
           },
           "art": {
@@ -584,8 +584,8 @@
               "id": "jade_e1_witness",
               "target_node_id": "jade_echo_2",
               "route_id": "jade_witness",
-              "text": "承认旧梦可以作证",
-              "outcome": "两世证词被并排保存，旧我可以作证，却不能越过今生替你裁决。",
+              "text": "保留记忆，继续找证人",
+              "outcome": "你保留了两世的相关记忆，并把它们当作待查资料。无论前世说了什么，最后的判断都由今生的你来做。",
               "deltas": {
                 "exp": 96,
                 "dao_heart": 4
@@ -608,8 +608,8 @@
               "id": "jade_e1_anchor",
               "target_node_id": "jade_echo_2",
               "route_id": "jade_anchor",
-              "text": "让今生先回答",
-              "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过现实的门。",
+              "text": "先查今生有没有证据",
+              "outcome": "你决定先查今生的记录。只有能找到人证或物证的前世记忆，才会被当作真实线索。",
               "deltas": {
                 "exp": 74,
                 "karma": 6
@@ -633,8 +633,8 @@
               "id": "jade_e1_seal",
               "target_node_id": "jade_echo_3",
               "route_id": "jade_seal",
-              "text": "留下伤痕，断开梦门",
-              "outcome": "过去被允许留下伤痕，却永远失去替今生下令的资格；你从梦门另一侧走回白昼。",
+              "text": "重新封住这段记忆",
+              "outcome": "你重新封住牢房记忆。它留下的恐惧还在，但已经无法控制你的身体和判断。",
               "deltas": {
                 "dao_heart": 8,
                 "hp": -10
@@ -667,20 +667,20 @@
         },
         {
           "id": "jade_echo_2",
-          "title": "定局续章·旧玉二｜伪忆死路",
-          "description": "两段互相矛盾的记忆同时显真。危险在于把伪忆当成自己的意志。",
+          "title": "旧玉续章·二｜两段记忆只能一真",
+          "description": "旧玉同时放出两段互相矛盾的前世记忆。它们不可能都是真的；如果判断错误，你可能会把别人的意志当成自己的决定。",
           "route_variants": {
             "jade_witness": {
-              "title": "让伪证现形",
-              "description": "旧我证词中出现一处无法解释的空白，你必须决定是否把它公开给所有见证人。"
+              "title": "公开证词漏洞",
+              "description": "你发现前世证词故意跳过了一段关键时间。把这个漏洞公开，其他见证人才能一起核对。"
             },
             "jade_anchor": {
-              "title": "回到现实坐标",
-              "description": "你用今生的伤口和名字逐一定位伪忆，梦境开始承认自己并不完整。"
+              "title": "按现实证据排序",
+              "description": "你按今生找到的时间、地点和伤痕重新排列两段记忆，矛盾之处很快显现出来。"
             },
             "jade_seal": {
-              "title": "死路中的出口",
-              "description": "伪忆把封印伪装成牢门，你沿着创伤留下的反光找到一条只容一人通过的缝隙。"
+              "title": "拒绝两段可疑记忆",
+              "description": "两段记忆都试图诱导你解除封印。既然无法确认真假，你决定两段都不接受。"
             }
           },
           "art": {
@@ -691,8 +691,8 @@
               "id": "jade_e2_witness",
               "target_node_id": "jade_echo_3",
               "route_id": "jade_witness",
-              "text": "公开伪证的空白",
-              "outcome": "你让所有见证人看见旧我曾经隐瞒的部分，证词因此变重，也能被质疑。",
+              "text": "把证词漏洞告诉所有人",
+              "outcome": "你公开了前世故意隐瞒的那段时间。见证人现在可以互相质疑，假的说法更难继续混在真相里。",
               "deltas": {
                 "exp": 102,
                 "reputation": 5
@@ -716,8 +716,8 @@
               "id": "jade_e2_anchor",
               "target_node_id": "jade_echo_3",
               "route_id": "jade_anchor",
-              "text": "以现实重排记忆",
-              "outcome": "你把矛盾记忆按今生发生顺序重排，无法解释的部分标作未知，留白留在那里。",
+              "text": "按现实证据重排记忆",
+              "outcome": "你按已经查到的事实重排两段记忆，把无法解释的部分明确标成未知，不再擅自补全。",
               "deltas": {
                 "exp": 82,
                 "karma": 6
@@ -741,8 +741,8 @@
               "id": "jade_e2_seal",
               "target_node_id": "jade_echo_3",
               "route_id": "jade_seal",
-              "text": "撕开伪忆的锁",
-              "outcome": "你承受一轮旧伤反噬，撕开伪忆伪装的锁；逃出的只有继续醒着的权利。",
+              "text": "强行切断两段可疑记忆",
+              "outcome": "你忍受旧伤复发，强行切断两段可疑记忆。你没能知道真相，但保住了自己的意识。",
               "deltas": {
                 "dao_heart": 9,
                 "hp": -14,
@@ -779,20 +779,20 @@
         },
         {
           "id": "jade_echo_3",
-          "title": "定局续章·旧玉终｜玉中自证",
-          "description": "旧玉把前世证词与今生经历并排放在你面前。你必须决定谁能作证，谁只能留下痕迹。",
+          "title": "旧玉续章·终｜最后如何处理",
+          "description": "你把前世证词和今生查到的事实全部摆在一起。证据已经足够，现在必须决定是否永久保留这些记忆。",
           "route_variants": {
             "jade_witness": {
-              "title": "旧我仍可作证",
-              "description": "见证人的名字都在场，旧我等待你给它一个不会越界的席位。"
+              "title": "前世记忆只作参考",
+              "description": "见证人已经核对过主要事实。前世记忆可以保留作参考，但不能替今生作决定。"
             },
             "jade_anchor": {
-              "title": "今生成为定锚",
-              "description": "现实记录完整闭合，旧玉只剩一件需要由你亲自签名的档案。"
+              "title": "现实证据拥有最终判断权",
+              "description": "现实中的人证和物证已经整理完整。与它们冲突的前世记忆，今后都视为不可信。"
             },
             "jade_seal": {
-              "title": "伤痕止于此",
-              "description": "封印与出口同时亮起，你可以带走伤痕，也可以让它在此处终止。"
+              "title": "永久关闭旧玉记忆",
+              "description": "你可以永久关闭读取前世记忆的能力，让旧玉再也无法用痛苦和幻觉影响你。"
             }
           },
           "art": {
@@ -803,8 +803,8 @@
               "id": "jade_e3_witness",
               "terminal": true,
               "route_id": "jade_witness",
-              "text": "让旧我作证但不作主",
-              "outcome": "两世证词被完整保存，旧我获得见证席位，却失去替你下令的权力。",
+              "text": "保留记忆，但只作参考",
+              "outcome": "两世的记忆和证词都被保存下来。它们可以提供线索，但无权命令你，也不能替你作决定。",
               "deltas": {
                 "exp": 110,
                 "dao_heart": 5
@@ -823,14 +823,14 @@
                   "agency": 8
                 }
               },
-              "resolution": "守证旧我"
+              "resolution": "前世记忆仅供参考"
             },
             {
               "id": "jade_e3_anchor",
               "terminal": true,
               "route_id": "jade_anchor",
-              "text": "把今生写成最终锚点",
-              "outcome": "今生经历成为旧忆的锚点，任何回响都必须先通过你亲手留下的现实记录。",
+              "text": "让现实证据作最终标准",
+              "outcome": "你把今生查到的证据设为最终标准。任何与现实记录冲突的前世记忆，都会被标记为不可信。",
               "deltas": {
                 "exp": 86,
                 "karma": 7
@@ -850,14 +850,14 @@
                   "agency": 8
                 }
               },
-              "resolution": "今身定锚"
+              "resolution": "现实证据优先"
             },
             {
               "id": "jade_e3_seal",
               "terminal": true,
               "route_id": "jade_seal",
-              "text": "让伤痕止于旧玉",
-              "outcome": "你把伤痕与伪忆一并留在玉中，带着清醒走出梦门；过去不能借痛苦召回你。",
+              "text": "永久关闭前世记忆",
+              "outcome": "你永久关闭了旧玉中的前世记忆。那些痛苦和假记忆被留在玉中，再也无法把你拖回去。",
               "deltas": {
                 "dao_heart": 10,
                 "hp": -12
@@ -885,30 +885,40 @@
                 "dream_wound",
                 "echo_burn"
               ],
-              "resolution": "断梦留痕"
+              "resolution": "永久关闭旧玉"
             }
           ]
         }
       ],
       "main_route_resolutions": {
-        "jade_witness": "旧我为证",
-        "jade_anchor": "今生校旧",
-        "jade_seal": "封梦自持"
+        "jade_witness": "保留前世证词",
+        "jade_anchor": "只信今生证据",
+        "jade_seal": "封存前世记忆"
       },
       "echo_route_resolutions": {
-        "jade_witness": "守证旧我",
-        "jade_anchor": "今身定锚",
-        "jade_seal": "断梦留痕"
+        "jade_witness": "前世记忆仅供参考",
+        "jade_anchor": "现实证据优先",
+        "jade_seal": "永久关闭旧玉"
       },
       "legacy_birth_effects": {
         "旧我为证": {
           "exp": 18,
           "dao_heart": 3
         },
+        "保留前世证词": {
+          "exp": 18,
+          "dao_heart": 3
+        },
         "今生校旧": {
           "dao_heart": 5
         },
+        "只信今生证据": {
+          "dao_heart": 5
+        },
         "封梦自持": {
+          "dao_heart": 7
+        },
+        "封存前世记忆": {
           "dao_heart": 7
         }
       },
@@ -916,10 +926,19 @@
         "守证旧我": {
           "exp": 15
         },
+        "前世记忆仅供参考": {
+          "exp": 15
+        },
         "今身定锚": {
           "dao_heart": 2
         },
+        "现实证据优先": {
+          "dao_heart": 2
+        },
         "断梦留痕": {
+          "dao_heart": 3
+        },
+        "永久关闭旧玉": {
           "dao_heart": 3
         }
       }

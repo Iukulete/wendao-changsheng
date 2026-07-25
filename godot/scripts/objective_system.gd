@@ -122,7 +122,7 @@ static func choose(state: Dictionary, objective_id: String) -> Dictionary:
 		"ok": true,
 		"code": "objective_selected",
 		"objective": objective.duplicate(true),
-		"message": "你立下阶段命途【%s】。八次年轮推进之内，所行之事都会留下可见道印。" % str(selected_definition.name),
+		"message": "你选择了阶段目标【%s】。需要在八次年轮内完成，进度会随行动更新。" % str(selected_definition.name),
 	}
 
 
@@ -229,7 +229,7 @@ static func _complete(state: Dictionary, objective: Dictionary, objective_id: St
 		"points": points,
 		"objective_id": objective_id,
 		"reward": applied_reward,
-		"message": "【%s】圆满，道印化为实质回报：%s。新的阶段命途已经可以择定。" % [
+		"message": "阶段目标【%s】已经完成，获得奖励：%s。现在可以选择新的阶段目标。" % [
 			str(objective_definition.name), _reward_dictionary_text(applied_reward)],
 	}
 

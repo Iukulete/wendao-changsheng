@@ -80,7 +80,7 @@ var current_event: Dictionary = {}
 var current_event_result: Dictionary = {}
 var events: Array = []
 var recent_memories: Array[String] = []
-var feedback: String = "旧玉仍温，今生尚未落笔。"
+var feedback: String = "新的旅程尚未开始。"
 var save_notice: String = "尚未封存"
 var menu_notice: String = ""
 var inventory_notice: String = "器物、材料与装备变化会立即封存。"
@@ -404,7 +404,7 @@ func _show_menu() -> void:
 	identity_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(identity_column)
 
-	var eyebrow := _label("旧玉纪事 · 神游新篇", 15, Color(era_accent, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
+	var eyebrow := _label("问道长生 · 新的旅程", 15, Color(era_accent, 0.92), HORIZONTAL_ALIGNMENT_CENTER)
 	identity_column.add_child(eyebrow)
 	var title := _display_label("问道长生", 60, Color("f4e5b7"), HORIZONTAL_ALIGNMENT_CENTER)
 	title.add_theme_constant_override("outline_size", 9)
@@ -426,10 +426,10 @@ func _show_menu() -> void:
 	feature_strip.name = "MenuFeatureStrip"
 	feature_strip.alignment = BoxContainer.ALIGNMENT_CENTER
 	feature_strip.add_theme_constant_override("separation", 7)
-	for feature_text in ["六纪元", "十世轮回", "分歧长卷"]:
+	for feature_text in ["六纪元", "十世轮回", "分歧剧情"]:
 		feature_strip.add_child(_menu_feature_pill(feature_text))
 	identity_column.add_child(feature_strip)
-	identity_column.add_child(_label("一枚旧玉，记录每一世留下的因果。", 14,
+	identity_column.add_child(_label("黑白旧玉保存着历代转生留下的记忆。", 14,
 		Color(0.70, 0.76, 0.77, 0.82), HORIZONTAL_ALIGNMENT_CENTER))
 
 	var action_panel := _panel(0.42, era_accent)
@@ -443,11 +443,11 @@ func _show_menu() -> void:
 	action_column.add_theme_constant_override("separation", 8)
 	action_panel.add_child(action_column)
 	action_column.add_child(_section_title("请写下此世道号"))
-	action_column.add_child(_label("道号只属于这一世，旧玉会替你记住。", 14,
+	action_column.add_child(_label("为这一世取个名字，旧玉会保存你的经历。", 14,
 		Color(0.72, 0.77, 0.78, 0.86)))
 	var name_input := LineEdit.new()
 	name_input.name = "DaoNameInput"
-	name_input.placeholder_text = "旧玉会记住这个名字"
+	name_input.placeholder_text = "输入这一世的名字"
 	name_input.text = "云归客" if player.name == "无名" else str(player.name)
 	name_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_input.custom_minimum_size = Vector2(430, 46)
@@ -456,11 +456,11 @@ func _show_menu() -> void:
 
 	var save_probe: Dictionary = save_service.call("inspect_save")
 	var can_continue := bool(save_probe.get("ok", false))
-	var continue_text := "续接旧玉 · 继续游戏"
+	var continue_text := "继续游戏"
 	if can_continue:
 		var saved_state: Dictionary = save_probe.get("state", {})
 		var saved_player: Dictionary = saved_state.get("player", {})
-		continue_text = "续接旧玉 · %s · %s" % [
+		continue_text = "继续游戏 · %s · %s" % [
 			str(saved_player.get("name", "旧日之我")),
 			str(saved_state.get("current_era", "未知纪元")),
 		]
@@ -551,7 +551,7 @@ func _start_new_game(name_input: LineEdit) -> void:
 	current_event_result = {}
 	_sync_state_views()
 	menu_notice = ""
-	_save_current_state("新生命途已立档")
+	_save_current_state("新游戏已创建")
 	_open_adventure()
 
 
@@ -569,7 +569,7 @@ func _continue_game() -> void:
 		return
 	run_state = loaded_state
 	_sync_state_views()
-	save_notice = str(load_result.get("message", "旧玉已续接上一次命途。"))
+	save_notice = str(load_result.get("message", "已继续上一次游戏。"))
 	menu_notice = ""
 	current_event = {}
 	current_event_result = {}
@@ -589,7 +589,7 @@ func _import_legacy_game() -> void:
 		return
 	run_state = GameStateScript.ensure_v2(import_result.get("state", {}))
 	_sync_state_views()
-	save_notice = str(import_result.get("message", "旧版命途已迁入。"))
+	save_notice = str(import_result.get("message", "旧版进度已导入。"))
 	menu_notice = ""
 	current_event = {}
 	current_event_result = {}
@@ -612,7 +612,7 @@ func _sync_state_views() -> void:
 	player = run_state.get("player", {})
 	recent_memories.clear()
 	recent_memories.assign(run_state.get("recent_memories", []))
-	feedback = str(run_state.get("feedback", "旧玉从沉眠中醒来。"))
+	feedback = str(run_state.get("feedback", "旧玉中的记忆再次出现。"))
 
 
 func _commit_state_views() -> void:
@@ -716,7 +716,7 @@ func _build_header() -> Control:
 	status_box.custom_minimum_size.x = 280
 	status_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(status_box)
-	status_box.add_child(_label("长卷随章节自动封存", 15, Color("c9c2a8"),
+	status_box.add_child(_label("故事进度会在每章结束后自动保存", 15, Color("c9c2a8"),
 		HORIZONTAL_ALIGNMENT_RIGHT))
 	status_box.add_child(_label(save_notice, 13,
 		Color("df776c") if save_notice.begins_with("保存失败") else Color(era_accent, 0.88),
@@ -734,7 +734,7 @@ func _build_player_panel() -> Control:
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 6)
 	panel.add_child(column)
-	column.add_child(_section_title("此世照影"))
+	column.add_child(_section_title("人物状态"))
 
 	var identity_row := HBoxContainer.new()
 	identity_row.name = "MainPlayerIdentity"
@@ -797,7 +797,7 @@ func _build_player_panel() -> Control:
 	var relic_resonance := int(((run_state.get("legacy", {}) as Dictionary).get("relic", {}) as Dictionary).get("resonance", 0))
 	var weapon_summary := "尚未显化" if jade_weapon.is_empty() else "%s·%s %d/100" % [
 		str(jade_weapon.name), str(jade_weapon.stage_name), int(jade_weapon.charge)]
-	column.add_child(_label("旧玉共鸣 %d   玉兵 · %s" % [relic_resonance, weapon_summary],
+	column.add_child(_label("旧玉记忆 %d   玉兵 · %s" % [relic_resonance, weapon_summary],
 		13, Color("e8c87f"), HORIZONTAL_ALIGNMENT_CENTER))
 	return panel
 
@@ -872,7 +872,7 @@ func _build_action_panel(compact: bool = false) -> Control:
 		primary_text = "回应敌踪 · %s" % str(encounter.get("title", "无名追兵"))
 		primary_callback = _start_combat
 	elif not story_ready:
-		primary_text = "追索下一处因果"
+		primary_text = "继续探索"
 	var adventure_button := _main_action_button(primary_text, primary_callback, true)
 	adventure_button.name = "ChapterPrimaryButton"
 	adventure_button.tooltip_text = str(encounter.get("detail", "让当前卷继续向前，而不是在大厅里盲点功能。"))
@@ -891,7 +891,7 @@ func _build_action_panel(compact: bool = false) -> Control:
 	if int(dungeon.get("clues", 0)) > 0 and int(dungeon.get("last_entered_generation", 0)) != int(run_state.get("generation", 1)):
 		var dungeon_button := _main_action_button("线索已明 · 踏入镜湖空阙", _enter_dungeon, false)
 		dungeon_button.name = "DungeonButton"
-		dungeon_button.tooltip_text = "来源：%s。此世只开放一次，胜败都会写入长卷。" % str(dungeon.get("clue_source", "当前因果"))
+		dungeon_button.tooltip_text = "线索来源：%s。每一世只能进入一次，结果会写入故事记录。" % str(dungeon.get("clue_source", "当前剧情"))
 		action_grid.add_child(dungeon_button)
 	column.add_child(_divider())
 	column.add_child(_build_secondary_navigation(compact))
@@ -905,13 +905,13 @@ func _build_chapter_direction() -> Control:
 	var next_event := StorySystemScript.next_event(run_state.duplicate(true))
 	var encounter := EncounterSystemScript.summary(run_state)
 	var title := "山河尚有一页未写"
-	var hook := "追索下一处因果；修炼、战斗与秘境都会作为故事中的手段出现。"
+	var hook := "继续探索下一段故事；修炼、战斗与秘境都会在推进过程中出现。"
 	if bool(encounter.get("active", false)):
 		title = "危机逼近 · %s" % str(encounter.get("title", "无名敌踪"))
 		hook = "%s · 尚余%d次年轮，回应或拖延都会改变山河。" % [
 			str(encounter.get("detail", "敌意已经显形。")), int(encounter.get("remaining_turns", 0))]
 	elif not next_event.is_empty():
-		title = str(next_event.get("title", "命途下一章"))
+		title = str(next_event.get("title", "下一章"))
 		hook = str(next_event.get("description", "下一页正在等待你的选择。")).left(170)
 	box.add_child(_label(title, 17, Color("e8c87f")))
 	var hook_label := _label(hook, 14, Color(0.80, 0.84, 0.83, 0.94))
@@ -924,14 +924,14 @@ func _build_chapter_direction() -> Control:
 	var story := StorySystemScript.normalize(run_state)
 	var threads: Array = story.get("unresolved_threads", [])
 	if not threads.is_empty():
-		var thread_label := _label("未竟 · %s" % str(threads[-1]).split(":")[-1], 12,
+		var thread_label := _label("待继续 · %s" % str(threads[-1]).split(":")[-1], 12,
 			Color(0.72, 0.78, 0.78, 0.9))
 		thread_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(thread_label)
 	var characters: Array = CharacterArtCatalogScript.story_characters()
 	var relationship_text := NarrativeConsequenceScript.relationship_summary(run_state, characters)
 	var obligation_text := NarrativeConsequenceScript.open_obligation_summary(run_state, characters)
-	var consequence_label := _label("牵系 · %s\n未偿 · %s" % [
+	var consequence_label := _label("人物关系 · %s\n尚未完成的约定 · %s" % [
 		relationship_text.left(72), obligation_text.left(88)], 12,
 		Color(0.70, 0.78, 0.78, 0.90))
 	consequence_label.name = "ChapterConsequenceSummary"
@@ -953,7 +953,7 @@ func _build_secondary_navigation(compact: bool = false) -> Control:
 	var entries := [
 		["准备", _show_inventory, "InventoryButton"],
 		["传承", _show_armory, "ArmoryButton"],
-		["长卷", _show_journal, "JournalButton"],
+		["记录", _show_journal, "JournalButton"],
 		["系统", _open_system_menu, "SystemMenuButton"],
 	]
 	for entry_value in entries:
@@ -977,17 +977,17 @@ func _build_objective_section() -> Control:
 	column.add_theme_constant_override("separation", 5)
 	var summary: Dictionary = ObjectiveSystemScript.summary(run_state)
 	if not bool(summary.get("active", false)):
-		var status := "上一轮已经圆满" if str(summary.get("last_result", "")) == "completed" else \
-			"尚未择定本轮命途"
-		column.add_child(_label("阶段命途 · %s" % status, 14, Color("e8c87f")))
+		var status := "上一项目标已经完成" if str(summary.get("last_result", "")) == "completed" else \
+			"尚未选择本轮目标"
+		column.add_child(_label("阶段目标 · %s" % status, 14, Color("e8c87f")))
 		column.add_child(_label("从修炼、入世或实战中选择一个八回合目标，让每次行动形成连贯计划。",
 			12, Color(0.77, 0.81, 0.81, 0.92)))
-		var choose_button := _button("择定本轮命途", _show_objective_selection, true, "", true)
+		var choose_button := _button("选择本轮目标", _show_objective_selection, true, "", true)
 		choose_button.name = "ChooseObjectiveButton"
 		choose_button.custom_minimum_size.y = 42
 		column.add_child(choose_button)
 		return column
-	column.add_child(_label("阶段命途 · %s" % str(summary.name), 15, Color("e8c87f")))
+	column.add_child(_label("阶段目标 · %s" % str(summary.name), 15, Color("e8c87f")))
 	column.add_child(_progress_row("道印", int(summary.progress), int(summary.target), Color("8fc7b5")))
 	column.add_child(_label("余 %d 次年轮 · 连续践行 %d" % [
 		int(summary.remaining_turns), int(summary.streak)], 12, Color(0.78, 0.83, 0.83, 0.92)))
@@ -1069,14 +1069,14 @@ func _build_objective_option(objective_id: String, number: int) -> PanelContaine
 func _select_objective(objective_id: String) -> void:
 	var result: Dictionary = ObjectiveSystemScript.choose(run_state, objective_id)
 	if not bool(result.get("ok", false)):
-		feedback = "当前命途仍在践行，不能无代价改立新愿。"
+		feedback = "当前阶段目标仍在进行，不能中途免费更换。"
 		_show_game()
 		return
-	feedback = str(result.get("message", "阶段命途已经择定。"))
-	_add_memory("第%d年，你立下阶段命途【%s】。" % [
+	feedback = str(result.get("message", "阶段目标已经选定。"))
+	_add_memory("第%d年，你选择了阶段目标【%s】。" % [
 		int((run_state.get("world", {}) as Dictionary).get("year", 1)),
 		str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id))])
-	_save_current_state("阶段命途已自动封存")
+	_save_current_state("阶段目标已自动保存")
 	_show_game()
 
 
@@ -1172,10 +1172,10 @@ func _world_digest() -> String:
 		"废土返道纪": "黑雨压过盐碱荒原，移动祖庭带着最后的药种与返道火种向东迁徙。",
 		"末法裂变纪": "灵息按份配给，寿元被写进契票；凡人正以合成灵根争夺一次入道机会。",
 		"仙朝鼎盛纪": "浮空仙城照耀诸州，巡天司却在镜湖发现一扇命籍无法编号的古门。",
-	}.get(current_era, "天下无声，因果仍在暗处流动。"))
+	}.get(current_era, "天下暂时平静，但新的变化正在发生。"))
 	var memory_lines := ""
 	if recent_memories.is_empty():
-		memory_lines = "- 今生尚无足以被旧玉铭记的大事。"
+		memory_lines = "- 今生还没有发生值得记录的大事。"
 	else:
 		for memory in recent_memories.slice(maxi(0, recent_memories.size() - 5)):
 			memory_lines += "- %s\n" % memory
@@ -1210,7 +1210,7 @@ func _world_digest() -> String:
 	if npc_lines.is_empty():
 		npc_lines = "- 旧人皆已隐入年史。\n"
 	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
-	var encounter_line := "当前没有可追索敌踪；先历练、卷入因果，再决定是否迎战。"
+	var encounter_line := "当前没有敌人追踪你；先继续历练，遇到威胁后再决定是否迎战。"
 	if bool(encounter.get("active", false)):
 		encounter_line = "[color=#ef9a78][b]%s[/b][/color] · 尚余%d次年轮\n%s" % [
 			str(encounter.get("title", "无名敌踪")), int(encounter.get("remaining_turns", 0)),
@@ -1224,10 +1224,10 @@ func _world_digest() -> String:
 		"[color=#d9c98f][b]当前敌情[/b][/color]\n" + encounter_line + "\n\n" + \
 		"[color=#d9c98f][b]势力消长[/b][/color]\n" + faction_lines + "\n" + \
 		"[color=#d9c98f][b]同世之人[/b][/color]\n" + npc_lines + "\n" + \
-		"[color=#d9c98f][b]命途长卷[/b][/color]\n" + StorySystemScript.digest(run_state) + "\n\n" + \
-		"[color=#d9c98f][b]旧玉近录[/b][/color]\n" + memory_lines + \
-		"\n[color=#8fbfb7][b]因果不会清零[/b][/color]\n" + \
-		"你闭关的一年也是众生的一年；旧人会老去，盟约会变质，前世留下的缺口仍在山河中。"
+		"[color=#d9c98f][b]当前故事[/b][/color]\n" + StorySystemScript.digest(run_state) + "\n\n" + \
+		"[color=#d9c98f][b]近期经历[/b][/color]\n" + memory_lines + \
+		"\n[color=#8fbfb7][b]世界会继续变化[/b][/color]\n" + \
+		"你闭关时，其他人也在生活；故人会老去，盟约可能改变，前世留下的问题也不会自行消失。"
 
 
 func _faction_name(faction_id: String, factions: Array) -> String:
@@ -1264,7 +1264,7 @@ func _resolve_meditation(mode_id: String) -> void:
 		consequence = "，道心 +%d" % int(result.get("dao_heart_gain", 0))
 	feedback = "你以【%s】运转周天，修为 +%d%s%s。" % [
 		str(result.get("mode_name", "守一周天")), gain, level_note, consequence]
-	_add_memory("第%d年，你在%s以%s运功，命途罗盘的%s位微微发亮。" % [
+	_add_memory("第%d年，你在%s以%s运功，修行罗盘的%s位微微发亮。" % [
 		int((run_state.world as Dictionary).get("year", 1)), current_era,
 		str(result.get("mode_name", "守一周天")),
 		["火", "水", "木", "金", "土"][int(run_state.rng_cursor) % 5]])
@@ -1457,7 +1457,7 @@ func _build_combat_header(battle: Dictionary, objective: Dictionary) -> Control:
 	context.add_child(motive_label)
 	var stakes := str(objective.get("stakes", "")).strip_edges()
 	if stakes.is_empty():
-		stakes = "压住来敌，活着把这一段因果带回去。"
+		stakes = "击退来敌，并活着把这里发生的事带回去。"
 	var stakes_label := _label("此战所争 · %s" % stakes, 14, Color(0.90, 0.89, 0.82, 0.98))
 	stakes_label.name = "CombatStoryStakes"
 	stakes_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -3239,7 +3239,7 @@ func _show_event() -> void:
 		Color(era_accent, 0.94), HORIZONTAL_ALIGNMENT_CENTER)
 	chapter_label.name = "EventChapterMeta"
 	header_column.add_child(chapter_label)
-	var header_label := _display_label(str(current_event.get("title", "无名因果")), 29,
+	var header_label := _display_label(str(current_event.get("title", "未命名事件")), 29,
 		Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER)
 	header_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -3282,7 +3282,7 @@ func _event_uses_dedicated_visual() -> bool:
 func _event_chapter_meta(event: Dictionary) -> Dictionary:
 	var source := str(event.get("source", "authored_event"))
 	var arc_name := str(event.get("story_arc_name", event.get("arc_name", {
-		"story_arc": "命途主卷", "local_ai": "天机外章", "authored_event": "山河异闻",
+		"story_arc": "剧情主线", "local_ai": "随机支线", "authored_event": "山河异闻",
 	}.get(source, "无名纪事"))))
 	var chapter := int(event.get("chapter_number", int(player.get("total_events", 0)) + 1))
 	var total := int(event.get("chapter_total", 0))
@@ -3363,7 +3363,7 @@ func _build_event_stage(narrow_layout: bool = false) -> Control:
 	caption.offset_bottom = -14
 	caption_panel.add_child(caption)
 	caption.add_child(_label(str(current_event.get("portrait_name", current_era)), 21, Color(era_accent, 0.98)))
-	caption.add_child(_label(str(current_event.get("portrait_title", "因果入局者")), 14,
+	caption.add_child(_label(str(current_event.get("portrait_title", "事件参与者")), 14,
 		Color(0.82, 0.86, 0.86, 0.86)))
 	return frame
 
@@ -3402,7 +3402,7 @@ func _build_event_choices() -> Control:
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 14)
 	panel.add_child(column)
-	column.add_child(_label(current_era + " · 因果抉择", 15, Color(era_accent, 0.92)))
+	column.add_child(_label(current_era + " · 剧情选择", 15, Color(era_accent, 0.92)))
 	var recap := str(current_event.get("previous_choice_recap", ""))
 	if recap.is_empty():
 		recap = StorySystemScript.previous_choice_recap(run_state, current_event)
@@ -3468,7 +3468,7 @@ func _resolve_choice(index: int) -> void:
 	player.hp = clamp(int(player.hp), 0, int(player.max_hp))
 	player.exp = max(0, int(player.exp))
 	player.total_events = int(player.get("total_events", 0)) + 1
-	var outcome := str(choice.get("outcome", "因果落定，旧玉没有给出解释。"))
+	var outcome := str(choice.get("outcome", "事情已经结束，但旧玉没有给出更多解释。"))
 	feedback = outcome
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
 	run_state["player"] = player
@@ -3476,10 +3476,10 @@ func _resolve_choice(index: int) -> void:
 	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
 	var story_message := ""
 	if bool(story_resolution.get("ok", false)):
-		story_message = str(story_resolution.get("message", "命途长卷又落下一笔。"))
+		story_message = str(story_resolution.get("message", "这次经历已经写入故事记录。"))
 		feedback += "\n\n" + story_message
 		if bool(story_resolution.get("terminal", false)):
-			_add_memory(str(story_resolution.get("message", "一条跨世因果已经定局。")))
+			_add_memory(str(story_resolution.get("message", "这段跨越两世的故事已经结束。")))
 	AchievementSystemScript.add_resonance(run_state, 3, "历练抉择")
 	CultivationScript.advance_time(run_state, 1)
 	var event_source := str(current_event.get("source", ""))
@@ -3494,7 +3494,7 @@ func _resolve_choice(index: int) -> void:
 		objective_result["encounter_message"] = encounter_message
 	if _choice_grants_dungeon_clue(choice):
 		var clue_result: Dictionary = DungeonSystemScript.grant_clue(run_state,
-			"%s · %s" % [str(current_event.get("title", "无名因果")), str(choice.get("text", "沉默"))])
+			"%s · %s" % [str(current_event.get("title", "未命名事件")), str(choice.get("text", "沉默"))])
 		if bool(clue_result.get("granted", false)):
 			var clue_message := str(clue_result.get("message", "秘境线索已显形。"))
 			feedback += "\n\n" + clue_message
@@ -3515,9 +3515,9 @@ func _resolve_choice(index: int) -> void:
 	current_event_result["full_feedback"] = feedback
 	current_event = {}
 	if CultivationScript.is_dead(run_state):
-		_end_current_life("因果事件中的重创")
+		_end_current_life("剧情事件中受到重创")
 		return
-	_save_current_state("因果抉择已自动封存")
+	_save_current_state("剧情选择已自动保存")
 	_show_event_result()
 
 func _choice_unavailable_reason(choice: Dictionary) -> String:
@@ -3528,7 +3528,7 @@ func _choice_unavailable_reason(choice: Dictionary) -> String:
 	if choice.has("available"):
 		if bool(choice.get("available", true)):
 			return ""
-		return declared_reason if not declared_reason.is_empty() else "此前的因果尚未走到这里。"
+		return declared_reason if not declared_reason.is_empty() else "前面的剧情还没有进行到这里。"
 	if not declared_reason.is_empty():
 		return declared_reason
 	var deltas: Dictionary = choice.get("deltas", {})
@@ -3563,10 +3563,10 @@ func _show_event_result() -> void:
 	var heading := VBoxContainer.new()
 	heading.alignment = BoxContainer.ALIGNMENT_CENTER
 	heading.add_theme_constant_override("separation", 2)
-	heading.add_child(_label(str(meta.get("line", "命途纪事")), 14,
+	heading.add_child(_label(str(meta.get("line", "故事记录")), 14,
 		Color(era_accent, 0.94), HORIZONTAL_ALIGNMENT_CENTER))
 	heading.add_child(_display_label("这一页已经写下", 30, Color("f5e7bd"), HORIZONTAL_ALIGNMENT_CENTER))
-	heading.add_child(_label(str(current_event_result.get("title", "无名因果")), 16,
+	heading.add_child(_label(str(current_event_result.get("title", "未命名事件")), 16,
 		Color(0.84, 0.87, 0.85, 0.94), HORIZONTAL_ALIGNMENT_CENTER))
 	header.add_child(heading)
 	page.add_child(header)
@@ -3591,18 +3591,18 @@ func _show_event_result() -> void:
 	choice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(choice_label)
 	content.add_child(_divider())
-	content.add_child(_label("余波", 15, Color(era_accent, 0.92)))
-	var outcome := _label(str(current_event_result.get("outcome", "因果无声落定。")), 21,
+	content.add_child(_label("结果", 15, Color(era_accent, 0.92)))
+	var outcome := _label(str(current_event_result.get("outcome", "事情暂时告一段落。")), 21,
 		Color("f3eee3"))
 	outcome.name = "EventResultOutcome"
 	outcome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(outcome)
 	var story_message := str(current_event_result.get("story_message", ""))
 	if not story_message.is_empty():
-		content.add_child(_result_note("长卷余音", story_message, Color("d9c98f")))
+		content.add_child(_result_note("剧情进展", story_message, Color("d9c98f")))
 	var world_message := str(current_event_result.get("world_message", ""))
 	if not world_message.is_empty():
-		content.add_child(_result_note("山河回声", world_message, Color("8fc7b5")))
+		content.add_child(_result_note("世界变化", world_message, Color("8fc7b5")))
 	var encounter_message := str(current_event_result.get("encounter_message", ""))
 	if not encounter_message.is_empty():
 		content.add_child(_result_note("敌踪", encounter_message, Color("ef9a78")))
@@ -3612,7 +3612,7 @@ func _show_event_result() -> void:
 	footer.name = "EventResultFooter"
 	footer.add_theme_constant_override("separation", 10)
 	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var journal_button := _button("查看命途长卷", _show_journal, false)
+	var journal_button := _button("查看故事记录", _show_journal, false)
 	journal_button.name = "EventResultJournalButton"
 	journal_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	footer.add_child(journal_button)
@@ -3654,7 +3654,7 @@ func _show_journal() -> void:
 	header.custom_minimum_size.y = 92
 	var heading := VBoxContainer.new()
 	heading.alignment = BoxContainer.ALIGNMENT_CENTER
-	heading.add_child(_display_label("命途长卷", 31, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
+	heading.add_child(_display_label("故事记录", 31, Color("f0d99c"), HORIZONTAL_ALIGNMENT_CENTER))
 	heading.add_child(_label("每一次选择都留下可回看的章节；未竟之事不会因为离开页面而消失。", 15,
 		Color(0.82, 0.85, 0.84, 0.92), HORIZONTAL_ALIGNMENT_CENTER))
 	header.add_child(heading)
@@ -3697,10 +3697,10 @@ func _build_journal_objective(body: VBoxContainer) -> void:
 	body.add_child(_section_title("此世所求"))
 	var summary: Dictionary = ObjectiveSystemScript.summary(run_state)
 	if not bool(summary.get("active", false)):
-		body.add_child(_label("本轮命途尚未择定。回到山河后，先决定接下来八次年轮要追求什么。", 16,
+		body.add_child(_label("本轮目标尚未选择。回到主界面后，先决定接下来八次年轮要完成什么。", 16,
 			Color(0.78, 0.83, 0.82, 0.92)))
 		return
-	body.add_child(_label("%s · 尚余%d次年轮 · 连续践行%d" % [str(summary.get("name", "无名命途")),
+	body.add_child(_label("%s · 尚余%d次年轮 · 连续完成%d次" % [str(summary.get("name", "未命名目标")),
 		int(summary.get("remaining_turns", 0)), int(summary.get("streak", 0))], 16,
 		Color(0.86, 0.88, 0.84, 0.95)))
 	body.add_child(_progress_row("道印", int(summary.get("progress", 0)), int(summary.get("target", 1)),
@@ -3712,7 +3712,7 @@ func _build_journal_objective(body: VBoxContainer) -> void:
 
 
 func _build_journal_threads(body: VBoxContainer) -> void:
-	body.add_child(_section_title("未竟因果"))
+	body.add_child(_section_title("尚未结束的故事"))
 	var threads: Array = (run_state.get("story", {}) as Dictionary).get("unresolved_threads", [])
 	if threads.is_empty():
 		body.add_child(_label("眼下没有悬而未决的主线，山河暂时允许你喘息。", 16,
@@ -3746,7 +3746,7 @@ func _build_journal_arcs(body: VBoxContainer) -> void:
 		stack.add_theme_constant_override("separation", 3)
 		stack.add_child(_label("%s · %s" % [str(names.get(arc_id, arc_id)), status], 15,
 			Color(0.84, 0.87, 0.84, 0.94)))
-		stack.add_child(_progress_row("命途进度", display_progress, maximum, era_accent))
+		stack.add_child(_progress_row("剧情进度", display_progress, maximum, era_accent))
 		if not legacy.is_empty():
 			stack.add_child(_label("跨世定局：%s" % legacy, 14, Color("d9c98f")))
 		body.add_child(stack)
@@ -3783,7 +3783,7 @@ func _build_journal_recent(body: VBoxContainer) -> void:
 			str(entry.get("arc_name", "无名纪事")), int(entry.get("chapter_number", 1)),
 			"/%d" % int(entry.get("chapter_total", 0)) if int(entry.get("chapter_total", 0)) > 0 else ""],
 			13, Color(era_accent, 0.9)))
-		column.add_child(_display_label(str(entry.get("title", "无名因果")), 19, Color("f0e7d2")))
+		column.add_child(_display_label(str(entry.get("title", "未命名事件")), 19, Color("f0e7d2")))
 		column.add_child(_label("你选择了“%s”" % str(entry.get("choice", "沉默")), 15,
 			Color(0.83, 0.86, 0.84, 0.94)))
 		var outcome := _label(str(entry.get("outcome", "")), 16, Color(0.78, 0.82, 0.81, 0.92))
@@ -3858,11 +3858,11 @@ func _record_objective_action(action_id: String) -> Dictionary:
 		result["world_message"] = str(encounter_result.get("message", "敌踪已经消散。"))
 	if bool(result.get("completed", false)):
 		var objective_id := str(result.get("objective_id", ""))
-		_add_memory("阶段命途【%s】圆满，连续践行被旧玉记下。" %
+		_add_memory("阶段目标【%s】已经完成，连续行动记录已保存。" %
 			str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id)))
 	elif bool(result.get("missed", false)):
 		var objective_id := str(result.get("objective_id", ""))
-		_add_memory("阶段命途【%s】逾期，连续践行归零。" %
+		_add_memory("阶段目标【%s】已经逾期，连续行动次数归零。" %
 			str(ObjectiveSystemScript.definition(objective_id).get("name", objective_id)))
 	return result
 
@@ -3967,7 +3967,7 @@ func _show_reincarnation() -> void:
 		"旧玉接住了这一缕神魂" if rebirth_triggered else "这一世的神魂归于天地"],
 		16, Color("cfd8c1") if rebirth_triggered else Color("d8b5aa"), HORIZONTAL_ALIGNMENT_CENTER))
 	column.add_child(_divider())
-	column.add_child(_section_title("将被下一世听见的回响"))
+	column.add_child(_section_title("下一世会继承的记忆"))
 	var echoes: Array = last_life.get("echoes", [])
 	if echoes.is_empty():
 		column.add_child(_label("这一世没有留下显眼遗产，但世界仍记得你曾来过。", 16,
@@ -3975,7 +3975,7 @@ func _show_reincarnation() -> void:
 	else:
 		for echo in echoes.slice(0, 4):
 			var echo_data: Dictionary = echo
-			var echo_label := _label("• %s · %s" % [echo_data.get("name", "无名回响"), echo_data.get("description", "")],
+			var echo_label := _label("• %s · %s" % [echo_data.get("name", "未命名记忆"), echo_data.get("description", "")],
 				16, Color("d9d2bb"))
 			echo_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			column.add_child(echo_label)
@@ -3991,17 +3991,17 @@ func _show_reincarnation() -> void:
 		var next_life_button := _button("循着心跳醒入下一世", _begin_next_life.bind(name_input), true)
 		next_life_button.name = "NextLifeButton"
 		column.add_child(next_life_button)
-		column.add_child(_label("世界不会重置：旧人会老去，宗门会兴衰，未竟因果会换一副面孔回来。",
+		column.add_child(_label("世界不会重置：故人会老去，宗门会兴衰，尚未解决的问题会在下一世继续出现。",
 			14, Color(0.72, 0.76, 0.77), HORIZONTAL_ALIGNMENT_CENTER))
 		name_input.grab_focus()
 	else:
-		var ending_text := _label("没有按钮可以让死亡反悔。此生命途、许诺与遗憾仍留在长卷中；若再开一局，天地会给出另一条路。",
+		var ending_text := _label("死亡无法撤销。这一世的经历、承诺与遗憾仍会保留在故事记录中；若重新开始，世界会走向另一条路。",
 			17, Color("ddd2c2"), HORIZONTAL_ALIGNMENT_CENTER)
 		ending_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		column.add_child(ending_text)
 		var ending_actions := HBoxContainer.new()
 		ending_actions.add_theme_constant_override("separation", 12)
-		var journal_button := _button("回看此生命途", _show_journal, false)
+		var journal_button := _button("回看这一世的记录", _show_journal, false)
 		journal_button.name = "EndingJournalButton"
 		journal_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		ending_actions.add_child(journal_button)
@@ -4681,7 +4681,7 @@ func _build_achievement_list() -> Control:
 		Color("f2dfaa"))
 	summary_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary_row.add_child(summary_title)
-	summary_row.add_child(_label("尚余 %d 道因果" % (achievement_total - achievement_count), 13,
+	summary_row.add_child(_label("尚余 %d 项成就" % (achievement_total - achievement_count), 13,
 		Color(0.70, 0.77, 0.78), HORIZONTAL_ALIGNMENT_RIGHT))
 	summary_column.add_child(summary_row)
 	summary_column.add_child(_progress_row("总体完成", achievement_count, achievement_total,
@@ -5297,7 +5297,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_9:
 				_resolve_choice(int(event.keycode - KEY_1))
 			elif event.keycode == KEY_ESCAPE:
-				feedback = "你暂时离开这段因果，但它没有真正结束。"
+				feedback = "你暂时离开了这件事，但它还没有真正结束。"
 				current_event = {}
 				_show_game()
 		ScreenState.EVENT_RESULT:

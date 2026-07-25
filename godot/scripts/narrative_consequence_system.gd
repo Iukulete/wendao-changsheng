@@ -266,7 +266,7 @@ static func choice_availability(state: Dictionary, choice: Dictionary,
 	var requires: Dictionary = choice.get("requires", {})
 	for flag_id in _string_array(requires.get("flags_all", []), 32, 64):
 		if not bool((story.flags as Dictionary).get(flag_id, false)):
-			return {"available": false, "reason": "此前的因果尚未走到这里。"}
+			return {"available": false, "reason": "前面的剧情还没有进行到这里。"}
 	for flag_id in _string_array(requires.get("flags_none", []), 32, 64):
 		if bool((story.flags as Dictionary).get(flag_id, false)):
 			return {"available": false, "reason": "此前的选择已经关闭这条路。"}
@@ -343,7 +343,7 @@ static func relationship_summary(state: Dictionary, characters: Array = []) -> S
 			best_weight = weight
 			best = relation
 	if best.is_empty() or best_weight <= 0:
-		return "尚无人真正走近你的命途。"
+		return "目前还没有建立重要关系。"
 	var state_text := "彼此试探"
 	if int(best.get("coercion", 0)) > 0:
 		state_text = "控制仍未解除"
@@ -363,8 +363,8 @@ static func open_obligation_summary(state: Dictionary, characters: Array = []) -
 		for index in range(records.size() - 1, -1, -1):
 			var record: Dictionary = records[index]
 			if str(record.get("status", "open")) == "open":
-				return str(record.get("text", "一件旧事仍待偿还。"))
-	return "暂时没有写在明面上的旧约。"
+				return str(record.get("text", "还有一项约定没有完成。"))
+	return "目前没有尚未完成的约定。"
 
 
 static func _queue_combat_consequences(story: Dictionary, state: Dictionary,

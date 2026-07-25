@@ -933,7 +933,14 @@ static func story_projection_for_resolution(arc_id: String, resolution: String) 
 	var resolutions_value: Variant = arc.get("resolutions", {})
 	if not resolutions_value is Dictionary:
 		return {}
-	var card_id := str((resolutions_value as Dictionary).get(resolution, ""))
+	var legacy_jade_resolutions := {
+		"旧我为证": "保留前世证词", "守证旧我": "前世记忆仅供参考",
+		"今生校旧": "只信今生证据", "今身定锚": "现实证据优先",
+		"封梦自持": "封存前世记忆", "断梦留痕": "永久关闭旧玉",
+	}
+	var lookup_resolution := str(legacy_jade_resolutions.get(resolution, resolution)) \
+		if arc_id == "jade" else resolution
+	var card_id := str((resolutions_value as Dictionary).get(lookup_resolution, ""))
 	if card_id.is_empty():
 		return {}
 	return {"arc_id":arc_id, "arc_name":str(arc.get("name", arc_id)),
