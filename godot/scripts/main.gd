@@ -21,6 +21,7 @@ const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const AudioDirectorScript = preload("res://scripts/audio_director.gd")
 const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.gd")
 const CinematicArtMotionScript = preload("res://scripts/cinematic_art_motion.gd")
+const CharacterArtRigScript = preload("res://scripts/character_art_rig.gd")
 const NarrativeConsequenceScript = preload("res://scripts/narrative_consequence_system.gd")
 
 const ERA_ORDER := [
@@ -42,10 +43,11 @@ const ERA_SCENES := {
 }
 
 const MENU_SCENE := "res://art/scenes/void_threshold_temple.png"
-const PROTAGONIST := "res://art/portraits/protagonist_hooded_close.jpg"
 const EVENTS_PATH := "res://data/events_v014.json"
 const BODY_FONT_PATH := "res://art/fonts/NotoSansSC-Variable.ttf"
 const DISPLAY_FONT_PATH := "res://art/fonts/NotoSerifSC-Variable.ttf"
+const MIN_READABLE_FONT_SIZE := 18
+const DEFAULT_BODY_FONT_SIZE := 22
 
 const DEFAULT_PLAYER := {
 	"name": "无名",
@@ -203,13 +205,13 @@ func _process(delta: float) -> void:
 func _build_theme() -> void:
 	var body_base := load(BODY_FONT_PATH) as Font
 	var display_base := load(DISPLAY_FONT_PATH) as Font
-	body_font = _font_variation(body_base, 740)
-	body_medium_font = _font_variation(body_base, 790)
-	body_semibold_font = _font_variation(body_base, 870)
-	display_font = _font_variation(display_base, 700)
+	body_font = _font_variation(body_base, 800)
+	body_medium_font = _font_variation(body_base, 850)
+	body_semibold_font = _font_variation(body_base, 900)
+	display_font = _font_variation(display_base, 750)
 	base_theme = Theme.new()
 	base_theme.default_font = body_font
-	base_theme.default_font_size = 18
+	base_theme.default_font_size = DEFAULT_BODY_FONT_SIZE
 	base_theme.set_font("font", "Button", body_medium_font)
 	base_theme.set_font("font", "LineEdit", body_font)
 	base_theme.set_font("normal_font", "RichTextLabel", body_font)
@@ -320,6 +322,32 @@ func _attach_art_motion(target: Control, profile_id: String, layer_mode: int,
 	rig.name = "CinematicArtMotion"
 	target.add_child(rig)
 	rig.call("configure", target, profile, layer_mode, seed_text, allow_offset_motion)
+
+
+func _build_character_art_rig(character_id: String, portrait_path: String,
+		profile_id: String, seed_text: String) -> CharacterArtRig:
+	var identity := CharacterArtCatalogScript.character(character_id)
+	var source_path := portrait_path
+	if source_path.is_empty():
+		source_path = str(identity.get("current_portrait", ""))
+	var texture := load(source_path) as Texture2D
+	var rig := CharacterArtRigScript.new() as CharacterArtRig
+	rig.name = "CharacterArtRig"
+	rig.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rig.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var profile := CharacterArtCatalogScript.motion_profile(profile_id)
+	var rig_contract: Dictionary = identity.get("rig_contract", {})
+	var canvas_value: Variant = rig_contract.get("canvas_size", [])
+	var canvas_size := Vector2.ZERO
+	if canvas_value is Array and (canvas_value as Array).size() >= 2:
+		canvas_size = Vector2(float((canvas_value as Array)[0]), float((canvas_value as Array)[1]))
+	var wind_value: Variant = rig_contract.get("wind_axis", [1.0, 0.0])
+	var wind_axis := Vector2(1.0, 0.0)
+	if wind_value is Array and (wind_value as Array).size() >= 2:
+		wind_axis = Vector2(float((wind_value as Array)[0]), float((wind_value as Array)[1]))
+	rig.call("configure", texture, identity.get("layers", []), profile, seed_text,
+		canvas_size, wind_axis)
+	return rig
 
 
 func _show_menu() -> void:
@@ -615,7 +643,7 @@ func _show_game() -> void:
 
 	var page := VBoxContainer.new()
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	page.add_theme_constant_override("separation", 18)
+	page.add_theme_constant_override("separation", 10 if screen_host.size.y <= 760.0 else 18)
 	screen_host.add_child(page)
 	var narrow_layout := screen_host.size.x < 1040.0
 	page.resized.connect(func() -> void:
@@ -649,7 +677,7 @@ func _show_game() -> void:
 		page.add_child(body)
 	var player_panel := _build_player_panel()
 	var world_panel := _build_world_panel(not narrow_layout)
-	var action_panel := _build_action_panel()
+	var action_panel := _build_action_panel(screen_host.size.y <= 760.0)
 	if narrow_layout:
 		body.add_child(world_panel)
 		var detail_row := HBoxContainer.new()
@@ -724,15 +752,12 @@ func _build_player_panel() -> Control:
 	portrait_style.content_margin_bottom = 6
 	portrait_frame.add_theme_stylebox_override("panel", portrait_style)
 	identity_row.add_child(portrait_frame)
-	var portrait := TextureRect.new()
-	portrait.name = "MainPortrait"
-	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	portrait.texture = load(PROTAGONIST)
-	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	portrait_frame.add_child(portrait)
-	_attach_art_motion(portrait, "introspective", CinematicArtMotionScript.LayerMode.PORTRAIT,
-		"protagonist-main")
+	var portrait_rig := _build_character_art_rig("protagonist", "",
+		"introspective", "protagonist-main")
+	portrait_rig.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	portrait_frame.add_child(portrait_rig)
+	if portrait_rig.base_portrait != null:
+		portrait_rig.base_portrait.name = "MainPortrait"
 
 	var identity_detail := VBoxContainer.new()
 	identity_detail.name = "MainPlayerVitals"
@@ -800,8 +825,9 @@ func _build_world_panel(use_inner_scroll: bool = true) -> Control:
 	narrative.bbcode_enabled = true
 	narrative.fit_content = true
 	narrative.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	narrative.add_theme_font_size_override("normal_font_size", 18)
-	narrative.add_theme_font_size_override("bold_font_size", 20)
+	narrative.add_theme_font_size_override("normal_font_size", 22)
+	narrative.add_theme_font_size_override("bold_font_size", 24)
+	narrative.add_theme_constant_override("line_separation", 7)
 	narrative.text = _world_digest()
 	if use_inner_scroll:
 		var scroll := ScrollContainer.new()
@@ -815,15 +841,20 @@ func _build_world_panel(use_inner_scroll: bool = true) -> Control:
 	return panel
 
 
-func _build_action_panel() -> Control:
+func _build_action_panel(compact: bool = false) -> Control:
 	var panel := _panel(0.84, era_accent)
 	panel.name = "GameActionPanel"
 	panel.custom_minimum_size.x = 300
+	if compact:
+		var compact_style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+		compact_style.content_margin_top = 10
+		compact_style.content_margin_bottom = 10
+		panel.add_theme_stylebox_override("panel", compact_style)
 	var column := VBoxContainer.new()
 	column.name = "GameActionColumn"
 	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	column.add_theme_constant_override("separation", 8)
+	column.add_theme_constant_override("separation", 4 if compact else 8)
 	panel.add_child(column)
 	column.add_child(_section_title("当前章节"))
 	column.add_child(_build_chapter_direction())
@@ -831,7 +862,7 @@ func _build_action_panel() -> Control:
 	var action_grid := VBoxContainer.new()
 	action_grid.name = "ChapterActionList"
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	action_grid.add_theme_constant_override("separation", 8)
+	action_grid.add_theme_constant_override("separation", 4 if compact else 8)
 	column.add_child(action_grid)
 	var story_ready := not StorySystemScript.next_event(run_state.duplicate(true)).is_empty()
 	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
@@ -863,14 +894,14 @@ func _build_action_panel() -> Control:
 		dungeon_button.tooltip_text = "来源：%s。此世只开放一次，胜败都会写入长卷。" % str(dungeon.get("clue_source", "当前因果"))
 		action_grid.add_child(dungeon_button)
 	column.add_child(_divider())
-	column.add_child(_build_secondary_navigation())
+	column.add_child(_build_secondary_navigation(compact))
 	return panel
 
 
 func _build_chapter_direction() -> Control:
 	var box := VBoxContainer.new()
 	box.name = "ChapterDirection"
-	box.add_theme_constant_override("separation", 5)
+	box.add_theme_constant_override("separation", 2 if screen_host.size.y <= 760.0 else 5)
 	var next_event := StorySystemScript.next_event(run_state.duplicate(true))
 	var encounter := EncounterSystemScript.summary(run_state)
 	var title := "山河尚有一页未写"
@@ -885,6 +916,10 @@ func _build_chapter_direction() -> Control:
 	box.add_child(_label(title, 17, Color("e8c87f")))
 	var hook_label := _label(hook, 14, Color(0.80, 0.84, 0.83, 0.94))
 	hook_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if screen_host.size.y <= 760.0:
+		hook_label.max_lines_visible = 2
+		hook_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	hook_label.tooltip_text = hook
 	box.add_child(hook_label)
 	var story := StorySystemScript.normalize(run_state)
 	var threads: Array = story.get("unresolved_threads", [])
@@ -901,11 +936,15 @@ func _build_chapter_direction() -> Control:
 		Color(0.70, 0.78, 0.78, 0.90))
 	consequence_label.name = "ChapterConsequenceSummary"
 	consequence_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if screen_host.size.y <= 760.0:
+		consequence_label.max_lines_visible = 1
+		consequence_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	consequence_label.tooltip_text = consequence_label.text
 	box.add_child(consequence_label)
 	return box
 
 
-func _build_secondary_navigation() -> Control:
+func _build_secondary_navigation(compact: bool = false) -> Control:
 	var grid := GridContainer.new()
 	grid.name = "SecondaryNavigation"
 	grid.columns = 2
@@ -921,6 +960,8 @@ func _build_secondary_navigation() -> Control:
 		var entry: Array = entry_value
 		var button := _button(str(entry[0]), entry[1], false, "", true)
 		button.name = str(entry[2])
+		if compact:
+			button.custom_minimum_size.y = 42
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(button)
 	return grid
@@ -1370,7 +1411,8 @@ func _show_combat() -> void:
 	stage_frame.add_child(combat_stage)
 	arena_row.add_child(stage_frame)
 
-	var tactics := _build_combat_tactics_panel(battle, intent_forecast, objective, narrow_layout)
+	var compact_tactics := narrow_layout or screen_host.size.x <= 1280.0 or screen_host.size.y <= 760.0
+	var tactics := _build_combat_tactics_panel(battle, intent_forecast, objective, compact_tactics)
 	tactics.size_flags_stretch_ratio = 1.18
 	arena_row.add_child(tactics)
 	page.add_child(_build_combat_action_deck(battle, action_forecasts, technique_forecasts,
@@ -1738,7 +1780,7 @@ func _combat_action_card(action_id: String, forecast: Dictionary, battle: Dictio
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	button.add_theme_font_size_override("font_size", 14)
+	button.add_theme_font_size_override("font_size", 18)
 	var role_color := _combat_role_color(role)
 	button.add_theme_stylebox_override("normal", _button_style(0.20, role_color, 0.62, true))
 	button.add_theme_stylebox_override("hover", _button_style(0.38, role_color, 0.96, true))
@@ -1763,7 +1805,7 @@ func _combat_utility_button(title: String, detail: String, role: String,
 	var button := _button("%s · %s" % [title, detail], callback, false, "", true)
 	button.custom_minimum_size = Vector2(0, 40)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 13)
+	button.add_theme_font_size_override("font_size", 18)
 	var role_color := _combat_role_color(role)
 	button.add_theme_stylebox_override("normal", _button_style(0.15, role_color, 0.40, true))
 	button.add_theme_stylebox_override("hover", _button_style(0.30, role_color, 0.84, true))
@@ -1849,13 +1891,13 @@ func _build_combat_tactics_panel(battle: Dictionary, forecast: Dictionary,
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var style := panel.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
-	style.content_margin_left = 13
-	style.content_margin_right = 13
-	style.content_margin_top = 10
-	style.content_margin_bottom = 9
+	style.content_margin_left = 10 if compact else 13
+	style.content_margin_right = 10 if compact else 13
+	style.content_margin_top = 6 if compact else 10
+	style.content_margin_bottom = 6 if compact else 9
 	panel.add_theme_stylebox_override("panel", style)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 5)
+	column.add_theme_constant_override("separation", 2 if compact else 5)
 	panel.add_child(column)
 
 	var signature := VBoxContainer.new()
@@ -1885,14 +1927,18 @@ func _build_combat_tactics_panel(battle: Dictionary, forecast: Dictionary,
 		Color(0.79, 0.82, 0.80))
 	rule.name = "CombatSignatureRule"
 	rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rule.max_lines_visible = 2
+	rule.max_lines_visible = 1 if compact else 2
+	rule.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	rule.tooltip_text = rule.text
 	signature.add_child(rule)
 	if phase_active or phase_pending:
 		var phase_rule := _label("换势 · %s" % str(objective.get("signature_phase_rule", "后半程招路已经改变。")),
 			12, Color("e88972"))
 		phase_rule.name = "CombatSignaturePhaseRule"
 		phase_rule.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		phase_rule.max_lines_visible = 2
+		phase_rule.max_lines_visible = 1 if compact else 2
+		phase_rule.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		phase_rule.tooltip_text = phase_rule.text
 		signature.add_child(phase_rule)
 	column.add_child(_divider())
 
@@ -1916,17 +1962,22 @@ func _build_combat_tactics_panel(battle: Dictionary, forecast: Dictionary,
 		"先看清敌意，再决定这一回合。")), 12, Color(0.78, 0.82, 0.81))
 	counterplay.name = "CombatCounterplay"
 	counterplay.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	counterplay.max_lines_visible = 2
+	counterplay.max_lines_visible = 1 if compact else 2
+	counterplay.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	counterplay.tooltip_text = counterplay.text
 	forecast_card.add_child(counterplay)
 	var intent_effect := _combat_intent_signature_effect(forecast)
 	if not intent_effect.is_empty():
 		var effect_label := _label(intent_effect, 12, Color("d99aba"))
 		effect_label.name = "CombatIntentSignatureEffect"
 		effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		effect_label.max_lines_visible = 1 if compact else 2
+		effect_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		effect_label.tooltip_text = effect_label.text
 		forecast_card.add_child(effect_label)
 	forecast_card.add_child(_build_combat_intent_timeline(battle))
 	column.add_child(_divider())
-	column.add_child(_build_combat_objective_card(objective))
+	column.add_child(_build_combat_objective_card(objective, compact))
 
 	var recent_lines := _combat_event_lines(battle, true)
 	if not compact and not recent_lines.is_empty():
@@ -2082,11 +2133,11 @@ func _combat_event_action_name(combat_event: Dictionary) -> String:
 	return CombatSystemScript.action_name(action_id)
 
 
-func _build_combat_objective_card(objective: Dictionary) -> Control:
+func _build_combat_objective_card(objective: Dictionary, compact: bool = false) -> Control:
 	var ready := bool(objective.get("ready", false))
 	var card := VBoxContainer.new()
 	card.name = "CombatObjectiveCard"
-	card.add_theme_constant_override("separation", 3)
+	card.add_theme_constant_override("separation", 1 if compact else 3)
 	var row := HBoxContainer.new()
 	card.add_child(row)
 	var progress := _label("%s · %d/%d" % [str(objective.get("title", "三拍破势")),
@@ -2115,7 +2166,9 @@ func _build_combat_objective_card(objective: Dictionary) -> Control:
 		Color(0.75, 0.80, 0.79, 0.94))
 	status_label.name = "CombatCounterStatus"
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	status_label.max_lines_visible = 2
+	status_label.max_lines_visible = 1 if compact else 2
+	status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	status_label.tooltip_text = status_label.text
 	card.add_child(status_label)
 	return card
 
@@ -2614,7 +2667,7 @@ func _show_dungeon_combat() -> void:
 		# opaque surface instead of letting the scene art compete with the text.
 		card_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		card_button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		card_button.add_theme_font_size_override("font_size", 16)
+		card_button.add_theme_font_size_override("font_size", 20)
 		card_button.add_theme_color_override("font_color", Color("f5eee0"))
 		card_button.add_theme_color_override("font_hover_color", Color.WHITE)
 		card_button.add_theme_color_override("font_pressed_color", Color("fff6d6"))
@@ -3274,20 +3327,19 @@ func _build_event_stage(narrow_layout: bool = false) -> Control:
 		_attach_art_motion(scene, motion_profile_id, CinematicArtMotionScript.LayerMode.SCENE,
 			"%s-scene" % motion_seed)
 	else:
-		var portrait := TextureRect.new()
-		portrait.name = "EventPortrait"
-		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		portrait.stretch_mode = TextureRect.STRETCH_SCALE
-		portrait.texture = load(portrait_path)
-		portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		stage.add_child(portrait)
+		var portrait_rig := _build_character_art_rig(str(current_event.get("character_id", "")),
+			portrait_path, motion_profile_id,
+			"%s-%s" % [motion_seed, str(current_event.get("character_id", "portrait"))])
+		portrait_rig.name = "CharacterArtRig"
+		stage.add_child(portrait_rig)
+		var portrait := portrait_rig.base_portrait
+		if portrait != null:
+			portrait.name = "EventPortrait"
 		var focus_y := clampf(float(current_event.get("portrait_focus_y", 0.18)), 0.0, 1.0)
 		stage.resized.connect(func() -> void:
-			_layout_focus_portrait(portrait, stage, focus_y)
+			_layout_focus_portrait_rig(portrait_rig, stage, focus_y)
 		)
-		call_deferred("_layout_focus_portrait", portrait, stage, focus_y)
-		_attach_art_motion(portrait, motion_profile_id, CinematicArtMotionScript.LayerMode.PORTRAIT,
-			"%s-%s" % [motion_seed, str(current_event.get("character_id", "portrait"))], false)
+		call_deferred("_layout_focus_portrait_rig", portrait_rig, stage, focus_y)
 
 	var shade := ColorRect.new()
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -3328,6 +3380,19 @@ func _layout_focus_portrait(portrait: TextureRect, stage: Control, focus_y: floa
 	portrait.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	portrait.position = Vector2(-overflow.x * 0.5, -overflow.y * focus_y)
 	portrait.size = rendered_size
+
+
+func _layout_focus_portrait_rig(rig: CharacterArtRig, stage: Control, focus_y: float) -> void:
+	if not is_instance_valid(rig) or rig.base_portrait == null or stage.size.x < 1.0 or stage.size.y < 1.0:
+		return
+	var texture_size := rig.base_portrait.texture.get_size()
+	if texture_size.x < 1.0 or texture_size.y < 1.0:
+		return
+	var cover_scale := maxf(stage.size.x / texture_size.x, stage.size.y / texture_size.y)
+	var rendered_size := texture_size * cover_scale
+	var overflow := rendered_size - stage.size
+	rig.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	rig.set_layout_rect(Vector2(-overflow.x * 0.5, -overflow.y * focus_y), rendered_size)
 
 
 func _build_event_choices() -> Control:
@@ -4100,7 +4165,7 @@ func _audio_toggle(title: String, description: String, key: String,
 	toggle.name = node_name
 	toggle.text = title
 	toggle.button_pressed = value
-	toggle.add_theme_font_size_override("font_size", 17)
+	toggle.add_theme_font_size_override("font_size", 21)
 	toggle.tooltip_text = description
 	column.add_child(toggle)
 	var explanation := _label(description, 13, Color(0.72, 0.78, 0.78))
@@ -4550,13 +4615,25 @@ func _show_armory() -> void:
 	page.add_theme_constant_override("separation", 12)
 	screen_host.add_child(page)
 	page.add_child(_display_label("成就与轮回玉藏兵", 28, Color("f1d79a"), HORIZONTAL_ALIGNMENT_CENTER))
-	var body := HBoxContainer.new()
+	var body: BoxContainer = VBoxContainer.new() if screen_host.size.x < 1040.0 else HBoxContainer.new()
 	body.name = "ArmoryBody"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_theme_constant_override("separation", 18)
 	page.add_child(body)
 	body.add_child(_build_achievement_list())
 	body.add_child(_build_jade_armory_list())
+	if screen_host.size.x < 1040.0:
+		var body_scroll := ScrollContainer.new()
+		body_scroll.name = "ArmoryBodyScroll"
+		body_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		body_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		body_scroll.follow_focus = true
+		body_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		body_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		page.remove_child(body)
+		body_scroll.add_child(body)
+		page.add_child(body_scroll)
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
 	actions.add_theme_constant_override("separation", 12)
@@ -5011,10 +5088,10 @@ func _button(text_value: String, callback: Callable, primary: bool,
 		sound_event: String = "", compact: bool = false) -> Button:
 	var button := Button.new()
 	button.text = text_value
-	button.custom_minimum_size.y = 44 if compact else 50
+	button.custom_minimum_size.y = 48 if compact else 56
 	button.focus_mode = Control.FOCUS_ALL
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 15 if compact else 18)
+	button.add_theme_font_size_override("font_size", 19 if compact else 22)
 	button.add_theme_color_override("font_color", Color("f4eee0"))
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	var normal := _button_style(0.18 if not primary else 0.31, era_accent, 0.44, compact)
@@ -5109,18 +5186,23 @@ func _style_line_edit(edit: LineEdit) -> void:
 	edit.add_theme_stylebox_override("normal", normal)
 	edit.add_theme_stylebox_override("focus", normal.duplicate())
 	edit.add_theme_color_override("font_color", Color("f3ede0"))
-	edit.add_theme_color_override("font_placeholder_color", Color(0.68, 0.71, 0.72, 0.72))
-	edit.add_theme_font_size_override("font_size", 19)
+	edit.add_theme_color_override("font_placeholder_color", Color(0.78, 0.81, 0.82, 0.90))
+	edit.add_theme_font_size_override("font_size", 22)
 
 
-func _label(text_value: String, font_size: int = 18, color: Color = Color.WHITE,
+func _label(text_value: String, font_size: int = DEFAULT_BODY_FONT_SIZE, color: Color = Color.WHITE,
 		alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
 	var label := Label.new()
 	label.text = text_value
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", maxi(font_size, MIN_READABLE_FONT_SIZE))
+	label.add_theme_constant_override("line_spacing", 5)
 	var readable_color := color
-	readable_color.a = maxf(readable_color.a, 0.84)
+	if readable_color.get_luminance() < 0.86:
+		readable_color = readable_color.lerp(Color.WHITE, 0.30)
+	readable_color.a = maxf(readable_color.a, 0.98)
 	label.add_theme_color_override("font_color", readable_color)
+	label.add_theme_constant_override("outline_size", 2)
+	label.add_theme_color_override("font_outline_color", Color(0.01, 0.015, 0.02, 0.82))
 	label.horizontal_alignment = alignment
 	return label
 
@@ -5133,7 +5215,7 @@ func _display_label(text_value: String, font_size: int, color: Color = Color.WHI
 
 
 func _section_title(text_value: String) -> Label:
-	var label := _label(text_value, 20, Color(era_accent, 0.98))
+	var label := _label(text_value, 24, Color(era_accent, 0.98))
 	label.add_theme_constant_override("outline_size", 4)
 	label.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.03, 0.74))
 	return label

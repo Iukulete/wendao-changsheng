@@ -13,7 +13,7 @@ func _init() -> void:
 	_expect(int(validation.get("motion_profile_count", 0)) >= 5,
 		"角色美术必须提供克制、警觉、对峙与回响等动效档位")
 	_expect(int(validation.get("storyboard_count", 0)) >= 3 and
-		(validation.get("storyboard_blockers", []) as Array).size() == 3,
+		(validation.get("storyboard_blockers", []) as Array).is_empty(),
 		"男主与照雪关键分镜必须进入正式美术计划与发布门禁")
 
 	var protagonist: Dictionary = CharacterArtCatalogScript.character("protagonist")

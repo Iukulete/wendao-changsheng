@@ -35,6 +35,62 @@ SUPPORTED_RELEASE_STATUSES = {
     "storyboard_required",
 }
 REQUIRED_NARRATIVE_ROLES = {"male_protagonist", "female_lead", "primary_antagonist"}
+OPEN_REGIONAL_POLICY = "open_regional_palette"
+# Audit probes only: catch regional labels accidentally used as blanket negatives.
+REGIONAL_LABEL_GUARD_TOKENS = (
+    "日式",
+    "日系",
+    "和风",
+    "和式",
+    "日本",
+    "韩式",
+    "韩系",
+    "韩国",
+    "日韩",
+    "日漫",
+    "韩漫",
+    "japanese",
+    "korean",
+    "anime",
+    "manga",
+)
+RIG_LAYER_IDS = {"hair_back", "hair_front", "tassel_or_ribbon", "outer_cloth", "local_fx"}
+REGIONAL_NARRATIVE_ANCHORS = {
+    "ning_zhaoxue": "海雾关",
+    "chi_yaoqing": "西域商道",
+    "wen_xingdu": "东南海域",
+    "han_xuansu": "高原与南亚",
+}
+LEAD_VISUAL_CONTRACTS = {
+    "protagonist": {
+        "style_profile": "legacy_xianxia_cg_lead_v1",
+        "reference_portrait": "res://art/portraits/protagonist_hooded_close.jpg",
+        "reference_sha256": "78323d185fbe99fbe29579a028e2b486a316e190b26d6a4d8d46995f02e75133",
+        "face_visibility": "hood_conceals_eyes",
+        "must_keep": {
+            "low_forward_hood",
+            "eyes_hidden",
+            "three_quarter_side_or_back_silhouette",
+            "black_teal_brocade_cloak",
+            "deep_teal_tassels",
+            "black_white_reincarnation_jade",
+        },
+    },
+    "jiang_zhaoxue": {
+        "style_profile": "legacy_xianxia_cg_lead_v1",
+        "reference_portrait": "res://art/portraits/qingyun_sword_heroine.jpg",
+        "reference_sha256": "9e845ad2f1e6e6a480823471e02ac3285407c70483616736ba7c1a058d724728",
+        "face_visibility": "visible",
+        "must_keep": {
+            "young_beautiful_adult_identity",
+            "long_blue_black_hair",
+            "silver_blue_hair_ornaments",
+            "small_cyan_forehead_ornament",
+            "jade_white_ice_blue_sword_dress",
+            "ornate_silver_blue_sword",
+        },
+    },
+}
 INTENT_ASSETS = {
     "scenes/lantern_river_spirit_bazaar.png",
     "scenes/void_threshold_temple.png",
@@ -105,6 +161,13 @@ def image_dimensions(payload: bytes, suffix: str) -> tuple[int, int]:
     raise RuntimeError(f"dimension reader does not support {suffix}")
 
 
+def png_has_alpha(payload: bytes) -> bool:
+    if payload[:8] != b"\x89PNG\r\n\x1a\n" or payload[12:16] != b"IHDR":
+        return False
+    # PNG IHDR byte 25 is the color type; 4 and 6 carry an alpha channel.
+    return len(payload) > 25 and payload[25] in (4, 6)
+
+
 def nonempty_text(value: object) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
@@ -119,6 +182,30 @@ def validate_character_art(entries: dict[str, dict[str, object]], require_releas
     catalog = json.loads(CHARACTER_ART.read_text(encoding="utf-8"))
     if catalog.get("schema_version") != 1:
         raise RuntimeError("unexpected character art schema version")
+    art_direction = catalog.get("art_direction")
+    if not isinstance(art_direction, dict):
+        raise RuntimeError("character art catalog has no art direction contract")
+    regional_influences = art_direction.get("regional_influences")
+    if (
+        not isinstance(regional_influences, dict)
+        or regional_influences.get("policy") != OPEN_REGIONAL_POLICY
+        or not nonempty_text(regional_influences.get("statement"))
+        or not nonempty_text(regional_influences.get("rejection_basis"))
+    ):
+        raise RuntimeError("character art catalog has no open regional-influence policy")
+    forbidden = art_direction.get("forbidden")
+    if not isinstance(forbidden, list) or not all(nonempty_text(value) for value in forbidden):
+        raise RuntimeError("character art forbidden rules must be a non-empty text list")
+    forbidden_text = "\n".join(str(value) for value in forbidden)
+    forbidden_text_folded = forbidden_text.casefold()
+    regional_label_violations = [
+        token for token in REGIONAL_LABEL_GUARD_TOKENS if token.casefold() in forbidden_text_folded
+    ]
+    if regional_label_violations:
+        raise RuntimeError(
+            "character art rules use regional labels as blanket negatives: "
+            + ", ".join(regional_label_violations)
+        )
     profiles = catalog.get("motion_profiles")
     if not isinstance(profiles, dict) or not profiles:
         raise RuntimeError("character art catalog has no motion profiles")
@@ -149,6 +236,91 @@ def validate_character_art(entries: dict[str, dict[str, object]], require_releas
             raise RuntimeError(f"unknown motion profile for {character_id}: {profile_id!r}")
         if not nonempty_text(character.get("visual_signature")):
             raise RuntimeError(f"missing visual signature for {character_id}")
+        regional_anchor = REGIONAL_NARRATIVE_ANCHORS.get(str(character_id))
+        if regional_anchor is not None and (
+            not nonempty_text(character.get("regional_influence_note"))
+            or regional_anchor not in str(character.get("visual_signature", ""))
+        ):
+            raise RuntimeError(f"missing regional narrative rationale for {character_id}")
+        expected_contract = LEAD_VISUAL_CONTRACTS.get(str(character_id))
+        if expected_contract is not None:
+            reference_portrait = character.get("reference_portrait")
+            reference_sha256 = character.get("reference_sha256")
+            visual_contract = character.get("visual_contract")
+            if (
+                character.get("style_profile") != expected_contract["style_profile"]
+                or reference_portrait != expected_contract["reference_portrait"]
+                or reference_sha256 != expected_contract["reference_sha256"]
+                or not isinstance(visual_contract, dict)
+                or visual_contract.get("face_visibility") != expected_contract["face_visibility"]
+            ):
+                raise RuntimeError(f"lead visual contract drifted for {character_id}")
+            required_features = visual_contract.get("must_keep")
+            rejected_features = visual_contract.get("must_avoid")
+            if (
+                not isinstance(required_features, list)
+                or not expected_contract["must_keep"].issubset(set(required_features))
+                or not isinstance(rejected_features, list)
+                or not rejected_features
+            ):
+                raise RuntimeError(f"lead visual requirements are incomplete for {character_id}")
+            reference_path = runtime_art_path(reference_portrait)
+            reference_entry = entries.get(reference_path)
+            if (
+                not isinstance(reference_entry, dict)
+                or reference_entry.get("sha256") != reference_sha256
+            ):
+                raise RuntimeError(f"lead visual reference is missing or changed for {character_id}")
+            rig_contract = character.get("rig_contract")
+            if not isinstance(rig_contract, dict):
+                raise RuntimeError(f"missing rig contract for {character_id}")
+            canvas_size = rig_contract.get("canvas_size")
+            wind_axis = rig_contract.get("wind_axis")
+            locked_regions = rig_contract.get("locked_regions")
+            allowed_layers = rig_contract.get("allowed_layers")
+            if (
+                not isinstance(canvas_size, list)
+                or len(canvas_size) != 2
+                or tuple(int(value) for value in canvas_size) != (1024, 1536)
+                or not isinstance(wind_axis, list)
+                or len(wind_axis) != 2
+                or not isinstance(locked_regions, list)
+                or not locked_regions
+                or not isinstance(allowed_layers, list)
+                or not set(str(value) for value in allowed_layers).issubset(RIG_LAYER_IDS)
+                or rig_contract.get("layering_rule") != "same_source_same_canvas_rgba_only"
+            ):
+                raise RuntimeError(f"invalid rig contract for {character_id}")
+            layers = character.get("layers")
+            if not isinstance(layers, list):
+                raise RuntimeError(f"rig layers must be a list for {character_id}")
+            seen_layer_ids: set[str] = set()
+            current_runtime_path = runtime_art_path(character.get("current_portrait"))
+            for layer in layers:
+                if not isinstance(layer, dict):
+                    raise RuntimeError(f"invalid rig layer for {character_id}")
+                layer_id = str(layer.get("id", ""))
+                layer_runtime_path = runtime_art_path(layer.get("path"))
+                if (
+                    layer_id not in RIG_LAYER_IDS
+                    or layer_id in seen_layer_ids
+                    or layer_id not in set(str(value) for value in allowed_layers)
+                    or not layer_runtime_path.startswith("portraits/layers/")
+                    or not layer_runtime_path.endswith(".png")
+                    or layer_runtime_path not in entries
+                ):
+                    raise RuntimeError(f"invalid or unregistered rig layer for {character_id}: {layer_id}")
+                layer_entry = entries[layer_runtime_path]
+                if (
+                    layer_entry.get("source_type") != "generated"
+                    or (int(layer_entry.get("width", -1)), int(layer_entry.get("height", -1))) != (1024, 1536)
+                    or layer_entry.get("derived_from") != current_runtime_path
+                ):
+                    raise RuntimeError(f"rig layer provenance drifted for {character_id}: {layer_id}")
+                layer_payload = (ART_ROOT / Path(*PurePosixPath(layer_runtime_path).parts)).read_bytes()
+                if not png_has_alpha(layer_payload):
+                    raise RuntimeError(f"rig layer must be RGBA/alpha PNG for {character_id}: {layer_id}")
+                seen_layer_ids.add(layer_id)
         roles.add(str(role))
         identities[str(character_id)] = character
         portrait = character.get("current_portrait")

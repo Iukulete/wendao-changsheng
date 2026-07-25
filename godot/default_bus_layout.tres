@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" load_steps=4 format=3]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://dftqyptfjn2u8"]
 
 [sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_night"]
 resource_name = "Night mode dynamics"
@@ -7,27 +7,16 @@ ratio = 5.0
 gain = 3.0
 attack_us = 18.0
 release_ms = 240.0
-mix = 1.0
 
 [sub_resource type="AudioEffectStereoEnhance" id="AudioEffectStereoEnhance_accessibility"]
 resource_name = "Stereo accessibility"
-pan_pullout = 1.0
-time_pullout_ms = 0.0
 
 [sub_resource type="AudioEffectLimiter" id="AudioEffectLimiter_safety"]
 resource_name = "Master safety limiter"
 ceiling_db = -1.0
 threshold_db = -3.0
-soft_clip_db = 2.0
-soft_clip_ratio = 10.0
 
 [resource]
-bus/0/name = &"Master"
-bus/0/solo = false
-bus/0/mute = false
-bus/0/bypass_fx = false
-bus/0/volume_db = 0.0
-bus/0/send = &""
 bus/0/effect/0/effect = SubResource("AudioEffectCompressor_night")
 bus/0/effect/0/enabled = false
 bus/0/effect/1/effect = SubResource("AudioEffectStereoEnhance_accessibility")

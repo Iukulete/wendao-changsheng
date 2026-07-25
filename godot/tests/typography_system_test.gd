@@ -5,6 +5,7 @@ const FONT_PATHS: PackedStringArray = [
 	"res://art/fonts/NotoSerifSC-Variable.ttf",
 ]
 const MANIFEST_PATH := "res://art/fonts/font_manifest.json"
+const MAIN_SCRIPT_PATH := "res://scripts/main.gd"
 const REQUIRED_GLYPHS := "问道长生天地人修炼境界突破轮回秘境卡牌能力气血灵力因果宗门师徒宿敌前世今生，。！？：；（）《》ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 var failures: Array[String] = []
@@ -12,6 +13,7 @@ var failures: Array[String] = []
 
 func _init() -> void:
 	_validate_manifest()
+	_validate_ui_readability()
 	for font_path in FONT_PATHS:
 		_validate_font(font_path)
 
@@ -22,6 +24,19 @@ func _init() -> void:
 		for failure in failures:
 			push_error("TYPOGRAPHY_SYSTEM_TEST_FAILED: %s" % failure)
 		quit(1)
+
+
+func _validate_ui_readability() -> void:
+	_expect(FileAccess.file_exists(MAIN_SCRIPT_PATH), "主界面脚本不存在：%s" % MAIN_SCRIPT_PATH)
+	if not FileAccess.file_exists(MAIN_SCRIPT_PATH):
+		return
+	var source := FileAccess.get_file_as_string(MAIN_SCRIPT_PATH)
+	_expect(source.contains("const MIN_READABLE_FONT_SIZE := 18"),
+		"界面必须保留不低于16px的可读字号下限")
+	_expect(source.contains("const DEFAULT_BODY_FONT_SIZE := 22"),
+		"界面默认正文字号必须保持在20px")
+	_expect(source.contains("readable_color.a = maxf(readable_color.a, 0.98)"),
+		"正文与说明文字必须保持高对比度")
 
 
 func _validate_manifest() -> void:
