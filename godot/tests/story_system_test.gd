@@ -371,7 +371,12 @@ func _test_jade_story_clarity(definitions: Dictionary) -> void:
 	var all_combined := "\n".join(all_story_text)
 	for awkward_fragment in ["相信其中任何人", "把传闻变成一张", "名字刚重现",
 			"血脉因此获得来处", "祖名只能加入关系", "自由和恶堕不会因",
-			"引敌之情", "宿敌因此成为双方反复选择的名字"]:
+			"引敌之情", "宿敌因此成为双方反复选择的名字",
+			"一座没有登记的渡口", "亲手合上最后一页",
+			"新门规还没有第一位违犯者", "血脉能说明你从哪里来",
+			"两样东西都在等你决定是否留下", "无法把对方当作普通路人",
+			"只有一盏灯和一个等你回答的时辰", "他只要求今后",
+			"旁人插不进你们的规则", "无需用伤害证明关系真实"]:
 		_expect(not all_combined.contains(awkward_fragment),
 			"主线文案出现指代不清或抽象拼接：%s" % awkward_fragment)
 
