@@ -579,7 +579,7 @@ func _run() -> void:
 		"id":"render_result_chapter", "source":"authored_event", "title":"雨夜来书",
 		"description":"一封没有署名的旧信穿过黑雨，停在你掌心。信上只问：你还记得上一世没有救下的人吗？",
 		"choices":[
-			{"text":"拆开信封，读完迟到的名字", "outcome":"雨声盖住远处的钟。你逐字读完，终于知道那场失约并非无人记得。",
+			{"text":"拆开信封，读清信上写的名字", "outcome":"雨声盖住远处的钟。你读完这封信，终于知道那场失约并不是没人记得。",
 				"deltas":{"dao_heart":2}, "path_deltas":{"bonds":2, "insight":1}},
 			{"text":"把信留到天明", "outcome":"信纸在灯下慢慢回温。", "deltas":{}, "path_deltas":{"insight":1}},
 			{"text":"原样退回黑雨", "outcome":"信封消失在雨幕里。", "deltas":{}, "path_deltas":{"defiance":1}},
