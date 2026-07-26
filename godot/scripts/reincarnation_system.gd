@@ -54,7 +54,7 @@ static func close_life(state: Dictionary, cause: String, rebirth_roll: int = -1)
 		"dao_name": str(DAO_NAMES.get(dao_id, "本我大道")),
 		"memory_fragments": state.get("recent_memories", []).duplicate().slice(-8),
 		"unfinished_threads": story.get("unresolved_threads", []).duplicate().slice(-8),
-		"echoes": _build_echoes(player, dao_id),
+		"echoes": _build_echoes(player, dao_id, story),
 	}
 	var lives: Array = legacy.get("past_lives", [])
 	lives.append(past_life)
@@ -252,10 +252,17 @@ static func _rebirth_roll(state: Dictionary) -> int:
 	return rng.randi_range(1, 100)
 
 
-static func _build_echoes(player: Dictionary, dao_id: String) -> Array:
+static func _build_echoes(player: Dictionary, dao_id: String, story: Dictionary = {}) -> Array:
 	var echoes: Array = []
 	var dao_echo: Array = DAO_ECHOES.get(dao_id, ["本我残响", "前世没有完成的自问仍在。"])
 	echoes.append({"id": "dao_%s" % dao_id, "type": "dao", "name": dao_echo[0], "description": dao_echo[1], "power": 20 + int(player.get("realm_index", 0)) * 4})
+	var side_echoes_value: Variant = story.get("side_thread_echoes", [])
+	var side_echoes: Array = side_echoes_value if side_echoes_value is Array else []
+	var first_side_echo := maxi(0, side_echoes.size() - 2)
+	for index in range(first_side_echo, side_echoes.size()):
+		var side_echo_value: Variant = side_echoes[index]
+		if side_echo_value is Dictionary:
+			echoes.append((side_echo_value as Dictionary).duplicate(true))
 	if int(player.get("realm_index", 0)) >= 5:
 		echoes.append({"id": "cultivation_memory", "type": "technique", "name": "前世行功残篇", "description": "经脉还记得上一世反复走过的修炼路线。", "power": 18 + int(player.realm_index) * 3})
 	if int(player.get("battles_won", 0)) >= 12:

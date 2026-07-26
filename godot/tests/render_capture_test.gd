@@ -7,6 +7,7 @@ const ItemSystemScript = preload("res://scripts/item_system.gd")
 const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
+const StorySystemScript = preload("res://scripts/story_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -538,6 +539,54 @@ func _run() -> void:
 			failures.append("扩展事件没有完整进入叙事舞台与三选一交互")
 		_capture(root, output_root.path_join("event_content_expansion_1280x720.png"),
 			Vector2i(1280, 720), "司命执笔扩展事件 1280x720")
+	var long_story_state := GameStateScript.create_new_game("长卷照影", 42424243, [8, 8, 8, 8, 8])
+	StorySystemScript.normalize(long_story_state)
+	long_story_state.story.route_history["rival"] = [{
+		"choice_id":"rival_m3_alliance", "route_id":"rival_alliance", "phase":"main",
+		"stage":2, "generation":1, "turn":3,
+	}]
+	long_story_state.story.chapter_log.append({
+		"id":"rival_main_3:1:3:3", "title":"战帖·三｜江氏旧债",
+		"choice":"先遮住递信人的姓名，再公开族老命令",
+		"outcome":"你们保住三名递信人的身份，把江氏这次送来的血契、日期和族老印鉴交给公证堂。追兵暂时退开，但族老已经派人封住山路，江照雪仍在等你决定这份证据如何公开，以及彼此是否继续并肩。",
+		"arc_id":"rival", "arc_name":"战帖", "phase":"main", "stage":2,
+		"chapter_number":3, "chapter_total":4, "generation":1, "year":4, "turn":3,
+	})
+	var long_story_event: Dictionary = StorySystemScript._build_event(long_story_state, {
+		"arc_id":"rival", "phase":"main", "node_id":"rival_main_4",
+	})
+	game.set("run_state", long_story_state)
+	game.call("_sync_state_views")
+	game.set("current_event", long_story_event)
+	game.call("_show_event")
+	await _settle_frames(4)
+	var long_story_scroll := game.find_child("EventChoicesScroll", true, false) as ScrollContainer
+	var long_story_choices := game.find_children("EventChoiceButton*", "Button", true, false)
+	if str(long_story_event.get("id", "")) != "rival_main_4" or \
+			str(long_story_event.get("description", "")).length() < 300 or \
+			long_story_choices.size() != 3:
+		failures.append("真实战帖终章没有完整合成长正文、路线后果与三个选择")
+	if long_story_scroll == null or not long_story_scroll.get_v_scroll_bar().visible or \
+			long_story_scroll.get_v_scroll_bar().max_value <= \
+			long_story_scroll.get_v_scroll_bar().page:
+		failures.append("1280x720真实长主线没有提供独立的选择区纵向滚动路径")
+	_capture(root, output_root.path_join("event_long_story_top_1280x720.png"),
+		Vector2i(1280, 720), "战帖终章长正文顶部 1280x720")
+	if long_story_scroll != null:
+		long_story_scroll.scroll_vertical = int(long_story_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var long_story_viewport := root.get_visible_rect()
+	for choice_index in range(3):
+		var long_story_choice := game.find_child("EventChoiceButton%d" % choice_index,
+			true, false) as Control
+		if long_story_choice == null or not long_story_viewport.encloses(
+				long_story_choice.get_global_rect()):
+			failures.append("1280x720真实长主线滚动到底后选择%d仍不可达" % (choice_index + 1))
+	_capture(root, output_root.path_join("event_long_story_bottom_1280x720.png"),
+		Vector2i(1280, 720), "战帖终章三个选择 1280x720")
+	game.set("run_state", auxiliary_state.duplicate(true))
+	game.call("_sync_state_views")
+	game.set("current_event", expanded_event)
 	root.size = Vector2i(800, 720)
 	game.call("_show_event")
 	await _settle_frames(4)

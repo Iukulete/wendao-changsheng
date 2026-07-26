@@ -5,6 +5,7 @@ const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.g
 const NarrativeConsequenceScript = preload("res://scripts/narrative_consequence_system.gd")
 const DATA_PATH := "res://data/story_arcs_v1.json"
 const ARC_IDS := ["jade", "sect", "family", "rival"]
+const SIDE_ROUTE_IDS := ["compassion", "ambition", "defiance", "insight", "creation", "bonds"]
 const MAIN_STAGE_COUNT := 4
 const ECHO_STAGE_COUNT := 3
 const MAX_RESOLVED := 256
@@ -315,6 +316,10 @@ static func normalize(state: Dictionary) -> Dictionary:
 		story.get("side_active_threads", {}), 64)
 	story["side_route_scores"] = _normalize_nested_int_map(
 		story.get("side_route_scores", {}), 0, 100000)
+	story["side_last_routes"] = _normalize_side_last_routes(
+		story.get("side_last_routes", {}))
+	story["side_thread_echoes"] = _normalize_side_thread_echoes(
+		story.get("side_thread_echoes", []))
 	story["side_chapter_count"] = clampi(int(story.get("side_chapter_count", 0)), 0, 1000000)
 	story["last_authored_context"] = _normalize_authored_context(
 		story.get("last_authored_context", {}))
@@ -593,9 +598,13 @@ static func _build_event(state: Dictionary, selected: Dictionary) -> Dictionary:
 	if not previous_route.is_empty() and variants.has(previous_route) and \
 			variants[previous_route] is Dictionary:
 		var variant: Dictionary = variants[previous_route]
-		for field in ["title", "description", "next", "art"]:
+		var common_description := str(node.get("description", ""))
+		for field in ["title", "next", "art"]:
 			if variant.has(field):
 				node[field] = variant[field].duplicate(true) if variant[field] is Dictionary else variant[field]
+		if variant.has("description"):
+			node["description"] = "%s\n\n%s" % [common_description,
+				str(variant.get("description", ""))]
 	var choices: Array = []
 	var realm_index := int((state.get("player", {}) as Dictionary).get("realm_index", 0))
 	for choice_value in (node.get("choices", []) as Array):
@@ -942,6 +951,16 @@ static func _normalize_nested_int_map(value: Variant, minimum: int, maximum: int
 	return result
 
 
+static func _normalize_side_last_routes(value: Variant) -> Dictionary:
+	var source: Dictionary = value if value is Dictionary else {}
+	var result := {}
+	for key in source.keys():
+		var route_id := str(source[key])
+		if SIDE_ROUTE_IDS.has(route_id):
+			result[str(key).left(64)] = route_id
+	return result
+
+
 static func _normalize_authored_context(value: Variant) -> Dictionary:
 	var source: Dictionary = value if value is Dictionary else {}
 	if source.is_empty():
@@ -956,6 +975,32 @@ static func _normalize_authored_context(value: Variant) -> Dictionary:
 		"generation": clampi(int(source.get("generation", 1)), 1, 100000),
 		"turn": maxi(0, int(source.get("turn", 0))),
 	}
+
+
+static func _normalize_side_thread_echoes(value: Variant) -> Array:
+	var source: Array = value if value is Array else []
+	var result: Array = []
+	for echo_value in source:
+		if not echo_value is Dictionary:
+			continue
+		var echo: Dictionary = echo_value
+		var echo_id := str(echo.get("id", "")).left(128)
+		var name := str(echo.get("name", "")).left(160)
+		var description := str(echo.get("description", "")).left(360)
+		if echo_id.is_empty() or name.is_empty() or description.is_empty():
+			continue
+		result.append({
+			"id": echo_id,
+			"type": "story",
+			"name": name,
+			"description": description,
+			"power": clampi(int(echo.get("power", 12)), 1, 100000),
+			"thread_id": str(echo.get("thread_id", "")).left(64),
+			"route_id": str(echo.get("route_id", "")).left(32),
+		})
+	while result.size() > 12:
+		result.pop_front()
+	return result
 
 
 static func _normalize_echoes(value: Variant) -> Dictionary:

@@ -17,6 +17,8 @@ func _init() -> void:
 	_expect(int(validation.get("thread_count", 0)) == 12,
 		"三十六个自由历练事件必须编排为十二条三章外篇")
 	_test_plain_language()
+	_test_authored_choice_consequences()
+	_test_route_variants_follow_last_choice()
 	var era_counts_value: Variant = validation.get("era_counts", {})
 	var era_counts: Dictionary = era_counts_value if era_counts_value is Dictionary else {}
 	for era in EventCatalogScript.ERAS:
@@ -75,6 +77,8 @@ func _init() -> void:
 			"每个时代必须先覆盖全部事件再允许重复：%s" % era)
 		_expect(int(state.rng_cursor) == era_event_count + 1 and state == twin,
 			"事件随机游标和冷却状态必须保持确定性：%s" % era)
+		_expect((state.story.side_thread_echoes as Array).size() == 2,
+			"每条三章外篇收束后必须留下可继承的具体遗响：%s" % era)
 		var cooldowns: Dictionary = state.story.event_cooldowns
 		_expect(cooldowns.size() == era_event_count,
 			"创作事件冷却必须按事件ID持久化：%s" % era)
@@ -85,6 +89,9 @@ func _init() -> void:
 			_numeric_dictionary_equal(persisted.story.event_cooldowns, state.story.event_cooldowns) and
 			persisted.story.life_event_ids == state.story.life_event_ids and
 			persisted.story.side_thread_progress == state.story.side_thread_progress and
+			persisted.story.side_route_scores == state.story.side_route_scores and
+			persisted.story.side_last_routes == state.story.side_last_routes and
+			persisted.story.side_thread_echoes == state.story.side_thread_echoes and
 			persisted.story.last_authored_context == state.story.last_authored_context,
 			"存档往返后必须保留事件游标、冷却、外篇进度与上一章结果：%s" % era)
 
@@ -100,6 +107,57 @@ func _init() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _test_route_variants_follow_last_choice() -> void:
+	var state := GameStateScript.create_new_game("路线承接", 831004, [7, 7, 7, 7, 7])
+	var opening := _event_by_id("imperial_void_registry")
+	opening["source"] = "authored_event"
+	var opening_choice: Dictionary = (opening.get("choices", []) as Array)[0]
+	EventCatalogScript.record_resolution(state, opening, opening_choice)
+	var middle: Dictionary = EventCatalogScript.select_event(state, "仙朝鼎盛纪")
+	_expect(str(middle.get("id", "")) == "imperial_fate_blank" and
+		str(middle.get("side_route_id", "")) == "insight",
+		"外篇第二章必须承接第一章的明确路线")
+	var middle_choice: Dictionary = (middle.get("choices", []) as Array)[2]
+	EventCatalogScript.record_resolution(state, middle, middle_choice)
+	var ending: Dictionary = EventCatalogScript.select_event(state, "仙朝鼎盛纪")
+	var route_variants: Dictionary = ending.get("route_variants", {})
+	var bonds_variant: Dictionary = route_variants.get("bonds", {})
+	var bonds_intro := str(bonds_variant.get("route_intro", ""))
+	var route_scores: Dictionary = state.story.side_route_scores.get("imperial_blank_fate", {})
+	_expect(str(ending.get("id", "")) == "imperial_siming_order" and
+		str(ending.get("side_route_id", "")) == "bonds" and
+		str(ending.get("description", "")).begins_with(bonds_intro) and
+		int(route_scores.get("insight", 0)) > int(route_scores.get("bonds", 0)),
+		"下一章必须跟随上一选择，不能被更早的累计高分覆盖")
+	var ending_choice: Dictionary = (ending.get("choices", []) as Array)[2]
+	EventCatalogScript.record_resolution(state, ending, ending_choice)
+	var side_echoes: Array = state.story.side_thread_echoes
+	var final_echo: Dictionary = side_echoes[-1] if not side_echoes.is_empty() else {}
+	_expect(str(final_echo.get("route_id", "")) == "bonds" and
+		str(final_echo.get("name", "")).contains(str(ending_choice.get("text", ""))) and
+		str(final_echo.get("description", "")) == str(ending_choice.get("outcome", "")),
+		"外篇遗响的路线、选择名与结果必须都来自终章实际选择")
+
+	var synthetic := {
+		"description": "基础正文。",
+		"route_variants": {"insight": {
+			"description": "覆盖正文。", "route_intro": "上章承接。",
+		}},
+	}
+	EventCatalogScript._apply_side_route_variant(
+		{"side_last_routes": {"synthetic": "insight"}}, "synthetic", synthetic)
+	_expect(str(synthetic.get("description", "")) == "上章承接。覆盖正文。",
+		"route_intro 与正文覆盖同时存在时必须保留两者")
+
+
+func _event_by_id(event_id: String) -> Dictionary:
+	for event_value in EventCatalogScript.load_events():
+		var event: Dictionary = event_value
+		if str(event.get("id", "")) == event_id:
+			return event.duplicate(true)
+	return {}
 
 
 func _test_combat_content_density() -> void:
@@ -156,6 +214,49 @@ func _test_plain_language() -> void:
 			"旧玉回声暂时合流", "空白签名"]:
 		_expect(not catalog_text.contains(awkward_fragment),
 			"时代事件出现无法直接复述的抽象文案：%s" % awkward_fragment)
+
+
+func _test_authored_choice_consequences() -> void:
+	var wound_terms := ["伤", "血", "痛", "灼", "裂", "反噬", "经脉", "神识", "识海",
+		"灵根", "周天", "受创", "冻", "烧", "毒", "骨", "割", "撕"]
+	var income_terms := ["俸", "赏", "售", "卖", "报酬", "酬金", "退还", "追回", "缴获",
+		"分成", "货款", "赎金", "公账", "私库", "库银", "赔付", "收入", "给", "交",
+		"付", "凑", "奖", "酬", "补"]
+	var spend_terms := ["花", "付", "垫", "购", "买", "支出", "清账", "赔", "药费", "修缮",
+		"雇", "拿出", "砸碎"]
+	var personal_income_blockers := ["暂作保管", "共同封存", "代为保管", "赔偿专账",
+		"等受损者", "等债主"]
+	for event_value in EventCatalogScript.load_events():
+		var event: Dictionary = event_value
+		for choice_value in (event.get("choices", []) as Array):
+			var choice: Dictionary = choice_value
+			var choice_id := str(choice.get("id", "%s:%s" % [
+				str(event.get("id", "")), str(choice.get("text", ""))]))
+			var route_id := EventCatalogScript._choice_side_route(choice)
+			var path_deltas: Dictionary = choice.get("path_deltas", {})
+			_expect(EventCatalogScript.PATH_IDS.has(route_id) and
+				int(path_deltas.get(route_id, 0)) > 0,
+				"时代选择必须能解析出实际路线及正向增量：%s" % choice_id)
+			var deltas: Dictionary = choice.get("deltas", {})
+			var outcome := str(choice.get("outcome", ""))
+			if int(deltas.get("hp", 0)) < 0:
+				_expect(_contains_any(outcome, wound_terms),
+					"掉 HP 的时代选择必须写明可见伤势或反噬：%s" % choice_id)
+			var stone_delta := int(deltas.get("spirit_stones", 0))
+			if stone_delta > 0:
+				_expect(outcome.contains("灵石") and _contains_any(outcome, income_terms) and
+					not _contains_any(outcome, personal_income_blockers),
+					"增加灵石的时代选择必须写明合法具体来源：%s" % choice_id)
+			elif stone_delta < 0:
+				_expect(outcome.contains("灵石") and _contains_any(outcome, spend_terms),
+					"扣除灵石的时代选择必须写明具体用途：%s" % choice_id)
+
+
+func _contains_any(text: String, terms: Array) -> bool:
+	for term_value in terms:
+		if text.contains(str(term_value)):
+			return true
+	return false
 
 
 func _numeric_dictionary_equal(left: Dictionary, right: Dictionary) -> bool:

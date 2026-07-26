@@ -3265,7 +3265,19 @@ func _show_event() -> void:
 		page.add_child(body)
 	if _event_uses_dedicated_visual():
 		body.add_child(_build_event_stage(narrow_layout))
-	body.add_child(_build_event_choices())
+	var choices_panel := _build_event_choices()
+	if narrow_layout:
+		body.add_child(choices_panel)
+	else:
+		var choices_scroll := ScrollContainer.new()
+		choices_scroll.name = "EventChoicesScroll"
+		choices_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		choices_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		choices_scroll.follow_focus = true
+		choices_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choices_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		choices_scroll.add_child(choices_panel)
+		body.add_child(choices_scroll)
 
 	var footer := _label("数字键选择  ·  ESC 暂离此事", 15,
 		Color(0.78, 0.82, 0.82, 0.82), HORIZONTAL_ALIGNMENT_CENTER)

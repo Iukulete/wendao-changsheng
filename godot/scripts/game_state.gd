@@ -143,6 +143,8 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"side_thread_progress": {},
 			"side_active_threads": {},
 			"side_route_scores": {},
+			"side_last_routes": {},
+			"side_thread_echoes": [],
 			"side_chapter_count": 0,
 			"last_authored_context": {},
 		},
@@ -326,6 +328,8 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 		"pending_echoes": [], "delivered_echoes": [], "last_echoes": [],
 		"pending_combat_consequences": [], "combat_consequence_history": [],
 		"side_thread_progress": {}, "side_active_threads": {}, "side_route_scores": {},
+		"side_last_routes": {},
+		"side_thread_echoes": [],
 		"side_chapter_count": 0, "last_authored_context": {},
 	})
 	state["ai"] = _merge_defaults(state.get("ai", {}), {

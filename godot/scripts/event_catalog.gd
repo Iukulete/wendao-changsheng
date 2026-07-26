@@ -95,6 +95,21 @@ static func validate_catalog() -> Dictionary:
 				"character_id": character_id}
 		if motion_profile.is_empty() or not CharacterArtCatalogScript.has_motion_profile(motion_profile):
 			return {"ok": false, "code": "invalid_event_motion_profile", "event_id": event_id}
+		var route_variants_value: Variant = event.get("route_variants", {})
+		if not route_variants_value is Dictionary:
+			return {"ok": false, "code": "invalid_event_route_variants", "event_id": event_id}
+		for route_id_value in (route_variants_value as Dictionary).keys():
+			var route_id := str(route_id_value)
+			var route_variant_value: Variant = (route_variants_value as Dictionary)[route_id_value]
+			if not PATH_IDS.has(route_id) or not route_variant_value is Dictionary:
+				return {"ok": false, "code": "invalid_event_route_variant",
+					"event_id": event_id, "route_id": route_id}
+			var route_variant: Dictionary = route_variant_value
+			for text_field in ["title", "description", "portrait_title", "route_intro"]:
+				if route_variant.has(text_field) and \
+						str(route_variant.get(text_field, "")).strip_edges().is_empty():
+					return {"ok": false, "code": "empty_event_route_variant_text",
+						"event_id": event_id, "route_id": route_id, "field": text_field}
 		var choices_value: Variant = event.get("choices", [])
 		if not choices_value is Array or (choices_value as Array).size() != 3:
 			return {"ok": false, "code": "invalid_event_choices", "event_id": event_id}
@@ -117,6 +132,12 @@ static func validate_catalog() -> Dictionary:
 				if not PATH_IDS.has(str(path_id)) or not _is_number(paths_value[path_id]) or \
 						int(paths_value[path_id]) == 0:
 					return {"ok": false, "code": "invalid_path_delta", "event_id": event_id}
+			if choice.has("route_id"):
+				var choice_route_id := str(choice.get("route_id", ""))
+				if not PATH_IDS.has(choice_route_id) or \
+						int((paths_value as Dictionary).get(choice_route_id, 0)) <= 0:
+					return {"ok": false, "code": "invalid_side_choice_route",
+						"event_id": event_id, "route_id": choice_route_id}
 		seen[event_id] = true
 		event_eras[event_id] = era
 		era_counts[era] = int(era_counts[era]) + 1
@@ -142,6 +163,30 @@ static func validate_catalog() -> Dictionary:
 				return {"ok": false, "code": "invalid_side_thread_event",
 					"thread_id": thread_id, "event_id": event_id}
 			threaded_events[event_id] = thread_id
+		for stage in range(1, thread_events.size()):
+			var previous_event := _event_by_id(str(thread_events[stage - 1]))
+			var current_event := _event_by_id(str(thread_events[stage]))
+			var variants_value: Variant = current_event.get("route_variants", {})
+			if not variants_value is Dictionary or (variants_value as Dictionary).is_empty():
+				continue
+			var reachable_routes := {}
+			for choice_value in (previous_event.get("choices", []) as Array):
+				var choice: Dictionary = choice_value
+				var route_id := _choice_side_route(choice)
+				if not route_id.is_empty():
+					reachable_routes[route_id] = true
+			for route_id_value in (variants_value as Dictionary).keys():
+				var route_id := str(route_id_value)
+				if not reachable_routes.has(route_id):
+					return {"ok": false, "code": "unreachable_event_route_variant",
+						"thread_id": thread_id, "event_id": str(thread_events[stage]),
+						"route_id": route_id}
+			for route_id_value in reachable_routes.keys():
+				var route_id := str(route_id_value)
+				if not (variants_value as Dictionary).has(route_id):
+					return {"ok": false, "code": "missing_event_route_variant",
+						"thread_id": thread_id, "event_id": str(thread_events[stage]),
+						"route_id": route_id}
 		seen_threads[thread_id] = true
 	if threaded_events.size() != seen.size():
 		return {"ok": false, "code": "unthreaded_authored_event",
@@ -301,6 +346,7 @@ static func _decorate_side_chapter(state: Dictionary, story: Dictionary,
 		event["story_arc_name"] = str(thread.get("name", "山河外篇")) + ("" if first_pass else "·余波")
 		event["chapter_number"] = stage + 1 if first_pass else side_chapter
 		event["chapter_total"] = event_ids.size() if first_pass else 0
+		_apply_side_route_variant(story, thread_id, event)
 	else:
 		event["story_arc_name"] = "山河余篇"
 		event["chapter_number"] = side_chapter
@@ -325,13 +371,15 @@ static func _record_side_resolution(state: Dictionary, story: Dictionary,
 		if stage == current_stage:
 			current_stage = mini(event_ids.size(), current_stage + 1)
 			progress[thread_id] = current_stage
-		story["side_thread_progress"] = progress
-		var active_value: Variant = story.get("side_active_threads", {})
-		var active: Dictionary = active_value if active_value is Dictionary else {}
-		active[str(thread.get("era", ""))] = thread_id if current_stage < event_ids.size() else ""
-		story["side_active_threads"] = active
-		_update_side_thread(story, thread, current_stage)
-		_record_side_route(story, thread_id, choice)
+			story["side_thread_progress"] = progress
+			var active_value: Variant = story.get("side_active_threads", {})
+			var active: Dictionary = active_value if active_value is Dictionary else {}
+			active[str(thread.get("era", ""))] = thread_id if current_stage < event_ids.size() else ""
+			story["side_active_threads"] = active
+			_update_side_thread(story, thread, current_stage)
+			_record_side_route(story, thread_id, choice)
+			if current_stage == event_ids.size():
+				_record_side_thread_echo(story, thread, choice)
 	story["last_authored_context"] = {
 		"event_id": str(event.get("id", "")).left(96),
 		"title": str(event.get("title", "时代事件")).left(96),
@@ -351,22 +399,122 @@ static func _record_side_route(story: Dictionary, thread_id: String,
 	var path_deltas_value: Variant = choice.get("path_deltas", {})
 	if not path_deltas_value is Dictionary:
 		return
-	var best_path := ""
-	var best_value := 0
-	for path_id in PATH_IDS:
-		var value := int((path_deltas_value as Dictionary).get(path_id, 0))
-		if value > best_value:
-			best_path = path_id
-			best_value = value
-	if best_path.is_empty():
+	var route_id := _choice_side_route(choice)
+	if route_id.is_empty():
+		return
+	var route_value := int((path_deltas_value as Dictionary).get(route_id, 0))
+	if route_value <= 0:
 		return
 	var score_maps_value: Variant = story.get("side_route_scores", {})
 	var score_maps: Dictionary = score_maps_value if score_maps_value is Dictionary else {}
 	var scores_value: Variant = score_maps.get(thread_id, {})
 	var scores: Dictionary = scores_value if scores_value is Dictionary else {}
-	scores[best_path] = clampi(int(scores.get(best_path, 0)) + best_value, 0, 100000)
+	scores[route_id] = clampi(int(scores.get(route_id, 0)) + route_value, 0, 100000)
 	score_maps[thread_id] = scores
 	story["side_route_scores"] = score_maps
+	var last_routes_value: Variant = story.get("side_last_routes", {})
+	var last_routes: Dictionary = last_routes_value if last_routes_value is Dictionary else {}
+	last_routes[thread_id] = route_id
+	story["side_last_routes"] = last_routes
+
+
+static func _apply_side_route_variant(story: Dictionary, thread_id: String,
+		event: Dictionary) -> void:
+	var route_id := _last_side_route(story, thread_id)
+	if route_id.is_empty():
+		route_id = _dominant_side_route(story, thread_id)
+	if route_id.is_empty():
+		return
+	event["side_route_id"] = route_id
+	var variants_value: Variant = event.get("route_variants", {})
+	if not variants_value is Dictionary:
+		return
+	var variant_value: Variant = (variants_value as Dictionary).get(route_id, {})
+	if not variant_value is Dictionary:
+		return
+	var variant: Dictionary = variant_value
+	for field in ["title", "description", "portrait_title"]:
+		if variant.has(field):
+			event[field] = str(variant[field])
+	if variant.has("route_intro"):
+		event["description"] = "%s%s" % [str(variant["route_intro"]),
+			str(event.get("description", ""))]
+
+
+static func _last_side_route(story: Dictionary, thread_id: String) -> String:
+	var last_routes_value: Variant = story.get("side_last_routes", {})
+	if not last_routes_value is Dictionary:
+		return ""
+	var route_id := str((last_routes_value as Dictionary).get(thread_id, ""))
+	return route_id if PATH_IDS.has(route_id) else ""
+
+
+static func _choice_side_route(choice: Dictionary) -> String:
+	var explicit_route := str(choice.get("route_id", ""))
+	if PATH_IDS.has(explicit_route):
+		return explicit_route
+	var path_deltas_value: Variant = choice.get("path_deltas", {})
+	if not path_deltas_value is Dictionary:
+		return ""
+	var winner := ""
+	var winner_score := 0
+	for path_id in PATH_IDS:
+		var score := int((path_deltas_value as Dictionary).get(path_id, 0))
+		if score > winner_score:
+			winner = path_id
+			winner_score = score
+	return winner
+
+
+static func _dominant_side_route(story: Dictionary, thread_id: String) -> String:
+	var score_maps_value: Variant = story.get("side_route_scores", {})
+	if not score_maps_value is Dictionary:
+		return ""
+	var scores_value: Variant = (score_maps_value as Dictionary).get(thread_id, {})
+	if not scores_value is Dictionary:
+		return ""
+	var winner := ""
+	var winner_score := 0
+	for path_id in PATH_IDS:
+		var score := int((scores_value as Dictionary).get(path_id, 0))
+		if score > winner_score:
+			winner = path_id
+			winner_score = score
+	return winner
+
+
+static func _record_side_thread_echo(story: Dictionary, thread: Dictionary,
+		choice: Dictionary) -> void:
+	var thread_id := str(thread.get("id", ""))
+	var route_id := _choice_side_route(choice)
+	if thread_id.is_empty() or route_id.is_empty() or choice.is_empty():
+		return
+	var score_maps: Dictionary = story.get("side_route_scores", {})
+	var scores: Dictionary = score_maps.get(thread_id, {})
+	var route_power := 0
+	for value in scores.values():
+		route_power += int(value)
+	var echo := {
+		"id": "side_%s_%s" % [thread_id, route_id],
+		"type": "story",
+		"name": "%s·%s" % [str(thread.get("name", "山河外篇")),
+			str(choice.get("text", "此事已有定论"))],
+		"description": str(choice.get("outcome", "这段经历已经留在旧玉里。")),
+		"power": clampi(12 + route_power, 12, 100000),
+		"thread_id": thread_id,
+		"route_id": route_id,
+	}
+	var echoes_value: Variant = story.get("side_thread_echoes", [])
+	var echoes: Array = echoes_value if echoes_value is Array else []
+	for index in range(echoes.size() - 1, -1, -1):
+		var existing_value: Variant = echoes[index]
+		if existing_value is Dictionary and \
+				str((existing_value as Dictionary).get("thread_id", "")) == thread_id:
+			echoes.remove_at(index)
+	echoes.append(echo)
+	while echoes.size() > SIDE_THREADS.size():
+		echoes.pop_front()
+	story["side_thread_echoes"] = echoes
 
 
 static func _update_side_thread(story: Dictionary, thread: Dictionary,
@@ -406,6 +554,14 @@ static func _thread_for_event(event_id: String) -> Dictionary:
 		var thread: Dictionary = thread_value
 		if (thread.get("events", []) as Array).has(event_id):
 			return thread
+	return {}
+
+
+static func _event_by_id(event_id: String) -> Dictionary:
+	for event_value in load_events():
+		var event: Dictionary = event_value
+		if str(event.get("id", "")) == event_id:
+			return event
 	return {}
 
 

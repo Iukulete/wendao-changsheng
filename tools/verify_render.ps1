@@ -58,6 +58,8 @@ $expected = @(
     "event_1280x720.png",
     "event_imperial_v2_1280x720.png",
     "event_content_expansion_1280x720.png",
+    "event_long_story_top_1280x720.png",
+    "event_long_story_bottom_1280x720.png",
     "event_narrow_top_800x720.png",
     "event_narrow_bottom_800x720.png",
     "event_text_only_1280x720.png",

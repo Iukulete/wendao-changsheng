@@ -31,8 +31,12 @@ func _init() -> void:
 	_test_legacy_stage_cursor_migration()
 	_test_prose_repetition(definitions)
 	_test_jade_story_clarity(definitions)
+	_test_rival_story_agency(definitions)
+	_test_story_continuity_details(definitions)
+	_test_authored_choice_consequences(definitions)
 	_test_resource_reachability(definitions)
 	_test_authored_obligation_lifecycle(definitions)
+	_test_obligation_closure_across_route_switches(definitions)
 
 	var state := GameStateScript.create_new_game("章节校验", 737300, [7, 7, 7, 7, 7])
 	var first_event: Dictionary = StorySystemScript.next_event(state)
@@ -55,12 +59,14 @@ func _init() -> void:
 	var jade_arc: Dictionary = (definitions.arcs as Array)[0]
 	var jade_second: Dictionary = (jade_arc.main as Array)[1]
 	var routed_variant: Dictionary = (jade_second.route_variants as Dictionary).get(jade_route, {})
+	var routed_description := str(routed_event.get("description", ""))
 	_expect(str(routed_event.get("story_arc_id", "")) == "jade" and
 		int(routed_event.get("story_stage", -1)) == 1 and
 		str(routed_event.get("previous_route_id", "")) == jade_route and
 		str(routed_event.get("title", "")) == str(routed_variant.get("title", "")) and
-		str(routed_event.get("description", "")).contains(str(routed_variant.get("description", ""))),
-		"上一章路线必须在下一章标题和正文中产生可见变体")
+		routed_description.begins_with(str(jade_second.get("description", ""))) and
+		routed_description.contains(str(routed_variant.get("description", ""))),
+		"下一章必须先交代完整公共场景，再说明上一选择造成的变化")
 
 	var journal_state := GameStateScript.create_new_game("长卷校验", 737301, [7, 7, 7, 7, 7])
 	var journal_event: Dictionary = StorySystemScript.next_event(journal_state)
@@ -194,6 +200,17 @@ func _test_static_graph_validation() -> void:
 
 
 func _test_choice_targets_drive_graph() -> void:
+	var definitions: Dictionary = StorySystemScript.load_definitions()
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		for phase in ["main", "echo"]:
+			var nodes: Array = arc.get(phase, [])
+			var opening_choices: Array = (nodes[0] as Dictionary).get("choices", [])
+			_expect(str((opening_choices[2] as Dictionary).get("target_node_id", "")) ==
+				str((nodes[1] as Dictionary).get("id", "")),
+				"%s 卷 %s 首节点的第三个选择不得跳过第二节点" % [
+					str(arc.get("id", "")), phase])
+
 	var normal_state := GameStateScript.create_new_game("节点分流", 737305, [7, 7, 7, 7, 7])
 	var normal_event: Dictionary = StorySystemScript.next_event(normal_state)
 	normal_state.player.total_events = int(normal_state.player.total_events) + 1
@@ -207,10 +224,9 @@ func _test_choice_targets_drive_graph() -> void:
 	var branch_next: Dictionary = StorySystemScript.next_event(branch_state)
 	_expect(str(normal_result.get("next_node_id", "")) == "jade_main_2" and
 		str(normal_next.get("id", "")) == "jade_main_2" and
-		str(branch_result.get("next_node_id", "")) == "jade_main_3" and
-		str(branch_next.get("id", "")) == "jade_main_3" and
-		str(normal_next.get("id", "")) != str(branch_next.get("id", "")),
-		"同一剧情节点的不同选择必须真正写入不同 next 节点")
+		str(branch_result.get("next_node_id", "")) == "jade_main_2" and
+		str(branch_next.get("id", "")) == "jade_main_2",
+		"首节点的不同路线都必须先进入第二节点")
 
 
 func _test_choice_visibility_and_enabled_state(definitions: Dictionary) -> void:
@@ -366,6 +382,14 @@ func _test_jade_story_clarity(definitions: Dictionary) -> void:
 	for opaque_term in ["回响", "定锚", "命途", "因果", "牵系", "未偿", "伪忆", "梦兆", "旧我"]:
 		_expect(not combined.contains(opaque_term),
 			"旧玉玩家文案不得用未解释的抽象词：%s" % opaque_term)
+	for required_fact in ["南渡口安置院", "程观鹤", "鹤纹铜扣", "红灯", "许青梧",
+			"私卖药材", "补回死伤名单", "追回药款"]:
+		_expect(combined.contains(required_fact),
+			"旧玉主卷必须交代完整旧案线索与受害者诉求：%s" % required_fact)
+	for choice_id in ["jade_m4_witness", "jade_m4_anchor", "jade_m4_seal"]:
+		var final_outcome := str(_choice_by_id(definitions, choice_id).get("outcome", ""))
+		_expect(final_outcome.contains("许青梧") or final_outcome.contains("幸存者"),
+			"旧玉终章三条路线都必须先向幸存者交付证据并接受追责：%s" % choice_id)
 	var all_story_text: Array[String] = []
 	_collect_jade_visible_text(definitions.get("arcs", []), all_story_text)
 	var all_combined := "\n".join(all_story_text)
@@ -379,6 +403,150 @@ func _test_jade_story_clarity(definitions: Dictionary) -> void:
 			"旁人插不进你们的规则", "无需用伤害证明关系真实"]:
 		_expect(not all_combined.contains(awkward_fragment),
 			"主线文案出现指代不清或抽象拼接：%s" % awkward_fragment)
+
+
+func _test_rival_story_agency(definitions: Dictionary) -> void:
+	var rival_main_3: Dictionary = {}
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		if str(arc.get("id", "")) != "rival":
+			continue
+		for node_value in (arc.get("main", []) as Array):
+			var node: Dictionary = node_value
+			if str(node.get("id", "")) == "rival_main_3":
+				rival_main_3 = node
+				break
+	_expect(not rival_main_3.is_empty(), "江照雪主卷第三章必须存在")
+	if rival_main_3.is_empty():
+		return
+	var description := str(rival_main_3.get("description", ""))
+	_expect(description.contains("止血丹") and description.contains("当面否决") and
+		description.contains("遮去三人的姓名"),
+		"江照雪出阵后必须主动分药，并否决公开递信人姓名的方案")
+	for choice_value in (rival_main_3.get("choices", []) as Array):
+		var choice: Dictionary = choice_value
+		var outcome := str(choice.get("outcome", ""))
+		_expect(outcome.contains("遮名") or outcome.contains("遮去") or
+			outcome.contains("递信人名单"),
+			"江照雪第三章的每条路线都必须保护递信人姓名：%s" %
+				str(choice.get("id", "")))
+
+
+func _test_story_continuity_details(definitions: Dictionary) -> void:
+	var jade_main_3 := str(_node_by_id(definitions, "jade_main_3").get("description", ""))
+	_expect(jade_main_3.contains("主事审案") and jade_main_3.contains("篡忆阵"),
+		"旧玉第三章必须说明程观鹤扣玉和篡改记忆的手段")
+	for choice_id in ["jade_e1_witness", "jade_e1_anchor", "jade_e1_seal"]:
+		var outcome := str(_choice_by_id(definitions, choice_id).get("outcome", ""))
+		_expect(outcome.contains("罗慎") and
+			(outcome.contains("副本") or outcome.contains("原件")),
+			"旧玉续章首章必须处理巷外罗慎并护住收据：%s" % choice_id)
+	for choice_id in ["jade_e2_witness", "jade_e2_anchor", "jade_e2_seal"]:
+		var outcome := str(_choice_by_id(definitions, choice_id).get("outcome", ""))
+		_expect(outcome.contains("官署") and outcome.contains("宅产"),
+			"旧玉续章第二章必须写明官署判决与赔偿来源：%s" % choice_id)
+	_expect(str(_choice_by_id(definitions, "jade_e3_witness").get("outcome", "")).contains(
+		"官署账吏"), "旧玉见证结局不得让玩家无数值地自掏赔偿")
+	var jade_anchor_end := str(_choice_by_id(definitions, "jade_e3_anchor").get("outcome", ""))
+	_expect(jade_anchor_end.contains("六户") and jade_anchor_end.contains("见证人"),
+		"旧玉现实结局必须由六户签收、玩家仅作见证")
+
+	var sect_compromise := str(_choice_by_id(definitions, "sect_m4_compromise").get("outcome", ""))
+	_expect(sect_compromise.contains("外院教习") and sect_compromise.contains("拒绝") and
+		sect_compromise.contains("一月内"), "山门协商结局必须写清职位、拒绝权与补救期限")
+	var sect_envoy := str(_choice_by_id(definitions, "sect_e1_compromise").get("outcome", ""))
+	_expect(sect_envoy.contains("旧宗使者") and sect_envoy.contains("陆崖"),
+		"山门续章必须区分旧宗使者与今生师长")
+	var sect_bell := str(_choice_by_id(definitions, "sect_e1_escape").get("outcome", ""))
+	_expect(sect_bell.contains("铃声") and sect_bell.contains("拘押印") and
+		sect_bell.contains("反噬"), "执律铃必须触发拘押印并造成可见反噬")
+	var sect_join := _choice_by_id(definitions, "sect_e3_compromise")
+	_expect(str(sect_join.get("text", "")).contains("两代同门") and
+		str(sect_join.get("outcome", "")).contains("两边名册"),
+		"山门续章折中路线的选项、结果和归属必须一致")
+
+	var family_text: Array[String] = []
+	_collect_jade_visible_text(_arc_by_id(definitions, "family"), family_text)
+	var family_combined := "\n".join(family_text)
+	for person_name in ["沈砚秋", "宁岚", "陆闻青"]:
+		_expect(family_combined.count(person_name) >= 3,
+			"家世线关键人物必须使用稳定姓名：%s" % person_name)
+	var family_break := str(_choice_by_id(definitions, "family_e1_break").get("outcome", ""))
+	_expect(family_break.contains("拒名文书") and family_break.contains("债务人印"),
+		"上世拒契路线必须说明官署改回旧账的凭据")
+	for choice_id in ["family_m3_truth", "family_m3_care", "family_m3_break"]:
+		_expect(str(_choice_by_id(definitions, choice_id).get("outcome", "")).contains("陆闻青"),
+			"家世第三章每条路线必须先保障见证人安全：%s" % choice_id)
+	var care_name := str(_choice_by_id(definitions, "family_m4_care").get("outcome", ""))
+	_expect(care_name.contains("生身来处"), "养恩路线必须限定祖族姓名只记录生身来处")
+
+	var diverted := str(_choice_by_id(definitions, "rival_m1_alliance").get("outcome", ""))
+	_expect(diverted.contains("其中一队") and diverted.contains("护送契"),
+		"战帖首章合作路线必须真正引走追兵并交代灵石来源")
+	var burned_post := str(_choice_by_id(definitions, "rival_m1_boundaries").get("outcome", ""))
+	_expect(burned_post.contains("接受") and burned_post.contains("芥蒂"),
+		"江照雪必须接受改帖条件，同时对焚帖保留真实情绪")
+	_expect(str(_choice_by_id(definitions, "rival_m3_boundaries").get("outcome", "")).contains(
+		"名单之外"), "公开战帖证据时只能记录递信人名单之外的全文")
+	var rival_main_final := str(_node_by_id(definitions, "rival_main_4").get("description", ""))
+	var rival_echo_final := str(_node_by_id(definitions, "rival_echo_3").get("description", ""))
+	_expect(rival_main_final.contains("优先") and rival_main_final.contains("普通对手") and
+		rival_echo_final.contains("优先") and rival_echo_final.contains("普通对手"),
+		"战帖两次终章都必须说清宿敌与普通对手的区别")
+
+
+func _test_authored_choice_consequences(definitions: Dictionary) -> void:
+	var wound_terms := ["伤", "血", "痛", "灼", "裂", "反噬", "经脉", "神识", "灵根", "周天", "受创"]
+	var source_terms := ["退还", "保管单", "追回", "遗产", "继承文书", "悬赏", "护送契",
+		"月俸", "祖库", "官署", "公账", "拍卖"]
+	var spend_terms := ["花", "付", "支出", "买", "购", "公证"]
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		for phase in ["main", "echo"]:
+			for node_value in (arc.get(phase, []) as Array):
+				var node: Dictionary = node_value
+				for choice_value in (node.get("choices", []) as Array):
+					var choice: Dictionary = choice_value
+					var deltas: Dictionary = choice.get("deltas", {})
+					var outcome := str(choice.get("outcome", ""))
+					if int(deltas.get("hp", 0)) < 0:
+						_expect(_contains_any(outcome, wound_terms),
+							"掉 HP 的剧情选择必须写明可见伤势或反噬：%s" %
+								str(choice.get("id", "")))
+					if int(deltas.get("spirit_stones", 0)) > 0:
+						_expect(outcome.contains("灵石") and _contains_any(outcome, source_terms),
+							"增加灵石的剧情选择必须写明合法具体来源：%s" %
+								str(choice.get("id", "")))
+					if int(deltas.get("spirit_stones", 0)) < 0:
+						_expect(outcome.contains("灵石") and _contains_any(outcome, spend_terms),
+							"扣除灵石的剧情选择必须写明具体用途：%s" %
+								str(choice.get("id", "")))
+
+
+func _contains_any(text: String, terms: Array) -> bool:
+	for term_value in terms:
+		if text.contains(str(term_value)):
+			return true
+	return false
+
+
+func _arc_by_id(definitions: Dictionary, arc_id: String) -> Dictionary:
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		if str(arc.get("id", "")) == arc_id:
+			return arc
+	return {}
+
+
+func _node_by_id(definitions: Dictionary, node_id: String) -> Dictionary:
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		for phase in ["main", "echo"]:
+			for node_value in (arc.get(phase, []) as Array):
+				var node: Dictionary = node_value
+				if str(node.get("id", "")) == node_id:
+					return node
+	return {}
 
 
 func _collect_jade_visible_text(value: Variant, output: Array[String]) -> void:
@@ -470,6 +638,95 @@ func _test_authored_obligation_lifecycle(definitions: Dictionary) -> void:
 	_expect(_records_with_status(refusal_state.story.debts, "forgiven").size() == 3 and
 		_records_with_status(refusal_state.story.debts, "open").is_empty(),
 		"拒绝继承旧名后，三笔族债必须从玩家当前义务中移除并保留历史")
+
+
+func _test_obligation_closure_across_route_switches(definitions: Dictionary) -> void:
+	for arc_value in (definitions.get("arcs", []) as Array):
+		var arc: Dictionary = arc_value
+		var branches: Array = [{"promises": {}, "debts": {}, "path": []}]
+		for phase in ["main", "echo"]:
+			for node_value in (arc.get(phase, []) as Array):
+				var node: Dictionary = node_value
+				var expanded: Array = []
+				for branch_value in branches:
+					for choice_value in (node.get("choices", []) as Array):
+						var branch: Dictionary = (branch_value as Dictionary).duplicate(true)
+						var choice: Dictionary = choice_value
+						_apply_symbolic_obligations(branch, choice)
+						var path: Array = branch.get("path", [])
+						path.append(str(choice.get("id", "missing_choice")))
+						branch["path"] = path
+						expanded.append(branch)
+				branches = expanded
+		var unresolved_count := 0
+		var example := ""
+		for branch_value in branches:
+			var branch: Dictionary = branch_value
+			var promises: Dictionary = branch.get("promises", {})
+			var debts: Dictionary = branch.get("debts", {})
+			if promises.is_empty() and debts.is_empty():
+				continue
+			unresolved_count += 1
+			if example.is_empty():
+				example = "%s；承诺%s；债务%s" % [
+					(branch.get("path", []) as Array), promises.keys(), debts.keys()]
+		_expect(unresolved_count == 0,
+			"卷章任意换线后都必须闭环义务：%s 尚有%d条路径，示例%s" % [
+				str(arc.get("id", "missing_arc")), unresolved_count, example])
+
+	var switch_paths := [
+		{"arc": "jade", "choices": ["jade_m1_witness", "jade_m2_anchor", "jade_m3_anchor",
+			"jade_m4_seal", "jade_e1_witness", "jade_e2_witness", "jade_e3_witness"]},
+		{"arc": "sect", "choices": ["sect_m1_reform", "sect_m2_compromise", "sect_m3_compromise",
+			"sect_m4_escape", "sect_e1_compromise", "sect_e2_compromise", "sect_e3_escape"]},
+		{"arc": "family", "choices": ["family_m1_care", "family_m2_truth", "family_m3_care",
+			"family_m4_truth", "family_e1_truth", "family_e2_truth", "family_e3_break"]},
+		{"arc": "rival", "choices": ["rival_m1_alliance", "rival_m2_duel", "rival_m3_alliance",
+			"rival_m4_boundaries", "rival_e1_duel", "rival_e2_alliance", "rival_e3_duel"]},
+	]
+	var characters: Array = definitions.get("characters", [])
+	for case_value in switch_paths:
+		var switch_case: Dictionary = case_value
+		var arc_id := str(switch_case.get("arc", "missing_arc"))
+		var state := GameStateScript.create_new_game("换线闭环-%s" % arc_id,
+			737400 + switch_paths.find(case_value), [7, 7, 7, 7, 7])
+		for choice_id_value in (switch_case.get("choices", []) as Array):
+			var choice_id := str(choice_id_value)
+			var choice := _choice_by_id(definitions, choice_id)
+			NarrativeScript.apply_choice(state, {
+				"story_arc_id": arc_id,
+				"story_phase": "echo" if choice_id.contains("_e") else "main",
+			}, choice, characters)
+		var open_promises := _records_with_status(state.story.promises, "open")
+		var open_debts := _records_with_status(state.story.debts, "open")
+		_expect(open_promises.is_empty() and open_debts.is_empty(),
+			"真实换线路径必须闭环：%s，承诺%s，债务%s" % [arc_id, open_promises, open_debts])
+		if arc_id == "rival":
+			_expect(_records_with_status(state.story.promises, "broken").has(
+				"rival_echo_promise_aftercare"), "带伤改走宿敌线必须明确记为打破休养约定")
+
+
+func _apply_symbolic_obligations(branch: Dictionary, choice: Dictionary) -> void:
+	var promises: Dictionary = branch.get("promises", {})
+	var debts: Dictionary = branch.get("debts", {})
+	for record_value in (choice.get("promises_add", []) as Array):
+		var record: Dictionary = record_value
+		var record_id := str(record.get("id", ""))
+		if not record_id.is_empty():
+			promises[record_id] = true
+	for record_value in (choice.get("debts_add", []) as Array):
+		var record: Dictionary = record_value
+		var record_id := str(record.get("id", ""))
+		if not record_id.is_empty():
+			debts[record_id] = true
+	for field in ["promises_resolve", "promises_break"]:
+		for record_id_value in (choice.get(field, []) as Array):
+			promises.erase(str(record_id_value))
+	for field in ["debts_resolve", "debts_forgive"]:
+		for record_id_value in (choice.get(field, []) as Array):
+			debts.erase(str(record_id_value))
+	branch["promises"] = promises
+	branch["debts"] = debts
 
 
 func _collect_record_ids(values: Variant, output: Dictionary) -> void:

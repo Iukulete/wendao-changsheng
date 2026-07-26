@@ -60,6 +60,11 @@ func _init() -> void:
 
 	state.player.path.insight = 28
 	state.player.total_events = 24
+	state.story.side_thread_echoes = [{
+		"id": "side_test_echo", "type": "story", "name": "镜湖旧梦册·留下证词",
+		"description": "你保住了见证人的证词，旧玉仍记得那扇门。", "power": 20,
+		"thread_id": "classical_memory_register", "route_id": "insight",
+	}]
 	state.player.age = state.player.lifespan
 	_expect(CultivationScript.is_dead(state), "道祖前寿元耗尽必须结束当前一世")
 	var closed: Dictionary = ReincarnationScript.close_life(state, "寿元耗尽", 1)
@@ -80,6 +85,11 @@ func _init() -> void:
 	_expect((state.world.annual_summaries as Array).size() > 1,
 		"轮回间隔必须逐年演算世界，而不是只修改年份")
 	_expect((state.legacy.inherited_echoes as Array).size() > 0, "下一世必须继承可解释的前世回响")
+	var inherited_side_echo := false
+	for echo_value in (state.legacy.inherited_echoes as Array):
+		if str((echo_value as Dictionary).get("id", "")) == "side_test_echo":
+			inherited_side_echo = true
+	_expect(inherited_side_echo, "已收束的三章外篇必须把具体选择带入下一世")
 	_expect(not bool(state.life_closed), "下一世开始后生命状态必须重新打开")
 
 	var ended_without_rebirth := GameStateScript.create_new_game("命尽者", 20260717, [5, 5, 5, 5, 5])
