@@ -355,6 +355,10 @@ func _test_jade_story_clarity(definitions: Dictionary) -> void:
 		str((opening_choices[1] as Dictionary).get("text", "")).contains("现实") and
 		str((opening_choices[2] as Dictionary).get("text", "")).contains("封住"),
 		"旧玉开场的三个选项必须直接说明调查、现实核对和封存的区别")
+	var witness_outcome := str((opening_choices[0] as Dictionary).get("outcome", ""))
+	_expect(witness_outcome.contains("人和地点") and witness_outcome.contains("一概不能当真") and
+		not witness_outcome.contains("相信其中任何人"),
+		"旧玉开场结果必须说明具体调查动作与证据标准，不能把记忆内容误写成人物信任")
 	var visible_text: Array[String] = []
 	_collect_jade_visible_text(jade.get("main", []), visible_text)
 	_collect_jade_visible_text(jade.get("echo", []), visible_text)

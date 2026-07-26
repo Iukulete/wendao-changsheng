@@ -32,9 +32,9 @@ func _validate_ui_readability() -> void:
 		return
 	var source := FileAccess.get_file_as_string(MAIN_SCRIPT_PATH)
 	_expect(source.contains("const MIN_READABLE_FONT_SIZE := 18"),
-		"界面必须保留不低于16px的可读字号下限")
+		"紧凑信息必须保留不低于18px的可读字号下限")
 	_expect(source.contains("const DEFAULT_BODY_FONT_SIZE := 22"),
-		"界面默认正文字号必须保持在20px")
+		"界面默认正文字号必须保持在22px")
 	_expect(source.contains("readable_color.a = maxf(readable_color.a, 0.98)"),
 		"正文与说明文字必须保持高对比度")
 

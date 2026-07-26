@@ -205,10 +205,10 @@ func _process(delta: float) -> void:
 func _build_theme() -> void:
 	var body_base := load(BODY_FONT_PATH) as Font
 	var display_base := load(DISPLAY_FONT_PATH) as Font
-	body_font = _font_variation(body_base, 800)
-	body_medium_font = _font_variation(body_base, 850)
-	body_semibold_font = _font_variation(body_base, 900)
-	display_font = _font_variation(display_base, 750)
+	body_font = _font_variation(body_base, 700)
+	body_medium_font = _font_variation(body_base, 760)
+	body_semibold_font = _font_variation(body_base, 820)
+	display_font = _font_variation(display_base, 700)
 	base_theme = Theme.new()
 	base_theme.default_font = body_font
 	base_theme.default_font_size = DEFAULT_BODY_FONT_SIZE
@@ -814,7 +814,7 @@ func _build_world_panel(use_inner_scroll: bool = true) -> Control:
 	var pulse_card := _panel(0.44, era_accent)
 	pulse_card.name = "MainWorldPulseCard"
 	pulse_card.custom_minimum_size.y = 78
-	var pulse := _label(feedback, 18, Color("f0e7d2"))
+	var pulse := _label(feedback, 23, Color("f5f1e7"))
 	pulse.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pulse.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	pulse_card.add_child(pulse)
@@ -825,8 +825,8 @@ func _build_world_panel(use_inner_scroll: bool = true) -> Control:
 	narrative.bbcode_enabled = true
 	narrative.fit_content = true
 	narrative.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	narrative.add_theme_font_size_override("normal_font_size", 22)
-	narrative.add_theme_font_size_override("bold_font_size", 24)
+	narrative.add_theme_font_size_override("normal_font_size", 24)
+	narrative.add_theme_font_size_override("bold_font_size", 26)
 	narrative.add_theme_constant_override("line_separation", 7)
 	narrative.text = _world_digest()
 	if use_inner_scroll:
@@ -3411,7 +3411,7 @@ func _build_event_choices() -> Control:
 		recap_label.name = "EventPreviousChoice"
 		recap_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		column.add_child(recap_label)
-	var description := _label(str(current_event.get("description", "")), 20, Color("f1eee5"))
+	var description := _label(str(current_event.get("description", "")), 23, Color("f5f1e8"))
 	description.name = "EventDescription"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	description.custom_minimum_size.y = 128
@@ -3592,7 +3592,7 @@ func _show_event_result() -> void:
 	content.add_child(choice_label)
 	content.add_child(_divider())
 	content.add_child(_label("结果", 15, Color(era_accent, 0.92)))
-	var outcome := _label(str(current_event_result.get("outcome", "事情暂时告一段落。")), 21,
+	var outcome := _label(str(current_event_result.get("outcome", "事情暂时告一段落。")), 23,
 		Color("f3eee3"))
 	outcome.name = "EventResultOutcome"
 	outcome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -3786,7 +3786,7 @@ func _build_journal_recent(body: VBoxContainer) -> void:
 		column.add_child(_display_label(str(entry.get("title", "未命名事件")), 19, Color("f0e7d2")))
 		column.add_child(_label("你选择了“%s”" % str(entry.get("choice", "沉默")), 15,
 			Color(0.83, 0.86, 0.84, 0.94)))
-		var outcome := _label(str(entry.get("outcome", "")), 16, Color(0.78, 0.82, 0.81, 0.92))
+		var outcome := _label(str(entry.get("outcome", "")), 20, Color(0.88, 0.91, 0.89, 0.98))
 		outcome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		column.add_child(outcome)
 		body.add_child(card)
@@ -5201,8 +5201,8 @@ func _label(text_value: String, font_size: int = DEFAULT_BODY_FONT_SIZE, color: 
 		readable_color = readable_color.lerp(Color.WHITE, 0.30)
 	readable_color.a = maxf(readable_color.a, 0.98)
 	label.add_theme_color_override("font_color", readable_color)
-	label.add_theme_constant_override("outline_size", 2)
-	label.add_theme_color_override("font_outline_color", Color(0.01, 0.015, 0.02, 0.82))
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_color_override("font_outline_color", Color(0.01, 0.015, 0.02, 0.94))
 	label.horizontal_alignment = alignment
 	return label
 

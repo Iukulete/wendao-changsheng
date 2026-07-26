@@ -26,4 +26,4 @@ environment/defaults/default_clear_color=Color(0.018, 0.024, 0.035, 1)
 
 [gui]
 
-theme/default_font_multichannel_signed_distance_field=false
+theme/default_font_multichannel_signed_distance_field=true
