@@ -23,6 +23,12 @@ if ($LASTEXITCODE -ne 0) {
     throw "Godot migration surface validation failed with exit code $LASTEXITCODE."
 }
 
+Write-Host "Validating six playable reincarnation chronicles and the 500,000-character floor..."
+& python -X utf8 (Join-Path $PSScriptRoot "verify_chronicle_content.py")
+if ($LASTEXITCODE -ne 0) {
+    throw "Chronicle content validation failed with exit code $LASTEXITCODE."
+}
+
 Write-Host "Validating the self-contained Godot art inventory..."
 $artArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_godot_art.py"))
 if ($RequireProductArt) {
@@ -112,6 +118,8 @@ $testScripts = @(
     "res://tests/encounter_system_test.gd",
     "res://tests/world_simulation_test.gd",
     "res://tests/story_system_test.gd",
+	"res://tests/chronicle_authored_blocks_test.gd",
+	"res://tests/chronicle_system_test.gd",
     "res://tests/narrative_consequence_system_test.gd",
     "res://tests/achievement_system_test.gd",
     "res://tests/dungeon_system_test.gd",

@@ -11,6 +11,7 @@ const ECHO_STAGE_COUNT := 3
 const MAX_RESOLVED := 256
 const MAX_THREADS := 128
 const MAX_CHAPTER_LOG := 96
+const MAX_CHAPTER_OUTCOME_LENGTH := 6000
 const MAX_CHOICES_PER_NODE := 8
 const TERMINAL_TARGETS := ["", "legacy", "resolution", "terminal"]
 
@@ -535,7 +536,7 @@ static func record_chapter(state: Dictionary, event: Dictionary, choice: Diction
 			int(state.get("generation", 1)), event_turn, chapter_number],
 		"title": str(event.get("title", "未命名事件")).left(160),
 		"choice": str(choice.get("text", "沉默")).left(240),
-		"outcome": outcome.strip_edges().left(1600),
+		"outcome": outcome.strip_edges().left(MAX_CHAPTER_OUTCOME_LENGTH),
 		"arc_id": str(event.get("story_arc_id", "")).left(48),
 		"arc_name": arc_name,
 		"phase": phase,
@@ -836,6 +837,7 @@ static func _update_thread(story: Dictionary, arc_id: String, arc_name: String,
 static func _source_name(source: String) -> String:
 	match source:
 		"story_arc": return "剧情主线"
+		"life_chronicle": return "今世长卷"
 		"local_ai": return "随机支线"
 		"authored_event": return "时代事件"
 		_: return "事件记录"
@@ -853,7 +855,7 @@ static func _normalize_chapter_log(value: Variant) -> Array:
 			"id": str(entry.get("id", "chapter")).left(160),
 			"title": str(entry.get("title", "未命名事件")).left(160),
 			"choice": str(entry.get("choice", "沉默")).left(240),
-			"outcome": str(entry.get("outcome", "")).left(1600),
+			"outcome": str(entry.get("outcome", "")).left(MAX_CHAPTER_OUTCOME_LENGTH),
 			"arc_id": str(entry.get("arc_id", "")).left(48),
 			"arc_name": str(entry.get("arc_name", "事件记录")).left(64),
 			"phase": str(entry.get("phase", "chronicle")).left(24),

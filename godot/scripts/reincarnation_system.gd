@@ -54,6 +54,8 @@ static func close_life(state: Dictionary, cause: String, rebirth_roll: int = -1)
 		"dao_name": str(DAO_NAMES.get(dao_id, "本我大道")),
 		"memory_fragments": state.get("recent_memories", []).duplicate().slice(-8),
 		"unfinished_threads": story.get("unresolved_threads", []).duplicate().slice(-8),
+		"chronicle": (story.get("life_chronicle", {}) as Dictionary).duplicate(true) if \
+			story.get("life_chronicle", {}) is Dictionary else {},
 		"echoes": _build_echoes(player, dao_id, story),
 	}
 	var lives: Array = legacy.get("past_lives", [])
@@ -217,6 +219,9 @@ static func begin_next_life(state: Dictionary, dao_name: String) -> Dictionary:
 	state["story"]["unresolved_threads"] = legacy.get("unresolved_threads", []).duplicate()
 	state["story"]["next_arc_event_at"] = 0
 	state["story"]["last_arc_id"] = ""
+	# The next era receives its own volume. Persistent route history,
+	# relationships and obligations deliberately remain untouched.
+	state["story"]["life_chronicle"] = {}
 	var combat: Dictionary = state.get("combat", {})
 	combat["active"] = false
 	combat["current"] = {}
@@ -256,6 +261,18 @@ static func _build_echoes(player: Dictionary, dao_id: String, story: Dictionary 
 	var echoes: Array = []
 	var dao_echo: Array = DAO_ECHOES.get(dao_id, ["本我残响", "前世没有完成的自问仍在。"])
 	echoes.append({"id": "dao_%s" % dao_id, "type": "dao", "name": dao_echo[0], "description": dao_echo[1], "power": 20 + int(player.get("realm_index", 0)) * 4})
+	var chronicle_value: Variant = story.get("life_chronicle", {})
+	if chronicle_value is Dictionary:
+		var chronicle: Dictionary = chronicle_value
+		var resolution := str(chronicle.get("resolution", ""))
+		if bool(chronicle.get("completed", false)) and not resolution.is_empty():
+			echoes.append({
+				"id": "chronicle_%s" % str(chronicle.get("volume_id", "finished")).left(48),
+				"type": "memory",
+				"name": "完卷余响",
+				"description": resolution.left(360),
+				"power": 24 + int(chronicle.get("chapter_index", 0)),
+			})
 	var side_echoes_value: Variant = story.get("side_thread_echoes", [])
 	var side_echoes: Array = side_echoes_value if side_echoes_value is Array else []
 	var first_side_echo := maxi(0, side_echoes.size() - 2)

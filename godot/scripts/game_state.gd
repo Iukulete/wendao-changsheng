@@ -147,6 +147,8 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"side_thread_echoes": [],
 			"side_chapter_count": 0,
 			"last_authored_context": {},
+			"life_chronicle": {},
+			"chronicle_history": [],
 		},
 		"objective": {
 			"version": 1,
@@ -331,6 +333,7 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 		"side_last_routes": {},
 		"side_thread_echoes": [],
 		"side_chapter_count": 0, "last_authored_context": {},
+		"life_chronicle": {}, "chronicle_history": [],
 	})
 	state["ai"] = _merge_defaults(state.get("ai", {}), {
 		"enabled": true, "local_only": true, "last_status": "not_requested",

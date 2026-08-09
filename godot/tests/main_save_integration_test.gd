@@ -77,6 +77,9 @@ func _run() -> void:
 		"事件结果页不得把数值增减或阶段积分包装成攻略式回响")
 	game.call("_continue_from_event_result")
 	var initialized_state: Dictionary = game.get("run_state")
+	_expect(int((initialized_state.get("player", {}) as Dictionary).get("age", 0)) == 18 and
+		int(initialized_state.get("turn", 0)) >= 1,
+		"短时长卷章节必须推进因果回合，但不能把一天误算成一年寿命")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("factions", []) as Array).size() >= 3,
 		"新生立档时必须初始化时代势力")
 	_expect(((initialized_state.get("world", {}) as Dictionary).get("npcs", []) as Array).size() >= 6,
@@ -240,7 +243,7 @@ func _run() -> void:
 		"保存读取必须保留年度世界摘要")
 	game.call("_open_adventure")
 	var continued_event: Dictionary = game.get("current_event")
-	_expect(str(continued_event.get("source", "")) == "story_arc",
+	_expect(str(continued_event.get("source", "")) in ["life_chronicle", "story_arc"],
 		"续接后必须回到作者编排的下一章，不能由AI随机事件改写主流程")
 	game.call("_resolve_choice", 0)
 	var resolved_story: Dictionary = (game.get("run_state") as Dictionary).get("story", {})

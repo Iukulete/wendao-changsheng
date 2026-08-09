@@ -5,6 +5,7 @@ const GameStateScript = preload("res://scripts/game_state.gd")
 const ItemSystemScript = preload("res://scripts/item_system.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
+const ChronicleSystemScript = preload("res://scripts/chronicle_system.gd")
 const ObjectiveSystemScript = preload("res://scripts/objective_system.gd")
 const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
@@ -449,6 +450,7 @@ func _normalize_nested_state(state: Dictionary) -> void:
 	ItemSystemScript.normalize(state)
 	CombatSystemScript.normalize(state)
 	StorySystemScript.normalize(state)
+	ChronicleSystemScript.normalize(state)
 	ObjectiveSystemScript.normalize(state)
 	EncounterSystemScript.normalize(state)
 	AchievementSystemScript.normalize(state)
@@ -459,6 +461,7 @@ func _normalize_nested_state(state: Dictionary) -> void:
 	story["chapter_log"] = _bounded_array(story.get("chapter_log", []), StorySystemScript.MAX_CHAPTER_LOG)
 	story["resolved_arcs"] = _bounded_array(story.get("resolved_arcs", []), 256)
 	story["unresolved_threads"] = _bounded_array(story.get("unresolved_threads", []), 128)
+	story["chronicle_history"] = _bounded_array(story.get("chronicle_history", []), 64)
 	state["story"] = story
 	var ai: Dictionary = state.ai
 	ai["enabled"] = bool(ai.get("enabled", true))
