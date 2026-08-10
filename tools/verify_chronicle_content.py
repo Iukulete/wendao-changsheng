@@ -33,6 +33,7 @@ TARGET_PLAYABLE_ROUTE_CJK = 110_000
 MIN_CHAPTERS = 24
 MIN_DESCRIPTION_CJK = 2_400
 MIN_OUTCOME_CJK = 70
+MAX_CHOICE_CJK = 36
 
 CJK_RE = re.compile(r"[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]")
 SPACE_RE = re.compile(r"\s+")
@@ -220,6 +221,8 @@ def validate_choice(
         fail(f"{location} uses unknown route {route_id}")
     if cjk_count(text) < 6:
         fail(f"{location}.text is too vague to represent a meaningful action")
+    if cjk_count(text) > MAX_CHOICE_CJK:
+        fail(f"{location}.text is longer than {MAX_CHOICE_CJK} CJK characters; keep the player action scannable")
     if cjk_count(outcome) < MIN_OUTCOME_CJK:
         fail(f"{location}.outcome has fewer than {MIN_OUTCOME_CJK} CJK characters")
     validate_paragraphs(outcome, f"{location}.outcome")

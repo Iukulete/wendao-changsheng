@@ -173,8 +173,30 @@ static func next_event(state: Dictionary) -> Dictionary:
 	var event := _build_event(state, volume, chapter, cursor)
 	if not event.is_empty() and not echoes.is_empty():
 		event["consequence_echoes"] = echoes.duplicate(true)
-		event["description"] = "%s\n\n%s" % ["\n\n".join(echoes),
-			str(event.get("description", ""))]
+		var authored_lead := ""
+		var previous_route_id := str(event.get("previous_route_id", ""))
+		if not previous_route_id.is_empty():
+			var variants_value: Variant = chapter.get("route_variants", {})
+			if variants_value is Dictionary:
+				var variant_value: Variant = (variants_value as Dictionary).get(
+					previous_route_id, "")
+				authored_lead = str((variant_value as Dictionary).get("description", "")) if \
+					variant_value is Dictionary else str(variant_value)
+		elif int(cursor.get("chapter_index", 0)) == 0:
+			var previous_life_route_id := str(event.get("previous_life_route_id", ""))
+			var inheritance_value: Variant = (volume.get("inheritance_variants", {}) as Dictionary).get(
+				previous_life_route_id, "") if volume.get("inheritance_variants", {}) is Dictionary else ""
+			authored_lead = str((inheritance_value as Dictionary).get("description", "")) if \
+				inheritance_value is Dictionary else str(inheritance_value)
+		var description := str(event.get("description", ""))
+		var echo_text := "\n\n".join(echoes)
+		if not authored_lead.is_empty() and description.begins_with(authored_lead):
+			var shared_text := description.substr(authored_lead.length()).trim_prefix("\n\n")
+			event["description"] = "%s\n\n%s" % [authored_lead, echo_text]
+			if not shared_text.is_empty():
+				event["description"] = "%s\n\n%s" % [str(event["description"]), shared_text]
+		else:
+			event["description"] = "%s\n\n%s" % [echo_text, description]
 	return event
 
 
