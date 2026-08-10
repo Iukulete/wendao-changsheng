@@ -13,6 +13,7 @@ const CombatStageScript = preload("res://scripts/combat_stage.gd")
 const DungeonDuelStageScript = preload("res://scripts/dungeon_duel_stage.gd")
 const DungeonFeedbackLayerScript = preload("res://scripts/dungeon_feedback_layer.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
+const ChronicleSystemScript = preload("res://scripts/chronicle_system.gd")
 const ObjectiveSystemScript = preload("res://scripts/objective_system.gd")
 const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const AchievementSystemScript = preload("res://scripts/achievement_system.gd")
@@ -603,6 +604,7 @@ func _sync_state_views() -> void:
 	CombatSystemScript.normalize(run_state)
 	DungeonSystemScript.normalize(run_state)
 	StorySystemScript.normalize(run_state)
+	ChronicleSystemScript.normalize(run_state)
 	ObjectiveSystemScript.normalize(run_state)
 	EncounterSystemScript.normalize(run_state)
 	AchievementSystemScript.normalize(run_state)
@@ -864,7 +866,8 @@ func _build_action_panel(compact: bool = false) -> Control:
 	action_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	action_grid.add_theme_constant_override("separation", 4 if compact else 8)
 	column.add_child(action_grid)
-	var story_ready := not StorySystemScript.next_event(run_state.duplicate(true)).is_empty()
+	var story_ready := not ChronicleSystemScript.next_event(run_state.duplicate(true)).is_empty() or \
+		not StorySystemScript.next_event(run_state.duplicate(true)).is_empty()
 	var encounter: Dictionary = EncounterSystemScript.summary(run_state)
 	var primary_text := "继续当前章"
 	var primary_callback := _open_adventure
@@ -902,7 +905,9 @@ func _build_chapter_direction() -> Control:
 	var box := VBoxContainer.new()
 	box.name = "ChapterDirection"
 	box.add_theme_constant_override("separation", 2 if screen_host.size.y <= 760.0 else 5)
-	var next_event := StorySystemScript.next_event(run_state.duplicate(true))
+	var next_event := ChronicleSystemScript.next_event(run_state.duplicate(true))
+	if next_event.is_empty():
+		next_event = StorySystemScript.next_event(run_state.duplicate(true))
 	var encounter := EncounterSystemScript.summary(run_state)
 	var title := "山河尚有一页未写"
 	var hook := "继续探索下一段故事；修炼、战斗与秘境都会在推进过程中出现。"
@@ -1225,6 +1230,7 @@ func _world_digest() -> String:
 		"[color=#d9c98f][b]势力消长[/b][/color]\n" + faction_lines + "\n" + \
 		"[color=#d9c98f][b]同世之人[/b][/color]\n" + npc_lines + "\n" + \
 		"[color=#d9c98f][b]当前故事[/b][/color]\n" + StorySystemScript.digest(run_state) + "\n\n" + \
+		"[color=#d9c98f][b]今世长卷[/b][/color]\n" + ChronicleSystemScript.digest(run_state) + "\n\n" + \
 		"[color=#d9c98f][b]近期经历[/b][/color]\n" + memory_lines + \
 		"\n[color=#8fbfb7][b]世界会继续变化[/b][/color]\n" + \
 		"你闭关时，其他人也在生活；故人会老去，盟约可能改变，前世留下的问题也不会自行消失。"
@@ -1313,7 +1319,9 @@ func _open_adventure() -> void:
 	if bool(run_state.get("life_closed", false)) or CultivationScript.is_dead(run_state):
 		_end_current_life(_current_death_cause())
 		return
-	var story_event: Dictionary = StorySystemScript.next_event(run_state)
+	var story_event: Dictionary = ChronicleSystemScript.next_event(run_state)
+	if story_event.is_empty():
+		story_event = StorySystemScript.next_event(run_state)
 	if not story_event.is_empty():
 		current_event = story_event
 		_show_event()
@@ -3294,7 +3302,8 @@ func _event_uses_dedicated_visual() -> bool:
 func _event_chapter_meta(event: Dictionary) -> Dictionary:
 	var source := str(event.get("source", "authored_event"))
 	var arc_name := str(event.get("story_arc_name", event.get("arc_name", {
-		"story_arc": "剧情主线", "local_ai": "随机支线", "authored_event": "时代事件",
+		"story_arc": "剧情主线", "life_chronicle": "今世长卷",
+		"local_ai": "随机支线", "authored_event": "时代事件",
 	}.get(source, "事件记录"))))
 	var chapter := int(event.get("chapter_number", int(player.get("total_events", 0)) + 1))
 	var total := int(event.get("chapter_total", 0))
@@ -3417,7 +3426,9 @@ func _build_event_choices() -> Control:
 	column.add_child(_label(current_era + " · 剧情选择", 15, Color(era_accent, 0.92)))
 	var recap := str(current_event.get("previous_choice_recap", ""))
 	if recap.is_empty():
-		recap = StorySystemScript.previous_choice_recap(run_state, current_event)
+		recap = ChronicleSystemScript.previous_choice_recap(run_state, current_event) if \
+			str(current_event.get("source", "")) == "life_chronicle" else \
+			StorySystemScript.previous_choice_recap(run_state, current_event)
 	if not recap.is_empty():
 		var recap_label := _label("前情 · %s" % recap, 15, Color(0.75, 0.81, 0.80, 0.92))
 		recap_label.name = "EventPreviousChoice"
@@ -3467,6 +3478,16 @@ func _resolve_choice(index: int) -> void:
 		feedback = unavailable_reason
 		_show_event()
 		return
+	var event_source := str(current_event.get("source", ""))
+	var story_resolution: Dictionary = {}
+	# Chronicle availability must be checked against the resources shown on the
+	# choice card, before this method applies that choice's costs.
+	if event_source == "life_chronicle":
+		story_resolution = ChronicleSystemScript.resolve_choice(run_state, current_event, index)
+		if not bool(story_resolution.get("ok", false)):
+			feedback = str(story_resolution.get("reason", "这一章已发生变化，请重新选择。"))
+			_show_event()
+			return
 	var deltas: Dictionary = choice.get("deltas", {})
 	for key in deltas.keys():
 		if player.has(key):
@@ -3485,7 +3506,8 @@ func _resolve_choice(index: int) -> void:
 	_add_memory("%s：%s" % [str(current_event.get("title", "无名事件")), str(choice.get("text", "沉默"))])
 	run_state["player"] = player
 	EventCatalogScript.record_resolution(run_state, current_event, choice)
-	var story_resolution: Dictionary = StorySystemScript.resolve_choice(run_state, current_event, index)
+	if event_source != "life_chronicle":
+		story_resolution = StorySystemScript.resolve_choice(run_state, current_event, index)
 	var story_message := ""
 	if bool(story_resolution.get("ok", false)):
 		story_message = str(story_resolution.get("message", "这次经历已经写入故事记录。"))
@@ -3493,9 +3515,9 @@ func _resolve_choice(index: int) -> void:
 		if bool(story_resolution.get("terminal", false)):
 			_add_memory(str(story_resolution.get("message", "这段跨越两世的故事已经结束。")))
 	AchievementSystemScript.add_resonance(run_state, 3, "历练抉择")
-	CultivationScript.advance_time(run_state, 1)
-	var event_source := str(current_event.get("source", ""))
-	var objective_action := "story_event" if event_source == "story_arc" else \
+	CultivationScript.advance_time(run_state,
+		clampi(int(current_event.get("time_years", 1)), 0, 100))
+	var objective_action := "story_event" if event_source in ["story_arc", "life_chronicle"] else \
 		"local_ai_event" if event_source == "local_ai" else "adventure"
 	var objective_result := _record_objective_action(objective_action)
 	var encounter_offer := EncounterSystemScript.offer_from_choice(run_state, current_event, choice)
@@ -3695,6 +3717,7 @@ func _show_journal() -> void:
 	scroll.add_child(surface)
 	surface.add_child(body)
 	_build_journal_objective(body)
+	_build_journal_chronicle(body)
 	_build_journal_threads(body)
 	_build_journal_arcs(body)
 	_build_journal_resolved(body)
@@ -3721,6 +3744,29 @@ func _build_journal_objective(body: VBoxContainer) -> void:
 		Color(0.74, 0.80, 0.79, 0.9))
 	recommendation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.add_child(recommendation)
+
+
+func _build_journal_chronicle(body: VBoxContainer) -> void:
+	body.add_child(_section_title("今世长卷"))
+	var cursor := ChronicleSystemScript.normalize(run_state)
+	var volume := ChronicleSystemScript.load_volume(str(run_state.get("current_era_id", "classical")))
+	if volume.is_empty():
+		body.add_child(_label("本纪元长卷尚未装订。", 16, Color(0.76, 0.82, 0.81, 0.9)))
+		return
+	var total := (volume.get("chapters", []) as Array).size()
+	var progress := clampi(int(cursor.get("chapter_index", 0)), 0, total)
+	var status := "已完卷" if bool(cursor.get("completed", false)) else \
+		"下一页 · 第%d/%d章" % [mini(total, progress + 1), total]
+	body.add_child(_label("《%s》 · %s" % [str(volume.get("name", "无名长卷")), status],
+		18, Color("f0e7d2")))
+	body.add_child(_label("叙事跨度 · %s" % str(volume.get("timespan", "未标注")), 14,
+		Color(0.73, 0.79, 0.78, 0.9)))
+	body.add_child(_progress_row("本世进度", progress, maxi(1, total), era_accent))
+	var detail := str(cursor.get("resolution", "")) if bool(cursor.get("completed", false)) else \
+		str(volume.get("summary", "这一世的故事仍在展开。"))
+	var detail_label := _label(detail, 17, Color(0.82, 0.86, 0.84, 0.96))
+	detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body.add_child(detail_label)
 
 
 func _build_journal_threads(body: VBoxContainer) -> void:
@@ -3771,7 +3817,9 @@ func _build_journal_resolved(body: VBoxContainer) -> void:
 	body.add_child(_section_title("已成定局"))
 	for resolution_value in resolved.slice(-8):
 		var resolution: Dictionary = resolution_value
-		var phase_name := "主线结局" if str(resolution.get("phase", "main")) == "main" else "续章结局"
+		var phase := str(resolution.get("phase", "main"))
+		var phase_name := "今世长卷" if phase == "chronicle" else \
+			"主线结局" if phase == "main" else "续章结局"
 		body.add_child(_result_note("%s · %s" % [str(resolution.get("arc_name", "无名主线")), phase_name],
 			"第%d世：%s" % [int(resolution.get("generation", 1)),
 				str(resolution.get("resolution", "结局未名"))], Color("d9c98f")))
@@ -3808,7 +3856,8 @@ func _build_journal_recent(body: VBoxContainer) -> void:
 func _journal_thread_text(thread: String) -> String:
 	# Storage keeps stable prefixes for migration and cleanup; the journal only
 	# exposes the authored thread text, never internal arc/thread identifiers.
-	if thread.begins_with("side:") or thread.begins_with("story:"):
+	if thread.begins_with("side:") or thread.begins_with("story:") or \
+			thread.begins_with("chronicle:"):
 		var first_separator := thread.find(":")
 		var second_separator := thread.find(":", first_separator + 1)
 		if second_separator >= 0:

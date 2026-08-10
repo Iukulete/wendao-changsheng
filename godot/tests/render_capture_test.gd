@@ -8,6 +8,7 @@ const DungeonSystemScript = preload("res://scripts/dungeon_system.gd")
 const EventCatalogScript = preload("res://scripts/event_catalog.gd")
 const EncounterSystemScript = preload("res://scripts/encounter_system.gd")
 const StorySystemScript = preload("res://scripts/story_system.gd")
+const ChronicleSystemScript = preload("res://scripts/chronicle_system.gd")
 const MainScene = preload("res://scenes/main.tscn")
 
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(1440, 900), Vector2i(1920, 1080)]
@@ -584,6 +585,37 @@ func _run() -> void:
 			failures.append("1280x720真实长主线滚动到底后选择%d仍不可达" % (choice_index + 1))
 	_capture(root, output_root.path_join("event_long_story_bottom_1280x720.png"),
 		Vector2i(1280, 720), "战帖终章三个选择 1280x720")
+	var chronicle_state := GameStateScript.create_new_game("长篇照影", 42424244, [8, 8, 8, 8, 8])
+	chronicle_state.player.spirit_stones = 100000
+	chronicle_state.player.pills = 100000
+	var chronicle_event := ChronicleSystemScript.next_event(chronicle_state)
+	game.set("run_state", chronicle_state)
+	game.call("_sync_state_views")
+	game.set("current_event", chronicle_event)
+	game.call("_show_event")
+	await _settle_frames(4)
+	var chronicle_scroll := game.find_child("EventChoicesScroll", true, false) as ScrollContainer
+	var chronicle_choices := game.find_children("EventChoiceButton*", "Button", true, false)
+	if str(chronicle_event.get("source", "")) != "life_chronicle" or \
+			str(chronicle_event.get("description", "")).length() < 2400 or \
+			chronicle_choices.size() != 3:
+		failures.append("今世长卷首章没有以完整长正文和三条持久路线进入实机")
+	if chronicle_scroll == null or not chronicle_scroll.get_v_scroll_bar().visible:
+		failures.append("1280x720今世长卷没有为小说长度正文提供独立滚动路径")
+	_capture(root, output_root.path_join("event_chronicle_top_1280x720.png"),
+		Vector2i(1280, 720), "今世长卷首章顶部 1280x720")
+	if chronicle_scroll != null:
+		chronicle_scroll.scroll_vertical = int(chronicle_scroll.get_v_scroll_bar().max_value)
+		await _settle_frames(4)
+	var chronicle_viewport := root.get_visible_rect()
+	for choice_index in range(3):
+		var chronicle_choice := game.find_child("EventChoiceButton%d" % choice_index,
+			true, false) as Control
+		if chronicle_choice == null or not chronicle_viewport.encloses(
+				chronicle_choice.get_global_rect()):
+			failures.append("1280x720今世长卷滚动到底后选择%d仍不可达" % (choice_index + 1))
+	_capture(root, output_root.path_join("event_chronicle_bottom_1280x720.png"),
+		Vector2i(1280, 720), "今世长卷首章三个选择 1280x720")
 	game.set("run_state", auxiliary_state.duplicate(true))
 	game.call("_sync_state_views")
 	game.set("current_event", expanded_event)
