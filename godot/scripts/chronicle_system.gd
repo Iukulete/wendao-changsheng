@@ -91,6 +91,20 @@ static func validate_volume(era_id: String) -> Dictionary:
 			var choice_id := str(choice.get("id", ""))
 			if choice_ids.has(choice_id) or not route_ids.has(str(choice.get("route_id", ""))):
 				return _invalid("invalid_chronicle_choice", era_id, chapter_id, choice_id)
+			var outcome_variants_value: Variant = choice.get("outcome_variants", {})
+			if not outcome_variants_value is Dictionary:
+				return _invalid("invalid_chronicle_outcome_variants", era_id, chapter_id,
+					choice_id)
+			var outcome_variants: Dictionary = outcome_variants_value
+			if not outcome_variants.is_empty():
+				if chapter_index == 0 or outcome_variants.size() != route_ids.size():
+					return _invalid("invalid_chronicle_outcome_variants", era_id, chapter_id,
+						choice_id)
+				for previous_route_value in route_ids:
+					var previous_route_id := str(previous_route_value)
+					if str(outcome_variants.get(previous_route_id, "")).is_empty():
+						return _invalid("missing_chronicle_outcome_variant", era_id,
+							chapter_id, "%s:%s" % [choice_id, previous_route_id])
 			var choice_validation := NarrativeConsequenceScript.validate_choice(
 				choice, characters, str(volume.id), chapter_id)
 			if not bool(choice_validation.get("ok", false)):
@@ -244,9 +258,10 @@ static func resolve_choice(state: Dictionary, event: Dictionary, choice_index: i
 	if terminal:
 		cursor["completed"] = true
 		cursor["current_chapter_id"] = ""
-		resolution = NarrativeConsequenceScript.route_resolution(story,
-			{"main_route_resolutions": volume.get("route_resolutions", {})},
-			volume_id, "main")
+		var resolutions_value: Variant = volume.get("route_resolutions", {})
+		if resolutions_value is Dictionary:
+			resolution = str((resolutions_value as Dictionary).get(
+				str(choice.get("route_id", "")), ""))
 		if resolution.is_empty():
 			resolution = str(choice.get("resolution", "这一世的长卷已经写完。"))
 		cursor["resolution"] = resolution
@@ -333,6 +348,11 @@ static func _build_event(state: Dictionary, volume: Dictionary, chapter: Diction
 	var choices: Array = []
 	for choice_value in (node.get("choices", []) as Array):
 		var choice: Dictionary = (choice_value as Dictionary).duplicate(true)
+		var outcome_variants_value: Variant = choice.get("outcome_variants", {})
+		if not route_id.is_empty() and outcome_variants_value is Dictionary:
+			var outcome_variant := str((outcome_variants_value as Dictionary).get(route_id, ""))
+			if not outcome_variant.is_empty():
+				choice["outcome"] = outcome_variant
 		var availability := NarrativeConsequenceScript.choice_availability(
 			state, choice, CharacterArtCatalogScript.story_characters())
 		choice["visible"] = true
