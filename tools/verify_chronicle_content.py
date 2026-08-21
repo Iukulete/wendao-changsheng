@@ -114,6 +114,10 @@ PLAYER_DELTA_FIELDS = {
 }
 PATH_IDS = {"compassion", "ambition", "defiance", "insight", "creation", "bonds"}
 RELATION_FIELDS = {"trust", "respect", "desire", "agency", "coercion", "dependency", "corruption"}
+RESOURCE_REACHABILITY_ERAS = {
+    "classical", "steam", "star_network", "wasteland", "final_age", "immortal_dynasty",
+}
+DEFAULT_RESOURCE_BALANCE = (10, 0)
 
 
 class ChronicleError(RuntimeError):
@@ -216,6 +220,23 @@ def validate_choice(
     global_ids.add(choice_id)
     text = require_text(choice.get("text"), f"{location}.text")
     outcome = authored_prose(choice, "outcome", location)
+    outcome_variants = require_dict(
+        choice.get("outcome_variants", {}), f"{location}.outcome_variants"
+    )
+    if outcome_variants and set(outcome_variants) != route_ids:
+        fail(f"{location}.outcome_variants must cover exactly the three incoming routes")
+    for previous_route_id, raw_variant in outcome_variants.items():
+        variant = require_text(
+            raw_variant, f"{location}.outcome_variants.{previous_route_id}"
+        )
+        if cjk_count(variant) < MIN_OUTCOME_CJK:
+            fail(
+                f"{location}.outcome_variants.{previous_route_id} has fewer than "
+                f"{MIN_OUTCOME_CJK} CJK characters"
+            )
+        validate_paragraphs(
+            variant, f"{location}.outcome_variants.{previous_route_id}"
+        )
     route_id = require_text(choice.get("route_id"), f"{location}.route_id")
     if route_id not in route_ids:
         fail(f"{location} uses unknown route {route_id}")
@@ -247,18 +268,22 @@ def validate_choice(
         if target not in chapter_ids and not allow_missing_target:
             fail(f"{location} points to missing chapter {target}")
 
+    rendered_outcomes = [outcome, *[str(value) for value in outcome_variants.values()]]
     for resource_id, labels in RESOURCE_LABELS.items():
         delta = int(deltas.get(resource_id, 0))
         if not delta:
             continue
-        if not any(label in outcome for label in labels):
-            fail(f"{location} changes {resource_id} without naming it in the outcome")
         markers = RESOURCE_GAIN_MARKERS if delta > 0 else RESOURCE_SPEND_MARKERS
-        if not any(marker in outcome for marker in markers):
-            direction = "source" if delta > 0 else "use"
-            fail(f"{location} changes {resource_id} without explaining its {direction}")
-    if int(deltas.get("hp", 0)) < 0 and not any(marker in outcome for marker in INJURY_MARKERS):
-        fail(f"{location} loses HP without describing a concrete injury")
+        for rendered_outcome in rendered_outcomes:
+            if not any(label in rendered_outcome for label in labels):
+                fail(f"{location} changes {resource_id} without naming it in every outcome variant")
+            if not any(marker in rendered_outcome for marker in markers):
+                direction = "source" if delta > 0 else "use"
+                fail(f"{location} changes {resource_id} without explaining its {direction} in every outcome variant")
+    if int(deltas.get("hp", 0)) < 0:
+        for rendered_outcome in rendered_outcomes:
+            if not any(marker in rendered_outcome for marker in INJURY_MARKERS):
+                fail(f"{location} loses HP without describing a concrete injury in every outcome variant")
 
 
 def verify_graph(
@@ -297,6 +322,124 @@ def verify_graph(
     missing = sorted(chapter_ids - reachable)
     if missing:
         fail(f"{volume_id} has unreachable chapters: {', '.join(missing[:8])}")
+
+
+def verify_resource_reachability(
+    filename: str,
+    chapters: list[dict[str, Any]],
+) -> None:
+    """Reject any direct chronicle route that can strand a default new life.
+
+    Reincarnation creates every new player with 10 spirit stones and no pills.
+    Chronicle choices are resolved before the main screen applies their player
+    deltas, so this frontier applies each affordable choice exactly once and
+    carries the resulting balance into the following chapter.  Keeping one
+    representative trail per exact balance is sufficient: resource availability
+    depends only on these two balances, not on the route that produced them.
+
+    All six shipped eras are covered.  The explicit era set keeps any future
+    volume opt-in deliberate, while the frontier algorithm itself remains
+    volume agnostic.
+    """
+    frontier: dict[tuple[int, int], tuple[str, ...]] = {
+        DEFAULT_RESOURCE_BALANCE: (),
+    }
+    for chapter in chapters:
+        chapter_id = str(chapter.get("id", "unknown_chapter"))
+        next_frontier: dict[tuple[int, int], tuple[str, ...]] = {}
+        stranded: list[tuple[int, int, tuple[str, ...]]] = []
+        for (spirit_stones, pills), trail in frontier.items():
+            affordable = 0
+            for choice in chapter["choices"]:
+                deltas = choice.get("deltas", {})
+                next_stones = spirit_stones + int(deltas.get("spirit_stones", 0))
+                next_pills = pills + int(deltas.get("pills", 0))
+                if next_stones < 0 or next_pills < 0:
+                    continue
+                affordable += 1
+                next_balance = (next_stones, next_pills)
+                next_frontier.setdefault(
+                    next_balance,
+                    trail + (str(choice.get("id", "unknown_choice")),),
+                )
+            if affordable == 0:
+                stranded.append((spirit_stones, pills, trail))
+
+        if stranded:
+            spirit_stones, pills, trail = stranded[0]
+            recent_trail = " > ".join(trail[-6:]) or "volume entry"
+            fail(
+                f"{filename}.{chapter_id} resource-softlocks a reachable state at "
+                f"{spirit_stones} spirit stones/{pills} pills after {recent_trail}"
+            )
+        if not next_frontier:
+            fail(f"{filename}.{chapter_id} is unreachable from default resources")
+        frontier = next_frontier
+
+
+def verify_record_lifecycle(
+    filename: str,
+    chapters: list[dict[str, Any]],
+) -> None:
+    """Require every promise/debt transition to reference an earlier producer.
+
+    Resolution remains conditional at runtime so route switching is legal: a
+    choice may close a record only on histories where that record is open.  This
+    static pass merely rejects dangling IDs and misspellings.  Additions from the
+    same chapter are deliberately unavailable until the following chapter.
+    """
+    established: dict[str, set[str]] = {
+        "promise": set(),
+        "debt": set(),
+    }
+    transition_fields = {
+        "promises_resolve": "promise",
+        "promises_break": "promise",
+        "debts_resolve": "debt",
+        "debts_forgive": "debt",
+    }
+    addition_fields = {
+        "promises_add": "promise",
+        "debts_add": "debt",
+    }
+    for chapter in chapters:
+        chapter_id = str(chapter.get("id", "unknown_chapter"))
+        additions: dict[str, set[str]] = {
+            "promise": set(),
+            "debt": set(),
+        }
+        for choice_index, choice in enumerate(chapter["choices"]):
+            choice_id = str(choice.get("id", f"choice_{choice_index}"))
+            location = f"{filename}.{chapter_id}.{choice_id}"
+            for field, kind in transition_fields.items():
+                values = choice.get(field, [])
+                if not values:
+                    continue
+                for record_index, record_id_value in enumerate(
+                    require_list(values, f"{location}.{field}")
+                ):
+                    record_id = require_text(
+                        record_id_value,
+                        f"{location}.{field}[{record_index}]",
+                    )
+                    if record_id not in established[kind]:
+                        fail(
+                            f"{location}.{field}[{record_index}] references {record_id}, "
+                            f"but no earlier chapter establishes that {kind}"
+                        )
+            for field, kind in addition_fields.items():
+                values = choice.get(field, [])
+                if not values:
+                    continue
+                for record_index, record_value in enumerate(
+                    require_list(values, f"{location}.{field}")
+                ):
+                    record = require_dict(record_value, f"{location}.{field}[{record_index}]")
+                    additions[kind].add(require_text(
+                        record.get("id"), f"{location}.{field}[{record_index}].id"
+                    ))
+        for kind, record_ids in additions.items():
+            established[kind].update(record_ids)
 
 
 def verify_repetition(volume_id: str, text_blocks: list[tuple[str, str]]) -> None:
@@ -453,10 +596,19 @@ def verify_volume(
                 global_ids,
                 allow_missing_target=draft and index == len(chapters) - 1,
             )
+            if index == 0 and choice.get("outcome_variants"):
+                fail(f"{location}.choices[{choice_index}] cannot vary by an incoming route")
             choice_texts.add(normalized(str(choice["text"])))
             outcomes.add(normalized(str(choice["outcome"])))
             choice_routes[str(choice["route_id"])] += 1
             text_blocks.append((f"{chapter_id}.choice.{choice_index}", str(choice["outcome"])))
+            for previous_route_id, outcome_variant in choice.get("outcome_variants", {}).items():
+                text_blocks.append(
+                    (
+                        f"{chapter_id}.choice.{choice_index}.from.{previous_route_id}",
+                        str(outcome_variant),
+                    )
+                )
             relationship_deltas = choice.get("relationship_deltas", {})
             if relationship_deltas:
                 chapter_has_relationship = True
@@ -531,6 +683,10 @@ def verify_volume(
         fail(f"{filename} needs at least eight explicit promises or debts across the volume")
     if not draft and consequence_counts["delayed_echoes"] < 8:
         fail(f"{filename} needs at least eight delayed echoes so prior actions return in play")
+
+    verify_record_lifecycle(filename, chapters)
+    if era_id in RESOURCE_REACHABILITY_ERAS:
+        verify_resource_reachability(filename, chapters)
 
     entry_id = require_text(data.get("entry_chapter_id"), f"{filename}.entry_chapter_id")
     if entry_id not in chapter_ids:

@@ -70,6 +70,12 @@ static func validate_choice(choice: Dictionary, characters: Dictionary,
 			str(choice.route_id).is_empty() or not choice.deltas is Dictionary or \
 			not choice.path_deltas is Dictionary:
 		return _invalid("invalid_story_choice", arc_id, node_id, choice)
+	var outcome_variants_value: Variant = choice.get("outcome_variants", {})
+	if not outcome_variants_value is Dictionary:
+		return _invalid("invalid_outcome_variants", arc_id, node_id, choice)
+	for outcome_variant_value in (outcome_variants_value as Dictionary).values():
+		if str(outcome_variant_value).is_empty():
+			return _invalid("invalid_outcome_variant", arc_id, node_id, choice)
 	var tags := _string_array(choice.get("content_tags", []), 16, 32)
 	var has_intimacy := _contains_any(tags, INTIMATE_TAGS)
 	var has_coercion := _contains_any(tags, COERCION_TAGS)

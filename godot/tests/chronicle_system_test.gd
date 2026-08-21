@@ -133,9 +133,12 @@ func _init() -> void:
 		str(reset_event.get("chronicle_volume_id", "")) == str(steam_volume.get("id", "")) and
 		int((reset_state.story.life_chronicle as Dictionary).get("generation", 0)) == 2,
 		"新一世必须自动切换纪元长卷并从第一章开始")
+	_verify_terminal_choice_resolution()
+	_verify_outcome_variants()
+	_verify_route_switch_matrix()
 
 	if failures.is_empty():
-		print("CHRONICLE_SYSTEM_TEST_OK: six volumes, 144+ choices, route consequences, stale protection and reincarnation reset passed")
+		print("CHRONICLE_SYSTEM_TEST_OK: six volumes, 144+ choices, 1242 route-switch transitions, authored outcome variants, terminal-choice endings, stale protection and reincarnation reset passed")
 		quit(0)
 	else:
 		for failure in failures:
@@ -146,6 +149,133 @@ func _init() -> void:
 func _expect(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
+
+
+func _verify_terminal_choice_resolution() -> void:
+	var terminal_state := GameStateScript.create_new_game(
+		"终章校验", 20260820, [8, 8, 8, 8, 8])
+	terminal_state.current_era_id = "classical"
+	terminal_state.current_era = str(GameStateScript.ERA_NAMES.classical)
+	terminal_state.player.spirit_stones = 100000
+	terminal_state.player.pills = 100000
+	var volume := ChronicleSystemScript.load_volume("classical")
+	var chapter_count := (volume.get("chapters", []) as Array).size()
+	var terminal_result: Dictionary = {}
+	var terminal_route_id := ""
+	for chapter_index in range(chapter_count):
+		var event := ChronicleSystemScript.next_event(terminal_state)
+		var choice_index := 0 if chapter_index < chapter_count - 1 else 2
+		var choices: Array = event.get("choices", [])
+		if choices.size() != 3:
+			_expect(false, "终章选择校验必须读到完整的三选一章节")
+			return
+		var choice: Dictionary = choices[choice_index]
+		terminal_route_id = str(choice.get("route_id", ""))
+		terminal_result = ChronicleSystemScript.resolve_choice(
+			terminal_state, event, choice_index)
+		if not bool(terminal_result.get("ok", false)):
+			_expect(false, "终章选择校验路径必须能完整结算")
+			return
+	var resolutions: Dictionary = volume.get("route_resolutions", {})
+	_expect(str(terminal_result.get("resolution", "")) ==
+		str(resolutions.get(terminal_route_id, "")),
+		"完卷摘要必须服从终章真实选择，不能被前二十三章的累计路线票数改写")
+
+
+func _verify_outcome_variants() -> void:
+	var variant_count := 0
+	for era_value in ChronicleSystemScript.ERA_IDS:
+		var era_id := str(era_value)
+		var volume := ChronicleSystemScript.load_volume(era_id)
+		var chapters: Array = volume.get("chapters", [])
+		for chapter_index in range(chapters.size()):
+			var chapter: Dictionary = chapters[chapter_index]
+			for source_choice_value in (chapter.get("choices", []) as Array):
+				var source_choice: Dictionary = source_choice_value
+				var variants_value: Variant = source_choice.get("outcome_variants", {})
+				if not variants_value is Dictionary or (variants_value as Dictionary).is_empty():
+					continue
+				for previous_route_value in (variants_value as Dictionary).keys():
+					var previous_route_id := str(previous_route_value)
+					var variant_state := GameStateScript.create_new_game(
+						"换线结果校验", 20260820 + variant_count, [8, 8, 8, 8, 8])
+					variant_state.current_era_id = era_id
+					variant_state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, era_id))
+					variant_state.player.spirit_stones = 100000
+					variant_state.player.pills = 100000
+					var cursor := ChronicleSystemScript.normalize(variant_state)
+					cursor["chapter_index"] = chapter_index
+					cursor["current_chapter_id"] = str(chapter.get("id", ""))
+					cursor["last_route_id"] = previous_route_id
+					var story: Dictionary = variant_state.get("story", {})
+					story["life_chronicle"] = cursor
+					variant_state["story"] = story
+					var event := ChronicleSystemScript.next_event(variant_state)
+					var rendered_choice: Dictionary = {}
+					for rendered_choice_value in (event.get("choices", []) as Array):
+						if str((rendered_choice_value as Dictionary).get("id", "")) == \
+								str(source_choice.get("id", "")):
+							rendered_choice = rendered_choice_value
+							break
+					_expect(str(rendered_choice.get("outcome", "")) ==
+						str((variants_value as Dictionary).get(previous_route_id, "")),
+						"换线结果必须按上一章真实路线选择作者写明的 outcome_variants")
+					variant_count += 1
+	_expect(variant_count > 0, "至少一个关键换线节点必须提供逐路线结果文本")
+
+
+func _verify_route_switch_matrix() -> void:
+	var transition_count := 0
+	for era_value in ChronicleSystemScript.ERA_IDS:
+		var era_id := str(era_value)
+		var volume := ChronicleSystemScript.load_volume(era_id)
+		var route_ids: Array = volume.get("route_ids", [])
+		var chapters: Array = volume.get("chapters", [])
+		for chapter_index in range(1, chapters.size()):
+			var chapter: Dictionary = chapters[chapter_index]
+			for previous_route_value in route_ids:
+				var previous_route_id := str(previous_route_value)
+				var switch_state := GameStateScript.create_new_game(
+					"逐章换线校验", 20270000 + transition_count, [8, 8, 8, 8, 8])
+				switch_state.current_era_id = era_id
+				switch_state.current_era = str(GameStateScript.ERA_NAMES.get(era_id, era_id))
+				switch_state.player.spirit_stones = 100000
+				switch_state.player.pills = 100000
+				var cursor := ChronicleSystemScript.normalize(switch_state)
+				cursor["chapter_index"] = chapter_index
+				cursor["current_chapter_id"] = str(chapter.get("id", ""))
+				cursor["last_route_id"] = previous_route_id
+				var story: Dictionary = switch_state.get("story", {})
+				story["life_chronicle"] = cursor
+				switch_state["story"] = story
+				var event := ChronicleSystemScript.next_event(switch_state)
+				var choices: Array = event.get("choices", [])
+				_expect(str(event.get("previous_route_id", "")) == previous_route_id and
+					choices.size() == 3,
+					"每章必须保留上一行动的回声，并继续给出三条可换路线")
+				var offered_routes: Array[String] = []
+				for choice_index in range(choices.size()):
+					var choice: Dictionary = choices[choice_index]
+					var outgoing_route_id := str(choice.get("route_id", ""))
+					offered_routes.append(outgoing_route_id)
+					_expect(bool(choice.get("visible", false)) and
+						bool(choice.get("available", false)),
+						"高资源且无额外前置时，任一来路都必须能改选三条路线")
+					var choice_state: Dictionary = switch_state.duplicate(true)
+					var result := ChronicleSystemScript.resolve_choice(
+						choice_state, event, choice_index)
+					_expect(bool(result.get("ok", false)) and
+						str(result.get("route_id", "")) == outgoing_route_id,
+						"逐章换线的九种来去组合都必须能真实结算")
+					transition_count += 1
+				var unique_routes: Array[String] = []
+				for offered_route_id in offered_routes:
+					if not unique_routes.has(offered_route_id):
+						unique_routes.append(offered_route_id)
+				_expect(unique_routes.size() == 3,
+					"每章三项行动必须分别通往三条不同路线")
+	_expect(transition_count == 6 * 23 * 3 * 3,
+		"六卷二十三个换线节点必须覆盖全部 1242 种来去组合")
 
 
 func _available_choice_index(event: Dictionary, preferred: int) -> int:
