@@ -2,6 +2,7 @@ class_name CombatStage
 extends Control
 
 const CombatVisualCatalogScript = preload("res://scripts/combat_visual_catalog.gd")
+const SPRITE_ANIMATION_DATA_PATH := "res://data/combat_sprite_animations_v1.json"
 
 var battle: Dictionary = {}
 var accent := Color("e4be4c")
@@ -11,11 +12,15 @@ var motes: Array[Dictionary] = []
 var feedback_cue := ""
 var feedback_kind := ""
 var feedback_actor := "system"
+var feedback_technique_id := ""
+var feedback_action_id := ""
 var feedback_seed := 0
 var debug_capture_only := false
 var debug_pixel_cells: Dictionary = {}
 var player_art_layers: Dictionary = {}
+var ally_art_layers: Dictionary = {}
 var enemy_art_layers: Dictionary = {}
+var sprite_animation_data: Dictionary = {}
 
 
 func _ready() -> void:
@@ -33,6 +38,7 @@ func configure(next_battle: Dictionary, next_accent: Color) -> void:
 	_build_motes()
 	_read_latest_feedback()
 	player_art_layers = _resolve_battle_art("player")
+	ally_art_layers = _resolve_battle_art("ally")
 	enemy_art_layers = _resolve_battle_art("enemy")
 	feedback_seed = absi(hash("%s:%s:%s" % [battle.get("turn", 0), feedback_kind, feedback_cue]))
 	queue_redraw()
@@ -60,6 +66,8 @@ func _read_latest_feedback() -> void:
 	feedback_cue = ""
 	feedback_kind = ""
 	feedback_actor = "system"
+	feedback_technique_id = ""
+	feedback_action_id = ""
 	var history_value: Variant = battle.get("event_history", [])
 	var history: Array = history_value if history_value is Array else []
 	if history.is_empty() or not history[-1] is Dictionary:
@@ -77,6 +85,10 @@ func _read_latest_feedback() -> void:
 		feedback_cue = str(step.get("cue", ""))
 		feedback_kind = kind
 		feedback_actor = str(step.get("actor", "system"))
+		var data_value: Variant = step.get("data", {})
+		var data: Dictionary = data_value if data_value is Dictionary else {}
+		feedback_technique_id = str(data.get("technique_id", ""))
+		feedback_action_id = str(data.get("action_id", ""))
 		return
 
 
@@ -88,7 +100,10 @@ func _draw() -> void:
 	# readable at 1280p while still fitting narrow screens.
 	var scale_value := clampf(minf(size.x / 520.0, size.y / 310.0), 0.72, 1.45)
 	var pixel_size := _pixel_size(scale_value)
-	var player_position := _snap_to_pixel(Vector2(size.x * 0.23, size.y * 0.78), pixel_size)
+	var has_ally := not ally_art_layers.is_empty()
+	var player_position := _snap_to_pixel(
+		Vector2(size.x * (0.16 if has_ally else 0.23), size.y * 0.78), pixel_size)
+	var ally_position := _snap_to_pixel(Vector2(size.x * 0.34, size.y * 0.78), pixel_size)
 	var enemy_position := _snap_to_pixel(Vector2(size.x * 0.76, size.y * 0.76), pixel_size)
 	var shake := _feedback_shake(scale_value)
 	if feedback_actor == "enemy":
@@ -106,6 +121,8 @@ func _draw() -> void:
 	_draw_presence(enemy_position, enemy_presence_radius, enemy_color,
 		_ratio("enemy_hp", "enemy_max_hp"), battle.get("enemy_statuses", {}), true)
 	_draw_player(player_position, scale_value, _actor_pose("player"))
+	if has_ally:
+		_draw_ally(ally_position, scale_value)
 	_draw_enemy(enemy_position, scale_value, _actor_pose("enemy"))
 	_draw_intent(enemy_position, player_position, scale_value)
 	_draw_clash_line(player_position, enemy_position, scale_value)
@@ -626,8 +643,13 @@ func _resolve_battle_art(side: String) -> Dictionary:
 	var result: Dictionary = {}
 	var requested_value: Variant = battle.get("%s_art" % side, {})
 	var requested: Dictionary = requested_value if requested_value is Dictionary else {}
-	var identity := "protagonist" if side == "player" else str(
-		battle.get("encounter_id", battle.get("enemy_id", "")))
+	var identity := ""
+	if side == "player":
+		identity = str(battle.get("player_character_id", "protagonist"))
+	elif side == "ally":
+		identity = str(battle.get("ally_support_id", ""))
+	else:
+		identity = str(battle.get("encounter_id", battle.get("enemy_id", "")))
 	identity = _safe_art_identity(identity)
 	var default_body := ""
 	if not identity.is_empty():
@@ -636,16 +658,22 @@ func _resolve_battle_art(side: String) -> Dictionary:
 	if body_path.is_empty() and not default_body.is_empty() and ResourceLoader.exists(default_body):
 		body_path = default_body
 	var body := _load_battle_texture(body_path)
-	if body == null:
+	var animation := _resolve_sprite_animation(identity, requested)
+	if body == null and animation.is_empty():
 		return {}
-	result["body"] = body
+	result["body"] = body if body != null else animation.get("texture", null)
+	if not animation.is_empty():
+		result["animation"] = animation
 	for layer in ["back", "weapon", "aura"]:
 		var layer_path := str(requested.get("%s_path" % layer, ""))
 		var texture := _load_battle_texture(layer_path)
 		if texture != null:
 			result[layer] = texture
-	result["display_height"] = clampf(float(requested.get("display_height", 226.0)), 160.0, 340.0)
+	var default_display_height := float(animation.get("display_height", 226.0)) if not animation.is_empty() else 226.0
+	result["display_height"] = clampf(float(requested.get("display_height", default_display_height)), 160.0, 340.0)
 	var pivot_value: Variant = requested.get("pivot", [0.5, 0.96])
+	if not requested.has("pivot") and not animation.is_empty():
+		pivot_value = animation.get("pivot", [0.5, 0.96])
 	if pivot_value is Array and (pivot_value as Array).size() >= 2:
 		result["pivot"] = Vector2(clampf(float((pivot_value as Array)[0]), 0.0, 1.0),
 			clampf(float((pivot_value as Array)[1]), 0.0, 1.0))
@@ -653,6 +681,52 @@ func _resolve_battle_art(side: String) -> Dictionary:
 		result["pivot"] = Vector2(0.5, 0.96)
 	result["source_id"] = identity
 	return result
+
+
+func _resolve_sprite_animation(identity: String, requested: Dictionary) -> Dictionary:
+	var definitions := _load_sprite_animation_data()
+	var character_data: Dictionary = {}
+	var requested_value: Variant = requested.get("animation", {})
+	if requested_value is Dictionary:
+		character_data = (requested_value as Dictionary).duplicate(true)
+	if character_data.is_empty():
+		var characters_value: Variant = definitions.get("characters", {})
+		if characters_value is Dictionary:
+			var value: Variant = (characters_value as Dictionary).get(identity, {})
+			if value is Dictionary:
+				character_data = (value as Dictionary).duplicate(true)
+	if character_data.is_empty():
+		return {}
+	var sheet_path := str(character_data.get("sheet_path", ""))
+	var sheet := _load_battle_texture(sheet_path)
+	if sheet == null:
+		return {}
+	var columns := maxi(1, int(character_data.get("columns", 1)))
+	var rows := maxi(1, int(character_data.get("rows", 1)))
+	var frame_size := Vector2(sheet.get_width() / columns, sheet.get_height() / rows)
+	var frame_size_value: Variant = character_data.get("frame_size", [])
+	if frame_size_value is Array and (frame_size_value as Array).size() >= 2:
+		frame_size = Vector2(maxf(1.0, float((frame_size_value as Array)[0])),
+			maxf(1.0, float((frame_size_value as Array)[1])))
+	var clips_value: Variant = character_data.get("clips", {})
+	if not clips_value is Dictionary or (clips_value as Dictionary).is_empty():
+		return {}
+	character_data["texture"] = sheet
+	character_data["columns"] = columns
+	character_data["rows"] = rows
+	character_data["frame_size"] = frame_size
+	return character_data
+
+
+func _load_sprite_animation_data() -> Dictionary:
+	if not sprite_animation_data.is_empty():
+		return sprite_animation_data
+	if not ResourceLoader.exists(SPRITE_ANIMATION_DATA_PATH):
+		return {}
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(SPRITE_ANIMATION_DATA_PATH))
+	if parsed is Dictionary:
+		sprite_animation_data = (parsed as Dictionary).duplicate(true)
+	return sprite_animation_data
 
 
 func _safe_art_identity(value: String) -> String:
@@ -682,6 +756,10 @@ func _draw_external_actor(art: Dictionary, position: Vector2, scale_value: float
 		return false
 	var body: Texture2D = body_value
 	var source_size := body.get_size()
+	var animation_frame := _sprite_animation_frame(art, pose)
+	var source_region: Rect2 = animation_frame.get("region", Rect2())
+	if source_region.size.x > 1.0 and source_region.size.y > 1.0:
+		source_size = source_region.size
 	if source_size.x <= 1.0 or source_size.y <= 1.0:
 		return false
 	var target_height := minf(float(art.get("display_height", 226.0)) * scale_value,
@@ -704,6 +782,12 @@ func _draw_external_actor(art: Dictionary, position: Vector2, scale_value: float
 		"hit":
 			movement.x -= facing * 12.0 * scale_value
 			rotation -= facing * 0.055
+		"spell":
+			movement.x += facing * 4.0 * scale_value
+			movement.y -= 2.0 * scale_value
+			rotation += facing * 0.018
+		"phase":
+			movement.y -= 3.0 * scale_value
 	var actor_origin := position + movement
 	var rect := Rect2(-target_size.x * pivot.x, -target_size.y * pivot.y, target_size.x, target_size.y)
 	var key_color := Color(enemy_color if enemy_side else accent, 0.12)
@@ -711,13 +795,13 @@ func _draw_external_actor(art: Dictionary, position: Vector2, scale_value: float
 		enemy_side, rotation * 0.45, Color(1.0, 1.0, 1.0, 0.55))
 	for key_offset in [Vector2(-2, 0), Vector2(2, 0), Vector2(0, -2), Vector2(0, 2)]:
 		_draw_external_layer(body, actor_origin + key_offset * scale_value, rect, enemy_side,
-			rotation, key_color)
+			rotation, key_color, source_region)
 	_draw_external_layer(art.get("back", null), actor_origin, rect, enemy_side, rotation,
 		Color.WHITE)
 	var body_modulate := Color(1.0, 0.72, 0.68, 1.0) if pose == "hit" else Color.WHITE
 	if pose == "defeat":
 		body_modulate = Color(0.58, 0.62, 0.65, 0.76)
-	_draw_external_layer(body, actor_origin, rect, enemy_side, rotation, body_modulate)
+	_draw_external_layer(body, actor_origin, rect, enemy_side, rotation, body_modulate, source_region)
 	var weapon_value: Variant = art.get("weapon", null)
 	if pose == "attack" and weapon_value is Texture2D:
 		for echo_index in range(3, 0, -1):
@@ -734,13 +818,59 @@ func _draw_external_actor(art: Dictionary, position: Vector2, scale_value: float
 
 
 func _draw_external_layer(texture_value: Variant, origin: Vector2, rect: Rect2,
-		enemy_side: bool, rotation: float, modulate: Color) -> void:
+		enemy_side: bool, rotation: float, modulate: Color, source_region: Rect2 = Rect2()) -> void:
 	if not texture_value is Texture2D:
 		return
 	var mirror := -1.0 if enemy_side else 1.0
 	draw_set_transform(origin, rotation, Vector2(mirror, 1.0))
-	draw_texture_rect(texture_value as Texture2D, rect, false, modulate)
+	if source_region.size.x > 1.0 and source_region.size.y > 1.0:
+		draw_texture_rect_region(texture_value as Texture2D, rect, source_region, modulate)
+	else:
+		draw_texture_rect(texture_value as Texture2D, rect, false, modulate)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _sprite_animation_frame(art: Dictionary, pose: String) -> Dictionary:
+	var animation_value: Variant = art.get("animation", {})
+	if not animation_value is Dictionary:
+		return {}
+	var animation: Dictionary = animation_value
+	var clips_value: Variant = animation.get("clips", {})
+	if not clips_value is Dictionary:
+		return {}
+	var clips: Dictionary = clips_value
+	var clip_id := pose
+	var technique_clips_value: Variant = animation.get("technique_clips", {})
+	if technique_clips_value is Dictionary and not feedback_technique_id.is_empty():
+		var technique_clip := str((technique_clips_value as Dictionary).get(feedback_technique_id, ""))
+		if not technique_clip.is_empty() and clips.has(technique_clip):
+			clip_id = technique_clip
+	var clip_value: Variant = clips.get(clip_id, clips.get("idle", {}))
+	if not clip_value is Dictionary:
+		return {}
+	var clip: Dictionary = clip_value
+	var frames_value: Variant = clip.get("frames", [])
+	if not frames_value is Array or (frames_value as Array).is_empty():
+		return {}
+	var frames: Array = frames_value
+	var fps := maxf(0.1, float(clip.get("fps", 8.0)))
+	var frame_index := int(floor(elapsed * fps))
+	if bool(clip.get("loop", false)):
+		frame_index = posmod(frame_index, frames.size())
+	else:
+		frame_index = mini(frame_index, frames.size() - 1)
+	var frame_number := int(frames[frame_index])
+	var columns := maxi(1, int(animation.get("columns", 1)))
+	var rows := maxi(1, int(animation.get("rows", 1)))
+	if frame_number < 0 or frame_number >= columns * rows:
+		return {}
+	var frame_size: Vector2 = animation.get("frame_size", Vector2.ZERO)
+	if frame_size.x <= 1.0 or frame_size.y <= 1.0:
+		return {}
+	var region := Rect2(Vector2(frame_number % columns, frame_number / columns) * frame_size,
+		frame_size)
+	return {"region": region, "clip_id": clip_id, "frame_index": frame_index,
+		"frame_count": frames.size(), "fps": fps}
 
 
 func _draw_player(position: Vector2, scale_value: float, pose: String) -> void:
@@ -820,6 +950,12 @@ func _draw_player(position: Vector2, scale_value: float, pose: String) -> void:
 		_pixel_line(root, pixel, Vector2i(9, -14), Vector2i(18, -23), outline, 2)
 		_pixel_line(root, pixel, Vector2i(10, -14), Vector2i(19, -24), Color("dddace"), 1)
 		_pixel_rect(root, pixel, Rect2i(17, -25, 3, 1), trim)
+
+
+func _draw_ally(position: Vector2, scale_value: float) -> void:
+	# Story encounters expose an ally support id. Render that support as a second
+	# party slot while keeping the player's HP/action lane authoritative.
+	_draw_external_actor(ally_art_layers, position, scale_value, "idle", false)
 
 
 func _draw_enemy(position: Vector2, scale_value: float, pose: String) -> void:
@@ -1409,6 +1545,69 @@ func debug_validate_external_art_contract() -> Dictionary:
 	}
 
 
+func debug_validate_sprite_animation_contract() -> Dictionary:
+	var failures: Array[String] = []
+	var definitions := _load_sprite_animation_data()
+	if int(definitions.get("schema_version", 0)) != 1:
+		failures.append("unsupported_sprite_animation_schema")
+	var characters_value: Variant = definitions.get("characters", {})
+	if not characters_value is Dictionary or (characters_value as Dictionary).is_empty():
+		failures.append("missing_sprite_animation_characters")
+	else:
+		for identity_value in (characters_value as Dictionary).keys():
+			var identity := str(identity_value)
+			var profile_value: Variant = (characters_value as Dictionary).get(identity, {})
+			if not profile_value is Dictionary:
+				failures.append("invalid_sprite_profile:%s" % identity)
+				continue
+			var profile: Dictionary = profile_value
+			var sheet_path := str(profile.get("sheet_path", ""))
+			var texture := _load_battle_texture(sheet_path)
+			if texture == null:
+				failures.append("missing_sprite_sheet:%s" % identity)
+				continue
+			var columns := maxi(1, int(profile.get("columns", 1)))
+			var rows := maxi(1, int(profile.get("rows", 1)))
+			var clips_value: Variant = profile.get("clips", {})
+			if not clips_value is Dictionary or (clips_value as Dictionary).is_empty():
+				failures.append("missing_sprite_clips:%s" % identity)
+				continue
+			for clip_id_value in (clips_value as Dictionary).keys():
+				var clip_id := str(clip_id_value)
+				var clip_value: Variant = (clips_value as Dictionary).get(clip_id, {})
+				if not clip_value is Dictionary:
+					failures.append("invalid_sprite_clip:%s:%s" % [identity, clip_id])
+					continue
+				var clip: Dictionary = clip_value
+				var frames_value: Variant = clip.get("frames", [])
+				var fps := float(clip.get("fps", 0.0))
+				if not frames_value is Array or (frames_value as Array).is_empty() or fps <= 0.0:
+					failures.append("invalid_sprite_clip_timing:%s:%s" % [identity, clip_id])
+					continue
+				for frame_value in (frames_value as Array):
+					if int(frame_value) < 0 or int(frame_value) >= columns * rows:
+						failures.append("sprite_frame_out_of_range:%s:%s" % [identity, clip_id])
+		return {
+			"ok": failures.is_empty(),
+			"failures": failures,
+			"character_count": (characters_value as Dictionary).size() if characters_value is Dictionary else 0,
+		}
+
+
+func debug_validate_party_art_contract() -> Dictionary:
+	var previous_battle := battle.duplicate(true)
+	battle = {"id": "debug_party_art", "ally_support_id": "jiang_zhaoxue"}
+	var player_art := _resolve_battle_art("player")
+	var ally_art := _resolve_battle_art("ally")
+	battle = previous_battle
+	return {
+		"ok": not player_art.is_empty() and not ally_art.is_empty() and
+			str(ally_art.get("source_id", "")) == "jiang_zhaoxue",
+		"player_source_id": str(player_art.get("source_id", "")),
+		"ally_source_id": str(ally_art.get("source_id", "")),
+	}
+
+
 func debug_capture_enemy(enemy_id: String, pose: String, frame_time: float = 0.20) -> Dictionary:
 	var previous_elapsed := elapsed
 	var previous_battle := battle.duplicate(true)
@@ -1603,13 +1802,18 @@ func debug_validate_pixel_pipeline() -> Dictionary:
 func _actor_pose(side: String) -> String:
 	var source_side := "enemy" if feedback_actor == "enemy" else "player"
 	var target_side := "player" if source_side == "enemy" else "enemy"
-	if elapsed <= 0.72 and not feedback_kind.is_empty():
+	var feedback_window := _feedback_animation_window(side)
+	if elapsed <= feedback_window and not feedback_kind.is_empty():
 		if feedback_kind == "phase_shift" and side == "enemy":
 			return "phase"
 		if feedback_kind == "shield" and side == source_side:
 			return "guard"
+		if feedback_kind == "heal" and side == source_side:
+			return "spell"
 		if feedback_kind == "damage":
 			if side == source_side:
+				if feedback_cue == "combat.spell" or feedback_cue.find("spell") >= 0:
+					return "spell"
 				return "charge" if elapsed < 0.16 else "attack"
 			if side == target_side and elapsed >= 0.30:
 				return "hit"
@@ -1618,6 +1822,47 @@ func _actor_pose(side: String) -> String:
 	if side == "player" and bool(battle.get("counter_burst_ready", false)):
 		return "charge"
 	return "idle"
+
+
+func _feedback_animation_window(side: String) -> float:
+	var art := player_art_layers if side == "player" else enemy_art_layers
+	var pose := "idle"
+	if feedback_kind == "phase_shift" and side == "enemy":
+		pose = "phase"
+	elif feedback_kind == "shield" and side == ("enemy" if feedback_actor == "enemy" else "player"):
+		pose = "guard"
+	elif feedback_kind == "heal" and side == ("enemy" if feedback_actor == "enemy" else "player"):
+		pose = "spell"
+	elif feedback_kind == "damage":
+		var source_side := "enemy" if feedback_actor == "enemy" else "player"
+		if side == source_side:
+			pose = "spell" if feedback_cue == "combat.spell" or feedback_cue.find("spell") >= 0 else "attack"
+		else:
+			pose = "hit"
+	var clip := _sprite_animation_clip(art, pose)
+	var frames_value: Variant = clip.get("frames", [])
+	var fps := maxf(0.1, float(clip.get("fps", 8.0)))
+	var frame_count := (frames_value as Array).size() if frames_value is Array else 0
+	return maxf(0.72, float(frame_count) / fps) if frame_count > 0 else 0.72
+
+
+func _sprite_animation_clip(art: Dictionary, pose: String) -> Dictionary:
+	var animation_value: Variant = art.get("animation", {})
+	if not animation_value is Dictionary:
+		return {}
+	var animation: Dictionary = animation_value
+	var clips_value: Variant = animation.get("clips", {})
+	if not clips_value is Dictionary:
+		return {}
+	var clips: Dictionary = clips_value
+	var clip_id := pose
+	var technique_clips_value: Variant = animation.get("technique_clips", {})
+	if technique_clips_value is Dictionary and not feedback_technique_id.is_empty():
+		var technique_clip := str((technique_clips_value as Dictionary).get(feedback_technique_id, ""))
+		if not technique_clip.is_empty() and clips.has(technique_clip):
+			clip_id = technique_clip
+	var value: Variant = clips.get(clip_id, clips.get("idle", {}))
+	return (value as Dictionary).duplicate(true) if value is Dictionary else {}
 
 
 func _pixel_size(scale_value: float) -> float:

@@ -1,0 +1,781 @@
+{
+  "schema_version": 1,
+  "description": "Data-driven battle sprite animation clips. Frame counts are intentionally unconstrained; each clip owns its own atlas sequence and timing.",
+  "characters": {
+    "protagonist": {
+      "sheet_path": "res://art/combat/characters/protagonist/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [7, 6, 5, 4], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "insight_cause_edge": "attack",
+        "insight_mirror_answer": "spell"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "jiang_zhaoxue": {
+      "sheet_path": "res://art/combat/characters/jiang_zhaoxue/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [11, 10, 9, 8], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "snow_duel": "attack",
+        "shoulder_snow": "spell"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "ning_zhaoxue": {
+      "sheet_path": "res://art/combat/characters/ning_zhaoxue/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "sea_guard": "guard",
+        "tide_thrust": "attack",
+        "mist_barrier": "spell"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "cen_zhaolu": {
+      "sheet_path": "res://art/combat/characters/cen_zhaolu/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "pressure_strike": "attack",
+        "furnace_guard": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "chi_yaoqing": {
+      "sheet_path": "res://art/combat/characters/chi_yaoqing/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "herb_dust": "attack",
+        "peacock_mist": "spell",
+        "field_triage": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "family_covenant_holder": {
+      "sheet_path": "res://art/combat/characters/family_covenant_holder/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "old_letter_witness": "attack",
+        "covenant_preservation": "spell",
+        "mutual_support": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "han_xuansu": {
+      "sheet_path": "res://art/combat/characters/han_xuansu/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "contract_lock": "attack",
+        "meridian_audit": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "jade_echo": {
+      "sheet_path": "res://art/combat/characters/jade_echo/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "jade_split": "attack",
+        "echo_reversal": "spell",
+        "shadow_misalignment": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "pei_zhaowei": {
+      "sheet_path": "res://art/combat/characters/pei_zhaowei/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "sky_censure": "attack",
+        "seal_the_gap": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "recurring_antagonist": {
+      "sheet_path": "res://art/combat/characters/recurring_antagonist/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "mandate_inscription": "attack",
+        "ledger_judgment": "spell",
+        "red_seal_suppression": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "sect_lawkeeper_first": {
+      "sheet_path": "res://art/combat/characters/sect_lawkeeper_first/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [0, 1, 2, 3], "fps": 8, "loop": false},
+        "attack": {"frames": [4, 5, 6, 7], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [10, 11, 12, 13], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "law_bell_shock": "attack",
+        "seal_the_gate": "spell",
+        "read_the_rule": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "sect_lawkeeper_second": {
+      "sheet_path": "res://art/combat/characters/sect_lawkeeper_second/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "attack": {"frames": [4, 5, 6, 7], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [10, 11, 12, 13], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "seal_step": "attack",
+        "seal_lock": "spell",
+        "law_bell_shock": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "sect_lawkeepers": {
+      "sheet_path": "res://art/combat/characters/sect_lawkeepers/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [14, 15, 13, 12], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "paired_gate_seal": "attack",
+        "law_bell_formation": "spell",
+        "generation_lock": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "shali": {
+      "sheet_path": "res://art/combat/characters/shali/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "attack": {"frames": [4, 5, 6, 7], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [10, 11, 12, 13], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "survival_cleave": "attack",
+        "lantern_flare": "spell",
+        "lantern_scan": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "wen_xingdu": {
+      "sheet_path": "res://art/combat/characters/wen_xingdu/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "route_mark": "attack",
+        "star_scan": "guard"
+      },
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "classical_fate_registrar": {
+      "sheet_path": "res://art/combat/monsters/classical_fate_registrar/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 330,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [6, 7, 8, 9], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13], "fps": 12, "loop": false},
+        "spell": {"frames": [14, 15, 16, 17], "fps": 10, "loop": false},
+        "hit": {"frames": [18, 19, 20, 21], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "fate_mark": "attack",
+        "seal_ribbon_bind": "spell",
+        "rewrite_fate": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "classical_oath_breaker": {
+      "sheet_path": "res://art/combat/monsters/classical_oath_breaker/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 292,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [0, 1, 2, 3], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [12, 13, 14, 15], "fps": 12, "loop": false},
+        "hit": {"frames": [10, 11, 12, 13], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "broken_oath_slash": "attack",
+        "binding_strip": "spell",
+        "asymmetric_guard": "guard"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "classical_razor_wolf": {
+      "sheet_path": "res://art/combat/monsters/classical_razor_wolf/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 248,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [0, 1, 2, 3], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 16, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 18, "loop": false}
+      },
+      "technique_clips": {
+        "claw_rake": "attack",
+        "split_jaw_bite": "spell",
+        "barb_tail_sweep": "charge"
+      },
+      "body_archetype": "QUAD_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "steam_blackbox_foreman": {
+      "sheet_path": "res://art/combat/monsters/steam_blackbox_foreman/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [14, 15, 16, 17], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13], "fps": 10, "loop": false},
+        "spell": {"frames": [15, 16, 17, 18], "fps": 8, "loop": false},
+        "hit": {"frames": [18, 19, 20, 21], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "pressure_slam": "attack",
+        "shoulder_bunker": "guard",
+        "blackbox_overload": "phase_change"
+      },
+      "body_archetype": "HUM_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "steam_debt_collector": {
+      "sheet_path": "res://art/combat/monsters/steam_debt_collector/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [16, 17], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 10, "loop": false},
+        "spell": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false},
+        "hit": {"frames": [18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "chain_sweep": "attack",
+        "chain_bind": "spell",
+        "ledger_guard": "guard",
+        "debt_lock": "phase_change"
+      },
+      "body_archetype": "HUM_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "wasteland_relic_raider": {
+      "sheet_path": "res://art/combat/monsters/wasteland_relic_raider/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [16, 17], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 10, "loop": false},
+        "spell": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false},
+        "hit": {"frames": [18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "relic_sweep": "attack",
+        "lamp_suppress": "spell",
+        "patched_guard": "guard",
+        "relic_escape": "phase_change"
+      },
+      "body_archetype": "HUM_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "immortal_unchained_duelist": {
+      "sheet_path": "res://art/combat/monsters/immortal_unchained_duelist/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 8, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 12, "loop": false},
+        "guard": {"frames": [16, 17], "fps": 10, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 14, "loop": false},
+        "spell": {"frames": [20, 21, 22, 23], "fps": 10, "loop": false},
+        "hit": {"frames": [18, 19], "fps": 16, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 10, "loop": false}
+      },
+      "technique_clips": {
+        "twin_blade_scissor": "attack",
+        "chain_bind": "spell",
+        "broken_harness_guard": "guard",
+        "unchained_burst": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "star_void_daemon": {
+      "sheet_path": "res://art/combat/monsters/star_void_daemon/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 300,
+      "pivot": [0.5, 0.58],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [16, 17], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 12, "loop": false},
+        "spell": {"frames": [20, 21, 22, 23], "fps": 10, "loop": false},
+        "hit": {"frames": [18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "phase_cut": "attack",
+        "rift_lock": "spell",
+        "core_shift_guard": "guard",
+        "void_consume": "phase_change"
+      },
+      "body_archetype": "FLOAT",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "star_ghost_archivist": {
+      "sheet_path": "res://art/combat/monsters/star_ghost_archivist/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 300,
+      "pivot": [0.5, 0.58],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 8, "loop": false},
+        "guard": {"frames": [16, 17], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 10, "loop": false},
+        "spell": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false},
+        "hit": {"frames": [18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "needle_seal": "spell",
+        "archive_ring_press": "attack",
+        "memory_veil_bind": "guard",
+        "ghost_archive_overload": "phase_change"
+      },
+      "body_archetype": "AMORPH",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "star_echo_hunter": {
+      "sheet_path": "res://art/combat/monsters/star_echo_hunter/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 7, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [12, 13], "fps": 10, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 10, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 14, "loop": false},
+        "phase_change": {"frames": [14, 15], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "echo_single_shot": "attack",
+        "echo_burst": "spell",
+        "antenna_lock": "charge",
+        "resonance_withdrawal": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "final_age_breath_taxer": {
+      "sheet_path": "res://art/combat/monsters/final_age_breath_taxer/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 7, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [12, 13], "fps": 9, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 10, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 14, "loop": false},
+        "phase_change": {"frames": [14, 15], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "receipt_burst": "attack",
+        "abacus_press": "spell",
+        "breath_meter": "charge",
+        "ledger_recovery": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "final_age_meridian_creditor": {
+      "sheet_path": "res://art/combat/monsters/final_age_meridian_creditor/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 8, "loop": false},
+        "guard": {"frames": [12, 13, 14, 15], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 10, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 9, "loop": false},
+        "hit": {"frames": [16, 17, 18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "meridian_measure": "spell",
+        "needle_rain": "attack",
+        "contract_bind": "guard",
+        "meridian_cage": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "immortal_sky_enforcer": {
+      "sheet_path": "res://art/combat/monsters/immortal_sky_enforcer/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 9, "loop": false},
+        "guard": {"frames": [12, 13], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 11, "loop": false},
+        "spell": {"frames": [10, 11], "fps": 8, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 13, "loop": false},
+        "phase_change": {"frames": [14, 15], "fps": 7, "loop": false}
+      },
+      "technique_clips": {
+        "halberd_sweep": "attack",
+        "hook_lift": "spell",
+        "banner_guard": "guard",
+        "skyline_recover": "phase_change"
+      },
+      "body_archetype": "HUM_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "final_age_silent_cultivator": {
+      "sheet_path": "res://art/combat/monsters/final_age_silent_cultivator/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 8, "loop": false},
+        "guard": {"frames": [12, 13, 14, 15], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 10, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 9, "loop": false},
+        "hit": {"frames": [16, 17, 18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "silent_pulse": "spell",
+        "sleeve_seal": "attack",
+        "bell_line_bind": "guard",
+        "silent_domain": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "wasteland_false_sun_prophet": {
+      "sheet_path": "res://art/combat/monsters/wasteland_false_sun_prophet/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 6,
+      "frame_size": [256, 384],
+      "display_height": 320,
+      "pivot": [0.5, 0.98],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 6, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 8, "loop": false},
+        "guard": {"frames": [12, 13, 14, 15], "fps": 8, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11, 12, 13, 14, 15], "fps": 10, "loop": false},
+        "spell": {"frames": [8, 9, 10, 11], "fps": 8, "loop": false},
+        "hit": {"frames": [16, 17, 18, 19], "fps": 14, "loop": false},
+        "phase_change": {"frames": [20, 21, 22, 23], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "ash_censer_suppress": "spell",
+        "false_sun_press": "attack",
+        "banner_chain_bind": "guard",
+        "black_rain_eclipse": "phase_change"
+      },
+      "body_archetype": "HUM_L",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "wasteland_rain_beast": {
+      "sheet_path": "res://art/combat/monsters/wasteland_rain_beast/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 250,
+      "pivot": [0.5, 0.92],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 7, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [12, 13], "fps": 9, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "spell": {"frames": [10, 11], "fps": 8, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 14, "loop": false},
+        "phase_change": {"frames": [14, 15], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "wide_maw_bite": "attack",
+        "rainfin_rush": "charge",
+        "water_shed_crash": "spell",
+        "black_rain_recovery": "phase_change"
+      },
+      "body_archetype": "QUAD_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    },
+    "steam_furnace_hound": {
+      "sheet_path": "res://art/combat/monsters/steam_furnace_hound/battle_sheet_web_v1.png",
+      "columns": 4,
+      "rows": 4,
+      "frame_size": [256, 384],
+      "display_height": 250,
+      "pivot": [0.5, 0.92],
+      "clips": {
+        "idle": {"frames": [0, 1, 2, 3], "fps": 7, "loop": true},
+        "charge": {"frames": [4, 5, 6, 7], "fps": 10, "loop": false},
+        "guard": {"frames": [12, 13], "fps": 9, "loop": false},
+        "attack": {"frames": [8, 9, 10, 11], "fps": 12, "loop": false},
+        "spell": {"frames": [4, 5, 6, 7], "fps": 8, "loop": false},
+        "hit": {"frames": [12, 13, 14, 15], "fps": 14, "loop": false},
+        "phase_change": {"frames": [14, 15], "fps": 8, "loop": false}
+      },
+      "technique_clips": {
+        "pressure_bite": "attack",
+        "boiler_rush": "charge",
+        "steam_exhaust_crash": "spell",
+        "furnace_recovery": "phase_change"
+      },
+      "body_archetype": "QUAD_H",
+      "source_type": "generated_web",
+      "rights_status": "review_required"
+    }
+  }
+}

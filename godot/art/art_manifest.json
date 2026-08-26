@@ -10,11 +10,613 @@
   "rights_notice": "本清单只记录技术来源类别、文件完整性与游戏用途，不声明、推定或授予任何版权或许可。发布前仍须由项目维护者完成权利审查。",
   "files": [
     {
-      "path": "portraits/chi_yaoqing_v1.png",
-      "sha256": "b1a8759394f598f996de5a47970f45e5b868c1360fc07dfab94386583fddf139",
+      "path": "combat/characters/cen_zhaolu/battle_sheet_web_v1.png",
+      "sha256": "568f47975e9313f0f36008408bf4383190b12bd2149892d4e3f39d0f96a4395c",
       "width": 1024,
       "height": 1536,
-      "bytes": 2450833,
+      "bytes": 2275134,
+      "purpose": "岑照炉工造师Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "灵机蒸汽纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以岑照炉网页端重生成剧情立绘为身份锚点，派生低饱和工造压力锤Combat Core动作图；本地仅做逐格安全边距与Alpha清理",
+        "mood": "警觉、结实修长、低重心、低饱和、工具驱动",
+        "story_use": "CombatStage 岑照炉支援角色；待运行时验收后用于工造锤击与受击反馈"
+      }
+    },
+    {
+      "path": "combat/characters/chi_yaoqing/battle_sheet_web_v1.png",
+      "sha256": "c700cbecc6737d22e1bf475cbb666a22ad10bed816c1dc2572febb6c9b620e69",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 203684,
+      "purpose": "迟药青游方女医修Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以不对称短发、赭红姜黄短夹衣、孔雀绿披肩、横挎药箱、药囊药瓶、铜秤与药碗为身份锚点的低分辨率像素Combat Core；本地按64x96像素基准最近邻归一化、清理孤立格底组件并执行低饱和调色",
+        "mood": "成熟、稳重、游方行医、克制、低饱和",
+        "story_use": "CombatStage 迟药青支援角色；用于研药、药粉、医雾护阵、急救和受击恢复",
+        "source_note": "内置网页生成；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/family_covenant_holder/battle_sheet_web_v1.png",
+      "sha256": "20c778e508259310bb822ee78bc2d73729aeac9c38310475d84098cded6b335f",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 211731,
+      "purpose": "祖契持有人双人协同Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以祖契持有人中老年男性见证者、女性守卷人、旧信和封名玉简为身份锚点的双人协同Combat Core；网页新图确认每格两人并存，本地按64x96像素基准最近邻归一化、Alpha清理、孤立底组件清理与低饱和调色",
+        "mood": "苍凉、克制、互相扶持、生活可信、低饱和",
+        "story_use": "CombatStage 祖契持有人剧情见证群像；用于递交旧信、守护玉简、受压后退、见证结契与退场反馈",
+        "source_note": "内置网页端新生成的4x4双人动作表；本地仅做逐格切片、最近邻像素化、Alpha清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/han_xuansu/battle_sheet_web_v1.png",
+      "sha256": "0e8dfbe99c6ed1177069bc8d638010f250f088a663639441f60978d9a40ca57c",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2081770,
+      "purpose": "韩玄素末法契师Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "末法裂变纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以韩玄素网页端重生成剧情立绘为身份锚点，派生低饱和契板、象牙探针与经脉测量环Combat Core动作图；本地仅做逐格安全边距与Alpha清理",
+        "mood": "冷静、精密、修长、低饱和、契文驱动",
+        "story_use": "CombatStage 韩玄素支援角色；待运行时验收后用于契约审计与经脉技能衔接"
+      }
+    },
+    {
+      "path": "combat/characters/jade_echo/battle_sheet_web_v1.png",
+      "sha256": "fa14b0cbec75a51c492002b589b6627abff2ba8193dda2fbf93c5385b30ff360",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 240312,
+      "purpose": "旧玉回声Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以旧玉回声成年半实体立绘为唯一身份锚点，派生由错位影子、黑白旧玉碎片和残破长衣驱动的低饱和Combat Core；网页编辑生成后本地按64x96像素基准最近邻归一化、清理孤立底组件、保留大块影子和碎玉并执行旧玉灰度调色",
+        "mood": "幽冷、悲悯、危险、半实体、极低饱和",
+        "story_use": "CombatStage 旧玉回声特殊剧情角色；用于碎玉裂片、影子延迟、回声重叠、重组与裂解恢复",
+        "source_note": "内置网页基于旧玉回声立绘编辑生成；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/jiang_zhaoxue/battle_sheet_web_v1.png",
+      "sha256": "229513eebe143913ab677df0adcfa66fc37294fbec164480f74bb68389c019c6",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2936965,
+      "purpose": "江照雪新版剧情立绘派生战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以江照雪蓝黑高马尾、银蓝发饰、青色额心饰、玉白冰蓝层叠剑裙和银蓝长剑为身份锚点的低饱和战斗像素图；网页生成后按调色硬门清理蓝雾",
+        "mood": "冷静、锋利、修长、低饱和、纯冷色、脸部可读",
+        "story_use": "CombatStage 江照雪支援入队角色；网页生成后调色验收版"
+      }
+    },
+    {
+      "path": "combat/characters/ning_zhaoxue/battle_sheet_web_v1.png",
+      "sha256": "f236ed6ad27ad419a3668b80a2e7bccbe0f7051c49411915dc43b2f7b89d8045",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 201096,
+      "purpose": "宁照雪守关支援战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以海雾关深青护肩、长侧辫、暗红誓绳和海纹守关剑为身份锚点的低分辨率像素Combat Core；网页纠正版经背景移除后，本地按64x96像素基准最近邻归一化、清理孤立格底残线并执行低饱和调色",
+        "mood": "警觉、低重心、冷静、修长、低饱和",
+        "story_use": "CombatStage 宁照雪支援角色；用于守关格挡、海纹剑技、海雾护阵和受击恢复",
+        "source_note": "内置网页生成与网页移除背景；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/pei_zhaowei/battle_sheet_web_v1.png",
+      "sha256": "f553a72225d5cb8ec58b89117ac26dc7a486e2ca60d9a280bb10fe6ba9e62c28",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2581979,
+      "purpose": "裴照微巡天监察使Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "仙朝鼎盛纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以裴照微网页端重生成剧情立绘为身份锚点，派生低饱和命籍笔、玉册与窄袖官服Combat Core动作图；本地仅做逐格安全边距与Alpha清理",
+        "mood": "威严、克制、修长、低饱和、审查工具驱动",
+        "story_use": "CombatStage 裴照微支援角色；待运行时验收后用于巡天审查与律纹技能衔接"
+      }
+    },
+    {
+      "path": "combat/characters/protagonist/battle_sheet_v0.png",
+      "sha256": "66516253381f290e7b42262fd54e60e600f732b426ad4527298fb1608e746953",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2118092,
+      "purpose": "问道人首套可变帧数战斗像素动作原型（4x4 16帧）",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以问道人兜帽、深青流苏、轮回玉和短剑为身份锚点的战斗像素动作原型",
+        "mood": "幽冷、克制、可读",
+        "story_use": "CombatStage 数据驱动 sprite clip 原型"
+      }
+    },
+    {
+      "path": "combat/characters/protagonist/battle_sheet_web_v1.png",
+      "sha256": "7f5ab20b72b04e94cf6c2bc49727df10e3a01149b36fa05477247817b1a96f5e",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 257331,
+      "purpose": "问道人新版剧情立绘派生战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以问道人第二版网页端剧情身份立绘为唯一锚点，重新制作低饱和、侧背优先、兜帽遮眼、轮回玉稳定、短剑清晰可读的战斗动作精灵图；修正上一版偏矮与小人感",
+        "mood": "幽冷、克制、修长、低饱和",
+        "story_use": "CombatStage 男主正式战斗角色",
+        "source_note": "内置网页端基于新版问道人立绘生成；本地按64x96像素基准最近邻归一化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/recurring_antagonist/battle_sheet_web_v1.png",
+      "sha256": "9080821acddbbb5670e2c87e0f1b21af054571c7cbc7f7c0c0a727583413d70b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 203265,
+      "purpose": "司命执笔Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以司命执笔新版墨黑官道袍、白玉命笔、命籍卷册和少量暗红命纹为身份锚点的低分辨率Combat Core；网页重试生成后本地按64x96像素基准最近邻归一化、清理孤立底组件并执行低饱和调色",
+        "mood": "冷峻、威严、制度压迫、修长、低饱和",
+        "story_use": "CombatStage 司命执笔主要反派；用于命笔落字、卷页束缚、命籍审判阵与命纹压制",
+        "source_note": "内置网页基于新版司命执笔立绘生成；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/sect_lawkeeper_first/battle_sheet_web_v1.png",
+      "sha256": "77111f876537518ff3971d07bcb01ec1f6a34301240b2015bea3df22b4c46b52",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 359888,
+      "purpose": "第一代执律人守山执律首座Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以第一代执律人独立剧情立绘为身份锚点，派生门规玉简、旧执律铃、封门律纹与年长稳重重心的低分辨率像素Combat Core；本地按64x96像素基准最近邻归一化",
+        "mood": "肃穆、克制、年长、制度律令、低饱和",
+        "story_use": "CombatStage 第一代执律人支援或首座战斗角色；用于封门律纹、执律铃震荡和受击反馈",
+        "source_note": "内置网页生成；本地仅做逐格切片、最近邻像素化、Alpha清理与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/sect_lawkeeper_second/battle_sheet_web_v1.png",
+      "sha256": "f81236cf4c680af7b728d6791e272738447fd2300fdcfff86fca9394fab7802e",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 245848,
+      "purpose": "第二代执律弟子封门执律使Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以第二代执律弟子独立剧情立绘为身份锚点，派生窄身门规玉片、轻执律铃、腕上拘押印与敏捷封门动作的低分辨率像素Combat Core；本地按64x96像素基准最近邻归一化",
+        "mood": "警觉、敏捷、克制、制度束缚、低饱和",
+        "story_use": "CombatStage 第二代执律弟子支援角色；用于封门、拘押印、铃影和受击反馈",
+        "source_note": "内置网页生成；本地仅做逐格切片、最近邻像素化、Alpha清理与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/sect_lawkeepers/battle_sheet_web_v1.png",
+      "sha256": "6c993ca31f82e314db7c47a8e17417439fbaae1360504e24e33f25724e90237e",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 378922,
+      "purpose": "两代执律人双人协同Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以第一代执律首座与第二代封门执律使两套已验收战斗表为身份锚点，逐格合成双人协同Combat Core；首座与封门使每帧并存，保持银灰长发短须、短黑发细侧辫、门规玉简、执律铃和旧封门绳的代际差异",
+        "mood": "肃穆、克制、协同守门、低饱和、制度律令",
+        "story_use": "CombatStage 两代执律人群像事件或协同敌对单位；用于双人封门、律纹护阵、执律铃震退与受击重整",
+        "source_note": "内置网页生成的双人群像作为身份参考；战斗表因网页输出错误退化为单一幽影而弃用，改用已通过身份门的两张单人战斗表逐格最近邻合成，清除棋盘背景与Alpha残色"
+      }
+    },
+    {
+      "path": "combat/characters/shali/battle_sheet_web_v1.png",
+      "sha256": "3d5c9720fa1462b001bbd45cd973d84a5e538d14e2e806858959a6b75c39ded7",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 322727,
+      "purpose": "沙砾废土引路人Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "废土返道纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以沙砾网页端剧情全身立绘为身份锚点，派生提灯、短柄生存斧、风沙披肩与耐候护具稳定的低分辨率像素Combat Core动作图；网页第二次生成后本地按64x96像素基准最近邻归一化",
+        "mood": "耐用、警觉、荒原求生、低饱和、冷灰",
+        "story_use": "CombatStage 沙砾支援角色；用于提灯火种、斧击、生存技能与受击反馈",
+        "source_note": "内置网页生成；本地仅做逐格切片、最近邻像素化、Alpha清理与安全边距"
+      }
+    },
+    {
+      "path": "combat/characters/wen_xingdu/battle_sheet_web_v1.png",
+      "sha256": "ae3b7990323cd3235870a5e5ed6777be60f3f0d9cdaf91e53439cfd0ee172bb4",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2345144,
+      "purpose": "闻星渡巡道使Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "星穹道网纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以闻星渡网页端重生成剧情立绘为身份锚点，派生低饱和实体星盘与巡道指针Combat Core动作图；本地仅做逐格安全边距、低饱和与Alpha清理",
+        "mood": "冷静、修长、专业、低饱和、星盘驱动",
+        "story_use": "CombatStage 闻星渡支援角色；待运行时验收后用于星网标记与巡道技能衔接"
+      }
+    },
+    {
+      "path": "combat/monsters/classical_fate_registrar/battle_sheet_web_v1.png",
+      "sha256": "bf3a7b06dc77105dcc0a6ac436a21162d75ffef0190be7928b53d2ffb7de4279",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 395803,
+      "purpose": "古典修仙纪命簿执录官Boss Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以巨大白玉命笔、高背命簿卷轴和长封印绶带为三重身份锚点的HUM_L Boss施术者；网页端基于剧情立绘生成4x6 24帧，本地按64x96像素基准归一化并保留玉笔、卷轴和绶带",
+        "mood": "冷峻、制度压迫、命令感、阶段变化、低饱和",
+        "story_use": "CombatStage 古典修仙纪Boss；用于命笔落印、绶带封缚、改写命簿、受击护卷与二阶段展开",
+        "source_note": "内置网页端基于命簿执录官剧情立绘生成；本地先按4:9比例还原标准1024x2304画布，再逐格最近邻缩放至64x96基准、Alpha清理、孤立小组件清理与低饱和调色"
+      }
+    },
+    {
+      "path": "combat/monsters/classical_oath_breaker/battle_sheet_web_v1.png",
+      "sha256": "772493f2922e5a773e3fc0c937d16e8d53d5fef57f624cb0b540f3ab7c0e6e7d",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 166479,
+      "purpose": "古典修仙纪毁誓剑客Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以断刃残剑、非对称肩甲、旧誓束带和破损誓牌为身份锚点的HUM_L精英敌人；网页生成后本地按64x96像素基准最近邻归一化、Alpha清理、孤立底组件清理并显著压低暗朱红特效",
+        "mood": "战损、冷硬、背誓、修长、低饱和",
+        "story_use": "CombatStage 精英级古典人形敌人；用于断剑劈砍、残誓束缚、突刺、受击失衡与断誓爆发",
+        "source_note": "内置网页端新生成的4x4怪物动作表；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/monsters/classical_razor_wolf/battle_sheet_web_v1.png",
+      "sha256": "7cf071706aed5dfd2107048e860f0d9f602f76fdbced2ed607ec7e2cd0c1f3de",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 122773,
+      "purpose": "古典修仙纪裂齿荒狼Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以低伏头部、纵向裂颚、短刺棘尾和前爪利刃为身份锚点的QUAD_L轻型四足怪物；网页生成后本地按64x96像素基准最近邻归一化、Alpha清理、孤立底组件清理与低饱和调色",
+        "mood": "凶猛、野外、低重心、冷灰岩褐、低饱和",
+        "story_use": "CombatStage 普通级古典妖兽；用于断颚咬击、前爪横扫、尾刺甩击、跃扑与倒地退场",
+        "source_note": "内置网页端新生成的4x4怪物动作表；本地仅做逐格切片、最近邻像素化、Alpha清理、孤立小组件清理、低饱和调色与安全边距"
+      }
+    },
+    {
+      "path": "combat/monsters/final_age_breath_taxer/battle_sheet_web_v1.png",
+      "sha256": "ffc57b029daff1e953ccf3b358b5cd10c81c77d79acc927dfb75b8a3bbdde970",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2203981,
+      "purpose": "末法纪气息税吏Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以旧账簿面罩、黑算盘框和收据气阀为三重身份锚点的HUM_L修长远程/控制普通敌人；网页端直接生成4x4 16帧",
+        "mood": "官僚压迫、纸灰、失算、低饱和",
+        "story_use": "CombatStage 末法纪普通敌人；用于收据束、算盘压制、气息抽取、刻度波和失算恢复技能",
+        "source_note": "内置网页端自由设计；本地归一化为1024x1536画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/final_age_meridian_creditor/battle_sheet_web_v1.png",
+      "sha256": "fe3066d8397e2df4a9e48acab9e2baf5dcc804a0d24a1e0b09f6b4ac92a09b4c",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 3279804,
+      "purpose": "末法纪经脉债主BossCombat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "基于大面积不对称开襟的成年女性身份立绘，以不闭合经脉测量环、银针黑玉针冠、契约脊骨和细长测脉针杖为四重身份锚点的HUM_L Boss；网页端基于新版立绘生成4x6 24帧",
+        "mood": "邪派医契、魅惑压迫、针具测量、命轮控制、低饱和",
+        "story_use": "CombatStage 末法纪Boss；用于经脉测量、针雨压制、命轮横切、契约束缚和经脉牢笼阶段技能",
+        "source_note": "内置网页端基于成人向新版身份立绘生成；本地按4:9比例归一化1024x2304画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/final_age_silent_cultivator/battle_sheet_web_v1.png",
+      "sha256": "f4ebbf021b131ef9b0177790f615a2af463c719f801ed50533e6ab5411f3b0ff",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 2558149,
+      "purpose": "末法纪无声修持者Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以静音布、旧铜铃和长袖结绳/封条为三重身份锚点的HUM_L修长控制型精英敌人；网页端直接生成4x6 24帧",
+        "mood": "无声、压抑、结印、封阵、低饱和",
+        "story_use": "CombatStage 末法纪精英敌人；用于沉默脉冲、袖结锁定、铃线牵引、无声领域和阶段退场技能",
+        "source_note": "内置网页端自由设计；本地按4:9比例归一化1024x2304画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/immortal_sky_enforcer/battle_sheet_web_v1.png",
+      "sha256": "11a633f637548da88dcef1525454068d1e40ab1b01a8916eb688bb66cf967bbe",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2134340,
+      "purpose": "仙朝鼎盛纪天穹执戍Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以旧天穹甲、超长钩刃战戟和环形旌旗领为三重身份锚点的HUM_H重型近战普通敌人；网页端直接生成4x4 16帧",
+        "mood": "重甲惯性、旗领回旋、旧玉灰、低饱和",
+        "story_use": "CombatStage 仙朝鼎盛纪普通敌人；用于长戟横扫、钩刃上挑、突刺、旗领冲撞和重甲恢复技能",
+        "source_note": "内置网页端自由设计；本地归一化为1024x1536画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/immortal_unchained_duelist/battle_sheet_web_v1.png",
+      "sha256": "3a68f42b4c6d67ca3980461fc54873c5c8126e96cddf7c3ec6bd9b59572ca8f0",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 2379702,
+      "purpose": "永劫天朝纪不羁双刃者Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "永劫天朝纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以不等长双刃、断链式链 harness、持续前压的失控突进姿态为三重身份锚点的HUM_L人形精英敌人；网页端自由设计并生成4x6 24帧",
+        "mood": "不羁、挣脱、前压、冷墨、低饱和、偏冷偏灰",
+        "story_use": "永劫天朝纪精英敌人；用于双刃交叉剪击、甩链拉刃、断链束缚和挣脱锁环技能",
+        "source_note": "内置网页端新生成的4x6怪物动作表；本地按4:9比例还原1024x2304画布、最近邻归一化、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/star_echo_hunter/battle_sheet_web_v1.png",
+      "sha256": "b1668c4d423313043ec8a6009c506ee6991495c3eff05e914c6f265ef542512d",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1914411,
+      "purpose": "星穹道网纪回声猎手Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以天线回声兜帽、偏长回声步枪和不对称回声鳍片为三重身份锚点的HUM_L修长远程普通敌人；网页端直接生成4x4 16帧",
+        "mood": "监听、冷静、轻重心、低饱和星穹材质",
+        "story_use": "CombatStage 星穹道网纪普通敌人；用于瞄准、单发、连续回声射击、后坐力滑步和残影撤离技能",
+        "source_note": "内置网页端自由设计；本地归一化为1024x1536画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/star_ghost_archivist/battle_sheet_web_v1.png",
+      "sha256": "63067e75d151626e803188a5682789d03eaa511a46d6b0b9d474947d38b76492",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 3119666,
+      "purpose": "星穹道网纪幽档案官Combat Core Boss战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以档案环、针阵云、撕裂记忆长幕、空洞核心为身份锚点的AMORPH浮空Boss；网页端基于身份立绘生成Core/Channel/Skill/Hit/Phase 24帧",
+        "mood": "幽冷、档案压迫、阶段变化、低饱和冷紫灰",
+        "story_use": "CombatStage 星穹道网纪Boss；用于针阵封存、档案环压制、记忆长幕撕裂、核心吞光和阶段退场",
+        "source_note": "内置网页端基于幽档案官剧情立绘生成；本地按4:9比例还原1024x2304画布、最近邻归一化、低饱和调色、低Alpha背景清理并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/star_void_daemon/battle_sheet_web_v1.png",
+      "sha256": "3fcf947feb274ac0eb9c3350b28d6a4f810a7ee98cc8a3a2b27d864548b74ee1",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 2357117,
+      "purpose": "星穹道网纪虚空妖灵Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以黑紫裂隙核心、两段不对称相位刃、缺失下半身的漂浮残片为三重身份锚点的FLOAT精英敌人；网页端自由设计并生成4x6 24帧",
+        "mood": "空洞、浮游、相位错位、低饱和、冷紫灰",
+        "story_use": "星穹道网纪浮游精英敌人；用于核心脉动、相位穿刺、裂隙位移和虚空吞光技能",
+        "source_note": "内置网页端新生成的4x6怪物动作表；本地按4:9比例还原1024x2304画布、最近邻归一化、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/steam_blackbox_foreman/battle_sheet_web_v1.png",
+      "sha256": "6189d91d69792c4136ffc1b39cc426273f245cb70ad79e576774753a1e781e3d",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 349662,
+      "purpose": "灵机蒸汽纪黑匣监工Boss Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "灵机蒸汽纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以巨大压力锤、左右箱式肩部工装和叠层锅炉背架为三重身份锚点的HUM_H重型近战Boss；网页端基于HUM_H剧情立绘生成4x6 24帧，本地按64x96像素基准归一化并压低暗橙过载",
+        "mood": "沉重、工业压迫、低重心、泄压、低饱和",
+        "story_use": "CombatStage 灵机蒸汽纪近战Boss；用于抬锤重击、肩箱护盾、锅炉泄压、受击稳住与黑匣过载阶段",
+        "source_note": "内置网页端基于黑匣监工剧情立绘生成；本地先按4:9比例还原标准1024x2304画布，再逐格最近邻缩放至64x96基准、Alpha清理、孤立小组件清理与低饱和调色"
+      }
+    },
+    {
+      "path": "combat/monsters/steam_debt_collector/battle_sheet_web_v1.png",
+      "sha256": "324b218209e75cc2a7a9109f5747444e74eeda0a496f868c73b2510e6ed91733",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 2545948,
+      "purpose": "灵机蒸汽纪债契收缚者Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "灵机蒸汽纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以链锤与收缚链、胸前账契板、背负配重回收包为三重身份锚点的HUM_H执行型精英敌人；网页端基于剧情立绘生成4x6 24帧",
+        "mood": "冷硬、制度压迫、低重心、链条惯性、低饱和",
+        "story_use": "CombatStage 灵机蒸汽纪精英敌人；用于链锤横扫、拘束拉回、账契板护身、配重稳身和追债锁定技能",
+        "source_note": "内置网页端基于债契收缚者剧情立绘生成；本地按4:9比例还原1024x2304画布、最近邻归一化、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/steam_furnace_hound/battle_sheet_web_v1.png",
+      "sha256": "59e03f91e3abb5d8e7b81c581ffc289670051c35ef3c960b5c56e69ed5e71bb5",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2061294,
+      "purpose": "灵机蒸汽纪蒸汽炉犬Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "灵机蒸汽纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以锅炉肋架、压力颚和后躯排气管为三重身份锚点的QUAD_H重型四足普通敌人；网页端直接生成4x4 16帧",
+        "mood": "低重心、旧铁、煤灰、机械咬击、低饱和",
+        "story_use": "CombatStage 灵机蒸汽纪普通敌人；用于炉压蓄势、压力颚咬击、泄压冲撞和受击恢复技能",
+        "source_note": "内置网页端自由设计；本地归一化为1024x1536画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/wasteland_false_sun_prophet/battle_sheet_web_v1.png",
+      "sha256": "188e4b46648e47ec6376f159ab8e2c0ea273a7eb15be80313d293b79966cec9e",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 3449360,
+      "purpose": "废土返道纪假日先知Boss Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "基于残阳先知身份立绘，以残缺假太阳圆盘、冒烟旧香炉、滤雨布破旗为三重锚点的HUM_L Boss；网页端基于立绘生成4x6 24帧",
+        "mood": "伪日仪式、黑雨、烟炉压制、破旗牵引、低饱和",
+        "story_use": "CombatStage 废土返道纪Boss；用于灰白压制烟、假日圆盘下压、破旗横扫、香炉链缚和黑雨伪日阶段技能",
+        "source_note": "内置网页端基于剧情身份立绘生成；本地按4:9比例归一化1024x2304画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/wasteland_rain_beast/battle_sheet_web_v1.png",
+      "sha256": "93a8f5b0531af70b9868631afb3a696de5021b4d3039d61c58d8cc6afa567687",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2130950,
+      "purpose": "废土返道纪雨兽Combat Core战斗像素动作图（4x4 16帧）",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以湿煤背脊、宽颚獠牙和水导鳍片为三重身份锚点的QUAD_H重型四足普通敌人；网页端直接生成4x4 16帧",
+        "mood": "黑雨、湿地、冲撞、撕咬、低饱和",
+        "story_use": "CombatStage 废土返道纪普通敌人；用于踏水蓄势、宽颚咬击、鳍片水浪冲撞和拖水恢复技能",
+        "source_note": "内置网页端自由设计；本地归一化为1024x1536画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/wasteland_relic_raider/battle_sheet_web_v1.png",
+      "sha256": "110adfaa99c2184946c6ef676ee4109ee4e35e7ab3565b8c915284afc784c7d4",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 2449669,
+      "purpose": "废土返道纪遗物掠夺者Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以遗物弧刃长柄武器、破旧拼接护具与风沙披肩、侧背遗物提灯为三重身份锚点的HUM_H成年女性精英敌人；网页端基于剧情立绘生成4x6 24帧",
+        "mood": "风沙、警惕、横扫、撤离、低饱和、偏冷偏灰",
+        "story_use": "CombatStage 废土返道纪精英敌人；用于遗物弧刃横扫、提灯压制、披肩回身和遗物夺取技能",
+        "source_note": "内置网页端基于遗物掠夺者剧情立绘生成；本地按4:9比例还原1024x2304画布、最近邻归一化、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "portraits/chi_yaoqing_v1.png",
+      "sha256": "afffef15e2d457e43892b733320c64dc2485e2c9ca834ec745cf4297e387c743",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2099148,
       "purpose": "迟药青产品级身份锚点立绘",
       "eras": [
         "古典修仙纪",
@@ -22,17 +624,35 @@
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "迟药青产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "按统一二次元游戏画风重制的迟药青全身身份锚点；不对称短发、药箱、药囊、药碗、铜秤和孔雀绿披肩保持医修辨识度",
+        "mood": "低饱和、成熟、稳重、温和而机敏",
+        "story_use": "Godot portraits 运行时资产；后续像素战斗图派生源"
+      }
+    },
+    {
+      "path": "portraits/classical_fate_registrar_v1.png",
+      "sha256": "9b07ee687388ed8113cca705c79f6187e412f8a78fcf6ecce274aefe526d80f6",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2432017,
+      "purpose": "命簿执录官Boss剧情身份锚点立绘",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以巨大白玉命笔、高背命簿卷轴和长封印绶带为三重身份锚点的HUM_L命簿执录官Boss；网页端先生成剧情立绘，后续派生24帧Boss Combat Core",
+        "mood": "冷峻、制度压迫、古旧、修长、低饱和",
+        "story_use": "古典修仙纪Boss剧情身份锚点；后续用于改写命簿、封印绶带和命笔落印技能",
+        "source_note": "内置网页端生成；本地仅做低饱和调色与透明Alpha阈值清理，不改变角色设计"
       }
     },
     {
       "path": "portraits/family_covenant_holders_v1.png",
-      "sha256": "e4fe7a9e88722b916083cae22999a2ada3e7eae61c0de1d96ac7b67f1e013bcf",
+      "sha256": "6e9f6fb2a5963ed910c39bd0906bc7231f4677fee83e99cec3e63218aea670ed",
       "width": 1024,
       "height": 1536,
-      "bytes": 2186780,
+      "bytes": 2148727,
       "purpose": "祖契持有人产品级身份锚点立绘",
       "eras": [
         "古典修仙纪",
@@ -40,69 +660,118 @@
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "祖契持有人产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "内置网页端重生成的祖契持有人双人身份锚点；68岁灰白短发短须男性持磨损旧信，58岁黑灰发髻夹银丝女性持封名玉简，补丁布衣和互相扶持站位锁定生活可信度",
+        "mood": "苍凉、克制、生活可信、低饱和冷灰褐与靛青",
+        "story_use": "Godot portraits 运行时资产；后续祖契持有人双人战斗图派生源",
+        "source_note": "内置网页生成；本地仅做低饱和调色，不改变人物年龄、信物和服装设计"
+      }
+    },
+    {
+      "path": "portraits/final_age_meridian_creditor_v1.png",
+      "sha256": "15b64ec62c87a1e0b1a0b4507dc7ee3a0496362fa7debb1f62d717d05afbf493",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2556730,
+      "purpose": "末法纪经脉债主Boss剧情身份立绘",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以不闭合经脉测量环、银针契冠和契约脊骨为三重身份锚点的成年女性制度型Boss；网页端先生成身份立绘供Combat Core参考",
+        "mood": "精密、冷峻、纸灰、针具、低饱和、非圣洁光环",
+        "story_use": "末法纪Boss剧情身份、后续4x6 Combat Core生成参考"
       }
     },
     {
       "path": "portraits/final_age_meridian_physician.png",
-      "sha256": "f6c59cf554ced3c0cc358b49c8bcb69fe6e2be281b9042fba81798215ca85b2c",
+      "sha256": "53fde815012932faec54503fe14dd9255d0db90ead0ddbd018c51a3f2b27132b",
       "width": 1024,
       "height": 1536,
-      "bytes": 2220708,
+      "bytes": 2062159,
       "purpose": "成熟末法契师、经脉契约与抵押所制度事件人物立绘",
       "eras": [
         "末法裂变纪"
       ],
       "source_type": "generated",
-      "derived_from": "portraits/han_xuansu_v1.png"
+      "derived_from": "portraits/han_xuansu_v1.png",
+      "generation_intent": {
+        "concept": "与韩玄素新版网页端全身身份锚点同步的历史别名；保留骨白灰紫契师外套、契板、象牙探针与经脉测量环",
+        "mood": "冷静、精密、低饱和、末法审计感",
+        "story_use": "旧事件资源引用兼容别名"
+      }
     },
     {
       "path": "portraits/han_xuansu_v1.png",
-      "sha256": "f6c59cf554ced3c0cc358b49c8bcb69fe6e2be281b9042fba81798215ca85b2c",
+      "sha256": "53fde815012932faec54503fe14dd9255d0db90ead0ddbd018c51a3f2b27132b",
       "width": 1024,
       "height": 1536,
-      "bytes": 2220708,
+      "bytes": 2062159,
       "purpose": "韩玄素产品级身份锚点立绘",
       "eras": [
         "末法裂变纪"
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "韩玄素产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "韩玄素网页端重生成剧情全身立绘；齐颌短直发与银鬓、骨白灰紫契师外套、黑漆契板、象牙探针和经脉测量环锁定身份",
+        "mood": "冷静、精密、成熟、低饱和、偏冷偏灰",
+        "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
       }
     },
     {
       "path": "portraits/imperial_sky_inspector.png",
-      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
+      "sha256": "ef97a51f718aba99f8b8598a9cd217c788d5c95089862cacb60aa4b8ea82dedf",
       "width": 1024,
       "height": 1536,
-      "bytes": 2262763,
+      "bytes": 2277684,
       "purpose": "仙朝巡天司监察使、命籍审查与空阙封关事件人物立绘",
       "eras": [
         "仙朝鼎盛纪"
       ],
       "source_type": "generated",
-      "derived_from": "portraits/imperial_sky_inspector_v2.png"
+      "derived_from": "portraits/imperial_sky_inspector_v2.png",
+      "generation_intent": {
+        "concept": "与裴照微新版网页端全身身份锚点同步的历史别名；保留窄袖巡天官服、命籍笔、玉册与侧腰功能性开口",
+        "mood": "威严、清冷、修长、低饱和、实用官服",
+        "story_use": "旧事件资源引用兼容别名"
+      }
     },
     {
       "path": "portraits/imperial_sky_inspector_v2.png",
-      "sha256": "654d12d8b5ba69ac013c17b0cad691c813244dd25562f61fe0495aaa3a251aa9",
+      "sha256": "ef97a51f718aba99f8b8598a9cd217c788d5c95089862cacb60aa4b8ea82dedf",
       "width": 1024,
       "height": 1536,
-      "bytes": 2262763,
+      "bytes": 2277684,
       "purpose": "裴照微产品级身份锚点立绘",
       "eras": [
         "仙朝鼎盛纪"
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "裴照微产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "裴照微网页端重生成剧情全身立绘；窄袖巡天司官服、命籍笔、薄玉册、云纹徽记与侧腰功能性开口锁定身份",
+        "mood": "威严、清冷、修长、低饱和、偏冷偏灰",
+        "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/jade_echo_v1.png",
+      "sha256": "3314ec162a23114d44d985a62f7c164acc8c9fbbb0afa79f69261ba7d1193ad5",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1848263,
+      "purpose": "旧玉回声产品级自由设计身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "按剧情自由设计的成年半实体回声；由不完整人形、错位影子、黑白旧玉碎片和非对称残光组成，不复制男主脸与完整轮回玉挂坠",
+        "mood": "幽冷、悲悯、克制、危险、低饱和",
+        "story_use": "Godot portraits 运行时资产；作为旧玉回声战斗像素表唯一身份锚点",
+        "source_note": "内置网页生成并移除背景；本地仅做透明Alpha阈值清理，不改变角色设计"
       }
     },
     {
@@ -120,10 +789,10 @@
     },
     {
       "path": "portraits/jiang_zhaoxue_v1.png",
-      "sha256": "a91ed77bb1b2cff6896d948781501dd42e752e591867f726ea5d085f9969a084",
+      "sha256": "e1c5f836fec1b1dd4f64f5995001f7d3f5192f14c96045676c34b590090ac0c3",
       "width": 1024,
       "height": 1536,
-      "bytes": 2512043,
+      "bytes": 2760833,
       "purpose": "江照雪产品级身份锚点立绘",
       "eras": [
         "古典修仙纪",
@@ -131,8 +800,8 @@
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "江照雪产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
+        "concept": "以用户提供的全局二次元游戏参考图提取线条、材质和动态语言，重做江照雪纯冷色全身身份立绘",
+        "mood": "冷静、修长、自然丰满、银蓝剑修、无红色",
         "story_use": "Godot portraits 运行时资产"
       }
     },
@@ -267,10 +936,10 @@
     },
     {
       "path": "portraits/ning_zhaoxue_v1.png",
-      "sha256": "bf5dfd59df03d09d6f7b6f47686456f6a68d287f2d4a230f98886aa2a9724d48",
+      "sha256": "0932fadb03488717d2372a6c5587fdd7eafd695a8069535d2ded2c1f4cce0e04",
       "width": 1024,
       "height": 1536,
-      "bytes": 2574680,
+      "bytes": 2536330,
       "purpose": "宁照雪产品级身份锚点立绘",
       "eras": [
         "古典修仙纪",
@@ -278,26 +947,27 @@
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "宁照雪产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "按统一二次元游戏画风重制的宁照雪全身身份锚点；海雾关深青护甲、细长侧辫、旧暗红誓绳和海纹守关剑形成独立识别",
+        "mood": "低饱和、警觉、利落、耐寒实战",
+        "story_use": "Godot portraits 运行时资产；后续像素战斗图派生源"
       }
     },
     {
       "path": "portraits/protagonist_canonical_v1.png",
-      "sha256": "047e17ebd7ce2afad7df74296f07ca90d341fa25d7e85c6e237f2727ff561027",
+      "sha256": "2750acbc32e4130baaae50416873f3e036d2194a8e30603913605a3c14baac3f",
       "width": 1024,
       "height": 1536,
-      "bytes": 2189650,
+      "bytes": 2409069,
       "purpose": "问道人产品级身份锚点立绘",
       "eras": [
         "全时代"
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "问道人产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "问道人网页端再次重生成的剧情全身立绘；保留兜帽遮眼、黑青披风、银丝链珠、深青流苏、黑白轮回玉和短剑，并把头身比、长腿和成年修长轮廓作为第一验收项",
+        "mood": "低饱和、幽冷、克制、成年修长、侧背观察者",
+        "story_use": "Godot portraits 运行时资产；作为新版战斗像素表唯一身份锚点",
+        "source_note": "内置网页端重新生成；本地仅做低饱和调色与透明Alpha阈值清理，不改变角色设计"
       }
     },
     {
@@ -326,11 +996,49 @@
       "source_type": "curated"
     },
     {
-      "path": "portraits/sect_lawkeepers_v1.png",
-      "sha256": "8cddf549191a5439c756c5beeb7b69e3c61fb9865415615211238725b59412ea",
+      "path": "portraits/sect_lawkeeper_first_v1.png",
+      "sha256": "a00ed2b289ef0406c7e9aed9f65789b26e26ffbe4e86e7bf23fbdd95e9b1eb6b",
       "width": 1024,
       "height": 1536,
-      "bytes": 2337951,
+      "bytes": 2470533,
+      "purpose": "第一代执律人、守山执律首座产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "第一代执律人网页端重生成的独立剧情全身立绘；锁定年长执律首座的真实年龄、墨青旧灰窄袖长袍、门规玉简、旧执律铃和封门符牌，作为第二代执律弟子的区分基准",
+        "mood": "肃穆、疲惫、克制、制度权力、低饱和",
+        "story_use": "Godot portraits 运行时资产；后续第一代执律人战斗像素图派生源",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/sect_lawkeeper_second_v1.png",
+      "sha256": "1dfc2a93f3409bf0b37e24369815aa497f776e3d47ce769d2ec85f63c4c4768f",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1776466,
+      "purpose": "第二代执律弟子、封门执律使产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "第二代执律弟子网页端重生成的独立剧情全身立绘；锁定年轻成年女性的短黑发细侧辫、墨青短执律外袍、窄身门规玉片、轻执律铃、旧朱红封门绳和腕上拘押印，与第一代首座分开建模",
+        "mood": "警觉、敏捷、克制、迟疑自审、低饱和",
+        "story_use": "Godot portraits 运行时资产；后续第二代执律弟子战斗像素图派生源",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/sect_lawkeepers_v1.png",
+      "sha256": "dcbe1ce00c716163e755fdc3d3b8a46c4889fc77f59d9f0dfa61dfc6a15315ad",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2759634,
       "purpose": "两代执律人产品级身份锚点立绘",
       "eras": [
         "古典修仙纪",
@@ -338,26 +1046,46 @@
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "两代执律人产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "内置网页端生成的两代执律人双人身份锚点；年长银灰发短须首座与年轻短黑发细侧辫封门使并置，门规玉简、执律铃、拘押印和旧封门绳固定代际职责；本地仅做低饱和调色",
+        "mood": "肃穆、克制、代际张力、低饱和冷灰墨青",
+        "story_use": "Godot portraits 运行时资产；后续双人协同战斗图派生源",
+        "source_note": "内置网页生成；修订分支停在分析状态未采用，当前资产为已生成双人群像的低饱和验收版"
       }
     },
     {
       "path": "portraits/siming_antagonist_v1.png",
-      "sha256": "a15b7002c398ec8104d0f4a6730679f05790cff1a1e48c358f9b4e3e0a64a137",
+      "sha256": "19efa14f6b79b7d0374aee520f07af9aec7d6e4d5bb20214952cd901d5e4050a",
       "width": 1024,
       "height": 1536,
-      "bytes": 2061177,
+      "bytes": 1457602,
       "purpose": "司命执笔产品级身份锚点立绘",
       "eras": [
         "全时代"
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "司命执笔产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "司命执笔网页端重生成剧情全身立绘；墨黑官道袍、白玉命笔、命籍卷册、冷峻成年男性脸和少量暗红命纹锁定其制度权力身份",
+        "mood": "冷峻、威严、修长、低饱和、制度压迫感",
+        "story_use": "Godot portraits 运行时资产；作为司命执笔战斗像素表唯一身份锚点",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/star_ghost_archivist_v1.png",
+      "sha256": "7936098b4b8f45a2901a3de76f3e0f27cef649a766ac02846587e5ac7d1f41f8",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2629618,
+      "purpose": "幽档案官AMORPH Boss剧情身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以多层档案环、轨道针阵云、撕裂记忆长幕和冷紫空洞核心为三重身份锚点的AMORPH幽体Boss；网页端自由设计并保持无正常腿部的人外轮廓",
+        "mood": "幽冷、档案压迫、浮空、记忆残缺、低饱和冷紫灰",
+        "story_use": "星穹道网纪Boss剧情身份锚点；后续用于针阵封存、记忆长幕撕裂、档案环压制和幽体阶段转换",
+        "source_note": "内置网页端生成；原图已保留真透明RGBA，未改变AMORPH角色设计"
       }
     },
     {
@@ -374,43 +1102,127 @@
     },
     {
       "path": "portraits/steam_artificer.png",
-      "sha256": "4861a41edf3b92f158b33a3b9b082fd00ad8523bd65d29cbe97c39d35aa19b60",
+      "sha256": "d10592ba9978324215ca9c00d730f631c214ed984bc537fb18684b32633c74f8",
       "width": 1024,
       "height": 1536,
-      "bytes": 2308269,
+      "bytes": 2402869,
       "purpose": "灵轨工造师、炉灵与黄铜黑匣事件人物立绘",
       "eras": [
         "灵机蒸汽纪"
       ],
-      "source_type": "generated"
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "岑照炉网页端重生成剧情全身立绘；沿用黄铜护具、耐热围领、工造工具与炉压身份锚点",
+        "mood": "成熟、结实修长、警觉、低饱和、偏冷偏灰、实用工装",
+        "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/steam_blackbox_foreman_v1.png",
+      "sha256": "2f6dba6357eb40eb45ec55de40c06d34eb51ff57dd81d14f774a82797aa76f3b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2577491,
+      "purpose": "黑匣监工HUM_H Boss剧情身份锚点立绘",
+      "eras": [
+        "灵机蒸汽纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以巨大压力锤、左右箱式肩部工装和叠层锅炉背架为三重身份锚点的HUM_H重型近战Boss；网页端按6到6.5头身小头重肩合同生成，区别于岑照炉的灵巧工造师",
+        "mood": "沉重、工业压迫、疲惫、低重心、低饱和",
+        "story_use": "灵机蒸汽纪近战Boss剧情身份锚点；后续用于压力锤重击、肩箱护盾、锅炉泄压和黑匣过载阶段",
+        "source_note": "内置网页端生成；本地仅做低饱和调色与透明Alpha阈值清理，不改变HUM_H比例和身份设备"
+      }
+    },
+    {
+      "path": "portraits/steam_debt_collector_v1.png",
+      "sha256": "dc7b74b7c02f6a1ff5dbdf216bf42b3351ba02d2531463e9969bb4fb50d94e0e",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2725817,
+      "purpose": "债契收缚者HUM_H精英敌人剧情身份锚点立绘",
+      "eras": [
+        "灵机蒸汽纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以链锤与收缚链、胸前账契板、背负配重回收包为三重身份锚点的HUM_H执行型精英敌人；网页端按6.2到6.8头身成年小头宽肩合同生成",
+        "mood": "冷硬、制度压迫、低重心、低饱和、偏冷偏灰",
+        "story_use": "灵机蒸汽纪精英敌人剧情身份锚点；后续用于链锤横扫、拘束拉回、账契板护身和追债锁定动作",
+        "source_note": "内置网页端生成；原图已保留真透明RGBA，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/wasteland_false_sun_prophet_v1.png",
+      "sha256": "e51662b4afeee285d4980d772f5b19205c8f3d7ccd04cd5132767340437c03a2",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2930215,
+      "purpose": "废土返道纪假日先知Boss剧情身份立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以残缺假太阳圆盘、冒烟旧香炉和滤雨布破旗为三重身份锚点的成年废土Boss；网页端先生成身份立绘供Combat Core参考",
+        "mood": "黑雨、伪神性、疲惫、低饱和、非神圣金光",
+        "story_use": "废土返道纪Boss剧情身份、后续4x6 Combat Core生成参考"
+      }
     },
     {
       "path": "portraits/wasteland_pathfinder.png",
-      "sha256": "183fad77632e94c9dae3a23c07233ca889ee9f8499f0bd13df18394c841059ec",
+      "sha256": "9259c7e97e72bdee359b146c4cf3446977fba60d73251402ebeec16aa1a3d679",
       "width": 1024,
       "height": 1536,
-      "bytes": 2818400,
+      "bytes": 2396029,
       "purpose": "返道火种引路人与荒原迁徙事件人物立绘",
       "eras": [
         "废土返道纪"
       ],
-      "source_type": "generated"
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "沙砾网页端重生成剧情全身立绘；保留防雨披肩、修补护具、火种容器、风沙痕迹与短柄生存武器，并统一到当前低饱和精致二次元游戏角色画风",
+        "mood": "低饱和、耐用、警觉、荒原求生、成年修长",
+        "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
+        "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/wasteland_relic_raider_v1.png",
+      "sha256": "b67e307e9132c4efec1cb8c6df1ccec9f9b43292ebe136a2ca0cac78c0a994eb",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2557410,
+      "purpose": "遗物掠夺者HUM_H成年女性精英敌人剧情身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "以遗物弧刃长柄武器、破旧拼接护具与风沙披肩、侧背遗物提灯为三重身份锚点的HUM_H成年女性精英敌人；网页端按小头宽肩、成熟修长求生者体态生成",
+        "mood": "风沙、警惕、耐用、成熟、低饱和、偏冷偏灰",
+        "story_use": "废土返道纪精英敌人剧情身份锚点；后续用于遗物弧刃横扫、提灯照射、披肩回身和遗物夺取技能",
+        "source_note": "内置网页端生成；原图已保留真透明RGBA，未改变角色设计"
+      }
     },
     {
       "path": "portraits/wen_xingdu_v1.png",
-      "sha256": "3d919349a5c649bc971bc89c637af4d6ea34793f15441898c129a28aaa0b9a4b",
+      "sha256": "d4b055674c0c5be2578f8dc68aacb907c52bf5d43140ea03cd337bb2fe545a0c",
       "width": 1024,
       "height": 1536,
-      "bytes": 2314679,
+      "bytes": 1906251,
       "purpose": "闻星渡产品级身份锚点立绘",
       "eras": [
         "星穹道网纪"
       ],
       "source_type": "generated",
       "generation_intent": {
-        "concept": "闻星渡产品级身份锚点立绘",
-        "mood": "经过候选筛选的产品级叙事美术",
-        "story_use": "Godot portraits 运行时资产"
+        "concept": "闻星渡网页端重生成剧情全身立绘；短发、人类面部、实体星盘、星网接口与巡道工具锁定身份",
+        "mood": "专业、冷静、修长、低饱和、偏冷偏灰；成年服装以小面积侧开口表达星网接口功能",
+        "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
+        "source_note": "内置网页生成；本地仅做降低饱和度与透明Alpha阈值清理，不改变角色设计"
       }
     },
     {

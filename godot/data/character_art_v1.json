@@ -218,9 +218,9 @@
       ],
       "narrative_role": "incarnated_echo",
       "narrative_age": 21,
-      "current_portrait": "",
+      "current_portrait": "res://art/portraits/jade_echo_v1.png",
       "replacement_target": "res://art/portraits/jade_echo_v1.png",
-      "release_status": "identity_anchor_required",
+      "release_status": "approved",
       "production_priority": 2,
       "motion_profile": "spectral",
       "visual_signature": "与主角共享部分记忆却不预设固定面孔的成年旧我，以黑白旧玉、错位影子和不完整称谓作为身份锚点"

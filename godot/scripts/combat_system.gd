@@ -382,6 +382,7 @@ static func start_combat(state: Dictionary, enemy_id: String = "") -> Dictionary
 		"player_statuses": {"bleed": 0, "weak": 0, "shield": 0},
 		"encounter_id": authored_encounter_id, "base_enemy_id": str(definition.id),
 		"enemy_id": str(definition.id), "enemy_name": enemy_display_name,
+		"player_character_id": "protagonist",
 		"visual_loadout": visual_loadout,
 		"encounter_tier": encounter_tier,
 		"visual_profile_id": visual_profile_id,
@@ -1899,6 +1900,7 @@ static func _normalize_battle(source: Dictionary) -> Dictionary:
 		battle["weapon_profile_id"] = str(battle.get("weapon_profile_id", "weapon.generic.unarmed")).strip_edges().left(96)
 		battle["vfx_profile_id"] = str(battle.get("vfx_profile_id", "vfx.generic.impact")).strip_edges().left(96)
 	battle["visual_loadout"] = _normalize_visual_loadout(battle.get("visual_loadout", {}))
+	battle["player_character_id"] = str(battle.get("player_character_id", "protagonist")).left(96)
 	battle["ally_support_id"] = str(battle.get("ally_support_id", "")).left(96)
 	battle["ally_support_name"] = str(battle.get("ally_support_name", "")).left(96)
 	battle["support_effect"] = str(battle.get("support_effect", "")).left(48)

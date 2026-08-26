@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "description": "统一角色资产目标清单：先用全局参考图锁定立绘画风，再按剧情身份生成并验收立绘，最后从通过身份门的立绘派生战斗精灵。帧数不设硬上限，4x4/16帧只是首轮可验收基线。",
+  "global_target": {
+    "portrait_first": "identity_card -> high_resolution_portrait -> identity_gate -> neutral_guard_attack -> pixel_atlas -> runtime_gate",
+    "style_reference_policy": "用户提供的两张二次元战斗插画只决定线条、脸部完成度、头发、材质、光影和动态语言；不得复制其角色身份、服装、武器、饰物或构图",
+    "style": "高密度16-bit手工像素画，硬边阶梯像素，有限调色板，深蓝轮廓，细密像素簇，不做Q版或大头小人",
+    "palette": "整体低饱和、偏冷偏灰；默认主体像素饱和度中位数22%到32%，绝大多数低于45%，超过55%的像素仅占角色与特效面积8%到12%；白衣先读成玉白、银甲先读成冷灰，故事允许时才使用暗朱红/酒红点缀，禁止荧光蓝",
+    "palette_gate": {
+      "median_saturation_percent": [22, 32],
+      "most_pixels_below_percent": 45,
+      "high_saturation_area_percent_max": 12,
+      "character_palette_colors": [26, 28],
+      "effect_alpha_levels": [96, 160, 224, 255]
+    },
+    "transparency": "真透明RGBA PNG；主体以外、格间、地面光斑、雾光、渐变和纹理全部透明",
+    "anatomy": "成年人完整全身，脚部不裁切；主角与成年女性默认约7.5到8头身，成年女性可有自然丰满的胸腰线与修长腿部来体现修仙者体态。成人女性按角色分为剧情克制档与成人向卖肉档：江照雪、男主及正经核心人物保持故事形象；明确成年且适合的反派或支线角色可用深V、大面积露上胸与肩锁骨、露背/侧腰、腿部开衩、贴身束带和姿态作为卖点，衣料保持不透明，不能出现明确性行为、露骨生殖器细节或未成年化体型；避免让全员使用同一档位。男主保持故事中的清瘦修长比例而不缩成小人；儿童永远使用独立的儿童比例和服装逻辑，不套用成人胸腰模板",
+    "facing": "玩家角色面向右，敌方角色面向左；脸、武器和职业轮廓在战斗显示高度下可辨",
+    "frame_policy": "idle、charge、guard、attack、spell、hit、defeat必须有可读动作变化；复杂剑诀、法术和终结技可扩展到32、64或128帧",
+    "baseline_sheet": {"columns": 4, "rows": 4, "frames": 16},
+    "acceptance": [
+      "与身份立绘保持脸型、发型、服装剪影、武器和叙事年龄一致",
+      "任何角色不得复用另一角色的脸、身体、服装或武器",
+      "透明背景在导入Godot后不产生彩色雾框",
+      "动作帧能映射到技能、受击、格挡和退场反馈"
+    ]
+  },
+  "named_characters": {
+    "protagonist": {
+      "display_name": "问道人",
+      "role": "male_protagonist",
+      "reference_portrait": "res://art/portraits/protagonist_canonical_v1.png",
+      "body_contract": "21岁清瘦成年男性，修长但不健美；低压墨青黑兜帽始终遮住双眼，侧背轮廓优先",
+      "identity_anchors": ["黑青织锦披风", "银丝链珠", "深青流苏", "黑白轮回玉", "短剑"],
+      "motion_profile": "introspective",
+      "priority": 1,
+      "sheet_path": "res://art/combat/characters/protagonist/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "jade_echo": {
+      "display_name": "旧玉回声",
+      "role": "incarnated_echo",
+      "reference_portrait": "res://art/portraits/jade_echo_v1.png",
+      "body_contract": "与男主共享部分记忆但不复制男主脸；成年、半实体、轮廓由错位影子和破碎旧玉组成",
+      "identity_anchors": ["黑白旧玉", "不完整人形", "错位影子", "非对称残光"],
+      "motion_profile": "spectral",
+      "priority": 2,
+      "sheet_path": "res://art/combat/characters/jade_echo/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "jiang_zhaoxue": {
+      "display_name": "江照雪",
+      "role": "female_lead",
+      "reference_portrait": "res://art/portraits/jiang_zhaoxue_v1.png",
+      "body_contract": "22岁成年女性剑修，约7.5到8头身，窄肩腰线清楚、长腿和完整靴子可见",
+      "identity_anchors": ["蓝黑长发与高马尾", "银蓝发饰", "青色额心饰", "玉白冰蓝剑裙", "银蓝长剑"],
+      "motion_profile": "confrontation",
+      "palette_override": "纯冷色；禁止红色、暗红、朱红、粉红和暖色装饰；自然丰满胸腰线与修长腿部",
+      "priority": 1,
+      "sheet_path": "res://art/combat/characters/jiang_zhaoxue/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "ning_zhaoxue": {
+      "display_name": "宁照雪",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/ning_zhaoxue_v1.png",
+      "body_contract": "23岁成年守山女剑修，敏捷修长但比江照雪更实战；不能共用江照雪脸型、发式或白冰蓝裙",
+      "identity_anchors": ["深青护肩", "海雾关漆木结构", "细长侧辫", "旧暗红誓绳", "海纹守关剑"],
+      "motion_profile": "vigilant",
+      "priority": 2,
+      "sheet_path": "res://art/combat/characters/ning_zhaoxue/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "chi_yaoqing": {
+      "display_name": "迟药青",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/chi_yaoqing_v1.png",
+      "body_contract": "约31岁成年游方女医修，重心稳、动作克制，不能被生成成少女剑仙",
+      "identity_anchors": ["不对称短发", "赭红姜黄短夹衣", "孔雀绿披肩", "横挎药箱", "铜秤与药囊"],
+      "motion_profile": "restrained",
+      "priority": 2,
+      "sheet_path": "res://art/combat/characters/chi_yaoqing/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "cen_zhaolu": {
+      "display_name": "岑照炉",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/steam_artificer.png",
+      "body_contract": "28岁灵机蒸汽纪女工造师，身材结实修长而非健美；动作由工具、护具和炉压驱动",
+      "identity_anchors": ["黄铜护具", "耐热围领", "可用工造工具", "炉火/铆钉细节"],
+      "motion_profile": "vigilant",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/cen_zhaolu/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "wen_xingdu": {
+      "display_name": "闻星渡",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/wen_xingdu_v1.png",
+      "body_contract": "27岁星穹道网纪女性巡道使，保持人类面部与短发，不做全息偶像或机械人",
+      "identity_anchors": ["短发", "星网接口", "实体星盘", "克制青白光纹", "巡道工具"],
+      "motion_profile": "spectral",
+      "priority": 2,
+      "sheet_path": "res://art/combat/characters/wen_xingdu/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "shali": {
+      "display_name": "沙砾",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/wasteland_pathfinder.png",
+      "body_contract": "26岁废土女引路人，风沙生活痕迹清楚；身材修长耐用，不做性感化舞台服",
+      "identity_anchors": ["防雨披肩", "修补护具", "火种容器", "风沙痕迹", "短柄生存武器"],
+      "motion_profile": "vigilant",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/shali/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "pei_zhaowei": {
+      "display_name": "裴照微",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/imperial_sky_inspector_v2.png",
+      "body_contract": "34岁仙朝女监察使，站姿克制有权威；窄袖官服和命籍工具清楚，避免华服堆砌",
+      "identity_anchors": ["正式窄袖官服", "命籍笔", "巡天纹章", "冷静权威姿态"],
+      "motion_profile": "restrained",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/pei_zhaowei/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "han_xuansu": {
+      "display_name": "韩玄素",
+      "role": "female_supporting",
+      "reference_portrait": "res://art/portraits/han_xuansu_v1.png",
+      "body_contract": "36岁末法契师，冷玉肤、齐颌短直发与银鬓；成年专业人士，不做年轻剑仙",
+      "identity_anchors": ["骨白灰紫契师外套", "黑漆契板", "暗红契线", "象牙探针", "经脉测量环"],
+      "motion_profile": "restrained",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/han_xuansu/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "sect_lawkeeper_first": {
+      "display_name": "第一代执律人／守山执律首座",
+      "role": "supporting_npc",
+      "reference_portrait": "res://art/portraits/sect_lawkeeper_first_v1.png",
+      "body_contract": "约58岁年长男性执律首座，修长但肩背略沉；真实年龄、银灰长发与短须，不能复用男主年轻脸",
+      "identity_anchors": ["墨青旧灰执律窄袖长袍", "磨损门规玉简", "旧执律铃", "封门符牌", "褪色律纹"],
+      "motion_profile": "restrained",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/sect_lawkeeper_first/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "sect_lawkeeper_second": {
+      "display_name": "第二代执律弟子／封门执律使",
+      "role": "supporting_npc",
+      "reference_portrait": "res://art/portraits/sect_lawkeeper_second_v1.png",
+      "body_contract": "约25岁成年女性，7.5头身、修长敏捷、窄肩轻重心；短黑发细侧辫，不能复用江照雪、宁照雪、沙砾或第一代首座的脸",
+      "identity_anchors": ["短黑发与细侧辫", "墨青短执律外袍", "窄身门规玉片", "轻执律铃", "腕上拘押印", "旧朱红封门绳"],
+      "motion_profile": "vigilant",
+      "priority": 3,
+      "sheet_path": "res://art/combat/characters/sect_lawkeeper_second/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "sect_lawkeepers": {
+      "display_name": "两代执律人",
+      "role": "supporting_ensemble",
+      "reference_portrait": "res://art/portraits/sect_lawkeepers_v1.png",
+      "body_contract": "一张双人战斗图鉴，年长师长与年轻执律弟子必须明显不同；同持门规玉简但不合并成人物",
+      "identity_anchors": ["两代年龄差", "门规玉简", "同源律纹", "不同服装层次", "双人协同站位"],
+      "motion_profile": "restrained",
+      "priority": 3,
+      "composition": "ensemble_two_figures",
+      "sheet_path": "res://art/combat/characters/sect_lawkeepers/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "family_covenant_holder": {
+      "display_name": "祖契持有人",
+      "role": "supporting_ensemble",
+      "reference_portrait": "res://art/portraits/family_covenant_holders_v1.png",
+      "body_contract": "一张双人战斗图鉴，中老年见证者群像；生活可信度优先，不替换成单一美型剑修",
+      "identity_anchors": ["中老年年龄差", "旧信", "封名玉简", "磨损衣料", "互相扶持的站位"],
+      "motion_profile": "introspective",
+      "priority": 3,
+      "composition": "ensemble_two_figures",
+      "sheet_path": "res://art/combat/characters/family_covenant_holder/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    },
+    "recurring_antagonist": {
+      "display_name": "司命执笔",
+      "role": "primary_antagonist",
+      "reference_portrait": "res://art/portraits/siming_antagonist_v1.png",
+      "body_contract": "约43岁成年中国男性，克制威严、修长偏瘦；危险来自绝对确信与制度权力，不戴夸张面具",
+      "identity_anchors": ["墨黑官道袍", "白玉命笔", "命籍卷册", "冷峻站姿", "少量暗红命纹"],
+      "motion_profile": "spectral",
+      "priority": 1,
+      "sheet_path": "res://art/combat/characters/recurring_antagonist/battle_sheet_web_v1.png",
+      "status": "generated_web_pending_runtime_qa"
+    }
+  },
+  "procedural_enemy_targets": [
+    {"id":"classical_razor_wolf","rank":"normal","weapon":"claw","design_mode":"free_design","sheet_path":"res://art/combat/monsters/classical_razor_wolf/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"classical_oath_breaker","rank":"elite","weapon":"broken_sword","design_mode":"free_design","sheet_path":"res://art/combat/monsters/classical_oath_breaker/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"classical_fate_registrar","rank":"boss","weapon":"brush","design_mode":"free_design","reference_portrait":"res://art/portraits/classical_fate_registrar_v1.png","sheet_path":"res://art/combat/monsters/classical_fate_registrar/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"steam_furnace_hound","rank":"normal","weapon":"jaw","design_mode":"free_design","sheet_path":"res://art/combat/monsters/steam_furnace_hound/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"steam_debt_collector","rank":"elite","weapon":"chain","design_mode":"free_design","reference_portrait":"res://art/portraits/steam_debt_collector_v1.png","sheet_path":"res://art/combat/monsters/steam_debt_collector/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"steam_blackbox_foreman","rank":"boss","weapon":"hammer","design_mode":"free_design","reference_portrait":"res://art/portraits/steam_blackbox_foreman_v1.png","sheet_path":"res://art/combat/monsters/steam_blackbox_foreman/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"star_echo_hunter","rank":"normal","weapon":"rifle","design_mode":"free_design","sheet_path":"res://art/combat/monsters/star_echo_hunter/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"star_void_daemon","rank":"elite","weapon":"phase_blade","design_mode":"free_design","sheet_path":"res://art/combat/monsters/star_void_daemon/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"star_ghost_archivist","rank":"boss","weapon":"needles","design_mode":"free_design","reference_portrait":"res://art/portraits/star_ghost_archivist_v1.png","sheet_path":"res://art/combat/monsters/star_ghost_archivist/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"wasteland_rain_beast","rank":"normal","weapon":"fang","design_mode":"free_design","sheet_path":"res://art/combat/monsters/wasteland_rain_beast/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"wasteland_relic_raider","rank":"elite","weapon":"glaive","design_mode":"free_design","reference_portrait":"res://art/portraits/wasteland_relic_raider_v1.png","sheet_path":"res://art/combat/monsters/wasteland_relic_raider/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"wasteland_false_sun_prophet","rank":"boss","weapon":"censer","design_mode":"free_design","reference_portrait":"res://art/portraits/wasteland_false_sun_prophet_v1.png","sheet_path":"res://art/combat/monsters/wasteland_false_sun_prophet/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"final_age_breath_taxer","rank":"normal","weapon":"abacus","design_mode":"free_design","sheet_path":"res://art/combat/monsters/final_age_breath_taxer/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"final_age_silent_cultivator","rank":"elite","weapon":"bell","design_mode":"free_design","sheet_path":"res://art/combat/monsters/final_age_silent_cultivator/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"final_age_meridian_creditor","rank":"boss","weapon":"needle","design_mode":"free_design","reference_portrait":"res://art/portraits/final_age_meridian_creditor_v1.png","sheet_path":"res://art/combat/monsters/final_age_meridian_creditor/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"immortal_sky_enforcer","rank":"normal","weapon":"halberd","design_mode":"free_design","sheet_path":"res://art/combat/monsters/immortal_sky_enforcer/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"immortal_unchained_duelist","rank":"elite","weapon":"dual_sword","design_mode":"free_design","sheet_path":"res://art/combat/monsters/immortal_unchained_duelist/battle_sheet_web_v1.png","status":"generated_web_pending_runtime_qa"},
+    {"id":"immortal_fate_registrar","rank":"boss","weapon":"jade_brush","design_mode":"free_design","status":"queued"}
+  ]
+}

@@ -2,20 +2,64 @@
 
 ## Product Direction
 
-Combat characters use original full-body anime sprites with a compact,
-appealing silhouette. The target feeling is light, readable, and expressive:
-slightly enlarged head and hands, narrow full-body proportions, clear facial
-direction, an oversized weapon silhouette, and restrained supernatural light.
-This direction is inspired by polished mobile RPG battle cutouts, but no
-existing character, costume, pose, weapon, halo, or line work may be copied.
+Combat characters may use original, story-bound full-body pixel animation
+sprites as a first-class battle presentation. The target feeling is readable,
+expressive, and compact: a stable silhouette, clear facing direction,
+recognizable costume anchors, readable weapon geometry, and restrained
+supernatural light. Portraits and story scenes may remain high-resolution;
+battle sprites translate the same identity into a deliberate pixel language.
+This direction is inspired by polished 2D RPG battle animation, but no existing
+character, costume, pose, weapon, halo, or line work may be copied.
 
-Programmatic pixel figures are a development fallback only. They must never be
-presented as final character art in a product release.
+Programmatic pixel figures remain a development fallback only. Final pixel
+sprites must be authored or generated as identity-specific raster assets and
+reviewed against the character's narrative visual contract.
+
+## Unified Portrait Style Bible (v1.0)
+
+The two user-provided anime game illustrations are global style references
+only. They establish the rendering language—clean contour hierarchy, polished
+adult anime faces, large-to-small hair masses, layered costume construction,
+dynamic contrapposto, controlled material highlights, and readable action
+silhouettes. They do not authorize copying the reference character's face,
+hair, costume, weapon, ornaments, or exact composition.
+
+The production order is deliberately portrait-first:
+
+1. Build or upload the character's story identity card and reference portrait.
+2. Generate a new high-resolution full-body portrait in the shared style.
+3. Pass the identity gate: age, face, hair, body type, costume, weapon,
+   palette, and five non-negotiable identity anchors.
+4. Lock neutral, guard, and attack poses from that accepted identity.
+5. Derive the transparent pixel atlas and run the animation gate.
+
+Adult characters default to 7.5–8 heads tall with complete feet, clear
+shoulder/waist/hip structure, and long readable legs. Adult women may have a
+naturally fuller bust and a visible waist-to-hip rhythm when the story supports
+it, while remaining tastefully clothed and anatomically grounded. Children,
+teenagers, giant adults, and monsters use different skeletons and silhouettes;
+they must not be made by scaling the same adult body.
+
+The shared portrait language uses richer color than the battle atlas, but the
+identity palette still wins over the style reference. Jiang Zhaoxue has a
+strict cold palette: blue-black hair, silver-blue ornaments, cyan forehead
+mark, jade white/ice blue sword dress, silver-blue sword, and no red, crimson,
+burgundy, pink, orange, or warm-gold decoration. Other characters receive
+their own allowed and forbidden colors from their identity cards.
+
+Portrait masters should target 2048 x 3072 (1536 x 2048 minimum) with a clean
+character PNG and optional character/FX/background layers. The reference
+images remain user-provided style inputs and are not shipped as runtime art.
 
 ## Deliverables Per Named Character
 
 - One canonical transparent PNG, 1536 x 2048 or larger, full body visible.
 - One neutral three-quarter battle stance facing inward.
+- One or more transparent animation atlases. There is no fixed frame-count
+  ceiling: use the minimum readable count for idle and hit reactions, and add
+  frames for complex sword techniques, spells, ultimates, or signature scenes
+  when the motion needs them. A named character may use 16, 64, or 128 frames
+  split across clips rather than one oversized sheet.
 - Separate transparent layers for body, front arm/weapon, back equipment, and
   optional aura. Layer registration and canvas size must be identical.
 - Three expression crops derived from the same identity anchor: neutral,
@@ -38,6 +82,13 @@ The runtime applies restrained motion to the supplied layers:
 The source art must remain still and clean. Motion, trails, particles, hit stop,
 and camera response are authored in Godot so the same timing follows combat
 events and accessibility settings.
+
+For pixel animation atlases, each clip owns its own frame sequence, FPS, loop
+flag, and optional technique mapping in
+`res://data/combat_sprite_animations_v1.json`. Combat events select a specific
+technique clip when one is registered, then fall back to the semantic
+`attack`, `guard`, `spell`, `hit`, or `idle` clips. Effects remain reusable
+Godot layers rather than being required in every character frame.
 
 ## Composition And Readability
 
