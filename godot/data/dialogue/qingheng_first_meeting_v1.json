@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "scene_id": "qingheng_first_meeting",
+  "title": "山门前的第一问",
+  "entry_node": "qh_line_01",
+  "participants": ["protagonist", "qingheng_zhenren"],
+  "nodes": [
+    {
+      "id": "qh_line_01",
+      "type": "line",
+      "speaker_id": "qingheng_zhenren",
+      "expression": "stern",
+      "outfit": "default",
+      "text": "清蘅真人在山门石阶上停下脚步：报上道号。若连自己的来处都说不清，便不必踏进这道门。",
+      "next": "qh_choice_01"
+    },
+    {
+      "id": "qh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "qh_choice_honest",
+          "text": "如实报上姓名，不替自己添一分来历。",
+          "next": "qh_line_02",
+          "effects": [
+            {
+              "type": "relation_delta",
+              "character_id": "qingheng_zhenren",
+              "stat": "respect",
+              "delta": 2
+            },
+            {
+              "type": "set_flag",
+              "flag": "qingheng_first_answer_honest",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "qh_choice_counter",
+          "text": "反问她：若来处不能说明，师门看什么收人？",
+          "next": "qh_line_02",
+          "effects": [
+            {
+              "type": "relation_delta",
+              "character_id": "qingheng_zhenren",
+              "stat": "trust",
+              "delta": 1
+            },
+            {
+              "type": "set_flag",
+              "flag": "qingheng_first_answer_countered",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qh_line_02",
+      "type": "line",
+      "speaker_id": "qingheng_zhenren",
+      "expression": "soft",
+      "outfit": "default",
+      "text": "她没有立刻斥责，只把视线从你的影子移回你的眼睛。规矩是门，能不能留下，要看你会不会在门里承担后果。",
+      "next": "qh_effect_01"
+    },
+    {
+      "id": "qh_effect_01",
+      "type": "effect",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "met_qingheng_at_mountain_gate",
+          "value": true
+        },
+        {
+          "type": "character_expression",
+          "character_id": "qingheng_zhenren",
+          "expression": "soft"
+        }
+      ],
+      "next": "qh_end"
+    },
+    {
+      "id": "qh_end",
+      "type": "end",
+      "result": "accepted_at_mountain_gate"
+    }
+  ]
+}

@@ -1,0 +1,832 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/build_character_index.py",
+  "registry": "godot/data/characters/character_registry_v2.json",
+  "groups": "godot/data/characters/character_groups_v1.json",
+  "source_files": [
+    "godot/data/story_arcs_v1.json",
+    "godot/data/events_v014.json",
+    "src/wendao_enhanced.cpp"
+  ],
+  "summary": {
+    "canonical_characters": 22,
+    "canonical_groups": 3,
+    "mentions": 936,
+    "structured_mentions": 81,
+    "text_mentions": 75,
+    "cpp_mentions": 780,
+    "unresolved_structured": 0
+  },
+  "references": [
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/0/character_id",
+      "field": "character_id",
+      "raw_name": "protagonist",
+      "resolved_id": "protagonist",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/0/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_razor_wolf",
+      "resolved_id": "classical_razor_wolf",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/1/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/1/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_oath_breaker",
+      "resolved_id": "classical_oath_breaker",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/10/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/10/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_unchained_duelist",
+      "resolved_id": "immortal_unchained_duelist",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/11/character_id",
+      "field": "character_id",
+      "raw_name": "ning_zhaoxue",
+      "resolved_id": "ning_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/11/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_fate_registrar",
+      "resolved_id": "classical_fate_registrar",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/12/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/12/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_blackbox_foreman",
+      "resolved_id": "steam_blackbox_foreman",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/13/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/13/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_ghost_archivist",
+      "resolved_id": "star_ghost_archivist",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/14/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/14/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_relic_raider",
+      "resolved_id": "wasteland_relic_raider",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/15/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/15/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_meridian_creditor",
+      "resolved_id": "final_age_meridian_creditor",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/16/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/17/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/18/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/19/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/2/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/2/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_furnace_hound",
+      "resolved_id": "steam_furnace_hound",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/20/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/21/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/22/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/23/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/24/character_id",
+      "field": "character_id",
+      "raw_name": "protagonist",
+      "resolved_id": "protagonist",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/25/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/26/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/27/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/28/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/29/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/3/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/3/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_debt_collector",
+      "resolved_id": "steam_debt_collector",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/30/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/30/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_false_sun_prophet",
+      "resolved_id": "wasteland_false_sun_prophet",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/31/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/32/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/33/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/34/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/35/character_id",
+      "field": "character_id",
+      "raw_name": "recurring_antagonist",
+      "resolved_id": "recurring_antagonist",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/35/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_fate_registrar",
+      "resolved_id": "immortal_fate_registrar",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/4/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/4/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_echo_hunter",
+      "resolved_id": "star_echo_hunter",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/5/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/5/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_void_daemon",
+      "resolved_id": "star_void_daemon",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/6/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/6/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_rain_beast",
+      "resolved_id": "wasteland_rain_beast",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/7/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/7/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_breath_taxer",
+      "resolved_id": "final_age_breath_taxer",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/8/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/8/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_silent_cultivator",
+      "resolved_id": "final_age_silent_cultivator",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/9/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/9/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_sky_enforcer",
+      "resolved_id": "immortal_sky_enforcer",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/0/character_id",
+      "field": "character_id",
+      "raw_name": "protagonist",
+      "resolved_id": "protagonist",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/0/main/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jade_echo",
+      "resolved_id": "jade_echo",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/0/main/0/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jade_echo",
+      "resolved_id": "jade_echo",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/0/main/1/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jade_echo",
+      "resolved_id": "jade_echo",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/0/main/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jade_echo",
+      "resolved_id": "jade_echo",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/echo/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/echo/1/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/main/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/main/0/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/main/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/1/main/2/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/main/0/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/main/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/main/1/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/main/2/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/2/main/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/echo/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/echo/2/choices/1/participants/0",
+      "field": "participants",
+      "raw_name": "player",
+      "resolved_id": "protagonist",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/echo/2/choices/1/participants/1",
+      "field": "participants",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/main/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/main/0/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/main/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/main/1/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "story_arcs_v1.json",
+      "source_path": "godot/data/story_arcs_v1.json",
+      "path": "/arcs/3/main/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    }
+  ]
+}

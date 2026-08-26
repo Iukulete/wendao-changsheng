@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "scene_id": "shuangya_first_intercept",
+  "title": "霜鸦的截路契书",
+  "entry_node": "sy_line_01",
+  "participants": ["protagonist", "shuangya"],
+  "nodes": [
+    {
+      "id": "sy_line_01",
+      "type": "line",
+      "speaker_id": "shuangya",
+      "expression": "stern",
+      "outfit": "combat",
+      "text": "霜鸦从废墟的阴影里走出，契纸压着半截断刃：交出火种，或者让我确认你也在契约里。",
+      "next": "sy_choice_01"
+    },
+    {
+      "id": "sy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sy_choice_refuse",
+          "text": "拒绝交出火种，拔剑迎上。",
+          "next": "sy_combat_01",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "shuangya_duel_started",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "sy_choice_bargain",
+          "text": "先问契约的委托人和违约代价。",
+          "next": "sy_combat_01",
+          "effects": [
+            {
+              "type": "relation_delta",
+              "character_id": "shuangya",
+              "stat": "trust",
+              "delta": 1
+            },
+            {
+              "type": "set_flag",
+              "flag": "shuangya_contract_questioned",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sy_combat_01",
+      "type": "combat",
+      "encounter_id": "star_echo_hunter",
+      "combat_label": "霜鸦的契约追猎",
+      "return_routes": {
+        "victory": "sy_victory",
+        "defeat": "sy_defeat",
+        "escape": "sy_escape",
+        "special": "sy_victory"
+      }
+    },
+    {
+      "id": "sy_victory",
+      "type": "line",
+      "speaker_id": "shuangya",
+      "expression": "hurt",
+      "outfit": "combat",
+      "text": "霜鸦捂住被剑气擦过的肩口，却没有追击：今天的契纸只写了火种，不包括你的命。",
+      "next": "sy_victory_effect"
+    },
+    {
+      "id": "sy_victory_effect",
+      "type": "effect",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "shuangya_survived_first_duel",
+          "value": true
+        },
+        {
+          "type": "reputation_delta",
+          "delta": 1
+        }
+      ],
+      "next": "sy_end"
+    },
+    {
+      "id": "sy_defeat",
+      "type": "line",
+      "speaker_id": "shuangya",
+      "expression": "stern",
+      "outfit": "combat",
+      "text": "霜鸦把契纸折回袖中：活下来，再谈火种归谁。她留下了一枚冷硬的定位钉。",
+      "next": "sy_defeat_effect"
+    },
+    {
+      "id": "sy_defeat_effect",
+      "type": "effect",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "shuangya_left_tracking_pin",
+          "value": true
+        }
+      ],
+      "next": "sy_end"
+    },
+    {
+      "id": "sy_escape",
+      "type": "line",
+      "speaker_id": "shuangya",
+      "expression": "surprised",
+      "outfit": "combat",
+      "text": "你借废墟的风道脱身。霜鸦没有追，只在远处抬手：下一次，契纸会写得更清楚。",
+      "next": "sy_end"
+    },
+    {
+      "id": "sy_end",
+      "type": "end",
+      "result": "shuangya_intercept_resolved"
+    }
+  ]
+}

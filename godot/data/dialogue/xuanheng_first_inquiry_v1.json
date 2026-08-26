@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "scene_id": "xuanheng_first_inquiry",
+  "title": "玄衡观的问询",
+  "entry_node": "xh_line_01",
+  "participants": ["protagonist", "xuanhengzi"],
+  "nodes": [
+    {
+      "id": "xh_line_01",
+      "type": "line",
+      "speaker_id": "xuanhengzi",
+      "expression": "stern",
+      "outfit": "default",
+      "text": "玄衡子把一枚没有署名的玉简推到案边：有人说你在镜湖见过不该见的东西。你准备把哪一部分写进记录？",
+      "next": "xh_condition_01"
+    },
+    {
+      "id": "xh_condition_01",
+      "type": "condition",
+      "condition": {
+        "op": "flag",
+        "flag": "saw_hidden_jade",
+        "operator": "==",
+        "value": true
+      },
+      "if_true": "xh_line_hidden",
+      "if_false": "xh_line_public"
+    },
+    {
+      "id": "xh_line_hidden",
+      "type": "line",
+      "speaker_id": "xuanhengzi",
+      "expression": "surprised",
+      "outfit": "default",
+      "text": "你已经见过那块旧玉。玄衡子的指尖在桌面上停了一瞬：很好，至少这次记录不会从空白开始。",
+      "next": "xh_choice_01"
+    },
+    {
+      "id": "xh_line_public",
+      "type": "line",
+      "speaker_id": "xuanhengzi",
+      "expression": "stern",
+      "outfit": "default",
+      "text": "你说自己只看见一面空湖。玄衡子没有拆穿，只将玉简收回袖中：那便先从空湖记起。",
+      "next": "xh_choice_01"
+    },
+    {
+      "id": "xh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xh_choice_record_truth",
+          "text": "把见到的异象如实写下。",
+          "next": "xh_check_01",
+          "effects": [
+            {
+              "type": "set_flag",
+              "flag": "xuanheng_recorded_truth",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "xh_choice_use_rule",
+          "text": "反问玄衡观是否有权保存你的记忆。",
+          "condition": {
+            "op": "all",
+            "args": [
+              {
+                "op": "flag",
+                "flag": "saw_hidden_jade",
+                "operator": "==",
+                "value": true
+              },
+              {
+                "op": "reputation",
+                "operator": ">=",
+                "value": 2
+              }
+            ]
+          },
+          "next": "xh_rule_effect",
+          "effects": [
+            {
+              "type": "relation_delta",
+              "character_id": "xuanhengzi",
+              "stat": "respect",
+              "delta": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xh_check_01",
+      "type": "check",
+      "check": {
+        "check_id": "xuanheng_composure",
+        "stat": "dao_heart",
+        "mode": "deterministic",
+        "difficulty": 8,
+        "visible_to_player": true
+      },
+      "success": "xh_truth_success",
+      "failure": "xh_truth_failure"
+    },
+    {
+      "id": "xh_truth_success",
+      "type": "effect",
+      "effects": [
+        {
+          "type": "reputation_delta",
+          "delta": 2
+        },
+        {
+          "type": "set_flag",
+          "flag": "xuanheng_trusts_your_record",
+          "value": true
+        }
+      ],
+      "next": "xh_end"
+    },
+    {
+      "id": "xh_truth_failure",
+      "type": "line",
+      "speaker_id": "xuanhengzi",
+      "expression": "stern",
+      "outfit": "default",
+      "text": "你的笔锋在最后一行偏了半寸。玄衡子合上玉简：事实是真的，但你还不会守住它。",
+      "next": "xh_end"
+    },
+    {
+      "id": "xh_rule_effect",
+      "type": "effect",
+      "effects": [
+        {
+          "type": "set_flag",
+          "flag": "challenged_xuanheng_authority",
+          "value": true
+        },
+        {
+          "type": "reputation_delta",
+          "delta": 1
+        }
+      ],
+      "next": "xh_end"
+    },
+    {
+      "id": "xh_end",
+      "type": "end",
+      "result": "xuanheng_inquiry_recorded"
+    }
+  ]
+}

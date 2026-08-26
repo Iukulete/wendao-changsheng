@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/build_character_index.py",
+  "registry": "godot/data/characters/character_registry_v2.json",
+  "groups": "godot/data/characters/character_groups_v1.json",
+  "source_files": [
+    "godot/data/story_arcs_v1.json",
+    "godot/data/events_v014.json",
+    "src/wendao_enhanced.cpp"
+  ],
+  "summary": {
+    "canonical_characters": 22,
+    "canonical_groups": 3,
+    "mentions": 936,
+    "structured_mentions": 81,
+    "text_mentions": 75,
+    "cpp_mentions": 780,
+    "unresolved_structured": 0
+  },
+  "mentions": []
+}

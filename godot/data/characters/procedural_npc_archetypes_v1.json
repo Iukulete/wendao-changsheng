@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "archetypes": {
+    "proc_male_cultivator_adult_01": {"gender": "male", "age_group": "adult", "portrait_pool": ["npc_male_01", "npc_male_02"], "sensuality_default": 0, "sensuality_max": 0},
+    "proc_female_cultivator_adult_01": {"gender": "female", "age_group": "adult", "portrait_pool": ["npc_female_01", "npc_female_02"], "sensuality_default": 0, "sensuality_max": 1},
+    "proc_male_elder_01": {"gender": "male", "age_group": "adult", "portrait_pool": ["npc_elder_male_01"], "sensuality_default": 0, "sensuality_max": 0},
+    "proc_female_elder_01": {"gender": "female", "age_group": "adult", "portrait_pool": ["npc_elder_female_01"], "sensuality_default": 0, "sensuality_max": 1},
+    "proc_survivor_unknown_01": {"gender": "any", "age_group": "unknown", "portrait_pool": ["npc_survivor_01", "npc_survivor_02"], "sensuality_default": 0, "sensuality_max": 0}
+  },
+  "runtime_identity_format": "proc:{archetype_id}:{seed}:{sequence}",
+  "promotion_rule": "a_procedural_npc_becomes_authored_only_after_named_story_reuse"
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "groups": {
+    "a_cen_siblings": {
+      "display_name": "阿岑兄妹",
+      "members": ["a_cen_brother", "a_cen_sister"],
+      "default_stage_layout": "duo",
+      "can_split_into_individual_speakers": true
+    },
+    "sect_lawkeepers": {
+      "display_name": "两代执律人",
+      "members": ["sect_lawkeepers"],
+      "default_stage_layout": "ensemble",
+      "can_split_into_individual_speakers": false
+    },
+    "family_covenant_holders": {
+      "display_name": "祖契持有人",
+      "members": ["family_covenant_holder"],
+      "default_stage_layout": "ensemble",
+      "can_split_into_individual_speakers": false
+    }
+  }
+}

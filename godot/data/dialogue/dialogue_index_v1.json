@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "index_id": "wendao_dialogue_pilot_v1",
+  "scenes": [
+    {
+      "scene_id": "qingheng_first_meeting",
+      "path": "res://data/dialogue/qingheng_first_meeting_v1.json",
+      "status": "pilot",
+      "arc": "classical_mountain_oath"
+    },
+    {
+      "scene_id": "xuanheng_first_inquiry",
+      "path": "res://data/dialogue/xuanheng_first_inquiry_v1.json",
+      "status": "pilot",
+      "arc": "classical_oath_wound"
+    },
+    {
+      "scene_id": "shuangya_first_intercept",
+      "path": "res://data/dialogue/shuangya_first_intercept_v1.json",
+      "status": "pilot",
+      "arc": "wasteland_fireseed_watch"
+    }
+  ]
+}

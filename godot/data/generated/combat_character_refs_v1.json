@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/build_character_index.py",
+  "registry": "godot/data/characters/character_registry_v2.json",
+  "groups": "godot/data/characters/character_groups_v1.json",
+  "source_files": [
+    "godot/data/story_arcs_v1.json",
+    "godot/data/events_v014.json",
+    "src/wendao_enhanced.cpp"
+  ],
+  "summary": {
+    "canonical_characters": 22,
+    "canonical_groups": 3,
+    "mentions": 936,
+    "structured_mentions": 81,
+    "text_mentions": 75,
+    "cpp_mentions": 780,
+    "unresolved_structured": 0
+  },
+  "references": [
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/0/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_razor_wolf",
+      "resolved_id": "classical_razor_wolf",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/1/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_oath_breaker",
+      "resolved_id": "classical_oath_breaker",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/10/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_unchained_duelist",
+      "resolved_id": "immortal_unchained_duelist",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/11/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "classical_fate_registrar",
+      "resolved_id": "classical_fate_registrar",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/12/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_blackbox_foreman",
+      "resolved_id": "steam_blackbox_foreman",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/13/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_ghost_archivist",
+      "resolved_id": "star_ghost_archivist",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/14/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_relic_raider",
+      "resolved_id": "wasteland_relic_raider",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/15/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_meridian_creditor",
+      "resolved_id": "final_age_meridian_creditor",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/2/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_furnace_hound",
+      "resolved_id": "steam_furnace_hound",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/3/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "steam_debt_collector",
+      "resolved_id": "steam_debt_collector",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/30/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_false_sun_prophet",
+      "resolved_id": "wasteland_false_sun_prophet",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/35/choices/1/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_fate_registrar",
+      "resolved_id": "immortal_fate_registrar",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/4/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_echo_hunter",
+      "resolved_id": "star_echo_hunter",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/5/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "star_void_daemon",
+      "resolved_id": "star_void_daemon",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/6/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "wasteland_rain_beast",
+      "resolved_id": "wasteland_rain_beast",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/7/choices/2/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_breath_taxer",
+      "resolved_id": "final_age_breath_taxer",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/8/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "final_age_silent_cultivator",
+      "resolved_id": "final_age_silent_cultivator",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    },
+    {
+      "source": "events_v014.json",
+      "source_path": "godot/data/events_v014.json",
+      "path": "/9/choices/0/encounter/enemy_id",
+      "field": "enemy_id",
+      "raw_name": "immortal_sky_enforcer",
+      "resolved_id": "immortal_sky_enforcer",
+      "confidence": 1.0,
+      "kind": "combat_asset_reference"
+    }
+  ]
+}
