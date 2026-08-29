@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "duan_qiuhe_proxy_boundary",
+  "title": "段秋禾的代领纸",
+  "entry_node": "dqh_line_01",
+  "participants": ["protagonist", "duan_qiuhe"],
+  "nodes": [
+    {
+      "id": "dqh_line_01",
+      "type": "line",
+      "speaker_id": "duan_qiuhe",
+      "expression": "tired",
+      "outfit": "returnee_lane_caregiver",
+      "text": "妹妹在匣子里说得很清楚：三十日没回信，基础药可以交给我，别交给行会。她死在外城塌桥以后，枯潮只留下前半句，还让我替她缴失联维护费。能代领她亲口留下的药，不等于能替她签新债。",
+      "next": "dqh_choice_01"
+    },
+    {
+      "id": "dqh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "dqh_choice_restore_full_record",
+          "text": "恢复完整录音和三十日限制，只给段秋禾代领已明确的基础药；冻结失联维护费与新债，不把养护关系扩成财产权限。",
+          "next": "dqh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "duan_qiuhe", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "duan_qiuhe_full_record_restored", "value": true}
+          ]
+        },
+        {
+          "id": "dqh_choice_seal_family_proof",
+          "text": "把家庭证明与妹妹的完整原意封存，只给法院和段秋禾查阅；公开记录仅写药物范围、期限与不可扩张的代理边界。",
+          "next": "dqh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "duan_qiuhe", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "duan_qiuhe_family_proof_sealed", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dqh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "她说可以代领哪一项，就只把那一项交给你；被截掉的‘不要交给行会’也要原样回来。照护和代领不是新债，家属身份更不能顺手变成处分押金、续签席位或替她回答别的事情的权力。",
+      "next": "dqh_effect_01"
+    },
+    {
+      "id": "dqh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "duan_qiuhe_proxy_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "duan_qiuhe", "expression": "relieved"}
+      ],
+      "next": "dqh_end"
+    },
+    {
+      "id": "dqh_end",
+      "type": "end",
+      "result": "duan_qiuhe_proxy_boundary_preserved"
+    }
+  ]
+}

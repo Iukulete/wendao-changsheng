@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xu_dongsuo_piece_rate",
+  "title": "订单不能只算厂里的损失",
+  "entry_node": "xd_line_01",
+  "participants": ["protagonist", "xu_dongsuo"],
+  "nodes": [
+    {
+      "id": "xd_line_01",
+      "type": "line",
+      "speaker_id": "xu_dongsuo",
+      "expression": "defensive",
+      "outfit": "default",
+      "text": "二百名女工的计件表都在这里。停机一天，绷带订单会延误，厂里的固定成本也不会自己消失。可你们若只把这张表当作我向炉会催汽的凭据，发钱时又说那是厂内管理，账就只剩厂主看得见的一半。",
+      "next": "xd_choice_01"
+    },
+    {
+      "id": "xd_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xd_choice_direct_subsidy",
+          "text": "把女工停机补助从厂务索赔中单列，固定一成蒸汽款直付到个人计件袋；替班和缺页另设补件期限。",
+          "next": "xd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xu_dongsuo", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xu_dongsuo_direct_subsidy_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "xd_choice_factory_pool",
+          "text": "先把所有钱汇进厂内统一池，由厂主核对后再发；这样最快，也能避免外部重复索赔。",
+          "next": "xd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xu_dongsuo", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xu_dongsuo_factory_pool_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xd_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你们把设备固定成本、女工个人计件损失、替班核验和订单延期免责分成四栏。许东梭仍保留厂务调度权，却不能再用“厂里会处理”代替女工对自己收入的确认；同一停机可以同时造成两类损失，只有重复申报同一笔工资才算重复索赔。",
+      "next": "xd_effect_01"
+    },
+    {
+      "id": "xd_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xu_dongsuo_wage_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "xu_dongsuo", "expression": "relieved"}
+      ],
+      "next": "xd_end"
+    },
+    {
+      "id": "xd_end",
+      "type": "end",
+      "result": "xu_dongsuo_wage_boundary_preserved"
+    }
+  ]
+}

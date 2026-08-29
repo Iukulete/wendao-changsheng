@@ -43,6 +43,8 @@ def main() -> int:
     aliases = load("character_aliases_v1.json")
     groups = load("character_groups_v1.json")
     procedural = load("procedural_npc_archetypes_v1.json")
+    identity_cards_path = CHARACTER_DIR / "identity_cards_v1.json"
+    identity_cards = load("identity_cards_v1.json") if identity_cards_path.exists() else {}
 
     if registry.get("schema_version") != 2:
         errors.append("registry schema_version must be 2")
@@ -102,6 +104,20 @@ def main() -> int:
         if status == "planned" and resolved_master is not None and resolved_master.exists():
             warnings.append(f"{character_id}: planned portrait already exists; update status after QA")
 
+        for asset_name in ("dialogue_bust", "avatar"):
+            dialogue_asset = assets.get(asset_name, {})
+            dialogue_path = dialogue_asset.get("path")
+            dialogue_status = dialogue_asset.get("status")
+            if dialogue_status not in ALLOWED_STATUSES:
+                errors.append(f"{character_id}: invalid {asset_name} status {dialogue_status!r}")
+            resolved_dialogue = resolve_res_path(dialogue_path)
+            if resolved_dialogue is None or resolved_dialogue.suffix.lower() != ".png":
+                errors.append(f"{character_id}: {asset_name} path must be res:// and .png")
+            if dialogue_status in {"ready", "curated"} and resolved_dialogue is not None and not resolved_dialogue.exists():
+                errors.append(f"{character_id}: ready {asset_name} does not exist: {dialogue_path}")
+            if dialogue_status == "planned" and resolved_dialogue is not None and resolved_dialogue.exists():
+                warnings.append(f"{character_id}: planned {asset_name} already exists; update status after QA")
+
         outfits = assets.get("outfits", [])
         if not isinstance(outfits, list) or not outfits:
             errors.append(f"{character_id}: assets.outfits must be a non-empty list")
@@ -149,6 +165,41 @@ def main() -> int:
 
     if procedural.get("schema_version") != 1 or not procedural.get("archetypes"):
         errors.append("procedural_npc_archetypes_v1 must contain archetypes")
+
+    cards = identity_cards.get("cards")
+    if identity_cards_path.exists() and (
+        identity_cards.get("schema_version") != 1 or not isinstance(cards, dict)
+    ):
+        errors.append("identity_cards_v1 must have schema_version 1 and cards object")
+        cards = {}
+    for card_id, card in cards.items() if isinstance(cards, dict) else []:
+        if card_id not in character_ids:
+            errors.append(f"identity card points to unknown character: {card_id!r}")
+            continue
+        if not isinstance(card, dict):
+            errors.append(f"{card_id}: identity card must be an object")
+            continue
+        character = characters[card_id]
+        identity = character.get("identity", {})
+        presentation = character.get("presentation_profile", {})
+        if card.get("age_group") != identity.get("age_group"):
+            errors.append(f"{card_id}: identity card age_group disagrees with registry")
+        card_presentation = card.get("presentation_profile", {})
+        for field in ("sensuality_default", "sensuality_max"):
+            if card_presentation.get(field) != presentation.get(field):
+                errors.append(f"{card_id}: identity card {field} disagrees with registry")
+        prompt_path = card.get("portrait_prompt_path")
+        resolved_prompt = resolve_res_path(prompt_path)
+        if resolved_prompt is None or resolved_prompt.suffix.lower() != ".md":
+            errors.append(f"{card_id}: portrait_prompt_path must be res:// and .md")
+        elif not resolved_prompt.exists():
+            errors.append(f"{card_id}: portrait prompt does not exist: {prompt_path}")
+        for field in ("candidate_path", "master_path"):
+            resolved_art = resolve_res_path(card.get(field))
+            if resolved_art is None or resolved_art.suffix.lower() != ".png":
+                errors.append(f"{card_id}: {field} must be res:// and .png")
+        if card.get("portrait_prompt_status") == "prepared_waiting_web_submission" and not prompt_path:
+            errors.append(f"{card_id}: prepared portrait prompt needs portrait_prompt_path")
 
     ready_count = sum(
         1

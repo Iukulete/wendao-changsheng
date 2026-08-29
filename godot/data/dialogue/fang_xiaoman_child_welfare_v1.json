@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "fang_xiaoman_child_welfare",
+  "title": "方小满与手里的红石",
+  "entry_node": "fxm_line_01",
+  "participants": ["protagonist", "fang_xiaoman"],
+  "nodes": [
+    {
+      "id": "fxm_line_01",
+      "type": "line",
+      "speaker_id": "fang_xiaoman",
+      "expression": "wary",
+      "outfit": "child_warm_clothes",
+      "text": "他们说抽走一点就会慢慢长回来，可我咳起来的时候，谁都没有问我能不能等。这个红石只管今天，可以放在我手里吗？",
+      "next": "fxm_choice_01"
+    },
+    {
+      "id": "fxm_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "fxm_choice_keep_red_stone",
+          "text": "红石先由你自己拿着。我们把“现在不要抽你的灵息”写清楚，再让医师解释今天每一步。",
+          "next": "fxm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "fang_xiaoman", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "fang_xiaoman_current_safety_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "fxm_choice_choose_checkup",
+          "text": "你可以先选喝水、休息还是听完检查说明；任何一步想停，都由你说停。",
+          "next": "fxm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "fang_xiaoman", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "fang_xiaoman_child_choice_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fxm_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "你的红石只说明今天的拒绝，不替你决定以后。大人要做的，是把危险、能停下的地方和照护的人都说清楚。",
+      "next": "fxm_effect_01"
+    },
+    {
+      "id": "fxm_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "fang_xiaoman_child_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "fang_xiaoman", "expression": "relieved"}
+      ],
+      "next": "fxm_end"
+    },
+    {
+      "id": "fxm_end",
+      "type": "end",
+      "result": "fang_xiaoman_child_boundary_preserved"
+    }
+  ]
+}

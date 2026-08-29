@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "wen_tao_scope_boundary",
+  "title": "闻桃的两张页",
+  "entry_node": "wta_line_01",
+  "participants": ["protagonist", "wen_tao"],
+  "nodes": [
+    {
+      "id": "wta_line_01",
+      "type": "line",
+      "speaker_id": "wen_tao",
+      "expression": "firm",
+      "outfit": "drainage_worker",
+      "text": "工会页写我的左肺旧伤，诊宫页写这周的药。我愿意让港口医师看两件事有没有相互作用，但不让雇主顺手看。你们说总页拆不开，那就照实写系统拆不开，别把我写成不肯配合防疫。病要查，读取范围也要查。",
+      "next": "wta_choice_01"
+    },
+    {
+      "id": "wta_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "wta_choice_split_medical_and_wage",
+          "text": "把伤情页交给独立医师席，把工资页交给工人席；只记录与当次检验相关的药物相互作用，不把病史送进雇主栏。",
+          "next": "wta_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_tao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "wen_tao_pages_split_by_scope", "value": true}
+          ]
+        },
+        {
+          "id": "wta_choice_record_system_failure",
+          "text": "在通行故障栏记录总页无法分栏、读取会扩大到雇主的系统缺陷，先由闻桃本人选择是否继续过门，不把技术限制伪装成她的拒绝。",
+          "next": "wta_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_tao", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "wen_tao_system_scope_failure_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wta_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你的伤情需要检验，不等于雇主需要病历；你的工资需要核对，也不等于医师席可以打开全部工会页。总页拆不开是系统的缺口，不是你的道德标签。我们把每次读取的理由、对象和期限留下，之后再修门。",
+      "next": "wta_effect_01"
+    },
+    {
+      "id": "wta_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "wen_tao_scope_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "wen_tao", "expression": "relieved"}
+      ],
+      "next": "wta_end"
+    },
+    {
+      "id": "wta_end",
+      "type": "end",
+      "result": "wen_tao_scope_boundary_preserved"
+    }
+  ]
+}

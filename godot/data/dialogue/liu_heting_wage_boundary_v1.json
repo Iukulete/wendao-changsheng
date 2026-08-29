@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "liu_heting_wage_boundary",
+  "title": "柳鹤汀的结清木签",
+  "entry_node": "lht_line_01",
+  "participants": ["protagonist", "liu_heting"],
+  "nodes": [
+    {
+      "id": "lht_line_01",
+      "type": "line",
+      "speaker_id": "liu_heting",
+      "expression": "firm",
+      "outfit": "night_shift_worker",
+      "text": "我借的是娘下葬那月的工资，钱还了，娘也埋了。结清木签盖着收讫章，母页却说身体还要担保，六年里每个月总有一夜把我叫醒。哪一句准它六年后还来叫我起夜？",
+      "next": "lht_choice_01"
+    },
+    {
+      "id": "lht_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lht_choice_cut_paid_lines",
+          "text": "先断已还清且证据明确的工资线，公开每一刻会影响哪台设备；安装本地开关，不把她的退出转嫁给下一个夜班工人。",
+          "next": "lht_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liu_heting", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "liu_heting_paid_lines_cut", "value": true}
+          ]
+        },
+        {
+          "id": "lht_choice_three_day_transition",
+          "text": "若必须缓三天，逐人说明灵息正在供给的病床、热屋和水炉，并写明退出、替代供给与损伤赔偿，不能默扣。",
+          "next": "lht_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liu_heting", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "liu_heting_transition_terms_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lht_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "还清的是钱，不是把你的夜晚永久租给城。现在停线会暴露真实短缺，我们就把病床、热屋、工资和替代开关逐项摆出来；谁要你再等三天，谁就要先说明三天里谁承受、何时补回。",
+      "next": "lht_effect_01"
+    },
+    {
+      "id": "lht_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "liu_heting_wage_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "liu_heting", "expression": "relieved"}
+      ],
+      "next": "lht_end"
+    },
+    {
+      "id": "lht_end",
+      "type": "end",
+      "result": "liu_heting_wage_boundary_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "qiao_suying_medical_causality",
+  "title": "药单不能替后果结案",
+  "entry_node": "qs_line_01",
+  "participants": ["protagonist", "qiao_suying"],
+  "nodes": [
+    {
+      "id": "qs_line_01",
+      "type": "line",
+      "speaker_id": "qiao_suying",
+      "expression": "direct",
+      "outfit": "default",
+      "text": "乔素英把断开的假滤芯和私接线路放到诊疗板旁：一粒药能救今天的伤口，却不能替整个月的肺病后果签字。先把患者能承受的治疗、工人被迫停工的损失和炉会答应的付款分别写清，别用一个总数把因果抹掉。",
+      "next": "qs_choice_01"
+    },
+    {
+      "id": "qs_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "qs_choice_separate_causality",
+          "text": "把急救药、后续肺部观察、停工工资和付款承诺分成四栏，并让患者知道每栏会留下什么责任。",
+          "next": "qs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qiao_suying", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "qiao_suying_causality_separated", "value": true}
+          ]
+        },
+        {
+          "id": "qs_choice_accept_monthly_deal",
+          "text": "先接受炉会的首月治疗款，长期影响等病人以后有力气再说。",
+          "next": "qs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qiao_suying", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "qiao_suying_monthly_deal_accepted", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qs_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把脉灯、药量、伤情和下一次警报该广播的居民动作写进同一张交班板，但没有把医疗记录公开成审问材料。乔素英确认每位患者都知道先做什么、可以拒绝什么，才收起最后一块夹板。",
+      "next": "qs_effect_01"
+    },
+    {
+      "id": "qs_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "qiao_suying_patient_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "qiao_suying", "expression": "relieved"}
+      ],
+      "next": "qs_end"
+    },
+    {
+      "id": "qs_end",
+      "type": "end",
+      "result": "qiao_suying_patient_boundary_preserved"
+    }
+  ]
+}

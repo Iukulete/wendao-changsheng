@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "sang_xian_water_limit",
+  "title": "六桶水的上限",
+  "entry_node": "sx_line_01",
+  "participants": ["protagonist", "sang_xian"],
+  "nodes": [
+    {
+      "id": "sx_line_01",
+      "type": "line",
+      "speaker_id": "sang_xian",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "桑弦把折叠水量刻度片压在停阀旁：苦井东床十一日内每天能让出六桶净水，再多就会断掉本地两畦和牲口的水。上限不是讨价还价，是让人知道明天还能不能活。",
+      "next": "sx_choice_01"
+    },
+    {
+      "id": "sx_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sx_choice_record_limit",
+          "text": "把六桶水、两畦代价和重新核算时间一并写入公开记录。",
+          "next": "sx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "sang_xian", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "sang_xian_water_limit_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "sx_choice_take_all",
+          "text": "先把能调来的水全部运走，代价等救完人再算。",
+          "next": "sx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "sang_xian", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "sang_xian_unbounded_water_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sx_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你没有把一次救急变成无限征用。桑弦重新挂好封口水囊，先去确认东床和牲口槽的水线，再决定下一次能让出多少。",
+      "next": "sx_effect_01"
+    },
+    {
+      "id": "sx_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "sang_xian_community_limit_respected", "value": true},
+        {"type": "character_expression", "character_id": "sang_xian", "expression": "relieved"}
+      ],
+      "next": "sx_end"
+    },
+    {
+      "id": "sx_end",
+      "type": "end",
+      "result": "sang_xian_community_limit_respected"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "du_hengqiu_timed_ruling",
+  "title": "临时裁定也要写终止时刻",
+  "entry_node": "dh_line_01",
+  "participants": ["protagonist", "du_hengqiu"],
+  "nodes": [
+    {
+      "id": "dh_line_01",
+      "type": "line",
+      "speaker_id": "du_hengqiu",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "杜衡秋敲了一下刻漏小钟：今天不把所有旧账念完，下一时辰锅炉先替我们结案。临时裁定要写清谁能支付、谁能保全、谁能调度，也要写清什么时候自动停，不许把一句“公共利益”变成另一把没有边的锁。",
+      "next": "dh_choice_01"
+    },
+    {
+      "id": "dh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "dh_choice_bound_trust",
+          "text": "把医疗、欠薪、安全改造、证物保全和清理成本分成不同筹码，逐项写权限、最低额与终止时刻。",
+          "next": "dh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_hengqiu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "du_hengqiu_bound_trust_enforced", "value": true}
+          ]
+        },
+        {
+          "id": "dh_choice_broad_public_interest",
+          "text": "把所有权力先归入一项宽泛的公共利益授权，等炉区安全后再慢慢补边界。",
+          "next": "dh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_hengqiu", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "du_hengqiu_broad_mandate_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把第三炉余压、当班工人、伤者治疗、订单分流和证物拆前留影放进同一张交班板，却没有让一张大总账替所有人签字。杜衡秋看完后补上每日公开余额与期限届满复核席，才把小钟扣回腰间。",
+      "next": "dh_effect_01"
+    },
+    {
+      "id": "dh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "du_hengqiu_timed_ruling_preserved", "value": true},
+        {"type": "character_expression", "character_id": "du_hengqiu", "expression": "relieved"}
+      ],
+      "next": "dh_end"
+    },
+    {
+      "id": "dh_end",
+      "type": "end",
+      "result": "du_hengqiu_timed_ruling_preserved"
+    }
+  ]
+}

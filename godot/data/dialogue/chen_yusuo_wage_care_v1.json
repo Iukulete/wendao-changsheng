@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "chen_yusuo_wage_care",
+  "title": "我的计件袋不能只在索赔时出现",
+  "entry_node": "cy_line_01",
+  "participants": ["protagonist", "chen_yusuo"],
+  "nodes": [
+    {
+      "id": "cy_line_01",
+      "type": "line",
+      "speaker_id": "chen_yusuo",
+      "expression": "firm",
+      "outfit": "weaving_shift",
+      "text": "厂里有厂里的固定损失，炉会有炉会的停机账，可我的计件袋不能只在他们要索赔时才出现。替班、照护、缺页和晚到半刻，最后都可能变成一句‘不在名单里’。",
+      "next": "cy_choice_01"
+    },
+    {
+      "id": "cy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "cy_choice_direct_wage",
+          "text": "把机台、同班证人、替班时刻和孩子照护交接分栏，先登记个人停机补助，再与厂方固定损失分开核算。",
+          "next": "cy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "chen_yusuo", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "chen_yusuo_direct_wage_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "cy_choice_factory_claim",
+          "text": "先让厂方统一提交复工与停机索赔，女工个人名单等总账稳定后再补。",
+          "next": "cy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "chen_yusuo", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "chen_yusuo_factory_claim_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把厂方设备损失、女工计件损失、替班时刻与照护交接分别编号。陈玉梭没有因此承诺所有人都能立刻拿到钱，却终于能指出哪一格还缺证人，哪一笔不能被另一笔覆盖。",
+      "next": "cy_effect_01"
+    },
+    {
+      "id": "cy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "chen_yusuo_wage_care_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "chen_yusuo", "expression": "relieved"}
+      ],
+      "next": "cy_end"
+    },
+    {
+      "id": "cy_end",
+      "type": "end",
+      "result": "chen_yusuo_wage_care_boundary_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "he_qie_pulp_room_boundary",
+  "title": "贺箧的纸房清单",
+  "entry_node": "hqi_line_01",
+  "participants": ["protagonist", "he_qie"],
+  "nodes": [
+    {
+      "id": "hqi_line_01",
+      "type": "line",
+      "speaker_id": "he_qie",
+      "expression": "weary",
+      "outfit": "pulp_room_clerk",
+      "text": "我六十七岁，在纸浆房看了半辈子纸。每月清单让我配多少，我就配多少；我以为那些纸是拿去修瘟潮病历的，从没见过主簿机生成的内容。可最近半年的送达印一次都不一样，工钱又记在申屠家的柜温折损账上。你问我看见了什么，我能一件件说；你问我是不是同意过那些内容，我只能说没有。",
+      "next": "hqi_choice_01"
+    },
+    {
+      "id": "hqi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "hqi_choice_record_limited_knowledge",
+          "text": "只记录贺箧亲手配过的纸量、送达印和工钱来源，把他没有看过的生成内容单独标作未知；再追查主簿机与申屠家的授权链。",
+          "next": "hqi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "he_qie", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "he_qie_limited_knowledge_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "hqi_choice_preserve_good_faith",
+          "text": "保留他善意配纸的陈述，但把善意、实际接触和机构授权分三栏记录，不让‘以为在修病历’替代内容审计。",
+          "next": "hqi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "he_qie", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "he_qie_good_faith_separated", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hqi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "不知道不是罪证，也不是自动免责。你亲手配过的纸、看见过的印、收到过的工钱和从未看过的内容，都要分别留下。这样才能追到真正生成、授权和得利的人，也不会把一个只按清单劳动的老吏写成整条链的替罪羊。",
+      "next": "hqi_effect_01"
+    },
+    {
+      "id": "hqi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "he_qie_fact_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "he_qie", "expression": "relieved"}
+      ],
+      "next": "hqi_end"
+    },
+    {
+      "id": "hqi_end",
+      "type": "end",
+      "result": "he_qie_fact_boundary_preserved"
+    }
+  ]
+}

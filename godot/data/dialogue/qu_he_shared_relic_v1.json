@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "qu_he_shared_relic",
+  "title": "屈禾的共同遗物",
+  "entry_node": "qhe_line_01",
+  "participants": ["protagonist", "qu_he"],
+  "nodes": [
+    {
+      "id": "qhe_line_01",
+      "type": "line",
+      "speaker_id": "qu_he",
+      "expression": "focused",
+      "outfit": "family_winter_layers",
+      "text": "我没有房契，但这条襁褓里那块冻伤药布，母亲怕冷时每次都会换到不同一角。我能说出她怎么打结、三代人在屋里怎么轮流照看。另一户也认得它，先别让谁用一句祖母抱过就把东西带走。",
+      "next": "qhe_choice_01"
+    },
+    {
+      "id": "qhe_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "qhe_choice_test_medicine_cloth",
+          "text": "先记录两户各自的照护记忆，再检验纤维、染料和药渍；核验物件归属与柜子供能分开，不把谁先说出口当成唯一凭据。",
+          "next": "qhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qu_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "qu_he_relic_evidence_tested", "value": true}
+          ]
+        },
+        {
+          "id": "qhe_choice_shared_custody",
+          "text": "先开共同保管、只看不取和暂不决定三种票，给两户同样的影像与药布样；任何一方都不能用遗物归属替另一方决定供能。",
+          "next": "qhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qu_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "qu_he_shared_custody_opened", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qhe_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "记忆是证据的一部分，但不是逼任何一家交出物件的命令。我们把药布样、纤维结果和两户的生活记录分栏保存；共同遗物可以共同保管，供能、补偿和家庭关系另行确认。",
+      "next": "qhe_effect_01"
+    },
+    {
+      "id": "qhe_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "qu_he_relic_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "qu_he", "expression": "relieved"}
+      ],
+      "next": "qhe_end"
+    },
+    {
+      "id": "qhe_end",
+      "type": "end",
+      "result": "qu_he_relic_boundary_preserved"
+    }
+  ]
+}

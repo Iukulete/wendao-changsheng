@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "bo_li_defense_signal",
+  "title": "拦住敌舟，也要让居民知道怎么躲",
+  "entry_node": "bl_line_01",
+  "participants": ["protagonist", "bo_li"],
+  "nodes": [
+    {
+      "id": "bl_line_01",
+      "type": "line",
+      "speaker_id": "bo_li",
+      "expression": "measured",
+      "outfit": "defense_engineer",
+      "text": "三刻复验不是拖延，叶片穿壳才是不可逆的损失。可敌舟进射程也是真的。我们要保一轮确定拦截，再用低压追踪灯和民用声码识别；警报不能只报一个危险级别，居民得知道下一步做什么。",
+      "next": "bl_choice_01"
+    },
+    {
+      "id": "bl_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "bl_choice_confirmed_intercept",
+          "text": "先用一成灵液保障一轮可确认拦截，同时发送固定的留室、避窗、检查储压、等待时刻四句动作警报。",
+          "next": "bl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bo_li", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "bo_li_confirmed_intercept_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "bl_choice_full_fire",
+          "text": "把现有灵液全部压入两架弩，先求最大火力，居民警报等拦截完成后再补。",
+          "next": "bl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bo_li", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "bo_li_full_fire_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bl_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把叶片复验、拦截耗液、追踪灯暴露范围和居民动作警报分开编号。柏砺保住了工程判断，却不能用一次成功拦截证明所有警报和设备都足够安全。",
+      "next": "bl_effect_01"
+    },
+    {
+      "id": "bl_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "bo_li_defense_signal_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "bo_li", "expression": "relieved"}
+      ],
+      "next": "bl_end"
+    },
+    {
+      "id": "bl_end",
+      "type": "end",
+      "result": "bo_li_defense_signal_boundary_preserved"
+    }
+  ]
+}

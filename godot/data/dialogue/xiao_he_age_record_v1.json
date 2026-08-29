@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xiao_he_age_record",
+  "title": "十六岁不是十八岁",
+  "entry_node": "xh_line_01",
+  "participants": ["protagonist", "xiao_he"],
+  "nodes": [
+    {
+      "id": "xh_line_01",
+      "type": "line",
+      "speaker_id": "xiao_he",
+      "expression": "alert",
+      "outfit": "default",
+      "text": "小何把旧入所簿封页按在滤芯检测夹旁：我十六岁。入所时有人叫我多写两岁，说这样才肯把我送进炉区。可年龄不是炉灰，擦掉就算没发生。",
+      "next": "xh_choice_01"
+    },
+    {
+      "id": "xh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xh_choice_keep_age",
+          "text": "把实际年龄单独留档，先按未成年保护流程处理，再保护同年孩子的姓名。",
+          "next": "xh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xiao_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xiao_he_actual_age_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "xh_choice_hide_age",
+          "text": "暂不公开年龄，先避免名单回溯牵连其他孩子。",
+          "next": "xh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xiao_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xiao_he_age_withheld_for_peers", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把小何的实际年龄、呼吸症状、培训安排和旧工龄拆成四栏，给同年孩子另设匿名编号。小何收起失效面罩，仍把合格面罩递给排在后面的孩子。",
+      "next": "xh_effect_01"
+    },
+    {
+      "id": "xh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xiao_he_worker_record_preserved", "value": true},
+        {"type": "character_expression", "character_id": "xiao_he", "expression": "resolute"}
+      ],
+      "next": "xh_end"
+    },
+    {
+      "id": "xh_end",
+      "type": "end",
+      "result": "xiao_he_age_boundary_recorded"
+    }
+  ]
+}

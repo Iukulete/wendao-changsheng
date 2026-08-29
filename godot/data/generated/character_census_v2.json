@@ -1,0 +1,4246 @@
+{
+  "schema_version": 2,
+  "generated_by": "tools/build_character_census.py",
+  "review_policy": {
+    "heuristic_names_are_not_runtime_characters": true,
+    "unknown_or_minor_age_default": "no_fanservice",
+    "promotion_requires": [
+      "identity_card",
+      "story_evidence",
+      "alias_review",
+      "age_review"
+    ]
+  },
+  "source_files": [
+    "godot/data/chronicles/classical_v1.json",
+    "godot/data/chronicles/final_age_v1.json",
+    "godot/data/chronicles/immortal_dynasty_v1.json",
+    "godot/data/chronicles/star_network_v1.json",
+    "godot/data/chronicles/steam_v1.json",
+    "godot/data/chronicles/wasteland_v1.json",
+    "godot/data/story_arcs_v1.json",
+    "godot/data/events_v014.json",
+    "src/wendao_enhanced.cpp"
+  ],
+  "summary": {
+    "registered_characters": 122,
+    "registered_groups": 3,
+    "combat_asset_ids": 33,
+    "json_and_cpp_strings_scanned": 26079,
+    "unique_structured_values": 32,
+    "unresolved_structured_values": 0,
+    "registered_character_reference_hits": 540,
+    "named_person_candidates": 107,
+    "role_or_group_candidates": 22,
+    "other_candidates_needing_review": 8,
+    "all_unregistered_candidates": 137
+  },
+  "registered_reference_hits": {
+    "cen_zhaolu": 24,
+    "chi_yaoqing": 9,
+    "classical_fate_registrar": 1,
+    "classical_oath_breaker": 1,
+    "classical_razor_wolf": 1,
+    "family_covenant_holder": 8,
+    "final_age_breath_taxer": 1,
+    "final_age_meridian_creditor": 1,
+    "final_age_silent_cultivator": 1,
+    "han_xuansu": 142,
+    "immortal_fate_registrar": 1,
+    "immortal_sky_enforcer": 1,
+    "immortal_unchained_duelist": 1,
+    "jade_echo": 4,
+    "jiang_zhaoxue": 11,
+    "ning_zhaoxue": 1,
+    "pei_zhaowei": 82,
+    "protagonist": 4,
+    "recurring_antagonist": 1,
+    "sect_lawkeepers": 9,
+    "shali": 150,
+    "star_echo_hunter": 1,
+    "star_ghost_archivist": 1,
+    "star_void_daemon": 1,
+    "steam_blackbox_foreman": 1,
+    "steam_debt_collector": 1,
+    "steam_furnace_hound": 1,
+    "wasteland_false_sun_prophet": 1,
+    "wasteland_rain_beast": 1,
+    "wasteland_relic_raider": 1,
+    "wen_xingdu": 77
+  },
+  "structured_references": [
+    {
+      "raw_value": "shali",
+      "resolved_id": "shali",
+      "reference_count": 150,
+      "sources": [
+        "wasteland_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "godot/data/chronicles/wasteland_v1.json:/art/character_id"
+        },
+        {
+          "source": "wasteland_v1.json",
+          "path": "godot/data/chronicles/wasteland_v1.json:/chapters/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "wasteland_v1.json",
+          "path": "godot/data/chronicles/wasteland_v1.json:/chapters/0/choices/0/debts_add/0/character_id"
+        },
+        {
+          "source": "wasteland_v1.json",
+          "path": "godot/data/chronicles/wasteland_v1.json:/chapters/0/choices/1/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "reference_count": 142,
+      "sources": [
+        "final_age_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "final_age_v1.json",
+          "path": "godot/data/chronicles/final_age_v1.json:/art/character_id"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "godot/data/chronicles/final_age_v1.json:/chapters/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "godot/data/chronicles/final_age_v1.json:/chapters/0/choices/0/debts_add/0/character_id"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "godot/data/chronicles/final_age_v1.json:/chapters/0/choices/1/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "reference_count": 82,
+      "sources": [
+        "immortal_dynasty_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "godot/data/chronicles/immortal_dynasty_v1.json:/art/character_id"
+        },
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "godot/data/chronicles/immortal_dynasty_v1.json:/chapters/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "godot/data/chronicles/immortal_dynasty_v1.json:/chapters/0/choices/1/promises_add/0/character_id"
+        },
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "godot/data/chronicles/immortal_dynasty_v1.json:/chapters/0/choices/2/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "reference_count": 77,
+      "sources": [
+        "star_network_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "star_network_v1.json",
+          "path": "godot/data/chronicles/star_network_v1.json:/art/character_id"
+        },
+        {
+          "source": "star_network_v1.json",
+          "path": "godot/data/chronicles/star_network_v1.json:/chapters/0/choices/0/debts_add/0/character_id"
+        },
+        {
+          "source": "star_network_v1.json",
+          "path": "godot/data/chronicles/star_network_v1.json:/chapters/0/choices/1/promises_add/0/character_id"
+        },
+        {
+          "source": "star_network_v1.json",
+          "path": "godot/data/chronicles/star_network_v1.json:/chapters/0/choices/2/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "reference_count": 24,
+      "sources": [
+        "steam_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "steam_v1.json",
+          "path": "godot/data/chronicles/steam_v1.json:/art/character_id"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "godot/data/chronicles/steam_v1.json:/chapters/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "godot/data/chronicles/steam_v1.json:/chapters/0/choices/2/debts_add/0/character_id"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "godot/data/chronicles/steam_v1.json:/chapters/1/choices/0/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "reference_count": 11,
+      "sources": [
+        "classical_v1.json",
+        "story_arcs_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/20/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/3/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/3/main/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/3/main/0/choices/1/debts_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "reference_count": 9,
+      "sources": [
+        "classical_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/art/character_id"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/19/choices/1/promises_add/0/character_id"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/20/choices/1/promises_add/0/character_id"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/20/choices/2/debts_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "reference_count": 9,
+      "sources": [
+        "classical_v1.json",
+        "story_arcs_v1.json"
+      ],
+      "examples": [
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/19/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/21/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/1/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/1/main/0/choices/0/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "reference_count": 8,
+      "sources": [
+        "classical_v1.json",
+        "story_arcs_v1.json"
+      ],
+      "examples": [
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/19/choices/2/debts_add/0/character_id"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "godot/data/chronicles/classical_v1.json:/chapters/21/choices/2/debts_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/2/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/2/main/0/choices/0/debts_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "jade_echo",
+      "resolved_id": "jade_echo",
+      "reference_count": 4,
+      "sources": [
+        "story_arcs_v1.json"
+      ],
+      "examples": [
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/0/main/0/choices/0/promises_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/0/main/0/choices/1/debts_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/0/main/1/choices/1/debts_add/0/character_id"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/0/main/2/choices/1/promises_add/0/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "protagonist",
+      "resolved_id": "protagonist",
+      "reference_count": 3,
+      "sources": [
+        "story_arcs_v1.json",
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/0/character_id"
+        },
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/0/character_id"
+        },
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/24/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "classical_fate_registrar",
+      "resolved_id": "classical_fate_registrar",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/11/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "classical_oath_breaker",
+      "resolved_id": "classical_oath_breaker",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/1/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "classical_razor_wolf",
+      "resolved_id": "classical_razor_wolf",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/0/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "final_age_breath_taxer",
+      "resolved_id": "final_age_breath_taxer",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/7/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "final_age_meridian_creditor",
+      "resolved_id": "final_age_meridian_creditor",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/15/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "final_age_silent_cultivator",
+      "resolved_id": "final_age_silent_cultivator",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/8/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "immortal_fate_registrar",
+      "resolved_id": "immortal_fate_registrar",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/35/choices/1/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "immortal_sky_enforcer",
+      "resolved_id": "immortal_sky_enforcer",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/9/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "immortal_unchained_duelist",
+      "resolved_id": "immortal_unchained_duelist",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/10/choices/1/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "ning_zhaoxue",
+      "resolved_id": "ning_zhaoxue",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/11/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "player",
+      "resolved_id": "protagonist",
+      "reference_count": 1,
+      "sources": [
+        "story_arcs_v1.json"
+      ],
+      "examples": [
+        {
+          "source": "story_arcs_v1.json",
+          "path": "godot/data/story_arcs_v1.json:/arcs/3/echo/2/choices/1/participants"
+        }
+      ]
+    },
+    {
+      "raw_value": "recurring_antagonist",
+      "resolved_id": "recurring_antagonist",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/35/character_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "star_echo_hunter",
+      "resolved_id": "star_echo_hunter",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/4/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "star_ghost_archivist",
+      "resolved_id": "star_ghost_archivist",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/13/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "star_void_daemon",
+      "resolved_id": "star_void_daemon",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/5/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "steam_blackbox_foreman",
+      "resolved_id": "steam_blackbox_foreman",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/12/choices/1/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "steam_debt_collector",
+      "resolved_id": "steam_debt_collector",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/3/choices/2/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "steam_furnace_hound",
+      "resolved_id": "steam_furnace_hound",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/2/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "wasteland_false_sun_prophet",
+      "resolved_id": "wasteland_false_sun_prophet",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/30/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "wasteland_rain_beast",
+      "resolved_id": "wasteland_rain_beast",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/6/choices/0/encounter/enemy_id"
+        }
+      ]
+    },
+    {
+      "raw_value": "wasteland_relic_raider",
+      "resolved_id": "wasteland_relic_raider",
+      "reference_count": 1,
+      "sources": [
+        "events_v014.json"
+      ],
+      "examples": [
+        {
+          "source": "events_v014.json",
+          "path": "godot/data/events_v014.json:/14/choices/1/encounter/enemy_id"
+        }
+      ]
+    }
+  ],
+  "candidates": [
+    {
+      "name": "五行老祖",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:1095",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "L\"一座无字石像在秘境尽头睁开眼。自称五行老祖的残念没有许诺成仙，只问你敢不敢用寿元和因果补齐短板。\","
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "候鸟换代",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/17/description_blocks/11",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "待校准区还有一份名为“候鸟换代”的清单。十一只灰匣将在次日凌晨从南环声务坞发往十一座外站，每匣带一段去名分识种子，供当地代值池离线展开。清单声称种子经过同意，附页却只列死亡账"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "城存白契",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/6/choices/1/outcome_blocks/6",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "审理压印机转债规则时，韩玄素发现每笔冻结债的尾数没有归零，而是转入一枚名为“城存白契”的空章。十八年前第一版总册没有这个账户，它从顾沉璧添加自动续行后的第一个月开始增长，现在余额等于九门阵三年维护量。收款方权限高于主簿，却没有姓"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "岑阔闸",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/16/choices/2/outcome_blocks/6",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "缺失的那一行终于恢复上下文：七成属于保护排风的结构输入，远比经验建议严格。她拒绝将修复件命名为“岑阔闸”，担心一个名字又遮住后来测试者。最后规格叫“七成硬止”，署名栏列原图、量产、伤者反馈和本次改修四代贡献。她保留父亲的位置，也让小何那句焊死红线"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "席主",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/11/choices/1/outcome_blocks/3",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "失联者保全匣收到外城纸信，寄信人自称席主，却否认回声匣中的登舟录音。阮同尘没有用新信直接恢复身份，先比对纸墨、旧伤描述和寄出路线；信中有两处只有家属知道的细节，也错写了母亲去世年份。匣"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "延长生存",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/8/description_blocks/9",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "著增长，只从六十四日九时升到六十四日十四时。三十六个人只换来五个时辰。照昼会继续收席已经很难称为延长生存，更像用更多名字维持一套无力的账。"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "拾九",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/0/description_blocks/0",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "么都不缺。 塔后的盐沟传来石子滚动声。沙砾举弩对准沟口，一名戴半面铜罩的拾遗客慢慢站起。他自称拾九，承认界钉由他所下，也承认桥板是拾遗契拆走的，因为桥底有一组旧世蓄能片。至于晴窗，他说塔盘昨天仍准，今晨才被别人改过。拾九愿意让你们用塔梁，条件"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "白芦药队",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/2/description_blocks/7",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "灰禾从地面回报，第五支队伍名叫白芦药队，共六十四人，其中五名修士，载着四车治疗雨蚀的白芦根。他们没有回应昨夜警告，中继只收到每刻钟一次的自动定位。按车速还剩六小时四十分钟。响骨站若派"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "维持枯潮",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/21/description_blocks/4",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "页，找到一栏叫“代偿回填”。它原本只在供息站倒闭时垫付工钱，后来却变成：只要机构花了一笔被称为“维持枯潮”的钱，母页便沿雇佣、同住、亲属或旧求助关系，找一个活人把钱扣回来。不经审理，也不用先说这个人错在哪里。"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "罗青",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/18/choices/2/outcome",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "故障柜，灵石减少十一枚。即使主柜断线，矿口和医棚也能核验已签发款。 第一轮就出现重号。两个名叫罗青的临时工被系统合并，兑付片总额多出一份。故障柜没有把两人都拦到明日，而是冻结重叠的三枚，先付各自有独立班表的部分；同班证人和旧袋在一刻内拆开身份"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "衡安养护",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/12/description_blocks/7",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "郁禾检查炉边工资簿，发现维护从未真正中断。六十一年间共有四十八名器工轮换进入，近十年由一家名为衡安养护的商号承包；它同安衡周转池只有一字倒置，股东中三人也重合。每月一千六百二十枚灵息里，九百枚供炉，四百枚记作维护，三百二十枚列为稳定风险金。现场近"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "西渠三号",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/8/description",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "干煤先卖给城内私宅和炼器坊，公共总炉收到的是混合底货。只要衡轨按上等重量结算，差价便进一个名为“西渠三号”的账户。 衡官听见西渠三号，手开始发抖。他承认有人昨夜换过衡轨校准簧，要求每车多记半成重量；报酬是让他生病的母亲住进城府内医坊。他愿意交出旧"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "见青畦",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/5/choices/0/outcome_blocks/11",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "隔温板还记录一处东岸种圃，名叫“见青畦”。那里保存能在黑雨后结籽的第一批谷种，也接收总炉排出的废热。若先去种圃，可以让大队补粮并查残律期限；若直追总炉，负岳将在四日内耗尽干粮。下一段"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "赃款",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/7/description_blocks/6",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "部支出，邵红砾把宴灯票拍在桌上：“那就报出那晚谁会冻死，报不出便退钱。”你们决定不把整池简单叫作赃款，也不因它曾买过救命药便承认每一笔都有公共用途，得把用途、受益人和批准方式拆开。"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "辅助人员",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/21/description_blocks/7",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "、十六名端点值班者和四十六名录声者各有工时页，书记按姓名、班次和应付工资登记，不再把他们统称为“辅助人员”。"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "运行正常",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/21/description_blocks/22",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "外的药布上，没有取得脉印。她低声说：“它来找我，我一眼就看得见。它去找夜工和病人时，我曾把这叫作运行正常。”众人眼下不仅要拆掉转嫁，还得决定母针是否有权一次控制六百三十一个人。"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "返针二号",
+      "category_guess": "needs_review",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/12/description_blocks/0",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "医修梭名叫返针二号，船龄十七年，外壳有三处新擦痕。简澄把货舱清单投到离线屏：十九只断层镜冷却匣、十套无菌拆取包、三十一枚白瓷退桥片、两台可独立运行的生物滤器。每枚"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "青篷队",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "explicit_name"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/1/description_blocks/5",
+          "evidence_kind": "explicit_name",
+          "confidence": 0.98,
+          "text": "一个十四五岁的少年从北廊钻出来，自称青篷队的学徒槐芽。他没有跟六名失踪者同住，却在清晨看见照昼会的执灯人把一只裹毯担架推进胸骨下的“回热井”。领队当时还能说话，一直问约定半个时辰为何没有"
+        }
+      ],
+      "max_confidence": 0.98
+    },
+    {
+      "name": "柳家",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_description"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/0/description",
+          "evidence_kind": "person_description",
+          "confidence": 0.78,
+          "text": "小小的“渡”字。男人想把筷子扔掉，手抬到窗前又收回来，请你们先封进布袋，等他能作决定时再看。 柳家的儿子从修桨棚赶回。他听见柳三娘的称呼只觉得胸口发闷，见到药包却立刻说雨前剂量多了会困倦，撑夜船时要减半钱。迟药青翻出旧签，背面果然有同一句嘱咐"
+        }
+      ],
+      "max_confidence": 0.78
+    },
+    {
+      "name": "柯家",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 7,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/13/choices/1/outcome_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "柯家旧屋进入六十日双向居住保护。修井夫妻照常居住和修补漏雨，柯家女儿可查门契、价款和药债，却暂不得强迁；租金与修缮款进入共管匣。法院追回当年三成代办费，先垫两家各自的律师与测绘开支。临时保护延后财产结论，未把"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/13/choices/2/outcome_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "门契机失去迁出齿后，柯家旧屋两方都无法一键改名。修井夫妻维持居住，柯家女儿取得查账与临时入屋看母亲遗物的时段；三成代办费账户冻结。两家争吵仍在，却不再由一张机器纸趁夜换锁。罗素织旁听后要求柳家旧屋也检查同类齿，发现"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/14/choices/1/outcome_blocks/2",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "财产层遇到柯家旧屋。短页明确沉默不转屋，修井夫妻继续住六十日，柯家女儿查账但要另约测绘。代办费三成先冻结，药债与维修投入分开核算。契厅想把六十日写成“允许暂住”，阮同尘改成“双方均不得借此改变所有权主张”，避免"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/17/description_blocks/3",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "代办人就不同了：他们明知本人不省人事，仍收走三成手续费。账上都写“得益”，做过的事却不能算一样。柯家女儿要补回父亲失去房屋的损失，修井夫妻要求在查清前别被赶到街上，代办人则必须交代房钱去了哪里。要补这间屋造成的伤害，既要追骗钱的人，也得给不知情"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/17/description_blocks/7",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "认自己见过一个昏迷者名下出现完整签字，却辩称当时全城都认韩玄素的验证印，他不懂阵法，也无从查起。柯家女儿问他为什么收三成代办费，薛百函答，那里面包括日后追债的风险。她把父亲的病床记录推到他面前：“你所谓的风险，就是怕我爹醒来。”这一句话不能直接"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "高阶",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 5,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/0/description_blocks/6",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "在站内，调阅签写着“灯河保管库”，送交时间是三日前。邵红砾听见地点便说，灯河夜市这几夜有人卖能让高阶修士延缓枯根的寿元药引，管壁印着配给站票号。应朝俭反驳保管库只存纸，不炼药。韩玄素用探针刮下母针旁的透明结晶，闻到淡淡药油味：“纸不会流血，经脉"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/2/description_blocks/10",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "意等草木缓根剂到天亮，条件是有人现在给她一份能撑过夜的护脉药，并保证四条巷子的接生急诊有人代班。高阶修士拒绝退药，申屠家的三席则试图将已付定金的药管带走。买家已经分化，供养者也有不同诉求：两人只要立即离开，三人坚持先拿到家属清账原件，一人昏迷，"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/2/choices/0/outcome_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "回定金，领取护脉散与草木缓根剂预约；替亲人买药的两户愿意暂缓，其中一户要求加入北坡私柜释放听证。高阶修士坚持取药，申屠家则拿契卫挤向恒温匣。邵红砾没有号召人群围殴，只让每个出口的值守者高声报出匣号与移动方向。三名契卫趁乱带走一只空匣，却无法将有"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/2/choices/0/outcome_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "围殴，只让每个出口的值守者高声报出匣号与移动方向。三名契卫趁乱带走一只空匣，却无法将有药匣换出；高阶修士最终拿回自己的灵石离场，留下一句会在都息署告你们阻断合法治疗。"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/2/choices/1/outcome_blocks/5",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "时才由指定人员解封住址。申屠家的三名买家申请返还定金，被告知可依法追偿，却不能取走人体来源药物；高阶修士拒绝签收，砸坏药棚一扇门后离开，修缮费也记入案件，不从供养者补偿扣除。普通草药摊获得临时营业许可，避免整条夜市因查封一炉而断掉基础药。"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "许多",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 3,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:1031",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "L\"山门外临时搭起问心台，外门长老按名册验骨、验心、验家世，许多少年排到天色发白。\","
+        },
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:7467",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "g_socialRumors.push_back(L\"老一辈都在感叹灵气不如从前，许多修士开始明争暗夺每一口能用来破境的资源。\");"
+        },
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:7607",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "L\"地面刻满失败阵图，许多修士在这里换来了破境，也换来了短命。\");"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "公学",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/9/description_blocks/0",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "餐锅开盖时，孩子没有按班级整齐排队。有人替夜班母亲多拿一份，有人只吃半碗，把剩下的装给家中老人。公学先生起初想按学籍发，林豆子提醒南外几个临时住户没有册。锅边改用到场点名和两份上限，余量再送医棚。食物的流向从一开始便影响保量契究竟保护谁。"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/23/description_blocks/11",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "公学先生将今日缺课记为城市事故，不扣学生考勤。孩子们画下锅、矿车、红灯和大钟，画里的人物大小与真实职位毫无关系。岑芽把乔素英画得比第三炉高，把岑照炉"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "单家",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/11/description_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "者才知道的秘密。廖春砚还说出一段没人认得的井号，那可能属于另一个人，也可能只是黑盐伤带来的胡话。单家兄长想把她所有梦话都留下作证，廖春砚只同意将录音密封，不准贴到粮仓的公开核账墙上。单家可以继续找妹妹留下的线索，廖春砚也可以拒绝让全城围着自己的"
+        },
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/12/route_variants/final_age_commons/description_blocks/0",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "廖春砚的梦中口令继续由三方分持，定波院旁门改走机械锁。暴露者保留或销毁梦话原录的选择，单家兄长没有因一段相似记忆取得她的完整记录。"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "车队",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action",
+        "honorific"
+      ],
+      "sources": [
+        "wasteland_v1.json",
+        "story_arcs_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json",
+        "godot/data/story_arcs_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/0/description_blocks/0",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "营时是四百三十七人，前哨砾歌刚从北面带回消息，枯渠、盐棚和双井三个小营另有九十一人正循车辙赶来。车队答应在折骨坡东侧给他们留路标和两车净水，却没约定等到何时。若接受末泉城的牵引，现有人今晚有墙可挡雨，九十一名后来者却赶不上封门；若原地修轴，所有"
+        },
+        {
+          "source": "story_arcs_v1.json",
+          "path": "/arcs/3/main/0/choices/1/outcome",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "在地图上点出两队追兵。你们沿岔路伪造交手痕迹，真把其中一队引去空谷，让被盯上的药商车队安全出关。车队掌柜按护送契付给你十枚灵石，另一队追兵仍在后面。"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "俞家",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/8/choices/1/outcome_blocks/1",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "、宁绣、工会和医工共同轮值。十六名孩子先给自己的物品袋画记号，再搬到饭堂；四名服药者留原照护人。俞家老人使用移动热匣后，供暖管才由阵工逐寸降压。宁绣只签施工见证，不把母亲旧契用来指挥现住病人的移动。"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "红圈",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/10/route_variants/final_age_break/description",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "四张实名船票已经发出，十五席留给急症者和必须同行的照护者。修院再也不能从育幼院偷读根值，也不能替红圈孩子自动签药室契；归潮行拿孩子未来工钱和病人寿元抵债的旧条款同样已经停用。净水炉和地下泄压仍缺九个班，诊室先借出的六十四息铢与染坊二十三名工人的"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "连药仓",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "honorific"
+      ],
+      "sources": [
+        "events_v014.json"
+      ],
+      "source_paths": [
+        "godot/data/events_v014.json"
+      ],
+      "snippets": [
+        {
+          "source": "events_v014.json",
+          "path": "/27/route_variants/ambition/route_intro",
+          "evidence_kind": "honorific",
+          "confidence": 0.74,
+          "text": "为了保住城北药仓而临时维持的高压班次，被工坊写成了永久规矩；这一次，连药仓医师也拒绝再收用人命保温的灵煤。"
+        }
+      ],
+      "max_confidence": 0.74
+    },
+    {
+      "name": "司命",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 7,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/14/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "安好，所谓病危是一封假讯；问忆符让他忘记核验结果，只留下赶来救女儿的冲动。 迟药青要求先取符。司命答符在稳定他受惊后的神识，撕下会造成记忆回冲。旧河工听见“女儿安好”时试图抬头，符纸立刻收紧，颈侧浮出红痕。你们需要药师在场、由本人重新确认才能"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/15/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "，几十年从未主动启动。老执律人通过传讯玉简问：“留着没人能看的证据，算纠错，还是给自己留退路？”司命答，公开总册会引发三代房产、婚姻、债务和宗门资格同时翻案，城里承受不了。 年轻执律人沿检修井下来，带着白塔跨层目录。目录能确认九十六箱题名，却"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/15/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "南安置棚、无照医馆和渡口短工册抓取候选。七十三户案若在这里被拖住，下一次清灯会在今夜扩到三百人。司命说名单只为最坏情况准备，还未决定执行。年轻执律人指着已经开始亮起的空格：“机器在填，等你落笔才算决定，这话我们昨夜听过。” 老钟先带你们试走低"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/20/choices/0/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "旦公开，值守者会因害怕伤亡而集体退班。鲁师傅问：“你怕他们知道危险，还是怕他们知道自己能拒绝？”司命答不出，转而强调当时没有备用河工。你让值班册和饭堂领粮数交叉核对，发现事发前一月官署曾辞退十二名短工，只因他们要求补发夜值钱。所谓无人可换并非天"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/20/choices/0/delayed_echoes/0/text",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "洪峰退去后，九名代表、司命答辩人和两名抄手在原封条上核印，旧鱼市外堂从暂停页继续问账。救灾没有把暂停改成终止，洪峰前留下的每一项异议仍在席上。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "公证员",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/3/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "第五只箱时，秤梁向左偏了半寸。底板夹层用的是屏息铜，常用来隔绝灵息追踪。她让公证员记录重量异常，公证员说委托只验六箱封条完整。陆含微问若箱中是石头是否也算完整，对方仍答职责有限。她没有逼他承担全部调查，只请他在见证页写“未检内容与来源”。公证员犹"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/3/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "现钱、四成券与七日承诺，但葛闻机坚持主文“双方无争”不改。陆含微问若七日不兑，附页能否单独追偿。公证员说要看两页是否同时盖缝印。葛闻机的随从没有带缝印。看似只差一枚小印，实际却暴露了他们从一开始就按一次结清准备，分期追偿根本没写进流程。钱箱旁的人"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "居民",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/20/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "子已经在账本和废墟里摆着。 最先争的不是谁当总董，是谁有票。炉工认为每天站在炉前的人应占多数；居民说锅炉爆炸、断水和配给由全城承受；兑券行拿出一千余枚未偿债权，要求重大资产处置有否决；矿工提醒没有煤便没有炉，却常被排除在城内章程外；城防营要求"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/20/description_blocks/5",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "会议设计轮值供应席：按实际交付量与安全记录抽签三家，任期一季，涉及自身合同回避。车队嫌一季太短，居民说正因煤源会变才不能永久。轮值需要额外选举和交接，换来的是离开城门的人也能看见验收规则。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "管事",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json",
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json",
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/2/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "照名镜查房时需要一段本地动作。少年问：“我会修屋顶，也能付三天工钱，为什么床要用别人的肩伤换？”管事答规矩由客栈定。围观的一名染坊老板愿意担保七日用工，条件是少年每日出工；迟药青又开一张临时医签，注明记忆接入会加重腕脉抽痛。少年因此有时间继续考"
+        },
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/17/description_blocks/10",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "清醒超过十四个时辰。即使设备全好，这批人直接接夜班也会增加误操作。她开出至少两刻睡眠和进食要求，管事说那会错过军械订单。罗晚棠问谁愿意在合同上签“疲劳不算事故原因”，无人应。休息就这样被写进复工条件，从下班后的私事变成所有班组都要核对的一栏。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "老人",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/inheritance_variants/dynasty_revision/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "你幼时在镜湖岸边替义父整理药票，发现每张官印后都另留一格：谁提供证据、何日复问、错了向哪里申诉。老人说这套写法来自一座早已落地的天城，那里的名册曾把整条街删去，后来才承认记录会错。你因此养成习惯，遇到盖印的纸先翻背面；若没有签责和期限，墨色再金"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/inheritance_variants/dynasty_unbound/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "。每处设施旁都装着人手够得到的木柄：水太急便断流，药量有误便停泵，住户拒绝供灵后由石槽接住余压。老人说祖上见过浮城把门与名册绑在一起，于是把退路造在器物表面。你很早便会试柄、听壳、记替件来源，也知道木头会朽、熟人会先修自家。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "老妇",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 2,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/17/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "掌柜仍可能要求见本人；江照雪提出由自己具名证明见证过程，只公开老妇当年工号，不公开现住址和家属。老妇问：“若他们说你和我串通呢？”江照雪答：“那就查船壳铆钉、旧班表和另外三名誊册人。你的话是入口，不该是唯一一根柱子。”这让当众核验不再只压在她一"
+        },
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/22/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "会在灾后流落；若只认收据，官署通过非法拍卖便能洗净夺来的房产。老执律人让两边分别陈述想保住什么。老妇说要门梁下丈夫刻的身高线和一间能住的房，不坚持赶谁走；制伞夫妻愿意保留作坊，也愿意把后院腾出。抄手据此写出第一份临时安排：官署先付修缮费，后院归"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "万千旧",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:3908",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "L\"鼎中升起未命名的新道胎息，万千旧道都在旁侧沉默。\","
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "丰景弼",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/12/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "自己下，不要让护炉卫和投煤工替他担。单秋禾问：“你现在承认，是怕死了没机会，还是认定那命令错？”丰景弼答他当时以为降压会让父亲在听证上失去炉权，他把炉权看得比湿煤读数重。单秋禾说这句话要当着死者家属再说一遍。丰敦甲在旁听完，没有阻止儿子。他转身请"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "乌景",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/5/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "乌景站在桥中段，隔着五十步举起一枚总钥。他承认改过观察牌，也承认向灰堤发药，却声称这一切是为了让东部总脉炉持续运行。若总炉停半日，烬河以东十七座聚落"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "任何改",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/4/description_blocks/5",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "停雨，他们会同时失去一季收入；大多数人没有资格领取延寿丹，也不知道云来自下界。管事此前告诉他们，任何改道都是下城争权造成。岑茴把七十六界收据和四座丹库库存贴到田口，仍有人反对，因为知道来源不会替家里买粮。你们把佃户工资列入补偿，不用“返还原主”要"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "何日复",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/inheritance_variants/dynasty_revision/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "你幼时在镜湖岸边替义父整理药票，发现每张官印后都另留一格：谁提供证据、何日复问、错了向哪里申诉。老人说这套写法来自一座早已落地的天城，那里的名册曾把整条街删去，后来才承认记录会错。你因此养成习惯，遇到盖印的纸先翻背面；若"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "何素汀",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/19/description_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "着四百余人的分识。虚舟每季派人更换冷缆，工单只写港务灾备；最近一次来人是三日前，使用柏沉维护码。何素汀问：“你们若今天拆井，六座气闸谁报时？先给我一个能交班的答案。”"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "公共呼",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/17/choices/2/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "以值班员权限打开听潮二十一西侧检修门，闻星渡、冯确和两名独立机务随行。三束学习干线分别承接医院、公共呼叫与转籍核活，输出则走另一排二十七只本地匣；机房图纸证实可以分开。你支付八枚灵石，三枚购置二十七片只读封舌，两枚补十五名人工值班者，两枚租四组冷"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "关掉",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/10/choices/1/outcome_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "餐厅旁的观察位。入站程序仍把她的辅助台当作调查终端，向屏幕连续弹出证言确认；她花了十七分钟拼出“关掉问句，只留脑压”。顾弦庭亲手拔掉询问模块的识别片，把这个动作和傅弦的停止脉冲一同写进凭证规则。她没有进入斜月坞，却让后面每张医疗凭证默认关闭调查"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "冷笑",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/10/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "时归还，以及原主说不借会让哪台设备停多久。邵红砾把那些只有半铢、却已经找到主人的小钱袋抱上高架，冷笑道：“一场水来了，最容易又有人说，先混在一起救急。”她要求每只借用的钱袋都挂在炉前，原主回来一眼便能看见。主簿嫌这样耽误救人，祝砧回他：“现在分"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "利用烟",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/8/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "一家高价炼器坊，契期还剩七日；南仓属于城府，干燥能力弱，只能处理十车；第七炉旧灰场能铺开二十车，利用烟道余热慢慢烘，却紧挨居民区，黑水若流入排水沟会污染井口。炼器坊老板愿意让出北仓四个时辰，条件是获得同等重量的上等煤补偿。城府没有干煤可还，只能用"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "别人",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/14/choices/1/outcome_blocks/6",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "底刻着第二十三个补签号。她说：“有人把复问室改成收钱的地方。明天先问钱从哪来，再问他们为什么敢替别人点头。”"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "卢冬枝",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/10/description_blocks/17",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "卢冬枝站在柜前没有走。粮铺老妇把四张药票推给她，只说母亲当年记的是两副药，票上没有二十二枚罚息。罗适在旁边等自己的两枚现债回执。申越声要求给周转池一个"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "古修问",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:7627",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "addSect(L\"古修问道宗\", L\"古典正宗\", L\"洞府传承\","
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "叶灯",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/10/choices/2/outcome_blocks/11",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "试降用掉两张蚀膜、截损一尺旧管、磨松三只陶楔。叶灯答应十二日后补十张新膜，九碑先从仓中借两张给鸣砂缺窗；陶楔由炉工夜班重烧。材料账把每日回流成本算到一百二十日，会远超现存蚀膜，迫使后续寻找可重复"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "唐荷",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/14/description_blocks/11",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "分钟发来反对。他们称落潮四已经升级为无感维护，关闭会让船员眩晕风险上升，并愿派远程医师逐船解释。唐荷问能否先提供退出说明，对方只发来一份集体风险摘要；段丘追问自己的薄片序号，得到“企业账户统一管理”。简澄在会议室听完，说旧版深层维护会先抓取四息"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "姜禾",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/4/description_blocks/9",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "要在两个时辰内立起铜幡；禾沼界的升仙台半浸水，直接导云会引雷；三十二座失联界连确认方位都做不到。姜禾说：“雨若来得比消息快，砸坏的也是我们的屋。”她请求仙朝先发送落雨时刻和撤离范围，至少等赤汀北田回一枚双结绳印再开闸。这个等待会吃掉冷流窗口的一"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "姜遥",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/3/choices/2/outcome_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "第二十五人通过时，界壁忽然卷走最后两点命火。姜遥喊出失散者姓名：闻徵与阿洛，一人来自赤汀，一人来自没有稳定传音的砾星界。门上还保留他们的肉身读数，归乡坐标却被三片碎籍拖向相反方向。若重新接回名"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "安排讯",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/13/description_blocks/8",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "的夜槽。贺箧执行了十八年，也保存了每一张领料回条。阮同尘没有让守卫当场押他进牢，先限制接触纸库、安排讯问与法律帮助，因为他的陈述还需与账房和夜槽记录核对。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "安置棚",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/16/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "不到可用灵石。三处人都在挥旗求援。你让联络人依次说明若得不到帮助会发生什么，不许只说“很危险”。安置棚答一刻后病患无法步行，钟楼答原始急令再不送到便会被官署宣布伪造，北堤答水位再涨四寸就得弃守外梁。 药师会来的女学徒主张先撤病患，因为纸晚一些仍"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "宗门护",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:3282",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": ": L\"这条线已越过山门初试，变成师承、人情、旧债与宗门护道的取舍。\";"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "宣布",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/14/choices/2/text",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "宣布沉默不算同意，给每床留下词表和停阀"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "家属",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/2/choices/1/outcome_blocks/8",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "声纹，使核验结论不可靠。梅澜同意声音可能变化，于是补交心率与呼吸同步数据；三号航标补交裂星角度；家属问题只作一项材料，不单独决定身份。你们没有宣称技术绝不会错，而是用彼此独立的三类证据降低同一错误同时发生的可能。次日听证将围绕这套组合标准展开，"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "家属质",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/2/choices/1/outcome_blocks/5",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "三人身份恢复带来新的不平等。厅外还有数百名乘客无法在今日取得六分钟核验，家属质问为何材料齐全者先成为活人。你承认现有流程过慢，请顾弦庭把重复问题改成可由船上护士预采、总藏抽查的分层核验，但拒绝降低现场性与本人意见两项底线。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "家属频",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/3/choices/0/outcome_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "示愿意，遇到“是否登艇”则连续拍击停止。两次不同回应不足以还原十一年前决定，却足以拒绝眼前转移。家属频道见证全过程，梁箴不能再把艇的离港计划说成父亲当前同意。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "家庭",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/1/choices/0/outcome_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "公开名册采用三种标记：两项以上材料一致的写“已核”，只有家属辨认的写“待证”，账户与家庭说法冲突的写“争议”。一位母亲无法接受儿子名字旁出现争议二字，认为那像第二次否认他的存在。闻星渡解释，标记衡量的是这条记录现有证据多少；她随后请"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "封闭通",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/11/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "。你们要选救援组织：让熟悉工位的人分组自治、以明确指挥和证据分区推进，或用跨炉技术先处理余热罐与封闭通道。无论选哪一条，进入者都会受热，城市会继续降产，失联者也可能等不到下一轮。岑小满替姐姐扣紧护领，低声说：“一刻。你自己说的。”岑照炉回她：“到"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "小商贩",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/6/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "葛闻机提出二十枚后，医棚迅速算出用途：补互助匣十四枚、买第一批清肺药六枚，一枚不剩。小商贩说这足以证明该拿。包绮云问下一批集尘板由谁付铜和返工，若永久保密，炉会也可停止生产。短期现金有确定救命价值，长期控制则会决定其他炉区能否自己做。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "小鳗",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/18/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "坡路仍通。她回来时喘得说不出话，只把刻缺口的白签拍在桌上。柳三娘给她披上干蓑衣，问是否愿意继续。小鳗摇头，换另一名跑手接班。小鳗的名字从“传令”移到“休息”，接班人就在下一格落名；没人再把坚持到倒下当作可靠。 司命执笔就在此时送来一张假急报，"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "岑小满",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/9/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "合伙人传讯，要求严守保量契。他把两枚罚金先从自己钱袋放在台上：“我可以违一次，第二刻我赔不起。”岑小满问能源署能否替执行公共命令的值守人承担罚金。俞从简说临时令可以暂停罚则，城府却可能面对合伙人索赔。沈簪华当众签字同意不追究她持有的份额，其余三名"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "岑茴",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/0/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "十六坊的人被删去后，阵枢把他们住的屋、储的水和站在街上的身体都算成无人杂物，只保留最低货运载重。岑茴说她清晨已经报了三次，城工署每次都回“无户籍不得发起公共报修”。第四次她索性拔下一枚裂钉做拓，跑来大点堵监察使。她指着最深一道墨线说：“日头过中"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "岑茴答",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/0/choices/0/outcome_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "拿出七十三年间六代人的税票、学舍簿和葬籍，天册却要求岑茴证明最初那名赈籍祖母为何未在第三年转正。岑茴答道：“因为替她办转正的官死了，她没有。”这句话被书吏原样写进缺证栏，责任没有再被悄悄推给已经死去的申请人。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "平日应",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/2/choices/2/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "你先把远程控制盘分成三道确认。陆绡只确认孩子身份与平日应答，梅澜只判断心率和开柜风险，许庚只报告维护臂与船内通道；三人都确认后，闻星渡才允许你触发丙七短码的反向断链。你没有用陆绡的母亲身份覆盖医疗，也"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "支付",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/13/choices/0/debts_add/0/text",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "支付说明席等待期照护、二百一十六个误工时辰及外城后续送达，并继续核价十九项赔偿。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "文书",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/1/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "进炉，有人保存他修退火轮时签过的工具票，耳鸣老工人拿出两年前班组合照，孟端左手就搭在同一只轮上。文书说照片无法证明今日仍在职。罗晚棠从炉厅送来刚才的白班换手表，上面有孟端受伤前一刻的岗位。旧材料、当日记录和同班证人拼到一起，比一张被改过的名册更"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "方厉声",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/17/choices/1/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "后依次通过。守卡吏追问他们去向，年轻执律人只交出一张写有总人数、病情等级和责任人的临时转运单。对方厉声道：“没有姓名，出了事算谁的？”他把自己的执律牌压在纸上：“医疗交接算我，住址不归你查。”卡口扣下牌，却找不到理由掀开病人的袖带。 鱼市的河工"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "方多",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/16/description_blocks/18",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "号。陆绡听到第三句便按下断音键：“那并非我现在说的话。”她同意保存这三句作核对，却拒绝继续诱导对方多说。顾弦庭为录音另立窄页，使用范围限于查明来源和阻止错药，不能拿去训练新的辨声模型。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "方应",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/4/description_blocks/6",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "种探测办法：主动照明会暴露双方位置并可能惊扰碎岩，公共航标可由多端轮流短扫，星籍庭临检码能要求对方应答一次，直接干扰则可让旧章导航失效。你们剩余一只缓冲囊，若清洁梭突然冲出，只能选择保护巡检艇、客船或对方其中一个接触面，无法覆盖全部。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "明天先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/14/choices/1/outcome_blocks/6",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "闻笛在南汲社旧澡堂找到三块脚踏板，板底刻着第二十三个补签号。她说：“有人把复问室改成收钱的地方。明天先问钱从哪来，再问他们为什么敢替别人点头。”"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "明日再",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/23/choices/1/outcome_blocks/9",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "第三十一日日落，顾弦庭封存四册首卷，陆绡在自己的名册页写下“明日再问会面”，孟寒枝在账册页写“门锁费已收首笔”，江琢在声册页写“新声归本人”。闻星渡将查询牌交给下一班，值班员逐册核对封条和次日第一项复问。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "明早频",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/0/choices/0/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "喊。有人报读数，有人记损失，有人能在我们说错时叫停，这才算共同。”她对你的信任增加，却也提醒你，明早频道外会站满家属、记者和想抢先认领功劳的人。你们获得六小时公开窗口、一组可交叉核验的方位，以及陆菱保存的登船前家庭录像；代价是两枚灵石已经花掉，外"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "明白",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:6924",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "L\"你顺着断链查到一段旧世影像，明白道网也会保存被人抹去的因果。\\n修为+\" + to_wstring(expGain) + L\"，因果+12，掌道+\" + to_wstring("
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "林照秋",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/16/description_blocks/14",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "痉挛处方挂到了城内同名账户。病床上的乘客尚未取药，城南一名素不相识的住户却先收到停用旧药的提醒。林照秋叫停整批打印，沿处方、腕带和柜号逐项倒查；她没有删除错发记录，先请城南诊所确认那名住户照常服药，再让药师把两具身体拆成两页。一次十七分钟的停顿挡"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "林豆子",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/7/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "林豆子的十四岁男孩从锅炉后取出半块滤芯。它与小何面罩里的旧芯同批，边缘缝着新布，内部却结成硬壳。林豆子说管理员每月会让他们把旧芯刷白、烘干，再装回新纸盒，做好一只可抵半顿肉。陶信立刻喝止：“那是修补训练。”林豆子把滤芯折开，黑尘从硬壳里落出：“训"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "柏沉",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/21/description_blocks/9",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "说公共依赖、预算撤回与四十三名现住者使他不敢停。陆绡问：“哪一次续期，你把这些理由送给了我们？”柏沉答没有。他可以解释每一年的压力，无法把解释补成缺失的告知。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "柏沉先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/19/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "陆绡从病房接入声筒。柏沉先叫出她十一年前的值班号，她打断他：“用我现在选的名字。”他改口后解释，自己保留原声是为了防止伪造归来。陆绡问为何一段分识能替她证明活着，却不能让"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "梁沅",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/9/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "扣一轮计件钱；东六巷修管时已经有人替她顶过一次。大女儿会自己排队，小儿子昨夜受寒发烧，离不开人。梁沅说可以把孩子留在灶房，可灶房烟正倒灌。陈玉梭蹲下给儿子系围巾，问他：“跟姐姐坐院里，还是跟娘去织机？”孩子摇头，两处都不想去。她抬头看你：“供汽"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "梁霁追",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/4/description_blocks/11",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "成算力。名单已经在我艇里，谁掉线也会记你们一笔。”闻星渡没有回骂，只让梅澜立即核对诊区备用阵，让梁霁追问名单里是否写了替代顺序。丁口倒计时跳到七分五十二秒时，航迹台上已经并排钉着三张执行单：七座航标各由谁暂代，临检等待的三十息里谁盯诊区，断章脉冲"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "梅澜先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/7/description_blocks/10",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "梅澜先问主馆工程师：“重验超过四十息，谁把接口切回蓄灵匣？”工程师答由诊区下令，闻星渡把手从隔离开关上移开，确认自己只执行切换。罗栖可随时叫停测试；桑"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "段丘",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/14/description_blocks/5",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "矿。矿工段丘听见公共维护频段里的船号，自己撬开腕部旧针疤，拍到一条银线，随即被主管指责传播恐慌。段丘说：“要罚我下船再罚。先告诉我，拿钻机时这只手会不会替别人动。”他的腕环已在前导台预热中升高零点二度。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "段丘追",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/14/description_blocks/11",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "船员眩晕风险上升，并愿派远程医师逐船解释。唐荷问能否先提供退出说明，对方只发来一份集体风险摘要；段丘追问自己的薄片序号，得到“企业账户统一管理”。简澄在会议室听完，说旧版深层维护会先抓取四息动作，再调整导丝延迟。四息足够一只手转过阀门，也足够钻机"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "水牢长",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/14/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "还说明压力阀每断三根铜线便要人工放水，否则东堤回压。他愿意负责第一轮，要求另一名懂阀的河工接替。水牢长叫来两名前同僚，其中一人承认参与重开铜室，仍愿意放阀；另一人拒绝靠近司命，只肯带普通车夫撤离。迟药青另列两名懂得处理回冲的药师，避免取符、护送和"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "水籍司",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/10/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "事；涉及宗门资格、财产继承和高额利益的凭据暂停；记忆片段按药房定下的三项核对、三项同意逐项隔离。水籍司说系统没有这种路牌，河工从旧工具房找出的轮值木签却证明早年无名雇工就是这样通行。 老河工当场做出首批五张路牌。每张只写本人现用称呼、有效期限与"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "沈旧雨",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/0/choices/0/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "你先爬上祖庭正脊，卸下写着历代掌门名号的第一块铜瓦。沈旧雨站在梯下问能否从无字的后檐拆起，你把承重图递给他：正脊最厚，拆成桥面能让病车先过沟；若为了保住名字改拆薄瓦，断的是活人要走的路。执事沉默片刻，亲"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "沈簪华",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/9/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "染浴池，梁沅愿意带家长清洗。陈玉梭算过时间，若现在开锅，她还能赶上织机第二轮点名，少扣一半计件。沈簪华答应派两名暖房管工关闭浴池并调整回水，她希望换取苗床最低四格供汽。技术、劳力与契约开始能拼出一顿早餐，却仍要决定谁签调度、谁补偿。 第九炉值守"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "沙砾先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/9/description_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "沙砾先问演示范围。殷昼答十七座主供聚落全部断热，另二十一座只断校拍；任何伤亡由主张停炉者承担。白药要求公布各站病人、备用热和撤离准备，殷昼只给一张总数"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "法庭先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/16/choices/1/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "字板与眼动帮助、提供法律协助，并付清支持点五日工资。这笔钱记作纠错费用，不从和解金或欠薪里倒扣。法庭先说清三件事：十五张新纸不能送回过去补同意，也不能替另外六十九人作证；本人今天听懂后愿意和解，可以从今天起单独生效；药、粮、护理和没有争议的工资，"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "法律",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/8/choices/1/outcome_blocks/4",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "退件归为未异议。审校员从十一年记录中随机抽取十二个季度，与数字冲突账逐笔对应，时间和复核号一致。法律问题从一份越期许可扩展为每年重复作出的送达与复核决定；顾弦庭追加保全历年投递规则及复核人名单，却没有因此自动认定每位复核人知情。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "洪水改",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/11/choices/2/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "固定，没让你带伤继续挥剑。江照雪随即切断司命手中笔线，却没有追杀失去阵权的官员。柳三娘打开旧渠，洪水改道冲进已撤空的仓地，七座控制轮由三十六名河工人工维持。 中央官籍索引随名井一同碎裂。七十三户不再被批量定籍，另外四百多份等待办理的普通籍册也失"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "班组",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/12/choices/0/outcome_blocks/0",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "照护班把守床、送饭、取药、看孩和跑文书排成四时辰一轮。第一天登记者多为女性，班组问男炉工能否替换，七人加入夜间与搬运班；照护不再默认由某种身份承担。赵苦艾和闻桑获救后，失联板改成治疗与联系板，家属仍能查位置。事故账户先付公共"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "申屠垣",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/0/description_blocks/12",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "法城池先保药库与城防，个人配给可顺延一旬。邵红砾举起缺指的右手，问顺延以后谁赔罗砚生断掉的经脉。申屠垣答，凡因城防调度受损者可以事后申领抚恤，前提是当夜不得阻碍执行。韩玄素请他报出抚恤库现有余额，他翻了两页才找到数字，只有十一枚灵石与三盒过期续脉"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "白根雨",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/21/description_blocks/13",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "灰禾把十四份树脂分配草案揉掉，重新问每处能撑几日。盐背西架十六日，白根雨站在晴日可等二十三日，苇下透明匣只要不再接绿讯可等三十日，照骨弯头已有替换。按失效日排，前九张先去盐背，后五张给白根；白根余下三张等北坡采集，且"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "白盐棚",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/8/choices/0/outcome_blocks/10",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "移动队收的工时回报并不都能兑现。白盐棚答应三班搬运，试装时却有半数人患盐咳，实际只完成一班半。灰禾按真实完成记账，未追剩余人情；棚民改交十二袋干盐补一班，仍欠半班。欠账可以改形，不能"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "白药先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/11/description_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "白药先问饮水量、发作时刻和旧病，再取六只小瓶分装。陶桶水温比当地常温高四度，锁息性却不强，最急的危险来自细砂刮伤肠胃和未知菌丝。她让同行者各喝负岳净水"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "白萤",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/11/choices/2/outcome_blocks/9",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "闻星渡把厨房柜里的铜闸钥匙分成两把，一把交给许庚，一把交给白萤保管。白萤问为什么是她，闻星渡答：“因为你最先说不上传，也最先说明自己会认错东西。你知道什么时候不该只信眼前。”白萤没有接受这句好听话，先要求再找一名替班"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "祖境问",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:8350",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "rn relic.daoLinked ? relic.daoName + L\"留真篇\" : L\"祖境问道篇\";"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "祝遥先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/4/choices/0/outcome_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "重新穿绳后，车门在二十七分钟内打开。祝遥三人都清醒，四肢因锁息散无力，却能分别回答是否愿意离车。祝遥先说愿意，另两人中一人要求白药进车检查后再动，最后一人不肯由末泉医护触碰，选择姜葵与陶绣抬出。第二人离车后吐血，白药让她含服一粒养脉丹，丹药账当场"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "程序",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/0/description_blocks/3",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "裴照微命人调出昨夜校录日志。命籍厅在子时三刻合并了七十三份“临时赈籍”，程序说明只有八个字：清理逾期，归还天衡。十六坊的祖辈曾在七十三年前的坠城灾中获准暂住，原诏答应三年后转为正籍；三年之期过了七十次，他们照常缴税、服役"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "管事想",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/0/description_blocks/9",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "孟端被推向医棚时，退火轮旁空出一个熟练岗位。管事想叫小何顶上，岑照炉拒绝让清灰学徒碰带伤轮，改由罗晚棠兼看，主炉只得再降两分。罗晚棠连续值守已十一个时辰，她要求半刻后有人换。黑板新增“罗晚棠换班"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "管工",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/4/description_blocks/13",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "管工说：“纸一卷，先关地窖小阀，再去第七炉叫人，别自己拧主阀。”周姨将顺序复述一遍，又问：“若半夜没人来，这张维修单找谁？”岑照炉把夜值姓名和替班写"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "管理方",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/17/description_blocks/4",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "名公学先生照看四十七个孩子。位置紧挨压力测试区，一声放汽便让孩子齐哭。小满要求移到两街外的钟厅，管理方说那里正堆证物。她问：“证物怕吵，孩子不怕？”最终清出一间兑券行查询棚给孩子，文书搬到露天。这个小变动让十三名照护者能参加复工讨论，代价是查询棚"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "罗适",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/12/description_blocks/18",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "答八人守两炉、六人处理闪烁柜、四人看桥索，共十八人。她把十八份当班工资先列入行动账，又对卢冬枝和罗适说：“你们今天做的测试只管自己的响应，不能替下一柜定规矩。”院门已经打开，接下来每一只柜都得重新找到能回答的人或明确保留无人回答的位置。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "老炉工",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/11/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "，补出三名临时换岗学徒。伤病名册与宿舍网络再次填补正式记录缺口。 第三炉内部传来三短两长敲击。老炉工说这是退火层的管道求救码，至少有人活着。几息后，屋顶也亮起一枚红色检修灯，余热罐附近同样有人。救援力量只能同时主攻一处，另一处要靠降温或远程工具"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "老钟",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/15/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "平底船从旧粮仓高廊接人；两代执律人安排白塔抄手从检修井下运纸；迟药青要求先让低廊居民自己选去处。老钟问能否留在旧城守册，他不想地面人再次替他们分配。 二十八人开了一次简短会。十九人选择去旧粮仓，其中五人需要担架；四人愿意协助抄册后再走；老钟与"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "荆婶",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/20/description_blocks/6",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "“黑盐能接住多少？”荆婶问。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "蒲衡",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/7/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "她留在集中暖床，解开衣襟抱进怀里；她仍反对立刻停铜肺，因为丈夫是最后十八名未上来的矿工之一。她对蒲衡说：“先把他吹出来，再拆你们想拆的。”阿稚在一旁回答：“风再抢一次床热，妹妹等不到矿门开。”两句请求指向不同亲人，谁也没有资格被一句顾全大局压下"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "薛百函",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/17/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "签字，却辩称当时全城都认韩玄素的验证印，他不懂阵法，也无从查起。柯家女儿问他为什么收三成代办费，薛百函答，那里面包括日后追债的风险。她把父亲的病床记录推到他面前：“你所谓的风险，就是怕我爹醒来。”这一句话不能直接定罪，却把该查的事钉得很清楚：他什"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "衡官",
+      "category_guess": "role_or_group_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/8/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "要立即公开姓名。赵槐青不同意完全遮名：“我们一百多人都在票上按了印，凭什么只藏坐屋里改表的人？”衡官低声说母亲与此无关。争执没有简洁答案。隐藏身份可换证据，也会让承担运输风险的矿工觉得城里人又保护自己人；公布姓名能证明衡轨受贿，却可能让一个病人"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "袁栎",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/18/description_blocks/8",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "沉灯六号的药师在装船前复核时发现，第四架药苗外箱被灰匣冷架的旧标签擦破，验收员暂扣了这一架。袁栎叫来两名搬运工和药师当面重贴封签，记录破损位置、重贴者与恒温曲线；复核完成后才放行，拆单也没有因此多等一小时。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "裴铎",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/13/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "准备：“妖群半个时辰能飞三十里，等它们转向再蓄阵，墙上没有第二次机会。”赵槐青问西门煤车怎么办。裴铎说车队可留城，矿区自守。矿工们的家属多在西岭，留城意味着煤口与家人断联。赵槐青按着刀鞘：“你守墙时，墙外的人也算人。”军务副使没有反驳，只说自己"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "许庚追",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/15/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "许庚追问四十七页由谁生成，韩缄调出一串来源：港务航迹、星籍争议提示、鹤汀公开信息抓取和虚舟器械申报。没有一名医师逐页看过，也没有一名乘客被询问；系统在"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "许闻笙",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/1/description_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "义务，期限所在的后半卷却被裁走。命籍厅保存的抄本在断口处补了一行“城在契在”，把三年变成无期限。许闻笙说后半卷不在库里，裴照微随即从母亲遗物中取出一块磨损的衣箱木片。木片内侧正贴着原诏末页的一角，上面只剩“第三年霜降”五个字。裴蘅生前显然知道这笔"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "许青梧",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/7/choices/0/outcome",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "药铺掌柜、船行账房和十几名提水邻居先站进前厅，屏风后只留自愿公开的三名病人。迟药青宣读消防分工，许青梧说明哪些门不能堵，录剑师则请主事重新出示抄查令。主事若要越过屏风，就必须在众人眼前解释为何查封队没有医官、为何侧巷先被人纵火。 邻里接起水桶长"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "谷炭",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/5/description_blocks/0",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "两日。负岳的票只保十辆，其他车和后来加入者需等下一次灰潮；下一次在七个时辰后，那时西岸黑雨会到。谷炭说自己不查谁是罪犯，只管桥不塌。若在链桥上抓人或拆车，他会立即升桥，让桥面所有人随灰潮自行求生。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "费岑",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/9/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "四成稳燃才能完成九日返航，坞内储量足够，旧账户却挂着十一年前一次未结靠泊费和持续累积的保管利息。费岑说紧急情况下可以先供最低返航量，条件是有人为争议账担保；他不愿让小坞替总藏和虚舟商团垫十一年。例外簿的结算页显示，商团每月从乘客分识收益中扣过航"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "贺崇",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/5/description_blocks/3",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "崇在未同步的石作坊借到小印，穿过人工通道后在她住处外停留一刻钟。门房认得他，劝离时没有发生伤害。贺崇说自己只想取回工具，沈青杳则出示早已约定由工会代取的清单。她要求今晚先封住他的住区通行，不要求公开其全部路线。十二个区若只互认急救和饮水，却不互"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "赵槐青",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/13/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "副使裴铎仍坚持按最高风险准备：“妖群半个时辰能飞三十里，等它们转向再蓄阵，墙上没有第二次机会。”赵槐青问西门煤车怎么办。裴铎说车队可留城，矿区自守。矿工们的家属多在西岭，留城意味着煤口与家人断联。赵槐青按着刀鞘：“你守墙时，墙外的人也算人。”军务"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "通天",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:2269",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "if (score >= 10) return L\"通天道胚\";"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "通风",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/3/choices/2/outcome_blocks/0",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "通风道中段因维修艇预推产生震动，一块松脱隔板砸中你的左肩，把你撞向管壁。护甲挡住骨裂，肩背仍出现大片挫伤，抬臂时刺痛，气血损失十点。闻星渡听见你呼吸"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "邢济常",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/14/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "手里没有兵器，只有昨夜以来的欠薪总表。她问邢济常：“冷凝器拆走，三百七十二名炉工靠什么还你钱？”邢济常答得很快：“炉会欠你们工资，我只收抵押物。”阿桑从人群里举起孟端按过手印的工伤担保：“炉会账上没钱，就是因为先把东西押给了你们。你说各收各的，我"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "钟匠",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/23/description_blocks/13",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "大钟的缺口让余音偏向南街。钟匠说以后可以补铜，家属选择先留一年，等事故审理和第三炉用途确定后再议。缺口先留着，却不强迫后人永远纪念；今晚也没人急着把它修平。城市给未来的人保留"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "钟楼",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "classical_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/classical_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "classical_v1.json",
+          "path": "/chapters/16/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "求援。你让联络人依次说明若得不到帮助会发生什么，不许只说“很危险”。安置棚答一刻后病患无法步行，钟楼答原始急令再不送到便会被官署宣布伪造，北堤答水位再涨四寸就得弃守外梁。 药师会来的女学徒主张先撤病患，因为纸晚一些仍能抄；钟楼抄手反驳急令一旦"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "闻徵",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/9/description_blocks/7",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "：“你十四岁偷走我哪样东西？”阿洛答：“不是偷。你把裂口埙丢进雪沟，我捡回来补过，后来又还你。”闻徵沉默很久，只确认埙确有裂口，没有替全套身份作保。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "阿桑追",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/10/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "工伤受理票和接骨阵欠款单。她问丰敦甲：“哪一张今天能在米铺按面值用？”丰敦甲说可由总账特批兑换。阿桑追问全班都要到总账门口求一次特批吗。厅里有人笑，杜衡秋让他们安静。阿桑把袋子重新系好：“我丈夫九年工龄被写成临时搬煤。你说管事骗了你，那你先把他欠"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陆余火",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/0/choices/1/outcome_blocks/0",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "，三钥齐到才能开门。沙砾注意到库门封条印着“灾时征用优先”，与折骨坡签下的七日返还并不完全一致。陆余火说城内旧规自动印在所有封条上，同意把双方条款钉在门旁，但拒绝撕去旧字。你们得到干燥库房，也带进了一处尚未解决的冲突。 当夜，现有四百三十七人全"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陆绡先",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/16/description_blocks/16",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "陆菱获准进入陆绡的十分钟会面窗。她带来的旧围巾已被消毒袋封住，隔着袋子放在床尾。陆绡先问母亲哪一年去世，听完日期后把脸转向墙面，过了很久才说：“今天别替我回答别人。”陆菱点头，撤回自己刚填到一半的紧急联系人表，只留下可接收病情通知"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陆绡质",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/6/choices/2/outcome_blocks/4",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "余量，九日返航路线重新亮起。燃料仍只有六成，外环补给站愿意供给，条件是先偿还十一年前未结靠泊费。陆绡质问失踪船为何还欠费，补给站拿出自动账单；你将费用列为争议，不让它阻止紧急补给，承诺返港后由保险与责任方解决。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陆辞川",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "immortal_dynasty_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "immortal_dynasty_v1.json",
+          "path": "/chapters/21/description_blocks/2",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "本周药量。她愿让港口医师看肺伤与药物相互作用，不让雇主看；赤霄总页没有分栏，接入后雇主也会获知。陆辞川说总页拆不开，闻桃回道：“拆不开就照实写，别写成我不肯配合防疫。”这句话被抄进城门故障栏。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陶信",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "steam_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/steam_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "steam_v1.json",
+          "path": "/chapters/7/description",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "经过矿难孤儿所。小何的床铺靠近锅炉房，床脚已经被管理员陶信搬到走廊，薄被卷成一捆，工牌挂在上面。陶信说孤儿所与炉会签的是“学工一体”契，床位补贴来自工位；小何停岗，补贴自然停止。他还拿出一册支出账，里面确有每人每月两枚的伙食、床铺和介绍费。小何"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "陶绣",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wasteland_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/wasteland_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "wasteland_v1.json",
+          "path": "/chapters/3/description_blocks/11",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "半个时辰。葛穗承认收过锁息散，却说药原本用于维护者在脉冲反噬时止痉，殷昼后来才把它灌进强制席位。陶绣问三块改牌是否也由他经手，他沉默很久，只举牌写了两个字：送进。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "韩缄",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "star_network_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/star_network_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "star_network_v1.json",
+          "path": "/chapters/15/description_blocks/10",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "。阮迟又问，能否只签自己看得懂的医疗观察，不替整船担保；屏幕上的签名框却只有接受与拒绝两个按钮。韩缄沉默了好一会儿。眼前每个人都愿承担自己看得懂的观察责任，表格却不肯把责任拆开。"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "高芦生",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/9/description_blocks/5",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "见到匣子，她没有立刻要求灌注，只问父亲当时怎么说。温照岚把“留给女儿”四字和高遂眨眼记录给她看。高芦生答：“这是他给我的选择，不能当成命令。我先要知道里头另一段是谁。”"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "高阶护",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "wendao_enhanced.cpp"
+      ],
+      "source_paths": [
+        "src/wendao_enhanced.cpp"
+      ],
+      "snippets": [
+        {
+          "source": "wendao_enhanced.cpp",
+          "path": "line:3261",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "kind = L\"古典宗门 / 高阶护道\";"
+        }
+      ],
+      "max_confidence": 0.68
+    },
+    {
+      "name": "黄线",
+      "category_guess": "named_person_candidate",
+      "review_state": "needs_identity_review",
+      "evidence_count": 1,
+      "evidence_kinds": [
+        "person_action"
+      ],
+      "sources": [
+        "final_age_v1.json"
+      ],
+      "source_paths": [
+        "godot/data/chronicles/final_age_v1.json"
+      ],
+      "snippets": [
+        {
+          "source": "final_age_v1.json",
+          "path": "/chapters/12/choices/1/outcome_blocks/1",
+          "evidence_kind": "person_action",
+          "confidence": 0.68,
+          "text": "许设备返回管组，不返回姓名；床边由医师和本人现有表达决定是否调整。顾疏萤划去“继续镇静”，保留“黄线叫醒”，秦慢拒绝家属代答后自己签下检查时刻。两份更正随原伪陈述入卷，旧纸不销毁，新操作不得再引用。"
+        }
+      ],
+      "max_confidence": 0.68
+    }
+  ]
+}

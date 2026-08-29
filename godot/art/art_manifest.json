@@ -342,6 +342,24 @@
       }
     },
     {
+      "path": "combat/monsters/classical_oath_breaker/battle_sheet_web_v2_retimed.png",
+      "sha256": "73ed8229f0fe0ca8ab16d8c9312d8a81850b7c3bc6dba482b487c533216fc4ab",
+      "width": 1280,
+      "height": 1536,
+      "bytes": 172717,
+      "purpose": "古典修仙纪毁誓剑客Combat Core战斗像素动作图（5x4 20帧，保留原16个动作并补保持帧）",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "沿用已通过的毁誓剑客4x4动作表与断刃、非对称肩甲、旧誓束带、破损誓牌锚点；只在每个动作行末加入一个保持帧，满足精英动作表的20帧容量，不改变角色身份与原始姿态",
+        "mood": "战损、冷硬、背誓、修长、低饱和",
+        "story_use": "CombatStage 精英级古典人形敌人；用于断剑劈砍、残誓束缚、突刺、受击失衡与断誓爆发",
+        "source_note": "由内置网页生成的v1动作表派生；本地仅做逐格保持帧重排、Alpha保留与版本化清单登记，仍需Godot运行时验收"
+      }
+    },
+    {
       "path": "combat/monsters/classical_razor_wolf/battle_sheet_web_v1.png",
       "sha256": "7cf071706aed5dfd2107048e860f0d9f602f76fdbced2ed607ec7e2cd0c1f3de",
       "width": 1024,
@@ -411,6 +429,24 @@
         "mood": "无声、压抑、结印、封阵、低饱和",
         "story_use": "CombatStage 末法纪精英敌人；用于沉默脉冲、袖结锁定、铃线牵引、无声领域和阶段退场技能",
         "source_note": "内置网页端自由设计；本地按4:9比例归一化1024x2304画布、最近邻像素规格、低饱和调色并保留真透明RGBA"
+      }
+    },
+    {
+      "path": "combat/monsters/immortal_fate_registrar/battle_sheet_web_v1.png",
+      "sha256": "7e818b163e556bb7c76db76a717fd189e68e58d329796d986585d77baf86642a",
+      "width": 1024,
+      "height": 2304,
+      "bytes": 312039,
+      "purpose": "永劫天朝纪命簿真人Boss Combat Core战斗像素动作图（4x6 24帧）",
+      "eras": [
+        "永劫天朝纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端单角色生成命簿真人4x6动作设计；本地按4x6切格、64x96基础像素格、28色限色与最近邻放大，保留玉笔、悬浮命簿和垂直封印线三重身份锚点",
+        "mood": "冷静、压迫、命籍官署、低饱和、硬边像素",
+        "story_use": "CombatStage 永劫天朝纪Boss；用于玉笔划界、垂直封印线、命簿防守与终页领域阶段技能",
+        "source_note": "内置网页端单角色生成并经网页端视觉与动作PASS；本地完成1024x2304 RGBA归一化、64x96像素化、28色限色、低饱和处理与Alpha阈值清理"
       }
     },
     {
@@ -612,6 +648,1995 @@
       }
     },
     {
+      "path": "dialogue/a_cen_brother/avatar.png",
+      "sha256": "b7611b36a8c810e924288b5b809cb59a4ee1c32b39348caf25ed0e85988c4dbd",
+      "width": 512,
+      "height": 512,
+      "bytes": 315458,
+      "purpose": "阿岑兄对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的阿岑兄Dialogue Bust候选派生头像；保留年龄未定Level 0、生活痕迹、实用发式、灰蓝围巾、补丁旧布衣与半袋干粮",
+        "mood": "求生、谨慎、护妹、低饱和尘土色",
+        "story_use": "Godot RPG对话框头像；与阿岑兄Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/Level 0/服装PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/a_cen_brother/default_bust.png",
+      "sha256": "02d74a82e63940ed3a56e303186397d3633ab27e3cf5ab87cd7945d048fdc7c8",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1093386,
+      "purpose": "阿岑兄对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的阿岑兄全身Master为身份硬参考并经复核的Dialogue Bust；锁定年龄未定Level 0、生活痕迹、补丁旧布衣、灰蓝围巾、半袋干粮与井绳",
+        "mood": "求生、记恩、护妹、谨慎、低饱和尘土色",
+        "story_use": "Godot RPG对话框左侧阿岑兄角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/Level 0/服装/构图/低饱和PASS；本地使用分割、透明杂边清理、缩放与约62px四边安全边距，保留干粮袋与井绳"
+      }
+    },
+    {
+      "path": "dialogue/a_cen_sister/avatar.png",
+      "sha256": "a27ea15b3cee9585f84d3b08bf8ba772508b1da99b84a79061e495ca6b26e97d",
+      "width": 512,
+      "height": 512,
+      "bytes": 344801,
+      "purpose": "阿岑妹对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的阿岑妹Dialogue Bust候选派生头像；保留年龄未定Level 0、简朴辫子、灰蓝旧披巾、补丁衣物与水壶/小包生活道具",
+        "mood": "安静、怕生、坚韧、低饱和尘土色",
+        "story_use": "Godot RPG对话框头像；与阿岑妹Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/Level 0/服装PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/a_cen_sister/default_bust.png",
+      "sha256": "ad3033518bdd563d8d89182b22c9f8e4caf4ad2cdef6341c715a0298c7f10a1d",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1150774,
+      "purpose": "阿岑妹对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的阿岑妹全身Master为身份硬参考并经复核的Dialogue Bust；锁定年龄未定Level 0、简朴辫子、灰蓝旧披巾、补丁旧布衣、水壶、小包与手中干粮",
+        "mood": "安静、怕生、坚韧、低饱和尘土色",
+        "story_use": "Godot RPG对话框右侧阿岑妹角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/Level 0/服装/构图/低饱和PASS；本地使用分割、透明杂边清理、缩放与约62px四边安全边距，保留水壶、小包与干粮"
+      }
+    },
+    {
+      "path": "dialogue/cen_zhaolu/avatar.png",
+      "sha256": "6fb129691db518abea9612cdcc3dcb3f5f504396b05d2ba495df5ac98f356fe3",
+      "width": 512,
+      "height": 512,
+      "bytes": 351851,
+      "purpose": "岑照炉对话头像",
+      "eras": [
+        "灵机蒸汽纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端基于岑照炉Dialogue Bust生成同角色Dialogue Avatar；保留防火高束发、铜色护目镜、深青黑工造服装、压力扳手与发热炉灵核心",
+        "mood": "好奇、讲效率、护工人、敢试错、低饱和铜钢深青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与岑照炉Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经成年女性/职业识别/透明/低饱和/无露骨内容复核通过；本地仅做中性去halo、Alpha阈值定点清理、预乘Alpha缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/cen_zhaolu/default_bust.png",
+      "sha256": "6304b77e7ea42826818035f9b0fb04004f3bd7ac3884717ddb5b55710e88c4fc",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1127069,
+      "purpose": "岑照炉对话半身像",
+      "eras": [
+        "灵机蒸汽纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以岑照炉剧情身份锚点生成的Dialogue Bust；锁定28岁成年百炉城蒸汽工造师、防火高束发、铜色护目镜、深青黑工造围裙层衣、压力扳手、炉灵核心与工牌",
+        "mood": "好奇、讲效率、护工人、敢试错、低饱和铜钢深青",
+        "story_use": "Godot RPG对话框右侧岑照炉角色半身像；不替换岑照炉全身Portrait Master",
+        "source_note": "内置网页端身份/成年女性/职业道具/构图/低至中低饱和/透明边缘/无露骨内容PASS；本地仅做边缘净化、Alpha阈值定点清理、预乘Alpha缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/cen_zhaolu/default_bust_v1.png",
+      "sha256": "6304b77e7ea42826818035f9b0fb04004f3bd7ac3884717ddb5b55710e88c4fc",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1127069,
+      "purpose": "岑照炉对话半身像 v1 回滚副本",
+      "eras": [
+        "灵机蒸汽纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "岑照炉Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "好奇、讲效率、护工人、敢试错、低饱和铜钢深青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与岑照炉Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/chi_yaoqing/avatar.png",
+      "sha256": "44e34bfc80913b3474b9bc35e45f8b6c949ccba94e43a667f09def7b7ebb7079",
+      "width": 512,
+      "height": 512,
+      "bytes": 307822,
+      "purpose": "迟药青对话头像",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端基于迟药青Dialogue Bust生成同角色Dialogue Avatar；保留不对称短发、右侧花簪、赭红姜黄短夹衣、孔雀绿披肩、横挎药箱与行灯",
+        "mood": "直率、务实、嘴硬、成熟、低饱和药草赭金与孔雀绿",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与迟药青Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经成年女性/职业识别/透明/低饱和/无露骨内容复核通过；本地仅做中性去halo、Alpha阈值定点清理、预乘Alpha缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/chi_yaoqing/default_bust.png",
+      "sha256": "76af76b624dfd0e7aa2e4f8ddb9c5473640a234ce1acd3d23c2567f2fe26d6dd",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1073744,
+      "purpose": "迟药青对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以迟药青剧情身份锚点生成的Dialogue Bust；锁定31岁成年游方医修、不对称短发、右侧花簪与赭红发饰、赭红姜黄短夹衣、孔雀绿披肩、横挎药箱与医修道具",
+        "mood": "直率、务实、嘴硬、警觉、低饱和药草赭金与孔雀绿",
+        "story_use": "Godot RPG对话框右侧迟药青角色半身像；不替换迟药青全身Portrait Master",
+        "source_note": "内置网页端身份/成年女性/职业道具/构图/低至中低饱和/透明边缘/无露骨内容PASS；本地仅做边缘净化、Alpha阈值定点清理、预乘Alpha缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/chi_yaoqing/default_bust_v1.png",
+      "sha256": "76af76b624dfd0e7aa2e4f8ddb9c5473640a234ce1acd3d23c2567f2fe26d6dd",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1073744,
+      "purpose": "迟药青对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪",
+        "末法裂变纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "迟药青Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "直率、务实、嘴硬、警觉、低饱和药草赭金与孔雀绿",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与迟药青Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/family_covenant_holder/avatar.png",
+      "sha256": "c0e145ab03466ceaa929a5b25c397756634ed66ec4e4712aca78094ccb418df5",
+      "width": 512,
+      "height": 512,
+      "bytes": 341301,
+      "purpose": "祖契持有人双人群像对话头像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端基于祖契持有人Dialogue Bust生成同角色双人群像Avatar；锁定风霜灰发短须的中老年男性见证者、盘发有生活纹理的中老年女性守卷人、磨损补丁家族衣料、封印旧信、祖契卷与旧家徽",
+        "mood": "护族、戒备、互相猜疑、生活可信、低饱和墨灰旧褐暗赭",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏群像头像；与祖契持有人Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端双人群像生成并经中老年身份/双脸/证物/衣料/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至512x512与至少36px安全边距，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/family_covenant_holder/default_bust.png",
+      "sha256": "4ad1676096c91e85635089818485a0a848cda0628863cd5410bd87b7960e915b",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1562501,
+      "purpose": "祖契持有人双人群像对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以祖契持有人剧情群像身份锚点生成的Dialogue Bust；锁定风霜灰发短须的中老年男性家族见证者、盘发有生活纹理的中老年女性守卷人、磨损补丁深墨灰旧褐衣料、封印旧信、祖契卷与血脉印",
+        "mood": "护族、戒备、互相猜疑、生活可信、低饱和墨灰旧褐暗赭",
+        "story_use": "Godot RPG对话框右侧祖契持有人群像半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端双人群像生成并经中老年身份/双脸/证物/衣料/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至1024x1024并保留约64px四边安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/family_covenant_holder/default_bust_v1.png",
+      "sha256": "4ad1676096c91e85635089818485a0a848cda0628863cd5410bd87b7960e915b",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1562501,
+      "purpose": "祖契持有人双人群像对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "祖契持有人Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页群像候选、身份锚点与本地Alpha处理",
+        "mood": "护族、戒备、互相猜疑、生活可信、低饱和墨灰旧褐暗赭",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与祖契持有人Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/feng_qi/avatar.png",
+      "sha256": "a471c26e9f2f26abe36633f9536c46aa55bd06a0cbeb1d5293dd93d8f98e8330",
+      "width": 512,
+      "height": 512,
+      "bytes": 361606,
+      "purpose": "冯七对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/feng_qi/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端生成并通过身份复核的冯七Dialogue Bust派生头像；保留搬运工、照料者、寺院守夜人身份、黑发低束发、墨青灰褐旧白工装、承重架与守夜灯",
+        "mood": "谨慎、忠实、疲惫克制、低饱和墨青灰褐",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与冯七Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "网页端身份连续性/搬运照料职业/道具/低饱和/透明背景与非露骨复核通过；本地做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/feng_qi/default_bust.png",
+      "sha256": "48693b842a8de0a694cb4297f518bc75a9dd52499fcf46eee3d0895bb9ec3e31",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1135900,
+      "purpose": "冯七对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/feng_qi_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于冯七全身Master生成同角色Dialogue Bust；锁定成熟但年龄未定的搬运工、肩背承重架、守夜灯、定神针盒、药布与搬运箱",
+        "mood": "疲惫守候、谨慎克制、低饱和墨青灰褐旧白",
+        "story_use": "Godot RPG对话框左侧冯七角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份/职业/道具/构图/低饱和/服装完整/非露骨复核PASS；网页源图为深色渐变背景，本地按头到腰构图、最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/feng_qi/default_bust_v1.png",
+      "sha256": "48693b842a8de0a694cb4297f518bc75a9dd52499fcf46eee3d0895bb9ec3e31",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1135900,
+      "purpose": "冯七对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/feng_qi_v1.png",
+      "generation_intent": {
+        "concept": "冯七Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "疲惫守候、谨慎克制、低饱和墨青灰褐旧白",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与冯七Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/han_xuansu/avatar.png",
+      "sha256": "d4e88c028c62b81e8bc82f16fa18cc61642dfc421e757e336a4f189746844225",
+      "width": 512,
+      "height": 512,
+      "bytes": 305426,
+      "purpose": "韩玄素对话头像",
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过验收的韩玄素Dialogue Bust生成同角色Dialogue Avatar；锁定36岁成年经脉契师、黑发银白发束、纸墨白黑冷紫契师长衣、黑高领、契板、象牙探针与经脉测量环",
+        "mood": "冷静、专业、重书面代价、不哄人、低饱和纸白墨黑冷紫",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与韩玄素Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份/服装/道具/成熟Level1非色情/低饱和复核PASS；网页端确认仅需常规dehalo与画布适配，本地使用Alpha阈值定点清理、局部头肩裁切、预乘Alpha缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/han_xuansu/default_bust.png",
+      "sha256": "f39af234d6d19ea43aeb2a5534841f8e50d285832e04b4bc8ed0e459a18d1e60",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1090344,
+      "purpose": "韩玄素对话半身像",
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以韩玄素全身Portrait Master为身份硬参考并经复核的Dialogue Bust；锁定36岁成年经脉契师、黑发银白发束、纸墨白黑冷紫契师长衣、黑高领、契板、象牙探针与经脉测量环",
+        "mood": "冷静、专业、重书面代价、不哄人、低饱和纸白墨黑冷紫",
+        "story_use": "Godot RPG对话框右侧韩玄素角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/年龄/服装/道具/成熟Level1非色情/低饱和复核PASS；本地仅做透明杂边净化、Alpha阈值定点清理、预乘Alpha缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/han_xuansu/default_bust_v1.png",
+      "sha256": "f39af234d6d19ea43aeb2a5534841f8e50d285832e04b4bc8ed0e459a18d1e60",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1090344,
+      "purpose": "韩玄素对话半身像 v1 回滚副本",
+      "eras": [
+        "末法裂变纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "韩玄素Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "冷静、专业、重书面代价、不哄人、低饱和纸白墨黑冷紫",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与韩玄素Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/he_wenqiu/avatar.png",
+      "sha256": "2b90cb54a5708a75bea3f46162864c251dac8f582fe16c392a89b284aeebe1fc",
+      "width": 512,
+      "height": 512,
+      "bytes": 333488,
+      "purpose": "何问秋对话头像",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/he_wenqiu/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端通过何问秋Master与Dialogue Bust连续性复核的同角色Dialogue Avatar；锁定静息病人、深色侧辫、医疗青灰旧米白层衣、腕部医疗识别带、临时医疗牌与封存证据匣",
+        "mood": "安静、疲惫、清醒、自主、低饱和医疗青灰旧米白暗青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏何问秋头像；与何问秋Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经静息病人身份、成年外观但年龄未定、剧情锚点、低饱和、透明与非情色复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/he_wenqiu/default_bust.png",
+      "sha256": "db3d61b6be9085c65a905252efec167e5cd7fa5f3caa6d8836eb627c9b564ce0",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1132528,
+      "purpose": "何问秋对话半身像",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/he_wenqiu_v1.png",
+      "generation_intent": {
+        "concept": "网页端以何问秋全身Portrait Master为身份硬参考生成同角色Dialogue Bust；锁定静息病人、深色侧辫、完整医疗层衣、厚披肩、腕部医疗识别带、药杯、临时医疗牌与封存证据匣",
+        "mood": "安静疲惫但有尊严、保有自主、低饱和医疗青灰旧米白暗青",
+        "story_use": "Godot RPG对话框左侧何问秋角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、静息病人职业、剧情道具、构图、低饱和、服装完整与非情色复核PASS；网页源图为深色渐变背景，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/he_wenqiu/default_bust_v1.png",
+      "sha256": "db3d61b6be9085c65a905252efec167e5cd7fa5f3caa6d8836eb627c9b564ce0",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1132528,
+      "purpose": "何问秋对话半身像 v1 回滚副本",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/he_wenqiu_v1.png",
+      "generation_intent": {
+        "concept": "何问秋Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "安静疲惫、清醒自主、低饱和医疗青灰旧米白暗青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与何问秋Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/jade_echo/avatar.png",
+      "sha256": "5e12b0dd2cc3cd6090a410ba67d95acfe59d985a4a217017749cde54fa0f40d7",
+      "width": 512,
+      "height": 512,
+      "bytes": 409144,
+      "purpose": "玉回声对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过女性身份与成人向非露骨尺度复核的玉回声Dialogue Bust候选派生头像；保留黑白错位影子、碎玉核心、裂片衣物与危险残魂气质",
+        "mood": "残缺、试探、依恋、低饱和冷灰玉色",
+        "story_use": "Godot RPG对话框头像；与玉回声Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端女性身份/残魂主设定/成人向非露骨尺度/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色结构"
+      }
+    },
+    {
+      "path": "dialogue/jade_echo/avatar_v2.png",
+      "sha256": "5ee3c989724c65b36811ab40ec4e6706870aacd0bb9d1ebf4586eab7f7980401",
+      "width": 512,
+      "height": 512,
+      "bytes": 453375,
+      "purpose": "玉回声对话头像 v2",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于玉回声透明候选生成同角色Dialogue Avatar；本轮允许网页端自由设计明确成年女性脸，保留黑白错位长发、左后回声、脸侧碎玉纹理与裂片衣锚点",
+        "mood": "残缺、试探、依恋、低饱和冷灰玉色",
+        "story_use": "Godot RPG对话框头像；与玉回声 v2 Dialogue Bust 共用身份锚点",
+        "source_note": "内置网页端成年女性身份/锚点/构图/低饱和/尺度审查PASS；本地仅做中性去halo、预乘Alpha缩放至512x512与至少36px安全边距，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jade_echo/default_bust.png",
+      "sha256": "8718c0ecff412214cd47d593daffa60ed048f000758289bc15311aff7e4cb9da",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1690935,
+      "purpose": "玉回声对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的玉回声全身Master为身份硬参考并经女性身份与成人向非露骨尺度复核的Dialogue Bust；锁定黑白错位双重长发、半实体裂片轮廓、碎玉核心、黑白旧玉层叠衣与错位影子",
+        "mood": "残缺、试探、依恋、危险、低饱和冷灰玉色",
+        "story_use": "Godot RPG对话框右侧玉回声角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端女性身份/残魂主设定/成人向非露骨尺度/构图/低饱和/透明边缘PASS；本地仅做透明杂边清理、轻微低饱和增色、缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/jade_echo/default_bust_v2.png",
+      "sha256": "44708ec3d44bcfab9a68f9965482d236d8cbcc2f723cc166f51067852081d90c",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1654553,
+      "purpose": "玉回声对话半身像 v2",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端自由设计的明确成年女性玉回声Dialogue Bust；锁定黑白错位长发、半透明左后回声、脸侧碎裂纹理、悬浮碎玉、右手控碎片、黑白冷灰裂片衣与白色破碎披层",
+        "mood": "残缺、试探、依恋、危险、低饱和冷灰玉色",
+        "story_use": "Godot RPG对话框右侧玉回声角色半身像；与旧玉回声全身Portrait Master和Avatar v2共用身份锚点",
+        "source_note": "内置网页端女性身份/颈肩/身份锚点/构图/低至中低饱和/成人商业游戏非露骨尺度PASS；网页端指出透明边缘需本地去halo，本地仅做中性去halo、预乘Alpha缩放至1024x1024与约62px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/jian_cheng/avatar.png",
+      "sha256": "8542c60c86e61ae6f1f07c191e3b09d5e50711671bcbe7b9e2b2d3b11dd87baf",
+      "width": 512,
+      "height": 512,
+      "bytes": 302401,
+      "purpose": "简澄对话头像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/jian_cheng/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的简澄Dialogue Bust派生同角色Dialogue Avatar；保留成熟技术人员脸、墨黑低束发与冷青维修夹、医研层衣、记录夹、陶瓷通讯半环与青色灵络工具",
+        "mood": "谨慎、克制、专业、低饱和医研冷青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与简澄Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端身份/职业/道具/低饱和/透明/非露骨复核PASS；本地从同一批准Dialogue Bust头肩裁切、Alpha清理与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jian_cheng/default_bust.png",
+      "sha256": "6f185510c7c3609de37d389062322df6fe919eaffccdcad2ce4693e55978d8b0",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 957415,
+      "purpose": "简澄对话半身像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jian_cheng_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于简澄剧情身份锚点生成同角色Dialogue Bust；锁定成年技术人员脸、墨黑低束发、雾白蓝灰墨青医研层衣、拆除记录夹、陶瓷通讯半环与青色灵络工具",
+        "mood": "谨慎、克制、专业、低饱和医研冷青",
+        "story_use": "Godot RPG对话框右侧简澄角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/职业/道具/脸发一致性/低饱和/非露骨复核PASS；本地仅做Alpha阈值清理、预乘Alpha缩放与约64px四边安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/jian_cheng/default_bust_v1.png",
+      "sha256": "6f185510c7c3609de37d389062322df6fe919eaffccdcad2ce4693e55978d8b0",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 957415,
+      "purpose": "简澄对话半身像 v1 回滚副本",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jian_cheng_v1.png",
+      "generation_intent": {
+        "concept": "简澄Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "谨慎、克制、专业、低饱和医研冷青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与简澄Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/jiang_kui/avatar.png",
+      "sha256": "9011c4d5abc3ccc5a5d6bdf48e95bbd5d22b4cd66fe17b8ffce8c3e796c32c80",
+      "width": 512,
+      "height": 512,
+      "bytes": 372283,
+      "purpose": "姜葵对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/jiang_kui/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端生成并通过身份复核的姜葵Dialogue Bust派生头像；保留照昼会种植师、深黑墨青实用束发、灰绿种窖工装、席位刻度板、种子罐与账册",
+        "mood": "沉着、警醒、实际、低饱和荒原灰绿",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与姜葵Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "网页端复核身份连续性、种窖种植职业、道具、低饱和、透明背景与非露骨PASS；本地做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jiang_kui/default_bust.png",
+      "sha256": "8434813a2bee0e9a741542e9718f61552662b50602312229e812fc54198173b5",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1229446,
+      "purpose": "姜葵对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_kui_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于姜葵全身Master生成同角色Dialogue Bust；锁定照昼会种植师、种窖与灌溉风险管理者、种子册、席位刻度板、封泥种子罐与背旗",
+        "mood": "沉着核验、警醒务实、克制、低饱和灰绿土褐",
+        "story_use": "Godot RPG对话框右侧姜葵角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份/职业/道具/构图/低饱和/服装完整/非露骨复核PASS；本地按头到腰构图、最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/jiang_kui/default_bust_v1.png",
+      "sha256": "8434813a2bee0e9a741542e9718f61552662b50602312229e812fc54198173b5",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1229446,
+      "purpose": "姜葵对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_kui_v1.png",
+      "generation_intent": {
+        "concept": "姜葵Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "沉着核验、警醒务实、低饱和灰绿土褐",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与姜葵Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/jiang_zhaoxue/avatar.png",
+      "sha256": "596a77a1480a2af5b4d2219881619de779bfe9214b045250d9fa5f6145b53869",
+      "width": 512,
+      "height": 512,
+      "bytes": 293368,
+      "purpose": "江照雪对话头像",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_zhaoxue_v1.png",
+      "generation_intent": {
+        "concept": "从已批准的江照雪全身身份锚点本地派生同角色Dialogue Avatar；保留成熟冷峻剑修脸、蓝黑高马尾、银蓝冠饰、青色额心饰、玉白冰蓝剑衣与银蓝长剑",
+        "mood": "冷静、好胜、克制、低饱和冰蓝",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与江照雪Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成连续两次失败且没有生成文件；本地从已批准主立绘做前景分离、去背景、局部头肩裁切、Alpha清理与512x512画布适配，未重绘、未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jiang_zhaoxue/default_bust.png",
+      "sha256": "0c2c2708f621bf2ba46f56d06f524712f2360e3338b10d4ea35f3745673f15ee",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1132103,
+      "purpose": "江照雪对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_zhaoxue_v1.png",
+      "generation_intent": {
+        "concept": "从已批准的江照雪全身身份锚点本地派生Dialogue Bust；锁定成熟冷峻剑修脸、蓝黑高马尾、银蓝冠饰、青色额心饰、玉白冰蓝剑衣与银蓝长剑",
+        "mood": "冷静、好胜、克制、低饱和冰蓝",
+        "story_use": "Godot RPG对话框左侧江照雪角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端江照雪Dialogue Bust请求连续两次失败且没有生成文件；本地从已批准主立绘做前景分离、去背景、上半身裁切、Alpha清理与约64px四边安全边距适配，未重绘、未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jiang_zhaoxue/default_bust_v1.png",
+      "sha256": "0c2c2708f621bf2ba46f56d06f524712f2360e3338b10d4ea35f3745673f15ee",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1132103,
+      "purpose": "江照雪对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiang_zhaoxue_v1.png",
+      "generation_intent": {
+        "concept": "江照雪Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一身份锚点与本地派生处理",
+        "mood": "冷静、好胜、克制、低饱和冰蓝",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与江照雪Dialogue Bust正式版字节一致的版本化副本；网页端请求未产出文件，保留本地派生来源以便追溯"
+      }
+    },
+    {
+      "path": "dialogue/jiao_liu/avatar.png",
+      "sha256": "9b04249fc10ef9ac87bd423004201feeda713329070da9988cd7ca3275f5691d",
+      "width": 512,
+      "height": 512,
+      "bytes": 358646,
+      "purpose": "焦六对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/jiao_liu/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于焦六已通过的Portrait Master与Dialogue Bust生成同角色Dialogue Avatar；锁定照昼会信徒、旧发髻、暗青围巾、日轮布章、祷告绳结、木签与种窖钥牌",
+        "mood": "虔信、恐惧、心虚、低饱和灰褐煤黑褪金暗青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏焦六头像；与焦六Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份连续性、照昼会信徒/种窖职业、锚点、低饱和、透明与非露骨复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/jiao_liu/default_bust.png",
+      "sha256": "fc28423e0e2054fd06c3b88fbed9b3a3423de3d6bcd2ab33823496aef07c8846",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1362026,
+      "purpose": "焦六对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiao_liu_v1.png",
+      "generation_intent": {
+        "concept": "网页端以已确认的焦六全身Master为身份硬参考生成同角色Dialogue Bust；锁定照昼会信徒、困守种窖、旧发髻、日轮布章、白祷告绳结、三席木签、种窖钥牌、旧灯笼与粮袋",
+        "mood": "虔信、恐惧、心虚、低饱和灰褐煤黑褪金暗青",
+        "story_use": "Godot RPG对话框焦六角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业、道具、构图、低饱和、服装完整与非露骨复核PASS；网页源图背景为深色渐变，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/jiao_liu/default_bust_v1.png",
+      "sha256": "fc28423e0e2054fd06c3b88fbed9b3a3423de3d6bcd2ab33823496aef07c8846",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1362026,
+      "purpose": "焦六对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/jiao_liu_v1.png",
+      "generation_intent": {
+        "concept": "焦六Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "虔信、恐惧、心虚、低饱和灰褐煤黑褪金暗青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与焦六Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/liu_sanniang/avatar.png",
+      "sha256": "37287f09aa81050a9278fd99b1625e20c1469ee85af48c158aa4d3d92dc0b45a",
+      "width": 512,
+      "height": 512,
+      "bytes": 284604,
+      "purpose": "柳三娘对话头像",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/liu_sanniang/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端柳三娘全身Portrait Master与Dialogue Bust连续性复核生成同角色Dialogue Avatar；锁定古门泊位领班、深黑高束发与粗辫、右肩旧伤护带、短缆与系船钩、低饱和耐水工装和旧钥匙环",
+        "mood": "警觉、疲惫而坚韧、尊重本人意愿、低饱和深蓝灰旧米白烟绿旧铜",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏柳三娘头像；与柳三娘Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色身份、脸部/发式/肩伤护带连续性、低饱和、透明与非情色复核；本地仅做最大主体连通域保留、Alpha清理、预乘Alpha缩放至512x512与至少36px安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/liu_sanniang/default_bust.png",
+      "sha256": "e315509bbc0dbb7dcca98bb24c25e9b6d2e5c04ab8ad7ff6887ff7a1e8d467c4",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 825265,
+      "purpose": "柳三娘对话半身像",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/liu_sanniang_v1.png",
+      "generation_intent": {
+        "concept": "网页端以柳三娘全身Portrait Master为身份硬参考生成同角色Dialogue Bust；锁定古门泊位领班、候船棚守桩人、右肩旧伤护带、肩背粗缆、系船钩与水路钥匙",
+        "mood": "警觉、疲惫而坚韧、克制坚定、低饱和深蓝灰旧米白烟绿旧铜",
+        "story_use": "Godot RPG对话框柳三娘角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业道具、构图、低饱和、服装完整、透明与非情色复核；本地按最大主体连通域保留、Alpha清理、去除浅色背景晕边、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/liu_sanniang/default_bust_v1.png",
+      "sha256": "e315509bbc0dbb7dcca98bb24c25e9b6d2e5c04ab8ad7ff6887ff7a1e8d467c4",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 825265,
+      "purpose": "柳三娘对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/liu_sanniang_v1.png",
+      "generation_intent": {
+        "concept": "柳三娘Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "警觉、疲惫而坚韧、克制坚定、低饱和深蓝灰旧米白烟绿旧铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与柳三娘Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/lu_qingyuan/avatar.png",
+      "sha256": "1a8bd522dc7609efe965058fba740460bfbda2effe1080c52188fe1e4ef863e8",
+      "width": 512,
+      "height": 512,
+      "bytes": 317383,
+      "purpose": "陆青鸢对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的陆青鸢Dialogue Bust候选派生头像；保留成年医道仙官、深棕长发、青鸢羽饰、白碧医官层衣、羽针/羽扇、药玉与药囊",
+        "mood": "温和、审慎、守底线、低饱和青玉白",
+        "story_use": "Godot RPG对话框头像；与陆青鸢Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/成年职业/服装道具/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/lu_qingyuan/default_bust.png",
+      "sha256": "ad9a6b612657a06e05f16e00982f78b1f769b83d3810b9f5dd3863b027f1b122",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1350168,
+      "purpose": "陆青鸢对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的陆青鸢全身Master为身份硬参考并经复核的Dialogue Bust；锁定成年医道仙官、深棕长发、青鸢羽饰、白碧医官层衣、羽针/羽扇、药玉、药囊与医道印",
+        "mood": "温和、审慎、守底线、低饱和青玉白",
+        "story_use": "Godot RPG对话框右侧陆青鸢角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/成年职业/服装道具/构图/低饱和/透明边缘PASS；本地仅做Alpha阈值定点清理、缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/lu_yuan/avatar.png",
+      "sha256": "d3b3dce79a53f105d5fb06c30a0103570f87e2086e115f839ffcbc55ea861f65",
+      "width": 512,
+      "height": 512,
+      "bytes": 402093,
+      "purpose": "陆芫对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/lu_yuan/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于陆芫已通过的Portrait Master与Dialogue Bust生成同角色Dialogue Avatar；锁定防风编发、左眉盐痕、护目镜、围巾、路线罗盘与旧路牌标记",
+        "mood": "负责、直面风险、耐行、低饱和盐灰风沙褐旧青绿",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏陆芫头像；与陆芫Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份连续性、车队领路职业、锚点、低饱和、透明与非露骨复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/lu_yuan/default_bust.png",
+      "sha256": "6c3bc2165c216af9f82383f9b034eccd39f33dc6f36eba4b88852721b1fc625b",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1504607,
+      "purpose": "陆芫对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/lu_yuan_v1.png",
+      "generation_intent": {
+        "concept": "网页端以已确认的陆芫全身Master为身份硬参考生成同角色Dialogue Bust；锁定成年车队领路/安置负责人、左眉盐痕、旧路牌、路线图、罗盘、水囊、绳结标记与护目镜",
+        "mood": "负责、直面风险、耐行、低饱和盐灰风沙褐旧青绿",
+        "story_use": "Godot RPG对话框陆芫角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业、道具、构图、低饱和、服装完整与非露骨复核PASS；网页源图背景为深色渐变，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/lu_yuan/default_bust_v1.png",
+      "sha256": "6c3bc2165c216af9f82383f9b034eccd39f33dc6f36eba4b88852721b1fc625b",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1504607,
+      "purpose": "陆芫对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/lu_yuan_v1.png",
+      "generation_intent": {
+        "concept": "陆芫Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "负责、直面风险、耐行、低饱和盐灰风沙褐旧青绿",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与陆芫Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/luo_ningshuang/avatar.png",
+      "sha256": "d01ce3d75f6088fedfb805b5912945a060d91a1bb2c501434999326a46374db3",
+      "width": 512,
+      "height": 512,
+      "bytes": 385396,
+      "purpose": "洛凝霜对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的洛凝霜Dialogue Bust候选派生头像；保留年龄未定Level 0、桃华花簪、紫色发带、棕紫长发、白紫剑衣与花枝剑饰",
+        "mood": "含笑试剑、好胜、自信、低饱和桃紫",
+        "story_use": "Godot RPG对话框头像；与洛凝霜Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/Level 0/服装/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/luo_ningshuang/default_bust.png",
+      "sha256": "5d1fe7aeb0dd2c8c82abaf0abf8bcd9fe5405f6c584889cb9999c236c81c7df8",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1257619,
+      "purpose": "洛凝霜对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的洛凝霜全身Master为身份硬参考并经复核的Dialogue Bust；锁定年龄未定Level 0、桃华花簪、紫色发带、棕紫长发、白紫剑衣、桃华剑与花纹剑穗",
+        "mood": "含笑试剑、好胜、自信、低饱和桃紫",
+        "story_use": "Godot RPG对话框右侧洛凝霜角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/Level 0/服装/构图/低饱和/透明边缘PASS；本地仅做透明杂边清理、Alpha阈值定点修复与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/meng_hanzhi/avatar.png",
+      "sha256": "3f7057df6afa78996bb2a641d048f6c7b8014e14e8c9880a62b7a7767fe1c94f",
+      "width": 512,
+      "height": 512,
+      "bytes": 309805,
+      "purpose": "孟寒枝对话头像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/meng_hanzhi/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端通过孟寒枝Master与Dialogue Bust连续性复核的同角色Dialogue Avatar；锁定城南现住者、转籍住户、低束侧辫、雾蓝住户服、腕带、旧钥串与门锁凭证牌",
+        "mood": "警惕、疲惫、务实、不卑不亢、低饱和雾蓝旧米白墨灰",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏孟寒枝头像；与孟寒枝Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经城南现住者身份、成年外观但年龄未定、剧情锚点、低饱和、透明与非情色复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/meng_hanzhi/default_bust.png",
+      "sha256": "2743a6a6ec3e314956f8d256e54e0fd43f58b69ebfb9efdc30c57e70cc3c6bd6",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1076322,
+      "purpose": "孟寒枝对话半身像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/meng_hanzhi_v1.png",
+      "generation_intent": {
+        "concept": "网页端以孟寒枝全身Portrait Master为身份硬参考生成同角色Dialogue Bust；锁定城南现住者、四年前官方转籍、门锁凭证、旧钥串、住户布包与务实防风服",
+        "mood": "警惕、疲惫、守住生活边界、低饱和雾蓝旧米白墨灰",
+        "story_use": "Godot RPG对话框右侧孟寒枝角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、住户/转籍职业、剧情道具、构图、低饱和、服装完整与非情色复核PASS；网页源图为深色渐变背景，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/meng_hanzhi/default_bust_v1.png",
+      "sha256": "2743a6a6ec3e314956f8d256e54e0fd43f58b69ebfb9efdc30c57e70cc3c6bd6",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1076322,
+      "purpose": "孟寒枝对话半身像 v1 回滚副本",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/meng_hanzhi_v1.png",
+      "generation_intent": {
+        "concept": "孟寒枝Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "警惕、疲惫、务实、低饱和雾蓝旧米白墨灰",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与孟寒枝Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/mu_lianchou/avatar.png",
+      "sha256": "b5ab2bd2554414518859f235adb1f2338461cecec3520a4222437e76a5ab0529",
+      "width": 512,
+      "height": 512,
+      "bytes": 339954,
+      "purpose": "穆连筹对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/mu_lianchou/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于穆连筹已通过的Portrait Master与Dialogue Bust生成同角色Dialogue Avatar；锁定细框眼镜、旧制小吏商账服、算盘、契账、封蜡卷与便携秤",
+        "mood": "精明、冷静、制度合理化、低饱和旧纸墨暗赭旧铜",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏穆连筹头像；与穆连筹Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份连续性、药价核算/供养契职业、道具、低饱和、透明与非露骨复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/mu_lianchou/default_bust.png",
+      "sha256": "8e841c0176388cca201fd18c440bc2de61941ddeb4d1dfafb01c2d5f09d0974f",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1110671,
+      "purpose": "穆连筹对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/mu_lianchou_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于穆连筹全身Master生成同角色Dialogue Bust；锁定都息署药价核算师、灵息债供养契摊主、细框眼镜、算盘、厚重契册与封蜡契卷",
+        "mood": "精明、冷静、制度合理化、低饱和旧纸墨暗赭旧铜",
+        "story_use": "Godot RPG对话框穆连筹角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业、道具、构图、低饱和、服装完整与非露骨复核PASS；网页源图背景为深色渐变，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/mu_lianchou/default_bust_v1.png",
+      "sha256": "8e841c0176388cca201fd18c440bc2de61941ddeb4d1dfafb01c2d5f09d0974f",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1110671,
+      "purpose": "穆连筹对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/mu_lianchou_v1.png",
+      "generation_intent": {
+        "concept": "穆连筹Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "精明、冷静、制度合理化、低饱和旧纸墨暗赭旧铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与穆连筹Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/mu_qingyou/avatar.png",
+      "sha256": "771a40a1fb54f0440d13deebba0f9a1912b16429a4f3b7b7769fd0d776c90ef2",
+      "width": 512,
+      "height": 512,
+      "bytes": 293679,
+      "purpose": "穆青釉对话头像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/mu_qingyou/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端通过穆青釉Portrait Master与Dialogue Bust连续性复核的同角色Dialogue Avatar；锁定雾港前导台值守者、低束短编发、蓝灰值守服、腕部操作环、值班牌与纸带/档案锚点",
+        "mood": "专注、克制、疲惫但可靠、低饱和雾港蓝灰旧米白深靛暗铜",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏穆青釉头像；与穆青釉Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份连续性、前导台值守职业、低饱和、透明、成人自然比例与非情色复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/mu_qingyou/default_bust.png",
+      "sha256": "de8f00d5921d41f2d75f4ecd6996bdc39ddaef91d3413daff6b7d85529e4fa7f",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 930603,
+      "purpose": "穆青釉对话半身像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/mu_qingyou_v1.png",
+      "generation_intent": {
+        "concept": "网页端以穆青釉全身Portrait Master为身份硬参考生成同角色Dialogue Bust；锁定雾港前导台值守者、六船纸带、陶质空载盒、机械计时牌、船号回执夹、值班牌与蓝灰低饱和值守服",
+        "mood": "专注、克制、疲惫但可靠、低饱和雾港蓝灰旧米白深靛暗铜",
+        "story_use": "Godot RPG对话框穆青釉角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业、剧情道具、构图、低饱和、服装完整、透明与非情色复核PASS；本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/mu_qingyou/default_bust_v1.png",
+      "sha256": "de8f00d5921d41f2d75f4ecd6996bdc39ddaef91d3413daff6b7d85529e4fa7f",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 930603,
+      "purpose": "穆青釉对话半身像 v1 回滚副本",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/mu_qingyou_v1.png",
+      "generation_intent": {
+        "concept": "穆青釉Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "专注、克制、疲惫但可靠、低饱和雾港蓝灰旧米白深靛暗铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与穆青釉Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/ning_xiu/avatar.png",
+      "sha256": "3b4fee43dd84343ae2dbfdedfb11fdfb53d094e97d86a4b79eff20847b0c0384",
+      "width": 512,
+      "height": 512,
+      "bytes": 297426,
+      "purpose": "宁绣对话头像",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/ning_xiu/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于宁绣全身立绘与Dialogue Bust生成同一角色Dialogue Avatar；锁定外貌三十出头但有百年阅历的成熟脸、深墨黑低束长发、一缕银丝、青玉簪、档案证物与墨绿灰白暗青修士衣",
+        "mood": "沉静、敏锐、重证据、低饱和苔玉档案色",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与宁绣Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端身份连续性/头像构图/银丝玉簪/档案证物/低饱和/透明/非露骨复核PASS；本地从网页生成Avatar做Alpha阈值清理、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/ning_xiu/default_bust.png",
+      "sha256": "9c2b63eeb5ce7bb7b008a838f22a7ec8a2c9a6ceff0008d57f0438486eb07c03",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1196537,
+      "purpose": "宁绣对话半身像",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/ning_xiu_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于宁绣全身身份锚点生成同角色Dialogue Bust；锁定104岁筑基女修、外貌三十出头、银丝玉簪、墨绿灰白暗青分层修士衣、旧纸收讫联、档案册与铜印",
+        "mood": "沉静、敏锐、重证据、低饱和苔玉档案色",
+        "story_use": "Godot RPG对话框右侧宁绣角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色连续性/职业证物/构图/低饱和/服装完整/非露骨复核PASS；网页源图边距不足，本地按头到腰构图裁取、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/ning_xiu/default_bust_v1.png",
+      "sha256": "9c2b63eeb5ce7bb7b008a838f22a7ec8a2c9a6ceff0008d57f0438486eb07c03",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1196537,
+      "purpose": "宁绣对话半身像 v1 回滚副本",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/ning_xiu_v1.png",
+      "generation_intent": {
+        "concept": "宁绣Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "沉静、敏锐、重证据、低饱和苔玉档案色",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与宁绣Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/ning_zhaoxue/avatar.png",
+      "sha256": "519912046d2e06c178f6961682e178719694c5c79ac54649ce0dd49aa9251cb6",
+      "width": 512,
+      "height": 512,
+      "bytes": 323879,
+      "purpose": "宁照雪对话头像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端生成并沿用宁照雪身份复核的同角色Dialogue Avatar；保留海雾关式高束长辫、雾蓝发带、雾青蓝/墨青/灰白守山剑衣、窄肩护甲、旧山门符与短剑",
+        "mood": "守礼、执拗、孤独、警觉、低饱和雾青蓝",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与宁照雪Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成；网页端身份、成年女性、服装道具、修长比例与无露骨内容复核通过；本地仅做中性去halo、预乘Alpha缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/ning_zhaoxue/default_bust.png",
+      "sha256": "90e03494bb069509469367610cf93477b3ccd8c9086a0271cebef4efb9034c11",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 970618,
+      "purpose": "宁照雪对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以宁照雪剧情身份锚点生成的Dialogue Bust；锁定23岁成年山门剑修、海雾关式高束长辫、雾蓝发带、守山末徒层叠剑衣、窄肩护甲、旧山门符与短剑",
+        "mood": "守礼、执拗、孤独、警觉、低饱和雾青蓝",
+        "story_use": "Godot RPG对话框右侧宁照雪角色半身像；不替换宁照雪全身Portrait Master",
+        "source_note": "内置网页端身份/成年女性/服装道具/构图/低至中低饱和/透明边缘/无露骨内容PASS；本地仅做边缘净化、Alpha阈值定点清理、预乘Alpha缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/ning_zhaoxue/default_bust_v1.png",
+      "sha256": "90e03494bb069509469367610cf93477b3ccd8c9086a0271cebef4efb9034c11",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 970618,
+      "purpose": "宁照雪对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "宁照雪Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "守礼、执拗、孤独、警觉、低饱和雾青蓝",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与宁照雪Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/pei_zhaowei/avatar.png",
+      "sha256": "9516e0d1ea68db9d777458f140289bf3a3cc8b1118ee6212af017d492f7f6776",
+      "width": 512,
+      "height": 512,
+      "bytes": 315906,
+      "purpose": "裴照微对话头像",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过验收的裴照微Dialogue Bust生成同角色Dialogue Avatar；锁定34岁成年巡天司监察使、银青云冠、高束长发、白墨黑雾青官服、命籍笔、薄玉册与巡天云纹徽章",
+        "mood": "威严、预案思维、清醒、不轻许诺、低饱和云白墨黑雾青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与裴照微Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份/服装/道具/低饱和/透明/非露骨复核PASS；网页端确认仅需常规dehalo与画布适配，本地使用Alpha阈值定点清理、预乘Alpha缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/pei_zhaowei/default_bust.png",
+      "sha256": "30f8de40fb495bd84f238ba2eadb5e7f7cb82d929b3cb21016d937fd00ef61bd",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1042996,
+      "purpose": "裴照微对话半身像",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以裴照微全身Portrait Master为身份硬参考并经复核的Dialogue Bust修复版；锁定34岁成年巡天司监察使、银青云冠、高束长发、白墨黑雾青正式窄袖官服、命籍笔、薄玉册与巡天云纹徽章",
+        "mood": "威严、预案思维、清醒、不轻许诺、低饱和云白墨黑雾青",
+        "story_use": "Godot RPG对话框右侧裴照微角色半身像；不替换全身Portrait Master",
+        "source_note": "初版网页复核仅技术FAIL（顶部/右侧裁切）；网页端锁定身份重做构图后，身份/服装/道具/胸口完整/低饱和/透明PASS，仅底部贴边由本地等比缩放补足约62px安全边距"
+      }
+    },
+    {
+      "path": "dialogue/pei_zhaowei/default_bust_v1.png",
+      "sha256": "30f8de40fb495bd84f238ba2eadb5e7f7cb82d929b3cb21016d937fd00ef61bd",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1042996,
+      "purpose": "裴照微对话半身像 v1 回滚副本",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "裴照微Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页修复候选、身份锚点与本地Alpha处理",
+        "mood": "威严、预案思维、清醒、不轻许诺、低饱和云白墨黑雾青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与裴照微Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/protagonist/avatar.png",
+      "sha256": "2ad77fe63928d47146d6561e66c74d5b3b3d6804fe0b0e071089db81ea772957",
+      "width": 512,
+      "height": 512,
+      "bytes": 318392,
+      "purpose": "问道人对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的问道人Dialogue Bust候选派生头像；保留成年男主、低压兜帽遮眼、黑青披风、深青流苏、黑白轮回玉与短剑",
+        "mood": "沉静、观察、克制、低饱和墨青",
+        "story_use": "Godot RPG对话框头像；与问道人Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/成年男主/服装道具/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/protagonist/default_bust.png",
+      "sha256": "2dd8001076ec96db32d5a80fdb125adf1fd670c01ee88a0aeb1e5f275b4a3306",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1269265,
+      "purpose": "问道人对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的问道人全身Master为身份硬参考并经复核的Dialogue Bust；锁定成年男主、低压兜帽遮眼、黑青织锦披风、深青流苏、黑白轮回玉、短剑与剑穗",
+        "mood": "沉静、观察、克制、低饱和墨青",
+        "story_use": "Godot RPG对话框左侧问道人角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/成年男主/服装道具/构图/低饱和/透明边缘PASS；本地仅做Alpha阈值定点清理、缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/qi_wujiu/avatar.png",
+      "sha256": "d18bca386f729f020ae3730873f53e97c65e4fb4828e1a14d93fb653e43c5db6",
+      "width": 512,
+      "height": 512,
+      "bytes": 389006,
+      "purpose": "祁无咎对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的祁无咎Dialogue Bust候选派生头像；保留成年男性、黑灰半束长发、紫色发带、灰黑旧修士层衣、空帖与折扇",
+        "mood": "含笑试探、藏拙、有分寸、低饱和墨紫",
+        "story_use": "Godot RPG对话框头像；与祁无咎Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/成年男性/服装道具/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/qi_wujiu/default_bust.png",
+      "sha256": "233b6983767141715849f723d7851a9460a4982c51d82e3a43746425232793c3",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1367938,
+      "purpose": "祁无咎对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的祁无咎全身Master为身份硬参考并经复核的Dialogue Bust；锁定成年男性、黑灰半束长发、紫色发带、灰黑旧修士层衣、空帖、折扇与隐藏灵压符",
+        "mood": "含笑试探、藏拙、有分寸、低饱和墨紫",
+        "story_use": "Godot RPG对话框左侧祁无咎角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/成年男性/服装道具/构图/低饱和/透明边缘PASS；本地仅做Alpha阈值定点清理、缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/qingheng_zhenren/avatar.png",
+      "sha256": "403ccea493b903b22180d7b376ccc5262e6bc44927acc6b8599168d21d660a42",
+      "width": 512,
+      "height": 512,
+      "bytes": 388742,
+      "purpose": "清蘅真人对话头像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的清蘅真人Dialogue Bust候选派生头像；保留黑青双髻、金玉红饰、成熟师尊脸、青玉耳坠与白绿层叠护道衣",
+        "mood": "沉静、克制、护道、低饱和",
+        "story_use": "Godot RPG对话框头像；与清蘅真人Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端清蘅真人候选身份与透明边缘通过PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/qingheng_zhenren/avatar_v2.png",
+      "sha256": "0e2c0eedab12325ce9e88504adc31ae77f4156db2b84e9253712b9a306bd7f1c",
+      "width": 512,
+      "height": 512,
+      "bytes": 303677,
+      "purpose": "清蘅真人新版对话头像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以已通过验收的清蘅真人 Dialogue Bust v2 为唯一身份锚点生成；锁定黑青双髻、金红玉饰、青玉耳坠、成熟师尊脸、闭合高领白色内衫与白青绿墨层叠护道衣",
+        "mood": "沉静、克制、护道、低饱和",
+        "story_use": "Godot RPG 队伍栏、状态栏与对话选项头像；与清蘅真人新版半身像共用身份锚点",
+        "source_note": "内置网页端单角色生成并经身份/服装/胸口衣襟/透明边缘PASS；本地使用Alpha分割、前景色填充、去halo与16px安全边距处理"
+      }
+    },
+    {
+      "path": "dialogue/qingheng_zhenren/default_bust.png",
+      "sha256": "8b9ed1b212c4a7a07a85f034e89416721aeb21ceb65f7d1770dcc96bf01ff01e",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1346602,
+      "purpose": "清蘅真人对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端通过身份复核的清蘅真人Dialogue Bust；锁定黑青双髻、金玉红饰、成熟师尊脸、白色封闭高领中央衣襟、绿色滚边层叠护道衣与门规玉简",
+        "mood": "沉静、克制、护道、低饱和、修长成人比例",
+        "story_use": "Godot RPG对话框左侧清蘅真人角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端单角色生成并经网页端身份/服饰/构图/低饱和/透明边缘PASS；本地仅做透明边缘定点修复与32px顶部安全边距裁切"
+      }
+    },
+    {
+      "path": "dialogue/qingheng_zhenren/default_bust_v2.png",
+      "sha256": "b0b2a3040b0647dc40ff049eb595b10c3251475f777d7d0516f8de0b1b598492",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1002572,
+      "purpose": "清蘅真人新版对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以已通过验收的清蘅真人 Portrait Master v2 为唯一身份锚点生成；锁定黑青双髻、金红玉饰、成熟师尊脸、闭合高领白色内衫、白青绿墨层叠护道衣和有孔青玉笛",
+        "mood": "沉静、克制、护道、低饱和、修长成人比例",
+        "story_use": "Godot RPG 对话框左侧清蘅真人角色半身像；不替换全身 Portrait Master",
+        "source_note": "内置网页端单角色生成并经身份/服装/胸口衣襟/构图/低饱和/透明边缘PASS；本地使用保留衣料的Alpha分割、前景色填充、去halo与约32px安全边距处理"
+      }
+    },
+    {
+      "path": "dialogue/recurring_antagonist/avatar.png",
+      "sha256": "02f194e714a4405bf05d5dc2c0873c16ba0c7cdb60ce9a5d73d0a6c2d49295ec",
+      "width": 512,
+      "height": 512,
+      "bytes": 300459,
+      "purpose": "司命执笔对话头像",
+      "eras": [
+        "仙朝鼎盛纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端基于司命执笔Dialogue Bust生成同角色Dialogue Avatar；锁定43岁成年制度官、黑灰官帽式发髻、墨黑深灰旧白命籍厅官服、白玉命籍笔、删改册与制度印章",
+        "mood": "礼貌冷漠、制度自信、审视、低饱和墨黑旧纸白暗金",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与司命执笔Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经成年男性/制度官身份/官服/道具/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至512x512与至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/recurring_antagonist/default_bust.png",
+      "sha256": "ba8abca2722779ea2f88b1d067d3aaadc1c1a17fe30fd75647d540850533e52d",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1066122,
+      "purpose": "司命执笔对话半身像",
+      "eras": [
+        "仙朝鼎盛纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以司命执笔剧情身份锚点生成的Dialogue Bust；锁定43岁成年命籍厅制度官、黑灰官帽式发髻、墨黑深灰旧白分层官袍、白玉命籍笔、厚重删改册与制度印章",
+        "mood": "礼貌冷漠、制度自信、审视、低饱和墨黑旧纸白暗金",
+        "story_use": "Godot RPG对话框右侧司命执笔角色半身像；不替换司命执笔全身Portrait Master",
+        "source_note": "内置网页端成年男性/制度官身份/官服/命籍笔/删改册/印章/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至1024x1024并保留约64px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/recurring_antagonist/default_bust_v1.png",
+      "sha256": "ba8abca2722779ea2f88b1d067d3aaadc1c1a17fe30fd75647d540850533e52d",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1066122,
+      "purpose": "司命执笔对话半身像 v1 回滚副本",
+      "eras": [
+        "仙朝鼎盛纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "司命执笔Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "礼貌冷漠、制度自信、审视、低饱和墨黑旧纸白暗金",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与司命执笔Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/sect_lawkeepers/avatar.png",
+      "sha256": "ec90afd49ee77f70dbe9e352e8e2d82ea53db389bc57e2e82b7c3a22679ee3ae",
+      "width": 512,
+      "height": 512,
+      "bytes": 357981,
+      "purpose": "两代执律人双人群像对话头像",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端基于两代执律人Dialogue Bust生成同角色双人群像Avatar；锁定银白长发灰白胡须的年长男性师长、短黑发侧编发的成年女性弟子、同源不同层次执律服、门规青玉简、执律钟铃与红律纹",
+        "mood": "肃穆、代际张力、共同执法、低饱和山门青玉",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏群像头像；与两代执律人Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端双人群像生成并经两位成年身份/双脸/服装/道具/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至512x512与至少36px安全边距，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/sect_lawkeepers/default_bust.png",
+      "sha256": "51bb32c549d2f48f69f7344acf63078e0da8e989511b67163b906436a2a793d2",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1425857,
+      "purpose": "两代执律人双人群像对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以两代执律人剧情群像身份锚点生成的Dialogue Bust；锁定年长银白发灰白胡须执律师长、年轻成年短黑发侧辫执律弟子、同源不同层次的墨灰冷白深青法衣、门规青玉简、执律铜钟与小铜铃",
+        "mood": "肃穆、代际张力、共同执法、低饱和山门青玉",
+        "story_use": "Godot RPG对话框右侧两代执律人群像半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端双人群像生成并经两位成年身份/双脸/服装/道具/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值定点清理、缩放至1024x1024并保留约64px四边安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/sect_lawkeepers/default_bust_v1.png",
+      "sha256": "51bb32c549d2f48f69f7344acf63078e0da8e989511b67163b906436a2a793d2",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1425857,
+      "purpose": "两代执律人双人群像对话半身像 v1 回滚副本",
+      "eras": [
+        "古典修仙纪",
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "两代执律人Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页群像候选、身份锚点与本地Alpha处理",
+        "mood": "肃穆、代际张力、共同执法、低饱和山门青玉",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与两代执律人Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/shali/avatar.png",
+      "sha256": "e814b628db025bd29e5876228b2dee6e4909c246fcb1db69219508a80c9c4062",
+      "width": 512,
+      "height": 512,
+      "bytes": 352511,
+      "purpose": "沙砾对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过验收的沙砾Dialogue Bust技术派生头像；锁定26岁成年废土引路人、风沙成年脸、高束防雨发式、灰青防雨披肩、深灰拼接护具与冷蓝白火种灯",
+        "mood": "坚韧、警惕、护短、记旧债、低饱和锈红雨灰深青",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与沙砾Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "网页端Dialogue Bust身份/服装/道具/低饱和/非露骨复核PASS；头像生成请求连续两次受网页端图像服务限流，未产生新文件；本地仅从已批准Bust做头肩裁切、预乘Alpha缩放至512x512并保留至少36px安全边距，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/shali/default_bust.png",
+      "sha256": "313cd2bbc17c329829f047d4e5a6a539f462ac99da780b6bda5fae6e7d81d6ae",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1318437,
+      "purpose": "沙砾对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以沙砾全身Portrait Master为身份硬参考并经复核的Dialogue Bust；锁定26岁成年、风沙磨出的成年脸、高束防雨发式、灰青修补披肩、深灰拼接护具、火种灯与旧地图/水囊",
+        "mood": "坚韧、警惕、护短、记旧债、低饱和锈红雨灰深青",
+        "story_use": "Godot RPG对话框右侧沙砾角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/年龄/长腿修长成年体态/服装道具/低饱和/透明边缘/非露骨商业游戏PASS；本地仅做透明杂边净化、Alpha阈值定点清理、预乘Alpha缩放与约62px四边安全边距"
+      }
+    },
+    {
+      "path": "dialogue/shali/default_bust_v1.png",
+      "sha256": "313cd2bbc17c329829f047d4e5a6a539f462ac99da780b6bda5fae6e7d81d6ae",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1318437,
+      "purpose": "沙砾对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "沙砾Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "坚韧、警惕、护短、记旧债、低饱和锈红雨灰深青",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与沙砾Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/shen_tinglan/avatar.png",
+      "sha256": "7e30db8395e5a9ab90eb4e42745fe2e8c8a8bcb67730632ba72a8d2dcf6bd0fa",
+      "width": 512,
+      "height": 512,
+      "bytes": 322048,
+      "purpose": "沈听澜对话头像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的沈听澜Dialogue Bust候选派生头像；保留成年灵机阵师、青铜护目镜、机械发饰、黑白青工造服、青色阵钥与展开阵板",
+        "mood": "明快、专业、敢试错、低饱和冷青",
+        "story_use": "Godot RPG对话框头像；与沈听澜Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份/成年职业/服装道具/构图/低饱和/透明边缘PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/shen_tinglan/default_bust.png",
+      "sha256": "eda741f4443a89733ee8243b361747eef7a0067b75d9718dad32c4f5436710db",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1300731,
+      "purpose": "沈听澜对话半身像",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的沈听澜全身Master为身份硬参考并经复核的Dialogue Bust；锁定成年灵机阵师、护目镜与机械发饰、白色机能外套、黑色高领内搭、工具带、青色阵钥与展开阵板",
+        "mood": "明快、专业、敢试错、低饱和冷青",
+        "story_use": "Godot RPG对话框左侧沈听澜角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/成年职业/服装道具/构图/低饱和/透明边缘PASS；本地仅做Alpha阈值定点清理、缩放与约62px四边安全边距，保留原参考中的功能性腹部剪裁"
+      }
+    },
+    {
+      "path": "dialogue/shuangya/avatar.png",
+      "sha256": "0597219bfdbbe712d3d8fd4b924ac835f5bf7c454a67ad5a6b0c6304a70ddcac",
+      "width": 512,
+      "height": 512,
+      "bytes": 362025,
+      "purpose": "霜鸦对话头像",
+      "eras": [
+        "星穹道网纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的霜鸦Dialogue Bust候选派生头像；保留霜白高束发、羽饰、冷艳猎手脸、黑鸦/黑灯、暗红契约带与黑色猎手装",
+        "mood": "冷艳、危险、耐心、低饱和、黑灰暗红",
+        "story_use": "Godot RPG对话框头像；与霜鸦Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份与服装PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/shuangya/default_bust.png",
+      "sha256": "f81233a9ba5285b3dcc08dc9619a44ea236581c67db6fa845a5a569abb214a94",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1408089,
+      "purpose": "霜鸦对话半身像",
+      "eras": [
+        "星穹道网纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端以确认的霜鸦全身Master为身份硬参考并经复核的Dialogue Bust；锁定冷艳猎手脸、霜白束发、羽饰、黑鸦灯、权限链、暗红契约带与黑色契约猎手装",
+        "mood": "冷艳、危险、审查、低饱和、黑灰暗红",
+        "story_use": "Godot RPG对话框左侧霜鸦角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/服装/成人魅力边界/构图/低饱和PASS；本地使用分割、透明杂边清理、缩放与约62px四边安全边距，保留黑鸦灯与权限链"
+      }
+    },
+    {
+      "path": "dialogue/wen_hao/avatar.png",
+      "sha256": "cea060a5588014c88c23ca33162a19a8a25dd7994f64962dc1b4bb3a8e1621af",
+      "width": 512,
+      "height": 512,
+      "bytes": 390918,
+      "purpose": "闻蒿对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/wen_hao/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端生成并通过身份复核的闻蒿Dialogue Bust派生头像；保留照骨原西畦轮水人、黑青辫发、灰绿灌渠工服、刻度铜水管与灌溉账册",
+        "mood": "沉着、务实、警醒、低饱和荒原灰绿",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与闻蒿Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "网页端复核身份连续性、轮水职业、道具、低饱和、透明背景与非露骨PASS；本地做Alpha清理、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/wen_hao/default_bust.png",
+      "sha256": "070d0dc1485a67027c6fbe9927226ebf361516d9ab2034ade03ab26ed038dca7",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1281951,
+      "purpose": "闻蒿对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/wen_hao_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于闻蒿全身Master生成同角色Dialogue Bust；锁定照骨原西畦轮水人、灌渠工服、刻度铜水管、灌溉账册与实用型水务身份",
+        "mood": "沉着核水、务实警戒、疲惫但不失条理、低饱和灰绿土褐",
+        "story_use": "Godot RPG对话框右侧闻蒿角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份/职业/道具/构图/低饱和/服装完整/非露骨复核PASS；网页源图边缘贴近画布，本地按头到腰构图、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/wen_hao/default_bust_v1.png",
+      "sha256": "070d0dc1485a67027c6fbe9927226ebf361516d9ab2034ade03ab26ed038dca7",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1281951,
+      "purpose": "闻蒿对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/wen_hao_v1.png",
+      "generation_intent": {
+        "concept": "闻蒿Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "沉着核水、务实警戒、低饱和灰绿土褐",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与闻蒿Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/wen_xingdu/avatar.png",
+      "sha256": "d5474033954429d89efbce0ad8f8d168737407a182ebf96a2455fa44b974e2a7",
+      "width": 512,
+      "height": 512,
+      "bytes": 342765,
+      "purpose": "闻星渡对话头像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/wen_xingdu/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于闻星渡已确认Dialogue Bust身份锚点生成同角色Dialogue Avatar；锁定27岁成年星网巡道使、深黑靛青短束发、轨道式银蓝星网发饰、靛青墨黑雾白巡道层衣与大型星盘",
+        "mood": "警觉、守权限、温柔有限、重证据、低饱和靛青金属",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与闻星渡Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经成年身份/发饰/职业服装/星盘道具/低饱和/透明/非露骨复核PASS；本地仅做Alpha阈值去彩边、预乘Alpha缩放至512x512与至少36px安全边距，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/wen_xingdu/default_bust.png",
+      "sha256": "0acdc75f2aa5799c9ab5250cb5a27dc4ef3f4103be82d23c0453fc4797c5bc25",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1192444,
+      "purpose": "闻星渡对话半身像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "闻星渡剧情身份锚点的Dialogue Bust；保留27岁成年星网巡道使、克制短束发、道网接口、实体巡道工具与人类面部",
+        "mood": "警觉、守权限、温柔有限、重证据、低饱和靛青金属",
+        "story_use": "Godot RPG对话框闻星渡角色半身像；不替换全身Portrait Master",
+        "source_note": "历史已存在资产；本次仅补登记，未改变角色设计或图像内容"
+      }
+    },
+    {
+      "path": "dialogue/wen_xingdu/default_bust_v1.png",
+      "sha256": "0acdc75f2aa5799c9ab5250cb5a27dc4ef3f4103be82d23c0453fc4797c5bc25",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1192444,
+      "purpose": "闻星渡对话半身像 v1 回滚副本",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "闻星渡Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一身份锚点",
+        "mood": "警觉、守权限、温柔有限、重证据、低饱和靛青金属",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "历史已存在资产；本次仅补登记，未改变角色设计或图像内容"
+      }
+    },
+    {
+      "path": "dialogue/xin_ye/avatar.png",
+      "sha256": "2bd055a78436ff816c2b9ca0a391153ad009602f96f533e280152b250135fa8a",
+      "width": 512,
+      "height": 512,
+      "bytes": 310587,
+      "purpose": "辛叶对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/xin_ye/default_bust.png",
+      "generation_intent": {
+        "concept": "网页端基于辛叶已通过的Portrait Master与Dialogue Bust生成同角色Dialogue Avatar；锁定正式医护牌、深色低束发、雾白灰青深靛医疗看守制服、记录夹与拆针细工具",
+        "mood": "谨慎、内疚、技术熟练、低饱和雾白灰青深靛旧铜",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏辛叶头像；与辛叶Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端同角色生成并经身份连续性、医护看守职业、道具、低饱和、透明与非露骨复核PASS；本地仅做Alpha清理、最大主体连通域保留、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/xin_ye/default_bust.png",
+      "sha256": "90fd83dcf638103e4429a68c0f46cac2e8eab81336b0a6bbe3976a6cbaa55ab4",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1003101,
+      "purpose": "辛叶对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/xin_ye_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于辛叶全身Master生成同角色Dialogue Bust；锁定持正式医护牌的锁息炉看守、炉钥、记录夹、拆针细工具与医疗器械",
+        "mood": "谨慎、内疚、技术熟练、准备补救、低饱和雾白灰青深靛旧铜",
+        "story_use": "Godot RPG对话框辛叶角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份、职业、道具、构图、低饱和、服装完整与非露骨复核PASS；网页源图背景为深色渐变，本地按最大主体连通域保留、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/xin_ye/default_bust_v1.png",
+      "sha256": "90fd83dcf638103e4429a68c0f46cac2e8eab81336b0a6bbe3976a6cbaa55ab4",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1003101,
+      "purpose": "辛叶对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/xin_ye_v1.png",
+      "generation_intent": {
+        "concept": "辛叶Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "谨慎、内疚、技术熟练、准备补救、低饱和雾白灰青深靛旧铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与辛叶Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/xu_geng/avatar.png",
+      "sha256": "ebf26007f64b71e079dd32329870c302af40ea899c711a79987d9c573dd95b16",
+      "width": 512,
+      "height": 512,
+      "bytes": 294167,
+      "purpose": "许庚对话头像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/xu_geng_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于许庚全身立绘与Dialogue Bust生成同一角色Dialogue Avatar；锁定黑发灰丝、温厚疲惫成年男性脸、雾白围裙、墨青工作层衣与皮质肩带",
+        "mood": "温厚、疲惫、可靠、低饱和墨青灰白暗铜",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与许庚Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "内置网页端身份连续性/头像构图/服装道具/低饱和/透明/非露骨复核PASS；本地从网页生成Avatar做Alpha阈值清理、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/xu_geng/default_bust.png",
+      "sha256": "5b9db85a69f04a6129487c76f0242705aff76a77fb2faef60e20aaa03d229fc7",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1040238,
+      "purpose": "许庚对话半身像",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/xu_geng_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于许庚全身身份锚点生成同角色Dialogue Bust；锁定成年男性厨房主管、黑发灰丝、雾白围裙、墨青船员工作层衣、铜柄长勺与维护钥匙",
+        "mood": "温厚、疲惫、可靠、低饱和墨青灰白暗铜",
+        "story_use": "Godot RPG对话框右侧许庚角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色连续性/职业身份/构图/低饱和/服装完整/非露骨复核PASS；网页源图边距不足，本地按头到腰构图裁取、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/xu_geng/default_bust_v1.png",
+      "sha256": "5b9db85a69f04a6129487c76f0242705aff76a77fb2faef60e20aaa03d229fc7",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1040238,
+      "purpose": "许庚对话半身像 v1 回滚副本",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/xu_geng_v1.png",
+      "generation_intent": {
+        "concept": "许庚Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "温厚、疲惫、可靠、低饱和墨青灰白暗铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与许庚Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "dialogue/xuanhengzi/avatar.png",
+      "sha256": "39888f306309ea1c31baa0dde64e37d9256d60e6935ee250b88a1e2842594222",
+      "width": 512,
+      "height": 512,
+      "bytes": 302876,
+      "purpose": "玄衡子对话头像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "由网页端通过身份复核的玄衡子Dialogue Bust候选派生头像；保留玄衡冠、长须、严厉掌律真人脸、黑灰金道袍与肩部法纹",
+        "mood": "冷硬、审查、权威、低饱和",
+        "story_use": "Godot RPG对话框头像；与玄衡子Dialogue Bust共用身份锚点",
+        "source_note": "内置网页端身份与服装PASS；本地从同一批准候选裁切为512x512透明头像，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/xuanhengzi/default_bust.png",
+      "sha256": "e686f37fc5da79fbd709ec183ed33b151159dd3c44085c55a2e80375152ec716",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1165160,
+      "purpose": "玄衡子对话半身像",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按用户提供黑白金掌律真人参考图生成并经复核的玄衡子Dialogue Bust；锁定玄衡冠、长须、黑灰白分层道袍、金色法纹、问律尺与黑玉法印",
+        "mood": "冷硬、审查、制度感、权威、低饱和、厚重",
+        "story_use": "Godot RPG对话框左侧玄衡子角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端身份/服装/构图/低饱和PASS；本地使用人像分割、透明杂边清理、缩放与约62px四边安全边距，不改动人物设计"
+      }
+    },
+    {
+      "path": "dialogue/yin_zhou/avatar.png",
+      "sha256": "9f3fb1e3b151fea0530d2b7cef06fba8fdf455ddc45dc481933e5bcc5caf349f",
+      "width": 512,
+      "height": 512,
+      "bytes": 271763,
+      "purpose": "殷昼对话头像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "dialogue/yin_zhou/default_bust.png",
+      "generation_intent": {
+        "concept": "由网页端生成并通过身份复核的殷昼Dialogue Bust派生头像；保留成熟天候工程官脸、黑灰高束发、铜制缺拍节律盘、旧天候历册与低饱和工程服",
+        "mood": "冷静、精确、疲惫、极端功利、低饱和荒原铜灰",
+        "story_use": "Godot RPG对话框、队伍栏与状态栏头像；与殷昼Dialogue Bust及全身Portrait Master共用身份锚点",
+        "source_note": "网页端两次独立Avatar请求均未返回可下载图片资源；本地从已通过网页端复核的同角色Dialogue Bust裁切头肩胸区域，做Alpha阈值清理、预乘Alpha缩放至512x512与至少36px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "dialogue/yin_zhou/default_bust.png",
+      "sha256": "108568203f7fde32e74e2c62f21d713741f761cafb74804e0e8e77fff953a305",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1325864,
+      "purpose": "殷昼对话半身像",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/yin_zhou_v1.png",
+      "generation_intent": {
+        "concept": "网页端基于殷昼全身Master生成同角色Dialogue Bust；锁定末泉天候署校历员、伪日井天气工程官、铜制缺拍节律盘、旧历册、热能罐与褪铜工程长衣",
+        "mood": "冷静核对、疲惫值守、极端功利、低饱和煤黑靛灰褪铜",
+        "story_use": "Godot RPG对话框右侧殷昼角色半身像；不替换全身Portrait Master",
+        "source_note": "内置网页端同角色身份/职业/道具/构图/低饱和/服装完整/非露骨复核PASS；网页源图边缘贴近画布，本地按头到腰构图、Alpha清理、预乘Alpha缩放与约64px四边安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "dialogue/yin_zhou/default_bust_v1.png",
+      "sha256": "108568203f7fde32e74e2c62f21d713741f761cafb74804e0e8e77fff953a305",
+      "width": 1024,
+      "height": 1024,
+      "bytes": 1325864,
+      "purpose": "殷昼对话半身像 v1 回滚副本",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "derived_from": "portraits/yin_zhou_v1.png",
+      "generation_intent": {
+        "concept": "殷昼Dialogue Bust正式版的版本化回滚副本；与default_bust.png保持同一网页候选、身份锚点与本地Alpha处理",
+        "mood": "冷静核对、疲惫值守、极端功利、低饱和煤黑靛灰褪铜",
+        "story_use": "资产回滚与候选对照，不作为运行时默认路径",
+        "source_note": "与殷昼Dialogue Bust正式版字节一致的版本化副本；保留用于可追溯回滚"
+      }
+    },
+    {
+      "path": "portraits/a_cen_brother_v1.png",
+      "sha256": "ce8060745bb01666ba083566babd421de4dd3b8bdb1072a6d21e93e0f99be4ca",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1901297,
+      "purpose": "阿岑兄枯井镇幸存者剧情身份锚点立绘",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按阿岑兄剧情卡单角色生成；锁定年龄不明Level 0、普通幸存者、旧布衣与补丁、半袋干粮和井绳，不使用成人性感模板",
+        "mood": "求生、护妹、记恩、谨慎、低饱和尘土色",
+        "story_use": "Godot portraits 运行时资产；作为枯井镇对话身份锚点，不派生战斗像素",
+        "source_note": "内置网页端单角色生成；网页端身份复核PASS；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变人物设计"
+      }
+    },
+    {
+      "path": "portraits/a_cen_sister_v1.png",
+      "sha256": "35a65ab417c35cf213a3f958840e563789810ad8e18120b67d852053bb931db5",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1732852,
+      "purpose": "阿岑妹枯井镇幸存者剧情身份锚点立绘",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按阿岑妹剧情卡单角色生成；锁定年龄不明Level 0、与兄长有亲缘但不复制五官、旧布衣与小披巾、小水囊和兄长递来的干粮，不使用成人性感模板",
+        "mood": "沉默、依赖、观察、克制希望、低饱和尘土色",
+        "story_use": "Godot portraits 运行时资产；作为枯井镇对话身份锚点，不派生战斗像素",
+        "source_note": "内置网页端单角色生成；网页端身份复核PASS；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变人物设计"
+      }
+    },
+    {
       "path": "portraits/chi_yaoqing_v1.png",
       "sha256": "afffef15e2d457e43892b733320c64dc2485e2c9ca834ec745cf4297e387c743",
       "width": 1024,
@@ -667,6 +2692,24 @@
       }
     },
     {
+      "path": "portraits/feng_qi_v1.png",
+      "sha256": "d709ee67ffb08a6fb565e553b19c35d13f7bfb46b1c4a40a85b55a85b44ddc58",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1427861,
+      "purpose": "冯七产品级搬运工与照料者身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于冯七剧情身份普查生成全身Portrait Master；锁定搬运工、照料昏迷姐姐、递定神针盒、拒绝趁乱换担架与寺院外院守夜等行为锚点",
+        "mood": "谨慎、忠实、疲惫守候、低饱和墨青灰褐旧白",
+        "story_use": "Godot portraits运行时资产；作为冯七Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端逐项剧情身份/搬运照料职业/道具/成熟但年龄未定比例/低饱和/服装完整/非露骨复核PASS；网页端明确指出深色渐变背景需本地处理，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
       "path": "portraits/final_age_meridian_creditor_v1.png",
       "sha256": "15b64ec62c87a1e0b1a0b4507dc7ee3a0496362fa7debb1f62d717d05afbf493",
       "width": 1024,
@@ -717,6 +2760,24 @@
         "mood": "冷静、精密、成熟、低饱和、偏冷偏灰",
         "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
         "source_note": "内置网页生成；本地仅做透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/he_wenqiu_v1.png",
+      "sha256": "25e3fda053cb5194350139967ad31d91574a0f04535850ed3823bcadc4175b3b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1114533,
+      "purpose": "何问秋产品级静息病人身份锚点立绘",
+      "eras": [
+        "末法纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成何问秋全身Portrait Master；锁定静息病人、临时医疗牌错名、冻结床边药物、深色侧辫、医疗层衣、厚披肩、腕部识别带、药杯与封存证据匣",
+        "mood": "安静、疲惫、清醒、自主、低饱和医疗青灰旧米白暗青暖铜",
+        "story_use": "Godot portraits运行时资产；作为何问秋Dialogue Bust与Avatar身份锚点，非参战者不派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、静息病人职业、成年外观但年龄未定、道具锚点、低饱和、服装完整、透明与非情色复核PASS；网页端原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
       }
     },
     {
@@ -788,6 +2849,42 @@
       "source_type": "curated"
     },
     {
+      "path": "portraits/jian_cheng_v1.png",
+      "sha256": "04f4bc9626aaeac1a13c60b773ea33e321bd583bc1535997ac693a82e315351f",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 847801,
+      "purpose": "简澄产品级身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查自由设计简澄全身Portrait Master；锁定曾任虚舟医研四室灵络技师、白肺夜事故知情证人、记录责任与灵络维修工具",
+        "mood": "谨慎、克制、专业、低饱和医研冷青",
+        "story_use": "Godot portraits运行时资产；作为简澄Dialogue Bust与后续NPC对话身份锚点",
+        "source_note": "内置网页端独立会话生成并经成年技术人员/职业身份/服装道具/低饱和/透明/非露骨复核；本地仅做Alpha阈值清理、预乘Alpha缩放与四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/jiang_kui_v1.png",
+      "sha256": "de076042957740476a88ff684eb134172bba56e35faf2cce03b31f9aa68ce2bd",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1152076,
+      "purpose": "姜葵产品级照昼会种窖种植师身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于姜葵剧情身份普查生成全身Portrait Master；锁定照昼会种植师、闸楼种窖管理、种子册/席位牌/封泥种子罐/水位尺/种窖旗等职业道具与生存风险判断",
+        "mood": "沉着、实际、警觉、有地方责任感、低饱和荒原灰绿土褐",
+        "story_use": "Godot portraits运行时资产；作为姜葵Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端生成并经网页端逐项剧情身份/种窖种植职业/道具/自然修长成人比例/低饱和/服装完整/非露骨复核PASS；网页端可见并推荐《荒野记事的测量师》候选，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
       "path": "portraits/jiang_zhaoxue_v1.png",
       "sha256": "e1c5f836fec1b1dd4f64f5995001f7d3f5192f14c96045676c34b590090ac0c3",
       "width": 1024,
@@ -803,6 +2900,24 @@
         "concept": "以用户提供的全局二次元游戏参考图提取线条、材质和动态语言，重做江照雪纯冷色全身身份立绘",
         "mood": "冷静、修长、自然丰满、银蓝剑修、无红色",
         "story_use": "Godot portraits 运行时资产"
+      }
+    },
+    {
+      "path": "portraits/jiao_liu_v1.png",
+      "sha256": "d431e4f401e95d952d88e048e696d74abaacaa019094a18ef9f4879370830f94",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1188520,
+      "purpose": "焦六产品级照昼会种窖信徒身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成焦六全身Portrait Master；锁定照昼会信徒、困守种窖、虔信与心虚、日轮布章、白祷告绳结、三席木签、种窖钥牌、旧灯笼与粮袋",
+        "mood": "虔信、恐惧、集体责任与心虚、低饱和灰褐煤黑褪金旧米白暗青",
+        "story_use": "Godot portraits运行时资产；作为焦六Dialogue Bust与Avatar身份锚点，非参战者暂不派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、照昼会信徒/种窖职业、道具、明确成年外观、低饱和、服装完整、透明与非露骨复核PASS；网页端指出原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
       }
     },
     {
@@ -935,6 +3050,152 @@
       }
     },
     {
+      "path": "portraits/liu_sanniang_v1.png",
+      "sha256": "74db1f662750d566a8a691f0e7a11694408427210bed90437740972a9228b208",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1046895,
+      "purpose": "柳三娘产品级古门泊位维护者身份锚点立绘",
+      "eras": [
+        "古典修仙纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成柳三娘全身Portrait Master；锁定古门第七道泊位、候船棚守桩、水路熟识、右肩旧伤护带、深黑高束发与粗辫、短缆/系船钩/泊位木牌/旧钥匙环",
+        "mood": "警觉、可靠、疲惫而坚韧、尊重本人意愿、低饱和深蓝灰旧米白烟绿旧铜",
+        "story_use": "Godot portraits运行时资产；作为柳三娘Dialogue Bust与Avatar身份锚点，非战斗剧情角色不派生战斗资源",
+        "source_note": "内置网页端单角色生成并经剧情身份、全身成人比例、右肩旧伤与职业道具锚点、低饱和、服装完整、透明与非情色复核PASS；网页端修正版通过最终风格复核，本地仅保留最大主体连通域、清理Alpha并做去晕边、预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未重绘角色"
+      }
+    },
+    {
+      "path": "portraits/lu_qingyuan_v1.png",
+      "sha256": "db27eca890e999f94d8d68137486fefbed60fa2549e391abbc1b5bc642807379",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2274026,
+      "purpose": "陆青鸢产品级医道仙官身份锚点立绘",
+      "eras": [
+        "仙朝鼎盛纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按陆青鸢身份卡单角色生成；锁定温和有底线的仙官脸、青鸢羽饰、霜白青玉医道层衣、青鸢羽针、药玉与医道印，并保持项目统一动画游戏画风",
+        "mood": "温和审慎、救人优先、追问代价、低饱和青玉",
+        "story_use": "Godot portraits 运行时资产；作为对话角色身份锚点",
+        "source_note": "内置网页端单角色生成；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/lu_yuan_v1.png",
+      "sha256": "b54caa690a7a5b252e24a28b0bdd185fcbb17f3f4c59d05bc747e96afb969552",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1468118,
+      "purpose": "陆芫产品级荒原车队领路与安置身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成陆芫全身Portrait Master；锁定红石线车队领路者、左眉盐痕、旧路牌、路线图、罗盘、水囊、粮袋、绳结标记与风灯",
+        "mood": "负责、直面风险、耐行、低饱和盐灰风沙褐旧青绿暗赭",
+        "story_use": "Godot portraits运行时资产；作为陆芫Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、车队领路职业、道具、明确成年比例、低饱和、服装完整、透明与非露骨复核PASS；网页端指出原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/luo_ningshuang_v1.png",
+      "sha256": "b66c7c57896ad8d8e46e0d742d996f71384aa0c69a533b98640eb94146a389ba",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2265198,
+      "purpose": "洛凝霜产品级桃华剑脉身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按洛凝霜身份卡定点生成；锁定暗梅长发、桃花簪、锐而不幼态的成熟脸、修长剑修比例、桃华剑、完整剑鞘与唯一剑柄剑穗，并保持项目之前的低饱和动画游戏画风",
+        "mood": "含笑邀战、好胜、冷梅、低饱和、修长",
+        "story_use": "Godot portraits 运行时资产；后续仅作为对话资产锚点，不派生战斗像素",
+        "source_note": "内置网页端生成 v2；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/meng_hanzhi_v1.png",
+      "sha256": "3cb3c8e812569d3d113d2d9d7f56ae96c6803bc6cb80dfd20c753534e100e2d2",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1131025,
+      "purpose": "孟寒枝产品级城南现住者身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成孟寒枝全身Portrait Master；锁定四年前官方转籍的城南现住者、同名账户争议、七日门锁凭证、旧钥串、住户布包、深色侧辫与雾蓝住户服",
+        "mood": "警惕、疲惫、务实、不卑不亢、低饱和雾蓝旧米白墨灰暖铜",
+        "story_use": "Godot portraits运行时资产；作为孟寒枝Dialogue Bust与Avatar身份锚点，非参战者不派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、城南现住者/转籍住户职业、道具锚点、成年外观但年龄未定、低饱和、服装完整、透明与非情色复核PASS；网页端原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/mu_lianchou_v1.png",
+      "sha256": "b5c14f2a71ccd178eabb75de0fec21b120522065049113eab87064e2ef819b33",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1227456,
+      "purpose": "穆连筹产品级药价核算与供养契身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成穆连筹全身Portrait Master；锁定都息署药价核算师、灵息债供养契摊主、算盘、清债契账册、封蜡契卷、印章、便携秤与药匣",
+        "mood": "精明、冷静、制度合理化、伦理迟钝、低饱和旧纸墨暗赭旧铜",
+        "story_use": "Godot portraits运行时资产；作为穆连筹Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、药价核算/供养契职业、道具、明确成年比例、低饱和、服装完整、透明与非露骨复核PASS；网页端指出原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/mu_qingyou_v1.png",
+      "sha256": "1e0949a30a9c41a3f23ccaa988bcfeb70d3be77ccfbe847fc9e5023b7c7f2a1d",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 930269,
+      "purpose": "穆青釉产品级雾港前导台值守者身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查并经全身构图复核生成穆青釉Portrait Master；锁定雾港前导台六船维护值守、十五分钟手动暂停、来源与船方回执核验、低束短编发、蓝灰值守服与纸带/空载盒/计时牌/回执夹",
+        "mood": "专注、克制、疲惫但可靠、低饱和雾港蓝灰旧米白深靛暗铜",
+        "story_use": "Godot portraits运行时资产；作为穆青釉Dialogue Bust与Avatar身份锚点，普通公共前导台工作人员不派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、全身成人比例、职业道具锚点、低饱和、服装完整、透明与非情色复核PASS；网页端候选图仅在预览中显示深色渐变，本地保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/ning_xiu_v1.png",
+      "sha256": "704c2176cf9d30693f3fb52cbf90f5fe719776d36918829b4a4ada6ac5cc80e8",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1513819,
+      "purpose": "宁绣产品级身份锚点立绘",
+      "eras": [
+        "仙朝鼎盛纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查自由设计宁绣全身Portrait Master；锁定104岁筑基女修、外貌三十出头、右膝坠桥旧伤、司命总席档库旧案证人及纸质收讫联/档案册/铜印",
+        "mood": "沉静、敏锐、重证据、低饱和苔玉档案色",
+        "story_use": "Godot portraits运行时资产；作为宁绣Dialogue Bust与后续生活型NPC对话身份锚点",
+        "source_note": "内置网页端独立会话生成并经成年女性/104岁筑基女修身份/旧伤/档案证物/低饱和/透明/非露骨复核PASS；网页端指出原图边距不足，本地仅做Alpha阈值清理、预乘Alpha缩放与四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
       "path": "portraits/ning_zhaoxue_v1.png",
       "sha256": "0932fadb03488717d2372a6c5587fdd7eafd695a8069535d2ded2c1f4cce0e04",
       "width": 1024,
@@ -981,6 +3242,62 @@
         "全时代"
       ],
       "source_type": "curated"
+    },
+    {
+      "path": "portraits/qi_wujiu_v1.png",
+      "sha256": "ae66d14614da870ca368becc511214ad6902265a09e932f03e41ccb3d8243702",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2413426,
+      "purpose": "祁无咎产品级藏拙修士身份锚点立绘",
+      "eras": [
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按祁无咎身份卡单角色生成；锁定笑意不达眼底、半束闲散长发、旧修士衣、空帖、折扇与隐藏灵压符，并保持项目统一动画游戏画风",
+        "mood": "含笑试探、藏拙、有分寸、低饱和、旧梅紫",
+        "story_use": "Godot portraits 运行时资产；作为对话角色身份锚点",
+        "source_note": "内置网页端单角色生成；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/qingheng_zhenren_v1.png",
+      "sha256": "a8c32a3ecc560a204ac16c22375ebe5d5fa7abf9f4c572158e822552b438c173",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2419172,
+      "purpose": "清蘅真人产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按清蘅真人身份卡与外观参考图生成；锁定成熟师尊脸、黑青双髻、门规玉简、短试心剑与直接挂在剑柄上的试心剑穗",
+        "mood": "低饱和、克制、护道、制度感、修长成人比例",
+        "story_use": "Godot portraits 运行时资产；后续派生对话半身像与表情资源",
+        "source_note": "内置网页端生成 v4；本地人物分割与Alpha阈值清理仅去除渐变背景，不改动角色RGB与身份设计"
+      }
+    },
+    {
+      "path": "portraits/qingheng_zhenren_v2.png",
+      "sha256": "73f208ee0dbdcef49b789f8b31d2704efd6d9ed83bc14467b80b4bdc1c9d9e39",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1589874,
+      "purpose": "清蘅真人新版产品级身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按清蘅真人原始服饰参考与身份卡生成；锁定黑青短发双髻、金红玉饰、有孔青玉笛、闭合高领白色内衫、白青绿墨层叠护道长衣与修长成人比例",
+        "mood": "低饱和、克制、护道、温和有威严、修长成人比例",
+        "story_use": "Godot portraits 运行时资产；后续派生对话半身像、头像与表情资源",
+        "source_note": "内置网页端单角色生成并完成胸口衣襟/身份/服装/比例/低饱和复核；网页端透明技术验收PASS；本地仅做前景色填充、Alpha清理、去halo与安全边距处理，不改动角色设计"
+      }
     },
     {
       "path": "portraits/qingyun_sword_heroine.jpg",
@@ -1050,6 +3367,44 @@
         "mood": "肃穆、克制、代际张力、低饱和冷灰墨青",
         "story_use": "Godot portraits 运行时资产；后续双人协同战斗图派生源",
         "source_note": "内置网页生成；修订分支停在分析状态未采用，当前资产为已生成双人群像的低饱和验收版"
+      }
+    },
+    {
+      "path": "portraits/shen_tinglan_v1.png",
+      "sha256": "5e6fe414660bdb13d9e7acdf16756c043539586e2994bdecdbefe19640e53f50",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2139802,
+      "purpose": "沈听澜产品级灵机阵师身份锚点立绘",
+      "eras": [
+        "星穹道网纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按沈听澜身份卡单角色生成；锁定明亮技术官脸、阵钥、折叠阵板、灵机护目镜与冷灰旧铜青绿色阵师工装，并保持项目统一动画游戏画风",
+        "mood": "明亮警惕、技术优先、合作留底牌、低饱和",
+        "story_use": "Godot portraits 运行时资产；作为对话角色身份锚点",
+        "source_note": "内置网页端单角色生成；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/shuangya_v1.png",
+      "sha256": "00b86f4f47f1d6b8d0880e33658ad0ec176eea4bfdee1bd0f7d40ed923829185",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2198678,
+      "purpose": "霜鸦产品级星网契约猎手身份锚点立绘",
+      "eras": [
+        "星穹道网纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按霜鸦身份卡单角色生成；锁定冷艳成熟脸、霜白黑鸦束发、功能性契约猎手装、契约钩刃、黑鸦灯与权限链，并保持项目统一动画游戏画风",
+        "mood": "冷静审查、危险耐心、黑冰、旧锈红、低饱和",
+        "story_use": "Godot portraits 运行时资产；作为对话角色身份锚点",
+        "source_note": "内置网页端单角色生成；本地仅做轻微低饱和对比度校正与透明Alpha清理，不改变角色设计"
       }
     },
     {
@@ -1208,6 +3563,24 @@
       }
     },
     {
+      "path": "portraits/wen_hao_v1.png",
+      "sha256": "d79ef408aee7d50f1a4ee8179c3075d28b74d20de5e1af3ad14fcd73e801009d",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1147894,
+      "purpose": "闻蒿产品级照骨原轮水人身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成闻蒿全身Portrait Master；锁定照骨原西畦轮水人、沉着务实的灌溉管理者、刻度铜水管、灌溉账册、信号旗与陶制水标",
+        "mood": "沉着、务实、警醒、地方责任感、低饱和荒原灰绿土褐",
+        "story_use": "Godot portraits运行时资产；作为闻蒿Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端逐项身份/轮水职业/道具/成熟比例/低饱和/服装完整/非露骨复核PASS；本地仅做Alpha阈值清理、预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
       "path": "portraits/wen_xingdu_v1.png",
       "sha256": "d4b055674c0c5be2578f8dc68aacb907c52bf5d43140ea03cd337bb2fe545a0c",
       "width": 1024,
@@ -1223,6 +3596,79 @@
         "mood": "专业、冷静、修长、低饱和、偏冷偏灰；成年服装以小面积侧开口表达星网接口功能",
         "story_use": "Godot portraits 运行时资产；身份门通过后作为战斗像素派生锚点",
         "source_note": "内置网页生成；本地仅做降低饱和度与透明Alpha阈值清理，不改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/xin_ye_v1.png",
+      "sha256": "46e21dcbd0989b973eaafe648cdfbd1caa73d13774fbe471693515c257783858",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1048709,
+      "purpose": "辛叶产品级锁息炉医护看守身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成辛叶全身Portrait Master；锁定正式医护牌、锁息炉钥、脉速剂量记录夹、拆针细工具与封存医疗箱等身份锚点",
+        "mood": "谨慎、内疚、技术熟练、愿意补救、低饱和雾白灰青深靛旧铜",
+        "story_use": "Godot portraits运行时资产；作为辛叶Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端单角色生成并经网页端剧情身份、医护看守职业、道具、明确成年比例、低饱和、服装完整、透明与非露骨复核PASS；网页端指出原图背景为深色渐变，本地仅保留最大主体连通域、清理Alpha并做预乘Alpha缩放与1024x1536四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/xu_geng_v1.png",
+      "sha256": "059bebe0e8af4cef3f61470a25a3b75a518134a2cc83e3c8a5ceb8be5b3a7a63",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1139927,
+      "purpose": "许庚产品级身份锚点立绘",
+      "eras": [
+        "星穹道网纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查自由设计许庚全身Portrait Master；锁定归潮八号厨房主管、船内白肺夜事故知情证人、厨房与设备维护双重职业道具",
+        "mood": "温厚、疲惫、可靠、低饱和墨青灰白暗铜",
+        "story_use": "Godot portraits运行时资产；作为许庚Dialogue Bust与后续生活型NPC对话身份锚点",
+        "source_note": "内置网页端独立会话生成并经成年男性/厨房主管身份/职业道具/低饱和/透明/非露骨复核PASS；网页端指出原图四边边距不足，本地仅做Alpha阈值清理、预乘Alpha缩放与四边至少64px安全边距适配，未改变角色设计"
+      }
+    },
+    {
+      "path": "portraits/xuanhengzi_v1.png",
+      "sha256": "c4d88e02878306717c421e29dcc3a6f0b900df2af5e5415c8c9cf93034a8e19b",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 2658585,
+      "purpose": "玄衡子产品级掌律真人身份锚点立绘",
+      "eras": [
+        "古典修仙纪",
+        "全时代"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端按玄衡子身份卡与用户提供的黑灰金掌律真人参考图重生成；锁定成熟掌律真人脸、玄衡冠、长须、宽肩厚袍、长方形问律尺/律令板与黑玉法印，并回到项目统一动画游戏画风",
+        "mood": "冷硬、审查、制度感、权威、低饱和、厚重",
+        "story_use": "Godot portraits 运行时资产；后续派生对话半身像与表情资源",
+        "source_note": "内置网页端按用户参考图生成 v3；本地仅使用分割Alpha并保留源图RGB以去除渐变背景，不改动人物设计"
+      }
+    },
+    {
+      "path": "portraits/yin_zhou_v1.png",
+      "sha256": "458eddcc7fb645a4a4396f4050b0ba3690928c926d8405017cd873bdc90f07e3",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1409188,
+      "purpose": "殷昼产品级末法天候工程官身份锚点立绘",
+      "eras": [
+        "废土返道纪"
+      ],
+      "source_type": "generated",
+      "generation_intent": {
+        "concept": "网页端基于剧情身份普查生成殷昼全身Portrait Master；锁定末泉城天候署校历员、伪日井校拍官、极端功利技术官僚与节律盘/热罐/旧天候历册/锁扣匣道具",
+        "mood": "冷静、精确、固执、疲惫值守、低饱和荒原铜灰",
+        "story_use": "Godot portraits运行时资产；作为殷昼Dialogue Bust与Avatar身份锚点，后续若确认战斗规格再派生战斗资源",
+        "source_note": "内置网页端A/B候选生成并经网页端逐项身份/职业/道具/成熟比例/低饱和/服装完整/非露骨复核PASS，A被推荐；本地仅做Alpha阈值清理、预乘Alpha缩放与四边至少64px安全边距适配，未改变角色设计"
       }
     },
     {

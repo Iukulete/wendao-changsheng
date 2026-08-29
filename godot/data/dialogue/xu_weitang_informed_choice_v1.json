@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xu_weitang_informed_choice",
+  "title": "救命的钱不能替人按下同意",
+  "entry_node": "xw_line_01",
+  "participants": ["protagonist", "xu_weitang"],
+  "nodes": [
+    {
+      "id": "xw_line_01",
+      "type": "line",
+      "speaker_id": "xu_weitang",
+      "expression": "urgent",
+      "outfit": "default",
+      "text": "我知道把整张纸念完，他们大半不会按，钱也就不到账。可我也知道，若只说“按一下就能领钱”，他们后来才发现纸上还写着放弃旧案，那不是救济，是拿今天的喘药替明天的人做决定。",
+      "next": "xw_choice_01"
+    },
+    {
+      "id": "xw_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xw_choice_full_terms",
+          "text": "逐人说明收款、治疗认可、旧案效力和撤回后果；急需药食先走独立窗口，不把救济绑定在补签上。",
+          "next": "xw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xu_weitang", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xu_weitang_full_terms_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "xw_choice_money_first",
+          "text": "先让二十三户拿到钱，复杂条款等救济池到账后再补说明，免得最急的人今晚断药。",
+          "next": "xw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xu_weitang", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xu_weitang_money_first_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xw_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把急药、欠薪、普通抄录工资和文书效力分成四笔账。许微棠交出委托原件与未送出的纸页，成件奖金进入审查，却不因她配合调查便追回已经用于吃饭和买药的生活钱；每个人都能保留认可治疗的部分，也能撤回被偷换的旧案意思。",
+      "next": "xw_effect_01"
+    },
+    {
+      "id": "xw_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xu_weitang_informed_choice_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "xu_weitang", "expression": "relieved"}
+      ],
+      "next": "xw_end"
+    },
+    {
+      "id": "xw_end",
+      "type": "end",
+      "result": "xu_weitang_informed_choice_boundary_preserved"
+    }
+  ]
+}

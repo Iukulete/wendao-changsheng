@@ -4,20 +4,126 @@
   "registry": "godot/data/characters/character_registry_v2.json",
   "groups": "godot/data/characters/character_groups_v1.json",
   "source_files": [
+    "godot/data/chronicles/classical_v1.json",
+    "godot/data/chronicles/final_age_v1.json",
+    "godot/data/chronicles/immortal_dynasty_v1.json",
+    "godot/data/chronicles/star_network_v1.json",
+    "godot/data/chronicles/steam_v1.json",
+    "godot/data/chronicles/wasteland_v1.json",
     "godot/data/story_arcs_v1.json",
     "godot/data/events_v014.json",
     "src/wendao_enhanced.cpp"
   ],
   "summary": {
-    "canonical_characters": 22,
+    "canonical_characters": 67,
     "canonical_groups": 3,
-    "mentions": 936,
-    "structured_mentions": 81,
-    "text_mentions": 75,
+    "mentions": 1954,
+    "structured_mentions": 540,
+    "text_mentions": 634,
     "cpp_mentions": 780,
     "unresolved_structured": 0
   },
   "references": [
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/19/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/19/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/19/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/20/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "jiang_zhaoxue",
+      "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/20/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/20/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "sect_lawkeepers",
+      "resolved_id": "sect_lawkeepers",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/21/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "chi_yaoqing",
+      "resolved_id": "chi_yaoqing",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "classical_v1.json",
+      "source_path": "godot/data/chronicles/classical_v1.json",
+      "path": "/chapters/21/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "family_covenant_holder",
+      "resolved_id": "family_covenant_holder",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
     {
       "source": "events_v014.json",
       "source_path": "godot/data/events_v014.json",
@@ -559,6 +665,3056 @@
       "kind": "combat_asset_reference"
     },
     {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/0/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/0/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/0/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/1/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/10/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/11/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/12/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/13/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/14/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/15/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/16/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/17/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/18/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/19/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/2/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/20/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/21/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/22/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/3/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/4/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/5/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/6/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/7/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/8/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "final_age_v1.json",
+      "source_path": "godot/data/chronicles/final_age_v1.json",
+      "path": "/chapters/9/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "han_xuansu",
+      "resolved_id": "han_xuansu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/0/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/1/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/10/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/10/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/10/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/11/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/11/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/11/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/12/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/12/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/12/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/13/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/13/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/13/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/14/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/14/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/14/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/15/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/15/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/15/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/16/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/16/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/16/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/17/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/17/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/17/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/18/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/18/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/18/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/19/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/19/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/19/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/2/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/2/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/20/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/20/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/20/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/21/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/21/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/22/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/22/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/22/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/0/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/1/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/3/choices/2/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/2/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/1/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/4/choices/2/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/5/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/5/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/5/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/6/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/6/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/6/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/7/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/7/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/7/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/8/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/8/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/8/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/9/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/9/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "immortal_dynasty_v1.json",
+      "source_path": "godot/data/chronicles/immortal_dynasty_v1.json",
+      "path": "/chapters/9/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "pei_zhaowei",
+      "resolved_id": "pei_zhaowei",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/0/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/0/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/1/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/10/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/10/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/10/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/11/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/11/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/11/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/12/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/12/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/12/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/13/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/13/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/13/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/14/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/14/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/14/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/15/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/15/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/15/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/16/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/16/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/16/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/17/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/17/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/17/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/18/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/18/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/18/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/19/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/19/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/19/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/2/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/2/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/20/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/20/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/20/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/21/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/21/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/22/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/22/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/22/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/23/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/23/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/23/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/3/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/3/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/3/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/4/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/4/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/5/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/5/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/5/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/6/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/6/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/6/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/7/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/7/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/7/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/8/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/8/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/9/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/9/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "star_network_v1.json",
+      "source_path": "godot/data/chronicles/star_network_v1.json",
+      "path": "/chapters/9/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "wen_xingdu",
+      "resolved_id": "wen_xingdu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/0/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/11/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/11/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/14/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/14/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/16/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/2/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/21/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/21/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/3/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/5/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/6/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/8/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "steam_v1.json",
+      "source_path": "godot/data/chronicles/steam_v1.json",
+      "path": "/chapters/8/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "cen_zhaolu",
+      "resolved_id": "cen_zhaolu",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
       "source": "story_arcs_v1.json",
       "source_path": "godot/data/story_arcs_v1.json",
       "path": "/arcs/0/character_id",
@@ -825,6 +3981,1446 @@
       "field": "character_id",
       "raw_name": "jiang_zhaoxue",
       "resolved_id": "jiang_zhaoxue",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/art/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/1/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/0/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/1/promises_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/1/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/10/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/11/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/12/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/13/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/14/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/15/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/16/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/17/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/18/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/19/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/0/debts_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/2/debts_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/2/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/20/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/21/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/22/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/2/debts_add/1/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/3/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/4/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/5/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/6/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/7/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/8/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/0/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/0/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/1/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/1/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/2/debts_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
+      "confidence": 1.0,
+      "kind": "structured_reference"
+    },
+    {
+      "source": "wasteland_v1.json",
+      "source_path": "godot/data/chronicles/wasteland_v1.json",
+      "path": "/chapters/9/choices/2/promises_add/0/character_id",
+      "field": "character_id",
+      "raw_name": "shali",
+      "resolved_id": "shali",
       "confidence": 1.0,
       "kind": "structured_reference"
     }

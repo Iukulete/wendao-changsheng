@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "wen_zhaolan_evidence_boundary",
+  "title": "温照岚的薄账",
+  "entry_node": "wzl_line_01",
+  "participants": ["protagonist", "wen_zhaolan"],
+  "nodes": [
+    {
+      "id": "wzl_line_01",
+      "type": "line",
+      "speaker_id": "wen_zhaolan",
+      "expression": "guarded",
+      "outfit": "north_slope_apprentice",
+      "text": "这三册账记了每次抽取、谁发高热、哪位买家退药。我可以交出证据，但不能把供养者住址贴到街上，也不能为了证明强制再让谁多挨一轮。",
+      "next": "wzl_choice_01"
+    },
+    {
+      "id": "wzl_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "wzl_choice_protect_addresses",
+          "text": "账册分三处封存，庭上先用编号；只有追查转运时才由指定人员解封住址，供养者可随时撤回证人行程。",
+          "next": "wzl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_zhaolan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "wen_zhaolan_addresses_protected", "value": true}
+          ]
+        },
+        {
+          "id": "wzl_choice_stop_extraction",
+          "text": "先关闭七个独立抽取阀，记录已经损失的寿元和身体状况；取证不应先制造新的损伤。",
+          "next": "wzl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_zhaolan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "wen_zhaolan_extraction_stopped", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wzl_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你可以同时保存证据和保护人。今天能确认的退出、清账和保密条件逐项写下，不能让一份总契把你的记录变成所有人的授权。",
+      "next": "wzl_effect_01"
+    },
+    {
+      "id": "wzl_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "wen_zhaolan_evidence_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "wen_zhaolan", "expression": "relieved"}
+      ],
+      "next": "wzl_end"
+    },
+    {
+      "id": "wzl_end",
+      "type": "end",
+      "result": "wen_zhaolan_evidence_boundary_preserved"
+    }
+  ]
+}

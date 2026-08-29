@@ -18,6 +18,17 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / ".tmp" / "art-candidate-review"
 SUPPORTED_FORMATS = {"PNG", "JPEG", "WEBP"}
 SPECS = {
+    "dialogue_bust": {
+        "min_width": 1024,
+        "min_height": 1024,
+        "aspect": 1.0,
+        "min_chroma": 0.035,
+        "contact_size": (512, 512),
+        "previews": (
+            ("dialogue_left", 512, 512, "contain", 0.5),
+            ("dialogue_compact", 384, 384, "contain", 0.45),
+        ),
+    },
     "environment": {
         "min_width": 1440,
         "min_height": 1080,
@@ -91,7 +102,12 @@ def histogram_entropy(gray: np.ndarray) -> float:
     return float(-np.sum(probabilities * np.log2(probabilities)))
 
 
-def analyze_candidate(path: Path, kind: str) -> dict[str, object]:
+def analyze_candidate(
+    path: Path,
+    kind: str,
+    *,
+    transparent_cutout: bool = False,
+) -> dict[str, object]:
     spec = SPECS[kind]
     failures: list[str] = []
     with Image.open(path) as source:
@@ -99,20 +115,46 @@ def analyze_candidate(path: Path, kind: str) -> dict[str, object]:
         width, height = source.size
         image_format = source.format or "UNKNOWN"
         rgba = source.convert("RGBA")
+    # Keep alpha metrics at source resolution. Resizing a complex transparent
+    # cutout with LANCZOS creates artificial semi-transparent edge pixels and
+    # can falsely reject otherwise binary/opaque product mattes.
+    full_pixels = np.asarray(rgba, dtype=np.float32) / 255.0
+    full_alpha = full_pixels[..., 3]
     sample = rgba.copy()
     sample.thumbnail((768, 768), Image.Resampling.LANCZOS)
     pixels = np.asarray(sample, dtype=np.float32) / 255.0
     rgb = pixels[..., :3]
     alpha = pixels[..., 3]
     gray = luminance(rgb)
-    low, median, high = (float(value) for value in np.percentile(gray, (1, 50, 99)))
+    visible = alpha > 0.05
+    is_cutout = transparent_cutout and kind in {"portrait", "dialogue_bust"}
+    metric_gray = gray[visible] if is_cutout else gray
+    if metric_gray.size == 0:
+        metric_gray = gray.reshape(-1)
+    low, median, high = (
+        float(value) for value in np.percentile(metric_gray, (1, 50, 99))
+    )
     dynamic_range = high - low
-    clipped_dark = float(np.mean(gray <= 0.01))
-    clipped_light = float(np.mean(gray >= 0.99))
-    sharpness = laplacian_variance(gray)
-    entropy = histogram_entropy(gray)
-    chroma = float(np.mean(np.max(rgb, axis=2) - np.min(rgb, axis=2)))
+    clipped_dark = float(np.mean(metric_gray <= 0.01))
+    clipped_light = float(np.mean(metric_gray >= 0.99))
+    sharp_gray = gray.copy()
+    if is_cutout:
+        sharp_gray[~visible] = 0.5
+    sharpness = laplacian_variance(sharp_gray)
+    entropy = histogram_entropy(metric_gray)
+    chroma_values = np.max(rgb, axis=2) - np.min(rgb, axis=2)
+    chroma = float(np.mean(chroma_values[visible])) if np.any(visible) else 0.0
     opaque_fraction = float(np.mean(alpha >= 0.99))
+    nonzero_fraction = float(np.mean(alpha > 0.0))
+    opaque_nonzero_fraction = float(
+        np.sum(alpha >= 0.99) / max(1.0, np.sum(alpha > 0.0))
+    )
+    if is_cutout:
+        opaque_fraction = float(np.mean(full_alpha >= 0.99))
+        nonzero_fraction = float(np.mean(full_alpha > 0.0))
+        opaque_nonzero_fraction = float(
+            np.sum(full_alpha >= 0.99) / max(1.0, np.sum(full_alpha > 0.0))
+        )
     aspect = width / max(1, height)
 
     if image_format not in SUPPORTED_FORMATS:
@@ -139,7 +181,15 @@ def analyze_candidate(path: Path, kind: str) -> dict[str, object]:
         failures.append(
             f"color separation is too weak ({chroma:.3f} < {float(spec['min_chroma']):.3f})"
         )
-    if opaque_fraction < 0.98:
+    if is_cutout:
+        if float(np.max(full_alpha)) < 0.99:
+            failures.append("transparent cutout has no fully opaque pixels")
+        if opaque_nonzero_fraction < 0.90:
+            failures.append(
+                "character matte is too soft "
+                f"({opaque_nonzero_fraction:.1%} of nonzero pixels opaque)"
+            )
+    elif opaque_fraction < 0.98:
         failures.append(f"unexpected transparency coverage ({opaque_fraction:.1%} opaque)")
 
     return {
@@ -161,6 +211,9 @@ def analyze_candidate(path: Path, kind: str) -> dict[str, object]:
         "entropy_bits": round(entropy, 4),
         "mean_chroma": round(chroma, 5),
         "opaque_fraction": round(opaque_fraction, 5),
+        "nonzero_fraction": round(nonzero_fraction, 5),
+        "opaque_nonzero_fraction": round(opaque_nonzero_fraction, 5),
+        "transparent_cutout": is_cutout,
         "automated_pass": not failures,
         "failures": failures,
     }
@@ -292,6 +345,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument("--reference", type=Path, action="append", default=[])
     parser.add_argument("--allow-single", action="store_true")
+    parser.add_argument(
+        "--transparent-cutout",
+        action="store_true",
+        help="Use portrait/dialogue-bust cutout alpha gates instead of requiring an opaque canvas",
+    )
     parser.add_argument("candidates", type=Path, nargs="+")
     return parser.parse_args()
 
@@ -307,7 +365,14 @@ def main() -> int:
             raise SystemExit(f"candidate image does not exist: {path}")
     output_dir = args.out_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    reports = {path: analyze_candidate(path, args.kind) for path in candidates + references}
+    reports = {
+        path: analyze_candidate(
+            path,
+            args.kind,
+            transparent_cutout=args.transparent_cutout,
+        )
+        for path in candidates + references
+    }
     pairwise_comparisons = [
         compare_candidates(candidates[first], candidates[second])
         for first in range(len(candidates))

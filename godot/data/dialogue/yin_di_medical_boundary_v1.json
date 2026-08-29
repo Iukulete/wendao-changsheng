@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "yin_di_medical_boundary",
+  "title": "尹荻的两栏记录",
+  "entry_node": "ydi_line_01",
+  "participants": ["protagonist", "yin_di"],
+  "nodes": [
+    {
+      "id": "ydi_line_01",
+      "type": "line",
+      "speaker_id": "yin_di",
+      "expression": "direct",
+      "outfit": "stone_bathhouse_keeper",
+      "text": "手术救了我，这句话是真的；那张同意也是假的，这句话同样是真的。别因为前一句有用，就把后一句从我的案子里擦掉。",
+      "next": "ydi_choice_01"
+    },
+    {
+      "id": "ydi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ydi_choice_split_medical_record",
+          "text": "把手术结果、当下观点、十六年前授权和后续拒赔分成四栏；先保她和其他病人的当前用药。",
+          "next": "ydi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yin_di", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "yin_di_medical_record_split", "value": true}
+          ]
+        },
+        {
+          "id": "ydi_choice_publish_all_names",
+          "text": "公开整批医疗文书和所有医师姓名，先让机构无法把责任藏在团队称呼里。",
+          "next": "ydi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yin_di", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "yin_di_public_accountability_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ydi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "救命的结果不能替过去的人补一句授权，伪造的授权也不能抹掉你活下来的事实。先让正在用药的人不被旧案拖断，再逐项确认谁做过决定、谁拒绝过说明。",
+      "next": "ydi_effect_01"
+    },
+    {
+      "id": "ydi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "yin_di_medical_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "yin_di", "expression": "relieved"}
+      ],
+      "next": "ydi_end"
+    },
+    {
+      "id": "ydi_end",
+      "type": "end",
+      "result": "yin_di_medical_boundary_preserved"
+    }
+  ]
+}

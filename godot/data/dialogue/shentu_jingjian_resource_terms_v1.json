@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "shentu_jingjian_resource_terms",
+  "title": "申屠敬简的条件",
+  "entry_node": "sjj_line_01",
+  "participants": ["protagonist", "shentu_jingjian"],
+  "nodes": [
+    {
+      "id": "sjj_line_01",
+      "type": "line",
+      "speaker_id": "shentu_jingjian",
+      "expression": "measured",
+      "outfit": "north_slope_steward",
+      "text": "末法之下，集中资源才能保住足够强的下一代。药柜、修院和外城保费都有条件，条件写在纸上，并不因为今天有人受伤就自动消失。",
+      "next": "sjj_choice_01"
+    },
+    {
+      "id": "sjj_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sjj_choice_publish_terms",
+          "text": "把测针记录、捐助附件、药柜钥匙和撤资后果逐项公开，让每个孩子与监护人知道自己在选择什么。",
+          "next": "sjj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shentu_jingjian", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "shentu_jingjian_terms_public", "value": true}
+          ]
+        },
+        {
+          "id": "sjj_choice_aid_first",
+          "text": "先打开捐赠柜救急，再把资源损失、撤资风险和旧案责任分开记账，不能让孩子先付代价。",
+          "next": "sjj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shentu_jingjian", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "shentu_jingjian_aid_first_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sjj_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "条件可以有，不能把没有听懂的孩子、失联的人和已经受损的人一起算成同一种同意。药要先救急，责任再按谁授权、谁得利、谁早该看出不对逐项追问。",
+      "next": "sjj_effect_01"
+    },
+    {
+      "id": "sjj_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "shentu_jingjian_accountability_preserved", "value": true},
+        {"type": "character_expression", "character_id": "shentu_jingjian", "expression": "uneasy"}
+      ],
+      "next": "sjj_end"
+    },
+    {
+      "id": "sjj_end",
+      "type": "end",
+      "result": "shentu_jingjian_accountability_preserved"
+    }
+  ]
+}

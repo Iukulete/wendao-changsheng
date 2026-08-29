@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "shan_weqing_memory_boundary",
+  "title": "白布鞋与留样",
+  "entry_node": "sw_line_01",
+  "participants": ["protagonist", "shan_weqing"],
+  "nodes": [
+    {
+      "id": "sw_line_01",
+      "type": "line",
+      "speaker_id": "shan_weqing",
+      "expression": "remembering",
+      "outfit": "default",
+      "text": "她把白布鞋带结和封存留样匣放在同一盏灯下：梦里听见的口令，可以留下；但不要因为它像我的声音，就替我把答案说完。",
+      "next": "sw_choice_01"
+    },
+    {
+      "id": "sw_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sw_choice_seal_in_parts",
+          "text": "按三方各持一段的方式封存，等本人和医师分别核对。",
+          "next": "sw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shan_weqing", "stat": "respect", "delta": 2},
+            {"type": "set_flag", "flag": "shan_weqing_memory_sealed_in_parts", "value": true}
+          ]
+        },
+        {
+          "id": "sw_choice_reconstruct_now",
+          "text": "先把完整口令拼出来，再判断它是不是她的记忆。",
+          "next": "sw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shan_weqing", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "shan_weqing_memory_reconstruction_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sw_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把白布鞋带结留在灯下，没有把一段梦境扩成整个人的同意。记录先保存，结论等能够被本人、亲属和医师分别核对的那一天。",
+      "next": "sw_effect_01"
+    },
+    {
+      "id": "sw_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "shan_weqing_identity_boundary_respected", "value": true},
+        {"type": "character_expression", "character_id": "shan_weqing", "expression": "firm"}
+      ],
+      "next": "sw_end"
+    },
+    {
+      "id": "sw_end",
+      "type": "end",
+      "result": "shan_weqing_identity_boundary_respected"
+    }
+  ]
+}

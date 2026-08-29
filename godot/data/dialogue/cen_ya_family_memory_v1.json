@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "cen_ya_family_memory",
+  "title": "今天要不要坐我旁边吃饭",
+  "entry_node": "cya_line_01",
+  "participants": ["protagonist", "cen_ya"],
+  "nodes": [
+    {
+      "id": "cya_line_01",
+      "type": "line",
+      "speaker_id": "cen_ya",
+      "expression": "curious",
+      "outfit": "child_warm_clothes",
+      "text": "姨，今天你坐我旁边吃吗？锅点着以后会回来吗？如果有人回不来，他的饭盒怎么办？",
+      "next": "cya_choice_01"
+    },
+    {
+      "id": "cya_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "cya_choice_fourth_chopstick",
+          "text": "给她留一双第四双筷子，并把大人何时回家、谁来照看和饭盒放在哪里说清楚，不用空话哄她。",
+          "next": "cya_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "cen_ya", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "cen_ya_fourth_chopstick_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "cya_choice_draw_route",
+          "text": "请她用画纸画出锅、红灯和安全路线，交给大人核对，不让孩子承担撤离决定，只让她知道自己该去哪里找照护者。",
+          "next": "cya_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "cen_ya", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "cen_ya_draw_route_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cya_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "岑芽可以记住谁陪她吃饭、哪盏灯亮着、该去哪里找人；城市的炉、债和排班由大人负责，不能把孩子的画变成替她签下的决定。",
+      "next": "cya_effect_01"
+    },
+    {
+      "id": "cya_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "cen_ya_memory_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "cen_ya", "expression": "relieved"}
+      ],
+      "next": "cya_end"
+    },
+    {
+      "id": "cya_end",
+      "type": "end",
+      "result": "cen_ya_memory_boundary_preserved"
+    }
+  ]
+}

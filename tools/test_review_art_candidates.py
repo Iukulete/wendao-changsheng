@@ -60,6 +60,27 @@ class CandidateReviewTests(unittest.TestCase):
             self.assertFalse(report["automated_pass"])
             self.assertGreaterEqual(len(report["failures"]), 3)
 
+    def test_binary_cutout_uses_source_resolution_alpha_metrics(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            y, x = np.mgrid[0:1536, 0:1024]
+            rgb = np.stack(
+                (
+                    40.0 + (x / 1023.0) * 130.0,
+                    30.0 + (y / 1535.0) * 150.0,
+                    70.0 + ((x + y) / 2558.0) * 120.0,
+                ),
+                axis=2,
+            ).astype(np.uint8)
+            alpha = (
+                (x - 512) ** 2 / 360.0**2 + (y - 768) ** 2 / 650.0**2 <= 1.0
+            ).astype(np.uint8) * 255
+            path = root / "cutout.png"
+            Image.fromarray(np.dstack((rgb, alpha)), "RGBA").save(path)
+            report = review.analyze_candidate(path, "portrait", transparent_cutout=True)
+            self.assertTrue(report["automated_pass"], report["failures"])
+            self.assertEqual(report["opaque_nonzero_fraction"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

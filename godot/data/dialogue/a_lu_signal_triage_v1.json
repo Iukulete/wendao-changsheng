@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "a_lu_signal_triage",
+  "title": "先到只说明多睡一夜",
+  "entry_node": "al_line_01",
+  "participants": ["protagonist", "a_lu"],
+  "nodes": [
+    {
+      "id": "al_line_01",
+      "type": "line",
+      "speaker_id": "a_lu",
+      "expression": "clear",
+      "outfit": "default",
+      "text": "粮仓只有这一片干地，药也只够先救一部分。先到只说明多睡一夜，不说明多占一块干地；先报清呼吸、出血和转运时限，再决定谁拿药、谁等船。报旗要有回旗，不能只因为我们看见了就当对面听懂。",
+      "next": "al_choice_01"
+    },
+    {
+      "id": "al_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "al_choice_harm_first",
+          "text": "按伤情和停药风险排红黄白，再用交叉旗确认上下游收到；每个安置点只掌握自己的路线与下一次报平安时刻。",
+          "next": "al_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_lu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "a_lu_harm_first_signal_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "al_choice_earliest_arrival",
+          "text": "先按到达顺序分干地和药，尽快让队伍看起来有一个统一的总表。",
+          "next": "al_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_lu", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "a_lu_earliest_arrival_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "al_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你们把水位、伤情、船位、药量和回旗时刻分别记录。阿芦接过总图，却只保留相邻点需要知道的局部；有人退出报旗班便换人，不因自选称呼或一次自愿救援变成公开整座粮仓的义务。",
+      "next": "al_effect_01"
+    },
+    {
+      "id": "al_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "a_lu_signal_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "a_lu", "expression": "relieved"}
+      ],
+      "next": "al_end"
+    },
+    {
+      "id": "al_end",
+      "type": "end",
+      "result": "a_lu_signal_boundary_preserved"
+    }
+  ]
+}

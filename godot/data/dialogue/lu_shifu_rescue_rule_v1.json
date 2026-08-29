@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_shifu_rescue_rule",
+  "title": "刀可以晚，失去知觉的人等不了",
+  "entry_node": "ls_line_01",
+  "participants": ["protagonist", "lu_shifu"],
+  "nodes": [
+    {
+      "id": "ls_line_01",
+      "type": "line",
+      "speaker_id": "lu_shifu",
+      "expression": "plain",
+      "outfit": "default",
+      "text": "水声一盖住喊话，井口就只认绳号。三息没有回应，先收人；不派第二个人盲目下潜。刀可以晚，失去知觉的人等不了。你若要快，先把谁能叫停、谁来接班和谁记下损失说清楚。",
+      "next": "ls_choice_01"
+    },
+    {
+      "id": "ls_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ls_choice_three_breaths",
+          "text": "先按三息无回应收人、双绳互报、两人确认下游；救援与取证分队，任何人都能拉停潜牌。",
+          "next": "ls_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_shifu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_shifu_rescue_rule_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ls_choice_single_fast_dive",
+          "text": "先派最熟的人单绳下潜，等人救回来再补写规则，不能让一道手续拖过窗口。",
+          "next": "ls_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_shifu", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_shifu_fast_dive_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ls_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "鲁师傅把徒弟、熟手河工、船位和门板浮排分别排班。救援记录写清每次下潜、收绳、换班、设备损失与未确认的水下路线；证物由岸上另一组保管，现场救人不再靠某一个人的记忆和勇气撑到最后。",
+      "next": "ls_effect_01"
+    },
+    {
+      "id": "ls_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_shifu_rescue_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_shifu", "expression": "relieved"}
+      ],
+      "next": "ls_end"
+    },
+    {
+      "id": "ls_end",
+      "type": "end",
+      "result": "lu_shifu_rescue_boundary_preserved"
+    }
+  ]
+}

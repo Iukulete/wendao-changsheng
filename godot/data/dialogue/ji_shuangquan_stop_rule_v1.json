@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ji_shuangquan_stop_rule",
+  "title": "纪双泉的停针",
+  "entry_node": "jsq_line_01",
+  "participants": ["protagonist", "ji_shuangquan"],
+  "nodes": [
+    {
+      "id": "jsq_line_01",
+      "type": "line",
+      "speaker_id": "ji_shuangquan",
+      "expression": "focused",
+      "outfit": "archive_medic",
+      "text": "第三只薄楔进到一半，阿洛咳出了铁锈色的水。我叫停七分钟，不是因为总时限不重要，而是身体现在给了新的风险。等脉搏回到原来的节律，再问他要不要继续；救援不能把倒计时当成他的同意。",
+      "next": "jsq_choice_01"
+    },
+    {
+      "id": "jsq_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "jsq_choice_wait_for_heartbeat",
+          "text": "按七分钟停针，复测脉搏、脚趾温度和胸口灵纹；每一步都由阿洛分别回应，救援时限和身体同意分开记账。",
+          "next": "jsq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ji_shuangquan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ji_shuangquan_pause_and_recheck", "value": true}
+          ]
+        },
+        {
+          "id": "jsq_choice_prepare_parallel_support",
+          "text": "停针同时让另一组加固水槽和风箱，不碰阿洛的身体；把延误、替代器材和下一次询问时刻写清，避免用更快的动作掩盖风险。",
+          "next": "jsq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ji_shuangquan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ji_shuangquan_parallel_support_ready", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jsq_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "停针不是放弃救援，复测也不是把决定交给医工。你负责说清风险和替代方案，阿洛负责回答能否继续；档库里的旧删卷和你父亲可能留下的签发链，也要由三方在场分别核验。",
+      "next": "jsq_effect_01"
+    },
+    {
+      "id": "jsq_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ji_shuangquan_stop_rule_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ji_shuangquan", "expression": "relieved"}
+      ],
+      "next": "jsq_end"
+    },
+    {
+      "id": "jsq_end",
+      "type": "end",
+      "result": "ji_shuangquan_stop_rule_preserved"
+    }
+  ]
+}

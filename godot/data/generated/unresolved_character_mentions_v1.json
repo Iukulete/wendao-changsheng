@@ -4,16 +4,22 @@
   "registry": "godot/data/characters/character_registry_v2.json",
   "groups": "godot/data/characters/character_groups_v1.json",
   "source_files": [
+    "godot/data/chronicles/classical_v1.json",
+    "godot/data/chronicles/final_age_v1.json",
+    "godot/data/chronicles/immortal_dynasty_v1.json",
+    "godot/data/chronicles/star_network_v1.json",
+    "godot/data/chronicles/steam_v1.json",
+    "godot/data/chronicles/wasteland_v1.json",
     "godot/data/story_arcs_v1.json",
     "godot/data/events_v014.json",
     "src/wendao_enhanced.cpp"
   ],
   "summary": {
-    "canonical_characters": 22,
+    "canonical_characters": 67,
     "canonical_groups": 3,
-    "mentions": 936,
-    "structured_mentions": 81,
-    "text_mentions": 75,
+    "mentions": 1954,
+    "structured_mentions": 540,
+    "text_mentions": 634,
     "cpp_mentions": 780,
     "unresolved_structured": 0
   },

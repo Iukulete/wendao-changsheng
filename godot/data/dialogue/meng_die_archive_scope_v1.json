@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "meng_die_archive_scope",
+  "title": "孟迭每天管哪一页",
+  "entry_node": "mdi_line_01",
+  "participants": ["protagonist", "meng_die"],
+  "nodes": [
+    {
+      "id": "mdi_line_01",
+      "type": "line",
+      "speaker_id": "meng_die",
+      "expression": "guarded",
+      "outfit": "side_archive_administrator",
+      "text": "我的岗位规程只让我核对单页格式。死亡裁定、活跃流水和公益算力并排放在这里以后，我才发现每一页都能合规，合在一起却没有人负责回答。你们要开柜，先说清楚今天拿哪一页、为什么拿。",
+      "next": "mdi_choice_01"
+    },
+    {
+      "id": "mdi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "mdi_choice_split_pages",
+          "text": "先按死亡、账号和机构三类用途分册，只开眼下能证明冲突的页；每次开柜登记开柜人、页码、归还时刻与可读取范围。",
+          "next": "mdi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "meng_die", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "meng_die_pages_split_by_scope", "value": true}
+          ]
+        },
+        {
+          "id": "mdi_choice_keep_originals_locked",
+          "text": "原件继续留在双钥柜，只给家属与调查席提供受限副本；你把自己排除出涉事页的后续操作，另交一把钥匙给独立管理员。",
+          "next": "mdi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "meng_die", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "meng_die_independent_keyholder", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mdi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你只为自己看见和操作过的部分作证，岗位规程不能替整套制度自动回答。原件、受限副本、开柜人和归还时刻各留一份记录；哪一页证明什么，不能靠柜门开过一次就扩大。",
+      "next": "mdi_effect_01"
+    },
+    {
+      "id": "mdi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "meng_die_archive_scope_preserved", "value": true},
+        {"type": "character_expression", "character_id": "meng_die", "expression": "relieved"}
+      ],
+      "next": "mdi_end"
+    },
+    {
+      "id": "mdi_end",
+      "type": "end",
+      "result": "meng_die_archive_scope_preserved"
+    }
+  ]
+}

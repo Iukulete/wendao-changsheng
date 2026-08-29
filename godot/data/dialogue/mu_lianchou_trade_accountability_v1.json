@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "mu_lianchou_trade_accountability",
+  "title": "穆连筹的七号棚",
+  "entry_node": "mlc_line_01",
+  "participants": ["protagonist", "mu_lianchou"],
+  "nodes": [
+    {
+      "id": "mlc_line_01",
+      "type": "line",
+      "speaker_id": "mu_lianchou",
+      "expression": "polite",
+      "outfit": "drug_stall_accountant",
+      "text": "每个人都按过清债契，一次抽取三年寿元，家属就能少二十年基础配给。买家要药，供养者得清账，纸上写得很清楚。",
+      "next": "mlc_choice_01"
+    },
+    {
+      "id": "mlc_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "mlc_choice_publish_source",
+          "text": "把每支药管的来源、抽取时刻、买家付款和供养者实际损失逐项封存公开，不能只展示一张清债契。",
+          "next": "mlc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "mu_lianchou", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "mu_lianchou_source_chain_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "mlc_choice_seal_harm",
+          "text": "先封住人体抽取与已被污染的成品，普通草药摊继续营业；交易是否有效，等供养者能安全表达后再问。",
+          "next": "mlc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "mu_lianchou", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "mu_lianchou_harm_sealed", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mlc_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "契约的字面不等于每个人都听懂了伤害。药要先救急，账要留证，失败药退款和供养者的寿元损失不能被同一行“交易完成”抹掉。",
+      "next": "mlc_effect_01"
+    },
+    {
+      "id": "mlc_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "mu_lianchou_accountability_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "mu_lianchou", "expression": "uneasy"}
+      ],
+      "next": "mlc_end"
+    },
+    {
+      "id": "mlc_end",
+      "type": "end",
+      "result": "mu_lianchou_accountability_boundary_preserved"
+    }
+  ]
+}

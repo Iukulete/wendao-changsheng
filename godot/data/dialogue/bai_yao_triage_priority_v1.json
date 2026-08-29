@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "bai_yao_triage_priority",
+  "title": "药箱按伤情，不按立场",
+  "entry_node": "by_line_01",
+  "participants": ["protagonist", "bai_yao"],
+  "nodes": [
+    {
+      "id": "by_line_01",
+      "type": "line",
+      "speaker_id": "bai_yao",
+      "expression": "precise",
+      "outfit": "default",
+      "text": "白药把药箱里的丹药分成两列：红灯先看呼吸和经脉灼伤，黄灯等担架，绿灯先自己站到避雨线里。药不够时更不能按谁先求救、谁信不信照昼会来分；伤情是一栏，意愿和去向是另一栏。",
+      "next": "by_choice_01"
+    },
+    {
+      "id": "by_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "by_choice_triage_by_harm",
+          "text": "先按呼吸、开放伤和转运时限排红黄绿，再把每个人的去向和是否愿意作证单独记录。",
+          "next": "by_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bai_yao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "bai_yao_harm_based_triage", "value": true}
+          ]
+        },
+        {
+          "id": "by_choice_triage_by_loyalty",
+          "text": "先救愿意留下守住种窖的人，把药留给能继续承担队伍任务的人。",
+          "next": "by_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bai_yao", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "bai_yao_loyalty_triage_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "by_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你们把余药、担架、空气、水位和下一次复查时刻逐项报入交班板。白药没有用“救出多少人”抹平药债、停留和无法复原的设备损失，也没有让照护责任覆盖患者自己对去向的选择。",
+      "next": "by_effect_01"
+    },
+    {
+      "id": "by_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "bai_yao_medical_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "bai_yao", "expression": "relieved"}
+      ],
+      "next": "by_end"
+    },
+    {
+      "id": "by_end",
+      "type": "end",
+      "result": "bai_yao_medical_boundary_preserved"
+    }
+  ]
+}

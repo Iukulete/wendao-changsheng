@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "feng_wendi_protocol_pen",
+  "title": "规程不能比人硬",
+  "entry_node": "fw_line_01",
+  "participants": ["protagonist", "feng_wendi"],
+  "nodes": [
+    {
+      "id": "fw_line_01",
+      "type": "line",
+      "speaker_id": "feng_wendi",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "封闻笛把一枚只存编号的灵息片放在木板边：记录要能交班，但不能把声音、图卡和猜测一起塞进一个看似整齐的答案。规程若比人硬，还是一台机器。",
+      "next": "fw_choice_01"
+    },
+    {
+      "id": "fw_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "fw_choice_user_fields",
+          "text": "让每位床边使用者决定哪些字段可记录、哪些方式不适用。",
+          "next": "fw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "feng_wendi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "feng_wendi_user_fields_kept", "value": true}
+          ]
+        },
+        {
+          "id": "fw_choice_universal_form",
+          "text": "统一所有人的图卡和手势，交班会更快。",
+          "next": "fw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "feng_wendi", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "feng_wendi_universal_form_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fw_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把可交班的编号和不能代答的空白同时留在木板上。封闻笛收起笔尖，要求下一班先问人，再读取记录。",
+      "next": "fw_effect_01"
+    },
+    {
+      "id": "fw_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "feng_wendi_human_first_protocol", "value": true},
+        {"type": "character_expression", "character_id": "feng_wendi", "expression": "relieved"}
+      ],
+      "next": "fw_end"
+    },
+    {
+      "id": "fw_end",
+      "type": "end",
+      "result": "feng_wendi_human_first_protocol"
+    }
+  ]
+}

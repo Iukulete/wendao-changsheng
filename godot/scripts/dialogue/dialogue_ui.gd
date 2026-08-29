@@ -12,6 +12,7 @@ var speaker_label: Label
 var line_label: Label
 var choice_box: VBoxContainer
 var continue_button: Button
+var portrait_view: TextureRect
 var portrait_path := ""
 
 
@@ -41,9 +42,22 @@ func _build_minimal_surface() -> void:
 	margin.add_theme_constant_override("margin_top", 18)
 	margin.add_theme_constant_override("margin_bottom", 18)
 	panel.add_child(margin)
+	var content := HBoxContainer.new()
+	content.name = "Content"
+	content.add_theme_constant_override("separation", 18)
+	margin.add_child(content)
+	portrait_view = TextureRect.new()
+	portrait_view.name = "Portrait"
+	portrait_view.custom_minimum_size = Vector2(220, 330)
+	portrait_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait_view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	portrait_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	portrait_view.visible = false
+	content.add_child(portrait_view)
 	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 12)
-	margin.add_child(column)
+	content.add_child(column)
 	speaker_label = Label.new()
 	speaker_label.name = "Speaker"
 	speaker_label.add_theme_font_size_override("font_size", 22)
@@ -78,6 +92,10 @@ func _render_node(node: Dictionary) -> void:
 	speaker_label.text = str(portrait.get("display_name", speaker_id))
 	line_label.text = str(node.get("text", ""))
 	portrait_path = str(portrait.get("portrait_path", ""))
+	if portrait_view != null:
+		var portrait_texture := load(portrait_path) as Texture2D
+		portrait_view.texture = portrait_texture
+		portrait_view.visible = portrait_texture != null
 	portrait_changed.emit(portrait.duplicate(true))
 	for child in choice_box.get_children():
 		child.queue_free()

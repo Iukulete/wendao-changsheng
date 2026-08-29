@@ -23,6 +23,7 @@ CHARACTER_DIR = DATA_DIR / "characters"
 GENERATED_DIR = DATA_DIR / "generated"
 
 STORY_SOURCES = (
+    *sorted((DATA_DIR / "chronicles").glob("*.json")),
     DATA_DIR / "story_arcs_v1.json",
     DATA_DIR / "events_v014.json",
 )

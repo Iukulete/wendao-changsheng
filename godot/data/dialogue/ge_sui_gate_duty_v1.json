@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ge_sui_gate_duty",
+  "title": "门里的人和门外的雨障",
+  "entry_node": "gsi_line_01",
+  "participants": ["protagonist", "ge_sui"],
+  "nodes": [
+    {
+      "id": "gsi_line_01",
+      "type": "line",
+      "speaker_id": "ge_sui",
+      "expression": "guarded",
+      "outfit": "gate_warden",
+      "text": "闸楼里十二个维护者、六个病人，锁已经困了四日。每次开门都要补一百零三席，强停又会让东闸雨障熄半个时辰。药箱和改牌我收过，不能把这两笔账藏在门后。",
+      "next": "gsi_choice_01"
+    },
+    {
+      "id": "gsi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gsi_choice_manual_check",
+          "text": "不补强制席，改由闸内外各四名值守同步报水位，葛穗每转半圈停一次；病人先撤离，药箱、改牌和送货册分层封存。",
+          "next": "gsi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_sui", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ge_sui_manual_check_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "gsi_choice_force_stop",
+          "text": "先切断三条索息缆，强行停止供能盘，立即开闸；雨障和跨站动态证据的损失留到事后再算。",
+          "next": "gsi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_sui", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ge_sui_force_stop_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gsi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "先救门里的人，再把药物、改牌、闸门读数和你的送货册分别封存。你可以接受限时限地询问，也可以保留辩护，但不能让“我在守门”自动变成“我没有责任”。",
+      "next": "gsi_effect_01"
+    },
+    {
+      "id": "gsi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ge_sui_gate_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ge_sui", "expression": "resolved"}
+      ],
+      "next": "gsi_end"
+    },
+    {
+      "id": "gsi_end",
+      "type": "end",
+      "result": "ge_sui_gate_boundary_preserved"
+    }
+  ]
+}

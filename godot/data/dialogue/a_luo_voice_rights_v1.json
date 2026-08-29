@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "a_luo_voice_rights",
+  "title": "这段声音先留给我",
+  "entry_node": "al2_line_01",
+  "participants": ["protagonist", "a_luo"],
+  "nodes": [
+    {
+      "id": "al2_line_01",
+      "type": "line",
+      "speaker_id": "a_luo",
+      "expression": "focused",
+      "outfit": "signal_technician",
+      "text": "风声可以拿来定位，支路可以交给法台，那段声音先留给我。药浴所植进去的口令若被当成自述，三枚信号片接得越完整，错得也越像本人。",
+      "next": "al2_choice_01"
+    },
+    {
+      "id": "al2_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "al2_choice_separate_voice",
+          "text": "把风声、法台支路和本人声音分成三份授权；先用空白试验片定位，旧口令只作待核线索，不能替阿洛回答。",
+          "next": "al2_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_luo", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "a_luo_separate_voice_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "al2_choice_merge_signal",
+          "text": "先把三枚信号片同时接入取得完整归乡坐标，默认把其中最清晰的口令当作自述，事后再补做确认。",
+          "next": "al2_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_luo", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "a_luo_merge_signal_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "al2_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "十四岁捡回裂口埙的旧事可以作为记忆锚点，但不替你整套作保；信号定位能帮人回家，却不能顺手拿走患者的指挥位。",
+      "next": "al2_effect_01"
+    },
+    {
+      "id": "al2_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "a_luo_voice_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "a_luo", "expression": "relieved"}
+      ],
+      "next": "al2_end"
+    },
+    {
+      "id": "al2_end",
+      "type": "end",
+      "result": "a_luo_voice_boundary_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ruan_he_pool_boundary",
+  "title": "阮禾的池边辨认",
+  "entry_node": "rhe_line_01",
+  "participants": ["protagonist", "ruan_he", "jiang_kui"],
+  "nodes": [
+    {
+      "id": "rhe_line_01",
+      "type": "line",
+      "speaker_id": "ruan_he",
+      "expression": "weary",
+      "outfit": "frostlung_pool_witness",
+      "text": "我每天来听这层池膜。阮青十一年前失踪，床牌里的三结细线还是他右腕的旧记号。你们说他的残律让西池和中池有热，我听懂了；直接拔掉，今夜有人会断水、病车会少暖。我可以在知道后果后提出最后一次短接，也可以接受停用，但别把一个母亲的悲伤写成你们替我决定的牺牲。",
+      "next": "rhe_choice_01"
+    },
+    {
+      "id": "rhe_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "rhe_choice_record_informed_bridge",
+          "text": "把阮禾提出短时接入的选择、预计影响和替代热源一项项写清；短接只在四方见证和明确期限内进行，同时启动停用方案。",
+          "next": "rhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ruan_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ruan_he_informed_bridge_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "rhe_choice_preserve_family_burial",
+          "text": "先保留三结细线、床牌和家属辨认记录，把阮青残律转为待安置证物；公共热量另列替代账，不让家属继续承担机器消耗。",
+          "next": "rhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ruan_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ruan_he_family_burial_preserved", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rhe_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "家属的选择要有后果，也要有期限；公共池的热量要有替代账，不能靠死者的经络和家属的愧疚无限续下去。三结细线能证明阮青是谁，却不能自动决定他还要被用多久。",
+      "next": "rhe_effect_01"
+    },
+    {
+      "id": "rhe_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ruan_he_family_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ruan_he", "expression": "relieved"}
+      ],
+      "next": "rhe_end"
+    },
+    {
+      "id": "rhe_end",
+      "type": "end",
+      "result": "ruan_he_family_boundary_preserved"
+    }
+  ]
+}

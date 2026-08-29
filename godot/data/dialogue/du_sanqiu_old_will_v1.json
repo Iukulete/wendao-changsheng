@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "du_sanqiu_old_will",
+  "title": "七日后复核",
+  "entry_node": "ds_line_01",
+  "participants": ["protagonist", "du_sanqiu"],
+  "nodes": [
+    {
+      "id": "ds_line_01",
+      "type": "line",
+      "speaker_id": "du_sanqiu",
+      "expression": "quiet",
+      "outfit": "default",
+      "text": "杜三秋暂时没有稳定回应。护理员读着工会医务册里的旧话：继续治疗、弟弟可以探视、七日后复核。三句话都要留下，不能只挑家属最想听的一句。",
+      "next": "ds_choice_01"
+    },
+    {
+      "id": "ds_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ds_choice_keep_conditions",
+          "text": "按三项条件分别建档，七日后由独立医师重新核验。",
+          "next": "ds_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_sanqiu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "du_sanqiu_old_will_kept_separate", "value": true}
+          ]
+        },
+        {
+          "id": "ds_choice_family_vote",
+          "text": "让到场家属先替他统一决定，之后再补记录。",
+          "next": "ds_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_sanqiu", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "du_sanqiu_family_vote_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ds_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你让探视、治疗和复核各自拥有停止条件。旧话被保存为待核证据，而不是被家属的急迫声音改写成今天的全量同意。",
+      "next": "ds_effect_01"
+    },
+    {
+      "id": "ds_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "du_sanqiu_agency_boundary_recorded", "value": true},
+        {"type": "character_expression", "character_id": "du_sanqiu", "expression": "resolute"}
+      ],
+      "next": "ds_end"
+    },
+    {
+      "id": "ds_end",
+      "type": "end",
+      "result": "du_sanqiu_agency_boundary_recorded"
+    }
+  ]
+}

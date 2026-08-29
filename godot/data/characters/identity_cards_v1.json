@@ -1,0 +1,3999 @@
+{
+  "schema_version": 1,
+  "registry_id": "wendao_character_identity_cards_v1",
+  "style_id": "wendao_anime_mature_v2",
+  "policy": {
+    "source": "story_and_runtime_logic",
+    "unconfirmed_age_presentation_max": 0,
+    "no_explicit_content": true,
+    "promotion_order": ["story_evidence", "alias_review", "age_review", "portrait_identity_gate"]
+  },
+  "cards": {
+    "lu_xiao": {
+      "display_name": "陆绡",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "missing_passenger_and_family_liaison",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "归潮八号失踪乘客，十一年后重新发出求救讯号",
+        "陆禾的母亲，记得孩子的应答习惯与船内路线",
+        "坚持先寻找没有声音的人，不允许他人替乘客作决定",
+        "不是战斗角色，是星穹道网事件的关键活证与家属联络者",
+        "左耳后旧伤来自少年时期偷骑运货梭的事故"
+      ],
+      "personality": ["警觉", "保护孩子", "尊重同意", "疲惫但有尊严", "坚持留存原始证据"],
+      "visual_identity": {
+        "body_type": "adult_slender_practical",
+        "height_class": "HUM_L",
+        "face": ["成熟清醒的航船生存者脸", "长期低温与失踪经历留下轻微疲惫感"],
+        "hair": ["深黑棕长发", "实用低束发或侧辫", "风冷吹乱的碎发"],
+        "body": ["自然修长成人比例", "完整肩背、腰胯与长腿", "不幼态、不夸张"],
+        "costume": ["低饱和雾蓝铁灰旧米白长途航船工装", "不透明分层长外套", "保温内层", "耐磨腰封", "生命维持背带", "磨损补丁与旧靴"],
+        "props": ["无可读文字的折叠星盘", "孩子用的小型星图片", "旧船舱钥牌", "简易通讯耳件"],
+        "scar": "左耳后细小旧伤疤"
+      },
+      "palette_profile": "low_sat_fog_blue_iron_gray_rust_signal",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与身份尚未进一步确认；优先表达航船生存者和母亲身份"
+      },
+      "portrait_prompt_status": "prepared_waiting_web_submission",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_xiao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_xiao_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_xiao_v1.png",
+      "source_refs": [
+        "godot/data/chronicles/star_network_v1.json",
+        "docs/CHARACTER_CENSUS_V2.md"
+      ]
+    },
+    "wen_zhaoye": {
+      "display_name": "温照野",
+      "age_group": "minor",
+      "narrative_tier": "supporting",
+      "occupation": "orphanage_child_and_consent_advocate",
+      "faction_id": "dry_tide_orphanage",
+      "story_evidence": [
+        "十一岁、潜力榜第一名，却拒绝把自己的启灵机会变成别的孩子的债",
+        "姐姐温照岚三年前被北坡修院接走后失联，他坚持先查姐姐去向",
+        "要求孩子本人能表达愿意、待问或拒绝，并记录每次可以改变的选择",
+        "拒绝用五年强制药室契换取救治，只申请真实可核验的医床",
+        "在育幼院负责记录换流与传递空床数，但不承担医师责任"
+      ],
+      "personality": ["敏锐", "坚持边界", "保护同伴", "不轻信承诺", "愿意核对记录"],
+      "visual_identity": {
+        "body_type": "child_natural_active",
+        "height_class": "CHILD_M",
+        "face": ["十一岁儿童的清瘦脸型", "警觉而不凶、认真核对大人承诺的眼神"],
+        "hair": ["深黑棕短发", "额前被风吹散的碎发"],
+        "body": ["自然儿童比例", "不成人化、不性感化"],
+        "costume": ["低饱和墨蓝旧米白灰褐育幼院保暖衣物", "补丁短外套、旧围巾、耐磨长裤与布鞋", "简易护腕和可活动的分层穿着"],
+        "props": ["折断的木签", "装彩色石子的透明小罐", "姐姐的两封旧信"],
+        "safety": "minor_level_0_no_fanservice"
+      },
+      "palette_profile": "low_sat_orphanage_ink_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确十一岁；儿童角色固定 Level 0"
+      },
+      "portrait_prompt_status": "prepared_after_lu_xiao_single_generation",
+      "portrait_prompt_path": "res://data/characters/prompts/wen_zhaoye_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/wen_zhaoye_web_source_v1.png",
+      "master_path": "res://art/portraits/wen_zhaoye_v1.png",
+      "source_refs": [
+        "godot/data/chronicles/final_age_v1.json",
+        "godot/data/generated/character_census_v2.json"
+      ]
+    },
+    "song_jian": {
+      "display_name": "宋鉴",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "injured_passenger_and_procedure_guardian",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "在落潮三薄片处置中明确喊停，优先保住患者手指感觉",
+        "参与遗体标签与转运分组复核，保留错误原页和修正页",
+        "在医院只接受伤口与导丝位置检查，不接受超出范围的器械检查",
+        "姐姐用豆子与他确认旧游戏，他用三粒豆子回应，保留亲属记忆锚点",
+        "浅层薄片风险下降后，由他本人再次决定是否手术"
+      ],
+      "personality": ["果断喊停", "重视本人意愿", "证据意识强", "克制谨慎", "珍惜亲属记忆"],
+      "visual_identity": {
+        "body_type": "adult_slender_injured_passenger",
+        "height_class": "HUM_L",
+        "face": ["长期住船与医疗观察留下疲惫但清醒的成年男性脸", "判断风险时眉眼收紧、面对姐姐时稍微软化"],
+        "hair": ["深灰黑短发", "额前少量被冷风吹散的碎发"],
+        "body": ["自然修长成人比例", "一侧前臂有完整医疗固定与监测环", "站姿谨慎但不虚弱夸张"],
+        "costume": ["低饱和雾蓝、铁灰与旧米白的归潮八号乘客保暖层衣", "完整不透明的耐寒外套、软质腰封与旧船靴", "医疗固定带、可拆卸记录夹与磨损缝补"],
+        "props": ["无可读文字的停止标记牌", "三粒豆子或小型豆瓶", "伤口与导丝位置记录片", "简易船舱腕带"]
+      },
+      "palette_profile": "low_sat_fog_blue_iron_gray_bean_accent",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与完整身体资料尚未进一步确认；先表达受伤乘客、程序守门人与兄妹记忆，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/song_jian_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/song_jian_web_source_v1.png",
+      "master_path": "res://art/portraits/song_jian_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "shan_weqing": {
+      "display_name": "单苇青",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "deceased_student_memory_subject",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "单家在寿元分脉中明确保留她的留样，不允许因灾情替她决定用途",
+        "她的兄长参与分脉校准、留样和梦中口令的三段密封核对",
+        "剧情提到她葬礼上少了一只白布鞋，留下可核对的亲属记忆锚点",
+        "她的名字与三年前去世学生、梦境和黑线病案相连，但具体回声身份仍待核验",
+        "她不是战斗角色，应作为记忆/遗物线索的对话立绘，不把未核实的回声当作本人替答"
+      ],
+      "personality": ["身份边界模糊", "安静坚韧", "重视亲属记忆", "不应被他人代言", "留下可核证细节"],
+      "visual_identity": {
+        "body_type": "adult_slender_memory_subject",
+        "height_class": "HUM_L",
+        "face": ["清瘦安静、带有学生时代记忆感的成年女性脸", "神情像正在辨认一件旧物，不做幽灵恐怖化"],
+        "hair": ["深黑长发低束或简洁侧辫", "少量松散发丝，不使用夸张仙侠发冠"],
+        "body": ["自然修长成人比例", "站姿轻而稳，像记忆中的人在门边回望", "不幼态、不性感化"],
+        "costume": ["低饱和墨蓝、旧米白与灰青的旧学舍/迁舟层衣", "完整不透明的长外套、窄腰封与耐磨鞋", "细小白布鞋带或缝补边作为葬礼记忆锚点"],
+        "props": ["无可读文字的封存留样匣", "一只白布鞋或鞋带结", "三段密封的旧口令封条", "与兄长共享的记忆小物"]
+      },
+      "palette_profile": "low_sat_ink_blue_old_cream_memory_echo",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄、死亡状态与回声身份尚未完全核实；优先表达记忆线索和本人边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/shan_weqing_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/shan_weqing_web_source_v1.png",
+      "master_path": "res://art/portraits/shan_weqing_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "qin_man": {
+      "display_name": "秦慢",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "long_term_rest_patient",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "秦慢是静息病人，儿子要求继续一切治疗，却没有见过她的眼动回答",
+        "医疗与财产窗口被分开，儿子只获准推床和读药名，不能因此替她决定财产或治疗",
+        "她的医疗令必须保留可逆的停止条件，不能被家属的文件或声音覆盖",
+        "剧情提到她十七年补贴与亲属代领争议，身份和财产边界需要分别核验"
+      ],
+      "personality": ["安静坚持", "保留自身表达", "不让治疗替代身份", "边界清楚", "耐心等待核验"],
+      "visual_identity": {
+        "body_type": "adult_slender_rest_patient",
+        "height_class": "HUM_L",
+        "face": ["长期静息与医疗照护留下安静疲惫的成年女性脸", "眼神清醒、用细微眼动表达停止或继续"],
+        "hair": ["深黑棕中长发，简单低束或铺在肩后", "发式整洁但不做华丽装饰"],
+        "body": ["自然修长成人比例", "坐卧或高廊病床姿态，身体不被夸张医疗设备遮住", "不幼态、不性感化"],
+        "costume": ["低饱和灰青、旧米白与墨蓝的静息室保暖层衣", "完整不透明的宽松长衣、软质护肩与床边披巾", "可见但简洁的腕带和可逆护理标记"],
+        "props": ["无可读文字的眼动图卡", "床边停止/继续双面标记", "旧补贴凭证封袋", "可移动的护理记录板"]
+      },
+      "palette_profile": "low_sat_rest_room_ink_blue_gray_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色处于长期静息治疗；优先表达本人意愿和医疗边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/qin_man_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/qin_man_web_source_v1.png",
+      "master_path": "res://art/portraits/qin_man_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "sang_xian": {
+      "display_name": "桑弦",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_water_ration_coordinator",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "她被邀请留下作证，但明确说明苦井埠当晚还要分水，只能留到午后",
+        "她的妹妹在讯里报出剩余干粮和可用驴数，她据此决定封住东砂床并保留牲口用水",
+        "她能给出苦井东床十一日内每日让出六桶净水的上限与代价",
+        "她代表沿线社区谈移动泵、应急水与停两畦的资源边界，不把证人的生活时间交给九碑占用"
+      ],
+      "personality": ["务实果断", "保护社区", "知道资源上限", "尊重证人退出", "把家人的担忧转成行动"],
+      "visual_identity": {
+        "body_type": "adult_slender_wasteland_worker",
+        "height_class": "HUM_L",
+        "face": ["长期风沙与热气中的成熟清醒女性脸", "说出水量上限时果断，听见家人讯息时短暂柔和"],
+        "hair": ["深棕长发实用低束或粗辫", "防风头巾与少量被沙尘吹散的碎发"],
+        "body": ["自然修长成人比例", "肩背有长期提水与操纵泵阀形成的稳重力量感", "不幼态、不性感化"],
+        "costume": ["低饱和沙灰、褪青与暗土红的荒原分水工装", "完整不透明的耐热长外套、护臂、宽腰封、耐磨长裤与旧靴", "水囊挂带、盐尘磨损和可修补的布层"],
+        "props": ["无可读文字的分水木牌", "折叠水量刻度片", "移动泵扳手或短柄停阀", "驴队缰绳与封口水囊"]
+      },
+      "palette_profile": "low_sat_wasteland_sand_faded_teal_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与更多外貌资料尚未确认；先突出荒原分水职业与社区责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/sang_xian_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/sang_xian_web_source_v1.png",
+      "master_path": "res://art/portraits/sang_xian_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "a_sang": {
+      "display_name": "阿桑",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "worker_family_wage_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她用丈夫的工牌印识别被伪装成工资的药券，判断来自日常买米而非账房术语",
+        "她的女儿发烧，她仍把药单和工伤受理票带到欠薪核验桌，要求制度面对真实时限",
+        "她把七个死者和未到场者的工资页留在证物线外，拒绝抢走自己那一页",
+        "她能提出专用工资账户双签与全账解冻的时间代价，并追问医疗和工资最低额是否同等受保护",
+        "她代表工人家属持续核对九年工龄、工伤担保、药费和住房压力"
+      ],
+      "personality": ["务实锋利", "护家", "证据意识强", "不接受施舍包装", "能把日常经验变成公共追问"],
+      "visual_identity": {
+        "body_type": "adult_slender_worker_mother",
+        "height_class": "HUM_L",
+        "face": ["经历炉尘、欠薪和熬夜后的成熟清醒女性脸", "提到孩子和药单时焦急，指向工牌和账页时锋利坚定"],
+        "hair": ["深棕黑长发实用低束或侧辫", "额前和鬓角有少量炉灰与忙乱碎发"],
+        "body": ["自然修长成人比例", "肩背有长期家务和炉区劳作形成的力量感", "成熟轮廓通过合身分层工装与站姿表达，不裸露、不幼态"],
+        "costume": ["低饱和煤灰、旧米白、暗锈红的蒸汽城工人家属工装", "不透明的合身高领内层、短外套、耐磨长裙或长裤与实用旧靴", "腰封与围裙层略强调成人轮廓但保持行动性，布料有炉尘与缝补痕迹"],
+        "props": ["丈夫的旧工牌印拓片", "女儿的退烧药单", "九年工龄工具票", "工伤担保与欠薪总表封夹"]
+      },
+      "palette_profile": "low_sat_steam_coal_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 1,
+        "sensuality_max": 2,
+        "reason": "有丈夫和女儿的成年工人家属；可用不透明合身工装与自信姿态体现成熟魅力，但不使用裸露或情色姿势"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/a_sang_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/a_sang_web_source_v1.png",
+      "master_path": "res://art/portraits/a_sang_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "du_sanqiu": {
+      "display_name": "杜三秋",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "long_term_rest_patient_and_union_record_subject",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "杜三秋是静息病人，女儿坚持尊重他留下的旧话，不把亲属争执变成当天生死投票",
+        "他的床边条件包括继续治疗、弟弟可探视和七日后复核，彼此分开记录",
+        "工会医务册记载他曾写下昏迷满三月后由两名同事共同确认的旧意愿",
+        "当前无法稳定回应时，医疗保持半流并等待独立医师复核，不恢复城防用途"
+      ],
+      "personality": ["留下明确边界", "尊重探视但不强迫", "谨慎授权", "曾参与工会记录", "不应被家属代替发言"],
+      "visual_identity": {
+        "body_type": "adult_slender_long_term_patient_male",
+        "height_class": "HUM_L",
+        "face": ["长期静息照护中的成熟男性脸", "闭眼休息时平静，清醒记录或旧话被提及时保留严肃轮廓"],
+        "hair": ["深灰黑短发，鬓角少量自然灰"],
+        "body": ["自然修长成人比例", "以高背护理椅或床边支撑呈现，不夸张病弱、不做战斗姿态"],
+        "costume": ["低饱和灰青、旧米白与深蓝的静息室保暖层衣", "完整不透明的宽松长衣、软质披巾和简洁固定带", "工会旧徽片或袖口缝补作为劳动记录锚点"],
+        "props": ["无可读文字的旧工会医务册封夹", "七日复核沙漏或计时片", "床边探视标记", "可逆医疗令双面牌"]
+      },
+      "palette_profile": "low_sat_rest_room_union_blue_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与完整外貌资料未确认，且角色处于长期静息照护；优先表现旧意愿与医疗边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/du_sanqiu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/du_sanqiu_web_source_v1.png",
+      "master_path": "res://art/portraits/du_sanqiu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "feng_wendi": {
+      "display_name": "封闻笛",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "care_protocol_and_record_auditor",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "她把自己的证言、行程与旧设计责任并卷，不申请先行免责",
+        "她主张先救能逆转的伤，再把没听懂的地方留下来，不把猜测写成肯定",
+        "她参与把四道门改成木板、计时砂和只存编号的交接记录，拒绝保存声音和推测结果",
+        "她要求眼动图卡允许本人圈出不适用方式，认为规程不能比人更硬",
+        "她能识别制度如何用单一答案逼迫抄录者替别人牺牲复杂人生"
+      ],
+      "personality": ["冷静锋利", "承担责任", "重视不确定性", "反对机器代答", "优先保护可逆伤害"],
+      "visual_identity": {
+        "body_type": "adult_slender_protocol_auditor",
+        "height_class": "HUM_L",
+        "face": ["冷静锋利、长期审阅责任卷宗的成年女性脸", "面对制度漏洞时严厉，面对病床使用者时克制专注"],
+        "hair": ["深灰黑长发低束或简洁盘发", "发间可有一枚朴素记录簪，不做华丽宫装"],
+        "body": ["自然修长成人比例", "站姿笔直、动作收敛，像随时准备收走错误的笔", "不幼态、不性感化"],
+        "costume": ["低饱和墨蓝、灰白与少量暗铜的定波院记录官层衣", "完整不透明的修长长外套、窄腰封、袖口护片与耐走软靴", "服装层级利落，强调职业剪影而非裸露"],
+        "props": ["无可读文字的木板记录夹", "计时砂", "只存编号的灵息片", "可拆笔尖与封存责任卷"]
+      },
+      "palette_profile": "low_sat_final_age_ink_blue_gray_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与更多外貌资料尚未确认；职业魅力来自审计权威和动作，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/feng_wendi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/feng_wendi_web_source_v1.png",
+      "master_path": "res://art/portraits/feng_wendi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "feng_dunjia": {
+      "display_name": "丰敦甲",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_furnace_council_delegate",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "他负责解释炉会总账特批、欠薪兑换与工伤票的现实用途",
+        "他区分炉会验收买煤与矿务所管理权，不替一个机构吞并另一个机构的责任",
+        "面对四十七名清灰工的专利维护边界，他追问代表授权而不是直接替工人签字",
+        "他同意公开十二座炉一时辰数据，但保留长期成本账，承认透明范围有边界",
+        "灾害中他没有要求先救自己的儿子，并同意把现场指挥交给熟悉工位的人"
+      ],
+      "personality": ["克制务实", "承认制度边界", "愿意有限透明", "灾时守公平", "能承担决策责任"],
+      "visual_identity": {
+        "body_type": "adult_slender_industrial_delegate",
+        "height_class": "HUM_L",
+        "face": ["长期面对炉会账目与工人争议的成熟男性脸", "平时克制审慎，灾时声音发哑但不争抢先后"],
+        "hair": ["深灰黑短发，鬓角少量炉尘或自然灰"],
+        "body": ["自然修长成人比例", "肩背挺直但不军人化，手上有常年翻账和触煤样的细小痕迹", "不幼态、不性感化"],
+        "costume": ["低饱和煤灰、深蓝与暗铜的炉会代表层衣", "完整不透明的长外套、硬质护肩、窄腰封、耐热手套与工靴", "正式层衣下保留可行动的炉区工作层"],
+        "props": ["无可读文字的十二炉数据板", "公开范围封条", "湿煤样盒", "点名板与炉会总账封夹"]
+      },
+      "palette_profile": "low_sat_steam_coal_navy_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认；职业魅力来自有限透明、责任承担和灾时公平，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/feng_dunjia_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/feng_dunjia_web_source_v1.png",
+      "master_path": "res://art/portraits/feng_dunjia_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "xiao_he": {
+      "display_name": "小何",
+      "age_group": "minor",
+      "narrative_tier": "supporting",
+      "occupation": "sixteen_year_old_furnace_worker_and_filter_trainee",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "原文明确写出小何只有十六岁，入所时被要求多报两岁以便送工",
+        "他出现灼烧性呼吸症状，医棚最初把他排在伤病墙末位，他却提醒救援不能只救一晚",
+        "他能说出同年六名孩子的真实生日，但为了不牵连他们失去床位而害怕公开姓名",
+        "后续他被安排做滤芯检测培训，同时要求保留炉工年资，不接受转岗抹掉过去工龄"
+      ],
+      "personality": ["清醒早熟", "保护同伴", "不轻信安置承诺", "坚持保留工龄", "在病痛中仍关心整体风险"],
+      "visual_identity": {
+        "body_type": "minor_natural_active_worker",
+        "height_class": "CHILD_M",
+        "face": ["十六岁少年清瘦而疲惫的脸", "呼吸不适时克制，谈到同伴生日和工龄时认真警惕"],
+        "hair": ["深棕黑短发，额前有炉灰和汗湿碎发"],
+        "body": ["自然少年比例，不成人化、不性感化", "肩背有少年工人劳作痕迹但不夸张肌肉"],
+        "costume": ["低饱和煤灰、旧蓝与米白的炉区少年工装", "完整不透明的补丁短外套、过滤面罩、耐磨长裤和旧工作靴", "可活动护腕与培训用滤芯袋"],
+        "props": ["合格与失效面罩各一只", "滤芯检测夹", "被改写过年龄的入所簿封页", "保留工龄的旧炉工牌"]
+      },
+      "palette_profile": "low_sat_steam_child_worker_coal_blue_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确十六岁；未成年角色固定 Level 0，禁止成人化、性感化或裸露呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xiao_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xiao_he_web_source_v1.png",
+      "master_path": "res://art/portraits/xiao_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "ge_wenji": {
+      "display_name": "葛闻机",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_settlement_and_revenue_manager",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "在欠薪签字桌旁嘲笑工人慢慢看条款，试图把紧迫的药单、房租和回乡车票推回个人等待",
+        "坚持主文写成双方无争，不愿把救急生活款从和解条件中拆出；面对追问时承认钱箱不能无条件散发",
+        "在泵台对峙中承认黑账一半曾救过人、另一半踩着同一批人过去，并愿交出黑脊本换取账丁与家属安全离城",
+        "面对分开陈述的要求，担心账丁被诱供而拒绝让他们离开泵台，但没有替抱孩子的女人决定留下还是先送医",
+        "熟悉资金、兑券和管理分成的流向，是蒸汽城欠薪案中把救急用途与剥削责任同时暴露出来的关键证人"
+      ],
+      "personality": ["精于算计", "擅长合理化", "控制信息节奏", "保留复杂责任", "在压力下仍承认具体后果"],
+      "visual_identity": {
+        "body_type": "adult_slender_bureaucratic_financier",
+        "height_class": "HUM_L",
+        "face": ["长期处理欠账与兑券的成熟男性脸", "习惯先评估风险，面对药单与家属时短暂露出迟疑"],
+        "hair": ["深黑短发，发尾整齐但被蒸汽打湿", "鬓角少量灰线或煤尘"],
+        "body": ["自然修长成人比例", "肩背端正、手指有长期翻账留下的薄茧", "不军人化、不性感化"],
+        "costume": ["低饱和煤灰、暗靛与旧铜的蒸汽城结算管事长衣", "完整不透明的窄领内衫、分层短外套、硬质护腕与耐磨工靴", "腰侧挂简化封条匣和可拆卸账夹"],
+        "props": ["无可读文字的黑脊账本", "分账用空白页与封缝印", "旧兑券匣", "泵台通行牌和家属离城凭证夹"]
+      },
+      "palette_profile": "low_sat_steam_charcoal_indigo_brass",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；职业魅力来自账务控制与责任冲突，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ge_wenji_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ge_wenji_web_source_v1.png",
+      "master_path": "res://art/portraits/ge_wenji_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "lu_hanwei": {
+      "display_name": "陆含微",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_evidence_chain_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "在屏息铜夹层与封条争议中要求公证员记录重量异常、未检内容与来源，不把委托范围扩大成无边界搜查",
+        "追问六成现钱、四成券和七日承诺能否分别追偿，指出一枚缺失缝印足以改变一次结清的法律效果",
+        "在旧件翻新与假滤芯案中记录钥匙去向，主张居民、管工和验炉三方见证开库、逐件称重拍号并写安装位置",
+        "她承认紧急征用能救东六巷，却坚持把肺检、滤芯编号、电池收益和担保款退还期限分案记录，不用救急结果抹掉责任"
+      ],
+      "personality": ["细致留痕", "尊重权限边界", "追问可执行期限", "不把证物说成结案", "愿意让多方共同见证"],
+      "visual_identity": {
+        "body_type": "adult_slender_evidence_inspector",
+        "height_class": "HUM_L",
+        "face": ["长期处理封条、重量和责任链的清醒成年女性脸", "提问时冷静，发现关键缺页时眼神明显收紧"],
+        "hair": ["深黑棕中长发，低束或编成便于工作的小辫", "鬓边有被蒸汽吹开的碎发"],
+        "body": ["自然修长成人比例", "肩背轻装、动作稳定，常年搬动样品留下适度劳动痕迹", "不幼态、不性感化"],
+        "costume": ["低饱和铁灰、烟绿、旧米白与暗铜的蒸汽城验货层衣", "完整不透明短外套、耐磨长裤、护腕与防滑工靴", "腰侧有封条匣、量尺套和可拆卸证物袋"],
+        "props": ["无可读文字的重量砝码与折叠量尺", "封条样本夹", "钥匙去向记录板", "三方见证用空白封匣"]
+      },
+      "palette_profile": "low_sat_steam_iron_smoke_green_brass",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；职业魅力来自证据链和权限边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_hanwei_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_hanwei_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_hanwei_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "bao_qiyun": {
+      "display_name": "包绮云",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_filter_material_merchant",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "在蒸汽城维修报价中逐项说明正常货、夜间叫工、紧急送货和风险押金，让居民知道每一笔钱对应什么服务",
+        "愿意把旧翻新件与材料虚报单交给料铺公开比对，并允许赊到午初，但要求具名付款人承担明确的兑付责任",
+        "用短期现钱支持互助匣和清肺药，却追问下一批集尘板由谁支付铜料与返工，指出永久保密会让炉会停止生产",
+        "收购余货并承担烘干、运输与复检成本，提醒整批扣押会让十二名仓工拿不到当月工资，同时拿出已通过风阻测试的滤芯",
+        "愿把父辈收款、仓工工资和滤芯质量分别写入补页，不用一笔模糊的公益款掩盖供应链与责任分歧"
+      ],
+      "personality": ["报价透明", "务实精明", "重视工人收入", "先说清代价", "不把救急和长期供给混为一谈"],
+      "visual_identity": {
+        "body_type": "adult_athletic_practical_merchant",
+        "height_class": "HUM_L",
+        "face": ["长期跑料铺、仓库和炉区的成熟女性脸", "谈价格时直接，看到工人断薪时眉眼沉下"],
+        "hair": ["深棕黑中长发，工作时高束或编成紧实侧辫", "额前有少量仓尘碎发"],
+        "body": ["自然修长成人比例，肩臂有搬运滤芯与集尘板的适度力量感", "不幼态、不性感化"],
+        "costume": ["低饱和煤灰、旧青、烟绿与暗铜的蒸汽城料商工装", "完整不透明短外套、耐磨长裤、厚护腕与防尘工靴", "腰侧挂量规、空白报价夹和仓库钥匙串"],
+        "props": ["无可读文字的滤芯与集尘板样件", "风阻测试框", "风险押金匣", "仓工工资封袋与复检封条"]
+      },
+      "palette_profile": "low_sat_steam_coal_teal_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；魅力来自报价透明、供应链判断和工人责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/bao_qiyun_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/bao_qiyun_web_source_v1.png",
+      "master_path": "res://art/portraits/bao_qiyun_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "zhou_yi": {
+      "display_name": "周姨",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_communal_grain_and_repair_coordinator",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "在织机班合购米吸水发热时，要求把整袋拆成小袋，先处理最直接的仓储风险",
+        "让孩子暂时在自己的阁楼避险，随后回到现场继续搬运与盘点，没有把照护责任变成对孩子的命令",
+        "参与居民、管工和验炉三方见证开库，担心居民取件后被反指为偷窃，要求证物和生活损失同时留档",
+        "在通水成功后继续追问木梁、煤饼散热和临时住处安全，提醒大家通水与可以回家是两项不同验收"
+      ],
+      "personality": ["有生活经验", "先处理实际风险", "照护邻里", "警惕事后归罪", "坚持分项验收"],
+      "visual_identity": {
+        "body_type": "adult_mature_practical_caretaker",
+        "height_class": "HUM_L",
+        "face": ["经历过长期仓储与街巷照护的成熟女性脸", "说话温和但遇到危险会立即打断错误搬运"],
+        "hair": ["深棕黑发夹少量自然灰，低盘或扎成便于搬运的发髻", "额前有湿气和米尘留下的碎发"],
+        "body": ["自然修长的成年比例，腰背结实但不夸张", "手臂有搬米与修缮的适度劳动痕迹，不幼态、不性感化"],
+        "costume": ["低饱和烟灰、旧蓝、米白与暗铜的蒸汽城街坊照护工装", "完整不透明长袖内衫、分层围裙背心、耐磨长裙裤与防滑布靴", "肩上可加短披巾，腰侧挂小秤、麻绳与钥匙环"],
+        "props": ["拆分用小米袋与麻绳", "无可读文字的手提秤", "临时住宿钥匙串", "维修验收用空白木牌"]
+      },
+      "palette_profile": "low_sat_steam_smoke_blue_rice_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自照护经验和风险判断，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhou_yi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhou_yi_web_source_v1.png",
+      "master_path": "res://art/portraits/zhou_yi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "xiao_man": {
+      "display_name": "小满",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_tailor_and_shift_caretaker",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "在炉区交班安排中追问谁来监督不进红区的承诺，把上下班时刻交给家属照护板，并允许副手按时收走领炉牌",
+        "黄炉复验班规定每日四时辰，她站在门口等领炉匠交笔，支持组织按时让人离岗而不是等人累倒",
+        "家中承担裁衣铺停工半日的损失，仍把工人补贴、检修工资和父亲旧专利补偿分开核对",
+        "在热线只供到街口的夜里分配四双筷子，提醒家人下一班有人值炉，不让所有人重新挤回炉边",
+        "她用普通的吃饭和交班动作确认照护安排真的执行，成为蒸汽城恢复日常边界的生活见证者"
+      ],
+      "personality": ["重视交班", "家庭责任感强", "不浪漫化硬撑", "会核对实际损失", "安静但有监督意识"],
+      "visual_identity": {
+        "body_type": "adult_slender_practical_tailor",
+        "height_class": "HUM_L",
+        "face": ["长期兼顾裁衣铺、炉区轮班和家庭账目的成年女性脸", "不说空话，看到有人逾时未交班时目光直接而安静"],
+        "hair": ["深棕黑中长发，低束或盘成方便穿针引线的发髻", "耳侧有少量被炉热吹开的碎发"],
+        "body": ["自然修长成人比例，肩背灵活、手指有裁剪和修补留下的细小针茧", "不幼态、不性感化"],
+        "costume": ["低饱和煤灰、旧蓝、米白与暗红线头点缀的蒸汽城裁衣工装", "完整不透明长袖内衫、分层围裙短外套、耐磨长裙裤与软底工鞋", "腰侧挂软尺、针线盒和可交接的领炉牌套"],
+        "props": ["无可读文字的裁衣软尺与针线盒", "四双筷子或分餐木牌", "家属照护板上的空白时刻牌", "黄炉复验班领炉牌与交班夹"]
+      },
+      "palette_profile": "low_sat_steam_blue_cream_muted_red_thread",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自交班边界、裁衣手艺和家庭责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xiao_man_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xiao_man_web_source_v1.png",
+      "master_path": "res://art/portraits/xiao_man_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "qi_lian": {
+      "display_name": "祁练",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_record_recovery_witness",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "她核对多年前被撕下的缺页与停机搜查记录，要求把交册者担心被先找到的自保动机一并写进见证页",
+        "熟悉机械分段轮和接地切换，能把三十一人分成三组，降低旁路薄片连续受讯的风险",
+        "参与换滤器与薄片隔船校准，却不夸大自己接触过的船员范围，明确区分亲眼核验和他人转述",
+        "面对体内装置与港内设备评分的冲突，追问能否只承担自己看得懂的医疗观察，不替整船担保"
+      ],
+      "personality": ["自保意识清醒", "证据精确", "不把交册写成赎罪", "熟悉设备风险", "拒绝替他人过度担保"],
+      "visual_identity": {
+        "body_type": "adult_slender_star_network_witness",
+        "height_class": "HUM_L",
+        "face": ["长期核对缺页、搜查记录与设备风险的成年女性脸", "谈到自保理由时警惕，确认记录边界后才短暂放松"],
+        "hair": ["深黑棕中长发，低束或编成便于检修的侧辫", "额前有雾气和金属粉尘吹开的碎发"],
+        "body": ["自然修长成人比例，肩背轻装灵活，常年检修留下适度劳动痕迹", "不幼态、不性感化"],
+        "costume": ["低饱和雾蓝、铁灰、暗靛与锈红的星网检修见证工装", "完整不透明的保温短夹克、分层内衫、耐磨长裤、护腕与船用工靴", "肩侧固定分段轮工具包，腰间挂备用滤器、生命线和空白记录夹"],
+        "props": ["机械分段轮与接地切换扳手", "备用过滤器和隔船校准环", "无可读文字的缺页档案夹", "本地计数盘与封存用空白见证片"]
+      },
+      "palette_profile": "low_sat_star_network_fog_indigo_iron_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自证据精度、设备知识和清醒自保，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/qi_lian_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/qi_lian_web_source_v1.png",
+      "master_path": "res://art/portraits/qi_lian_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "gu_xianting": {
+      "display_name": "顾弦庭",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_registry_procedure_officer",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "作为星籍官，他先检查三份封条和线路末端采样，再签发有明确时限的临时保全令，不把受理求救直接写成已恢复身份",
+        "他能冻结节点日志、传唤记录保管人和要求保留负载表，却不会在没有替代供能时查封医疗支路，始终把程序能力与程序边界一起说明",
+        "他把死亡裁定、活跃回执、扣费和依附身份拆成不同卷宗，区分旧私章属于谁与实际操作由谁完成，不用一枚签章替调查结案",
+        "在四席复核和长期制度落地时，他坚持把身体、器械、生活与责任分册处理，让每项权利都绑定范围、期限和下一位复核人"
+      ],
+      "personality": ["程序边界清楚", "证据分层", "不急于定性", "能在压力下保持窄权限", "愿意承担制度责任"],
+      "visual_identity": {
+        "body_type": "adult_slender_star_registry_officer",
+        "height_class": "HUM_L",
+        "face": ["长期处理保全令、听证和身份争议的成熟男性脸", "目光克制而专注，面对家属的急迫会先解释能做什么与不能做什么"],
+        "hair": ["深黑中长发，整齐低束或以窄簪固定", "鬓边有少量被雾港风吹乱的碎发"],
+        "body": ["自然修长成人比例，肩背端正但不武人化", "手指有翻卷宗、压封条和持印留下的细小茧痕，不性感化"],
+        "costume": ["低饱和雾蓝、铁灰、旧米白与暗铜的星籍庭外勤长衣", "完整不透明立领内衫、分层短袍、窄袖护腕与耐雾长靴", "胸前有无文字的窄权限牌匣，腰侧挂双钥封套、时钟盘和可拆分卷宗夹"],
+        "props": ["三方校验用空白封条与压印板", "两枚不同权限的查档钥匙", "无可读文字的临时保全令卷夹", "小型时限沙漏或四席同步计时盘"]
+      },
+      "palette_profile": "low_sat_star_registry_fog_ink_brass",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自程序判断、责任边界和证据分层，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/gu_xianting_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/gu_xianting_web_source_v1.png",
+      "master_path": "res://art/portraits/gu_xianting_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "qiao_suying": {
+      "display_name": "乔素英",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_field_physician_and_triage_advocate",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她在医棚中根据伤情与可用药量决定接骨和清蚀处理，直接说明什么能保住手、什么治疗会留下长期代价",
+        "面对炉会提出的首月治疗换电池方案，她把假滤芯、私接线路与肺病后果放在同一张桌上，要求付款不能抹掉医疗因果",
+        "警报造成伤者惊厥与呼吸加快后，她要求下一次广播同时给居民可执行动作，而不只播报危险级别",
+        "她在死亡、失联、骨折和轻伤之间逐项报数，不替家属回答，也不让仓促的城市效率把患者身体写成账目里的附注"
+      ],
+      "personality": ["临床判断直接", "尊重患者知情", "坚持医疗因果", "能在资源不足时分诊", "不把伤亡数字化抹平"],
+      "visual_identity": {
+        "body_type": "adult_slender_field_physician",
+        "height_class": "HUM_L",
+        "face": ["长期在蒸汽、伤口和紧急分诊之间工作的成熟女性脸", "判断药量时专注，面对不公平的医疗条件时眼神锋利但不失克制"],
+        "hair": ["深黑棕中长发，低束或盘成便于戴护目镜的发髻", "额前有蒸汽和药草灰留下的少量碎发"],
+        "body": ["自然修长成人比例，肩背轻装而稳定，手臂有长期搬运医箱的适度力量", "不幼态、不性感化"],
+        "costume": ["低饱和煤灰、旧蓝、米白与暗红药标点缀的蒸汽城医棚工装", "完整不透明的高领内衫、分层短外套、耐磨长裤、皮质护腕与防滑医靴", "腰侧挂分诊夹、药瓶袋、折叠听诊片和可快速取用的绷带盒"],
+        "props": ["无可读文字的分诊木牌与脉灯", "接骨夹板和缠带", "清蚀丹分装盒与药量刮片", "记录医疗因果的空白诊疗板"]
+      },
+      "palette_profile": "low_sat_steam_medic_smoke_blue_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自临床判断、分诊责任和患者边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/qiao_suying_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/qiao_suying_web_source_v1.png",
+      "master_path": "res://art/portraits/qiao_suying_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "du_hengqiu": {
+      "display_name": "杜衡秋",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_council_hearing_chair_and_labor_budget_mediator",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她主持爆炉后的联合听证，把高压恢复、工人与伤者的即时生活治疗、以及证物保全拆成可在下一时辰执行的临时问题",
+        "面对炉会、工人、矿队和医棚的冲突，她要求同时看余压、工位、煤质、伤情与订单，不让任何一方用商业秘密或城市效率抹掉另一方",
+        "救援时她询问丰敦甲是否愿意把指挥交给现场，并支持点名板不按亲疏排序，后来把紧急接管限制为安全阀、即时数据和专用工资医疗账户",
+        "她把医疗、死亡预付、欠薪、复工安全、调查保全与清理成本分别做成实物筹码，强调临时信托必须有具体权限、期限和退出条款"
+      ],
+      "personality": ["善于限时裁定", "能听见弱势方", "重视劳动与医疗账", "拒绝模糊授权", "在冲突中保持可执行性"],
+      "visual_identity": {
+        "body_type": "adult_mature_council_mediator",
+        "height_class": "HUM_L",
+        "face": ["资历很深、长期处理工会与城府预算争议的成熟女性脸", "敲钟定时或划分权限时果断，听到伤者发言时仍保留耐心"],
+        "hair": ["深棕黑发夹少量自然灰，低盘或以简洁发簪固定", "额前有听证厅蒸汽和煤尘留下的零散碎发"],
+        "body": ["自然修长成熟比例，肩背端正，手臂保留早年柜台与长期翻账的适度劳动痕迹", "不幼态、不性感化"],
+        "costume": ["低饱和烟灰、旧蓝、米白与暗铜的百炉城议厅长衣", "完整不透明高领内衫、分层议员外袍、耐磨长裙裤与防滑短靴", "腰侧挂刻漏小钟、空白裁定板、筹码袋和可拆分的临时接管令夹"],
+        "props": ["未完工大钟旁的无文字刻漏壶", "白黑铜蓝灰五色实物筹码", "三方签名用空白木板", "事故证物登记牌与终止时刻沙漏"]
+      },
+      "palette_profile": "low_sat_steam_council_smoke_blue_cream_brass",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自经验、裁定与公共责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/du_hengqiu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/du_hengqiu_web_source_v1.png",
+      "master_path": "res://art/portraits/du_hengqiu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "liang_zhen": {
+      "display_name": "梁箴",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_cargo_equipment_supervisor",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "他作为货栈设备主管签发维修艇和维护臂权限，熟悉发射轨、医疗龛、燃料阀与消防、人工制动之间不能互相越过的安全边界",
+        "他坚持父亲梁度当年的救急授权救过诊区与许多病人，却把四十八小时的最初授权延伸成十一年分识服务，试图用结果掩盖持续同意缺失",
+        "他使用梁度派生的维护权限与旧私章，权限被封后试图以父亲下落交换解封，并在维修艇离港前安排镇静剂、维护臂和无人驾驶流程",
+        "他把货栈工、诊区和城市算力的现实代价摆到谈判桌上，却没有让受影响者亲自同意继续被使用；在父亲拒绝登艇后仍试图维持远控"
+      ],
+      "personality": ["技术判断熟练", "保护家人", "善于论证最初救急", "会把系统性代价当筹码", "在责任边界前反复自我合理化"],
+      "visual_identity": {
+        "body_type": "adult_slender_cargo_equipment_supervisor",
+        "height_class": "HUM_L",
+        "face": ["长期负责货栈设备、维护艇和公益节点的成熟男性脸", "谈到父亲与白肺夜时压着疲惫，面对权限被封则显出强烈控制欲"],
+        "hair": ["深黑中长发，低束或扎成便于戴安全帽的短马尾", "鬓边和额前有货栈灰尘、油雾留下的碎发"],
+        "body": ["自然修长成人比例，肩背有设备检修和搬运留下的适度力量感", "不军人化、不性感化"],
+        "costume": ["低饱和铁灰、旧靛、雾蓝与暗锈橙的星网货栈设备主管工装", "完整不透明高领内衫、耐磨分层短外套、护肘、工具腰带与防滑货栈靴", "腰侧挂权限板、燃料阀钥、维护臂校准片和封存过的旧私章匣"],
+        "props": ["货运型维护臂的小型校准轮", "无可读文字的发射轨与燃料阀示意板", "医疗龛供氧转换接头", "梁度旧章封套与维修艇航迹片"]
+      },
+      "palette_profile": "low_sat_star_network_cargo_iron_indigo_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自技术能力、亲情冲突和责任自辩，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/liang_zhen_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/liang_zhen_web_source_v1.png",
+      "master_path": "res://art/portraits/liang_zhen_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "mei_lan": {
+      "display_name": "梅澜",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_clinic_duty_physician",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "她在西侧诊区先核对两台心脉维持机还能独立运行多久，再决定是否让救援来讯占用公共带宽，要求医护提前知道何时会掉线",
+        "她保存陌生人声出现时的病床读数与演算余量变化，愿意为活人求救作证，却不把断链后的床位费、配液延误和加班损失说成不存在",
+        "她坚持黑箱只保留药物时间、剂量和操作者，隐去与事故无关的既往病史，防止读取救援数据变成翻开所有人的生活",
+        "她在维护臂、医疗龛和低温乘客之间给出窄判断，明确心率、柜温、清醒时长和药量红线，任何超线动作先停而不是先赌成功"
+      ],
+      "personality": ["临床与系统并重", "提前说清红线", "尊重医疗隐私", "能量化附带损失", "叫停时不向效率让步"],
+      "visual_identity": {
+        "body_type": "adult_slender_clinic_physician",
+        "height_class": "HUM_L",
+        "face": ["长期在诊区值班、处理心脉机和复杂证据的成年女性脸", "听到病人风险时专注冷静，面对隐瞒和越界时语气平但不退让"],
+        "hair": ["深黑棕中长发，低束或盘成便于戴医用面罩的发髻", "额前有夜班灯光和消毒蒸汽吹开的细碎发丝"],
+        "body": ["自然修长成人比例，肩背轻装稳定，手腕和手指有长期操作诊疗器械的细小痕迹", "不幼态、不性感化"],
+        "costume": ["低饱和雾蓝、医用灰、米白与暗红识别线的星网诊区值班服", "完整不透明高领内衫、分层短医袍、护腕、药物腰包与防滑诊区靴", "胸前挂无文字的离线记录片，腰侧挂脉灯、计时盘、备用供氧阀与封存袋"],
+        "props": ["两台心脉机的状态指示盘", "无可读文字的心率与柜温记录板", "药量刮片和离线配液匣", "黑箱隐私遮盖夹与断链叫停牌"]
+      },
+      "palette_profile": "low_sat_star_network_clinic_fog_blue_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自临床判断、隐私边界和风险红线，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/mei_lan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/mei_lan_web_source_v1.png",
+      "master_path": "res://art/portraits/mei_lan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "bai_yao": {
+      "display_name": "白药",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "ashland_healers_mobile_physician",
+      "faction_id": "ashland_healers",
+      "story_evidence": [
+        "她在折骨坡先处理芦芽的开放伤口，按黑雨前的药效和整队后续高蚀区风险精确刮分清蚀丹，不把药当成账面数字",
+        "面对四百多人、有限担架和有限丹药，她把红灯、黄灯、绿灯患者按呼吸、经脉灼伤和转运紧迫度分开，不按是否参加某个组织或谁先开口分药",
+        "她坚持把每一名被救者的伤情、药量、观察期和不确定处分别记录，既不把救援成果夸成没有代价，也不让后续债务吞掉患者的医疗边界",
+        "她能在车队、种窖和黑雨之间同时考虑开放伤、空气、水位和药种，必要时明确要求先停、先转运或先给下一班留下药量"
+      ],
+      "personality": ["按伤情分诊", "药量精确", "不按立场救治", "能在荒原资源不足时做取舍", "坚持把医疗代价说清"],
+      "visual_identity": {
+        "body_type": "adult_slender_wasteland_mobile_physician",
+        "height_class": "HUM_L",
+        "face": ["长期穿越黑雨、照护迁民和核对药箱的成年女性脸", "判断红灯患者时专注果断，面对哭闹家属仍保持清楚而不冷硬的语气"],
+        "hair": ["深灰黑中长发，低束或编成防风侧辫", "发尾和额前沾有细盐尘，部分碎发被雨罩压弯"],
+        "body": ["自然修长成人比例，肩背结实灵活，手臂有长期抬担架和搬运药箱的适度力量", "不幼态、不性感化"],
+        "costume": ["低饱和沙灰、枯草绿、旧蓝与暗红药标的荒原医盟行医装", "完整不透明高领内衫、防蚀短披风、分层长衣、耐磨长裤、绑带护腕与防水行靴", "腰侧挂分诊牌、药箱、脉灯和细口水囊，肩上有可拆卸的遮雨医布"],
+        "props": ["无可读文字的红黄绿分诊牌", "清蚀丹与养脉丹的分装盒、药量刮片", "折叠担架固定带", "记录伤情和余药的空白医盟板"]
+      },
+      "palette_profile": "low_sat_ashland_sand_dust_herbal_blue_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自分诊判断、医盟责任和资源纪律，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/bai_yao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/bai_yao_web_source_v1.png",
+      "master_path": "res://art/portraits/bai_yao_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "xu_dongsuo": {
+      "display_name": "许东梭",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_weaving_factory_owner",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "他带着二百名织机女工的计件表来催汽，承认停机影响产量与城防绷带订单，却不能让厂主替女工决定损失如何发放",
+        "他起初把停机罚金说成厂与炉会的结算，在陈玉梭追问后被迫面对女工个人收入并未从合同中获得保障",
+        "复工协议最终要求蒸汽款中固定一成直接进入女工补助袋，许东梭获得稳定五成汽与订单延期免责，交换条件公开且可申诉",
+        "他同意核实替班女工与缺页名单，也承认同一停机可同时造成设备固定成本与个人收入损失，不能简单说成重复索赔"
+      ],
+      "personality": ["重视产量与订单", "擅长把厂务风险制度化", "最初忽视个人工资边界", "能在公开账面前修正立场", "不轻易放弃经营控制"],
+      "visual_identity": {
+        "body_type": "adult_slender_weaving_factory_owner",
+        "height_class": "HUM_L",
+        "face": ["长期处理订单、炉会结算和工人争议的成熟男性脸", "谈到交付时计算迅速，面对女工补助被单列时先防御后迟疑"],
+        "hair": ["深黑中长发，低束或用旧铜簪固定，发尾沾有蒸汽湿气", "鬓角有少量炉灰和疲惫留下的灰线"],
+        "body": ["自然修长成人比例，肩背端正，手指有翻计件表与检验纱轴留下的薄茧", "不军人化、不夸张富态、不性感化"],
+        "costume": ["低饱和煤灰、旧靛、米白与暗锈色的蒸汽城织机厂主长衣", "完整不透明窄领内衫、可活动的分层短外套、护腕、耐磨长裤与防滑工靴", "腰侧挂计件表夹、蒸汽合同封筒、替班核验牌与小型停机计时器"],
+        "props": ["无可读文字的二百人计件板", "女工停机补助袋与一成直付封签", "织机纱轴与独立蓄压筒的示意零件", "三方复工协议夹和缺页补件牌"]
+      },
+      "palette_profile": "low_sat_steam_weaving_charcoal_indigo_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自经营压力、账务修正与对女工收入边界的迟到承认，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xu_dongsuo_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xu_dongsuo_web_source_v1.png",
+      "master_path": "res://art/portraits/xu_dongsuo_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "xu_weitang": {
+      "display_name": "许微棠",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_compensation_scribe_and_recruiter",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "她三十九岁，原是定波院停院后的赔付抄录员，亲眼见过当事人因拿不出旧同意书而失去复诊，也见过家属多年等不到风险工资",
+        "她接受申屠敬简的补签委托，知道完整念出文书会让多数人拒绝，却仍把复杂的旧案效力压成“按一下就能领钱”",
+        "她用二十三份手印换四十枚救济灵石，试图让欠薪、静息病人听力器和育幼院护根药先得到现金，但没有把这种急迫性写成替他人同意的资格",
+        "被发现后她交出纸页，并要求已经领到钱的人不因调查失去生活款；她的成件奖金应受审查，普通抄录工资与基本生活不应被查案饥饿化"
+      ],
+      "personality": ["知道流程如何伤人", "擅长把复杂纸面压成可执行步骤", "急于让救济到账", "会替别人承担决定", "被揭穿后愿意保留当事人撤回权"],
+      "visual_identity": {
+        "body_type": "adult_slender_compensation_scribe",
+        "height_class": "HUM_L",
+        "face": ["三十九岁、长期在赔付窗口与夜间问话之间工作的成熟女性脸", "面对急药与欠薪时急切，面对完整文书被展开时有明显羞惭却不逃避"],
+        "hair": ["深棕黑中长发，低束并用旧布带固定，发尾受潮贴在肩后", "额前有纸尘、朱砂和连续抄录留下的细碎乱发"],
+        "body": ["自然修长成人比例，肩背略疲惫，手指有长期握笔、翻纸和搬运纸袋的薄茧", "不幼态、不性感化，不把疲惫塑造成脆弱装饰"],
+        "costume": ["低饱和烟灰、旧靛、米白与暗朱砂色的赔付抄录员层衣", "完整不透明高领内衫、分层短外套、护腕、耐磨长裙裤与防潮布靴", "腰侧挂空白案号夹、封纸刀、湿纸套和可拆卸的跑腿袋"],
+        "props": ["无可读文字的二十三份补签页夹", "只写事实的短页与撤回标记牌", "用于分开纸、钱、送签名单的三只证管封套", "未送出的纸袋与被水汽打皱的抄录笔记"]
+      },
+      "palette_profile": "low_sat_final_age_smoke_indigo_vermilion",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色虽有明确成年年龄，视觉重点仍是抄录劳动、急迫救济与知情边界冲突；不把剥削性委托或疲惫状态性化"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xu_weitang_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xu_weitang_web_source_v1.png",
+      "master_path": "res://art/portraits/xu_weitang_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "lu_ling": {
+      "display_name": "陆菱",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_family_liaison_and_identity_witness",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "她在星网公共频道接入时先用只有家人知道的生活细节核对陆绡身份，却没有因为相认就把姐姐的所有权限一并取回",
+        "面对陆绡的医疗与通行证明，她撤回填到一半的紧急联系人表，只留下可接收病情通知的时段，承认家属联络不等于照护授权",
+        "她把登船前家庭录像交给独立证据链，并接受录像只能证明当时的在场与关系，不能替名单外孩子自动生成完整身份结论",
+        "在陆绡恢复通行后，她每次来访都先申请十分钟；陆绡说今天不要替她回答别人时，她选择停下而不是用亲情继续追问"
+      ],
+      "personality": ["记得家人细节", "亲近却不越权", "愿意补充证据", "能承受被拒绝", "把家属联络做成可撤回的时段"],
+      "visual_identity": {
+        "body_type": "adult_slender_family_liaison",
+        "height_class": "HUM_L",
+        "face": ["长期在家属席、星网值守台和病房门外等待的成年女性脸", "认出妹妹时温柔克制，面对权限表与病情通知时认真核对、不急于代答"],
+        "hair": ["深黑棕长发，低束或编成简洁侧辫，便于在信塔与病房间行动", "发尾带有雾港潮气，额前留少量自然碎发"],
+        "body": ["自然修长成人比例，肩背轻装稳定，长期携带家庭档案和跨站联络器材留下适度劳动感", "不幼态、不性感化，不用悲情姿态替代人物行动力"],
+        "costume": ["低饱和雾蓝、旧米白、灰青与少量暗红标记的星网家属联络层衣", "完整不透明高领内衫、分层短外套、护腕、耐磨长裤与防潮行靴", "胸前挂可撤回的联络时段牌，腰侧挂家庭录像封套、病情通知夹和临时身份标签"],
+        "props": ["无可读文字的家庭核验问题卡", "三份互相独立封存的登船前录像晶片", "只写通知时段的紧急联系人表", "十分钟会面申请牌与名单外人员的临时索引夹"]
+      },
+      "palette_profile": "low_sat_star_network_fog_blue_old_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与私人外貌资料尚未确认；角色魅力来自亲情中的权限克制、证据意识和可撤回联络，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_ling_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_ling_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_ling_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "gu_chenbi": {
+      "display_name": "顾沉璧",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_total_covenant_architect",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "他实际九十一岁，却仍保持四十余岁的外表与没有杂色的乌发，曾任都息署契正并负责总契的核心契文",
+        "他承认自己删掉失联确认、双医师复核和自动失效等三处限制，把韩玄素原本有限用途的阵图嵌进“末法存续期间自动续行”",
+        "他以东井枯潮后的城防和急救药数据为总契辩护，指出十七年间主城未破，却要求把供养者寿元、病痛和公共药量一并列入同一张责任表",
+        "他试图用城防缺口和第九响冬雷推动续行，后来携私印逃离，必须面对自己把修不好的部分藏进他人身体、并拒绝及时复审的责任"
+      ],
+      "personality": ["擅长把危机写成长期规则", "相信强制能换来稳定", "能准确报出系统收益", "面对具体身体代价仍试图辩护", "控制权限且不轻易承认迟到的复审责任"],
+      "visual_identity": {
+        "body_type": "adult_mature_total_covenant_architect",
+        "height_class": "HUM_L",
+        "face": ["外表四十余岁、实际九十一岁的成熟男性脸，五官克制而近乎不显老", "讨论城防数据时冷静精确，面对供养者伤情与删改痕迹时仍保持控制，却无法完全遮住迟疑"],
+        "hair": ["乌黑长发，整齐低束或半束，几乎没有白发，发尾带药棚与旧井的冷雾", "额前与鬓边干净利落，像多年维持契厅仪态的人"],
+        "body": ["自然修长成人比例，肩背挺直，手指有多年执契板、压私印和翻阅总账留下的薄茧", "不军人化、不夸张威压、不性感化"],
+        "costume": ["低饱和墨黑、深靛、旧银与暗铜的都息署契正层衣", "完整不透明高领内衫、分层长外套、硬质护肩、护腕、耐磨长裤与旧井工靴", "胸前挂无文字的契权牌，腰侧挂黑铜私印匣、分层契板和可拆卸的续行槽钥片"],
+        "props": ["三处被删限制的空白契板对照件", "无可读文字的六百三十一份总契索引册", "黑铜私印与透明封存匣", "用于记录城防收益和供养者代价的双栏责任板"]
+      },
+      "palette_profile": "low_sat_final_age_ink_indigo_old_silver_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色为明确成年且外表特殊，但视觉重点是契约设计责任、长期权力与系统收益/身体代价的冲突，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/gu_chenbi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/gu_chenbi_web_source_v1.png",
+      "master_path": "res://art/portraits/gu_chenbi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "lu_shifu": {
+      "display_name": "鲁师傅",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "classical_river_rescue_craftsman",
+      "faction_id": "independent",
+      "story_evidence": [
+        "他在水下救援开始前先定下规矩：只认绳号，三息没有回应便先收人，不派第二个人盲目下潜",
+        "洪水困住鱼市河工家属时，他站在齐腰水里让徒弟先去闸口，自己留下接人，并把会认暗沟的熟手分给小船、用门板做浮排",
+        "他坚持把救援与证据分开，允许原始目录、签字页和水下底稿由不同人保管，避免为了抢救一个人而让另一条证据链无人接手",
+        "面对被写成“自行离岗”的死者，他追问官署究竟是怕值守者知道危险，还是怕他们知道自己能拒绝，不接受用安全口号抹掉劳动者的退出权"
+      ],
+      "personality": ["先定救援规程", "熟悉暗沟与水势", "愿意把总图交给下一班", "不拿伤势证明资格", "把劳动者的拒绝权写进现场规则"],
+      "visual_identity": {
+        "body_type": "adult_mature_river_rescue_craftsman",
+        "height_class": "HUM_L",
+        "face": ["长期在闸口、暗沟和洪水里带徒弟救人的成熟男性脸", "说话直接而稳定，判断危险时眉眼收紧，确认被救者清醒后才放松"],
+        "hair": ["深灰黑短发，鬓角有自然灰线，常被水汽和风压向后", "短须或整洁灰黑胡茬，脸上有水工常年日晒与风蚀痕迹"],
+        "body": ["自然修长成人比例，肩背结实、腰腿稳定，带有长期涉水、拉绳和搬运门板的真实力量", "不军人化、不夸张肌肉、不性感化"],
+        "costume": ["低饱和河青、旧靛、泥灰、木褐与暗锈色的镜湖河工救援层衣", "完整不透明高领内衫、防水短褂、分层耐磨裤、护膝、缠绳护腕与防滑涉水靴", "腰侧挂绳号牌、哨子、短钩和可拆卸的防水工具袋"],
+        "props": ["三息计时砂与无文字停潜牌", "双股救援绳、浮标和门板浮排固定扣", "旧闸钩与暗沟水尺", "分开保管的水下底稿封管与岸上证物牌"]
+      },
+      "palette_profile": "low_sat_classical_river_ink_water_wood_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "称谓显示为经验丰富的河工，但正文未确认具体年龄；角色魅力来自救援纪律、现场判断和对劳动者拒绝权的坚持，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_shifu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_shifu_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_shifu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/classical_v1.json"
+      ]
+    },
+    "a_lu": {
+      "display_name": "阿芦",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "classical_shelter_water_signal_coordinator",
+      "faction_id": "independent",
+      "story_evidence": [
+        "她使用自选称呼阿芦，不愿恢复可能错误的旧姓，却熟记平码头六种水声并能在救援点之间传递可执行的水位信号",
+        "粮仓药箱不足时，她接受按伤情和停药风险排序，不把先到或先占铺板当成更有资格获得干地和药物",
+        "她提出用交叉旗与缺口木牌确认上下游已收到指令，并提醒完整住址总图不能由一个人独占，以免被捕后整座粮仓跟着开门",
+        "她接过报旗和局部联络任务，愿意把总图交给轮值网络，却没有因自愿救援而被默认承担整城轮值或公开全部受保护者位置"
+      ],
+      "personality": ["按伤情分流", "熟悉水声与报旗", "警惕单点控制", "愿意承担局部协调", "保护匿名住户的撤离路径"],
+      "visual_identity": {
+        "body_type": "adult_slender_water_signal_coordinator",
+        "height_class": "HUM_L",
+        "face": ["长期在旧粮仓、船头和闸口之间跑动的成年女性脸", "听见水声时专注敏锐，面对争抢药箱与床位时语气清楚、不迁怒新来者"],
+        "hair": ["深黑棕中长发，低束或编成贴颈侧辫，方便在雨水和屋脊间行动", "额前有潮气、粮尘和奔跑后散开的碎发"],
+        "body": ["自然修长成人比例，腿脚灵活，肩背有搬铺板、跑报旗和运药箱留下的真实力量", "不幼态、不性感化，不把失名经历做成脆弱装饰"],
+        "costume": ["低饱和河青、旧米白、粮仓灰与暗锈色的镜湖安置点救援层衣", "完整不透明高领内衫、防潮短披、分层耐磨裤、缠绳护腕与防滑软底靴", "肩上挂白黄红三色报旗，腰侧挂水声哨、止血散袋、缺口木牌与局部接头时刻牌"],
+        "props": ["无可读文字的六种水声对照片", "交叉旗的半面木牌与回旗扣", "按伤情排序的药箱分栏牌", "不含完整住址的粮仓轮值册和匿名接头封袋"]
+      },
+      "palette_profile": "low_sat_classical_river_blue_grain_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄与原始姓名尚未确认；角色魅力来自救援分流、水声经验和匿名网络纪律，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/a_lu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/a_lu_web_source_v1.png",
+      "master_path": "res://art/portraits/a_lu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/classical_v1.json"
+      ]
+    },
+    "tang_kui": {
+      "display_name": "唐葵",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_unregistered_mother_and_child_protector",
+      "faction_id": "independent",
+      "story_evidence": [
+        "她是十六坊产房里的无籍母亲，靠一枚小印躲避强制带走孩子的户吏，担心午夜显名后先上门的不是复核员",
+        "产婆用空白命印为母女只开三日急救与住处，约定在新的无债名页完成后归还；唐葵愿让受约束复核员知道位置，却拒绝让位置进入旧户吏可调用的总表",
+        "她承认若被查到使用空白命印会承担责任，但坚持孩子的药页先留在自己手里，把有限的临时保护与永久公开身份分开"
+      ],
+      "personality": ["先护孩子药页", "清楚临时授权边界", "愿意面对有限审查", "不接受被总表重新捕获", "在无籍状态下保持具体行动"],
+      "visual_identity": {
+        "body_type": "adult_slender_unregistered_mother",
+        "height_class": "HUM_L",
+        "face": ["长期在产房、临时住处和户吏搜索之间保护孩子的成年女性脸", "警觉却不慌乱，面对复核时能承认风险，谈到药页被夺时明显坚定"],
+        "hair": ["深黑棕中长发，低束或用布带盘起，便于抱孩子和穿过窄巷", "额前有产房蒸汽、夜雨和连续守夜后的碎发"],
+        "body": ["自然修长成人比例，肩背有抱持和搬运生活物资的真实力量", "不幼态、不性感化，不把母亲身份做成裸露或脆弱装饰"],
+        "costume": ["低饱和墨青、旧米白、灰绿与暗朱砂的十六坊临时住户层衣", "完整不透明高领内衫、宽松分层短袄、耐磨长裙裤、软底布靴与可隐藏证物的腰封", "腰侧挂空白命印保护匣、三日住处牌、药页防潮套与可撤回的临时位置牌"],
+        "props": ["无可读文字的空白命印", "孩子急救药页与三日药量封套", "只给受约束复核员看的位置牌", "新的无债名页和归还命印的封线"]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_ink_green_cream_vermilion",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确为母亲但具体年龄与身份资料未全确认；角色魅力来自保护孩子、有限授权与反追踪判断，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/tang_kui_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/tang_kui_web_source_v1.png",
+      "master_path": "res://art/portraits/tang_kui_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "chen_yusuo": {
+      "display_name": "陈玉梭",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_weaving_worker_and_wage_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她是织机厂的计件女工，在停机、复工和供汽争议中直接追问个人工资不能被厂方与炉会的结算吞掉",
+        "东六巷修管时，她让孩子留在仍有低温暖气的楼上，自己回到织机厂核对物资与停机影响，说明照护与劳动都不是可以从账面删掉的背景",
+        "她发现厂方提交的女工补助名单漏掉最常临时替班的一排，要求按机台和同班证人补核，并指出同一停机可以同时造成设备固定成本与个人收入损失",
+        "她会计算孩子发烧、灶房烟倒灌、第二轮点名和计件扣款之间的时间，在能回织机时回去，在不能安全交接时要求照护与替班被正式记录"
+      ],
+      "personality": ["把计件工资说清", "擅长按时间核对证据", "先安排孩子的安全交接", "不接受替班女工被漏记", "能与厂主谈条件但不替厂主做决定"],
+      "visual_identity": {
+        "body_type": "adult_slender_weaving_worker",
+        "height_class": "HUM_L",
+        "face": ["长期在织机、宿舍和东六巷之间往返的成年女性脸，疲惫但不软弱", "面对账册和工牌时目光锐利，谈到孩子与同班女工时有克制的急切"],
+        "hair": ["深棕黑中长发，低束或编成贴颈侧辫，避免卷入织机", "额前有煤尘、蒸汽和赶路后散开的碎发，发带为旧米白布条"],
+        "body": ["自然修长成人比例，肩背和前臂有长期操作织机与搬运线轴留下的真实力量", "不幼态、不夸张曲线，不把母亲与工人身份做成裸露装饰"],
+        "costume": ["低饱和炭灰、靛青、旧米白与暗锈红的蒸汽城织机厂工作层衣", "完整不透明高领内衫、耐磨短袄、分层长裙裤、护腕、围裙片与防滑工作靴", "腰侧挂计件卡夹、铜工牌、替班登记绳结与小型补助袋，袖口和裙摆有可见但克制的机油磨痕"],
+        "props": ["无可读文字的计件卡与机台编号牌", "带磨痕的铜工牌", "女工同班证人签名用的空白签条", "孩子照护交接的小布结与补助袋"]
+      },
+      "palette_profile": "low_sat_steam_city_charcoal_indigo_cream_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色明确承担照护与劳动证据职责；角色魅力来自清醒、耐力和现场判断，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/chen_yusuo_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/chen_yusuo_web_source_v1.png",
+      "master_path": "res://art/portraits/chen_yusuo_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "meng_duan": {
+      "display_name": "孟端",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_annealing_wheel_worker_and_wage_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "他家中女儿高烧、药铺只收灵石，管事借特别周转逼工人签下含糊条款；孟端承认缺钱，却拒绝把欠款改写成没有欠款的名字",
+        "退火轮夹住他的手时，他反复护住工牌，知道工伤认定必须先证明自己确实站在这只轮前，而不是让受伤者连证据一起丢掉",
+        "工伤预付到账时，他要求把生活预付、余款复核日和工具票来源写清，先解决眼前生活又不把临时付款伪装成最终和解",
+        "他需要长期复健，仍参与说明岗位风险与轮机证据；可行动的部分由他本人决定，不能把伤者的配合变成免费验收劳动"
+      ],
+      "personality": ["缺钱但不接受改名式和解", "护住工牌与证据", "说话直截", "愿意承担复核程序", "把家庭压力和工伤边界分开"],
+      "visual_identity": {
+        "body_type": "adult_lean_annealing_wheel_worker",
+        "height_class": "HUM_L",
+        "face": ["长期在炉厅、医棚和宿舍之间生活的成年男性脸，疼痛使眉眼紧但不显凶", "谈到工牌和女儿的药时克制而直接，不是英雄式怒吼"],
+        "hair": ["短黑发，发梢沾有煤灰和金属粉，额前因汗水贴住", "不做夸张发型，侧后方有旧布带固定护耳片"],
+        "body": ["自然修长偏瘦的成年工人比例，肩背和前臂有操作退火轮的真实力量", "右手或前臂有清晰但非血腥的固定绷带，姿态略避让受伤侧，不缩成 Q 版比例"],
+        "costume": ["低饱和炭黑、铁灰、暗锈红与旧米白的蒸汽城炉厅工装", "完整不透明立领内衫、耐热短褂、分层工作裤、厚底护趾靴、护耳片与工牌绳", "腰侧挂无可读文字的工具票夹、生活预付封袋和复核日期木签，袖口带油污与修补线"],
+        "props": ["带血迹已清理但有磨痕的铜工牌", "退火轮安全销与旧木柄", "无可读文字的工伤预付封袋", "女儿药铺用的空白取药牌"]
+      },
+      "palette_profile": "low_sat_steam_city_iron_charcoal_rust_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是工伤、欠薪与家庭照护证据；视觉重点放在工装、伤手和工牌，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/meng_duan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/meng_duan_web_source_v1.png",
+      "master_path": "res://art/portraits/meng_duan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "ge_xiulin": {
+      "display_name": "葛绣林",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_archive_copyist_and_data_consent_witness",
+      "faction_id": "independent",
+      "story_evidence": [
+        "她在整理育幼院旧档时偷偷拓录孩子根值页，收取三十息铢并换得儿子两个月学费，随后在天亮前主动到场承认经过",
+        "她说明买方曾以全城共同授权为由继续传播名单，促使共同席要求任何集体授权都必须写清字段、期限与退出记录",
+        "她退还收取的钱并进入有工资的通知班，追责不被一纸认错抹平，同时儿子的学费另设救助，不再拿孩子停学作为母亲保持沉默的筹码",
+        "她的行动让人看见数据泄露不只来自恶意，也来自急迫生活压力；解决办法必须同时追溯传播链、通知受影响者并提供不依赖泄密的救助"
+      ],
+      "personality": ["承认自己做过的事", "熟悉旧档与抄录流程", "在压力下仍能补证据链", "不替买方包装集体授权", "愿意用有工资的通知劳动修复影响"],
+      "visual_identity": {
+        "body_type": "adult_slender_archive_copyist",
+        "height_class": "HUM_L",
+        "face": ["长期在契厅、育幼院旧档室和申诉席之间工作的成年女性脸，眼下有睡眠不足的淡淡疲惫", "承认错误时不回避视线，谈到孩子学费和泄露名单时神情复杂但清楚"],
+        "hair": ["深棕黑长发，低盘发配旧青灰发簪，几缕碎发因伏案抄录散到颊侧", "发簪不是华丽饰品，而是可固定纸页和卷带的工作物件"],
+        "body": ["自然修长成年比例，肩颈有长期伏案与搬档箱的痕迹，手指纤细但有墨痕和纸割小伤", "不幼态、不柔弱化，不把被胁迫与犯错做成性感表演"],
+        "costume": ["低饱和雾青、旧米白、墨灰与暗铜色的最终纪元契厅抄录员层衣", "完整不透明高领内衫、窄袖长外袍、便于坐行的分层长裙裤、软底鞋与护腕", "腰侧挂无可读文字的档页夹、封存绳、退还钱袋与通知班木牌，袖口留有墨灰与纸尘"],
+        "props": ["无可读文字的根值副页空白拓板", "已封存的传播链卷轴", "退还三十息铢的封袋", "通知班用的空白收件牌与封蜡"]
+      },
+      "palette_profile": "low_sat_final_age_mist_blue_ink_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄未确认且角色核心是数据同意、生活压力与补救劳动；视觉重点放在抄录工具和承认责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ge_xiulin_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ge_xiulin_web_source_v1.png",
+      "master_path": "res://art/portraits/ge_xiulin_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "gao_sui": {
+      "display_name": "高遂",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "cameo",
+      "occupation": "final_age_thermostatic_case_holder",
+      "faction_id": "independent",
+      "story_evidence": [
+        "他留下装有混合脉纹药材的恒温匣，并以眨眼记录与‘留给女儿’的短句表达意愿",
+        "女儿高芦生第一次面对恒温匣时没有把父亲留下的话当成强制命令，而是要求先知道匣中另一段脉纹属于谁",
+        "他的匣子被继续以代号封存，没有被分散席或迁舟多数决定归属；后续分脉前由高芦生与另一位脉纹家属共同同意",
+        "高遂的遗留物成为区分生前意愿、现时同意、身体材料来源与公共费用的关键证据，不是可随意调用的资源"
+      ],
+      "personality": ["给家人留下选择", "不把照护意愿写成命令", "尊重脉纹来源", "谨慎保管恒温材料", "用简短记录抵抗总表式代管"],
+      "visual_identity": {
+        "body_type": "adult_lean_thermostatic_case_holder",
+        "height_class": "HUM_L",
+        "face": ["经历长期病护、冬日奔波与家庭取舍的成年男性脸，沉静、克制、眼神温和但有明确边界", "适合记忆片段与旧记录中的正面形象，不做神秘邪术师或权贵模板"],
+        "hair": ["深灰黑中长发，低束或半束，夹少量自然灰丝", "发型朴素，额前留有久病照护与冬风造成的散发"],
+        "body": ["自然修长偏瘦的成年比例，肩背略有长期守着恒温匣与病护生活的疲态", "手指保持稳定托匣的姿势，身体不缩短、不 Q 版化"],
+        "costume": ["低饱和霜灰、深青、旧米白与暗铜色的最终纪元冬日层衣", "完整不透明高领内衫、长外袍、保温披肩、窄腿长裤与软底冬靴", "胸前挂无可读文字的眨眼记录牌，腰侧以布带固定恒温匣封扣和女儿可辨认的旧结"],
+        "props": ["带双重封扣的恒温匣", "无可读文字的眨眼记录牌", "写有‘留给女儿’但不出现可读字样的折叠纸片", "脉纹来源封存签与旧布结"]
+      },
+      "palette_profile": "low_sat_final_age_frost_blue_ink_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "人物年龄与完整生平未确认，且角色通过遗留意愿与记忆出现；视觉重点是恒温匣和选择边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/gao_sui_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/gao_sui_web_source_v1.png",
+      "master_path": "res://art/portraits/gao_sui_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "du_yong": {
+      "display_name": "杜雍",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_civic_covenant_planner",
+      "faction_id": "independent",
+      "story_evidence": [
+        "他提出为三十七个孩子补正籍、给家属城宅券以换取名珠留在承霄台，方案能解决当日坠落风险，却可能把孩子的身份与未来再次抵押给一处系统",
+        "在跨城互认讨论中，他坚持至少保留一个稳定称呼，让医疗与返程联系能够继续，但接受现名授权不能统摄旧观察样本与随身物",
+        "他参与把紧急救助、姓名修复、医疗联系和资料使用拆成不同授权，说明制度设计需要兼顾即时生存和之后的撤回权",
+        "杜雍的方案经常以‘先把城撑住’为出发点，角色冲突不在善恶二分，而在公共稳定能否借机重新占有个人身份"
+      ],
+      "personality": ["先保住城市与孩子", "擅长把救助做成制度", "愿意听取现名授权", "容易低估长期抵押风险", "能在分栏授权后修正方案"],
+      "visual_identity": {
+        "body_type": "adult_tall_civic_covenant_planner",
+        "height_class": "HUM_L",
+        "face": ["长期在承霄台、契厅和迁舟码头之间协调的人类成年男性脸，沉着、理性，疲惫藏在眼角", "看见孩子或患者被再次登记时会停顿，像在重新计算制度代价"],
+        "hair": ["墨黑长发高束，发尾夹少量灰蓝缎带，方便伏案和在风台行走", "发冠简洁，像官署文书工具而非贵族装饰"],
+        "body": ["自然修长挺拔的成年男性比例，肩背有长期携带档案匣与登台奔走的力量", "姿态端正但不僵硬，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和深青、烟灰、旧米白与暗铜色的承霄台公契层衣", "完整不透明立领内衫、窄袖长袍、分层下摆、软底长靴与防风披肩", "腰侧挂分栏授权签、城宅券匣、空白撤回页与稳定称呼牌，衣缘有风台尘痕"],
+        "props": ["无可读文字的补正籍匣", "分栏授权签与撤回页", "城宅券封匣", "只含稳定称呼不含旧样本的联系牌"]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_civic_ink_blue_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄未确认且角色核心是公共救助与身份授权制度；视觉重点放在文书、分栏权限和城市协调，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/du_yong_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/du_yong_web_source_v1.png",
+      "master_path": "res://art/portraits/du_yong_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "huang_ji": {
+      "display_name": "黄稷",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "heng_an_maintenance_shift_foreman",
+      "faction_id": "independent",
+      "story_evidence": [
+        "他今年五十二岁，从十八岁起便负责换滤片、补水和把闪烁柜调回平均值，是衡安养护二十一名工人的当班领工",
+        "他交出院门钥匙并追问封院后工人本月工资由谁支付，说明设施关闭不能把长期维护劳动一起抹掉",
+        "右肩受伤后，他明确登记可远距听材、不可举重，让学徒按他的口述拆灯壳，不用继续负重证明经验",
+        "他公开三十四年工作内容，接受知情范围审查并参与过渡工资与替班安排，既保留工人报酬，也不替旧设施隐瞒责任"
+      ],
+      "personality": ["熟悉滤片与灯壳声", "先问清工人工资", "能把经验交给学徒", "接受有限审查", "区分维修责任与个人背锅"],
+      "visual_identity": {
+        "body_type": "adult_mature_maintenance_foreman",
+        "height_class": "HUM_L",
+        "face": ["五十二岁维修领工的成熟男性脸，额角有灰发和长期夜班留下的疲惫", "听见异常壳声时专注，面对官署询问时不卑不亢，像习惯用数据而不是喊话争取工资"],
+        "hair": ["黑灰短发，后侧略长，常戴旧灰布工帽", "胡须修剪简洁，眉骨和耳侧有金属粉与机油留下的生活痕迹"],
+        "body": ["自然修长、结实但不夸张的成年男性比例，长期爬梯、搬滤片形成实用力量", "右肩有整洁固定带或绷带，抬臂受限，姿态不缩短、不 Q 版化"],
+        "costume": ["低饱和铁灰、深青、旧米白与暗黄的蒸汽城维护工装", "完整不透明立领内衫、耐磨短夹克、分层工作裤、护膝、厚底工靴与旧灰工帽", "腰侧挂无可读文字的滤片钳、听材短筒、钥匙串、排班木牌与过渡工资封袋"],
+        "props": ["一串设施钥匙", "带裂纹的无名灯壳样件", "滤片钳与听材短筒", "工人排班和过渡工资用的空白木牌"]
+      },
+      "palette_profile": "low_sat_steam_city_iron_blue_cream_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色年龄明确为五十二岁，核心是维修经验、伤后限制与工人报酬；视觉重点放在工装、肩伤和工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/huang_ji_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/huang_ji_web_source_v1.png",
+      "master_path": "res://art/portraits/huang_ji_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "luo_wantang": {
+      "display_name": "罗晚棠",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_veteran_furnace_worker_and_shift_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她是炉厅老工人，在孟端受伤时先切投煤、守住退火轮，并要求将熟练工换班写进黑板而不是靠人硬顶",
+        "面对管事把八枚钱包装成对一户人的特别照顾，她追问能否写成工伤预付、不附和解，拒绝用亲切话术遮住制度条件",
+        "她用煤粉划出证物递交线、要求换班者先听完规则，并从工具袋拿出旧铜帽参与低压试验，既懂现场也知道临时备件必须报废",
+        "她坚持至少两刻睡眠与进食、在轮值簿上公开下一班未结项，并把伤者划出后续高处作业，不把轻伤当成还能继续冒险的证明"
+      ],
+      "personality": ["护住现场证物", "识破伪装成照顾的条件", "熟悉炉厅细声", "坚持可持续换班", "愿意把经验写成公开规则"],
+      "visual_identity": {
+        "body_type": "adult_mature_furnace_worker",
+        "height_class": "HUM_L",
+        "face": ["长期在高温炉厅与夜班交接中工作的成年女性脸，眼神锐利，笑意短促但不冷酷", "看到危险读数会先看表和人，不会被高薪订单或官署口号带走"],
+        "hair": ["深棕黑短发或低束发，发尾沾煤灰，额前有汗湿碎发", "用耐热布巾压住发根，少量银丝自然出现，不做华丽发饰"],
+        "body": ["自然修长而结实的成年比例，肩背、前臂与腿部有长期站炉和搬工具的真实力量", "姿态稳，手套与护腕有磨痕，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和炭黑、铁灰、暗红与旧米白的百炉城炉工工装", "完整不透明高领内衫、耐热短外衣、分层工作裤、厚底工靴、护腕与护耳片", "腰侧挂工具袋、煤粉短棒、旧铜帽、无可读文字的轮值木牌和临时证物封签"],
+        "props": ["装有旧铜帽与泄压小件的工具袋", "无可读文字的轮值木牌", "煤粉划线短棒", "带磨痕的护腕与工牌绳"]
+      },
+      "palette_profile": "low_sat_steam_city_charcoal_iron_rust_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是炉工经验、换班安全与工资条件；视觉重点放在工装与工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/luo_wantang_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/luo_wantang_web_source_v1.png",
+      "master_path": "res://art/portraits/luo_wantang_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "shan_qiuhe": {
+      "display_name": "单秋禾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_cross_furnace_safety_coordinator",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她在第三炉风险扩大时主持临时值守会，让发生风险的当班者参与压力表决、订单分配和安全承诺，而不是由总董单点决定",
+        "爆炸后她作为当班者证人和救援知识来源，记得岳重楼的敲击方式与自己的旧伤信息，帮助搜索组把微弱刮擦声重新识别为生命信号",
+        "她提出两日安全停工计划，要求复验黄类炉裂纹、更换同批定压簧、核对防护甲和撤离码，并把基本生活工资列入成本",
+        "后续她提出三层停机权限并成为首任跨炉安全组轮值，不掌握结算钥匙，也不因专业判断恢复事故责任人的管理资格"
+      ],
+      "personality": ["把风险交给现场共同判断", "熟悉炉区与撤离码", "坚持安全计划有生活工资", "能在救援中按时撤退", "分离专业意见与管理权限"],
+      "visual_identity": {
+        "body_type": "adult_slender_cross_furnace_safety_coordinator",
+        "height_class": "HUM_L",
+        "face": ["长期在炉区、检修门和公开铜盘之间工作的成年女性脸，注意力集中、表达简洁", "面对爆炸和救援时冷静计算撤退线，面对工资和停工压力时不回避代价"],
+        "hair": ["深黑棕中长发，编成低侧辫并用暗红耐热布带固定，耳侧留有被护具压过的碎发", "发型适合戴护耳和穿过检修门，不做华丽装饰"],
+        "body": ["自然修长、灵活的成年比例，肩背和腿部有跨炉巡查与救援训练留下的力量", "手腕有旧伤护带或轻薄固定，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和深青、铁灰、旧米白与暗锈红的百炉城安全协调工装", "完整不透明高领内衫、耐热短外衣、分层工作裤、护膝、护耳与防滑工靴", "腰侧挂无可读文字的撤离码牌、刻漏计时器、红黄绿安全标记、跨炉传讯板和轮值印记"],
+        "props": ["无可读文字的三层停机权限牌", "刻漏计时器与撤退绳扣", "红黄绿安全标记片", "跨炉压力记录铜板与空白点名条"]
+      },
+      "palette_profile": "low_sat_steam_city_safety_ink_blue_iron_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是安全权限、救援判断与可持续停工；视觉重点放在护具、计时和安全标记，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/shan_qiuhe_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/shan_qiuhe_web_source_v1.png",
+      "master_path": "res://art/portraits/shan_qiuhe_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "bo_li": {
+      "display_name": "柏砺",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_defense_ballista_engineer",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "他指出城防弩若在复验前升到八成，叶片穿壳的风险高于暂时停机，愿意带人用三刻完成复验",
+        "面对敌舟逼近，他接受先用一成灵液保一轮确定拦截，再以低压追踪灯和民用声码识别，说明军务判断也要把暴露位置与误伤风险写清",
+        "警钟让医棚伤者出现惊厥和呼吸加快时，他承认军营不能每次临时写长文，参与把警报改成固定四句居民动作",
+        "他在城防技术、民用信号和医疗避险之间持续协调，关注的是可验证的拦截与可执行的撤离，不是单纯追求火力最大化"
+      ],
+      "personality": ["先复验高危设备", "能把军事风险说成技术条件", "接受低压追踪与民用声码", "愿意压缩警报成可执行动作", "区分拦截成功与居民安全"],
+      "visual_identity": {
+        "body_type": "adult_tall_defense_engineer",
+        "height_class": "HUM_L",
+        "face": ["长期在城防塔、弩台和医棚警报席之间工作的成年男性脸，眉眼专注，少有夸张表情", "面对军务压力仍会先看叶片、压力和伤者反应，像习惯让设备数据约束判断"],
+        "hair": ["深黑短发，后侧略长，用深蓝布带束住；额前有金属粉和风沙", "不戴华丽头盔，头顶保留工程护目镜架或简洁护耳"],
+        "body": ["自然修长挺拔的成年男性比例，肩背有搬弩件和爬塔留下的力量", "腰腹与四肢不夸张，姿态像在操作校准器，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和深蓝、铁灰、旧米白与暗铜色的城防工程层衣", "完整不透明立领内衫、短甲片护肩、耐磨长外衣、分层工作裤、护膝与厚底工靴", "腰侧挂无可读文字的叶片厚度规、低压追踪灯、民用声码片、警报四句动作牌和维修封签"],
+        "props": ["城防弩叶片校准规", "低压追踪灯样件", "无可读文字的民用声码片", "四句居民动作警报牌"]
+      },
+      "palette_profile": "low_sat_steam_city_defense_ink_blue_iron_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是城防工程、警报可达性和误伤风险；视觉重点放在护具与校准工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/bo_li_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/bo_li_web_source_v1.png",
+      "master_path": "res://art/portraits/bo_li_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "tao_sao": {
+      "display_name": "陶嫂",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "classical_fish_market_householder_and_rescue_coordinator",
+      "faction_id": "mirror_lake",
+      "story_evidence": [
+        "她来自鱼市，家屋顶被洪浪掀掉一半，仍在闸门争议中要求先派船接屋顶上的人，再讨论鱼市能承受多少积水",
+        "她能把自己的退让写成可执行条件：鱼市可以多等半刻，但要先完成搜屋顶和撤离，而不是用代表身份替所有居民决定淹谁",
+        "她在公开调度中追问灾后赔偿何时真正交到受损者手中，不接受官署把一纸受理当成兑现",
+        "她在惩罚责任人与保护无辜家属之间重新划线，明确不替被追责者开脱，也不肯把其家人当成抵账对象"
+      ],
+      "personality": ["护住鱼市住户", "愿意承担具体损失", "先要救人再谈货物", "不替群体越权签字", "追问赔偿兑现时刻"],
+      "visual_identity": {
+        "body_type": "adult_sturdy_fish_market_householder",
+        "height_class": "HUM_L",
+        "face": ["长期在镜湖鱼市、湿屋顶和赔偿桌之间奔走的成年女性脸，眼神直接，疲惫里带着不肯含糊的坚硬", "争闸时不是泼辣表演，而是能把屋顶人数、船次和半刻时间说清"],
+        "hair": ["深棕黑中长发，湿后低束在颈后，外面压一条旧蓝灰头巾", "鬓角有雨水和湖盐留下的碎发，不做华丽首饰"],
+        "body": ["自然修长但有搬鱼箱、拉船绳和爬湿屋顶的真实力量，成年比例清楚", "手臂和小腿有工作磨痕，姿态稳健，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和湖青、旧米白、泥灰与暗朱砂的镜湖鱼市雨洪工作服", "完整不透明高领内衫、短防水披、分层长裙裤、缠绳护腕、防滑软底靴与旧头巾", "腰侧挂无可读文字的屋顶点名木牌、船绳扣、灾损登记板和赔偿回执封袋"],
+        "props": ["船绳扣与防水手套", "无可读文字的屋顶点名木牌", "灾损登记空白板", "写有复核时刻但不出现可读文字的回执封袋"]
+      },
+      "palette_profile": "low_sat_mirror_lake_river_blue_mud_cream_vermilion",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是洪灾救援、居民代表边界与赔偿兑现；视觉重点放在雨洪工装和船绳工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/tao_sao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/tao_sao_web_source_v1.png",
+      "master_path": "res://art/portraits/tao_sao_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/classical_v1.json"
+      ]
+    },
+    "shen_yanqiu": {
+      "display_name": "沈砚秋",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "gui_chao_xing_migration_vessel_agent",
+      "faction_id": "independent",
+      "story_evidence": [
+        "她作为归潮行迁舟代理人说明船舱、医师、抵达后三十日粮食和真实保管成本，承认行会没有核对十年确认者是否真是乘客",
+        "她允许申请者登船查看，不收体检押金，并说明六日无灵区、医床适配、目的港居所与中途不能靠岸的实际风险",
+        "她在重算后同意撤掉虚增的十年床位保管费，只主张真实航程与近三日准备成本，同时保留对枯潮违约的复议",
+        "黑盐回压时，她把借用船泵截止、乘客撤回和最后登梯拆成不同钟声，允许已签票者正常登船，也不把自愿留城搬运变成换床位的条件"
+      ],
+      "personality": ["先把迁舟条件说全", "承认行会核验失察", "能在账目面前重算费用", "尊重乘客撤回", "把船务效率与个人选择分开"],
+      "visual_identity": {
+        "body_type": "adult_slender_migration_vessel_agent",
+        "height_class": "HUM_L",
+        "face": ["长期在迁舟码头、医床核验桌和远程账台之间奔走的成年女性脸，沉着、疲惫、说话有条理", "面对质疑时不躲在行会名义后面，能把真实成本与不应收取的费用逐项分开"],
+        "hair": ["深黑棕长发低束，发尾用墨青绳带收住，适合风大的船梯与码头", "额前有水汽和长途传讯后的碎发，不做华丽头饰"],
+        "body": ["自然修长的成年比例，肩背有携带乘客册、登船牌和水泵账的真实力量", "站姿稳定、行动利落，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和海青、雾灰、旧米白与暗铜色的归潮行码头层衣", "完整不透明高领内衫、长风衣式外袍、分层长裙裤、防滑船靴、短披肩与护腕", "腰侧挂无可读文字的乘客册夹、不同音色的三枚钟铃、医床适配牌、退票封签与船泵借用牌"],
+        "props": ["无可读文字的乘客册夹", "三枚代表不同时间的钟铃", "医床适配牌与船票封签", "船泵借用截止木牌"]
+      },
+      "palette_profile": "low_sat_final_age_sea_blue_mist_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是迁舟知情、费用重算与乘客撤回；视觉重点放在码头层衣与票据工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/shen_yanqiu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/shen_yanqiu_web_source_v1.png",
+      "master_path": "res://art/portraits/shen_yanqiu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "zhu_yao": {
+      "display_name": "祝遥",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_witness_and_evidence_protection_advocate",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "她在荒原桥面证据争夺中明确表示宁可失去纸，也不愿用放走下一批受害者换证据，并强调另外两名证人的决定不能由她代表",
+        "她把三十七份不明席槽留在空白栏，没有把所有过渡席都推定成受害者，同时让副本分散保管，避免主井毁表",
+        "她要求本人可以单独撤签、亲属栏冻结，并在试验中因两名受亲属线牵连者出现耳鸣而暂停下一组，不为完成名单越过红线",
+        "她参与把证据保护、匿名避险号、撤回和设备供能分开，使证物能够追责，却不把证人的身体、隐私和选择变成案件燃料"
+      ],
+      "personality": ["证据重要但不高于证人", "不替他人作决定", "能接受未知留在空白栏", "擅长分散保管副本", "在红线前主动暂停"],
+      "visual_identity": {
+        "body_type": "adult_slender_wasteland_witness_advocate",
+        "height_class": "HUM_L",
+        "face": ["长期在灰堤、霜肺营和主井证物台之间奔走的成年女性脸，警觉、清醒、很少被人群情绪带走", "面对证据烧毁与救人冲突时表情坚决，但不会把自己塑造成唯一英雄"],
+        "hair": ["深黑棕长发，编成两股低辫或低束，用褪色沙红布带固定，方便穿过风沙与车棚", "额前有荒原尘土和雨蚀碎发，不做华丽发饰"],
+        "body": ["自然修长、耐行的成年比例，肩背有背证物匣与长途跋涉的真实力量", "护腕、膝部和鞋底带磨痕，姿态稳定，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和沙灰、风蚀青、旧米白与暗赭红的荒原行旅层衣", "完整不透明高领内衫、短防风披、分层长衣裤、护膝、软底沙靴和防尘面巾", "腰侧挂无可读文字的证物匣封扣、匿名避险号牌、撤签木片、空白栏册页和三色回讯绳"],
+        "props": ["分散保管用的三只小证物匣", "无可读文字的匿名避险号牌", "撤签木片与空白栏册页", "三色回讯绳和风沙护目片"]
+      },
+      "palette_profile": "low_sat_wasteland_sand_fog_blue_cream_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "具体年龄尚未确认且角色核心是证人保护、撤回权与匿名避险；视觉重点放在行旅护具与证物工具，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhu_yao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhu_yao_web_source_v1.png",
+      "master_path": "res://art/portraits/zhu_yao_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "jian_tiezhi": {
+      "display_name": "简铁枝",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_salt_mirror_drilling_camp_chief",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "她四十六岁，是盐镜营营首，负责深井钻机、五十四名营员、工业水与钻工班的现场安排",
+        "她承认旧报价只有可议、二十亩和一口井等片段，没有把口头交谈硬磨成完整土地成交，并主动接受三方见证与停止权",
+        "她在探到第七苗窖空腔后改画钻架，选择侧面斜钻、封套和观察孔以保护窖顶，也把钻头寿命、耗水和工班成本写入实际投入",
+        "她拒绝把救命材料捆成永久土地让步，愿意借硬壳搭紧急棚并要求雨后补回，说明她能同时保护工人利益与其他聚落的生存空间"
+      ],
+      "personality": ["先把水和土地分开谈", "尊重三方共同读数", "愿为安全牺牲设备寿命", "不把救急借用换成永久权利", "清楚记录工班与物资成本"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_drilling_camp_chief",
+        "height_class": "HUM_L",
+        "face": ["四十六岁荒原钻营营首的成熟女性脸，长期缺水与风沙留下真实疲惫，目光直接而有计算力", "面对钻机、土地和三方争议时不靠威吓，习惯拿读数、时限和成本回应"],
+        "hair": ["深黑棕中长发编成紧实低辫，用褪色赭红头巾压住，额前有沙尘和金属屑", "发型便于戴护目镜、低头看钻架，不做贵族式装饰"],
+        "body": ["自然修长偏高、结实的成年比例，肩背和腿部有扶钻、搬套管与荒原行走的真实力量", "手掌有工具茧，姿态稳重，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和沙灰、铁黑、旧米白、暗赭红的盐镜营钻工层衣", "完整不透明高领内衫、耐磨短夹克、分层工作裤、护膝、厚底沙靴、防尘护目镜与手套", "腰侧挂无可读文字的钻机插销、扭矩规、探钎封套、三方计日牌与硬壳借用登记片"],
+        "props": ["钻机插销与扭矩规", "三枚空心探钎和可拔封套", "无可读文字的三方计日牌", "拆下的钻机硬壳与补回登记片"]
+      },
+      "palette_profile": "low_sat_wasteland_sand_iron_cream_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色年龄明确为四十六岁，核心是钻井安全、土地谈判与工人投入；视觉重点放在荒原工装和设备，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/jian_tiezhi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/jian_tiezhi_web_source_v1.png",
+      "master_path": "res://art/portraits/jian_tiezhi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "wen_yin": {
+      "display_name": "闻茵",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_seed_vault_owner_and_agro_coordinator",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "她是见青畦圃主，打开种库清点二万四千七百一十一粒青稞种，负责四十二畦和一百八十六名原住佃户的播种协调",
+        "她拒绝把四十名修士姓名交给总炉换取温风，也没有把选择推给外来者；她公开水、粮、竹膜与劳力账，要求先说清风险",
+        "她曾按乌景回报逐畦发放促生粉，粉害查明后在库墙写下自己的名字和四十二次发放，接受从自己的手先查",
+        "她尊重失踪种户的未表态，将无法取得同意的一碗封存，不以“大局需要”替失踪者签名",
+        "她在重开地热与切断总炉的争议中保留圃主印、交出技术职分，接受五人共同管理，继续说明促生粉责任"
+      ],
+      "personality": ["先把种、水、膜和劳力分开算", "不替失踪者签字", "愿意承担自己发放粉料的责任", "保护原住佃户的返还份", "能把技术职与管理权分开"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_seed_keeper",
+        "height_class": "HUM_L",
+        "face": ["长期在风沙、种圃和缺粮压力下工作的成熟女性脸，清醒、克制、带真实疲惫", "面对四十席压力时眉眼坚定，谈到失踪种户和返还份时显出谨慎与尊重"],
+        "hair": ["深黑棕长发编成低辫，用褪色沙青头巾压住，发尾沾少量土尘", "发型利于低头筛种、布膜和检查竹管，不做华丽仙侠发冠"],
+        "body": ["自然修长偏高、结实的成年比例，肩背和腿部有搬种袋、抬水桶和长时间弯腰播种的真实力量", "站姿稳重、手掌有农务薄茧，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和土灰、旧米白、灰青、暗赭绿的荒原种圃层衣", "完整不透明高领内衫、分层长外衣或围裙层、耐磨长裤、护膝、软底沙靴与防尘头巾", "腰侧挂无可读文字的种库封片、竹膜夹、土筛扣和小水囊，衣摆有泥尘与反复缝补痕迹"],
+        "props": ["四十二只无可读文字刻记的种碗", "折叠竹膜与土筛", "种库水粮劳力账册", "取下的圃主印和十五粒发芽试验种"]
+      },
+      "palette_profile": "low_sat_wasteland_soil_faded_teal_cream_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是种库责任、佃户同意与粮食风险；优先表现荒原农务职业和审慎责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/wen_yin_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/wen_yin_web_source_v1.png",
+      "master_path": "res://art/portraits/wen_yin_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "a_luo": {
+      "display_name": "阿洛",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_signal_voice_technician",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "他参与三枚信号片的接入与归乡坐标校准，明确区分可用于定位的风声、应交给法台的支路和必须保留给本人的声音",
+        "他指出药浴所强制观察时植入的口令可能被误当成自述，要求把三类内容分开授权，不让技术便利替代本人同意",
+        "闻徵用隔音纸线追问他十四岁时的旧事，他以捡回裂口埙并修好后归还作答，留下可复核但不包办整套身份的记忆锚点",
+        "他的技术知识在医疗与返乡信号之间被使用，却没有因此重新取得患者指挥位，说明他愿意让设备权限服从本人边界"
+      ],
+      "personality": ["先分离信号用途", "保留自己的声音", "技术熟练但不替人授权", "愿意接受局部记忆核验", "警惕强制观察留下的口令"],
+      "visual_identity": {
+        "body_type": "adult_slender_signal_technician",
+        "height_class": "HUM_L",
+        "face": ["长期在寒风、法台和维修桌之间工作的清瘦成年男性脸，专注而克制", "听见自己的声音被误用时警觉，谈到旧埙和修复经验时稍显柔和"],
+        "hair": ["深黑棕中长发低束，额前有少量被风吹散的碎发", "发式利于佩戴简洁的信号听片，不做浮夸发冠"],
+        "body": ["自然修长的成年比例，肩背和手指有长期拆接信号片、抬设备箱形成的真实力量", "站姿轻而稳，手部动作精准，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和墨青、旧米白、铁灰与暗铜的永朝技术层衣", "完整不透明高领内衫、短护肩、分层长衣、耐磨长裤、软底靴与腕部绝缘带", "腰侧挂无可读文字的信号片盒、三路分流扣、隔音纸线卷和小工具囊"],
+        "props": ["三枚不同边缘刻痕的信号片", "无可读文字的归乡坐标盘", "裂口埙修补件或小型旧埙", "隔音纸线与授权分流牌"]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_ink_teal_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是信号分流、患者声音与技术授权；优先表现维修职业和身份边界，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/a_luo_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/a_luo_web_source_v1.png",
+      "master_path": "res://art/portraits/a_luo_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "ge_sui": {
+      "display_name": "葛穗",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_gray_dike_gate_warden",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "他是灰堤闸吏，闸楼内有十二名维护者和六名病人，被自动锁困四日后仍负责维持供能盘与东闸雨障",
+        "他承认收过锁息散，说明药物原本用于维护者脉冲反噬止痉，后来被殷昼灌进强制席位；面对三块改写观察牌，他只举白板写下“送进”",
+        "他能隔门核对井芯报码，知道灰堤只收回声、不见本人，并愿意配合皮肤测试和跨站索息检查，不要求门外人先相信他无辜",
+        "他在缺少一百零三席时愿意手动转阀，以东、西值守同步报水位来开闸；之后交出送货册并接受限时、限地的共同询问",
+        "他的责任既包括让闸门和雨障继续运行，也包括解释改牌与送药链，不能被单纯的守门功劳或单纯的共谋指控覆盖"
+      ],
+      "personality": ["先报设备与病人数量", "愿意承认送药与改牌责任", "熟悉本地闸门和水轮", "接受限时限地核查", "不要求别人替他洗清责任"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_gate_warden",
+        "height_class": "HUM_L",
+        "face": ["长期守灰堤闸楼、风雨和锁困压力下的成熟成年男性脸，疲惫、谨慎、责任感沉重", "隔门报出设备与病人数时冷静，写下送进时回避又不逃避"],
+        "hair": ["深黑棕短发或低束中发，额前有雨水和灰尘留下的碎发", "发型便于戴旧防雨兜帽和贴近闸门听水轮，不做华丽发冠"],
+        "body": ["自然修长偏高、结实的成年比例，肩背和前臂有转阀、搬药箱、守水轮的真实力量", "站姿像长期守在狭窄闸室的人，手部有金属与药粉磨痕，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和灰堤泥灰、雨障青、旧米白与暗锈色的闸楼维护层衣", "完整不透明高领内衫、防雨短披、分层工作裤、护膝、厚底湿地靴、护臂和旧兜帽", "腰侧挂无可读文字的内阀扳手、供能盘拨片、药箱封片、白板夹与水位刻度绳"],
+        "props": ["内阀扳手和水轮木齿", "无可读文字的白板与白板笔", "三块被刮改过的观察牌", "锁息散药箱与四方封存绳"]
+      },
+      "palette_profile": "low_sat_wasteland_gray_dike_rain_teal_rust",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是闸门维护、病人保护与责任核查；优先表现雨障工务和复杂责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ge_sui_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ge_sui_web_source_v1.png",
+      "master_path": "res://art/portraits/ge_sui_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "yu_he": {
+      "display_name": "郁禾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_heat_array_maintenance_supervisor",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "她是十二座热阵的主管，在第九阵稳压胆渗出蓝白冷雾时先让工人退到风上侧、关闭相邻支路并用旧毡包住裂口",
+        "她在备用胆受税号接口阻拦时用手摇泵维持压力，要求按仓单、车重和限时担保放行，不让设施维修被失籍身份卡死",
+        "她拿出二十三个月的欠料单，指出四十六名阵工中已有多人连续少领工资，把维修现场的工时、冻伤治疗和误工费从总额账中单独列出",
+        "她拒绝工人继续赊薪，把排班册交给裴照微，要求先说清本月谁付、再谈百年制度；学徒冻伤页被她压在热阵账最上方",
+        "她熟悉十二座热阵的负载差异，支持停掉非必要宫苑热负载、冻结旧债接口并由本地阵工共同接管，而不是用平均削减掩盖老阵先裂的风险"
+      ],
+      "personality": ["先保护现场工人", "把工资与阵材分账", "不让姓名接口阻断维修", "能看懂不同热阵的真实负载", "把长期制度落到当月排班"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_heat_array_supervisor",
+        "height_class": "HUM_L",
+        "face": ["长期在浮城热阵、冷雾和欠薪压力下工作的成熟女性脸，疲惫却直接", "遇到设备险情先判断风向和支路，谈到工人月薪时不再让步"],
+        "hair": ["深黑棕中长发扎成低马尾或紧实侧辫，用旧铜色发扣固定", "发丝边缘有冷雾水珠和少量阵房灰，不做华丽宫廷发饰"],
+        "body": ["自然修长偏高、结实的成年比例，肩背和前臂有搬稳压胆、摇泵和爬阵梯的真实力量", "姿态稳重、手掌有绝缘手套压痕，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和墨青、铁灰、旧米白与暗铜的永朝阵房工务层衣", "完整不透明高领内衫、隔冷短夹、分层工作裤、护膝、厚底阵房靴、绝缘护臂与护目镜", "腰侧挂无可读文字的阵阀扳手、温度片、手摇泵扣、排班夹和备用胆封片"],
+        "props": ["九阵稳压胆封片", "无可读文字的二十三个月欠料排班册", "阵阀扳手和手摇泵", "冷雾防护护目镜与绝缘手套"]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_ink_gray_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是热阵安全、工人薪资与基础设施责任；优先表现工务主管的可靠力量，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/yu_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/yu_he_web_source_v1.png",
+      "master_path": "res://art/portraits/yu_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "zhou_lan": {
+      "display_name": "周岚",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_ship_nurse_and_consent_reviewer",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "她是归潮八号船上的护士，在船尾货口紧邻氧气循环时提醒外部强拉会让两个舱段失压",
+        "她为陆禾教三种可立即使用的应答：愿意、不懂、害怕或停止，并用与陆绡不同的声音复核，确认沟通不是机械诱导",
+        "她在听潮二十一代值池事件中统计高风险处方，明确无法稳定表达者只保留生命支持范围，家属和机构无权扩写",
+        "她参与遗体与载波回声处置，要求把死者账户单列，不播放人格化声音，并按照护人决定分开冷源、样本和声务权限",
+        "她把药物、病床、声纹和家属授权分别记录，说明她既能做紧急医疗判断，也能守住护理便利不扩张成全面同意"
+      ],
+      "personality": ["先报危险与生命支持范围", "用可停止的沟通方式复核", "不让家属扩写病人意愿", "分开病床、药物和声纹权限", "在急救中保留不确定性"],
+      "visual_identity": {
+        "body_type": "adult_slender_ship_nurse",
+        "height_class": "HUM_L",
+        "face": ["长期在迁舟病区、狭窄货口和远程诊所之间值班的成熟女性脸，清醒、疲惫而稳定", "遇到失压和高风险处方时快速判断，面对患者微小回应时保持柔和但不替人作答"],
+        "hair": ["深黑棕中长发低束或侧辫，用雾蓝布带固定，方便穿过船舱和病床间", "额前有少量值夜后的碎发，不做夸张医疗头饰"],
+        "body": ["自然修长成人比例，肩背和手臂有搬担架、药匣与氧气设备的真实力量", "站姿稳而灵活，手指适合翻页、配药和按停止键，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和雾蓝、旧米白、铁灰与暗海青的迁舟医护层衣", "完整不透明高领内衫、短医护外套、分层长裤、软底船靴、护腕与简洁防污染围裙", "胸前挂无可读文字的船舱腕带夹，腰侧有药匣扣、氧气管卡和三色应答标记"],
+        "props": ["无可读文字的高风险处方夹", "三色可停止应答牌", "便携药匣与氧气管卡", "载波回声封存袋和病床复核板"]
+      },
+      "palette_profile": "low_sat_star_network_fog_blue_iron_cream_sea_teal",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是护理、急救和本人同意范围；优先表现医护专业性与稳定感，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhou_lan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhou_lan_web_source_v1.png",
+      "master_path": "res://art/portraits/zhou_lan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "liang_zhi": {
+      "display_name": "梁直",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_coal_loader_and_wage_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "他是蒸汽城第一个走向签字桌的年轻投煤工，父亲欠债、家中冬被被债主拿走，他知道和解页存在问题却仍需撑过白日",
+        "面对队伍里有人骂他拆台，他没有放弃登记，只在签名前把已付与未付写在页边，并在葛闻机要求不加字时停住",
+        "在男炉工登记孩子照护时，他说明妻子在织机班、当日两边同时复工，使托儿安排成为两套生产能否排班的基础",
+        "他把个人家庭压力带到公共欠薪核验桌，却没有替其他工人或家属代签，能区分自己的急迫和共同账目的证据边界",
+        "他的选择让工伤、欠薪、住房与托儿成本同时可见，说明他不是单纯的背景工人，而是制度条款实际落在人身上的见证者"
+      ],
+      "personality": ["知道自己很急但不替别人签", "愿意把已付未付写清", "护住家庭过冬底线", "能把工人现实说成排班条件", "克制面对队伍压力"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_coal_worker",
+        "height_class": "HUM_L",
+        "face": ["长期在炉区和欠薪压力中工作的年轻成年男性脸，煤尘疲惫、警惕又不失克制", "谈到父亲债务和冬被时压着焦急，谈到妻子复工和托儿时认真清楚"],
+        "hair": ["深黑短发，炉尘在发际和额前留下灰痕", "发式简单利落，便于戴旧煤帽和在投煤轨旁低头工作"],
+        "body": ["自然修长偏高、结实的成年比例，肩背、前臂和小腿有抬煤筐、推车和长时站班的真实力量", "手掌有煤粉与绳索磨痕，站姿疲惫但不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和煤灰、旧米白、暗锈红与铁黑的蒸汽城投煤工层衣", "完整不透明高领内衫、耐磨短夹克、分层工作裤、护膝、厚底炉区靴、旧煤帽与防尘围巾", "腰侧挂无可读文字的工牌、投煤钩、轮班铜片和边注夹，衣物有洗不掉的炉灰与缝补"],
+        "props": ["写有已付与未付分栏但无可读文字的和解页", "旧工牌和轮班铜片", "投煤钩与短柄铲", "一角旧冬被布料与托儿登记空白牌"]
+      },
+      "palette_profile": "low_sat_steam_city_coal_cream_rust_iron",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄虽被描述为年轻但未给出具体年龄，且角色核心是投煤劳动、家庭债务与欠薪证据；优先表现劳动者和家庭责任，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/liang_zhi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/liang_zhi_web_source_v1.png",
+      "master_path": "res://art/portraits/liang_zhi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "shao_hongli": {
+      "display_name": "邵红砾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_potter_and_ration_debt_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她是枯潮城配给钟前排的烧陶工，右手拇指缺了半节，却被系统留下完整指印并标成‘本旬已领’",
+        "她去年为让弟弟熬过肺灼伤借过七日济急息，欠款已经还清，济急契却被续成没有终期的维护契，导致她今晚领不到本应属于自己的配给",
+        "她当面指出验签只验印、不验人会让人死给印看，并持续要求把每条支路、每个伤者和每份不足额票逐项公开核对",
+        "她把车铃交给共同记录者、拒绝长期代表整条队伍，只说明烧陶工和伤患家属的损失，不替明晨手术者、育幼院孩子或未到场者让渡",
+        "她愿意留下来共同守账，也要求原式、改写责任和实际受益分开记录，说明她是制度伤害的当事人和主动见证者"
+      ],
+      "personality": ["不让印记代替本人", "记得旧契实际期限", "能把个人损失变成公共证据", "拒绝替不在场者代签", "愿意共同守账但不承担总责"],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_potter",
+        "height_class": "HUM_L",
+        "face": ["长期在窑火、冷气和配给排队中生活的成熟女性脸，疲惫、锋利而不失清醒", "谈到弟弟和济急契时压着焦急，指出错印和不实配给时目光直接"],
+        "hair": ["深黑棕长发扎成低辫，用暗陶红布带固定，发梢带少量窑灰", "发式利于转陶坯、搬窑板和排队核票，不做华丽首饰"],
+        "body": ["自然修长偏高、结实的成年比例，肩背和前臂有搬陶坯、推窑车与长时站炉的真实力量", "右手拇指保留半节缺损的生活痕迹，手势坚定，不缩成 Q 版或大头娃娃"],
+        "costume": ["低饱和窑灰、旧米白、暗陶红与铁褐的蒸汽城烧陶工层衣", "完整不透明高领内衫、耐热短夹、分层长裙裤、护膝、厚底窑工靴、袖套与半围裙", "腰侧挂无可读文字的配给票夹、旧车铃绳、陶坯刮片、窑温片和缺角印拓"],
+        "props": ["无可读文字的配给票根与红结", "南门车铃", "陶坯刮片和窑温片", "封存济急契的黑木匣与缺指印拓"]
+      },
+      "palette_profile": "low_sat_steam_city_kiln_gray_clay_cream_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未进一步确认且角色核心是烧陶劳动、配给伤害与契约证据；优先表现当事人的坚韧和工艺痕迹，不做卖肉呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/shao_hongli_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/shao_hongli_web_source_v1.png",
+      "master_path": "res://art/portraits/shao_hongli_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "cen_ya": {
+      "display_name": "岑芽",
+      "age_group": "minor",
+      "narrative_tier": "cameo",
+      "occupation": "steam_city_child_and_family_memory_keeper",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "她是岑小满独自抚养的女儿，会在公学和医疗线外等母亲与姨母，记得大人答应一起吃饭的时刻",
+        "她问岑照炉今天是否坐在自己旁边吃饭，也会追问回不来的人饭盒怎么办，把城市危机落回孩子能理解的生活问题",
+        "她用画纸记下锅、矿车、红灯、大钟和第四双筷子，不替城市作能源决定，却留下谁在她眼里真正陪伴过人的记忆",
+        "她在警钟与配给变化中需要清楚的撤离路线、食物和照护安排，不能被当成成人制度争执里的无名背景"
+      ],
+      "personality": ["直接提问", "记得承诺的吃饭时刻", "会用画表达观察", "需要清楚安全路线", "关心身边的人是否回家"],
+      "visual_identity": {
+        "body_type": "child_natural_active",
+        "height_class": "CHILD_M",
+        "face": ["学龄儿童清亮而专注的脸，能在大人争论时抓住吃饭、回家和灯是否会亮这些具体问题", "笑起来自然，听见警钟或看到受伤护衣时会认真观察，不做成人化表情"],
+        "hair": ["深黑棕齐肩短发或双小辫，用旧米白布绳简单固定", "发型适合在公学、澡堂和家人身边活动，不使用华丽饰品"],
+        "body": ["自然儿童比例，动作轻快、手脚有日常奔跑和抱饭盒的活力，不成人化、不性感化"],
+        "costume": ["低饱和旧米白、灰蓝、暗黄与煤灰的蒸汽城儿童保暖衣物", "补丁短外套、围巾、耐磨长裤、布鞋和小饭盒背带，衣物适合公学与街区活动"],
+        "props": ["画有锅、红灯和大钟的纸片", "小饭盒和第四双筷子", "儿童用撤离路线木片", "没有可读文字的彩色石子或小蜡笔盒"],
+        "safety": "minor_level_0_no_fanservice"
+      },
+      "palette_profile": "low_sat_steam_city_child_cream_soot_muted_yellow",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确为儿童角色；固定 Level 0，只表现家庭记忆、日常活动与安全照护"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/cen_ya_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/cen_ya_web_source_v1.png",
+      "master_path": "res://art/portraits/cen_ya_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/steam_v1.json"
+      ]
+    },
+    "fang_xiaoman": {
+      "display_name": "方小满",
+      "age_group": "minor",
+      "narrative_tier": "cameo",
+      "occupation": "steam_city_child_and_potential_list_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "九岁，咳嗽时脸色发青，却因潜力榜排第四十三被管事排除在十二盏启灵灯之外",
+        "她问抽走经脉会不会像掉牙一样再长，要求大人说明现在能否停下以及谁会承担风险",
+        "她指出榜首温照野已经替大家决定了名额，拒绝让孩子们的身体被排名和药材捐助附件绑定",
+        "她手里的红石只表示现在不要抽自己的灵息，不被当作替自己决定一辈子的授权"
+      ],
+      "personality": [
+        "直接追问",
+        "会把复杂制度换成生活问题",
+        "勇敢表达拒绝",
+        "观察大人是否说实话",
+        "重视同伴安全"
+      ],
+      "visual_identity": {
+        "body_type": "child_natural_delicate",
+        "height_class": "CHILD_S",
+        "face": [
+          "九岁孩子清瘦而有病后苍白感的脸，眼神清醒，先看手里的红石再看大人是否说清楚",
+          "咳嗽后仍会认真追问，害怕时不夸张哭喊，只把木签和红石握紧"
+        ],
+        "hair": [
+          "深棕黑齐肩短发，额前碎发自然落下，用旧米白布带束住一侧",
+          "发型朴素耐用，适合育幼院、诊室和旧织坊活动，不使用华丽饰品"
+        ],
+        "body": [
+          "自然九岁儿童比例，肩窄、四肢纤细但动作有生活感；体态略显虚弱，不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和旧米白、灰蓝、煤灰与暗红点缀的蒸汽城儿童保暖衣物",
+          "补丁短外套、软围巾、耐磨长裤、布鞋与小饭盒背带；衣物适合育幼院与街区活动"
+        ],
+        "props": [
+          "手心大小的暗红护脉石",
+          "写有编号的木签与旧布袋",
+          "小饭盒和一块擦咳嗽冷汗的布",
+          "不含可读文字的儿童涂画纸片"
+        ],
+        "safety": "minor_level_0_no_fanservice"
+      },
+      "palette_profile": "low_sat_steam_city_child_cream_soot_muted_red",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确为九岁儿童角色；固定 Level 0，只表现病后照护、儿童表达与同伴安全"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/fang_xiaoman_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/fang_xiaoman_web_source_v1.png",
+      "master_path": "res://art/portraits/fang_xiaoman_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "jiao_wenwei": {
+      "display_name": "焦闻苇",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_orphanage_director",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "昼芥育幼院院长，负责把四十七名孩子留在院内，不按通知把暂缓启灵者送回寄养家庭",
+        "她把拨付函、入院单和校准床记录带到现场，承认自己不懂含混的维护条款，却没有用院长身份替孩子签字",
+        "她给每个孩子三种颜色的石子，让孩子分别表达愿意、待问与今天拒绝，并逐项记下结果",
+        "她把四十七张矮凳排成开口圆环，安排照护与轮值，让孩子参与选择却不把医师责任推给孩子"
+      ],
+      "personality": [
+        "对孩子负责",
+        "承认自己不知道的条款",
+        "擅长把混乱安排成轮值",
+        "在资源紧张时仍保留退出权",
+        "会把制度问题翻译成照护安排"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_orphanage_director",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，面容疲惫而可靠，眼神先确认孩子有没有呼吸困难，再看桌上的拨付函",
+          "面对世家管事时不夸张愤怒，眉眼压着担心与坚持，像长期守夜的院长"
+        ],
+        "hair": [
+          "深棕黑长发低束成便于照护孩子的发髻，几缕碎发因奔走而松开",
+          "发髻用旧布带和木簪固定，不使用华丽饰品，轮值和搬床时保持利落"
+        ],
+        "body": [
+          "修长的成人比例，肩背结实、手臂有长期抱孩子和搬木凳的力量感；站姿稳，不做夸张英雄姿势"
+        ],
+        "costume": [
+          "低饱和煤灰、旧米白、灰蓝与暗红线头点缀的蒸汽城院长工作服",
+          "长身保暖外衫、耐磨围裙、分层长裙或宽腿裤、软底布靴，袖口留出方便量脉与抱孩子的活动空间",
+          "衣物有洗旧和补丁痕迹，但前襟别着一枚育幼院木牌，不出现可读文字"
+        ],
+        "props": [
+          "四十七张入院单和一只防潮档案袋",
+          "十二盏白瓷启灵灯的清点牌",
+          "绿、黄、红三色儿童表达石子",
+          "院门钥匙、轮值木板与一块干净擦汗布"
+        ]
+      },
+      "palette_profile": "low_sat_steam_city_orphanage_cream_soot_wood_muted_red",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色核心是儿童照护与程序责任，先固定低调工作服和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/jiao_wenwei_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/jiao_wenwei_web_source_v1.png",
+      "master_path": "res://art/portraits/jiao_wenwei_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "yi_chenshuang": {
+      "display_name": "易沉霜",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_static_rest_physician",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "四十九岁，管理静息室十二年，长期负责二十八张床的用药、转床与共同管维护",
+        "她把看见的观察和自己的推断分开记录，不把能追随声音与能稳定表达抄成同一个结论",
+        "她承认曾因总契要求维持共同管而逐年加药，也承认从第五年起没有继续逐户寄信",
+        "她接受逐床能力评估与减镇静复问，愿意向病人与家属说明旧签名造成的后果"
+      ],
+      "personality": [
+        "把观察与推断分开",
+        "熟悉静息室的实际限制",
+        "承认长期维护中的失误",
+        "重视逐床复问",
+        "愿意承担护理记录责任"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_slender_static_rest_physician",
+        "height_class": "HUM_L",
+        "face": [
+          "四十九岁成年女性，面容清瘦、眼下有长期夜班的疲惫，观察病人时专注而克制",
+          "面对旧记录时有明显的自责与迟疑，但说明病情时语气准确，不用夸张哭泣替代解释"
+        ],
+        "hair": [
+          "深灰黑长发低束，夹少量霜白发丝，用窄布带固定，适合诊室与静息室工作",
+          "发尾略有散乱，保留十二年护理工作的生活痕迹，不使用华丽发饰"
+        ],
+        "body": [
+          "修长的成年比例，肩颈略紧、手指稳定，像长期在床边读脉和换药的人；不摆模特姿势"
+        ],
+        "costume": [
+          "低饱和雾蓝、灰白、墨灰与少量旧铜色的静息室医师工作服",
+          "长身分层外袍、窄袖内衫、耐磨长裙或直筒裤、软底医疗鞋，袖口方便接管与记录",
+          "胸前有无可读文字的医师木牌，衣物有药渍、折痕和多次清洗痕迹"
+        ],
+        "props": [
+          "四格眼动沟通板和可翻面的暂停牌",
+          "二十八张床的分组记录夹",
+          "低剂量药匣、脉象计时砂与备用绑带",
+          "一支旧铅笔和标记观察/推断的双色夹签"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_static_rest_fog_blue_cream_ink_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "虽为明确成年角色，视觉重点是医疗专业、长期照护与责任复盘，保持非性感化工作服"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/yi_chenshuang_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/yi_chenshuang_web_source_v1.png",
+      "master_path": "res://art/portraits/yi_chenshuang_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "gu_shuying": {
+      "display_name": "顾疏萤",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_static_rest_patient",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "顾沉璧的女儿，年轻时曾在缓根院教学生辨药，后来病重并从公开记录里消失",
+        "十七年前留下明确拒绝，不愿继续以陌生人经脉供养，也不愿自己的脉象被城防使用",
+        "静息室里她用五下敲击表达停、再测、不要硬接，证明病床上的人仍可能留下可复核的当前意愿",
+        "经过独立复问后，她能稳定拒绝脉象用于城防，却暂时无法区分停止城防与停止医疗，照护决定必须逐项进行"
+      ],
+      "personality": [
+        "用短促敲击保留表达",
+        "拒绝被当成公共设备",
+        "对药物与病情有专业记忆",
+        "需要足够时间理解新处境",
+        "在能确认的地方明确说不"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_slender_static_rest_patient",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，病后清瘦而安静，眼神在清醒时有辨药者的专注，不把虚弱画成暧昧",
+          "面对熟悉声音会出现细微回应，困惑时眉心收紧，明确拒绝时目光稳定"
+        ],
+        "hair": [
+          "墨黑长发夹少量冷灰发丝，低松束在肩后，发尾有长期卧床与反复护理留下的自然散乱",
+          "不使用华丽发饰，耳侧可留一枚旧药草木片作为她年轻时教辨药的记忆锚点"
+        ],
+        "body": [
+          "修长的成年比例与病后自然消瘦体态，肩背由软枕和轻支具支撑；手指保留敲击床沿的准确性，不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和雾蓝、灰白与墨灰的静息室分层病房服，领口与袖口保暖、宽松且便于医疗检查",
+          "软质长衫、保暖披肩、宽腿裤或床边裙摆、无硬饰软底鞋；衣物有反复清洗和药渍痕迹",
+          "不加入裸露设计，不把病房服改成贴身或舞台服"
+        ],
+        "props": [
+          "四格眼动沟通板和写有停/再测图示的无字牌",
+          "床边可敲击的木质节拍块",
+          "一枚旧药草木片与封存的十七年前拒绝记录",
+          "独立医师使用的低亮脉象计时灯"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_static_rest_fog_blue_cream_ink_herb",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于病后照护状态，视觉重点是主体性、沟通辅助与医疗边界，固定非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/gu_shuying_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/gu_shuying_web_source_v1.png",
+      "master_path": "res://art/portraits/gu_shuying_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "shentu_jingjian": {
+      "display_name": "申屠敬简",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_north_slope_steward_and_financier",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "北坡药库与修院的世家管事，负责解释潜力榜、捐助柜和统一教养附件的条件",
+        "他承认启灵药芯来自回流，却把三十五名孩子的损伤称为集中资源的可控成本",
+        "面对十四名失联学生的查询令与家庭房契争议，他主张旧案不能阻断今日供药，却必须交出账册与条件原件",
+        "他签下续济代办委托，以六成手印换取救济金，后来承认授权、资金与比例板都应接受逐项追问"
+      ],
+      "personality": [
+        "擅长用稳定语气陈述高风险方案",
+        "相信集中资源能保住强者与整体存续",
+        "熟悉药材、捐助和外城保费账",
+        "不以威胁语气说服，却把撤资写成条件",
+        "在责任追问下逐步交出原件"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_composed_steward",
+        "height_class": "HUM_L",
+        "face": [
+          "成年男性，面容窄长而克制，讲话时少有情绪波动，像习惯把孩子、药材和灵石都换算成表格",
+          "被问到失联学生与受损孩子时仍保持礼貌，但眼神短暂躲开，显出立场并非没有代价"
+        ],
+        "hair": [
+          "墨黑长发高束成简洁发冠，鬓边有少量灰丝，用暗铜簪固定",
+          "发尾与衣带整洁克制，不使用过度华丽的家族装饰，保留管事而非宗主的身份感"
+        ],
+        "body": [
+          "修长的成年比例，肩背挺直、动作节省，站在药柜和账桌旁像一个能长期控制流程的人；不摆夸张反派姿势"
+        ],
+        "costume": [
+          "低饱和墨黑、深蓝灰、旧米白与暗铜边的北坡世家管事长袍",
+          "分层长衫、窄袖内袍、硬挺但不夸张的肩披、软底长靴，袖口方便翻账与开柜",
+          "腰间有无可读文字的药库钥匙牌、封契夹与一枚朴素家印，不做珠宝堆砌"
+        ],
+        "props": [
+          "潜力榜木板与可封存的原始测针记录",
+          "北坡捐赠柜钥匙和透明药芯匣",
+          "统一教养附件、续济委托和外城保费账册",
+          "一只不显示文字的黑色印匣与分项条件木牌"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_north_slope_ink_navy_cream_bronze",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色魅力来自克制的资源权力与责任冲突，先保持非性感化的管事服与道具叙事"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/shentu_jingjian_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/shentu_jingjian_web_source_v1.png",
+      "master_path": "res://art/portraits/shentu_jingjian_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "zhu_zhen": {
+      "display_name": "祝砧",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_nine_gate_lightning_engineer",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "负责九门阵与本地避雷点检修，能用长柄钩手动分离中央线路",
+        "她把受护地点、失护地点和现场人名写在手调图上，要求每名机师只为自己的动作负责",
+        "面对母亲在石浴堂、顾疏萤静息基准和城防满载之间的冲突，她承认个人牵挂并把工具交给共同保管",
+        "她在雷暴中优先降载、封板和转移病患，拒绝把临时互助组或一次侥幸写成永久标准"
+      ],
+      "personality": [
+        "熟悉九门阵的机械边界",
+        "把受护与失护都写进记录",
+        "承认个人牵挂并主动约束自己",
+        "愿意在高压下先救人再争责任",
+        "拒绝把侥幸包装成标准"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_lightning_engineer",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，面容坚硬而专注，经历雷暴和长夜检修后的疲惫写在眼角，不用夸张怒容表现力量",
+          "听见母亲或病患名字时眼神会短暂动摇，回到设备读数时又迅速恢复判断"
+        ],
+        "hair": [
+          "深黑长发编成贴头侧辫并在后颈束起，发间夹一枚旧铜绝缘片",
+          "发梢有雨水和烟尘痕迹，发型方便戴护目镜、爬墙槽与搬运避雷器"
+        ],
+        "body": [
+          "修长结实的成年比例，肩背有长期扛设备与转柄的力量，前臂与手掌有轻微工茧；站姿稳，不做夸张战斗姿势"
+        ],
+        "costume": [
+          "低饱和铁灰、雾蓝、旧米白与暗铜的九门阵检修工装",
+          "长身防雨外套、分层工作背心、耐磨长裤、绑腿和绝缘软底靴，袖口和腰侧有工具扣",
+          "肩部有旧烧痕与补丁，胸前挂无可读文字的机师木牌和分段粉笔袋"
+        ],
+        "props": [
+          "可手动分离九门的长柄检修钩",
+          "画着受护/失护地点的旧床板手调图",
+          "六截分门粉笔与机械节拍器",
+          "绝缘索、湿毡和一枚记录母亲所在石浴堂的无字铜片"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_lightning_engineer_iron_fog_blue_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色魅力来自工程判断、责任边界与个人牵挂，保持实用工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhu_zhen_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhu_zhen_web_source_v1.png",
+      "master_path": "res://art/portraits/zhu_zhen_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "wen_zhaolan": {
+      "display_name": "温照岚",
+      "age_group": "minor",
+      "narrative_tier": "supporting",
+      "occupation": "north_slope_apprentice_and_supply_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "十七岁少女，被七号棚登记成自愿供养学徒，长期坐在抽息阀旁承受寿元损耗",
+        "她没有立即要求粗暴断开，而是保存过去三年的抽取量、高热、买家退药和学生轮班记录",
+        "她提出不公开供养者住址，也不把所有买家姓名当场贴出，为病患改用替代药留下时间",
+        "她把薄账与轮班表分开保管，确认每名供养者的退出、清账和家属通知不能被一张总契概括"
+      ],
+      "personality": [
+        "在强制环境里保存证据",
+        "先考虑同伴和家属安全",
+        "能提出清楚的保密条件",
+        "不把救援变成围观",
+        "会逐项确认退出与返还"
+      ],
+      "visual_identity": {
+        "body_type": "teen_natural_tall_ledger_apprentice",
+        "height_class": "HUM_L",
+        "face": [
+          "十七岁少女，面容清瘦而警觉，长期缺息带来疲惫，却保留记录者的专注，不成人化、不性感化",
+          "被询问时先确认同伴是否安全，再回答自己的选择；耳后有一道月牙形旧疤"
+        ],
+        "hair": [
+          "深棕黑中长发编成一条便于工作的小辫，后半段用褪色红布带束住",
+          "发尾略乱，有药棚烟尘与夜班痕迹，不使用华丽发饰"
+        ],
+        "body": [
+          "自然十七岁少年比例，身形偏高而纤细，肩背因长期坐在躺椅边略显紧绷；不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、煤灰与褪暗红的北坡药棚学徒工作服",
+          "补丁短外套、耐磨围裙、长裤、软底布鞋与可夹住薄账的腰袋，衣物包裹完整并方便照护与记录",
+          "手腕可有无文字的布质护带，不出现束缚、内衣化或暴露设计"
+        ],
+        "props": [
+          "三册按日期分开的薄账与木夹",
+          "七号棚河门钥匙和无字保密布签",
+          "记录抽取量的短刻度片",
+          "一只替代药预约用的空纸筒与月牙疤记忆锚点"
+        ],
+        "safety": "minor_level_0_no_fanservice"
+      },
+      "palette_profile": "low_sat_final_age_north_slope_apprentice_fog_blue_cream_muted_red",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确为十七岁未成年角色；固定 Level 0，只表现受压环境中的证据保存、同伴保护与安全退出"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/wen_zhaolan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/wen_zhaolan_web_source_v1.png",
+      "master_path": "res://art/portraits/wen_zhaolan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "cheng_yanhui": {
+      "display_name": "程雁回",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "north_slope_well_maintenance_student",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "北坡旧井七名维护学生之一，坐在主阀旁守住自然井息与公共药路",
+        "她的妹妹每月领取换脉药，家属药票曾被拿来绑定她的维护班和离开选择",
+        "她承认最初为三个月维护换药，后来多次想走又被复债吓回；如今明确只守完当天这一班便离开",
+        "她完成一班后亲手按下到期印，要求把工时、工资、家属待遇和退出分别记录，不再坐回校准椅"
+      ],
+      "personality": [
+        "把公共药路放在眼前急救之前",
+        "能承认自己曾经同意过短期工作",
+        "清楚区分妹妹药票与自己的工资",
+        "愿意完成有限期限的一班",
+        "离开时坚持拿到真实回执"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_well_maintenance_student",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，长期井下工作使面容疲惫而坚韧，眼神先确认公共药路压力，再看自己的腕环是否到期",
+          "提到妹妹时有牵挂但不软弱，谈到离开与工钱时目光直接，不用夸张悲情表达"
+        ],
+        "hair": [
+          "深棕黑长发编成低侧辫，尾端用旧蓝布条束住，方便戴井下护帽与听压",
+          "发丝有井灰和水汽痕迹，额前碎发自然散开，不使用华丽发饰"
+        ],
+        "body": [
+          "修长偏瘦的成年比例，肩臂有转阀与提滤胆的实用力量，腕上留淡淡青线痕；不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和井灰、雾蓝、旧米白与少量褪棕的北坡旧井维护工装",
+          "短防潮外套、分层工背心、耐磨长裤、护膝、软底井靴与工具腰袋，衣物完整包裹并适合长时间值班",
+          "肩部有水汽和矿尘留下的旧痕，胸前挂无可读文字的学徒木牌"
+        ],
+        "props": [
+          "主阀用短柄扳手与可夹断细阀",
+          "妹妹换脉药票的无字封套",
+          "三个月旧维护单与当天到期印",
+          "邵红砾送过的跑调陶哨和一小卷井声记录带"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_well_maintenance_fog_blue_iron_cream_muted_brown",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色核心是劳动期限、家庭药物与退出权，保持完整实用工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/cheng_yanhui_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/cheng_yanhui_web_source_v1.png",
+      "master_path": "res://art/portraits/cheng_yanhui_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "lu_liao": {
+      "display_name": "卢蓼",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_south_city_midwife_and_herbal_physician",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "城南接生医师，右手经脉正逐月石化，却仍是四条贫民巷唯一能处理难产的人",
+        "她知道夜市药引可能取别人寿元，仍要求先把病患的真实时限与替代药讲清",
+        "她愿意等待草木缓根剂到天亮，条件是有人提供一夜护脉药并替她安排学徒值守四条巷子",
+        "她在返还桌与断炉后重新排出临时诊疗表，不把救援药物或证物灵池私下挪给自己"
+      ],
+      "personality": [
+        "把病患真实时限说清",
+        "不以自己的伤势压过别人的选择",
+        "坚持寻找不取寿元的替代药",
+        "能安排学徒接管急诊",
+        "公开资源交换条件"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_midwife_physician",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，面容利落而有长期接生值夜的疲惫，目光先看产妇与婴儿的呼吸，再看自己的右手",
+          "疼痛时眉心收紧但不卖惨，谈到病人时语气直接，面对替代药方案时有谨慎的希望"
+        ],
+        "hair": [
+          "深棕黑长发编成低髻，发侧夹一枚草木色布签，方便戴医师软帽与弯腰接生",
+          "发尾有药草、烟火和夜班水汽留下的自然散乱，不使用华丽发饰"
+        ],
+        "body": [
+          "修长结实的成年比例，肩背有长期抱婴与搬药箱的实用力量；右手动作略僵，左手保持稳定，不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和旧米白、草木灰绿、雾蓝与少量陶土色的城南医师工作服",
+          "长身分层外衫、耐磨围裙、宽腿长裤、软底医靴与可快速取药的腰袋，袖口方便洗手、接生和包扎",
+          "右腕有包扎与护脉布套，衣物有药渍和反复清洗痕迹，保持完整包裹"
+        ],
+        "props": [
+          "草木缓根剂药囊与一夜护脉散",
+          "接生用软布、木夹与河灯急号牌",
+          "四条巷子的学徒轮值木板",
+          "右手经脉石化进度用的无字刻度环"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_south_city_herbal_cream_herb_blue_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色魅力来自医师判断、伤病中的坚持与公共照护责任，保持实用工作服与非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_liao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_liao_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_liao_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "mu_lianchou": {
+      "display_name": "穆连筹",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_seventh_shed_drug_stall_owner",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "七号棚摊主，原都息署药价核算师，熟悉凝息炉、买家定金和供养者清债契",
+        "他承认供养者被灵息债逼来，却用一次抽取减免家属债的条款为交易辩护",
+        "他把炼制失败归咎于供养者身体质量，仍让供养者承担完整抽取，并从退款与转售各赚一次",
+        "人体抽取被封停时他试图携总契从河门离开，留下可追溯的药管、时纹与交易账证据"
+      ],
+      "personality": [
+        "熟悉价格与契约数字",
+        "用合法外形解释伤害",
+        "擅长把损失推回供养者",
+        "面对查封优先保住总契",
+        "把市场连续供药当作辩护理由"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_drug_stall_accountant",
+        "height_class": "HUM_L",
+        "face": [
+          "成年男性，面容细长而精明，习惯在对话中先看药管刻度与钱匣，再看人的伤势",
+          "被追问供养者损失时仍保持商贩式礼貌，眼神在出口方向短暂游移，显出急于保账的心态"
+        ],
+        "hair": [
+          "灰黑长发束成低冠，后颈用暗棕布带固定，便于在药棚和账桌间奔走",
+          "鬓边夹少量灰丝，发尾带烟火和药油痕迹，不使用夸张珠宝"
+        ],
+        "body": [
+          "修长偏瘦的成年比例，肩背是长期搬药箱和守账桌的体态，动作快而谨慎；不摆夸张反派姿势"
+        ],
+        "costume": [
+          "低饱和煤灰、旧米白、深棕与暗铜边的七号棚药商工作服",
+          "长身防尘外衫、窄袖账房内袍、分层围裙、直筒长裤和软底药棚靴，腰侧挂钱匣与封管扣",
+          "衣物有药油、纸粉和烟尘痕迹，前襟只有无可读文字的摊主木牌"
+        ],
+        "props": [
+          "七只透明契筒与标记药管",
+          "凝息炉刻度板、时纹记录片与失败药退款单",
+          "装有定金的透明灵石匣和旧算盘",
+          "河门钥匙、总契卷筒与可封存的黑色药管"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_seventh_shed_drug_stall_ash_brown_cream_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色魅力来自商贩式话术与责任冲突，保持功能性账房服和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/mu_lianchou_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/mu_lianchou_web_source_v1.png",
+      "master_path": "res://art/portraits/mu_lianchou_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "yu_baidi": {
+      "display_name": "余白荻",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "north_slope_well_listening_worker",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "北坡旧井维护学生之一，年纪最轻，长期听井震并协助判断自然井息压力",
+        "她的右耳因连续听井震失去大半听力，却能在滤胆裂响时用手势提醒程雁回退开",
+        "她拒绝继续坐校准椅，转为井外听震工作，并要求把工资、助听器维修和父亲旧屋分开处理",
+        "她愿意教新手从井声变化判断压力，但不接受把个人经验等同于继续用身体校准"
+      ],
+      "personality": [
+        "用手势和震动辅助沟通",
+        "对设备异常反应敏锐",
+        "把听力损伤说成需要补偿的劳动后果",
+        "愿意培训新手",
+        "拒绝回到人体校准椅"
+      ],
+      "visual_identity": {
+        "body_type": "young_adult_tall_lean_listening_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年轻成年女性，面容清瘦而警觉，左耳佩戴简单听震辅助片，面对说话者会先看嘴形和手势",
+          "听见异常震动时目光迅速转向设备，平时表情安静，不把听力障碍画成怯弱或装饰"
+        ],
+        "hair": [
+          "深棕黑中长发编成双股低辫，耳侧留出听震辅助片位置，用灰蓝布带固定",
+          "发尾带井灰与水汽痕迹，发型适合戴护帽和在井外听压，不使用华丽发饰"
+        ],
+        "body": [
+          "自然年轻成人比例，身形偏高而纤细，手臂有提滤胆与扶人的实用力量；不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和井灰、雾蓝、旧米白与少量暗青的井外听震工装",
+          "短防潮外套、分层背心、耐磨长裤、护耳布、软底井靴与震动记录腰袋，衣物完整并适合户外轮班",
+          "肩部有旧井水汽磨痕，胸前挂无可读文字的听震工木牌"
+        ],
+        "props": [
+          "手掌大小的听震辅助片与备用耳塞",
+          "井外压力木尺和无字震动记录板",
+          "滤胆裂响用的示警铃与手势布旗",
+          "父亲旧屋回执的无字封套和助听器维修牌"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_well_listening_worker_fog_blue_iron_cream_teal",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认，角色核心是听力损伤、劳动转岗与设备安全，保持完整工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/yu_baidi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/yu_baidi_web_source_v1.png",
+      "master_path": "res://art/portraits/yu_baidi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "ruan_tongchen": {
+      "display_name": "阮同尘",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_night_contract_court_officer",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "值夜契官，在第八响前赶到契厅处理六百三十一份续扣争议",
+        "他把已还清、仍在还款、失联和未成年人/无法表达者分开审查，把问题从假签押扩大到继受条款",
+        "他签下十二小时止扣令与三十日禁停禁转债令，允许公共药柜和避雷阵维持最低供息，但不把一枚私印当成裁判依据",
+        "他在临时庭中把责任拆成谁造假、谁得利、谁早知不对三问，允许药、工资、护理与住居保护先于和解和最终归责"
+      ],
+      "personality": [
+        "不接受一句话的全盘定性",
+        "擅长把大案拆成可复核的个人案号",
+        "把程序期限写清并承担资源代价",
+        "保护最低生活与医疗而不替当事人作决定",
+        "面对机构压力仍保持平静、精确和可追责"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_contract_court_officer",
+        "height_class": "HUM_L",
+        "face": [
+          "成年男性，面容清瘦而沉静，眼下有值夜审案的疲惫；读案卷时先看期限、当事人和证据缺口，不用夸张威严代替判断",
+          "面对药库、医院和公署的压力仍保持克制，签下保护令时眼神坚定，发现文书措辞有漏洞时眉心短暂收紧"
+        ],
+        "hair": [
+          "深黑长发束成利落低冠，鬓边有少量夜勤风尘，用暗铜簪与窄蓝带固定",
+          "发尾保持整洁但有连续值夜后的自然松散，发式便于戴契法院软帽和伏案抄录，不使用夸张珠宝"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背挺直但不魁梧，手指有长期翻案卷、压印和持灯的稳定感；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和墨黑、雾蓝、旧米白与少量暗铜边的契法院夜勤官服",
+          "长身分层外袍、窄袖内衫、可翻阅卷宗的肩披、护腕、软底长靴和便携灯袋，衣物完整并适合雨夜送达",
+          "胸前挂无可读文字的值夜木牌，腰侧分列到期印、封条筒、案号夹和三色责任标签，不加入华丽官阶装饰"
+        ],
+        "props": [
+          "契法院到期印与十二小时止扣令的无字副本",
+          "按本人、机构和待核证据分开的案卷夹",
+          "三色责任标签、便携油灯与一只可由三人共同开启的证匣",
+          "写有三问结构但不显示可读文字的窄木板"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_contract_court_night_ink_fog_blue_cream_bronze",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自夜勤审理、程序边界与责任拆分，保持功能性契法院官服和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ruan_tongchen_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ruan_tongchen_web_source_v1.png",
+      "master_path": "res://art/portraits/ruan_tongchen_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "zhou_daiping": {
+      "display_name": "周黛瓶",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "steam_city_nanjishe_filter_cloth_worker_and_widow_witness",
+      "faction_id": "steam_city",
+      "story_evidence": [
+        "四十八岁，在南汲社洗了二十年滤布，左眼因黑盐灼伤只能看清近处",
+        "她原以为两枚灵石是亡夫窦庆禾的井下风险费，按下领款回执后才发现印记会被解释成亡夫自愿延班",
+        "她拒绝退回已经用于喘药的救急钱，同时要求撤掉把收款倒填成死者同意的后一层意思",
+        "她用洗滤布的木钳夹住受潮补签页，手背因此被蒸汽烫红；随后坚持让每名当事人分别看估价、分开记录工资、急救和和解"
+      ],
+      "personality": [
+        "把收到的钱与承认的意思分开",
+        "熟悉滤布、锅炉和工人风险费的实际流程",
+        "受伤后仍能准确指出文书偷换",
+        "愿意公开自己的经历但尊重他人密封选择",
+        "不让少数手印替多数人回答"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_filter_cloth_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "四十八岁成年女性，面容有长期洗滤布、夜班和黑盐灼伤留下的疲惫；左眼视线略收近但表情清醒，不把伤痕画成猎奇装饰",
+          "面对含混收款回执时眉眼锋利，讲到亡夫和喘药时压着悲伤，指出文书偷换时目光直接而有分寸"
+        ],
+        "hair": [
+          "深黑棕长发束成低辫或低髻，用褪色暗陶红布带固定，发丝沾有洗滤水汽与少量黑盐灰",
+          "发式实用、方便戴布巾和低头清洗滤布，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高且结实的成年比例，肩背和前臂有二十年搬滤布、拧水和推车的真实力量；站姿稳，不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和旧青灰、烟绿、旧米白与暗陶红的南汲社滤布工层衣",
+          "完整不透明高领内衫、耐水短夹克、厚围裙、分层长裤、护膝、布巾与防滑工靴，衣物有反复清洗、黑盐和蒸汽痕迹",
+          "一只袖口带简易烫伤护布，腰侧挂无可读文字的工牌、风险费回执夹和小药包"
+        ],
+        "props": [
+          "洗滤布用木钳与折叠滤布样片",
+          "两枚带月牙磨口的灵石和无字收款回执夹",
+          "亡夫窦庆禾的旧工牌蜡拓与喘药包",
+          "可供近处阅读的分栏木板和三色密封布签"
+        ]
+      },
+      "palette_profile": "low_sat_steam_city_nanjishe_filter_cloth_soot_teal_cream_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确成年但角色魅力来自工伤经验、家属证词与文书辨析，保持功能性滤布工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhou_daiping_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhou_daiping_web_source_v1.png",
+      "master_path": "res://art/portraits/zhou_daiping_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "tao_xihuai": {
+      "display_name": "陶细槐",
+      "age_group": "minor",
+      "narrative_tier": "cameo",
+      "occupation": "final_age_seventeen_year_old_delivery_runner",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "十七岁，四名送纸跑腿中年纪最小，每送一袋只得两枚铜钱",
+        "她以为自己送的是欠薪通知，后来才知道袋中可能是诱导当事人按印的补签纸",
+        "她在独立问话时交出六张未送袋和自己跑过的路线，接受可停工、可请人陪同而不是被扣住问话",
+        "她能指出已经出城的三只纸筒车号，帮助追回原纸，同时保留自己只按地址送袋、不替委托方决定内容的边界"
+      ],
+      "personality": [
+        "对工作内容保持好奇和警觉",
+        "愿意交出路线但不替别人背全责",
+        "在压力下能记住车号与袋数",
+        "需要明确的工资和陪同安排",
+        "不把害怕误认成同意"
+      ],
+      "visual_identity": {
+        "body_type": "teen_natural_tall_delivery_runner",
+        "height_class": "HUM_L",
+        "face": [
+          "十七岁未成年跑腿学生，面容清瘦、警觉而有少年人的直接感；听见袋中不是欠薪通知时先困惑，再认真核对自己知道的范围，不成人化、不性感化",
+          "指出车号和路线时表情专注，面对守卫和出资方压力时紧张但仍能说清自己没有读过的内容"
+        ],
+        "hair": [
+          "深棕黑短发或齐肩短发，用旧布绳简单束住一侧，发梢带街巷尘土与潮气",
+          "发式利落，适合背包、跑巷和戴薄雨帽，不使用华丽饰品"
+        ],
+        "body": [
+          "自然十七岁少年比例，身形偏高而轻快，肩背因背送纸袋略有负重感；不成人化、不强调身体曲线、不缩成 Q 版"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、煤灰与暗黄布结的末法城送达学徒衣",
+          "补丁短外套、完整高领内衫、耐磨长裤、轻便布靴、斜挎送袋和薄雨披，衣物适合街巷奔跑与小雨送件",
+          "腰侧挂无可读文字的临时工牌、铜钱袋、路线木片和可归还的空纸袋，不出现束缚或暴露设计"
+        ],
+        "props": [
+          "六只尚未送出的空白纸袋",
+          "记录已走纸筒车号的无字路线木片",
+          "两枚铜钱和一张只标颜色不显示文字的停工/陪同布签",
+          "小型街巷送达包与可折叠雨披"
+        ],
+        "safety": "minor_level_0_no_fanservice"
+      },
+      "palette_profile": "low_sat_final_age_delivery_runner_fog_blue_cream_soot_muted_yellow",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确十七岁未成年角色，固定 Level 0，只表现跑腿、路线记忆、工资与知情边界"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/tao_xihuai_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/tao_xihuai_web_source_v1.png",
+      "master_path": "res://art/portraits/tao_xihuai_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "yin_di": {
+      "display_name": "尹荻",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_stone_bathhouse_keeper_and_medical_consent_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "十六年前因瘟后血栓昏迷，定波院生成同意并截去坏死左腿，手术救回她的性命",
+        "如今经营石浴堂，拄木杖到契厅，先追问谁会把她的腿和今天的选择混为一谈",
+        "她愿意补写自己当下对手术结果的看法，却拒绝把今天的认可倒填成十六年前的医疗授权",
+        "面对医院要求整批隐名时，她反对把所有决定者藏进‘医疗团队’，同时坚持救治有效、伪造同意和后续拒赔必须分栏审理"
+      ],
+      "personality": [
+        "承认救命手术的现实收益",
+        "拒绝让结果替过去授权发言",
+        "用木杖和近处阅读把问题说清",
+        "关注仍在用药者的即时需要",
+        "要求机构和具体决定者分别承担说明责任"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_stone_bathhouse_keeper",
+        "height_class": "HUM_L",
+        "face": [
+          "成年女性，面容清醒利落，有多年经营石浴堂和复诊留下的疲惫；被问到旧手术时眼神直接，不把疼痛画成猎奇或暧昧",
+          "拄木杖走进契厅时带着审慎的防备，说明手术救命与同意造假必须分栏时语气坚定"
+        ],
+        "hair": [
+          "深黑棕长发束成低髻或低辫，用旧青灰布带固定，发梢带石浴堂水汽与少量矿盐痕迹",
+          "发式利落，方便在浴堂、药柜和账桌间工作，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背和持杖侧前臂有经营浴堂与搬水桶的实用力量；左腿截肢后的裤管整齐收束并配合木杖，重点表现适应与主体性，不裸露、不性感化"
+        ],
+        "costume": [
+          "低饱和石灰、雾蓝、旧米白、墨灰与少量暗青的石浴堂经营者层衣",
+          "完整不透明高领内衫、耐水短外套、分层围裙、宽腿长裤、右脚防滑软底靴与木杖固定带，衣物有热汽、药水和长期清洗痕迹",
+          "腰侧挂无可读文字的浴堂钥匙、复诊回执夹和近处阅读用小木板，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "打磨光滑的木杖与石浴堂阀门钥匙",
+          "分栏记录手术结果、当下选择和旧授权争议的无字木板",
+          "定波院旧医疗页封套与可供近处阅读的放大镜片",
+          "给仍在用药者准备的温石药包和一盏低亮引路灯"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_stone_bathhouse_fog_blue_stone_cream_teal",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色核心是截肢后的主体性、医疗证词与当前救治，保持完整经营者衣物和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/yin_di_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/yin_di_web_source_v1.png",
+      "master_path": "res://art/portraits/yin_di_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "luo_jin": {
+      "display_name": "骆谨",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_salt_lung_survivor_and_hearing_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "当年清醒且能够书写，明确拒绝会损伤听力的护脉药，空席却按同类病人偏好生成同意",
+        "药物让他活过盐肺感染，却使右耳永久失聪，医院后来用‘本人已同意副作用’驳回补偿",
+        "他不要求抹掉救命事实，只要求恢复原拒绝页、支付听力器与十二年误工差额",
+        "他拒绝在任何追认页上按指，却愿意向年轻医师说明药效和副作用，并允许隐藏当年善意急救者的姓名"
+      ],
+      "personality": [
+        "承认救命药物的真实作用",
+        "明确保留自己的拒绝记录",
+        "不让领取器材变成追认文书",
+        "愿意把经验讲给后来者",
+        "区分善意急救与后续拒赔"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_salt_lung_survivor",
+        "height_class": "HUM_L",
+        "face": [
+          "成年男性，面容清瘦而有盐肺感染后的疲惫，目光专注于说话者的口形与手势；谈到右耳失聪时平静而明确，不把听力损伤画成猎奇装饰",
+          "听见‘领取听力器是否等于认纸’时眉心收紧，说明药物救命与副作用拒绝时语气有条理"
+        ],
+        "hair": [
+          "深黑棕中长发低束，耳侧留出旧木号与听力辅助片的位置，用灰蓝布带固定",
+          "发尾有病后护理和长期复诊留下的自然松散，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背略显病后消瘦但站姿有自我支撑，手指保留书写和调试旧木号的准确性；不成人化、不性感化"
+        ],
+        "costume": [
+          "低饱和雾蓝、灰白、墨灰与少量旧木色的末法城病后修补工装",
+          "完整不透明高领内衫、宽松分层外套、耐磨长裤、软底靴与肩背药袋，衣物有盐尘、药渍和反复清洗痕迹",
+          "耳侧佩戴简单听力辅助片，胸前挂无可读文字的复诊木牌，腰侧有拒绝页封套与听力器维修扣"
+        ],
+        "props": [
+          "旧木号与听力辅助片",
+          "三个孔位分别表示听见、拒绝和已回问的无字耳册",
+          "原拒绝页封套、听力器维修牌与误工记录木片",
+          "写有药效/副作用分栏图示但不含文字的窄板"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_salt_lung_survivor_fog_blue_cream_ink_wood",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色核心是听力损伤、医疗拒绝与赔偿证词，保持完整病后工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/luo_jin_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/luo_jin_web_source_v1.png",
+      "master_path": "res://art/portraits/luo_jin_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "ying_chaojian": {
+      "display_name": "应朝俭",
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_night_account_clerk",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "三十来岁，是枯潮城都息署值夜账吏，习惯先报外队、病倒人数与应急灵罐余息",
+        "他最初只验印不验人，直到发现完整指印、错手签押和地下回流正在让活人领不到本该属于自己的配给",
+        "他交出铁柜钥匙与验签印，却没有逃离或烧账，继续守住库存、按时公开用量并接受逐笔说明",
+        "他能把明晨术前配额、公共药柜、城墙避雷阵和当夜伤者分开，承认辞职不能替代对已放行错印的责任"
+      ],
+      "personality": [
+        "依赖数字维持秩序感",
+        "程序边界清楚但早期把验印与验人分开",
+        "面对错印先迟疑后愿意承担",
+        "不以辞职逃离现场责任",
+        "接受公开流水与外部复核"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_night_account_clerk",
+        "height_class": "HUM_L",
+        "face": [
+          "三十来岁成年男性，面容理性克制，眼下有值夜和伏案留下的疲惫；报数时像在依赖数字保护秩序",
+          "看见错印、伤者和被转移的库存时从迟疑转为必须负责的严肃，不用夸张官威替代悔意"
+        ],
+        "hair": [
+          "深黑棕中长发束成低冠或简洁发髻，用暗铜簪和旧蓝带固定",
+          "鬓角有少量夜班乱发、朱砂和纸尘，不使用奢华发冠"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背端正但不魁梧，手指有翻账、压印和拎油灯的稳定感；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和墨黑、雾蓝、旧米白与少量暗朱砂边的都息署值夜账吏层衣",
+          "完整不透明窄领内衫、分层长外袍、护腕、耐磨长裤与软底靴，袖口和指尖留验签朱砂、纸尘与铁柜油痕",
+          "腰侧挂封条筒、空白案号夹、便携油灯和可归还的验签印盒，衣物适合长夜站柜与伏案抄录"
+        ],
+        "props": [
+          "铁柜钥匙与带抽象分栏的实时负载表",
+          "无可读文字的值夜流水木板和封条筒",
+          "验签印盒、到期记录夹与可归还的便携油灯",
+          "分开当夜库存、明晨术前配额、公共药柜和城防余量的四格木片"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_night_account_clerk_ink_fog_blue_cream_vermilion",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确成年但角色魅力来自程序责任、库存压力与认错后的持续值守，保持专业完整着装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ying_chaojian_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ying_chaojian_web_source_v1.png",
+      "master_path": "res://art/portraits/ying_chaojian_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "zhang_he": {
+      "display_name": "章禾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_warehouse_clerk_and_covenant_archive_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "守着白契库门的老仓吏，十七年没有获准下楼，却保留最早临时库纸账与历次满载令留底",
+        "他能指出七日无人领取、暂存九十日、逐户公告和原主退回的原始限制，以及后来复写章如何删掉这些限制",
+        "面对灰池中尾差、失联款、撤销待返、无人承领和城防暂存混在一起，他坚持把用途、受益人和批准方式拆开",
+        "他会把方小满的提问记下却不算报名，也把顾沉璧的异议和未采纳回执一起上墙，不把记录者变成替任何人作主的人"
+      ],
+      "personality": [
+        "把档案完整视为对在场者和缺席者的共同责任",
+        "熟悉旧制度的临时期限和复写漏洞",
+        "不把公共救急与个人财物混成一池",
+        "记录问题但不替当事人报名或授权",
+        "在库门前要求三人复核和可追溯返还"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_warehouse_clerk",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成熟成年仓吏，面容沉静、观察力强，像能从纸背摸出复写章",
+          "谈到临时库九十日限制被删时目光沉下，面对谁从哪一囊取钱时清晰而不煽情"
+        ],
+        "hair": [
+          "深黑棕夹灰的中长发束成简洁低髻或后束，用旧木簪固定",
+          "鬓边和发尾带纸尘、盐雾与多年库房护理痕迹，不使用华丽发冠"
+        ],
+        "body": [
+          "自然修长偏高、略结实的成年比例，肩背有搬箱和守库的实用力量，腰背只有轻微长期伏案疲惫；不佝偻、不滑稽化"
+        ],
+        "costume": [
+          "低饱和墨灰、旧棕、雾蓝、旧米白与少量暗铜边的城存库房工作长衣",
+          "完整不透明高领内衫、分层长外袍、厚护袖、耐磨长裤与软底库靴，衣摆和袖口带纸尘、木屑、盐霜与封蜡磨痕",
+          "腰侧挂封蜡筒、旧刻度绳、低亮库灯和可归还的黑线封存扣，衣物适合长时间站柜和搬运账箱"
+        ],
+        "props": [
+          "库门齿钥和无字钥匙牌",
+          "最早临时库纸账与历次满载令留底",
+          "分开公共储备、个人尾差、工人工资和待认领款的无字四栏木板",
+          "封蜡筒、低亮库灯与三人开库记录夹"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_warehouse_archive_ink_old_brown_fog_blue_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自档案保管、公共储备分栏与缺席者记录责任，保持完整仓吏服和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/zhang_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/zhang_he_web_source_v1.png",
+      "master_path": "res://art/portraits/zhang_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "liu_heting": {
+      "display_name": "柳鹤汀",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_wage_advance_survivor_and_night_shift_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "六年前预支工钱安葬母亲，钱已还清并盖有都息署收讫章，母页却仍按存续所需每月抽走她的夜间灵息",
+        "她指出结清工资、丧葬和身体继续担保不是同一件事，拒绝让‘历来如此’替六年持续浅眠提供授权",
+        "她要求若缓三天必须逐人说明灵息供给了哪张病床、哪间热屋，并允许本人拒绝与获得损伤赔偿",
+        "她愿意亲手剪断第一条工资线，但先让所有人看清六十四刻暗账去了哪里，不接受退出后把负担转给下一个夜班工人"
+      ],
+      "personality": [
+        "把还清木签视为需要被尊重的事实",
+        "能把睡眠损伤转成可追问的责任问题",
+        "不把退出说成拒绝救邻居",
+        "愿意参与公共核对但要求明确工时和赔偿",
+        "在行动前要求公开真实缺口"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_night_shift_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容清醒疲惫，眼下有六年反复浅眠的淡淡阴影；把结清木签拍在桌上时目光直接",
+          "询问缓三天是否还要从自己夜里取息时压着愤怒，不用悲情姿态替代判断力"
+        ],
+        "hair": [
+          "深黑棕长发低束或编成简洁侧辫，发尾带连续夜班和潮雾留下的自然松散",
+          "发式适合戴工帽、搬运和夜间轮值，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，身形有夜班劳动的真实力量与长期浅眠造成的疲态，站姿仍然稳；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、煤灰、旧米白与少量褪暗陶红的枯潮夜班工层衣",
+          "完整不透明高领内衫、分层短外套、耐磨长裤、护腕和软底工靴，衣物有夜雾、木尘、旧工资封签与反复清洗痕迹",
+          "腰侧挂工资回执夹、可拔下的本地开关木片和护耳暖布，服装完整实用"
+        ],
+        "props": [
+          "盖有抽象收讫印记的结清木签",
+          "第一把断线剪和只显示刻度的公开用量板",
+          "工资回执夹、六年夜班记录的无字木片",
+          "可以让本人拔下的本地开关木片"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_night_shift_wage_fog_blue_soot_cream_muted_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自劳动主体性、清账证据与退出责任边界，保持完整夜班工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/liu_heting_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/liu_heting_web_source_v1.png",
+      "master_path": "res://art/portraits/liu_heting_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "liu_hesheng": {
+      "display_name": "柳鹤生",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_returnee_dock_worker_and_identity_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "十年前乘归潮舟离城，三年前因母亲病重返城，此后一直用码头临工号生活",
+        "归籍册把他登记为死于外城风疫，六三二号借他的旧脉持续签外部合同并把本名服务锁在死者记录下",
+        "他持有舟籍、旧伤医单与母亲每月来信，要求先用本名领取母亲的药，不要求当晚把表妹一家赶出旧屋",
+        "他愿意恢复本名、工龄、押金和已挣工资，同时接受旧屋、托管租金和现住户修缮另案核对"
+      ],
+      "personality": [
+        "对活着却被登记为死者保持直接质问",
+        "优先恢复母亲的药与自己的劳动服务",
+        "不把身份纠正等同于驱逐现住户",
+        "保留旧工龄、押金和返城证据",
+        "能把个人权益与城市合同分案"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_returnee_dock_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的瘦高成年男性，面容疲惫、警觉而克制，像多年用临工号生活的人重新拿回本名",
+          "用小刀刮除铜片上的死亡误认时目光直接，谈到母亲的药和旧屋时不夸张咆哮"
+        ],
+        "hair": [
+          "深黑棕中长发低束，发尾有潮雾、盐尘和码头风留下的自然散乱",
+          "发间只用朴素布带或木扣固定，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高、明显瘦高的成年比例，肩背有码头临工和长途乘舟留下的实用力量；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、煤灰、旧棕与少量暗铜的归籍巷码头临工层衣",
+          "完整不透明高领内衫、短防潮外套、耐磨长裤、护腕与防滑工靴，衣物有船缆摩擦、潮雾、旧伤医单和码头灰尘痕迹",
+          "腰侧挂码头工牌、封存的死亡误认通知和旧屋临时保护扣，衣物完整实用"
+        ],
+        "props": [
+          "小刀与本名身份片",
+          "归潮舟籍、旧伤医单和母亲来信束",
+          "码头临工牌与两月船工钱的无字记录片",
+          "旧屋三十日现状保护扣和不可读的死亡误认封套"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_returnee_dock_fog_blue_old_cream_soot_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自身份纠正、劳动服务与住房分案，保持完整码头工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/liu_hesheng_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/liu_hesheng_web_source_v1.png",
+      "master_path": "res://art/portraits/liu_hesheng_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "luo_suzhi": {
+      "display_name": "罗素织",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_returnee_lane_repairer_and_current_occupant",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "柳鹤生被登记为死亡后，旧屋分给表妹罗素织，她在十年间修过屋顶并把一半租给修伞匠",
+        "她担心的不是柳鹤生本人，而是恢复姓名会触发系统自动换锁、让三户无过错住户一夜失去住处",
+        "她要求把十年必要修缮、托管租金、柳鹤生押金和最终产权主张分开核对",
+        "她旁听后要求柳家旧屋也检查死亡误认同类齿，说明现住者既是住房争议当事人也是制度漏洞的发现者"
+      ],
+      "personality": [
+        "务实警惕地保护现住者",
+        "能区分亲属关系与系统自动执行后果",
+        "熟悉屋顶修缮、租金托管和门契风险",
+        "不否认柳鹤生的身份请求",
+        "要求所有权、居住和修缮账分案"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_returnee_lane_repairer",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容清醒戒备而不刻薄，像同时照看屋顶、租金和三户住处",
+          "握着门契时先检查谁会被系统换锁，指出身份纠正不等于驱逐时语气准确坚定"
+        ],
+        "hair": [
+          "深黑棕中长发编成利落低辫或低髻，用旧布带与木簪固定",
+          "发尾带潮雾、木屑和屋顶灰尘，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高、略结实的成年比例，肩背和前臂有十年修屋、搬瓦与照看住户的实用力量；站姿警惕稳定，不缩成 Q 版"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、灰棕、煤灰和少量暗青的归籍巷修屋工层衣",
+          "完整不透明高领内衫、短防潮外套、分层围裙、耐磨长裤、护膝与防滑软底靴，衣物有雨水、木屑、旧瓦灰和反复修补痕迹",
+          "腰侧挂修屋钳、麻绳、租金回执夹和无字铜钥匙，服装完整实用"
+        ],
+        "props": [
+          "旧屋门契封套与木尺",
+          "三十日临时居住保护扣",
+          "十年必要修缮的无字账板与租金回执夹",
+          "可以分开所有权和居住权的两枚无字铜钥"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_returnee_lane_repair_fog_blue_old_cream_gray_brown_teal",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自居住安全、修缮劳动与住房分案，保持完整修屋工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/luo_suzhi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/luo_suzhi_web_source_v1.png",
+      "master_path": "res://art/portraits/luo_suzhi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "duan_qiuhe": {
+      "display_name": "段秋禾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_deceased_sister_and_limited_medicine_proxy",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "段秋蓬的姐姐，妹妹在回声匣中明确授权三十日无回信时把基础药交给她，但明确说不要交给行会",
+        "段秋蓬死于外城塌桥后，枯潮截掉否定句并连续十年用声音确认席位，段秋禾反而被要求偿还失联维护费",
+        "她的养护关系可以支持基础药代领，却不能替亡妹承接新债、处分押金或确认长期席位",
+        "她要求完整录音、家庭证明和公开范围分层保存，保护亡妹原意也保护当前养护家庭不被机器扩权"
+      ],
+      "personality": [
+        "安静但坚持完整保留原话",
+        "把有限代领与新债权限分开",
+        "长期照护家人和孩子但不借亲情替人作主",
+        "重视密封家庭证明和隐私",
+        "愿意配合核对但要求可撤回边界"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_returnee_lane_caregiver",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容疲惫而清醒，保留长期等信、照护和处理文书的克制",
+          "握着回声匣记录时先确认哪一句是妹妹本人说的，谈到维护费和被截掉的否定句时目光坚定"
+        ],
+        "hair": [
+          "深黑棕长发束成低辫或低髻，用褪色布带固定",
+          "发尾带潮雾、纸尘和照护奔波痕迹，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背有长期照护家人、跑送药和处理文书的实用力量；姿态安静坚韧，不缩成 Q 版"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、灰棕和少量暗陶红的归籍巷照护与送药层衣",
+          "完整不透明高领内衫、分层短外套、耐磨长裙裤、护腕与软底鞋，衣物有药粉、潮雾、旧信封和反复清洗痕迹",
+          "腰侧挂密封家庭证明、临时医疗片、药包和可撤回的授权扣，服装完整实用"
+        ],
+        "props": [
+          "完整回声匣封套与段秋蓬来信束",
+          "只显示抽象刻度的基础药代领牌",
+          "密封家庭证明、临时医疗片与可撤回授权扣",
+          "冻结失联维护费的无字封条"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_returnee_lane_caregiver_fog_blue_old_cream_gray_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自有限代领、家庭照护与原意保存，保持完整照护工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/duan_qiuhe_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/duan_qiuhe_web_source_v1.png",
+      "master_path": "res://art/portraits/duan_qiuhe_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "lu_hai_shan": {
+      "display_name": "陆还山",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_bedside_pump_worker_and_family_witness",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "静息室床边泵手，认出第十二床病人薛存砚是自己的师父",
+        "他先要求把师父的脉从库门上撤下，不以亲属或师徒关系取得财产、补贴或代签资格",
+        "他可以补完一班床边泵工作，但工时必须独立计薪，不能被重逢包装成长期无偿照护义务",
+        "他接受薛存砚通过眼动或其他支持表达完成评估后再回答是否认亲、是否撤线和是否处理财产"
+      ],
+      "personality": [
+        "重视师徒关系但不越过病人回答",
+        "先保护当前治疗和床边脉线",
+        "能把身份线索与代领权分开",
+        "愿意承担明确排班的劳动",
+        "接受慢速支持表达和逐项复问"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_bedside_pump_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年男性，面容沉静、担忧而有分寸，认出师父时有重逢情绪却不把它变成代签资格",
+          "面对床边脉线时先看病人当前状态，说明身份线索与财产代理必须分开"
+        ],
+        "hair": [
+          "深黑棕中长发低束，发尾有药房水汽与连续夜班留下的自然松散",
+          "发间只用布带或木扣固定，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，肩背与前臂有长期操作人工泵、换管和守床班次的实用力量；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、灰白、墨灰和少量旧铜的静息室床边泵工装",
+          "完整不透明高领内衫、分层短外套、耐磨长裤、护腕、软底泵房鞋和肩背工具袋，衣物有药水、金属粉尘与反复清洗痕迹",
+          "腰侧挂换管夹、护脉膜盒、交班木片和无字临时见证扣，服装完整实用"
+        ],
+        "props": [
+          "机械摆锤与泵阀扳手",
+          "薛存砚旧工牌与只显示刻度的床边班表",
+          "换管夹、护脉膜盒和交班木片",
+          "不含代领权限的临时见证扣"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_bedside_pump_fog_blue_gray_ink_old_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色魅力来自床边劳动、师徒关系与代领边界，保持完整泵工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_hai_shan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_hai_shan_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_hai_shan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "xue_cunyan": {
+      "display_name": "薛存砚",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_static_rest_patient_and_former_pump_master",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "静息室第十二床病人，陆还山认出他是自己的师父，曾收到过关于其死亡的消息",
+        "目前只能眨眼，尚未完成稳定表达评估，不能以沉默、旧工牌或师徒关系替他签署财产与城务",
+        "他的脉象被六三二号借作城库门的假人脉，陆还山要求先撤线，再问本人是否同意后续处理",
+        "眼动确认后可以选择撤线、暂不处理财产等不同事项，支持表达必须慢速、重复且按项目分开"
+      ],
+      "personality": [
+        "保有旧工匠与教师的专注感",
+        "以慢速眼动或敲击回应",
+        "不让师徒关系替代本人回答",
+        "需要熟悉声音和重复确认",
+        "把治疗、身份和财产事项分开"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_static_rest_patient",
+        "height_class": "HUM_L",
+        "anchors": {
+          "face": ["年龄未完全确认的成年静息病人，面容安静疲惫而有旧工匠/教师的专注，目光能在眼动板和熟悉声音间移动", "重点表现尚未完成评估，不把沉默、虚弱或眨眼画成同意"],
+          "hair": ["深灰黑长发松束在肩后，夹少量银灰发丝", "发型便于静息照护和眼动板使用，不使用华丽发饰"],
+          "body": ["自然修长偏高的成年比例，病后安静消瘦，由软枕和床边支具支持，手部保留轻微回应能力；不缩成 Q 版或大头娃娃"],
+          "costume": ["低饱和雾蓝、灰白、墨灰和少量旧铜的静息室病房层衣", "完整不透明高领病服、保暖披肩、宽松长裤、软底床边鞋和简洁支具，衣物有药渍、反复清洗和床边护理痕迹", "床侧有无字临时医疗牌和护脉膜盒，服装保持医疗尊严"],
+          "props": ["四格眼动沟通板或敲击节拍块", "薛存砚旧工牌与机械摆锤", "无字临时医疗牌和可拆脉线夹", "重复确认用的低亮床边计时灯"]
+        }
+      },
+      "palette_profile": "low_sat_final_age_static_rest_fog_blue_gray_ink_old_copper",
+      "presentation_profile": {"sensuality_default": 0, "sensuality_max": 0, "reason": "年龄未完全确认且处于静息治疗中，角色核心是慢速支持表达与医疗尊严，保持完整病房服和非性感化呈现"},
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xue_cunyan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xue_cunyan_web_source_v1.png",
+      "master_path": "res://art/portraits/xue_cunyan_v1.png",
+      "source_refs": ["godot/data/generated/character_census_v2.json", "godot/data/chronicles/final_age_v1.json"]
+    },
+    "he_qie": {
+      "display_name": "贺箧",
+      "age": 67,
+      "age_group": "adult",
+      "narrative_tier": "supporting",
+      "occupation": "final_age_pulp_room_old_clerk",
+      "faction_id": "final_age",
+      "story_evidence": [
+        "纸浆房老吏，明确记录为六十七岁，每月按主簿机清单配纸",
+        "他以为纸张用途是修复瘟潮病历，从未看过主簿机实际生成的内容",
+        "工钱来自申屠家的柜温折损账，送达印最近半年每次都不同，说明他是程序链上的有限知情者",
+        "可以核对配纸、送达印和工钱来源，但不能把善意误认成对内容、用途或后续责任的完整同意"
+      ],
+      "personality": [
+        "做事按月按清单，不擅长猜测机器之外的意图",
+        "对自己没看过的内容明确说不知道",
+        "记得纸张数量、送达印和柜温折损等细节",
+        "愿意补充事实但不替申屠家或主簿机担责",
+        "年长而克制，面对追问仍保留劳动者的尊严"
+      ],
+      "visual_identity": {
+        "body_type": "adult_mature_tall_lean_pulp_room_clerk",
+        "height_class": "HUM_L",
+        "face": [
+          "六十七岁成年男性，面容瘦削、沉静而有纸尘与长期值守留下的疲惫，眼神能准确区分亲手做过与只是听说过的事",
+          "面对送达印变化时眉心收紧，承认不知道生成内容时不躲闪，不用猥琐或滑稽化表现年长"
+        ],
+        "hair": [
+          "灰黑相间的长发低束或简洁低髻，鬓角自然发白，用朴素木簪固定",
+          "发尾带纸浆房潮气和纸尘，发式适合低头配纸与搬运纸卷，不使用华丽发冠"
+        ],
+        "body": [
+          "自然修长偏高的老年成年比例，肩背略有长期站柜和搬纸造成的疲态，手指保留分纸、压印和数卷的稳定动作；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和灰棕、雾蓝、旧米白与少量暗铜边的纸浆房老吏工层衣",
+          "完整不透明高领内衫、旧长外袍、护袖、围腰、耐磨长裤与软底库靴，衣摆和袖口带纸尘、浆水与反复缝补痕迹",
+          "胸前挂无可读文字的纸房工牌，腰侧有封蜡筒、送达印夹和小型柜温计，服装体现劳动而非官阶"
+        ],
+        "props": [
+          "按月分开的空白纸卷清单夹",
+          "最近半年不同送达印的封存拓片",
+          "无可读文字的柜温折损账夹与纸浆房小秤",
+          "一只只显示刻度、不显示文字的纸卷计数板"
+        ]
+      },
+      "palette_profile": "low_sat_final_age_pulp_room_paper_dust_fog_blue_old_brown_copper",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "明确六十七岁且角色魅力来自有限知情、劳动记忆与事实边界，保持完整老吏工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/he_qie_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/he_qie_web_source_v1.png",
+      "master_path": "res://art/portraits/he_qie_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/final_age_v1.json"
+      ]
+    },
+    "ruan_he": {
+      "display_name": "阮禾",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "wasteland_frostlung_pool_family_witness",
+      "faction_id": "wasteland",
+      "story_evidence": [
+        "霜肺营西池边的老妇，每天来听池膜鼓动，因为十一年前失踪的儿子阮青曾负责第一代水泵",
+        "她能认出灰堤第一席床牌内经络旁的三结细线，末泉档案却只记载阮青死于东堤塌方且遗体未寻回",
+        "阮青残律为霜肺营净水池提供部分热量，直接拔除会让东池和中池降温并影响病车与居民",
+        "她愿意在知道后果后提出短时接入或停用意见，但不让悲伤被别人加工成替儿子牺牲的统一命令"
+      ],
+      "personality": [
+        "每天观察池膜与热量变化，记得旧泵工留下的细节",
+        "先问停用会让谁断气，再谈死者应得的归还",
+        "能承认自己的决定带有母亲身份，却要求把后果写清",
+        "不抢替代方案的技术判断，也不放弃家属的辨认与安置权",
+        "年长、坚韧而克制，不把悲伤演成号召"
+      ],
+      "visual_identity": {
+        "body_type": "adult_mature_tall_sturdy_wasteland_pool_witness",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的年长成年女性，面容被风沙、盐霜与多年守池磨出清晰纹理，听见池膜鼓动时专注而沉静",
+          "辨认三结细线时眼神短暂锐利，讨论停用代价时压住悲伤，不使用猎奇老妪或夸张苦情表情"
+        ],
+        "hair": [
+          "灰黑长发夹自然白发，编成低辫或低髻，用褪色荒原布带固定",
+          "发尾带盐霜、净水藻水汽和风沙痕迹，发式适合池边久坐与搬动水票，不使用华丽饰物"
+        ],
+        "body": [
+          "自然修长偏高、略结实的年长成年比例，肩背有守池、提水和长途等候形成的稳定力量与疲态；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和盐灰、褪青、旧米白、暗土红与藻绿的霜肺营守池层衣",
+          "完整不透明高领内衫、旧长外袍、耐水披肩、分层长裙裤、护臂与防滑旧靴，衣物有盐霜、水汽、黑雨和反复修补痕迹",
+          "肩侧挂旧水泵布包，腰侧有无可读文字的水票夹、床牌封套与低亮引路灯，服装体现守池劳动而非性感化"
+        ],
+        "props": [
+          "带三结细线的阮青旧床牌封套",
+          "记录西池、中池和东池热量的无字刻度板",
+          "净水藻样本罐、旧水泵小扳手和家属辨认布签",
+          "可分开短时接入、替代热源与停用安置的三色木牌"
+        ]
+      },
+      "palette_profile": "low_sat_wasteland_frostlung_salt_gray_faded_teal_cream_rust_algae",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色核心是家属辨认、净水热源和死者安置，保持完整守池层衣和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ruan_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ruan_he_web_source_v1.png",
+      "master_path": "res://art/portraits/ruan_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/wasteland_v1.json"
+      ]
+    },
+    "xie_lu": {
+      "display_name": "谢芦",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_infected_passenger_and_medical_transfer_witness",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "归潮八号首批需要转移的感染者，身份门显示她十一年前死亡并拒绝打开内侧气闸",
+        "她本人在体温、肺音、预计床位和接收人被说明后点头确认，医疗转移没有用全船身份恢复替代逐人确认",
+        "她被列为红色医疗时限且愿意首批离船，其他患者的床牌和医疗顺序不能复制她的选择",
+        "后续她要求保留机械内侧出口并在低温复现，说明医疗安全与调查、身份门权限必须分栏处理"
+      ],
+      "personality": [
+        "在身份系统误判时仍能快速确认自己的医疗选择",
+        "重视机械退出装置和本人随时停止的能力",
+        "不让自己的紧急通行变成整船自动放行规则",
+        "愿意配合医疗与设备复检，但要求记录实际理由和复核时刻",
+        "清醒、直接、对过度承诺保持警惕"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_quarantine_passenger",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容因感染和低温隔离显出疲惫，但目光清醒，点头确认时带有明确的自我判断",
+          "面对身份门误判时眉眼冷静，复检机械出口时专注，不把病弱或隔离服画成猎奇或暧昧"
+        ],
+        "hair": [
+          "深黑棕中长发低束或简洁侧辫，便于佩戴隔离面罩、耳件和医疗帽",
+          "发尾有船舱冷凝水汽与长途航行留下的自然松散，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，身体有感染后疲惫与低温僵硬感，但站姿或担架坐姿保持主体性；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、铁灰、旧米白与少量医疗暗红识别线的归潮八号隔离层衣",
+          "完整不透明保温内层、分层隔离外套、软质护肩、医疗腕带、耐滑船靴或担架固定布，衣物有冷凝水、消毒和船舱磨损痕迹",
+          "胸前挂无可读文字的临时医疗凭证，腰侧保留机械出口拉环与可由本人触发的停止牌，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "红色医疗时限床牌与本人点头确认记录片",
+          "斜月坞临时医疗凭证的无字副本",
+          "内侧机械出口拉环、编织护套与干石墨小盒",
+          "只显示体温、肺音和床位分栏的窄医疗板"
+        ]
+      },
+      "palette_profile": "low_sat_star_network_quarantine_fog_blue_iron_gray_cream_medical_red",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于感染隔离与医疗转移中，角色魅力来自本人确认、机械退出与医疗边界，保持完整隔离层衣和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/xie_lu_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/xie_lu_web_source_v1.png",
+      "master_path": "res://art/portraits/xie_lu_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "tao_xi": {
+      "display_name": "陶熹",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_unidentified_ceramic_worker",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "归潮八号中与陆成舟共用账户的无名担架者，系统没有为他的身体保留独立账户或脉冲频道",
+        "星籍庭纸档里存在一名叫陶熹的陶工，旧执业号末四位为三、七、一、九",
+        "技术员逐个亮出数字后，担架上的人用床栏触点连续两轮选出三、七、一、九，并在陆成舟出现时按下停止",
+        "许庚从货册找到陶熹烧制的耐热衬片编号与执业号相连，顾弦庭据此签发暂用身份，但财产和亲属栏仍封存"
+      ],
+      "personality": [
+        "在无法稳定说话时仍努力控制自己的身份确认节奏",
+        "能区分数字证据、旧执业记录和不接受的同名归并",
+        "对被并入他人账户保持警惕",
+        "愿意接受只用于医疗和通行的窄范围暂用身份",
+        "以触点、停顿和重复选择表达边界"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_bedridden_ceramic_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年男性，面容因担架、低温和长途航行显出疲惫，眼神专注于数字辅助台和床栏触点",
+          "确认三、七、一、九时集中，看到陆成舟姓名时明确停止，不用失语或病弱作为猎奇表演"
+        ],
+        "hair": [
+          "深黑棕中长发低束或被整理到肩后，发尾带船舱冷凝水与陶窑尘色",
+          "发式便于担架照护、面罩和触点操作，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高的成年比例，以担架半坐或软枕支撑呈现，手指保留触点确认的细微控制；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、铁灰、旧米白与陶土灰的归潮八号医疗保温层衣",
+          "完整不透明高领内衫、分层保温外套、简洁固定带、耐滑船靴或担架脚套，衣物有陶尘、冷凝水和长途磨损痕迹",
+          "胸前挂无可读文字的暂用身份牌，腰侧保留触点辅助板和耐热衬片证物袋，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "只显示数字形状的本地辅助台与床栏触点",
+          "三、七、一、九的抽象数字确认纸带",
+          "陶工旧执业号封存页与耐热衬片编号证物袋",
+          "封闭财产和亲属栏的窄权限暂用凭证"
+        ]
+      },
+      "palette_profile": "low_sat_star_network_ceramic_worker_fog_blue_iron_gray_clay_cream",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于担架、医疗与身份复核中，角色魅力来自触点表达和拒绝同名归并，保持完整保温层衣和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/tao_xi_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/tao_xi_web_source_v1.png",
+      "master_path": "res://art/portraits/tao_xi_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "wen_tao": {
+      "display_name": "闻桃",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_drainage_worker_and_lung_injury_witness",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "赤霄城跨城通行争议中的排水工，携带工会页与诊宫页两份用途不同的资料",
+        "工会页记录左肺旧伤，诊宫页记录本周药量；她愿让港口医师查看肺伤与药物相互作用，但不让雇主读取",
+        "她指出赤霄总页无法拆分时，不接受被写成拒绝防疫，而是要求如实写明读取范围和无法分栏的系统缺陷",
+        "后续她的伤情页只进入医师席，工资页进入工人席，跨城令没有把两页重新合并成一张总页"
+      ],
+      "personality": [
+        "熟悉排水、夜班和工会页的实际负担",
+        "愿意配合与肺伤直接相关的医疗检验",
+        "不把隐私要求说成拒绝防疫，也不接受雇主顺手读取病史",
+        "能把同一人的医疗、工资和通行范围拆成不同用途",
+        "直接、务实，要求系统承担分栏失败的责任"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_drainage_worker",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容有长期排水、夜班和左肺旧伤留下的疲惫，面对港口医师时清醒直接",
+          "谈到总页会把病史交给雇主时眉眼锋利，要求如实记录而非被贴上拒检标签，不做苦情或暧昧化表现"
+        ],
+        "hair": [
+          "深黑棕长发低束或编成耐汗侧辫，用褪色雾蓝布带固定",
+          "发尾带排水渠水汽、盐尘和夜班碎发，发式适合戴工帽与口罩，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高且结实的成年比例，肩背与前臂有排水、提泵和夜班劳动的真实力量，左肺旧伤通过呼吸节奏表现；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、铁灰、旧米白与少量暗陶红识别线的跨城排水工层衣",
+          "完整不透明高领内衫、防水短外套、分层耐磨长裤、护腕、防滑工靴与简易过滤面罩，衣物有水汽、泥痕、药渍和反复清洗痕迹",
+          "胸前挂无可读文字的工会页夹，腰侧分列诊宫页、工资回执和独立医师交接封袋，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "工会页与诊宫页的两只分色封套",
+          "排水阀扳手、短柄抽水钩与无字工牌",
+          "左肺旧伤检验用的窄医疗板和本周药量封袋",
+          "只允许医师席读取伤情、工人席读取工资的分栏夹"
+        ]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_drainage_fog_blue_iron_gray_cream_terracotta",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于排水劳动、旧肺伤与跨城医疗通行争议中，角色魅力来自分栏表达与劳动主体性，保持完整工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/wen_tao_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/wen_tao_web_source_v1.png",
+      "master_path": "res://art/portraits/wen_tao_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "yu_qing": {
+      "display_name": "郁青",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_route_runner_and_interpreter",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "赤霄城三十六张互认桌上的潮夜跑表员，负责在方言、手语和图示之间切换口译",
+        "潮夜跑表造成手腕灼伤，药费先由姐姐垫付；她要求先支付急救班与旧工资，再谈恢复全部班次",
+        "她拒绝把一人守两张夜桌包装成代表百坊的稳定性，要求按真实班次重新排表",
+        "后续她回到日班、培训口述支持，却拒绝继续守双桌；替换记录人接席，工伤者不必持续展示疼痛才获倾听"
+      ],
+      "personality": [
+        "熟悉夜班跑表、工时结算与多模态口译的实际负担",
+        "说话直接，不接受欠薪和工伤被包装成个人忍耐力",
+        "愿意培训替换记录人，让口述支持成为被承认的劳动",
+        "支持工伤者暂离双桌，不要求对方持续展示疼痛换取席位",
+        "可靠、清醒，能把急救班的紧迫性与长期排班边界分开"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_route_runner",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年女性，面容有潮夜奔跑、口译切换与工伤后仍值班的疲惫，面对欠薪时清醒直接",
+          "谈到替换记录与不再守双桌时目光坚定，保留可靠的克制感，不做苦情或暧昧化表现"
+        ],
+        "hair": [
+          "深黑棕长发高束或利落侧编，用褪色雾蓝布带固定",
+          "发丝带夜雾灯尘与奔跑后的碎发，适合佩戴耳侧口译标记，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高且结实灵活的成年比例，肩背、前臂和小腿有长距离跑表与搬运的真实力量，一侧手腕缠药布；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、铁灰、旧米白与少量褪暗砖红识别线的赤霄城跑表员层衣",
+          "完整不透明高领内衫、短款耐磨外套、分层工作裙裤或长裤、药布护腕、软底防滑靴与轻便肩带，衣物有夜雾、药渍和长途磨损痕迹",
+          "胸前挂无可读文字的口译标记，腰侧分列班次回执、替换记录夹与小型跑表灯，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "抽象手势卡、方言路线板与图示交接板",
+          "缠药布的手腕、急救班回执与旧工资封套",
+          "无字班次牌、小型跑表灯与替换记录夹",
+          "用于培训口述支持的分栏卡片"
+        ]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_route_runner_mist_blue_iron_gray_cream_muted_red",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于工伤、欠薪与夜班排班协商中，角色魅力来自劳动主体性与多模态口译能力，保持完整工装和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/yu_qing_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/yu_qing_web_source_v1.png",
+      "master_path": "res://art/portraits/yu_qing_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "qu_he": {
+      "display_name": "屈禾",
+      "age_group": "unknown",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_relic_claimant_and_family_memory_witness",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "赈籍院死名与遗物复核中的年轻来访者，抱旧襁褓辨认母亲留下的冻伤药布",
+        "没有房契，却能说出药布每次换位、母亲怕冷时的结法与家族三代轮流照护场景",
+        "另一户也认领同一襁褓，屈禾接受先记录双方记忆并检验纤维、染料和药渍，不让先发言者直接带走",
+        "要求回执增加共同保管、只看不取、暂不决定和销毁前重问，物件归属与柜子供能分开处理"
+      ],
+      "personality": [
+        "记忆细节具体，愿意把生活动作作为可核验材料",
+        "没有房契也坚持自己对家人照护和遗物的发言资格",
+        "面对同一物件的共同认领时克制，不把情绪变成唯一裁决",
+        "接受纤维、染料和药渍等外部核验，也要求保留两户的共同保管选择",
+        "关心遗物、供能和补偿不要被一张归属票强行合并"
+      ],
+      "visual_identity": {
+        "body_type": "age_unconfirmed_tall_lean_relic_claimant",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄与性别未完全确认的年轻来访者，面容专注克制，抱着旧襁褓时记忆清楚而不苦情",
+          "面对两户共同认领保持坚定与耐心，等待证据核验，不做幼态卖萌或暧昧化表现"
+        ],
+        "hair": [
+          "深黑棕中长发低束或简洁短束，用旧灰蓝布带固定",
+          "发梢带冷库水汽与奔波尘，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长但不夸张的年龄未确认中性比例，双臂体现长途抱物与守候家人的真实力量；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、铁灰与褪暗赭色的完整朴素冬季层衣",
+          "不透明高领内衫、旧棉短袍、分层长裤或过膝裙裤、布护腕、耐磨短靴与简易肩包，衣物有冷凝水和多次修补痕迹",
+          "腰侧挂无可读文字的查看票、共同保管票和纤维取样小袋，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "无文字旧襁褓与冻伤药布边角",
+          "只显示抽象色块的查看票、共同保管票和暂不决定票",
+          "纤维取样小袋与小型封存夹",
+          "便于核对结法与药渍的窄记录板"
+        ]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_relic_claimant_mist_blue_iron_gray_cream_dull_ochre",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "原文仅确认年轻人，年龄与性别未完全确认且角色处于家属遗物核验中，保持中性完整冬衣与非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/qu_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/qu_he_web_source_v1.png",
+      "master_path": "res://art/portraits/qu_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    },
+    "liang_du": {
+      "display_name": "梁度",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_retired_registry_officer_and_conflict_signer",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "归潮八号死亡裁定上留下私章的退休星籍官，曾签发冲突许可",
+        "旧许可同时让死亡结论、活跃账户扣费和商团公益算力并存，调查要求调取值班簿与许可说明",
+        "退休私章可能被复制或盗用，必须把签章归属与实际操作人分开核对",
+        "后续责任调查还要保全取件窗口、授权复制器与设备日志，不能让旧章替所有操作者承担全部责任"
+      ],
+      "personality": [
+        "熟悉星籍许可、值班簿和冲突授权的制度细节",
+        "谨慎承认旧章与旧决定的责任，不用记忆模糊逃避核验",
+        "接受把签章归属、设备日志和实际操作者拆开审查",
+        "不愿让退休身份成为真正复制授权器者的遮蔽物",
+        "沉静、克制，在证据边界内回答问题"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_retired_registry_officer",
+        "height_class": "HUM_L",
+        "face": [
+          "成年男性，具体年龄未完全确认，灰白鬓角与长期档案审查的沉静疲态并存，知道制度漏洞却不做邪魅反派",
+          "面对私章与复制授权器时谨慎、克制、愿意分担可证实责任，不做夸张老态或苦情化表现"
+        ],
+        "hair": [
+          "灰黑长发整齐低束，鬓角自然灰白，用素色旧发带或简化退役官帽固定",
+          "发式克制利落，不使用华丽冠饰"
+        ],
+        "body": [
+          "自然修长偏高、成熟偏瘦但站姿稳重的成年比例，肩颈和手指保留长期处理档案与签发许可的职业习惯；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和墨蓝、炭灰、旧米白与少量暗铜边的完整退役星籍官长衣",
+          "高领内衫、分层长袍或档案外套、窄腰封与软底官靴，衣料有冷库灰尘、折痕和多年磨损痕迹",
+          "腰侧挂无可读文字的授权复制器封袋、取件药包封条与双钥凭证，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "封存值班簿与冲突许可夹",
+          "无文字旧私章盒与封条",
+          "授权复制器封袋与取件窗口药包封条",
+          "只显示抽象印记的双钥凭证"
+        ]
+      },
+      "palette_profile": "low_sat_star_network_retired_registry_officer_ink_blue_charcoal_cream_dark_bronze",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色为成年但具体年龄未完全确认的退休官员，处于旧许可责任调查中，角色魅力来自证据边界与制度经验，保持完整职业长衣和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/liang_du_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/liang_du_web_source_v1.png",
+      "master_path": "res://art/portraits/liang_du_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "lu_he": {
+      "display_name": "陆禾",
+      "age_group": "minor",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_child_passenger_and_identity_witness",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "登船时八岁的孩子，被总藏错误归入母亲陆绡账户下的随行休眠物",
+        "独立灵识回执呈现成长节律，纸票编号与船内影像指向一个真实儿童",
+        "害怕时用指节敲三短、四长、一下停顿，要求有自己的名字而不是回到母亲账页",
+        "身份补证需要独立声纹、监护关系或船内影像之一，七十二小时临时自然人推定不能悄悄届满"
+      ],
+      "personality": [
+        "警觉但愿意用固定节律求助",
+        "能辨认母亲与柜外回应，不接受被当作行李或财物附属项",
+        "需要成人保护与清楚的期限说明，不承担复杂的制度举证压力",
+        "希望拥有独立名字、药量与保温记录",
+        "在安全前提下保留自己的表达节奏"
+      ],
+      "visual_identity": {
+        "body_type": "child_8_tall_enough_for_age_cold_storage_passenger",
+        "height_class": "CHILD_M",
+        "face": [
+          "明确八岁男孩的儿童面容，低温休眠后的苍白与警觉并存，眼神保留求助和辨认能力，不成人化、不暧昧化",
+          "害怕时注意力落在节律和柜外回应上，表情克制，不做恐怖化或病弱消费化表现"
+        ],
+        "hair": [
+          "深黑棕短发略乱，带冷存舱静电与睡眠压痕",
+          "朴素儿童发式，不使用发簪、冠饰或成人造型"
+        ],
+        "body": [
+          "符合八岁儿童的自然头身、四肢和肩宽比例，身形小而真实，不拉长为成年比例，也不缩成夸张 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和雾蓝、旧米白、冷灰与少量暗橙保温线的完整不透明保温睡衣",
+          "软底防滑袜靴、轻便保温披肩、安全扣和小型隔音耳罩，衣物有冷凝水、舱内折痕和修补痕迹",
+          "胸前保留无可读文字的纸票或节律记录板，不加入任何成人化或暴露设计"
+        ],
+        "props": [
+          "只显示抽象编号形状的纸票",
+          "记录三短四长一停顿的窄节律板",
+          "保温披肩、安全扣与隔音耳罩",
+          "独立临时伤页的封存夹"
+        ]
+      },
+      "palette_profile": "low_sat_star_network_child_cold_storage_mist_blue_old_cream_cool_gray_muted_orange",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "角色明确为八岁儿童，必须按儿童安全规范以完整保温衣、自然儿童比例和非性感化方式呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/lu_he_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/lu_he_web_source_v1.png",
+      "master_path": "res://art/portraits/lu_he_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "meng_die": {
+      "display_name": "孟迭",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "star_network_side_archive_administrator",
+      "faction_id": "star_network",
+      "story_evidence": [
+        "归潮八号侧库管理员，负责旧式账机、冷存柜和双钥开柜流程",
+        "岗位规程只让他核对单页格式，面对死亡裁定、活跃流水与公益算力并排时无法回答三页合并责任",
+        "坚持每开一次柜另册登记开柜人、页码和归还时刻，不替家属辨认声音",
+        "在后续责任调查中愿意把自己排除出涉事页操作，把钥匙交给另一名管理员"
+      ],
+      "personality": [
+        "熟悉冷存柜、旧式账机和双钥开柜规程",
+        "诚实承认单页岗位无法回答跨页冲突",
+        "重视原件、页码、归还时刻和可读取范围",
+        "不替家属辨认声音，也不把岗位规程当作制度免责",
+        "在利益冲突出现时愿意主动回避后续操作"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_lean_side_archive_administrator",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年档案管理员，面容谨慎专注，带冷库工作和规程失效后的困惑，但不做无能或邪恶文员模板",
+          "决定主动回避涉事页时表情清醒负责，不做苦情或暧昧化表现"
+        ],
+        "hair": [
+          "深黑棕或灰黑发整齐向后束，额角带冷库碎发与淡淡霜尘",
+          "发式朴素，不使用华丽发饰"
+        ],
+        "body": [
+          "自然修长偏高、偏瘦但耐久的成年比例，肩背有长期站在冷存柜前的轻微紧绷，双手保持保护纸卷和钥匙的职业习惯；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和墨蓝、冷灰、旧米白与少量暗铜的完整侧库管理员层衣",
+          "高领内衫、短档案外套、分层长裤、冷存手套、软底工作靴和钥匙腰带，衣物有纸尘、冷凝水和开柜磨损痕迹",
+          "腰侧挂无可读文字的开柜登记夹与隔热封套，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "无文字账机纸卷与单页核验板",
+          "双钥中的一把与冷存柜钥匙串",
+          "开柜登记夹、隔热封套与受限副本袋",
+          "只显示抽象色块的页码封签"
+        ]
+      },
+      "palette_profile": "low_sat_star_network_side_archive_administrator_ink_blue_cool_gray_cream_dark_bronze",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "年龄未完全确认且角色处于档案责任与权限复核中，角色魅力来自诚实承认岗位边界与原件保全，保持完整职业层衣和非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/meng_die_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/meng_die_web_source_v1.png",
+      "master_path": "res://art/portraits/meng_die_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/star_network_v1.json"
+      ]
+    },
+    "ji_shuangquan": {
+      "display_name": "纪双泉",
+      "age_group": "adult_unconfirmed",
+      "narrative_tier": "supporting",
+      "occupation": "immortal_dynasty_archive_medic_and_rescue_examiner",
+      "faction_id": "immortal_dynasty",
+      "story_evidence": [
+        "皇城总席档库档吏，使用铜尺与寒玉片分层读取删卷承灰砖",
+        "在阿洛地下救援中负责测脉、复测脚趾温度和胸口灵纹，出现异常时叫停七分钟",
+        "不以救援总时限逼伤者继续，分别记录水、身份样本、卸梁和身体风险的回答",
+        "因父亲可能出现在旧签发链中坚持档吏、受影响户或指定者与独立校验人三方在场"
+      ],
+      "personality": [
+        "精确、沉着，对身体风险和证据污染都敏感",
+        "会在伤者出现异常时主动叫停，不把倒计时当作同意",
+        "能同时处理档案读取、医工复测和地下救援",
+        "面对父亲旧签发链保持避嫌与自我约束",
+        "把停时、复测、替代器材和三方在场写成可核验流程"
+      ],
+      "visual_identity": {
+        "body_type": "adult_tall_sturdy_archive_medic",
+        "height_class": "HUM_L",
+        "face": [
+          "年龄未完全确认的成年男性医工/档吏，面容沉着精确，对风险敏感，叫停救援时坚定但不冷酷",
+          "涉及父亲旧签发链时保持克制与避嫌，不做救世主或苦情化表现"
+        ],
+        "hair": [
+          "深黑棕长发低束，鬓角带少量灰砖粉尘与地下冷霜",
+          "发式利落，不使用华丽冠饰"
+        ],
+        "body": [
+          "自然修长偏高、结实耐久的成年比例，站姿兼具档案核验的稳定与急救现场的低重心；不缩成 Q 版或大头娃娃"
+        ],
+        "costume": [
+          "低饱和墨青、旧米白、铁灰与暗铜的完整档库医工层衣",
+          "高领内衫、分层档案外套、护腕、软底工作靴、窄腰包和短急救围裙，衣物有灰砖粉尘、药水和地下湿气痕迹",
+          "腰侧挂无可读文字的分栏证据袋、独立校验牌与停时牌，不加入束缚或暴露设计"
+        ],
+        "props": [
+          "铜尺与寒玉读取片",
+          "窄急救包与薄楔记录板",
+          "分栏证据袋、独立校验牌和无字停时牌",
+          "用于记录脉搏、温度与灵纹的细窄测量条"
+        ]
+      },
+      "palette_profile": "low_sat_immortal_dynasty_archive_medic_ink_cyan_old_cream_iron_dark_bronze",
+      "presentation_profile": {
+        "sensuality_default": 0,
+        "sensuality_max": 0,
+        "reason": "成年但具体年龄未完全确认，角色处于档案责任、避嫌与急救复测中，魅力来自精确流程和主动叫停，保持完整职业层衣与非性感化呈现"
+      },
+      "portrait_prompt_status": "prepared_waiting_previous_character",
+      "portrait_prompt_path": "res://data/characters/prompts/ji_shuangquan_portrait_master_v1.md",
+      "candidate_path": "res://art/portraits/candidates/ji_shuangquan_web_source_v1.png",
+      "master_path": "res://art/portraits/ji_shuangquan_v1.png",
+      "source_refs": [
+        "godot/data/generated/character_census_v2.json",
+        "godot/data/chronicles/immortal_dynasty_v1.json"
+      ]
+    }
+  }
+}

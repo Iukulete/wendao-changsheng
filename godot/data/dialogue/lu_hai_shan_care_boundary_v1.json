@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_hai_shan_care_boundary",
+  "title": "陆还山的床边一班",
+  "entry_node": "lhsn_line_01",
+  "participants": ["protagonist", "lu_hai_shan"],
+  "nodes": [
+    {
+      "id": "lhsn_line_01",
+      "type": "line",
+      "speaker_id": "lu_hai_shan",
+      "expression": "concerned",
+      "outfit": "bedside_pump_worker",
+      "text": "我认得十二号床上的人，他是我师父。先把他的脉从门上拿下来，等他能说，再问他认不认我；我可以补完今天这一班，但不代领他十七年的补贴，也不替他按下财产页。",
+      "next": "lhsn_choice_01"
+    },
+    {
+      "id": "lhsn_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lhsn_choice_remove_pulse_first",
+          "text": "先用机械摆锤替换薛存砚的脉线，只记录陆还山提供的身份线索；师徒关系、补贴和财产等本人能表达后再分开确认。",
+          "next": "lhsn_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_hai_shan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_hai_shan_pulse_removed_first", "value": true}
+          ]
+        },
+        {
+          "id": "lhsn_choice_cover_one_shift",
+          "text": "让陆还山按独立排班补完一班，工资只按本班工时结算；同时保留薛存砚的表达评估与财产暂停，不扩大成家属代理。",
+          "next": "lhsn_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_hai_shan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_hai_shan_shift_paid_separately", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lhsn_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你认得他，是重要的身份线索；你替他守一班，是实际劳动。两件事都不能自动变成财产代理或长期照护义务。先让床边的脉回到机械摆锤，再让薛存砚以他能用的方式回答以后要不要你继续帮忙。",
+      "next": "lhsn_effect_01"
+    },
+    {
+      "id": "lhsn_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_hai_shan_care_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_hai_shan", "expression": "relieved"}
+      ],
+      "next": "lhsn_end"
+    },
+    {
+      "id": "lhsn_end",
+      "type": "end",
+      "result": "lu_hai_shan_care_boundary_preserved"
+    }
+  ]
+}

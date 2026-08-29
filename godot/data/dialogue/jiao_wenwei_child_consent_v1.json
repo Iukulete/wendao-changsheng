@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "jiao_wenwei_child_consent",
+  "title": "焦闻苇与三色石",
+  "entry_node": "jww_line_01",
+  "participants": ["protagonist", "jiao_wenwei"],
+  "nodes": [
+    {
+      "id": "jww_line_01",
+      "type": "line",
+      "speaker_id": "jiao_wenwei",
+      "expression": "steady",
+      "outfit": "orphanage_director",
+      "text": "榜单只能告诉我们测针转了几圈，不能替孩子回答愿不愿意。今天每个人都要拿到绿、黄、红三种石子，先把他们听懂的答案记下来。",
+      "next": "jww_choice_01"
+    },
+    {
+      "id": "jww_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "jww_choice_public_stones",
+          "text": "把三色石放到每张矮凳前，公开说明绿、黄、红分别代表什么，再逐人记录和复问。",
+          "next": "jww_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "jiao_wenwei", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "jiao_wenwei_child_choices_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "jww_choice_protect_first",
+          "text": "先让最喘的孩子离开圆环休息，再由照护者一对一解释，不能为了齐整的名单让孩子硬撑。",
+          "next": "jww_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "jiao_wenwei", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "jiao_wenwei_triage_first_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jww_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "让孩子参与选择，不等于让他们承担诊断和供药责任。你只需要把每一次答应、待问和拒绝留在原处，后面的治疗由能负责的人签名。",
+      "next": "jww_effect_01"
+    },
+    {
+      "id": "jww_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "jiao_wenwei_child_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "jiao_wenwei", "expression": "relieved"}
+      ],
+      "next": "jww_end"
+    },
+    {
+      "id": "jww_end",
+      "type": "end",
+      "result": "jiao_wenwei_child_boundary_preserved"
+    }
+  ]
+}

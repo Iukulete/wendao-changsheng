@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "liang_zhen_emergency_authority",
+  "title": "救急不等于十一年续签",
+  "entry_node": "lz_line_01",
+  "participants": ["protagonist", "liang_zhen"],
+  "nodes": [
+    {
+      "id": "lz_line_01",
+      "type": "line",
+      "speaker_id": "liang_zhen",
+      "expression": "defensive",
+      "outfit": "default",
+      "text": "梁箴把维修艇的校准轮放在桌上：白肺夜里，父亲的分识确实救过诊区的人。可那份原授权只写到归潮八号恢复自航或四十八小时，后面的十一年不能因为结果好看，就自动算成每个人都继续同意。",
+      "next": "lz_choice_01"
+    },
+    {
+      "id": "lz_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lz_choice_separate_terms",
+          "text": "把最初救急、后续续签、当前身体意愿和诊区替代供能分开记录，先冻结新写入，再逐项寻找当事人意见。",
+          "next": "lz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_zhen", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "liang_zhen_authority_terms_separated", "value": true}
+          ]
+        },
+        {
+          "id": "lz_choice_keep_service",
+          "text": "只要诊区还在受益，就先保持全额服务，等替代算力出现后再讨论是否需要撤回。",
+          "next": "lz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_zhen", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "liang_zhen_service_first_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lz_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把医疗龛、消防、人工制动和维护臂远控分成不同权限，保留本地供氧与手动停机，不让封掉一个主管账号就让整座货栈失去安全能力。梁箴的技术理由进入卷宗，但父亲是否愿意继续代签必须另由医师和本人回应。",
+      "next": "lz_effect_01"
+    },
+    {
+      "id": "lz_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "liang_zhen_emergency_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "liang_zhen", "expression": "strained"}
+      ],
+      "next": "lz_end"
+    },
+    {
+      "id": "lz_end",
+      "type": "end",
+      "result": "liang_zhen_emergency_boundary_preserved"
+    }
+  ]
+}

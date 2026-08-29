@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xiao_man_shift_handoff",
+  "title": "按时交班也是照护",
+  "entry_node": "xm_line_01",
+  "participants": ["protagonist", "xiao_man"],
+  "nodes": [
+    {
+      "id": "xm_line_01",
+      "type": "line",
+      "speaker_id": "xiao_man",
+      "expression": "quiet",
+      "outfit": "default",
+      "text": "小满把黄炉领炉牌放在交班夹上：一个人的自制不够，家属和副手得有能叫她回家的手段。按四个时辰交班，不是认输，是让下一班知道自己接住了什么。",
+      "next": "xm_choice_01"
+    },
+    {
+      "id": "xm_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xm_choice_handoff_on_time",
+          "text": "按班表交出领炉牌，把裁衣铺损失、轮班补贴和检修工资分别记账。",
+          "next": "xm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xiao_man", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xiao_man_handoff_on_time", "value": true}
+          ]
+        },
+        {
+          "id": "xm_choice_finish_page",
+          "text": "让她先把最后一页记录写完，再由下一班补签交接。",
+          "next": "xm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xiao_man", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xiao_man_finish_page_first", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xm_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把交班时刻、红区边界、裁衣铺停工半日和家中四双筷子的分配分别留在板上。小满收起针线盒，坐下吃第一口饭，没有再回头看压力盘。",
+      "next": "xm_effect_01"
+    },
+    {
+      "id": "xm_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xiao_man_daily_boundary_recorded", "value": true},
+        {"type": "character_expression", "character_id": "xiao_man", "expression": "relieved"}
+      ],
+      "next": "xm_end"
+    },
+    {
+      "id": "xm_end",
+      "type": "end",
+      "result": "xiao_man_daily_boundary_recorded"
+    }
+  ]
+}

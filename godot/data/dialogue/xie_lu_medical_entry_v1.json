@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xie_lu_medical_entry",
+  "title": "谢芦的临时医疗门",
+  "entry_node": "xlu_line_01",
+  "participants": ["protagonist", "xie_lu"],
+  "nodes": [
+    {
+      "id": "xlu_line_01",
+      "type": "line",
+      "speaker_id": "xie_lu",
+      "expression": "focused",
+      "outfit": "quarantine_passenger",
+      "text": "门上说我十一年前就死了，可我现在还在这里。周岚报了体温和肺音，费岑说清了床位和接收人，我点头，是因为我要进医疗门，不是因为系统突然承认我活着。我的凭证只准通过气闸、收治和联系我指定的人，别把这张纸扩成整船的默认同意。",
+      "next": "xlu_choice_01"
+    },
+    {
+      "id": "xlu_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xlu_choice_narrow_medical_pass",
+          "text": "按谢芦本人确认的范围签发临时医疗凭证，只开放气闸、收治和指定联系；身份、债务和调查字段另行封存。",
+          "next": "xlu_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xie_lu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xie_lu_narrow_medical_pass", "value": true}
+          ]
+        },
+        {
+          "id": "xlu_choice_preserve_mechanical_exit",
+          "text": "把内侧机械出口和本人停止牌列为不可删除的安全条件，低温复现每个出口；医疗协助不自动变成调查或监控许可。",
+          "next": "xlu_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xie_lu", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xie_lu_mechanical_exit_preserved", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xlu_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你的点头确认的是这一次医疗转移、这一个接收范围和这几个明确用途。身份冲突要另外复核，调查要另外取得许可，机械出口要留在你能触发的位置。紧急通行可以很快，但不能趁快把人的范围一起扩大。",
+      "next": "xlu_effect_01"
+    },
+    {
+      "id": "xlu_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xie_lu_medical_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "xie_lu", "expression": "relieved"}
+      ],
+      "next": "xlu_end"
+    },
+    {
+      "id": "xlu_end",
+      "type": "end",
+      "result": "xie_lu_medical_boundary_preserved"
+    }
+  ]
+}

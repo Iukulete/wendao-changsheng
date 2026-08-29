@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "yu_qing_shift_boundary",
+  "title": "郁青的急救班",
+  "entry_node": "yuq_line_01",
+  "participants": ["protagonist", "yu_qing"],
+  "nodes": [
+    {
+      "id": "yuq_line_01",
+      "type": "line",
+      "speaker_id": "yu_qing",
+      "expression": "firm",
+      "outfit": "route_runner",
+      "text": "潮夜四个跑表员的手腕都灼伤了，我的药费还是姐姐先垫的。你们要我们代表百坊，就先把急救班的钱和旧账付了；别把两张夜桌压在一个人肩上，再叫它恢复秩序。",
+      "next": "yuq_choice_01"
+    },
+    {
+      "id": "yuq_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "yuq_choice_pay_urgent_shift",
+          "text": "先支付急救班与旧工资，按一桌一人的实际班次重新排表；药费回执只用于工伤核算，不把她的家庭借款公开成谈判筹码。",
+          "next": "yuq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_qing", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "yu_qing_urgent_shift_paid", "value": true}
+          ]
+        },
+        {
+          "id": "yuq_choice_train_support",
+          "text": "先认定替换记录人和口述支持的工时，允许她转为培训日班；不要求工伤者持续展示疼痛，才算有资格留在席位上。",
+          "next": "yuq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_qing", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "yu_qing_support_training_started", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yuq_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "急救班先按真实工时结算，记录席也可以由替换人接续。你回到日班时不必再守两张夜桌；培训口述支持同样算劳动，工伤者无需不断展示伤口来证明自己值得被听见。",
+      "next": "yuq_effect_01"
+    },
+    {
+      "id": "yuq_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "yu_qing_shift_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "yu_qing", "expression": "relieved"}
+      ],
+      "next": "yuq_end"
+    },
+    {
+      "id": "yuq_end",
+      "type": "end",
+      "result": "yu_qing_shift_boundary_preserved"
+    }
+  ]
+}

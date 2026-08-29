@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ruan_tongchen_due_process",
+  "title": "阮同尘的到期令",
+  "entry_node": "rtc_line_01",
+  "participants": ["protagonist", "ruan_tongchen"],
+  "nodes": [
+    {
+      "id": "rtc_line_01",
+      "type": "line",
+      "speaker_id": "ruan_tongchen",
+      "expression": "measured",
+      "outfit": "night_contract_officer",
+      "text": "我可以先签止扣令，但不能把六百三十一份案子压成一句‘全部违法’。已经还清的、仍在还的、失联的、未成年人和无法表达的人，必须各有一栏，各有证据和期限。",
+      "next": "rtc_choice_01"
+    },
+    {
+      "id": "rtc_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "rtc_choice_split_cases",
+          "text": "按本人、机构和待核证据分案，先保药、工资、护理与住居，再逐项追问授权、得利和早知不对者。",
+          "next": "rtc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ruan_tongchen", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ruan_tongchen_case_split_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "rtc_choice_fast_blanket_order",
+          "text": "先用一张总令冻结所有续扣，等资源压力过去后再补每个人的证据和送达记录。",
+          "next": "rtc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ruan_tongchen", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ruan_tongchen_blanket_order_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rtc_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "程序不是把人拖到最后才允许活下去的门槛。先把今天会断的药、工资和住处保护住，再让每一项责任都留下可追问的名字、期限和证据。",
+      "next": "rtc_effect_01"
+    },
+    {
+      "id": "rtc_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ruan_tongchen_due_process_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ruan_tongchen", "expression": "resolute"}
+      ],
+      "next": "rtc_end"
+    },
+    {
+      "id": "rtc_end",
+      "type": "end",
+      "result": "ruan_tongchen_due_process_preserved"
+    }
+  ]
+}

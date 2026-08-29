@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "wen_yin_seed_consent",
+  "title": "种子不是四十个活席的抵押",
+  "entry_node": "wi_line_01",
+  "participants": ["protagonist", "wen_yin"],
+  "nodes": [
+    {
+      "id": "wi_line_01",
+      "type": "line",
+      "speaker_id": "wen_yin",
+      "expression": "measured",
+      "outfit": "seed_keeper",
+      "text": "种库里只有二万四千七百一十一粒，四十二畦要靠水、膜、温风和两天劳力一起落地。拿四十个名字换今晚的热，不叫救种，叫把人先写成炉子的零件。",
+      "next": "wi_choice_01"
+    },
+    {
+      "id": "wi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "wi_choice_public_ledger",
+          "text": "把种、水、竹膜和劳力账公开，先按每畦完整条件认领；温风援助只写期限和复核，不提交四十名修士名单，也不替失踪种户签字。",
+          "next": "wi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_yin", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "wen_yin_public_ledger_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "wi_choice_submit_names",
+          "text": "先交出四十名名单保住总炉温风，种子和返还份等第一轮出苗后再复核，愿意承担名单可能被继续利用的风险。",
+          "next": "wi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_yin", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "wen_yin_submit_names_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "四十二只种碗逐碗筛，失踪种户那一碗先封存；你的圃主印交给共同席保管，促生粉的四十二次发放另立复核页。援助可以救今天，但不能把明天的返还份和人的姓名一起锁进总炉。",
+      "next": "wi_effect_01"
+    },
+    {
+      "id": "wi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "wen_yin_seed_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "wen_yin", "expression": "relieved"}
+      ],
+      "next": "wi_end"
+    },
+    {
+      "id": "wi_end",
+      "type": "end",
+      "result": "wen_yin_seed_boundary_preserved"
+    }
+  ]
+}

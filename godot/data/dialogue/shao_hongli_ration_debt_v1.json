@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "shao_hongli_ration_debt",
+  "title": "七日济急不该长成无期",
+  "entry_node": "shr_line_01",
+  "participants": ["protagonist", "shao_hongli"],
+  "nodes": [
+    {
+      "id": "shr_line_01",
+      "type": "line",
+      "speaker_id": "shao_hongli",
+      "expression": "direct",
+      "outfit": "potter",
+      "text": "我的济急契三个月前已经还清，票上却说本旬已领，完整指印压在缺掉的拇指上。验签只验印、不验人，今晚就会看着活人死给印看。",
+      "next": "shr_choice_01"
+    },
+    {
+      "id": "shr_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "shr_choice_public_order",
+          "text": "打开测量架和外显灯板，逐条公开支路、伤者、配给票与契约期限；先冻结错印续扣，明晨手术配额不从今夜库存里挪。",
+          "next": "shr_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shao_hongli", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "shao_hongli_public_order_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "shr_choice_pull_needle",
+          "text": "立即拔出母针，先停止全部未经本人确认的抽取，配给、药库和城防的断流损失等事后再逐项补救。",
+          "next": "shr_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shao_hongli", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "shao_hongli_pull_needle_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shr_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "缺指的手、完整的印、还清的济急契和仍在扣取的经脉分栏记录；邵红砾只说明自己的损失，不替不在场的人交出明天。",
+      "next": "shr_effect_01"
+    },
+    {
+      "id": "shr_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "shao_hongli_ration_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "shao_hongli", "expression": "resolute"}
+      ],
+      "next": "shr_end"
+    },
+    {
+      "id": "shr_end",
+      "type": "end",
+      "result": "shao_hongli_ration_boundary_preserved"
+    }
+  ]
+}

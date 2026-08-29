@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "wen_zhaoye_dry_tide_consent",
+  "title": "木签与石子",
+  "entry_node": "wz_line_01",
+  "participants": ["protagonist", "wen_zhaoye"],
+  "nodes": [
+    {
+      "id": "wz_line_01",
+      "type": "line",
+      "speaker_id": "wen_zhaoye",
+      "expression": "questioning",
+      "outfit": "default",
+      "text": "温照野把折断的木签放在透明石子罐旁：他们说我的根值最高，就该替所有人点灯。可我只想先知道，姐姐的名字为什么又出现在一张没有人承认的契上。",
+      "next": "wz_choice_01"
+    },
+    {
+      "id": "wz_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "wz_choice_child_voice",
+          "text": "先问每个孩子今天愿意接受什么，不把根值当成同意。",
+          "next": "wz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_zhaoye", "stat": "respect", "delta": 2},
+            {"type": "set_flag", "flag": "wen_zhaoye_child_voice_first", "value": true}
+          ]
+        },
+        {
+          "id": "wz_choice_sister_record",
+          "text": "先封存温照岚的旧信和契号，再谈任何修院或医床条件。",
+          "next": "wz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "wen_zhaoye", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "wen_zhaoye_sister_record_first", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wz_line_02",
+      "type": "line",
+      "speaker_id": "wen_zhaoye",
+      "expression": "resolute",
+      "outfit": "default",
+      "text": "他把白石换成代表想停的颜色：石子只能帮人说话，不能替人答应。若有人今天改变主意，也要把旧答案留下，不许说他一开始就欠了谁。",
+      "next": "wz_effect_01"
+    },
+    {
+      "id": "wz_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "wen_zhaoye_heard_and_recorded", "value": true},
+        {"type": "character_expression", "character_id": "wen_zhaoye", "expression": "relieved"}
+      ],
+      "next": "wz_end"
+    },
+    {
+      "id": "wz_end",
+      "type": "end",
+      "result": "child_choice_recorded"
+    }
+  ]
+}

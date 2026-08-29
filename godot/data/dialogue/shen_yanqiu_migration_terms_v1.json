@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "shen_yanqiu_migration_terms",
+  "title": "船票要写清，也要允许反悔",
+  "entry_node": "sy_line_01",
+  "participants": ["protagonist", "shen_yanqiu"],
+  "nodes": [
+    {
+      "id": "sy_line_01",
+      "type": "line",
+      "speaker_id": "shen_yanqiu",
+      "expression": "measured",
+      "outfit": "migration_agent",
+      "text": "船上有医床、六日无灵区和抵港后三十日住处，也有不能中途靠岸的风险。真实航程和近三日准备要算，十年里找不到对应开支的保管费不能因为大家急着上船就继续收。",
+      "next": "sy_choice_01"
+    },
+    {
+      "id": "sy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sy_choice_informed_ticket",
+          "text": "把航程、床位、医疗、抵港居所、退出条件和费用来源分栏；乘客看过后可撤回，已签票不因自愿留城帮忙而失效。",
+          "next": "sy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shen_yanqiu", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "shen_yanqiu_informed_ticket_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "sy_choice_priority_boarding",
+          "text": "先按已缴费与登船顺序锁定名单，医疗风险和反悔条件等船离港后再由行会处理。",
+          "next": "sy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shen_yanqiu", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "shen_yanqiu_priority_boarding_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把票面条件、医床适配、费用凭据、乘客撤回和自愿留城的搬运工时分开记录。沈砚秋仍要面对空床、慢账与航期压力，却不能用一声催船把已签票变成强制，也不能让孩子未来的工钱替船费自动续债。",
+      "next": "sy_effect_01"
+    },
+    {
+      "id": "sy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "shen_yanqiu_migration_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "shen_yanqiu", "expression": "relieved"}
+      ],
+      "next": "sy_end"
+    },
+    {
+      "id": "sy_end",
+      "type": "end",
+      "result": "shen_yanqiu_migration_boundary_preserved"
+    }
+  ]
+}

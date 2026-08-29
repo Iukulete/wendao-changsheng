@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "tao_xi_identity_touch",
+  "title": "陶熹的触点确认",
+  "entry_node": "txi_line_01",
+  "participants": ["protagonist", "tao_xi"],
+  "nodes": [
+    {
+      "id": "txi_line_01",
+      "type": "line",
+      "speaker_id": "tao_xi",
+      "expression": "focused",
+      "outfit": "bedridden_ceramic_worker",
+      "text": "我不知道门上现在把我写成谁。三、七、一、九是我的旧执业号，重复两轮也只是证明我认得这串数字；当辅助台亮出陆成舟时，我按了停止。你们可以用陶工旧档和货册证明我是谁，但别用一次数字确认替我签财产、亲属或别人的名字。",
+      "next": "txi_choice_01"
+    },
+    {
+      "id": "txi_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "txi_choice_narrow_temporary_identity",
+          "text": "依据两轮数字确认、旧执业号和耐热衬片货册，签发仅用于医疗、气闸和指定联系人的暂用身份；财产与亲属栏继续封存。",
+          "next": "txi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_xi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "tao_xi_narrow_identity_signed", "value": true}
+          ]
+        },
+        {
+          "id": "txi_choice_keep_touch_evidence",
+          "text": "先封存触点纸带、停止记录和货册对应关系，只确认陶工身份线索；待恢复更多表达后再逐项开放身份功能。",
+          "next": "txi_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_xi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "tao_xi_touch_evidence_preserved", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "txi_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "两轮选择能支持一串数字，货册能支持一段职业记录，停止动作能说明你拒绝被并进陆成舟；它们共同指向一个窄范围的暂用身份，却还不够替你决定财产和亲属。身份能先恢复一部分，权限必须等你继续确认。",
+      "next": "txi_effect_01"
+    },
+    {
+      "id": "txi_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "tao_xi_identity_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "tao_xi", "expression": "relieved"}
+      ],
+      "next": "txi_end"
+    },
+    {
+      "id": "txi_end",
+      "type": "end",
+      "result": "tao_xi_identity_boundary_preserved"
+    }
+  ]
+}

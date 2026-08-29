@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "liang_du_conflict_permit",
+  "title": "梁度的冲突许可",
+  "entry_node": "ldu_line_01",
+  "participants": ["protagonist", "liang_du"],
+  "nodes": [
+    {
+      "id": "ldu_line_01",
+      "type": "line",
+      "speaker_id": "liang_du",
+      "expression": "guarded",
+      "outfit": "retired_registry_officer",
+      "text": "那枚私章确实在旧许可上，但签章属于谁，和后来是谁拿它改了节点，不是同一个问题。若你们只把我叫来认章，真正复制授权器的人会躲在“历史条件未变”后面继续操作。",
+      "next": "ldu_choice_01"
+    },
+    {
+      "id": "ldu_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ldu_choice_seize_old_records",
+          "text": "传唤时一并保全退休私章、十一年前值班簿、冲突许可说明和授权复制器；先冻结新授权，分别核对签章、设备日志与实际操作者。",
+          "next": "ldu_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_du", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "liang_du_records_preserved", "value": true}
+          ]
+        },
+        {
+          "id": "ldu_choice_question_signature_only",
+          "text": "先只询问私章来源，暂不保全设备与取件窗口；把责任收窄到签章本人，但承认操作链仍待补证。",
+          "next": "ldu_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_du", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "liang_du_signature_scope_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ldu_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "旧章能证明一段权限痕迹，不能替设备日志、取件记录和实际操作人作证。我们先让冲突许可停在原地，再把每一项责任按证据分开；你需要回答的部分不会被别人代认，别人做过的事也不会让你独自承担。",
+      "next": "ldu_effect_01"
+    },
+    {
+      "id": "ldu_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "liang_du_responsibility_split_preserved", "value": true},
+        {"type": "character_expression", "character_id": "liang_du", "expression": "relieved"}
+      ],
+      "next": "ldu_end"
+    },
+    {
+      "id": "ldu_end",
+      "type": "end",
+      "result": "liang_du_responsibility_split_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ying_chaojian_accountability",
+  "title": "应朝俭的十二只罐",
+  "entry_node": "ycj_line_01",
+  "participants": ["protagonist", "ying_chaojian"],
+  "nodes": [
+    {
+      "id": "ycj_line_01",
+      "type": "line",
+      "speaker_id": "ying_chaojian",
+      "expression": "measured",
+      "outfit": "night_account_clerk",
+      "text": "外队二百一十七人，病倒六人，十二只应急灵罐够稳住四十个周天。我只验印，不验人——可今晚有人按着完整指印领不到气，也有人被错印抽到经脉发空。把钥匙交出去很容易，留下来说明每一笔才难。",
+      "next": "ycj_choice_01"
+    },
+    {
+      "id": "ycj_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ycj_choice_open_load_table",
+          "text": "公开实时负载表，先按当夜库存分开伤者、公共药柜和城防余量；你继续守柜，但每半刻复读一次用量。",
+          "next": "ycj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ying_chaojian", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ying_chaojian_load_table_opened", "value": true}
+          ]
+        },
+        {
+          "id": "ycj_choice_surrender_seal",
+          "text": "先封存验签印和全部流水，把库存交给外部见证者，等契法院到场后再决定谁可以开柜。",
+          "next": "ycj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ying_chaojian", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ying_chaojian_seal_surrendered", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ycj_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "验印可以是你的职责，验人不能永远被排除在职责之外。你不靠辞职把错误留在柜里，也不靠继续值夜把自己变成唯一知情人；钥匙、流水和每一份错印都要留下能被别人复核的边界。",
+      "next": "ycj_effect_01"
+    },
+    {
+      "id": "ycj_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ying_chaojian_accountability_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ying_chaojian", "expression": "resolute"}
+      ],
+      "next": "ycj_end"
+    },
+    {
+      "id": "ycj_end",
+      "type": "end",
+      "result": "ying_chaojian_accountability_preserved"
+    }
+  ]
+}

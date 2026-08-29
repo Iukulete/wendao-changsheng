@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "tang_kui_child_shelter",
+  "title": "先把孩子的药页留在我手里",
+  "entry_node": "tk_line_01",
+  "participants": ["protagonist", "tang_kui"],
+  "nodes": [
+    {
+      "id": "tk_line_01",
+      "type": "line",
+      "speaker_id": "tang_kui",
+      "expression": "guarded",
+      "outfit": "default",
+      "text": "我用了空白命印，若你们要查，我认。可先把孩子的药页留在我手里。三日急救和住处是眼下的事，旧户吏能不能从总表里找到我们，是另一件事，不能用同一张表解决。",
+      "next": "tk_choice_01"
+    },
+    {
+      "id": "tk_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "tk_choice_limited_review",
+          "text": "只让受约束的复核员知道临时位置，药页由唐葵保管；三日后重新询问是否归还命印或进入无债名页。",
+          "next": "tk_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tang_kui", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "tang_kui_limited_review_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "tk_choice_public_name",
+          "text": "为了防止重复救济，立即把母女姓名、位置和命印使用记录写入全城总表，之后再补保护措施。",
+          "next": "tk_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tang_kui", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "tang_kui_public_name_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tk_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把药物、住处、临时位置、复核权限和命印归还时刻分栏。唐葵没有因此获得永久隐身，也没有因承认使用空白命印就失去孩子的急救；旧户吏不能借一条临时位置记录，把母女重新写回可调用的总表。",
+      "next": "tk_effect_01"
+    },
+    {
+      "id": "tk_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "tang_kui_child_shelter_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "tang_kui", "expression": "relieved"}
+      ],
+      "next": "tk_end"
+    },
+    {
+      "id": "tk_end",
+      "type": "end",
+      "result": "tang_kui_child_shelter_boundary_preserved"
+    }
+  ]
+}

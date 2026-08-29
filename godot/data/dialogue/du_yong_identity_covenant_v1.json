@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "du_yong_identity_covenant",
+  "title": "稳定称呼不等于重新占有",
+  "entry_node": "dy_line_01",
+  "participants": ["protagonist", "du_yong"],
+  "nodes": [
+    {
+      "id": "dy_line_01",
+      "type": "line",
+      "speaker_id": "du_yong",
+      "expression": "measured",
+      "outfit": "civic_covenant",
+      "text": "城要给人一个能用的名字，医师要知道该把回执送到哪里；可稳定称呼只是路标，不是把旧档、观察样本和随身物再收回总库的借口。",
+      "next": "dy_choice_01"
+    },
+    {
+      "id": "dy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "dy_choice_scoped_name",
+          "text": "只登记现名、医疗回执地址与明确期限；旧观察样本另列授权，个人可以撤回或限制用途。",
+          "next": "dy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_yong", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "du_yong_scoped_name_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "dy_choice_total_registry",
+          "text": "为了跨城调度，把现名、旧档、观察样本与家庭关系一次并入统一总库，之后再补退出机制。",
+          "next": "dy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "du_yong", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "du_yong_total_registry_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把补正籍、医疗联系、跨城返程和旧观察样本拆成四栏，分别写明谁能看、拿去做什么、多久失效。杜雍的方案仍能让人登船、领药和收到回执，却不能再用公共稳定的名义把个人身份一次性收回。",
+      "next": "dy_effect_01"
+    },
+    {
+      "id": "dy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "du_yong_identity_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "du_yong", "expression": "relieved"}
+      ],
+      "next": "dy_end"
+    },
+    {
+      "id": "dy_end",
+      "type": "end",
+      "result": "du_yong_identity_boundary_preserved"
+    }
+  ]
+}

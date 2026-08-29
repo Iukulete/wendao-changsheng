@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ge_xiulin_data_repair",
+  "title": "承认抄过，不等于替所有人背锅",
+  "entry_node": "gx_line_01",
+  "participants": ["protagonist", "ge_xiulin"],
+  "nodes": [
+    {
+      "id": "gx_line_01",
+      "type": "line",
+      "speaker_id": "ge_xiulin",
+      "expression": "contrite",
+      "outfit": "archive_copyist",
+      "text": "我抄过那一页，也收过三十息铢，这两件事我认。可修院、迁舟和药库后来怎么传、拿去做什么，不能因为我最先伸了手，就把所有链路都写成我的名字。",
+      "next": "gx_choice_01"
+    },
+    {
+      "id": "gx_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gx_choice_trace_notify",
+          "text": "逐项记录她抄录、收款、交付和已知传播节点；先通知四十七户，再安排有工资的修复班，学费另走救助申请。",
+          "next": "gx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_xiulin", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ge_xiulin_trace_notify_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "gx_choice_single_blame",
+          "text": "让葛绣林签下全部泄露责任，以最快速度关闭案件和招生桌副本。",
+          "next": "gx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_xiulin", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ge_xiulin_single_blame_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gx_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把原始抄录、买方付款、后续转抄、药价变化和通知回执分开封存。葛绣林要面对自己的责任，也不必用一份过大的认罪书替真正的买方、传播者和受益者消失。",
+      "next": "gx_effect_01"
+    },
+    {
+      "id": "gx_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ge_xiulin_data_repair_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "ge_xiulin", "expression": "relieved"}
+      ],
+      "next": "gx_end"
+    },
+    {
+      "id": "gx_end",
+      "type": "end",
+      "result": "ge_xiulin_data_repair_boundary_preserved"
+    }
+  ]
+}

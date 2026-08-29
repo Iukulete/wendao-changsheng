@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhou_daiping_filter_witness",
+  "title": "周黛瓶的两枚灵石",
+  "entry_node": "zdp_line_01",
+  "participants": ["protagonist", "zhou_daiping"],
+  "nodes": [
+    {
+      "id": "zdp_line_01",
+      "type": "line",
+      "speaker_id": "zhou_daiping",
+      "expression": "direct",
+      "outfit": "filter_worker",
+      "text": "我承认钱收到了，也拿半枚买了喘药。可收款回执怎么会变成我丈夫当年愿意把命押在那一班？钱和他说过什么，得分开写。",
+      "next": "zdp_choice_01"
+    },
+    {
+      "id": "zdp_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zdp_choice_separate_receipt",
+          "text": "保留急救钱，撤掉倒填的死者同意；把收款、风险费、补签页和亡夫生前证词分别立案。",
+          "next": "zdp_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_daiping", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhou_daiping_receipt_boundary_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "zdp_choice_return_money_first",
+          "text": "先把两枚灵石退回去，等所有争议查清后再决定喘药与风险费怎么处理。",
+          "next": "zdp_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_daiping", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhou_daiping_return_money_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zdp_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "收到救急钱不等于替亡者开口。先让你今天的喘药不断，再把谁做过什么、谁得了什么、哪句话没有证据逐项留下，不能让十五个手印替八十四个人回答。",
+      "next": "zdp_effect_01"
+    },
+    {
+      "id": "zdp_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhou_daiping_witness_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "zhou_daiping", "expression": "relieved"}
+      ],
+      "next": "zdp_end"
+    },
+    {
+      "id": "zdp_end",
+      "type": "end",
+      "result": "zhou_daiping_witness_boundary_preserved"
+    }
+  ]
+}

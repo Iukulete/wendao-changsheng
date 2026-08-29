@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "yi_chenshuang_care_review",
+  "title": "易沉霜的观察表",
+  "entry_node": "ycs_line_01",
+  "participants": ["protagonist", "yi_chenshuang"],
+  "nodes": [
+    {
+      "id": "ycs_line_01",
+      "type": "line",
+      "speaker_id": "yi_chenshuang",
+      "expression": "clinical",
+      "outfit": "static_rest_physician",
+      "text": "我能确认的，是七个人可以追随声音；我推断的，是其中四个人或许能稳定表达。这两句话不能抄成一条，更不能替二十八张床一起回答。",
+      "next": "ycs_choice_01"
+    },
+    {
+      "id": "ycs_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ycs_choice_separate_records",
+          "text": "把观察、推断和还不知道的部分分栏记录，再逐床复问；旧记录保留，新的结论注明日期。",
+          "next": "ycs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yi_chenshuang", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "yi_chenshuang_observation_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ycs_choice_assess_first",
+          "text": "先减掉能安全减的镇静，给每张床足够的理解时间；无法回答就记为暂不确定，不强行补全。",
+          "next": "ycs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yi_chenshuang", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "yi_chenshuang_assessment_first_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ycs_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "你不必用一张整齐的表证明自己没有错。把当年的签名、今天能听懂的内容和下一次复问时间分开，病人的选择才不会被旧维护记录吞掉。",
+      "next": "ycs_effect_01"
+    },
+    {
+      "id": "ycs_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "yi_chenshuang_care_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "yi_chenshuang", "expression": "relieved"}
+      ],
+      "next": "ycs_end"
+    },
+    {
+      "id": "ycs_end",
+      "type": "end",
+      "result": "yi_chenshuang_care_boundary_preserved"
+    }
+  ]
+}

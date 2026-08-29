@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "song_jian_procedure_boundary",
+  "title": "三粒豆子与停止标记",
+  "entry_node": "sj_line_01",
+  "participants": ["protagonist", "song_jian"],
+  "nodes": [
+    {
+      "id": "sj_line_01",
+      "type": "line",
+      "speaker_id": "song_jian",
+      "expression": "alert",
+      "outfit": "default",
+      "text": "宋鉴把无可读文字的停止标记牌放在记录片旁：先把能停下来的地方写清楚。证物可以晚一点，手指和今天的决定不能替别人保管。",
+      "next": "sj_choice_01"
+    },
+    {
+      "id": "sj_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sj_choice_record_boundary",
+          "text": "先把检查范围、停止方式和本人决定一起留档。",
+          "next": "sj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "song_jian", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "song_jian_boundary_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "sj_choice_family_memory",
+          "text": "先让他和姐姐用三粒豆子确认彼此，再谈下一步。",
+          "next": "sj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "song_jian", "stat": "respect", "delta": 2},
+            {"type": "set_flag", "flag": "song_jian_family_memory_confirmed", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sj_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你没有把一次确认扩成永久许可，只把眼前能核对的范围写在两个人都看得见的记录上。宋鉴这才收起停止牌，留下三粒豆子。",
+      "next": "sj_effect_01"
+    },
+    {
+      "id": "sj_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "song_jian_procedure_boundary_respected", "value": true},
+        {"type": "character_expression", "character_id": "song_jian", "expression": "remembering"}
+      ],
+      "next": "sj_end"
+    },
+    {
+      "id": "sj_end",
+      "type": "end",
+      "result": "song_jian_boundary_respected"
+    }
+  ]
+}

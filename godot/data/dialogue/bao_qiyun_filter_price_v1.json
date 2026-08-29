@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "bao_qiyun_filter_price",
+  "title": "每一枚钱都写清去处",
+  "entry_node": "bq_line_01",
+  "participants": ["protagonist", "bao_qiyun"],
+  "nodes": [
+    {
+      "id": "bq_line_01",
+      "type": "line",
+      "speaker_id": "bao_qiyun",
+      "expression": "direct",
+      "outfit": "default",
+      "text": "包绮云把滤芯、量规和空白报价夹放在一起：正常货三枚，夜间叫工一枚，紧急送货一枚，风险押金一枚。贵不贵可以再谈，先让每一枚该付给谁、哪一枚什么时候退写在桌面上。",
+      "next": "bq_choice_01"
+    },
+    {
+      "id": "bq_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "bq_choice_open_price",
+          "text": "公开材料、返工、运输和风险押金的分项，并把仓工工资从临时和解里单独列出。",
+          "next": "bq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bao_qiyun", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "bao_qiyun_price_breakdown_open", "value": true}
+          ]
+        },
+        {
+          "id": "bq_choice_hide_supply",
+          "text": "先把滤芯交给医棚，供应商和仓工账等救援结束后再说。",
+          "next": "bq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "bao_qiyun", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "bao_qiyun_supply_deferred", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bq_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把短期清肺药、下一批集尘板、仓工工资和旧件复检分成四条时间线。包绮云封好风险押金匣，仍要求把永久保密可能造成的停产写在附页上。",
+      "next": "bq_effect_01"
+    },
+    {
+      "id": "bq_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "bao_qiyun_supply_responsibility_recorded", "value": true},
+        {"type": "character_expression", "character_id": "bao_qiyun", "expression": "relieved"}
+      ],
+      "next": "bq_end"
+    },
+    {
+      "id": "bq_end",
+      "type": "end",
+      "result": "bao_qiyun_supply_responsibility_recorded"
+    }
+  ]
+}

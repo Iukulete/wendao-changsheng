@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "xue_cunyan_slow_consent",
+  "title": "薛存砚的慢回答",
+  "entry_node": "xcy_line_01",
+  "participants": ["protagonist", "xue_cunyan", "lu_hai_shan"],
+  "nodes": [
+    {
+      "id": "xcy_line_01",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "薛存砚现在只能用眨眼和极慢的手指回答。陆还山认得他是师父，却不能替他回答。先把第十二床的脉从城库门上撤下，眼动板、敲击和熟悉声音都可以慢慢试；没有完成的回答，就先记作没有完成。",
+      "next": "xcy_choice_01"
+    },
+    {
+      "id": "xcy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "xcy_choice_slow_eye_assessment",
+          "text": "先做慢速眼动评估：每次只问一个问题，给薛存砚足够等待时间；陆还山的记忆只作为线索，不当作本人同意。",
+          "next": "xcy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xue_cunyan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "xue_cunyan_slow_assessment_started", "value": true}
+          ]
+        },
+        {
+          "id": "xcy_choice_hold_old_badge",
+          "text": "先封存旧工牌和床边账页，只用来核对工作经历与关系；财产、城务和以后由谁照护，都等薛存砚本人慢慢表达。",
+          "next": "xcy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "xue_cunyan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "xue_cunyan_old_badge_limited", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "xcy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "calm",
+      "outfit": "default",
+      "text": "慢回答不是空白，眨眼也不是别人可以趁机填上的同意。旧工牌能帮助我们找到他经历过的工作和关系，却不能替他决定财产、城务或以后要不要让陆还山继续照护。",
+      "next": "xcy_effect_01"
+    },
+    {
+      "id": "xcy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "xue_cunyan_slow_consent_preserved", "value": true},
+        {"type": "character_expression", "character_id": "xue_cunyan", "expression": "relieved"}
+      ],
+      "next": "xcy_end"
+    },
+    {
+      "id": "xcy_end",
+      "type": "end",
+      "result": "xue_cunyan_slow_consent_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "liang_zhi_wage_boundary",
+  "title": "和解页不能替家里过冬",
+  "entry_node": "lz_line_01",
+  "participants": ["protagonist", "liang_zhi"],
+  "nodes": [
+    {
+      "id": "lz_line_01",
+      "type": "line",
+      "speaker_id": "liang_zhi",
+      "expression": "wary",
+      "outfit": "coal_worker",
+      "text": "我爹的债主昨晚拿走了家里的冬被，白天还得投煤。和解页里已付和未付混在一起，我知道它有问题，可家里撑不到白日之后。",
+      "next": "lz_choice_01"
+    },
+    {
+      "id": "lz_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lz_choice_itemized_wage",
+          "text": "不要求你替整队签字；把已付、未付、家庭照护和托儿需求分栏记录，先发可核对的临时工资，剩余欠薪另立追索页。",
+          "next": "lz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_zhi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "liang_zhi_itemized_wage_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "lz_choice_quick_settlement",
+          "text": "先接受一次性和解换取今晚结算，不再追问已付未付的细项，托儿和住房压力等制度稳定后再谈。",
+          "next": "lz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liang_zhi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "liang_zhi_quick_settlement_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lz_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你的急迫写在自己的栏里，其他人的工资和照护不由你代签；妻子织机班的复工、托儿空位和炉区排班也进入同一张可核对的现实账。",
+      "next": "lz_effect_01"
+    },
+    {
+      "id": "lz_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "liang_zhi_wage_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "liang_zhi", "expression": "relieved"}
+      ],
+      "next": "lz_end"
+    },
+    {
+      "id": "lz_end",
+      "type": "end",
+      "result": "liang_zhi_wage_boundary_preserved"
+    }
+  ]
+}

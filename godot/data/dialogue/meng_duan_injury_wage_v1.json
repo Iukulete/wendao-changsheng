@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "meng_duan_injury_wage",
+  "title": "工牌先留在我手里",
+  "entry_node": "md_line_01",
+  "participants": ["protagonist", "meng_duan"],
+  "nodes": [
+    {
+      "id": "md_line_01",
+      "type": "line",
+      "speaker_id": "meng_duan",
+      "expression": "strained",
+      "outfit": "annealing_shift",
+      "text": "我缺钱，女儿的药铺也不等人。但我不缺一个把欠钱写成没欠的名字。手可以先治，工牌不能先交；没有工牌，站在退火轮前的人就会变成一句没人认的传闻。",
+      "next": "md_choice_01"
+    },
+    {
+      "id": "md_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "md_choice_recorded_advance",
+          "text": "先把生活预付、工伤证据、工牌保管和余款复核日分栏登记，立即支付可确认的生活额，不附带最终和解。",
+          "next": "md_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "meng_duan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "meng_duan_recorded_advance", "value": true}
+          ]
+        },
+        {
+          "id": "md_choice_full_settlement",
+          "text": "用一笔较大的和解金今天结清工伤与欠薪，暂时不再区分生活预付和未来恶化费用。",
+          "next": "md_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "meng_duan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "meng_duan_full_settlement_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "md_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把工牌、退火轮断口、同班证人、生活预付和复健复核分开编号。孟端仍要承担未来复健不确定的风险，却不必用交出工牌或放弃恶化追偿来换今天的药钱。",
+      "next": "md_effect_01"
+    },
+    {
+      "id": "md_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "meng_duan_injury_wage_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "meng_duan", "expression": "relieved"}
+      ],
+      "next": "md_end"
+    },
+    {
+      "id": "md_end",
+      "type": "end",
+      "result": "meng_duan_injury_wage_boundary_preserved"
+    }
+  ]
+}

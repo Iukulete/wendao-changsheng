@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "gu_xianting_narrow_warrant",
+  "title": "权限要窄，证据才不会越界",
+  "entry_node": "gx_line_01",
+  "participants": ["protagonist", "gu_xianting"],
+  "nodes": [
+    {
+      "id": "gx_line_01",
+      "type": "line",
+      "speaker_id": "gu_xianting",
+      "expression": "measured",
+      "outfit": "default",
+      "text": "顾弦庭把三份封条并排压在桌上：临时保全能冻结节点日志、传唤保管人、保留同一时段的负载表；它不能凭一段声纹把人恢复成活人，也不能为了查证据就切断没有替代供能的诊区。令文写得窄，才不会在救急时重新制造一份长期授权。",
+      "next": "gx_choice_01"
+    },
+    {
+      "id": "gx_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gx_choice_split_permissions",
+          "text": "把身份、医疗、设备日志和财产权限分成四栏，分别写期限、证据来源与到期后的下一位复核人。",
+          "next": "gx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_xianting", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "gu_xianting_permissions_split", "value": true}
+          ]
+        },
+        {
+          "id": "gx_choice_open_all",
+          "text": "先把所有账户和节点一并打开，等调查结束后再补写哪些内容本来不该被读取。",
+          "next": "gx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_xianting", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "gu_xianting_broad_access_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gx_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把死亡裁定、活跃回执、扣费记录和实际操作日志分开封存，另标出旧私章的归属不能替代操作者身份。顾弦庭收回双钥，说明四席可以共享时间戳与证物索引，但不能用一案的推定替另一案补空格。",
+      "next": "gx_effect_01"
+    },
+    {
+      "id": "gx_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "gu_xianting_narrow_scope_preserved", "value": true},
+        {"type": "character_expression", "character_id": "gu_xianting", "expression": "relieved"}
+      ],
+      "next": "gx_end"
+    },
+    {
+      "id": "gx_end",
+      "type": "end",
+      "result": "gu_xianting_narrow_scope_preserved"
+    }
+  ]
+}

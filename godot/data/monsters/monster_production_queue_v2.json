@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "queue_id": "wendao_monster_production_v2",
+  "style_id": "wendao_style_v2",
+  "source_queue": "res://data/monster_asset_queue_v1.json",
+  "coverage": {
+    "authored_enemy_targets_currently": 18,
+    "story_encounter_ids_currently": 10,
+    "future_scale": "unbounded",
+    "addition_rule": "every_new_enemy_id_requires_family_body_plan_combat_role_signature_organs_palette_and_identity_gate_before_runtime_use"
+  },
+  "body_plans": ["HUM_L", "HUM_H", "GIANT", "QUAD_L", "QUAD_H", "FLOAT", "AMORPH", "SERPENT", "INSECT", "MULTI_LIMB", "CONSTRUCT", "AVIAN", "BURROW"],
+  "combat_roles": ["bruiser", "tank", "skirmisher", "ranged", "caster", "controller", "assassin", "support", "summoner", "boss"],
+  "batch_policy": {
+    "size": [6, 8],
+    "required_mix": ["HUM", "QUAD", "FLOAT_OR_AMORPH", "one_special_body_plan"],
+    "variant_minimum_structural_changes": 2,
+    "color_only_variant_is_invalid": true,
+    "animation_tier_by_rank": {"normal":"16_to_20", "elite":"20_to_28", "boss":"24_to_48"}
+  },
+  "era_palettes": {
+    "classical": ["rock_brown", "old_ink", "bone_gray", "dark_cinnabar"],
+    "steam": ["coal_black", "iron_gray", "old_brass", "dark_orange"],
+    "star": ["ink_blue", "cold_purple_gray", "old_silver", "dark_indigo"],
+    "wasteland": ["sand_gray", "mud_gray", "dark_moss", "rust_brown"],
+    "final_age": ["paper_gray", "ink_black", "old_blue_gray", "dark_copper", "faded_ochre"]
+  },
+  "targets": [
+    {"monster_id":"classical_razor_wolf","era":"classical","family_id":"razor_beast","body_plan":"QUAD_L","mass_class":"light","combat_role":"bruiser","rank":"normal","signature_organs":["split_jaw","short_barb_tail"],"palette_profile":"classical_razor_beast","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/classical_razor_wolf/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"classical_oath_breaker","era":"classical","family_id":"oath_humanoid","body_plan":"HUM_L","mass_class":"medium","combat_role":"skirmisher","rank":"elite","signature_organs":["broken_blade","binding_strips"],"palette_profile":"classical_oath_humanoid","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/classical_oath_breaker/battle_sheet_web_v2_retimed.png","source_status":"generated_web_pixelized_pending_runtime_qa"},
+    {"monster_id":"classical_fate_registrar","era":"classical","family_id":"fate_registrar","body_plan":"HUM_L","mass_class":"medium","combat_role":"boss","rank":"boss","signature_organs":["oversized_jade_brush","tall_back_scroll"],"palette_profile":"classical_fate_registrar","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/classical_fate_registrar/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"steam_furnace_hound","era":"steam","family_id":"furnace_beast","body_plan":"QUAD_H","mass_class":"heavy","combat_role":"bruiser","rank":"normal","signature_organs":["boiler_ribcage","pressure_jaw","rear_exhaust"],"palette_profile":"steam_furnace_beast","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/steam_furnace_hound/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"steam_debt_collector","era":"steam","family_id":"debt_collector","body_plan":"HUM_H","mass_class":"heavy","combat_role":"tank","rank":"elite","signature_organs":["chain_gauntlet","ledger_chest","weighted_pack"],"palette_profile":"steam_debt_collector","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/steam_debt_collector/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"steam_blackbox_foreman","era":"steam","family_id":"blackbox_foreman","body_plan":"HUM_H","mass_class":"heavy","combat_role":"boss","rank":"boss","signature_organs":["pressure_hammer","boxy_shoulder_rig","stacked_boiler_back"],"palette_profile":"steam_blackbox_foreman","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/steam_blackbox_foreman/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"star_echo_hunter","era":"star","family_id":"echo_hunter","body_plan":"HUM_L","mass_class":"light","combat_role":"ranged","rank":"normal","signature_organs":["antenna_hood","long_rifle","echo_fins"],"palette_profile":"star_echo_hunter","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/star_echo_hunter/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"star_void_daemon","era":"star","family_id":"void_entity","body_plan":"FLOAT","mass_class":"light","combat_role":"caster","rank":"elite","signature_organs":["floating_core","split_phase_blade","missing_lower_body"],"palette_profile":"star_void_entity","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/star_void_daemon/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"star_ghost_archivist","era":"star","family_id":"ghost_archivist","body_plan":"AMORPH","mass_class":"variable","combat_role":"boss","rank":"boss","signature_organs":["archive_halo","needle_cloud","memory_veil"],"palette_profile":"star_ghost_archivist","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/star_ghost_archivist/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"wasteland_rain_beast","era":"wasteland","family_id":"rain_beast","body_plan":"QUAD_H","mass_class":"heavy","combat_role":"bruiser","rank":"normal","signature_organs":["rain_slick_back","wide_maw","water_shedding_fins"],"palette_profile":"wasteland_rain_beast","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/wasteland_rain_beast/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"wasteland_relic_raider","era":"wasteland","family_id":"relic_raider","body_plan":"HUM_H","mass_class":"heavy","combat_role":"bruiser","rank":"elite","signature_organs":["patched_armor","relic_glaive","lamp_pack"],"palette_profile":"wasteland_relic_raider","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/wasteland_relic_raider/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"wasteland_false_sun_prophet","era":"wasteland","family_id":"false_sun_prophet","body_plan":"HUM_L","mass_class":"medium","combat_role":"boss","rank":"boss","signature_organs":["sun_disc","smoke_censer","ragged_banner"],"palette_profile":"wasteland_false_sun_prophet","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/wasteland_false_sun_prophet/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"final_age_breath_taxer","era":"final_age","family_id":"breath_taxer","body_plan":"HUM_L","mass_class":"light","combat_role":"ranged","rank":"normal","signature_organs":["ledger_mask","abacus_frame","receipt_tags"],"palette_profile":"final_age_breath_taxer","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/final_age_breath_taxer/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"final_age_silent_cultivator","era":"final_age","family_id":"silent_cultivator","body_plan":"HUM_L","mass_class":"medium","combat_role":"caster","rank":"elite","signature_organs":["sealed_mouth_cloth","hanging_bell","sleeve_knots"],"palette_profile":"final_age_silent_cultivator","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/final_age_silent_cultivator/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"final_age_meridian_creditor","era":"final_age","family_id":"meridian_creditor","body_plan":"HUM_L","mass_class":"medium","combat_role":"boss","rank":"boss","signature_organs":["meridian_ring","needle_crown","contract_spine"],"palette_profile":"final_age_meridian_creditor","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/final_age_meridian_creditor/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"immortal_sky_enforcer","era":"immortal","family_id":"sky_enforcer","body_plan":"HUM_H","mass_class":"heavy","combat_role":"tank","rank":"normal","signature_organs":["sky_armor","long_halberd","banner_collar"],"palette_profile":"immortal_sky_enforcer","animation_tier":"16_to_20","candidate_path":"res://art/combat/monsters/immortal_sky_enforcer/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"immortal_unchained_duelist","era":"immortal","family_id":"unchained_duelist","body_plan":"HUM_L","mass_class":"light","combat_role":"assassin","rank":"elite","signature_organs":["uneven_twin_blades","chain_harness","forward_lean"],"palette_profile":"immortal_unchained_duelist","animation_tier":"20_to_28","candidate_path":"res://art/combat/monsters/immortal_unchained_duelist/battle_sheet_web_v1.png","source_status":"legacy_v1_runtime_qa_pending"},
+    {"monster_id":"immortal_fate_registrar","era":"immortal","family_id":"fate_registrar","body_plan":"HUM_L","mass_class":"medium","combat_role":"boss","rank":"boss","signature_organs":["jade_brush","floating_register","vertical_seal_lines"],"palette_profile":"immortal_fate_registrar","animation_tier":"24_to_48","candidate_path":"res://art/combat/monsters/immortal_fate_registrar/battle_sheet_web_v1.png","source_status":"generated_web_pixelized_pending_runtime_qa"}
+  ]
+}

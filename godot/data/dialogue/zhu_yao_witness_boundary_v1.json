@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhu_yao_witness_boundary",
+  "title": "证据不能比证人更先被保住",
+  "entry_node": "zy_line_01",
+  "participants": ["protagonist", "zhu_yao"],
+  "nodes": [
+    {
+      "id": "zy_line_01",
+      "type": "line",
+      "speaker_id": "zhu_yao",
+      "expression": "firm",
+      "outfit": "wasteland_witness",
+      "text": "纸烧了可以追副本，人若被你们为了证据再推过一次红线，就没有副本能替她回来。我的决定只能管我这一份，另外两个人要不要留下、要不要撤签，得由她们自己说。",
+      "next": "zy_choice_01"
+    },
+    {
+      "id": "zy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zy_choice_person_first",
+          "text": "把证物副本分散保管，冻结亲属栏；每名当事人分别选择继续、撤签、匿名避险或暂不决定，试验越线就暂停。",
+          "next": "zy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhu_yao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhu_yao_person_first_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "zy_choice_evidence_first",
+          "text": "先把三十七份不明席槽全部归入案件证据并完成统一撤签，个人是否同意留到副本整理后再问。",
+          "next": "zy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhu_yao", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhu_yao_evidence_first_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把证物来源、本人选择、亲属关系、设备供能和撤回时刻分栏。祝遥保住了能够追责的副本，也保留了一个空白结论：找不到本人，不等于替本人同意继续。",
+      "next": "zy_effect_01"
+    },
+    {
+      "id": "zy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhu_yao_witness_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "zhu_yao", "expression": "relieved"}
+      ],
+      "next": "zy_end"
+    },
+    {
+      "id": "zy_end",
+      "type": "end",
+      "result": "zhu_yao_witness_boundary_preserved"
+    }
+  ]
+}

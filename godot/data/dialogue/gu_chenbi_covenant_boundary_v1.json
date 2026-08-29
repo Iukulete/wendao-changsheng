@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "gu_chenbi_covenant_boundary",
+  "title": "总契不能把迟到的复审也算成稳定",
+  "entry_node": "gc_line_01",
+  "participants": ["protagonist", "gu_chenbi"],
+  "nodes": [
+    {
+      "id": "gc_line_01",
+      "type": "line",
+      "speaker_id": "gu_chenbi",
+      "expression": "controlled",
+      "outfit": "default",
+      "text": "删掉三处限制的人是我。东井枯潮后的第一个冬天，若没有总契，城防会少三成，急救药会少一半；十七年间主城没有破，这不是一句“后来被滥用”就能抹掉的收益。你们若现在拆掉它，先死的不会是我。",
+      "next": "gc_choice_01"
+    },
+    {
+      "id": "gc_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gc_choice_restore_limits",
+          "text": "保留当年的城防收益记录，但恢复失联确认、双重复核、用途期限和自动失效；把供养者身体代价与公共收益分栏审理。",
+          "next": "gc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_chenbi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "gu_chenbi_limits_restored", "value": true}
+          ]
+        },
+        {
+          "id": "gc_choice_keep_total_contract",
+          "text": "先维持总契到冬雷结束，事后再按城防收益给供养者补偿；不能为了程序完整让全城今晚冒险。",
+          "next": "gc_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_chenbi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "gu_chenbi_total_contract_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gc_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把城防收益、公共药量、供养者失去的寿元和每次续行的告知记录分别列出。顾沉璧仍可以说明当年危机，却不能再用第一年的必要性覆盖十七年后的每一次扣取；设计、维护、获利和迟到的复审各自留下责任人。",
+      "next": "gc_effect_01"
+    },
+    {
+      "id": "gc_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "gu_chenbi_covenant_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "gu_chenbi", "expression": "remorseful"}
+      ],
+      "next": "gc_end"
+    },
+    {
+      "id": "gc_end",
+      "type": "end",
+      "result": "gu_chenbi_covenant_boundary_preserved"
+    }
+  ]
+}

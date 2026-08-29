@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "luo_suzhi_housing_boundary",
+  "title": "罗素织的门契",
+  "entry_node": "lsz_line_01",
+  "participants": ["protagonist", "luo_suzhi"],
+  "nodes": [
+    {
+      "id": "lsz_line_01",
+      "type": "line",
+      "speaker_id": "luo_suzhi",
+      "expression": "wary",
+      "outfit": "returnee_lane_repairer",
+      "text": "这间屋子十年没人来认，我修过屋顶，也把一半租给修伞匠。表哥活着回来当然该有名字，可你们若把改名直接接成换锁，系统今晚就会替你把三户人赶出去。你们要恢复他的身份，先说清谁保护住处、谁算修缮、谁来核租。",
+      "next": "lsz_choice_01"
+    },
+    {
+      "id": "lsz_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lsz_choice_hold_housing",
+          "text": "给三户设三十日现状保护，冻结自动换锁；把罗素织十年必要修缮、托管租金与柳鹤生押金分开核价。",
+          "next": "lsz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_suzhi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "luo_suzhi_housing_protected", "value": true}
+          ]
+        },
+        {
+          "id": "lsz_choice_move_to_neutral_escrow",
+          "text": "先把租金、仓租和修缮收据交入中立匣，门契只保留所有权待核和临时居住两张独立凭证。",
+          "next": "lsz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_suzhi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "luo_suzhi_rent_escrow_separated", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lsz_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "恢复柳鹤生的本名，是让机器停止借死者签约，不是让无过错的现住者在产权结论出来前失去屋顶。三十日里你们的修缮、租金和他的押金各自留证，谁最终主张什么，等分案核对后再决定。",
+      "next": "lsz_effect_01"
+    },
+    {
+      "id": "lsz_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "luo_suzhi_housing_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "luo_suzhi", "expression": "relieved"}
+      ],
+      "next": "lsz_end"
+    },
+    {
+      "id": "lsz_end",
+      "type": "end",
+      "result": "luo_suzhi_housing_boundary_preserved"
+    }
+  ]
+}

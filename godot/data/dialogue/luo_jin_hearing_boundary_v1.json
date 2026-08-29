@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "luo_jin_hearing_boundary",
+  "title": "骆谨的三个孔",
+  "entry_node": "ljn_line_01",
+  "participants": ["protagonist", "luo_jin"],
+  "nodes": [
+    {
+      "id": "ljn_line_01",
+      "type": "line",
+      "speaker_id": "luo_jin",
+      "expression": "measured",
+      "outfit": "salt_lung_survivor",
+      "text": "药救了我的命，副作用也伤了我的耳朵。三个孔要分开：我听见过什么，我拒绝过什么，后来谁回问过我。不能因为第一孔是真的，就把第二孔改成同意。",
+      "next": "ljn_choice_01"
+    },
+    {
+      "id": "ljn_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ljn_choice_restore_refusal",
+          "text": "恢复原拒绝页，单列听力器和十二年误工差额；把药效、拒绝、副作用与拒赔分别送入听证记录。",
+          "next": "ljn_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_jin", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "luo_jin_refusal_restored", "value": true}
+          ]
+        },
+        {
+          "id": "ljn_choice_protect_kind_doctor",
+          "text": "隐去当年善意急救者的姓名，但保留机构后来否认拒绝页、拒付补偿的决定链。",
+          "next": "ljn_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_jin", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "luo_jin_kind_doctor_protected", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ljn_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "听力器是帮助你继续听见，不是替你在追认页上按指。救命的急救和后来拿伪同意拒赔，是两条责任线；我会把它们分开，也把你的拒绝留在原处。",
+      "next": "ljn_effect_01"
+    },
+    {
+      "id": "ljn_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "luo_jin_hearing_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "luo_jin", "expression": "relieved"}
+      ],
+      "next": "ljn_end"
+    },
+    {
+      "id": "ljn_end",
+      "type": "end",
+      "result": "luo_jin_hearing_boundary_preserved"
+    }
+  ]
+}

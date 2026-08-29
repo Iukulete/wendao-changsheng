@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "liu_hesheng_identity_boundary",
+  "title": "柳鹤生的本名工牌",
+  "entry_node": "lhs_line_01",
+  "participants": ["protagonist", "liu_hesheng"],
+  "nodes": [
+    {
+      "id": "lhs_line_01",
+      "type": "line",
+      "speaker_id": "liu_hesheng",
+      "expression": "wary",
+      "outfit": "returnee_dock_worker",
+      "text": "我十年前坐归潮舟离开，三年前因母亲病重回来，之后一直拿码头临工号过日子。册上却写我死于外城风疫。我的药和工钱被它认成死人的，旧屋又可能因我活着回来把三户人一夜赶走。你们先说，哪一个算我？",
+      "next": "lhs_choice_01"
+    },
+    {
+      "id": "lhs_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lhs_choice_restore_services_first",
+          "text": "先恢复你的本名、工龄、母亲代领权和已挣工资；旧屋另设三十日现状保护，暂不把身份纠正变成驱逐令。",
+          "next": "lhs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liu_hesheng", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "liu_hesheng_services_restored", "value": true}
+          ]
+        },
+        {
+          "id": "lhs_choice_cut_dead_identity",
+          "text": "先切断六三二号借你的死签新约，只保留真实使用者的药、租、仓和净水服务，再分案核对旧屋与工龄。",
+          "next": "lhs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "liu_hesheng", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "liu_hesheng_dead_identity_cut", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lhs_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你活着这件事先让你的药、工钱和母亲的代领回到你名下；罗素织一家住了十年、修过屋顶的事实也要单独留下。身份纠正可以阻止机器继续借你的死签约，但不能把过去十年的住房和劳动争议一把推给今晚。",
+      "next": "lhs_effect_01"
+    },
+    {
+      "id": "lhs_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "liu_hesheng_identity_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "liu_hesheng", "expression": "relieved"}
+      ],
+      "next": "lhs_end"
+    },
+    {
+      "id": "lhs_end",
+      "type": "end",
+      "result": "liu_hesheng_identity_boundary_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_he_natural_person",
+  "title": "陆禾不是行李",
+  "entry_node": "lhe_line_01",
+  "participants": ["protagonist", "lu_he"],
+  "nodes": [
+    {
+      "id": "lhe_line_01",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "concerned",
+      "outfit": "default",
+      "text": "丁十七下四的回执已经连续十一年变化，纸票和船内影像也指向一个正在长大的孩子。先不用让他重复证明自己是人，我们把依附项暂停为财物归类，按能被保护的自然人开临时伤页。",
+      "next": "lhe_line_02"
+    },
+    {
+      "id": "lhe_line_02",
+      "type": "line",
+      "speaker_id": "lu_he",
+      "expression": "guarded",
+      "outfit": "cold_storage_child",
+      "text": "我听见有人在柜外。怕黑的时候我会敲三短、四长、一下停顿，妈妈说你们听见就会回我。别把我的票放回她的账里，我想有自己的名字。",
+      "next": "lhe_choice_01"
+    },
+    {
+      "id": "lhe_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lhe_choice_separate_identity",
+          "text": "把陆禾从母亲账户的依附栏移入待核姓名册，保留他的节律、纸票与船内影像；七十二小时内补一项独立核验，不把期限届满写成默认放弃。",
+          "next": "lhe_effect_01",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_he_independent_identity_opened", "value": true}
+          ]
+        },
+        {
+          "id": "lhe_choice_keep_dependency_for_now",
+          "text": "先维持母子账户的最低保温与药量，暂不公开陆禾的姓名；同时单独封存节律和影像，等母亲与船内见证补证后再改栏。",
+          "next": "lhe_effect_01",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_he_dependency_protected", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lhe_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_he_natural_person_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_he", "expression": "relieved"}
+      ],
+      "next": "lhe_end"
+    },
+    {
+      "id": "lhe_end",
+      "type": "end",
+      "result": "lu_he_natural_person_boundary_preserved"
+    }
+  ]
+}

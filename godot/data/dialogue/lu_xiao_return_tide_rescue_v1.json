@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_xiao_return_tide_rescue",
+  "title": "归潮八号的回声",
+  "entry_node": "lx_line_01",
+  "participants": ["protagonist", "lu_xiao"],
+  "nodes": [
+    {
+      "id": "lx_line_01",
+      "type": "line",
+      "speaker_id": "lu_xiao",
+      "expression": "alert",
+      "outfit": "default",
+      "text": "陆绡把通讯耳件按在掌心：先别问我是不是该被救。船里还有没有声音的人，先确认他们有没有选择继续等。",
+      "next": "lx_choice_01"
+    },
+    {
+      "id": "lx_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lx_choice_consent_first",
+          "text": "先确认每一位乘客是否愿意被接触，再安排救援顺序。",
+          "next": "lx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_xiao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_xiao_consent_first", "value": true}
+          ]
+        },
+        {
+          "id": "lx_choice_route_first",
+          "text": "先核对船内路线和生命维持余量，避免救援本身造成二次伤害。",
+          "next": "lx_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_xiao", "stat": "respect", "delta": 2},
+            {"type": "set_flag", "flag": "lu_xiao_route_first", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lx_line_02",
+      "type": "line",
+      "speaker_id": "lu_xiao",
+      "expression": "protective",
+      "outfit": "default",
+      "text": "她摊开没有可读文字的折叠星盘，指腹停在七号室：陆禾怕黑时会敲三短、四长，再停一下。听见这组回应之后，也要问他愿不愿意继续等。",
+      "next": "lx_effect_01"
+    },
+    {
+      "id": "lx_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_xiao_rescue_contacted", "value": true},
+        {"type": "character_expression", "character_id": "lu_xiao", "expression": "firm"}
+      ],
+      "next": "lx_end"
+    },
+    {
+      "id": "lx_end",
+      "type": "end",
+      "result": "return_tide_rescue_contacted"
+    }
+  ]
+}

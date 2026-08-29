@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_ling_family_boundary",
+  "title": "今天十分钟，明天由她再问",
+  "entry_node": "ll_line_01",
+  "participants": ["protagonist", "lu_ling"],
+  "nodes": [
+    {
+      "id": "ll_line_01",
+      "type": "line",
+      "speaker_id": "lu_ling",
+      "expression": "careful",
+      "outfit": "default",
+      "text": "我是陆绡的姐姐。我能说出她十二岁那年把门夹伤说成骑梭摔的，也带来了登船前的家庭录像；可相认不是一枚万能印。她今天说什么、愿不愿意见谁，得由她自己再问一遍。",
+      "next": "ll_choice_01"
+    },
+    {
+      "id": "ll_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ll_choice_honor_ten_minutes",
+          "text": "把家庭录像作为独立证据封存，只留下陆绡指定的病情通知时段；会面先限十分钟，结束后由她重新确认。",
+          "next": "ll_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_ling", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_ling_ten_minute_boundary_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ll_choice_family_authority",
+          "text": "既然家人已经核对身份，就让陆菱先把紧急联系人和照护授权全部补齐，免得之后反复询问。",
+          "next": "ll_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_ling", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_ling_family_authority_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ll_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把身份核验、病情通知、探视时段和照护授权拆成四张表。陆菱撤回填到一半的紧急联系人页，只保留陆绡同意的通知窗口；家庭录像证明过去发生过什么，却不替今天的陆绡回答愿不愿意见人。",
+      "next": "ll_effect_01"
+    },
+    {
+      "id": "ll_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_ling_family_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_ling", "expression": "relieved"}
+      ],
+      "next": "ll_end"
+    },
+    {
+      "id": "ll_end",
+      "type": "end",
+      "result": "lu_ling_family_boundary_preserved"
+    }
+  ]
+}

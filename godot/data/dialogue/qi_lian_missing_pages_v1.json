@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "qi_lian_missing_pages",
+  "title": "缺页也要留下自保理由",
+  "entry_node": "ql_line_01",
+  "participants": ["protagonist", "qi_lian"],
+  "nodes": [
+    {
+      "id": "ql_line_01",
+      "type": "line",
+      "speaker_id": "qi_lian",
+      "expression": "precise",
+      "outfit": "default",
+      "text": "祁练把被撕下的缺页和停机搜查记录分开压平：别把我交册写成悔过书。我当时怕他们先找到我，这个自保理由也是真实证词，不能因为听起来不体面就删掉。",
+      "next": "ql_choice_01"
+    },
+    {
+      "id": "ql_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ql_choice_record_motive",
+          "text": "把缺页、停机时段和她当时的自保动机分栏记录，注明哪些是亲眼核验、哪些只是转述。",
+          "next": "ql_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qi_lian", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "qi_lian_self_protection_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ql_choice_force_confession",
+          "text": "先要求她把所有隐瞒解释成认错，再决定哪些内容可以进入见证页。",
+          "next": "ql_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qi_lian", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "qi_lian_forced_confession", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ql_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把机械分段轮的接地切换、三十一人分三组、换滤器和薄片隔船校准分别记下，也标明她没有亲眼接触过的船员范围。设备能降低连续受讯的风险，不能替她替整船担保。",
+      "next": "ql_effect_01"
+    },
+    {
+      "id": "ql_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "qi_lian_evidence_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "qi_lian", "expression": "relieved"}
+      ],
+      "next": "ql_end"
+    },
+    {
+      "id": "ql_end",
+      "type": "end",
+      "result": "qi_lian_evidence_boundary_preserved"
+    }
+  ]
+}

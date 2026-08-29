@@ -19,6 +19,522 @@
       "path": "res://data/dialogue/shuangya_first_intercept_v1.json",
       "status": "pilot",
       "arc": "wasteland_fireseed_watch"
+    },
+    {
+      "scene_id": "lu_xiao_return_tide_rescue",
+      "path": "res://data/dialogue/lu_xiao_return_tide_rescue_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "wen_zhaoye_dry_tide_consent",
+      "path": "res://data/dialogue/wen_zhaoye_dry_tide_consent_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_child_consent"
+    },
+    {
+      "scene_id": "song_jian_procedure_boundary",
+      "path": "res://data/dialogue/song_jian_procedure_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "shan_weqing_memory_boundary",
+      "path": "res://data/dialogue/shan_weqing_memory_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_memory_witness"
+    },
+    {
+      "scene_id": "qin_man_reversible_care",
+      "path": "res://data/dialogue/qin_man_reversible_care_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_rest_patient"
+    },
+    {
+      "scene_id": "sang_xian_water_limit",
+      "path": "res://data/dialogue/sang_xian_water_limit_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_water_boundary"
+    },
+    {
+      "scene_id": "a_sang_wage_medicine",
+      "path": "res://data/dialogue/a_sang_wage_medicine_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_wage_recovery"
+    },
+    {
+      "scene_id": "du_sanqiu_old_will",
+      "path": "res://data/dialogue/du_sanqiu_old_will_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_rest_patient"
+    },
+    {
+      "scene_id": "feng_wendi_protocol_pen",
+      "path": "res://data/dialogue/feng_wendi_protocol_pen_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_care_protocol"
+    },
+    {
+      "scene_id": "feng_dunjia_name_board",
+      "path": "res://data/dialogue/feng_dunjia_name_board_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "xiao_he_age_record",
+      "path": "res://data/dialogue/xiao_he_age_record_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "ge_wenji_black_ledger",
+      "path": "res://data/dialogue/ge_wenji_black_ledger_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "lu_hanwei_evidence_chain",
+      "path": "res://data/dialogue/lu_hanwei_evidence_chain_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "bao_qiyun_filter_price",
+      "path": "res://data/dialogue/bao_qiyun_filter_price_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "zhou_yi_wet_grain",
+      "path": "res://data/dialogue/zhou_yi_wet_grain_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "xiao_man_shift_handoff",
+      "path": "res://data/dialogue/xiao_man_shift_handoff_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "qi_lian_missing_pages",
+      "path": "res://data/dialogue/qi_lian_missing_pages_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "gu_xianting_narrow_warrant",
+      "path": "res://data/dialogue/gu_xianting_narrow_warrant_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "qiao_suying_medical_causality",
+      "path": "res://data/dialogue/qiao_suying_medical_causality_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "du_hengqiu_timed_ruling",
+      "path": "res://data/dialogue/du_hengqiu_timed_ruling_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "liang_zhen_emergency_authority",
+      "path": "res://data/dialogue/liang_zhen_emergency_authority_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "mei_lan_clinic_bandwidth",
+      "path": "res://data/dialogue/mei_lan_clinic_bandwidth_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "bai_yao_triage_priority",
+      "path": "res://data/dialogue/bai_yao_triage_priority_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_migration"
+    },
+    {
+      "scene_id": "xu_dongsuo_piece_rate",
+      "path": "res://data/dialogue/xu_dongsuo_piece_rate_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_rescue"
+    },
+    {
+      "scene_id": "xu_weitang_informed_choice",
+      "path": "res://data/dialogue/xu_weitang_informed_choice_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "lu_ling_family_boundary",
+      "path": "res://data/dialogue/lu_ling_family_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_return_tide"
+    },
+    {
+      "scene_id": "gu_chenbi_covenant_boundary",
+      "path": "res://data/dialogue/gu_chenbi_covenant_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "lu_shifu_rescue_rule",
+      "path": "res://data/dialogue/lu_shifu_rescue_rule_v1.json",
+      "status": "identity_card_ready",
+      "arc": "classical_rescue"
+    },
+    {
+      "scene_id": "a_lu_signal_triage",
+      "path": "res://data/dialogue/a_lu_signal_triage_v1.json",
+      "status": "identity_card_ready",
+      "arc": "classical_rescue"
+    },
+    {
+      "scene_id": "tang_kui_child_shelter",
+      "path": "res://data/dialogue/tang_kui_child_shelter_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_identity"
+    },
+    {
+      "scene_id": "chen_yusuo_wage_care",
+      "path": "res://data/dialogue/chen_yusuo_wage_care_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "meng_duan_injury_wage",
+      "path": "res://data/dialogue/meng_duan_injury_wage_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "ge_xiulin_data_repair",
+      "path": "res://data/dialogue/ge_xiulin_data_repair_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "gao_sui_legacy_choice",
+      "path": "res://data/dialogue/gao_sui_legacy_choice_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "du_yong_identity_covenant",
+      "path": "res://data/dialogue/du_yong_identity_covenant_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_identity"
+    },
+    {
+      "scene_id": "huang_ji_maintenance_wage",
+      "path": "res://data/dialogue/huang_ji_maintenance_wage_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_identity"
+    },
+    {
+      "scene_id": "luo_wantang_shift_rule",
+      "path": "res://data/dialogue/luo_wantang_shift_rule_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "shan_qiuhe_safety_authority",
+      "path": "res://data/dialogue/shan_qiuhe_safety_authority_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "bo_li_defense_signal",
+      "path": "res://data/dialogue/bo_li_defense_signal_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "tao_sao_flood_compensation",
+      "path": "res://data/dialogue/tao_sao_flood_compensation_v1.json",
+      "status": "identity_card_ready",
+      "arc": "classical_rescue"
+    },
+    {
+      "scene_id": "shen_yanqiu_migration_terms",
+      "path": "res://data/dialogue/shen_yanqiu_migration_terms_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "zhu_yao_witness_boundary",
+      "path": "res://data/dialogue/zhu_yao_witness_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_witness"
+    },
+    {
+      "scene_id": "jian_tiezhi_drilling_terms",
+      "path": "res://data/dialogue/jian_tiezhi_drilling_terms_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_drilling"
+    },
+    {
+      "scene_id": "wen_yin_seed_consent",
+      "path": "res://data/dialogue/wen_yin_seed_consent_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_seed_vault"
+    },
+    {
+      "scene_id": "a_luo_voice_rights",
+      "path": "res://data/dialogue/a_luo_voice_rights_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_identity"
+    },
+    {
+      "scene_id": "ge_sui_gate_duty",
+      "path": "res://data/dialogue/ge_sui_gate_duty_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_gray_dike"
+    },
+    {
+      "scene_id": "yu_he_heat_wage",
+      "path": "res://data/dialogue/yu_he_heat_wage_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_heat_arrays"
+    },
+    {
+      "scene_id": "zhou_lan_care_consent",
+      "path": "res://data/dialogue/zhou_lan_care_consent_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_network_medical"
+    },
+    {
+      "scene_id": "liang_zhi_wage_boundary",
+      "path": "res://data/dialogue/liang_zhi_wage_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_workers"
+    },
+    {
+      "scene_id": "shao_hongli_ration_debt",
+      "path": "res://data/dialogue/shao_hongli_ration_debt_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "cen_ya_family_memory",
+      "path": "res://data/dialogue/cen_ya_family_memory_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_family"
+    },
+    {
+      "scene_id": "fang_xiaoman_child_welfare",
+      "path": "res://data/dialogue/fang_xiaoman_child_welfare_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_family"
+    },
+    {
+      "scene_id": "jiao_wenwei_child_consent",
+      "path": "res://data/dialogue/jiao_wenwei_child_consent_v1.json",
+      "status": "identity_card_ready",
+      "arc": "steam_city_family"
+    },
+    {
+      "scene_id": "yi_chenshuang_care_review",
+      "path": "res://data/dialogue/yi_chenshuang_care_review_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "gu_shuying_independent_choice",
+      "path": "res://data/dialogue/gu_shuying_independent_choice_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "shentu_jingjian_resource_terms",
+      "path": "res://data/dialogue/shentu_jingjian_resource_terms_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "zhu_zhen_gate_responsibility",
+      "path": "res://data/dialogue/zhu_zhen_gate_responsibility_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "wen_zhaolan_evidence_boundary",
+      "path": "res://data/dialogue/wen_zhaolan_evidence_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "cheng_yanhui_shift_boundary",
+      "path": "res://data/dialogue/cheng_yanhui_shift_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "lu_liao_midwife_ethic",
+      "path": "res://data/dialogue/lu_liao_midwife_ethic_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "mu_lianchou_trade_accountability",
+      "path": "res://data/dialogue/mu_lianchou_trade_accountability_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "yu_baidi_listening_work",
+      "path": "res://data/dialogue/yu_baidi_listening_work_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "ruan_tongchen_due_process",
+      "path": "res://data/dialogue/ruan_tongchen_due_process_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "zhou_daiping_filter_witness",
+      "path": "res://data/dialogue/zhou_daiping_filter_witness_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "tao_xihuai_runner_boundary",
+      "path": "res://data/dialogue/tao_xihuai_runner_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_covenant"
+    },
+    {
+      "scene_id": "yin_di_medical_boundary",
+      "path": "res://data/dialogue/yin_di_medical_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "luo_jin_hearing_boundary",
+      "path": "res://data/dialogue/luo_jin_hearing_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "ying_chaojian_accountability",
+      "path": "res://data/dialogue/ying_chaojian_accountability_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "zhang_he_archive_boundary",
+      "path": "res://data/dialogue/zhang_he_archive_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "liu_heting_wage_boundary",
+      "path": "res://data/dialogue/liu_heting_wage_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "liu_hesheng_identity_boundary",
+      "path": "res://data/dialogue/liu_hesheng_identity_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "luo_suzhi_housing_boundary",
+      "path": "res://data/dialogue/luo_suzhi_housing_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "duan_qiuhe_proxy_boundary",
+      "path": "res://data/dialogue/duan_qiuhe_proxy_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "lu_hai_shan_care_boundary",
+      "path": "res://data/dialogue/lu_hai_shan_care_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "xue_cunyan_slow_consent",
+      "path": "res://data/dialogue/xue_cunyan_slow_consent_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "he_qie_pulp_room_boundary",
+      "path": "res://data/dialogue/he_qie_pulp_room_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "final_age_commons"
+    },
+    {
+      "scene_id": "ruan_he_pool_boundary",
+      "path": "res://data/dialogue/ruan_he_pool_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "wasteland_commons"
+    },
+    {
+      "scene_id": "xie_lu_medical_entry",
+      "path": "res://data/dialogue/xie_lu_medical_entry_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_commons"
+    },
+    {
+      "scene_id": "tao_xi_identity_touch",
+      "path": "res://data/dialogue/tao_xi_identity_touch_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_commons"
+    },
+    {
+      "scene_id": "wen_tao_scope_boundary",
+      "path": "res://data/dialogue/wen_tao_scope_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_commons"
+    },
+    {
+      "scene_id": "yu_qing_shift_boundary",
+      "path": "res://data/dialogue/yu_qing_shift_boundary_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_commons"
+    },
+    {
+      "scene_id": "qu_he_shared_relic",
+      "path": "res://data/dialogue/qu_he_shared_relic_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_commons"
+    },
+    {
+      "scene_id": "liang_du_conflict_permit",
+      "path": "res://data/dialogue/liang_du_conflict_permit_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_commons"
+    },
+    {
+      "scene_id": "lu_he_natural_person",
+      "path": "res://data/dialogue/lu_he_natural_person_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_commons"
+    },
+    {
+      "scene_id": "meng_die_archive_scope",
+      "path": "res://data/dialogue/meng_die_archive_scope_v1.json",
+      "status": "identity_card_ready",
+      "arc": "star_commons"
+    },
+    {
+      "scene_id": "ji_shuangquan_stop_rule",
+      "path": "res://data/dialogue/ji_shuangquan_stop_rule_v1.json",
+      "status": "identity_card_ready",
+      "arc": "immortal_dynasty_commons"
     }
   ]
 }

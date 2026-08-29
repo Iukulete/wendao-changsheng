@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "cheng_yanhui_shift_boundary",
+  "title": "程雁回的到期印",
+  "entry_node": "cyh_line_01",
+  "participants": ["protagonist", "cheng_yanhui"],
+  "nodes": [
+    {
+      "id": "cyh_line_01",
+      "type": "line",
+      "speaker_id": "cheng_yanhui",
+      "expression": "direct",
+      "outfit": "well_maintenance_worker",
+      "text": "我可以再守这一班，把十四份自然井息送到约定诊室。但班次有结束，妹妹的药票不是我的工资，更不是把我绑回校准椅的理由。",
+      "next": "cyh_choice_01"
+    },
+    {
+      "id": "cyh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "cyh_choice_finish_shift",
+          "text": "把这班的结束时刻、工钱和公共药路用途写清；到期后由你亲手按印离开，妹妹药票另行核验。",
+          "next": "cyh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "cheng_yanhui", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "cheng_yanhui_shift_end_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "cyh_choice_leave_now",
+          "text": "现在就停阀离开；公共药路的缺口公开列出，由其他人重新报名补班，不能用你的身体自动填空。",
+          "next": "cyh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "cheng_yanhui", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "cheng_yanhui_leave_now_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cyh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "妹妹的药票可以单独保住，旧班的工资也必须按工时发。你今天愿意帮忙，不等于明天不能离开；任何人接班，都要知道风险和最晚结束时间。",
+      "next": "cyh_effect_01"
+    },
+    {
+      "id": "cyh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "cheng_yanhui_wage_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "cheng_yanhui", "expression": "relieved"}
+      ],
+      "next": "cyh_end"
+    },
+    {
+      "id": "cyh_end",
+      "type": "end",
+      "result": "cheng_yanhui_wage_boundary_preserved"
+    }
+  ]
+}

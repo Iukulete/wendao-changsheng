@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "a_sang_wage_medicine",
+  "title": "药单先于亲切话",
+  "entry_node": "as_line_01",
+  "participants": ["protagonist", "a_sang"],
+  "nodes": [
+    {
+      "id": "as_line_01",
+      "type": "line",
+      "speaker_id": "a_sang",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "阿桑把女儿的退烧药单和丈夫的工牌印拓片并排压在桌上：你们可以说这是照顾，也可以说这是预付，但先写清今天能拿到什么、剩下的什么时候复核。亲切话不能让孩子多等一刻。",
+      "next": "as_choice_01"
+    },
+    {
+      "id": "as_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "as_choice_separate_accounts",
+          "text": "把医疗、工资预付和工伤担保分成三张可核对的记录。",
+          "next": "as_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_sang", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "a_sang_accounts_separated", "value": true}
+          ]
+        },
+        {
+          "id": "as_choice_accept_kindness",
+          "text": "先接受专门给这一家的八枚，格式以后再说。",
+          "next": "as_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "a_sang", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "a_sang_kindness_without_format", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "as_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你让柜员在每一栏写下用途、到账时刻和未结部分。阿桑把药单收进封夹，又把七个死者的工资页留在证物线外，确认没有人因自己的急事失去作证机会。",
+      "next": "as_effect_01"
+    },
+    {
+      "id": "as_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "a_sang_wage_medicine_boundary", "value": true},
+        {"type": "character_expression", "character_id": "a_sang", "expression": "relieved"}
+      ],
+      "next": "as_end"
+    },
+    {
+      "id": "as_end",
+      "type": "end",
+      "result": "a_sang_wage_medicine_boundary"
+    }
+  ]
+}

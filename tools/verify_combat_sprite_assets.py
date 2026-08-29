@@ -102,6 +102,17 @@ def main() -> int:
                     failures.append(f"{profile_id}.{clip_id}: invalid frame indexes {invalid}")
                 if float(clip.get("fps", 0)) <= 0:
                     failures.append(f"{profile_id}.{clip_id}: non-positive fps")
+        technique_clips = profile.get("technique_clips", {})
+        if technique_clips is not None and not isinstance(technique_clips, dict):
+            failures.append(f"{profile_id}: technique_clips is not an object")
+        elif isinstance(technique_clips, dict):
+            for technique_id, clip_id in technique_clips.items():
+                if not isinstance(technique_id, str) or not technique_id.strip():
+                    failures.append(f"{profile_id}: technique mapping has an empty id")
+                if not isinstance(clip_id, str) or clip_id not in clips:
+                    failures.append(
+                        f"{profile_id}.{technique_id}: technique maps to missing clip {clip_id!r}"
+                    )
         checked += 1
 
     target_count = 0

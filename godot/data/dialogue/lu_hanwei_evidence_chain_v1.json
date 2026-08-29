@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_hanwei_evidence_chain",
+  "title": "一张证物不能替整条责任链结案",
+  "entry_node": "lh_line_01",
+  "participants": ["protagonist", "lu_hanwei"],
+  "nodes": [
+    {
+      "id": "lh_line_01",
+      "type": "line",
+      "speaker_id": "lu_hanwei",
+      "expression": "measured",
+      "outfit": "default",
+      "text": "陆含微将砝码、旧接头和封条样本排成三列：重量能证明货到了这里，不能自动证明谁该赔。钥匙去向、安装位置和未检内容也要留下，否则下一张表会把今天的缺口写成从未存在。",
+      "next": "lh_choice_01"
+    },
+    {
+      "id": "lh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lh_choice_three_party",
+          "text": "让居民、管工和验炉三方共同开库，逐件称重、拍号，并把未检范围单独封存。",
+          "next": "lh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_hanwei", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_hanwei_three_party_evidence", "value": true}
+          ]
+        },
+        {
+          "id": "lh_choice_official_only",
+          "text": "由城府验货官单独开库，先追求最快出具一份结论。",
+          "next": "lh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_hanwei", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_hanwei_official_only_evidence", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把肺检、滤芯编号、电池收益和担保款退还期限分成四条记录。陆含微封好最后一个空匣，提醒在场的人：紧急征用解决的是今晚，责任链要能走到下一个交班日。",
+      "next": "lh_effect_01"
+    },
+    {
+      "id": "lh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_hanwei_evidence_chain_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_hanwei", "expression": "relieved"}
+      ],
+      "next": "lh_end"
+    },
+    {
+      "id": "lh_end",
+      "type": "end",
+      "result": "lu_hanwei_evidence_chain_preserved"
+    }
+  ]
+}

@@ -497,7 +497,13 @@ def main() -> int:
     actual_paths = {
         path.relative_to(ART_ROOT).as_posix()
         for path in ART_ROOT.rglob("*")
-        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+        if (
+            path.is_file()
+            and path.suffix.lower() in IMAGE_SUFFIXES
+            # Candidate images are deliberately versioned staging artifacts;
+            # they enter the manifest only after visual and technical gates.
+            and "candidates" not in path.relative_to(ART_ROOT).parts
+        )
     }
     missing = sorted(registered_paths - actual_paths)
     unregistered = sorted(actual_paths - registered_paths)

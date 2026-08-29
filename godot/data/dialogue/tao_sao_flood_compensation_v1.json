@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "tao_sao_flood_compensation",
+  "title": "先接屋顶的人，再谈谁的仓会湿",
+  "entry_node": "ts_line_01",
+  "participants": ["protagonist", "tao_sao"],
+  "nodes": [
+    {
+      "id": "ts_line_01",
+      "type": "line",
+      "speaker_id": "tao_sao",
+      "expression": "direct",
+      "outfit": "flood_survivor",
+      "text": "我家屋顶已经掉了一半。鱼市可以多等半刻，但先派船接屋顶上的人；你们要我替整条街签字之前，先说清哪一船、哪一闸、哪一户会承担什么。",
+      "next": "ts_choice_01"
+    },
+    {
+      "id": "ts_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ts_choice_rescue_then_loss",
+          "text": "把未撤离人数、船次、闸门时限和鱼市可承受损失分栏，先完成屋顶搜救，再由各方确认自己的授权范围。",
+          "next": "ts_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_sao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "tao_sao_rescue_then_loss_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ts_choice_maximum_open",
+          "text": "为了尽快降低水位，直接全开第六闸，鱼市、南仓和寺院坡路的损失留到灾后统一清点。",
+          "next": "ts_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_sao", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "tao_sao_maximum_open_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ts_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把人员撤离、闸门动作、仓物损失和赔偿回执分别编号。陶嫂没有替所有人原谅谁，也没有让自己的屋顶被一句‘全城得救’抹掉；每一项退让都留下了谁能确认、谁要复核的边界。",
+      "next": "ts_effect_01"
+    },
+    {
+      "id": "ts_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "tao_sao_rescue_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "tao_sao", "expression": "relieved"}
+      ],
+      "next": "ts_end"
+    },
+    {
+      "id": "ts_end",
+      "type": "end",
+      "result": "tao_sao_rescue_boundary_preserved"
+    }
+  ]
+}

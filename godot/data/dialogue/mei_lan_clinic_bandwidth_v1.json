@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "mei_lan_clinic_bandwidth",
+  "title": "先写红线，再谈救援带宽",
+  "entry_node": "ml_line_01",
+  "participants": ["protagonist", "mei_lan"],
+  "nodes": [
+    {
+      "id": "ml_line_01",
+      "type": "line",
+      "speaker_id": "mei_lan",
+      "expression": "measured",
+      "outfit": "default",
+      "text": "梅澜把两台心脉机的离线读数推到你面前：诊区不是一句“救人要紧”就能无限让路的空房间。每多接一端，影像判读、药物调度和病床的余量都会变；你们要查来讯，可以，但先告诉我什么时候会掉线，以及谁来替病人守住红线。",
+      "next": "ml_choice_01"
+    },
+    {
+      "id": "ml_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ml_choice_notice_before_cut",
+          "text": "把心脉机最低余量、提前通知、降载顺序和附带损失逐项写进救援单，诊疗数据只保留必要字段。",
+          "next": "ml_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "mei_lan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "mei_lan_clinic_redline_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ml_choice_broadcast_all",
+          "text": "先把所有家属和旁听者接进来，带宽与隐私等救援结束后再算。",
+          "next": "ml_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "mei_lan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "mei_lan_broadcast_all_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ml_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把额外床位费、配液延误和工作人员加班分别登记，黑箱只保留药物时间、剂量和操作者。梅澜确认心脉机仍有独立供能，才允许窄带继续；与事故无关的既往病史不进入救援副本。",
+      "next": "ml_effect_01"
+    },
+    {
+      "id": "ml_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "mei_lan_patient_data_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "mei_lan", "expression": "relieved"}
+      ],
+      "next": "ml_end"
+    },
+    {
+      "id": "ml_end",
+      "type": "end",
+      "result": "mei_lan_patient_data_boundary_preserved"
+    }
+  ]
+}

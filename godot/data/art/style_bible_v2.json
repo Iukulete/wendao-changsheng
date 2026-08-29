@@ -1,0 +1,180 @@
+{
+  "schema_version": 2,
+  "style_id": "wendao_style_v2",
+  "title": "问道长生角色与战斗资产 Style Bible v2",
+  "source_policy": {
+    "reference_images": [
+      {
+        "path": "D:/dector/cc/微信图片_20260825115621_41_99.jpg",
+        "role": "face_clarity_and_rendering_reference"
+      },
+      {
+        "path": "D:/dector/cc/微信图片_20260825115620_40_99.jpg",
+        "role": "silhouette_material_and_action_reference"
+      }
+    ],
+    "extract": [
+      "mature anime fantasy face clarity",
+      "clean variable edge strength",
+      "segmented hair masses and signature strands",
+      "layered costume construction",
+      "slender adult proportions",
+      "commercial game material readability",
+      "strong readable action silhouette"
+    ],
+    "do_not_copy": [
+      "reference character identity",
+      "reference hairstyle as a universal template",
+      "reference pink hair or costume colors",
+      "high-saturation bloom and magical effects"
+    ]
+  },
+  "visual_contract": {
+    "linework": {
+      "face": "fine_clean_selective",
+      "hair_outer_edge": "strong",
+      "costume_overlap": "medium_strong",
+      "weapon_and_prop": "hard_clear",
+      "skin_internal_lines": "minimal",
+      "outline_palette": "deep_blue_black_or_deep_brown_black_not_pure_black"
+    },
+    "face": {
+      "style": "polished_japanese_chinese_fantasy_game_anime",
+      "adult_read": "adult_face_structure_without_childlike_eyes_or_chin",
+      "distinct_face_families": [
+        "oval",
+        "sharp_long",
+        "short_mature",
+        "narrow_jaw",
+        "broad_cheek",
+        "soft_round_adult"
+      ],
+      "identity_gate_at_256px": ["face_readable", "age_readable", "no_same_face"]
+    },
+    "hair": {
+      "required_layers": ["primary_mass", "secondary_locks", "signature_strand", "motion_strand"],
+      "identity_rule": "hair_structure_not_color_alone"
+    },
+    "costume_layers": ["inner", "primary_costume", "functional_layer", "identity_accessory", "prop_or_weapon"],
+    "materials": {
+      "metal": ["narrow_edge_highlight", "cold_silver_or_old_copper_accents", "sharp_edges"],
+      "cloth": ["silk", "heavy_cloth", "leather", "old_cloth", "workwear", "gauze_when_story_justified"],
+      "forbid": ["full_surface_mirror_highlight", "uniform_gloss", "product_pbr_render"]
+    },
+    "composition": {
+      "portrait_master": "full_body_transparent",
+      "canvas": [1024, 1536],
+      "safe_margin_percent": 9,
+      "background": "transparent_for_identity_assets"
+    }
+  },
+  "rendering_gate": {
+    "face_detail_percent": 90,
+    "hair_detail_percent": 85,
+    "costume_layer_detail_percent": 85,
+    "material_detail_percent": 80,
+    "effect_intensity_percent": [30, 40],
+    "saturation_reduction_from_reference_percent": [25, 35],
+    "high_saturation_identity_area_percent_max": 15,
+    "portrait_body_saturation_median_percent": [25, 38],
+    "combat_body_saturation_median_percent": [22, 32],
+    "bloom": "low_or_disabled"
+  },
+  "body_classes": {
+    "HUM_L": {"description": "slender_adult_human", "head_height": [7.4, 8.2], "leg_ratio": [0.49, 0.53]},
+    "HUM_M": {"description": "average_adult_human", "head_height": [6.8, 7.5], "leg_ratio": [0.44, 0.49]},
+    "HUM_H": {"description": "broad_heavy_adult_human", "head_height": [5.8, 6.8], "leg_ratio": [0.38, 0.43], "must_redesign_not_scale": true},
+    "GIANT_HUM": {"description": "giant_heavy_human", "head_height": [4.5, 5.8], "must_redesign_not_scale": true},
+    "CHILD_S": {"description": "child_approximately_6_to_9", "head_height": [4.8, 5.5], "fanservice_level": 0, "must_redesign_not_scale": true},
+    "CHILD_M": {"description": "child_approximately_10_to_13", "head_height": [5.5, 6.2], "fanservice_level": 0, "must_redesign_not_scale": true},
+    "NON_HUMAN": {"description": "use_body_plan_contract_instead_of_head_height"}
+  },
+  "presentation_levels": {
+    "0": {"name": "functional", "allowed": ["good_proportions", "silhouette_emphasis"], "adult_only": false},
+    "1": {"name": "adult_appeal", "allowed": ["tailored_cut", "collarbone", "shoulder_hint", "natural_body_line"], "adult_only": true},
+    "2": {"name": "clear_commercial_fanservice", "allowed": ["opaque_deep_v", "open_shoulders", "open_back", "side_waist", "high_slit", "fitted_binding"], "adult_only": true, "forbid": ["explicit_nudity", "transparent_private_area", "sexual_pose"]},
+    "3": {"name": "signature_adult_story_outfit", "allowed": ["open_front", "open_shoulders_or_back", "high_slit", "story_justified_body_fit"], "adult_only": true, "requires": ["confirmed_adult", "story_justified_scene"], "forbid": ["explicit_nudity", "sexual_act", "pornographic_pose"]}
+  },
+  "presentation_rules": {
+    "age_unknown_or_minor_max_level": 0,
+    "adult_level_is_personality_and_scene_driven": true,
+    "outfit_level_must_not_exceed_character_max": true,
+    "adult_body_rule": "natural_full_body_proportion_and_costume_structure; do_not_use_exaggerated_body_parts_as_the_only_identity",
+    "pixel_idle_rule": "whole_upper_torso_breathing_with_cloth_belt_and_shoulders_1_to_2px; never_isolated_repetitive_breast_bounce",
+    "no_explicit_content": true
+  },
+  "identity_anchor_contract": {
+    "human_minimum": {
+      "face": 2,
+      "hair": 2,
+      "body": 2,
+      "costume": 2,
+      "prop": 1,
+      "posture": 1,
+      "palette": 1
+    },
+    "monster_minimum": ["family", "body_plan", "head_organ", "attack_organ", "locomotion", "signature_organ", "palette"],
+    "same_character_outfit_rule": "first_glance_identity_must_survive_outfit_change",
+    "different_character_rule": "face_hair_body_silhouette_profession_and_prop_must_not_all_match"
+  },
+  "prompt_contract": {
+    "positive_template": "[identity card] + [permanent identity anchors] + [outfit and presentation level] + polished mature fantasy RPG anime, clean selective linework, segmented hair, layered costume construction, slender adult proportions when adult, controlled material highlights, low-to-mid saturation, transparent background, full body, 1024x1536, safe margins",
+    "negative": [
+      "chibi",
+      "big head small body",
+      "childlike adult face",
+      "same face",
+      "random hairstyle or weapon",
+      "generic cultivation costume",
+      "oversaturated neon blue or purple",
+      "large bloom",
+      "cyberpunk clothing",
+      "full background",
+      "text UI watermark",
+      "cropped feet",
+      "explicit nudity",
+      "transparent private areas",
+      "sexual pose"
+    ],
+    "minor_or_unknown_extra_negative": ["adultized_body", "adult_fanservice", "sexualized_pose", "revealing_costume"]
+  },
+  "asset_pipeline": [
+    "story_and_runtime_extract",
+    "identity_card",
+    "portrait_master",
+    "identity_gate",
+    "dialogue_bust_and_avatar",
+    "needed_outfit_variants",
+    "combat_spec",
+    "pixel_combat_sheet",
+    "combat_gate",
+    "godot_import",
+    "runtime_binding",
+    "git_batch"
+  ],
+  "animation_contract": {
+    "noncombat_npc": {"frames": 0, "assets": ["portrait", "bust", "avatar"]},
+    "ordinary_enemy": {"frames": [16, 20], "fps": {"idle": [4, 6], "attack": [12, 16], "hit": [10, 14]}},
+    "elite": {"frames": [20, 28], "fps": {"idle": [4, 6], "attack": [10, 16], "skill": [8, 14]}},
+    "player_or_frequent_ally": {"frames": [28, 40], "fps": {"idle": [4, 6], "walk": [8, 12], "attack": [12, 16], "skill": [8, 14]}},
+    "boss": {"frames": [24, 48], "fps": {"idle": [4, 6], "phase": [8, 14]}, "events": ["anticipation", "hitbox_on", "impact", "hitstop", "hitbox_off", "recovery"]}
+  },
+  "godot_import": {
+    "filter": "off",
+    "mipmaps": "off",
+    "compression": "lossless",
+    "preferred_node": "AnimatedSprite2D_with_SpriteFrames",
+    "transparent_assets": true
+  },
+  "qa_gates": {
+    "identity": ["age", "face", "hair", "body_class", "silhouette", "costume_layers", "core_prop", "palette"],
+    "technical": ["rgba", "canvas_size", "alpha_margin", "no_text", "no_crop", "saturation_gate"],
+    "combat": ["frame_grid", "anchor_consistency", "readable_hitbox_pose", "skill_event_timing", "runtime_import"],
+    "reject_levels": {
+      "L1": "technical_fix",
+      "L2": "outfit_only_fix",
+      "L3": "portrait_identity_redo",
+      "L4": "discard_for_style_failure"
+    }
+  }
+}

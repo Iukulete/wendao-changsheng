@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhang_he_archive_boundary",
+  "title": "章禾的旧账页",
+  "entry_node": "zhe_line_01",
+  "participants": ["protagonist", "zhang_he"],
+  "nodes": [
+    {
+      "id": "zhe_line_01",
+      "type": "line",
+      "speaker_id": "zhang_he",
+      "expression": "measured",
+      "outfit": "warehouse_clerk",
+      "text": "我守库门十七年，直到今天才获准下楼。最早那页写的是七日无人领取可暂存九十日，九十日后逐户公告、找得到原主就退回；后来有人盖了一枚复写章，三条限制一起不见了。旧账不是怀旧，它要告诉你临时借用什么时候变成了没人负责的永久占用。",
+      "next": "zhe_choice_01"
+    },
+    {
+      "id": "zhe_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zhe_choice_restore_temporary_terms",
+          "text": "恢复九十日复核和逐户公告，把公共止疫储备、个人尾差、工人工资与待认领款分成独立账囊；你保留钥匙但每次开库都留三人记录。",
+          "next": "zhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhang_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhang_he_temporary_terms_restored", "value": true}
+          ]
+        },
+        {
+          "id": "zhe_choice_open_all_publicly",
+          "text": "先把灰池所有流入流出全部公开，允许共同席暂时支用，但为每笔支用写回来源、受益人、期限和返还路径。",
+          "next": "zhe_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhang_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhang_he_public_ledger_opened", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zhe_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "救过人的支出不能因此自动合法，被暂存的尾差也不能因为攒成一池就失去主人。你守住钥匙，是为了让每次开门都能追到来源和期限，不是让库门继续替所有人沉默。",
+      "next": "zhe_effect_01"
+    },
+    {
+      "id": "zhe_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhang_he_archive_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "zhang_he", "expression": "relieved"}
+      ],
+      "next": "zhe_end"
+    },
+    {
+      "id": "zhe_end",
+      "type": "end",
+      "result": "zhang_he_archive_boundary_preserved"
+    }
+  ]
+}

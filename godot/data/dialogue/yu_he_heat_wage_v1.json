@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "yu_he_heat_wage",
+  "title": "热阵吃的是灵石和工时",
+  "entry_node": "yh_line_01",
+  "participants": ["protagonist", "yu_he"],
+  "nodes": [
+    {
+      "id": "yh_line_01",
+      "type": "line",
+      "speaker_id": "yu_he",
+      "expression": "direct",
+      "outfit": "heat_array_supervisor",
+      "text": "热阵吃的是灵石和工时，不吃谁祖父的名字。四十六个阵工里已经有人连续两月少领，学徒的冻伤也不能塞进阵材损耗里。先把这个月谁付说清，再谈百年制度。",
+      "next": "yh_choice_01"
+    },
+    {
+      "id": "yh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "yh_choice_wage_first",
+          "text": "先停非必要热负载，从租金、商号分红和财政预拨中补足本月工资与冻伤治疗；旧债接口冻结，维修、工时和阵材另立公开账。",
+          "next": "yh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_he", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "yu_he_wage_first_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "yh_choice_restore_debt_interface",
+          "text": "先恢复旧债接口，用姓名关联扣取比例填上缺口，待新预算建立后再改；热阵可以当天稳定，欠薪者承担更直接的代价。",
+          "next": "yh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_he", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "yu_he_restore_debt_interface_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "冷雾、备用胆、四十六名阵工和二十三个月欠料单分别入账；工人不是热阵的隐形燃料，姓名也不能变成自动扣款的阀门。",
+      "next": "yh_effect_01"
+    },
+    {
+      "id": "yh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "yu_he_heat_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "yu_he", "expression": "relieved"}
+      ],
+      "next": "yh_end"
+    },
+    {
+      "id": "yh_end",
+      "type": "end",
+      "result": "yu_he_heat_boundary_preserved"
+    }
+  ]
+}

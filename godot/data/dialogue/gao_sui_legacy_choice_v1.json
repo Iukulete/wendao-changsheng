@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "gao_sui_legacy_choice",
+  "title": "留下选择，不留下命令",
+  "entry_node": "gs_line_01",
+  "participants": ["protagonist", "gao_sui"],
+  "nodes": [
+    {
+      "id": "gs_line_01",
+      "type": "line",
+      "speaker_id": "gao_sui",
+      "expression": "quiet",
+      "outfit": "winter_legacy",
+      "text": "匣子里有我的东西，也有另一个人的东西。‘留给女儿’是我能留下的话，不是替她决定什么时候用，更不是让别人把另一段脉纹一起带走。",
+      "next": "gs_choice_01"
+    },
+    {
+      "id": "gs_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gs_choice_separate_consent",
+          "text": "先核对来源、分别征得高芦生与另一位家属的同意，再用空匣校准后进行最低耗分脉。",
+          "next": "gs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gao_sui", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "gao_sui_separate_consent_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "gs_choice_legacy_command",
+          "text": "既然留下了‘给女儿’的记录，就直接把恒温匣全部灌入高芦生体内，之后再处理另一段来源。",
+          "next": "gs_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gao_sui", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "gao_sui_legacy_command_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gs_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你们先用空匣校准，再把两段来源分别封回。高遂留下的话仍然有效，却被放回它应有的位置：说明他的愿望，不替活着的人取消确认，也不让恒温材料因为沉默而变成无主资源。",
+      "next": "gs_effect_01"
+    },
+    {
+      "id": "gs_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "gao_sui_legacy_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "gao_sui", "expression": "fading"}
+      ],
+      "next": "gs_end"
+    },
+    {
+      "id": "gs_end",
+      "type": "end",
+      "result": "gao_sui_legacy_boundary_preserved"
+    }
+  ]
+}

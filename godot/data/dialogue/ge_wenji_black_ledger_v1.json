@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "ge_wenji_black_ledger",
+  "title": "黑脊本里的两半钱",
+  "entry_node": "gw_line_01",
+  "participants": ["protagonist", "ge_wenji"],
+  "nodes": [
+    {
+      "id": "gw_line_01",
+      "type": "line",
+      "speaker_id": "ge_wenji",
+      "expression": "calculating",
+      "outfit": "default",
+      "text": "葛闻机没有先替自己辩白，只把黑脊账本推到泵台边：这里面一半的钱确实救过人，另一半也确实踩着同一批人过去。你若只拿一半出去，剩下的责任会重新长成另一笔账。",
+      "next": "gw_choice_01"
+    },
+    {
+      "id": "gw_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gw_choice_open_accounts",
+          "text": "把救急用途、管理分成和欠薪责任拆开逐笔留证，先救孩子，再按原账追责。",
+          "next": "gw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_wenji", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "ge_wenji_black_ledger_separated", "value": true}
+          ]
+        },
+        {
+          "id": "gw_choice_seal_everything",
+          "text": "先把整本账封死，等城府裁定后再决定哪些页能见人。",
+          "next": "gw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "ge_wenji", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "ge_wenji_black_ledger_sealed", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gw_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你将药款、工资、管理分成和离城安置分别装入四个无字封匣，记录谁在何时看过哪一页。葛闻机交出泵台通行牌，却仍提醒你：救急的速度不能变成删掉细节的理由。",
+      "next": "gw_effect_01"
+    },
+    {
+      "id": "gw_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "ge_wenji_accountability_recorded", "value": true},
+        {"type": "character_expression", "character_id": "ge_wenji", "expression": "strained"}
+      ],
+      "next": "gw_end"
+    },
+    {
+      "id": "gw_end",
+      "type": "end",
+      "result": "ge_wenji_black_ledger_recorded"
+    }
+  ]
+}

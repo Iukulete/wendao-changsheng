@@ -36,6 +36,53 @@ func start(target_scene_id: String, target_state: Dictionary) -> Dictionary:
 	return _process_until_interactive()
 
 
+func restore(target_state: Dictionary) -> Dictionary:
+	## Rehydrate a saved dialogue cursor after the main scene is recreated.
+	## Combat mode deliberately stops before processing the node; the existing
+	## combat screen will call resume_after_combat once its outcome is known.
+	state = target_state
+	SaveAdapterScript.normalize(state)
+	var dialogue_value: Variant = state.get("dialogue", {})
+	var dialogue: Dictionary = dialogue_value if dialogue_value is Dictionary else {}
+	var target_scene_id := str(dialogue.get("current_scene_id", "")).strip_edges()
+	var target_node_id := str(dialogue.get("current_node_id", "")).strip_edges()
+	var loaded := RepositoryScript.load_scene(target_scene_id)
+	var validation := RepositoryScript.validate_scene(loaded)
+	if target_scene_id.is_empty() or not bool(validation.get("ok", false)):
+		last_error = str(validation.get("code", "dialogue_restore_scene_missing"))
+		return {"ok": false, "code": last_error, "scene_id": target_scene_id}
+	if target_node_id.is_empty():
+		last_error = "dialogue_restore_node_missing"
+		return {"ok": false, "code": last_error, "scene_id": target_scene_id}
+	scene = loaded
+	scene_id = target_scene_id
+	current_node_id = target_node_id
+	var node := current_node()
+	if node.is_empty():
+		last_error = "dialogue_restore_node_unknown"
+		return {"ok": false, "code": last_error, "scene_id": target_scene_id,
+			"node_id": target_node_id}
+	var mode := str(dialogue.get("mode", "idle"))
+	if mode == "combat":
+		active = true
+		last_error = ""
+		var return_context_value: Variant = dialogue.get("combat_return_context", {})
+		var return_context: Dictionary = return_context_value if \
+			return_context_value is Dictionary else {}
+		return {"ok": true, "kind": "combat", "scene_id": scene_id,
+			"node": node.duplicate(true),
+			"encounter_id": str(return_context.get("encounter_id", node.get("encounter_id", ""))),
+			"label": str(return_context.get("combat_label", node.get("combat_label", "对话冲突"))),
+			"return_context": return_context.duplicate(true)}
+	if mode not in ["dialogue", "line", "choice", "check", "effect"]:
+		last_error = "dialogue_not_resumable"
+		return {"ok": false, "code": last_error, "scene_id": scene_id,
+			"node_id": current_node_id}
+	active = true
+	last_error = ""
+	return _process_until_interactive()
+
+
 func current_node() -> Dictionary:
 	for node_value in (scene.get("nodes", []) as Array):
 		if node_value is Dictionary and str((node_value as Dictionary).get("id", "")) == current_node_id:

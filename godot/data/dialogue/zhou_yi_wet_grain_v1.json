@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhou_yi_wet_grain",
+  "title": "能回家不是只有水通了",
+  "entry_node": "zy_line_01",
+  "participants": ["protagonist", "zhou_yi"],
+  "nodes": [
+    {
+      "id": "zy_line_01",
+      "type": "line",
+      "speaker_id": "zhou_yi",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "周姨用麻绳把吸水的合购米袋拆开：别整袋抬，湿米压在一起会自己发热。先拆成小袋，再数清是谁家的。水通了也不等于能回家，木梁、煤饼和孩子睡哪儿还要分别看。",
+      "next": "zy_choice_01"
+    },
+    {
+      "id": "zy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zy_choice_split_and_verify",
+          "text": "先拆粮、分户登记，再让居民、管工和验炉三方共同确认仓库与住处安全。",
+          "next": "zy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_yi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhou_yi_split_grain_and_verify", "value": true}
+          ]
+        },
+        {
+          "id": "zy_choice_move_fast",
+          "text": "先把整袋粮和所有人一起搬出危险区，细项等水路恢复后再补。",
+          "next": "zy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_yi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhou_yi_fast_move_first", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把粮食、维修材料、临时住处和回家条件分成四块木牌。周姨把最后一把阁楼钥匙交给照护板，提醒现场的人：先让孩子有地方睡，再决定哪一项能算修完。",
+      "next": "zy_effect_01"
+    },
+    {
+      "id": "zy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhou_yi_separate_safety_acceptance", "value": true},
+        {"type": "character_expression", "character_id": "zhou_yi", "expression": "relieved"}
+      ],
+      "next": "zy_end"
+    },
+    {
+      "id": "zy_end",
+      "type": "end",
+      "result": "zhou_yi_separate_safety_acceptance"
+    }
+  ]
+}

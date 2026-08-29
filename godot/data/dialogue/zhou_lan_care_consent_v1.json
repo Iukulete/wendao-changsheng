@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhou_lan_care_consent",
+  "title": "能救命，不等于替人答应",
+  "entry_node": "zl_line_01",
+  "participants": ["protagonist", "zhou_lan"],
+  "nodes": [
+    {
+      "id": "zl_line_01",
+      "type": "line",
+      "speaker_id": "zhou_lan",
+      "expression": "calm",
+      "outfit": "ship_nurse",
+      "text": "我可以先把氧气、药物和担架接上，但这不等于拿病人的沉默替他签整套授权。愿意、不懂、害怕或停止，至少要给他一枚能立即按下的信号。",
+      "next": "zl_choice_01"
+    },
+    {
+      "id": "zl_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zl_choice_narrow_care",
+          "text": "先只开生命支持、止痛和当前病床需要；三色信号逐项复核，声纹与家属意见分册，无法稳定表达的项目全部暂缓。",
+          "next": "zl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_lan", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhou_lan_narrow_care_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "zl_choice_full_proxy",
+          "text": "为避免延误，先让家属和机构共同代签全部治疗、声纹与影像范围，患者之后若清醒再申请修改。",
+          "next": "zl_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhou_lan", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhou_lan_full_proxy_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zl_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "氧气货口、药匣、病床和高风险处方各留一页；陆禾的停止信号可以停止眼前护理，却不能替她签合同，陆绡的声音也不能变成别人的自述。",
+      "next": "zl_effect_01"
+    },
+    {
+      "id": "zl_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhou_lan_care_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "zhou_lan", "expression": "relieved"}
+      ],
+      "next": "zl_end"
+    },
+    {
+      "id": "zl_end",
+      "type": "end",
+      "result": "zhou_lan_care_boundary_preserved"
+    }
+  ]
+}

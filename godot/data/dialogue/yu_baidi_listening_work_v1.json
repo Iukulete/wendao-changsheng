@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "yu_baidi_listening_work",
+  "title": "余白荻的听震片",
+  "entry_node": "ybd_line_01",
+  "participants": ["protagonist", "yu_baidi"],
+  "nodes": [
+    {
+      "id": "ybd_line_01",
+      "type": "line",
+      "speaker_id": "yu_baidi",
+      "expression": "alert",
+      "outfit": "well_listening_worker",
+      "text": "我还能听见井壁的变化，只是右耳已经听不全了。若要我教新手，可以按时领工钱；若要我再坐回校准椅，答案是不用问第二遍。",
+      "next": "ybd_choice_01"
+    },
+    {
+      "id": "ybd_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "ybd_choice_outside_listening",
+          "text": "安排井外听震工作，配听力辅助片和明确班次；听力维修、工资与父亲旧屋回执分别记账。",
+          "next": "ybd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_baidi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "yu_baidi_outside_work_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "ybd_choice_train_short_shift",
+          "text": "让你只做一班新手培训，提前写好停班信号和中途换人方式，不用身体重新接入校准环。",
+          "next": "ybd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "yu_baidi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "yu_baidi_training_shift_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ybd_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "你的听力损伤是工作后果，不是继续工作的抵押物。能用经验帮助别人，就按经验付薪、按能力安排；设备和旧屋问题也不能附在你的身体上一起扣走。",
+      "next": "ybd_effect_01"
+    },
+    {
+      "id": "ybd_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "yu_baidi_work_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "yu_baidi", "expression": "relieved"}
+      ],
+      "next": "ybd_end"
+    },
+    {
+      "id": "ybd_end",
+      "type": "end",
+      "result": "yu_baidi_work_boundary_preserved"
+    }
+  ]
+}

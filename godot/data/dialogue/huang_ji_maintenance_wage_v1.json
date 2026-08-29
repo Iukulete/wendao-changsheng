@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "huang_ji_maintenance_wage",
+  "title": "经验可以交接，工资不能隐身",
+  "entry_node": "hj_line_01",
+  "participants": ["protagonist", "huang_ji"],
+  "nodes": [
+    {
+      "id": "hj_line_01",
+      "type": "line",
+      "speaker_id": "huang_ji",
+      "expression": "focused",
+      "outfit": "maintenance_shift",
+      "text": "我把钥匙交出来，灯壳怎么听、滤片怎么换，也能教给学徒。可封院以后，我手下二十一人的这个月工资不能跟着钥匙一起消失；维护不是阵法自己长出来的。",
+      "next": "hj_choice_01"
+    },
+    {
+      "id": "hj_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "hj_choice_wage_handoff",
+          "text": "把每个人已完成的班次、伤药、替班和过渡工资单独列账；黄稷只远距听材，由学徒按口述操作。",
+          "next": "hj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "huang_ji", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "huang_ji_wage_handoff_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "hj_choice_unpaid_expertise",
+          "text": "先把维修经验全部留下，工资等设施重新开门后再统一补算。",
+          "next": "hj_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "huang_ji", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "huang_ji_deferred_wage_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hj_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把钥匙、操作知识、已完成工时、肩伤限制和过渡工资分成五栏。黄稷不必举重证明自己，学徒也不再以免费劳动换取一句‘跟着老工学过’。",
+      "next": "hj_effect_01"
+    },
+    {
+      "id": "hj_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "huang_ji_maintenance_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "huang_ji", "expression": "relieved"}
+      ],
+      "next": "hj_end"
+    },
+    {
+      "id": "hj_end",
+      "type": "end",
+      "result": "huang_ji_maintenance_boundary_preserved"
+    }
+  ]
+}

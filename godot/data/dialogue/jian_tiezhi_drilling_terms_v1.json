@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "jian_tiezhi_drilling_terms",
+  "title": "今天不落钻，水也要喝",
+  "entry_node": "jt_line_01",
+  "participants": ["protagonist", "jian_tiezhi"],
+  "nodes": [
+    {
+      "id": "jt_line_01",
+      "type": "line",
+      "speaker_id": "jian_tiezhi",
+      "expression": "practical",
+      "outfit": "drilling_camp",
+      "text": "旧报价里只有可议、二十亩和一口井，没有五年、独占和失败后怎么办。今天不落钻，水也要喝；明天落在哪里，别只让我一个人担。",
+      "next": "jt_choice_01"
+    },
+    {
+      "id": "jt_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "jt_choice_shared_test",
+          "text": "先做七日共同试钻：盐镜出钻机与工班，照骨出旧苗牌与停止权，负岳出斜钻材料；五亩营地临时使用，出水后按实际工、水、人重谈。",
+          "next": "jt_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "jian_tiezhi", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "jian_tiezhi_shared_test_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "jt_choice_land_first",
+          "text": "按旧报价立即确认二十亩五年使用权，先让盐镜落主钻，出水与失败责任以后再补条款。",
+          "next": "jt_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "jian_tiezhi", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "jian_tiezhi_land_first_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jt_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把土地期限、失败封堵、钻机损耗、工业水、三方读数和停止权分别列出。简铁枝可以为安全牺牲一成钻头寿命，也不必用一口尚未证实的水替所有人签下永久承诺。",
+      "next": "jt_effect_01"
+    },
+    {
+      "id": "jt_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "jian_tiezhi_drilling_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "jian_tiezhi", "expression": "relieved"}
+      ],
+      "next": "jt_end"
+    },
+    {
+      "id": "jt_end",
+      "type": "end",
+      "result": "jian_tiezhi_drilling_boundary_preserved"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "luo_wantang_shift_rule",
+  "title": "休息也是复工条件",
+  "entry_node": "lw_line_01",
+  "participants": ["protagonist", "luo_wantang"],
+  "nodes": [
+    {
+      "id": "lw_line_01",
+      "type": "line",
+      "speaker_id": "luo_wantang",
+      "expression": "sharp",
+      "outfit": "furnace_shift",
+      "text": "谁都能说自己愿意再上两刻，可没有人愿意在合同上签‘疲劳不算事故原因’。第一晚凑够人数，不等于第四天还站得住。先把睡眠、进食和下一班写出来。",
+      "next": "lw_choice_01"
+    },
+    {
+      "id": "lw_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lw_choice_sustainable_shift",
+          "text": "按连续清醒时长、岗位熟练度和照护负担排班；未接急单的人写明床位、基本生活与下一次确认时刻。",
+          "next": "lw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_wantang", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "luo_wantang_sustainable_shift_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "lw_choice_high_pressure_order",
+          "text": "先接高压军械订单，用更高工价换取几夜连续值守，休息与转岗等订单完成后再议。",
+          "next": "lw_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "luo_wantang", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "luo_wantang_high_pressure_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lw_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把报名人数改成可持续班次，把照护、培训、休息与高危限制单独列出。罗晚棠接过下一册轮值簿，要求每班复述未结责任；没有人因为拒绝冒险就自动失去床位和基本生活。",
+      "next": "lw_effect_01"
+    },
+    {
+      "id": "lw_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "luo_wantang_shift_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "luo_wantang", "expression": "relieved"}
+      ],
+      "next": "lw_end"
+    },
+    {
+      "id": "lw_end",
+      "type": "end",
+      "result": "luo_wantang_shift_boundary_preserved"
+    }
+  ]
+}

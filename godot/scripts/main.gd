@@ -24,6 +24,16 @@ const CharacterArtCatalogScript = preload("res://scripts/character_art_catalog.g
 const CinematicArtMotionScript = preload("res://scripts/cinematic_art_motion.gd")
 const CharacterArtRigScript = preload("res://scripts/character_art_rig.gd")
 const NarrativeConsequenceScript = preload("res://scripts/narrative_consequence_system.gd")
+const DialogueRepositoryScript = preload("res://scripts/dialogue/dialogue_repository.gd")
+const DialogueDirectorScript = preload("res://scripts/dialogue/dialogue_director.gd")
+const DialogueUIScript = preload("res://scripts/dialogue/dialogue_ui.gd")
+const DialoguePortraitControllerScript = preload("res://scripts/dialogue/portrait_controller.gd")
+
+const DIALOGUE_ENEMY_NAMES := {
+	"star_echo_hunter": "星网猎忆者",
+	"classical_razor_wolf": "断刃苍狼",
+	"classical_oath_breaker": "毁誓剑客",
+}
 
 const ERA_ORDER := [
 	"古典修仙纪",
@@ -71,7 +81,7 @@ const DEFAULT_PLAYER := {
 }
 
 enum ScreenState {
-	MENU, GAME, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, INVENTORY, COMBAT, ARMORY,
+	MENU, GAME, DIALOGUE, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, INVENTORY, COMBAT, ARMORY,
 	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE,
 }
 
@@ -108,6 +118,9 @@ var achievement_toast: Control
 var dungeon_action_feedback: Dictionary = {}
 var combat_input_locked: bool = false
 var combat_feedback_sequence: int = 0
+var dialogue_director: DialogueDirector
+var dialogue_ui: DialogueUI
+var dialogue_scene_id := ""
 
 
 func _ready() -> void:
@@ -134,6 +147,7 @@ func _refresh_screen_layout(expected_state: ScreenState) -> void:
 		return
 	match expected_state:
 		ScreenState.GAME: _show_game()
+		ScreenState.DIALOGUE: _show_dialogue()
 		ScreenState.COMBAT: _show_combat()
 		ScreenState.DUNGEON_ROUTE: _show_dungeon_route()
 		ScreenState.DUNGEON_COMBAT: _show_dungeon_combat()
@@ -578,8 +592,43 @@ func _continue_game() -> void:
 		_show_dungeon()
 	elif CombatSystemScript.has_active_combat(run_state):
 		_show_combat()
+	elif _resume_saved_dialogue():
+		return
 	else:
 		_show_game()
+
+
+func _resume_saved_dialogue() -> bool:
+	var dialogue_value: Variant = run_state.get("dialogue", {})
+	var dialogue: Dictionary = dialogue_value if dialogue_value is Dictionary else {}
+	var mode := str(dialogue.get("mode", "idle"))
+	if mode not in ["dialogue", "line", "choice", "check", "effect", "combat"]:
+		return false
+	var saved_scene_id := str(dialogue.get("current_scene_id", "")).strip_edges()
+	if saved_scene_id.is_empty():
+		return false
+	dialogue_director = DialogueDirectorScript.new()
+	var restored: Dictionary = dialogue_director.restore(run_state)
+	if not bool(restored.get("ok", false)):
+		dialogue_director = null
+		return false
+	dialogue_scene_id = str(restored.get("scene_id", saved_scene_id))
+	if not dialogue_director.combat_requested.is_connected(_on_dialogue_combat_requested):
+		dialogue_director.combat_requested.connect(_on_dialogue_combat_requested)
+	if str(restored.get("kind", "")) == "combat":
+		# A save can land after the dialogue node is entered but before the
+		# combat screen has been created. Rebuild the encounter from the saved
+		# return context instead of silently dropping the dialogue cursor.
+		var encounter_value: Variant = run_state.get("encounter", {})
+		var encounter: Dictionary = encounter_value if encounter_value is Dictionary else {}
+		if bool(encounter.get("active", false)):
+			_save_current_state("恢复对话战斗入口")
+			_start_combat()
+		else:
+			dialogue_director.combat_requested.emit(restored.duplicate(true))
+		return true
+	_show_dialogue()
+	return true
 
 
 func _import_legacy_game() -> void:
@@ -959,6 +1008,7 @@ func _build_secondary_navigation(compact: bool = false) -> Control:
 		["准备", _show_inventory, "InventoryButton"],
 		["传承", _show_armory, "ArmoryButton"],
 		["记录", _show_journal, "JournalButton"],
+		["人物对话", _open_dialogue_hub, "DialogueButton"],
 		["系统", _open_system_menu, "SystemMenuButton"],
 	]
 	for entry_value in entries:
@@ -974,6 +1024,280 @@ func _build_secondary_navigation(compact: bool = false) -> Control:
 
 func _open_system_menu() -> void:
 	_show_audio_settings()
+
+
+func _open_dialogue_hub() -> void:
+	state = ScreenState.DIALOGUE
+	dialogue_director = null
+	dialogue_scene_id = ""
+	_set_audio_context("event")
+	_clear_screen()
+	_apply_era_visuals()
+	var page := VBoxContainer.new()
+	page.name = "DialogueHubPage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 14)
+	screen_host.add_child(page)
+
+	var header := _panel(0.82, era_accent)
+	header.name = "DialogueHubHeader"
+	header.custom_minimum_size.y = 106
+	var heading := VBoxContainer.new()
+	heading.alignment = BoxContainer.ALIGNMENT_CENTER
+	heading.add_theme_constant_override("separation", 3)
+	heading.add_child(_display_label("人物对话 · RPG 试运行", 30, Color("f4e5b7")))
+	heading.add_child(_label("选择会写入关系、旗标与战斗返回节点；已确认的角色立绘会直接作为对话人物形象。",
+		15, Color(0.82, 0.86, 0.85, 0.94)))
+	heading.add_child(_label("当前已接入 %d 个原生对话场景，其余剧情继续按角色队列逐个迁移。" %
+		DialogueRepositoryScript.scene_ids().size(), 13, Color(era_accent, 0.88)))
+	header.add_child(heading)
+	page.add_child(header)
+
+	var scroll := ScrollContainer.new()
+	scroll.name = "DialogueHubScroll"
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	scroll.follow_focus = true
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	page.add_child(scroll)
+	var scene_list := VBoxContainer.new()
+	scene_list.name = "DialogueSceneList"
+	scene_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scene_list.add_theme_constant_override("separation", 10)
+	scroll.add_child(scene_list)
+
+	var scene_count := 0
+	for scene_id in DialogueRepositoryScript.scene_ids():
+		var scene := DialogueRepositoryScript.load_scene(scene_id)
+		if scene.is_empty():
+			continue
+		scene_count += 1
+		var card := _panel(0.80, era_accent)
+		card.name = "DialogueSceneCard_%s" % scene_id
+		card.custom_minimum_size.y = 116
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 14)
+		card.add_child(row)
+		var detail := VBoxContainer.new()
+		detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		detail.add_theme_constant_override("separation", 3)
+		row.add_child(detail)
+		detail.add_child(_label(str(scene.get("title", scene_id)), 20, Color("f2e5bc")))
+		var participants := _dialogue_participant_names(scene.get("participants", []))
+		detail.add_child(_label("参与者 · %s" % participants, 13,
+			Color(0.74, 0.82, 0.81, 0.92)))
+		detail.add_child(_label("剧情弧 · %s · 节点 %d" % [
+			str(scene.get("arc", "未标注")), (scene.get("nodes", []) as Array).size()], 12,
+			Color(0.65, 0.73, 0.74, 0.90)))
+		var enter := _button("进入对话", _start_rpg_dialogue.bind(scene_id), true)
+		enter.name = "DialogueEnterButton_%s" % scene_id
+		enter.custom_minimum_size = Vector2(148, 48)
+		row.add_child(enter)
+		scene_list.add_child(card)
+	if scene_count == 0:
+		scene_list.add_child(_label("还没有可运行的原生对话场景。", 18, Color("e8c87f")))
+
+	var footer := HBoxContainer.new()
+	footer.name = "DialogueHubFooter"
+	footer.add_theme_constant_override("separation", 10)
+	var back := _button("返回山河", _show_game, false)
+	back.name = "DialogueHubBackButton"
+	back.custom_minimum_size.y = 46
+	footer.add_child(back)
+	footer.add_child(_label("快捷键 · Esc 返回 · 对话选择会自动保存", 13,
+		Color(0.70, 0.77, 0.77, 0.86)))
+	page.add_child(footer)
+
+
+func _dialogue_participant_names(value: Variant) -> String:
+	var names: Array[String] = []
+	var participants: Array = value if value is Array else []
+	for participant_value in participants:
+		var character_id := str(participant_value)
+		var portrait := DialoguePortraitControllerScript.resolve(character_id)
+		names.append(str(portrait.get("display_name", character_id)))
+	return "、".join(names) if not names.is_empty() else "待定"
+
+
+func _start_rpg_dialogue(target_scene_id: String) -> void:
+	var scene := DialogueRepositoryScript.load_scene(target_scene_id)
+	var validation := DialogueRepositoryScript.validate_scene(scene)
+	if not bool(validation.get("ok", false)):
+		feedback = "对话场景无法载入：%s" % str(validation.get("code", "invalid_dialogue_scene"))
+		_open_dialogue_hub()
+		return
+	dialogue_scene_id = target_scene_id
+	dialogue_director = DialogueDirectorScript.new()
+	if not dialogue_director.combat_requested.is_connected(_on_dialogue_combat_requested):
+		dialogue_director.combat_requested.connect(_on_dialogue_combat_requested)
+	var result: Dictionary = dialogue_director.start(target_scene_id, run_state)
+	if not bool(result.get("ok", false)):
+		feedback = "对话没有启动：%s" % str(result.get("code", "unknown_dialogue_error"))
+		dialogue_director = null
+		_open_dialogue_hub()
+		return
+	_sync_state_views()
+	_save_current_state("人物对话已自动封存")
+	if str(result.get("kind", "")) == "combat":
+		# The signal handler has already handed the encounter to the combat screen.
+		return
+	if str(result.get("kind", "")) == "finished":
+		_on_rpg_dialogue_finished(result)
+		return
+	_show_dialogue()
+
+
+func _show_dialogue() -> void:
+	if dialogue_director == null or not bool(dialogue_director.active):
+		_open_dialogue_hub()
+		return
+	state = ScreenState.DIALOGUE
+	_set_audio_context("event")
+	_clear_screen()
+	_apply_era_visuals()
+	var scene := DialogueRepositoryScript.load_scene(dialogue_scene_id)
+	var page := VBoxContainer.new()
+	page.name = "DialoguePage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 10)
+	screen_host.add_child(page)
+
+	var header := _panel(0.82, era_accent)
+	header.name = "DialogueHeader"
+	header.custom_minimum_size.y = 76
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 12)
+	header.add_child(header_row)
+	var heading := VBoxContainer.new()
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(_display_label(str(scene.get("title", "人物对话")), 25, Color("f4e5b7")))
+	heading.add_child(_label("原生剧情节点 · 选择、条件、关系效果与战斗返回均由同一条 RPG 流程处理。",
+		13, Color(0.75, 0.82, 0.81, 0.92)))
+	header_row.add_child(heading)
+	header_row.add_child(_label("%s · %s" % [current_era, dialogue_scene_id], 12,
+		Color(era_accent, 0.86), HORIZONTAL_ALIGNMENT_RIGHT))
+	page.add_child(header)
+
+	dialogue_ui = DialogueUIScript.new()
+	dialogue_ui.name = "DialogueUI"
+	dialogue_ui.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dialogue_ui.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	dialogue_ui.custom_minimum_size.y = 360
+	dialogue_ui.dialogue_result.connect(_on_rpg_dialogue_finished)
+	page.add_child(dialogue_ui)
+	dialogue_ui.bind_director(dialogue_director)
+
+	var footer := HBoxContainer.new()
+	footer.name = "DialogueFooter"
+	footer.add_theme_constant_override("separation", 10)
+	var back := _button("暂离对话", _leave_rpg_dialogue, false)
+	back.name = "DialogueBackButton"
+	back.custom_minimum_size.y = 46
+	footer.add_child(back)
+	footer.add_child(_label("继续 · Enter / Space    返回 · Esc", 13,
+		Color(0.70, 0.77, 0.77, 0.86)))
+	page.add_child(footer)
+
+
+func _leave_rpg_dialogue() -> void:
+	var dialogue_value: Variant = run_state.get("dialogue", {})
+	var dialogue: Dictionary = dialogue_value.duplicate(true) if dialogue_value is Dictionary else {}
+	dialogue["mode"] = "idle"
+	dialogue["combat_return_context"] = {}
+	run_state["dialogue"] = dialogue
+	feedback = "你暂时离开了这段对话；已发生的选择仍会保留。"
+	dialogue_director = null
+	dialogue_scene_id = ""
+	_sync_state_views()
+	_save_current_state("离开人物对话已自动封存")
+	_show_game()
+
+
+func _on_rpg_dialogue_finished(result: Dictionary) -> void:
+	_sync_state_views()
+	feedback = "人物对话已完成：%s" % str(result.get("result", "completed"))
+	_add_memory("你完成了人物对话【%s】。" % str(result.get("scene_id", dialogue_scene_id)))
+	_save_current_state("人物对话结果已自动封存")
+	dialogue_director = null
+	dialogue_scene_id = ""
+	_show_game()
+
+
+func _on_dialogue_combat_requested(request: Dictionary) -> void:
+	var encounter_id := str(request.get("encounter_id", "")).strip_edges()
+	if encounter_id.is_empty():
+		feedback = "这段对话试图进入战斗，但没有可识别的 encounter。"
+		_show_dialogue()
+		return
+	var profile_value: Variant = EncounterSystemScript.PROFILE_CONTRACTS.get(encounter_id, [])
+	var profile: Array = profile_value if profile_value is Array else []
+	var enemy_name := str(DIALOGUE_ENEMY_NAMES.get(encounter_id,
+		request.get("label", "对话中的来敌")))
+	var label := str(request.get("label", "对话冲突"))
+	var return_context: Dictionary = request.get("return_context", {}) if \
+		request.get("return_context", {}) is Dictionary else {}
+	var context := {
+		"source_event_id": "dialogue:%s" % dialogue_scene_id,
+		"source_choice_id": str(return_context.get("node_id", "dialogue_combat")),
+		"source_choice_text": label,
+		"encounter_id": encounter_id,
+		"base_enemy_id": encounter_id,
+		"enemy_id": encounter_id,
+		"enemy_name": enemy_name,
+		"encounter_tier": "normal",
+		"visual_profile_id": str(profile[0]) if profile.size() > 0 else "enemy.generic.unknown",
+		"weapon_profile_id": str(profile[1]) if profile.size() > 1 else "weapon.generic.unarmed",
+		"vfx_profile_id": str(profile[2]) if profile.size() > 2 else "vfx.generic.impact",
+		"motivation": "%s把对话中的分歧推进成了必须回应的战局。" % label,
+		"stakes": "这场冲突的结果会沿着原对话节点返回，并写入人物关系与年史。",
+		"victory_consequence": "你赢下这次对话冲突，得以继续追问真相。",
+		"defeat_consequence": "你在这次对话冲突中落败，旧玉记录下这笔代价。",
+		"escape_consequence": "你暂时脱离战圈，但这段对话留下的敌意没有消失。",
+	}
+	var offer := EncounterSystemScript.offer(run_state, "dialogue:%s" % dialogue_scene_id,
+		label, "%s现身。%s" % [enemy_name, str(context.motivation)], 3, context)
+	if not bool(offer.get("ok", false)):
+		feedback = "对话战斗没有建立：%s" % str(offer.get("code", "encounter_offer_failed"))
+		var dialogue_value: Variant = run_state.get("dialogue", {})
+		var dialogue: Dictionary = dialogue_value.duplicate(true) if dialogue_value is Dictionary else {}
+		dialogue["mode"] = "dialogue"
+		dialogue["combat_return_context"] = {}
+		run_state["dialogue"] = dialogue
+		_sync_state_views()
+		_show_dialogue()
+		return
+	_save_current_state("对话战斗入口已自动封存")
+	_start_combat()
+
+
+func _resume_dialogue_after_combat(outcome: String) -> bool:
+	var dialogue_value: Variant = run_state.get("dialogue", {})
+	var dialogue: Dictionary = dialogue_value if dialogue_value is Dictionary else {}
+	if str(dialogue.get("mode", "")) != "combat":
+		return false
+	if dialogue_director == null:
+		dialogue_director = DialogueDirectorScript.new()
+		var restored: Dictionary = dialogue_director.restore(run_state)
+		if not bool(restored.get("ok", false)):
+			feedback = "战斗结束，但对话返回上下文无法恢复：%s" % str(restored.get("code", "unknown"))
+			_show_game()
+			return true
+		if dialogue_scene_id.is_empty():
+			dialogue_scene_id = str(restored.get("scene_id", ""))
+		if not dialogue_director.combat_requested.is_connected(_on_dialogue_combat_requested):
+			dialogue_director.combat_requested.connect(_on_dialogue_combat_requested)
+	var result: Dictionary = dialogue_director.resume_after_combat(outcome)
+	if not bool(result.get("ok", false)):
+		feedback = "战斗结果无法回到对话：%s" % str(result.get("code", "unknown"))
+		_show_game()
+		return true
+	_sync_state_views()
+	_save_current_state("对话战斗返回已自动封存")
+	if str(result.get("kind", "")) == "finished":
+		_on_rpg_dialogue_finished(result)
+	else:
+		_show_dialogue()
+	return true
 
 
 func _build_objective_section() -> Control:
@@ -2313,12 +2637,16 @@ func _resolve_combat_result(action: String, result: Dictionary) -> void:
 			_end_current_life("胜战后寿元耗尽")
 			return
 		_save_current_state("胜战与年史已自动封存")
+		if _resume_dialogue_after_combat(outcome):
+			return
 		_show_game()
 		return
 	if outcome == "defeat":
 		feedback = "你败于%s，此世气血归零。" % str(battle.get("enemy_name", "强敌"))
 		if not story_consequence.is_empty():
 			feedback += "\n\n" + story_consequence
+		if _resume_dialogue_after_combat(outcome):
+			return
 		_end_current_life("战败身陨：%s%s" % [str(battle.get("enemy_name", "强敌")),
 			"；%s" % story_consequence if not story_consequence.is_empty() else ""])
 		return
@@ -2327,6 +2655,8 @@ func _resolve_combat_result(action: String, result: Dictionary) -> void:
 		feedback += "\n\n" + story_consequence
 		_add_memory(story_consequence)
 	_save_current_state("脱战结果已自动封存")
+	if _resume_dialogue_after_combat(outcome):
+		return
 	_show_game()
 
 
@@ -5344,6 +5674,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _return_to_menu()
+		ScreenState.DIALOGUE:
+			if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
+				if dialogue_director != null and bool(dialogue_director.active):
+					var advance_result: Dictionary = dialogue_director.advance()
+					if not bool(advance_result.get("ok", false)) and \
+						str(advance_result.get("code", "")) != "dialogue_waiting_for_combat":
+						feedback = "对话推进失败：%s" % str(advance_result.get("code", "unknown"))
+						_show_dialogue()
+			elif event.keycode == KEY_ESCAPE:
+				if dialogue_director != null and bool(dialogue_director.active):
+					_leave_rpg_dialogue()
+				else:
+					_show_game()
 		ScreenState.CULTIVATION:
 			if event.keycode >= KEY_1 and event.keycode <= KEY_3:
 				_resolve_meditation(str(CultivationScript.MEDITATION_MODE_IDS[int(event.keycode - KEY_1)]))

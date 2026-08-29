@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "feng_dunjia_name_board",
+  "title": "点名板没有先后身份",
+  "entry_node": "fd_line_01",
+  "participants": ["protagonist", "feng_dunjia"],
+  "nodes": [
+    {
+      "id": "fd_line_01",
+      "type": "line",
+      "speaker_id": "feng_dunjia",
+      "expression": "concerned",
+      "outfit": "default",
+      "text": "丰敦甲看着煤斗层的两处求救信号，没有先指向自己的儿子：点名板上没有先后身份。熟悉工位的人来分组，谁知道哪根管线会塌，就由谁决定先走哪条路。",
+      "next": "fd_choice_01"
+    },
+    {
+      "id": "fd_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "fd_choice_worker_led",
+          "text": "让熟悉工位的工人自治分组，并把危险边界写在点名板上。",
+          "next": "fd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "feng_dunjia", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "feng_dunjia_worker_led_rescue", "value": true}
+          ]
+        },
+        {
+          "id": "fd_choice_official_command",
+          "text": "由炉会代表统一下令，现场只负责执行。",
+          "next": "fd_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "feng_dunjia", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "feng_dunjia_official_command_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fd_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把炉压、工位、撤离线和交班时刻逐项写清。丰敦甲交出手里的代表印，先让现场的人确认哪一项他们愿意承担，哪一项必须停下。",
+      "next": "fd_effect_01"
+    },
+    {
+      "id": "fd_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "feng_dunjia_responsibility_delegated", "value": true},
+        {"type": "character_expression", "character_id": "feng_dunjia", "expression": "relieved"}
+      ],
+      "next": "fd_end"
+    },
+    {
+      "id": "fd_end",
+      "type": "end",
+      "result": "feng_dunjia_responsibility_delegated"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "zhu_zhen_gate_responsibility",
+  "title": "祝砧的九门手调图",
+  "entry_node": "zz_line_01",
+  "participants": ["protagonist", "zhu_zhen"],
+  "nodes": [
+    {
+      "id": "zz_line_01",
+      "type": "line",
+      "speaker_id": "zhu_zhen",
+      "expression": "focused",
+      "outfit": "lightning_engineer",
+      "text": "九门不是我的一道手。哪一门受护、哪一门失护、谁在什么时候转了柄，都要写在现场；我母亲在石浴堂，也不能让我把私心藏进总阀。",
+      "next": "zz_choice_01"
+    },
+    {
+      "id": "zz_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "zz_choice_sign_local_gate",
+          "text": "按门分配机师和可承受时限，每次转柄都由在场的人签收；有人叫停，就先保留读数再停。",
+          "next": "zz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhu_zhen", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "zhu_zhen_local_gate_signed", "value": true}
+          ]
+        },
+        {
+          "id": "zz_choice_mother_first",
+          "text": "先把石浴堂的病患撤到安全处，再决定九门降载；个人牵挂可以公开，但不能让病患替它承担隐形风险。",
+          "next": "zz_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "zhu_zhen", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "zhu_zhen_patient_transfer_first", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zz_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "firm",
+      "outfit": "default",
+      "text": "你可以把牵挂说出来，也可以把钩柄交给共同保管。只要受护地点、失护地点和下一班都留在图上，今夜的选择才不会变成某个人永远背着的功劳或罪名。",
+      "next": "zz_effect_01"
+    },
+    {
+      "id": "zz_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "zhu_zhen_responsibility_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "zhu_zhen", "expression": "relieved"}
+      ],
+      "next": "zz_end"
+    },
+    {
+      "id": "zz_end",
+      "type": "end",
+      "result": "zhu_zhen_responsibility_boundary_preserved"
+    }
+  ]
+}

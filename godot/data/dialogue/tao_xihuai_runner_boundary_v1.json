@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "tao_xihuai_runner_boundary",
+  "title": "陶细槐的路线木片",
+  "entry_node": "txh_line_01",
+  "participants": ["protagonist", "tao_xihuai"],
+  "nodes": [
+    {
+      "id": "txh_line_01",
+      "type": "line",
+      "speaker_id": "tao_xihuai",
+      "expression": "confused",
+      "outfit": "delivery_runner",
+      "text": "他们说袋里是欠薪通知，我才接的活。现在才知道里面可能让人按手印。我可以把已经跑过的路和车号交出来，但我没看过的那几行，不能算我替他们说过。",
+      "next": "txh_choice_01"
+    },
+    {
+      "id": "txh_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "txh_choice_stop_with_pay",
+          "text": "结清已完成的跑腿工钱，允许你停工并由陪同者一起说明；未送纸袋先封存，不把路线交出等同于承认内容。",
+          "next": "txh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_xihuai", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "tao_xihuai_stop_with_pay_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "txh_choice_continue_supervised",
+          "text": "让你继续按地址送件，但每袋都由成年人陪同并先逐句说明内容，再决定是否送出。",
+          "next": "txh_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "tao_xihuai", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "tao_xihuai_supervised_work_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "txh_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "你交出自己亲眼走过的路线，不等于替纸上的大人补齐意思。先结清工钱、给你陪同和停下来的选择，再按每个人真正知道的范围记录。",
+      "next": "txh_effect_01"
+    },
+    {
+      "id": "txh_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "tao_xihuai_runner_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "tao_xihuai", "expression": "relieved"}
+      ],
+      "next": "txh_end"
+    },
+    {
+      "id": "txh_end",
+      "type": "end",
+      "result": "tao_xihuai_runner_boundary_preserved"
+    }
+  ]
+}

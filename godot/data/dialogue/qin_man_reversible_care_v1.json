@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "qin_man_reversible_care",
+  "title": "眼动图卡与可逆护理令",
+  "entry_node": "qm_line_01",
+  "participants": ["protagonist", "qin_man"],
+  "nodes": [
+    {
+      "id": "qm_line_01",
+      "type": "line",
+      "speaker_id": "qin_man",
+      "expression": "alert",
+      "outfit": "default",
+      "text": "秦慢没有回答亲属的催促，只把眼睛移向床边的双面标记。护理员读出图卡：今天只确认推床、读药名和夜间叫醒，其他事情还没有得到她的回答。",
+      "next": "qm_choice_01"
+    },
+    {
+      "id": "qm_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "qm_choice_reversible_order",
+          "text": "把护理范围写成今天有效、随时可停的短令。",
+          "next": "qm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qin_man", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "qin_man_reversible_care_order", "value": true}
+          ]
+        },
+        {
+          "id": "qm_choice_family_override",
+          "text": "先按儿子的全量治疗要求执行，之后再等她表达。",
+          "next": "qm_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "qin_man", "stat": "hostility", "delta": 1},
+            {"type": "set_flag", "flag": "qin_man_family_override_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qm_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把治疗、身份核验和补贴窗口分成三张记录。秦慢再次看向停止面，护理员便停下复述，没有把沉默当成同意。",
+      "next": "qm_effect_01"
+    },
+    {
+      "id": "qm_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "qin_man_agency_recorded", "value": true},
+        {"type": "character_expression", "character_id": "qin_man", "expression": "resolute"}
+      ],
+      "next": "qm_end"
+    },
+    {
+      "id": "qm_end",
+      "type": "end",
+      "result": "qin_man_agency_recorded"
+    }
+  ]
+}

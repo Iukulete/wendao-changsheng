@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "lu_liao_midwife_ethic",
+  "title": "卢蓼的草木药",
+  "entry_node": "lla_line_01",
+  "participants": ["protagonist", "lu_liao"],
+  "nodes": [
+    {
+      "id": "lla_line_01",
+      "type": "line",
+      "speaker_id": "lu_liao",
+      "expression": "direct",
+      "outfit": "midwife_physician",
+      "text": "我的右手还能接生多久，不比四条巷子的产妇今晚有没有医师更重要。药引若要取别人的寿元，先把替代药、病人的时限和代班的人都说清楚。",
+      "next": "lla_choice_01"
+    },
+    {
+      "id": "lla_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "lla_choice_alternative_medicine",
+          "text": "先给你一夜护脉散和草木缓根剂预约，让你等到天亮；同时把两名学徒分到四条巷子，逐项写清能力边界。",
+          "next": "lla_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_liao", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "lu_liao_alternative_medicine_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "lla_choice_keep_emergency",
+          "text": "让你继续守最危险的一班，但药物、换班与最迟退出时间必须由你和学徒共同确认，不能把坚持变成无限值夜。",
+          "next": "lla_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "lu_liao", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "lu_liao_emergency_shift_recorded", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lla_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "救急不能靠一个人把手臂熬坏。你可以拒绝取寿元的药，也可以接受有期限的支持；每项资源都标明来源、用途和下一次复核。",
+      "next": "lla_effect_01"
+    },
+    {
+      "id": "lla_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "lu_liao_care_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "lu_liao", "expression": "hopeful"}
+      ],
+      "next": "lla_end"
+    },
+    {
+      "id": "lla_end",
+      "type": "end",
+      "result": "lu_liao_care_boundary_preserved"
+    }
+  ]
+}

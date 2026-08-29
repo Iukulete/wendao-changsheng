@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "gu_shuying_independent_choice",
+  "title": "顾疏萤的五下敲击",
+  "entry_node": "gsy_line_01",
+  "participants": ["protagonist", "gu_shuying"],
+  "nodes": [
+    {
+      "id": "gsy_line_01",
+      "type": "line",
+      "speaker_id": "gu_shuying",
+      "expression": "alert",
+      "outfit": "static_rest_patient",
+      "text": "她的手指在床沿敲了五下：停、再测、不要硬接。旧记录不能替她回答今天，但这句话至少说明，有一件事我现在仍能说不。",
+      "next": "gsy_choice_01"
+    },
+    {
+      "id": "gsy_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "gsy_choice_stop_city_defense",
+          "text": "先永久停止把你的脉象用于城防，再保留床边医疗支持；停止一项，不擅自扩大成停止全部治疗。",
+          "next": "gsy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_shuying", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "gu_shuying_city_defense_stopped", "value": true}
+          ]
+        },
+        {
+          "id": "gsy_choice_continue_assessment",
+          "text": "先让独立医师减去能安全减的镇静，重新解释年份、身体和支持选项，再逐项问你想保留什么。",
+          "next": "gsy_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "gu_shuying", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "gu_shuying_assessment_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gsy_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "gentle",
+      "outfit": "default",
+      "text": "你的十七年前拒绝是重要证据，却不是替你完成所有今天决定的按钮。能确认的先照做，不能确认的留下复问时间，不让旁人的悔意替你回答。",
+      "next": "gsy_effect_01"
+    },
+    {
+      "id": "gsy_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "gu_shuying_choice_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "gu_shuying", "expression": "firm"}
+      ],
+      "next": "gsy_end"
+    },
+    {
+      "id": "gsy_end",
+      "type": "end",
+      "result": "gu_shuying_choice_boundary_preserved"
+    }
+  ]
+}

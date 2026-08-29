@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "scene_id": "shan_qiuhe_safety_authority",
+  "title": "停机权要分层，责任也要分层",
+  "entry_node": "sq_line_01",
+  "participants": ["protagonist", "shan_qiuhe"],
+  "nodes": [
+    {
+      "id": "sq_line_01",
+      "type": "line",
+      "speaker_id": "shan_qiuhe",
+      "expression": "calm",
+      "outfit": "safety_shift",
+      "text": "安全权不能只写成‘当班者可停机’。当班者会被班组压力逼着不停，远端调度也可能看不见现场。红灯、两刻复查、跨炉决定，要分成三层；错误停机不罚个人，故意虚报另审。",
+      "next": "sq_choice_01"
+    },
+    {
+      "id": "sq_choice_01",
+      "type": "choice",
+      "choices": [
+        {
+          "id": "sq_choice_layered_stop",
+          "text": "让在场者先停半刻，当班安全员可停两刻并启动复查，超过两刻再交给包含受影响支管代表的跨炉安全组。",
+          "next": "sq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shan_qiuhe", "stat": "trust", "delta": 2},
+            {"type": "set_flag", "flag": "shan_qiuhe_layered_stop_recorded", "value": true}
+          ]
+        },
+        {
+          "id": "sq_choice_single_authority",
+          "text": "把停机权交给一名总安全官，避免多人同时按闸造成调度混乱，事后再追究误停责任。",
+          "next": "sq_line_02",
+          "effects": [
+            {"type": "relation_delta", "character_id": "shan_qiuhe", "stat": "respect", "delta": 1},
+            {"type": "set_flag", "flag": "shan_qiuhe_single_authority_requested", "value": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sq_line_02",
+      "type": "line",
+      "speaker_id": "protagonist",
+      "expression": "focused",
+      "outfit": "default",
+      "text": "你把三层停机权限、复查时刻、在场证人、错误成本与故意虚报另审分开写下。单秋禾保留跨炉轮值，却不掌握结算钥匙；专业判断能被使用，管理权不因此自动回到一个人手里。",
+      "next": "sq_effect_01"
+    },
+    {
+      "id": "sq_effect_01",
+      "type": "effect",
+      "effects": [
+        {"type": "set_flag", "flag": "shan_qiuhe_safety_boundary_preserved", "value": true},
+        {"type": "character_expression", "character_id": "shan_qiuhe", "expression": "relieved"}
+      ],
+      "next": "sq_end"
+    },
+    {
+      "id": "sq_end",
+      "type": "end",
+      "result": "shan_qiuhe_safety_boundary_preserved"
+    }
+  ]
+}
