@@ -50,6 +50,15 @@ REGRESSION_SCRIPTS = (
     "save_service_test.gd",
     "legacy_save_importer_test.gd",
     "main_save_integration_test.gd",
+    "ark_greybox_smoke.gd",
+    "ark_exposure_test.gd",
+    "ark_resident_gather_test.gd",
+    "ark_jade_sail_ark_test.gd",
+    "ark_jade_sail_industry_test.gd",
+	"ark_jade_sail_guest_stay_test.gd",
+	"ark_pressure_galley_test.gd",
+	"ark_reef_beast_test.gd",
+    "ark_mooring_test.gd",
     "ten_life_long_run_test.gd",
 )
 

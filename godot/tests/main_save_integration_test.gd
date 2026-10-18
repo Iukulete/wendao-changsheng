@@ -33,6 +33,23 @@ func _run() -> void:
 
 	var name_input := game.find_child("DaoNameInput", true, false) as LineEdit
 	_expect(name_input != null, "新生菜单应存在道号输入框")
+	var open_world_ark_button := game.find_child("MenuOpenWorldArkButton", true, false) as Button
+	_expect(open_world_ark_button != null and not open_world_ark_button.disabled and
+		open_world_ark_button.tooltip_text.contains("分开保存"),
+		"主菜单应提供独立的开放世界仙舟入口，并明确它与长卷存档隔离")
+	var menu_start_button := game.find_child("MenuStartButton", true, false) as Button
+	_expect(menu_start_button != null and open_world_ark_button != null and
+		menu_start_button.focus_next == open_world_ark_button.get_path() and
+		open_world_ark_button.focus_previous == menu_start_button.get_path(),
+		"键盘焦点应能从原主线入口顺畅抵达开放世界试航入口")
+	if open_world_ark_button != null:
+		var ark_connections: Array = open_world_ark_button.pressed.get_connections()
+		var ark_callable: Callable = ark_connections[0].get("callable", Callable()) if not ark_connections.is_empty() else Callable()
+		var ark_bound_arguments: Array = ark_callable.get_bound_arguments()
+		var ark_action: Callable = ark_bound_arguments[0] if not ark_bound_arguments.is_empty() else Callable()
+		_expect(ark_callable.is_valid() and ark_callable.get_method() == "_activate_button" and
+			ark_action.is_valid() and ark_action.get_method() == "_enter_open_world_ark",
+			"主菜单的开放世界入口必须连到真实切片启动器")
 	var empty_continue_button := game.find_child("ContinueButton", true, false) as Button
 	_expect(empty_continue_button != null and empty_continue_button.disabled and
 		empty_continue_button.focus_mode == Control.FOCUS_NONE,
@@ -169,6 +186,25 @@ func _run() -> void:
 	game.call("_show_inventory")
 	_expect(game.find_child("InventoryBackButton", true, false) != null,
 		"行囊界面必须提供明确返回动作")
+	game.call("_show_game")
+	game.call("_open_survival")
+	var exploration_button := game.find_child("EnterArkExplorationButton", true, false) as Button
+	_expect(exploration_button != null and not exploration_button.disabled,
+		"仙舟管理页必须提供可见的3D实地探索入口")
+	if exploration_button != null:
+		var launch_connections: Array = exploration_button.pressed.get_connections()
+		_expect(not launch_connections.is_empty(), "3D实地探索入口必须有实际动作")
+		if not launch_connections.is_empty():
+			var launch_callable: Callable = launch_connections[0].get("callable", Callable())
+			var bound_arguments: Array = launch_callable.get_bound_arguments()
+			var action_callable: Callable = bound_arguments[0] if not bound_arguments.is_empty() else Callable()
+			_expect(action_callable.is_valid() and action_callable.get_method() == "_enter_ark_exploration",
+				"3D入口必须启动独立开放世界切片，而不是旧的回合制动作")
+	var ark_packed := load("res://scenes/ark_greybox.tscn") as PackedScene
+	_expect(ark_packed != null, "仙舟管理页链接的3D场景必须可加载")
+	var saved_survival: Dictionary = (game.get("run_state") as Dictionary).get("survival", {})
+	_expect(bool(saved_survival.get("in_mode", false)), "打开3D探索前应封存当前仙舟行程，以便返回后继续")
+	game.call("_leave_survival")
 	game.call("_show_game")
 	EncounterSystemScript.offer(game.get("run_state"), "integration", "回归敌踪", "用于验证战斗入口只在有敌情时开放。")
 	game.call("_show_game")

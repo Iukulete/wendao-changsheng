@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128" shape-rendering="crispEdges">
+  <!-- Original 24x32 pixel-grid character study for a 3D-world / pixel-character prototype. -->
+  <g>
+    <!-- Hair ribbon -->
+    <rect x="18" y="8" width="18" height="8" fill="#a83238"/><rect x="14" y="4" width="10" height="8" fill="#d9574f"/>
+    <rect x="32" y="4" width="10" height="8" fill="#d9574f"/><rect x="24" y="8" width="12" height="8" fill="#c34143"/>
+    <rect x="16" y="12" width="8" height="4" fill="#7c2934"/><rect x="34" y="12" width="8" height="4" fill="#7c2934"/>
+    <!-- Hair silhouette and face -->
+    <rect x="28" y="12" width="40" height="8" fill="#392934"/><rect x="20" y="20" width="56" height="24" fill="#392934"/>
+    <rect x="24" y="20" width="48" height="36" fill="#e9b995"/><rect x="28" y="52" width="40" height="8" fill="#e9b995"/>
+    <rect x="24" y="20" width="12" height="20" fill="#392934"/><rect x="64" y="20" width="12" height="24" fill="#392934"/>
+    <rect x="32" y="16" width="36" height="8" fill="#51313a"/><rect x="40" y="24" width="24" height="4" fill="#6a3942"/>
+    <rect x="28" y="36" width="8" height="20" fill="#51313a"/><rect x="64" y="36" width="8" height="20" fill="#51313a"/>
+    <!-- Pixel eyes, warm blush, small calm mouth -->
+    <rect x="36" y="36" width="4" height="8" fill="#342936"/><rect x="56" y="36" width="4" height="8" fill="#342936"/>
+    <rect x="36" y="36" width="2" height="2" fill="#fff0d4"/><rect x="56" y="36" width="2" height="2" fill="#fff0d4"/>
+    <rect x="32" y="48" width="8" height="4" fill="#d9887f"/><rect x="56" y="48" width="8" height="4" fill="#d9887f"/>
+    <rect x="44" y="52" width="8" height="2" fill="#a65b5a"/>
+    <!-- Neck and crossed collar -->
+    <rect x="40" y="56" width="16" height="12" fill="#d89d7b"/>
+    <rect x="32" y="60" width="32" height="8" fill="#f2e4ca"/><rect x="44" y="60" width="8" height="16" fill="#b53a40"/>
+    <!-- Red robe, broad sleeves and pale cuff highlights -->
+    <rect x="24" y="68" width="48" height="24" fill="#b83a42"/><rect x="16" y="72" width="16" height="20" fill="#c84c4e"/>
+    <rect x="64" y="72" width="16" height="20" fill="#c84c4e"/><rect x="12" y="88" width="20" height="8" fill="#ead9bd"/>
+    <rect x="64" y="88" width="20" height="8" fill="#ead9bd"/><rect x="28" y="72" width="8" height="16" fill="#d45a54"/>
+    <rect x="60" y="72" width="8" height="16" fill="#8e303b"/>
+    <!-- Sash, skirt panels, embroidered hem -->
+    <rect x="28" y="84" width="40" height="8" fill="#e3bd82"/><rect x="44" y="84" width="8" height="8" fill="#f4e2bd"/>
+    <rect x="24" y="92" width="48" height="20" fill="#b83a42"/><rect x="20" y="100" width="56" height="12" fill="#c84c4e"/>
+    <rect x="28" y="96" width="8" height="16" fill="#8e303b"/><rect x="60" y="96" width="8" height="16" fill="#8e303b"/>
+    <rect x="20" y="112" width="56" height="4" fill="#ead9bd"/><rect x="28" y="116" width="40" height="4" fill="#d7b47f"/>
+    <!-- Legs and dark cloth boots -->
+    <rect x="32" y="112" width="12" height="8" fill="#e3bd82"/><rect x="52" y="112" width="12" height="8" fill="#e3bd82"/>
+    <rect x="28" y="120" width="20" height="8" fill="#342936"/><rect x="48" y="120" width="20" height="8" fill="#342936"/>
+    <rect x="32" y="120" width="8" height="4" fill="#60414a"/><rect x="52" y="120" width="8" height="4" fill="#60414a"/>
+    <!-- Tiny travel charm -->
+    <rect x="68" y="64" width="4" height="16" fill="#d4ae69"/><rect x="68" y="76" width="8" height="8" fill="#73958a"/>
+  </g>
+</svg>

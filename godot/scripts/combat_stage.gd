@@ -1587,11 +1587,11 @@ func debug_validate_sprite_animation_contract() -> Dictionary:
 				for frame_value in (frames_value as Array):
 					if int(frame_value) < 0 or int(frame_value) >= columns * rows:
 						failures.append("sprite_frame_out_of_range:%s:%s" % [identity, clip_id])
-		return {
-			"ok": failures.is_empty(),
-			"failures": failures,
-			"character_count": (characters_value as Dictionary).size() if characters_value is Dictionary else 0,
-		}
+	return {
+		"ok": failures.is_empty(),
+		"failures": failures,
+		"character_count": (characters_value as Dictionary).size() if characters_value is Dictionary else 0,
+	}
 
 
 func debug_validate_party_art_contract() -> Dictionary:

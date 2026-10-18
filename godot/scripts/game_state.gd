@@ -103,6 +103,7 @@ static func create_new_game(dao_name: String, seed_value: int = 0,
 			"current": {},
 			"history": [],
 		},
+			"survival": {},
 		"dungeon": {
 			"active": false,
 			"run": {},
@@ -307,6 +308,7 @@ static func ensure_v2(snapshot: Dictionary) -> Dictionary:
 	state["combat"] = _merge_defaults(state.get("combat", {}), {
 		"active": false, "current": {}, "history": [],
 	})
+	state["survival"] = state.get("survival", {}).duplicate(true) if state.get("survival", {}) is Dictionary else {}
 	state["dungeon"] = _merge_defaults(state.get("dungeon", {}), {
 		"active": false, "run": {}, "history": [], "clues": 0,
 		"clue_source": "", "last_entered_generation": 0,

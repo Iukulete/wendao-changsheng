@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="128" viewBox="0 0 96 128" shape-rendering="crispEdges">
+  <!-- Original companion variation; same pixel scale, cooler traveler's palette. -->
+  <g>
+    <!-- Headband and dark bob -->
+    <rect x="28" y="12" width="40" height="8" fill="#303944"/><rect x="20" y="20" width="56" height="32" fill="#303944"/>
+    <rect x="24" y="20" width="48" height="36" fill="#e3b596"/><rect x="20" y="24" width="8" height="28" fill="#303944"/>
+    <rect x="68" y="24" width="8" height="32" fill="#303944"/><rect x="28" y="16" width="40" height="8" fill="#45515b"/>
+    <rect x="24" y="20" width="48" height="8" fill="#6f9992"/><rect x="44" y="20" width="8" height="8" fill="#d9c59f"/>
+    <rect x="32" y="28" width="28" height="8" fill="#3b444f"/><rect x="28" y="36" width="8" height="16" fill="#3b444f"/>
+    <!-- Clear expression -->
+    <rect x="36" y="36" width="4" height="8" fill="#282d37"/><rect x="56" y="36" width="4" height="8" fill="#282d37"/>
+    <rect x="36" y="36" width="2" height="2" fill="#fff0d4"/><rect x="56" y="36" width="2" height="2" fill="#fff0d4"/>
+    <rect x="44" y="52" width="8" height="2" fill="#985e59"/>
+    <!-- Neck and layered storm coat -->
+    <rect x="40" y="56" width="16" height="12" fill="#d89d7b"/><rect x="28" y="60" width="40" height="28" fill="#536771"/>
+    <rect x="16" y="68" width="20" height="20" fill="#647d82"/><rect x="60" y="68" width="20" height="20" fill="#647d82"/>
+    <rect x="36" y="60" width="12" height="24" fill="#e0d2b7"/><rect x="48" y="60" width="12" height="24" fill="#384852"/>
+    <rect x="24" y="84" width="48" height="8" fill="#c69a59"/><rect x="44" y="84" width="8" height="8" fill="#e6cf9c"/>
+    <!-- Coat tails, cuffs and boots -->
+    <rect x="24" y="92" width="48" height="20" fill="#536771"/><rect x="20" y="104" width="56" height="8" fill="#647d82"/>
+    <rect x="12" y="84" width="20" height="8" fill="#e0d2b7"/><rect x="64" y="84" width="20" height="8" fill="#e0d2b7"/>
+    <rect x="32" y="112" width="12" height="8" fill="#d9c59f"/><rect x="52" y="112" width="12" height="8" fill="#d9c59f"/>
+    <rect x="28" y="120" width="20" height="8" fill="#303944"/><rect x="48" y="120" width="20" height="8" fill="#303944"/>
+    <!-- Old buoy-token satchel -->
+    <rect x="68" y="72" width="12" height="20" fill="#8e704e"/><rect x="72" y="76" width="8" height="8" fill="#79a69e"/>
+    <rect x="72" y="76" width="4" height="4" fill="#d8e0bd"/>
+  </g>
+</svg>

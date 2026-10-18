@@ -43,5 +43,6 @@ Desktop.ini
 godot/.godot/
 tools/godot/
 tools/gh/
+/.tools/
 .tmp/
 .local/

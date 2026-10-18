@@ -134,11 +134,25 @@ $testScripts = @(
     "res://tests/save_service_test.gd",
     "res://tests/legacy_save_importer_test.gd",
     "res://tests/main_save_integration_test.gd",
+	"res://tests/ark_navigation_test.gd",
+	"res://tests/ark_refuge_test.gd",
+		"res://tests/ark_exposure_test.gd",
+		"res://tests/ark_resident_gather_test.gd",
+		"res://tests/ark_jade_sail_ark_test.gd",
+		"res://tests/ark_jade_sail_industry_test.gd",
+		"res://tests/ark_jade_sail_guest_stay_test.gd",
+			"res://tests/ark_pressure_galley_test.gd",
+	"res://tests/ark_reef_surge_test.gd",
+		"res://tests/ark_reef_beast_test.gd",
+		"res://tests/ark_world_travel_test.gd",
+			"res://tests/ark_mooring_test.gd",
+		"res://tests/ark_greybox_smoke.gd",
     "res://tests/ten_life_long_run_test.gd"
 )
 foreach ($testScript in $testScripts) {
     Write-Host "Running Godot regression: $testScript"
-    $testOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after 600 --script $testScript 2>&1)
+	$quitAfterFrames = if ($testScript -eq "res://tests/ark_world_travel_test.gd") { 30000 } elseif ($testScript -eq "res://tests/ark_mooring_test.gd") { 10000 } else { 600 }
+    $testOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after $quitAfterFrames --script $testScript 2>&1)
     $testExitCode = $LASTEXITCODE
     $testOutput | ForEach-Object { Write-Host $_ }
     $testText = $testOutput | Out-String

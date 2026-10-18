@@ -25,6 +25,7 @@ IMAGE_SUFFIXES = {
     ".svg",
     ".webp",
 }
+NON_PRODUCT_ART_DIRS = {"candidates", "concepts", "references"}
 SUPPORTED_SOURCE_TYPES = {"generated", "curated"}
 SUPPORTED_RELEASE_STATUSES = {
     "approved",
@@ -500,9 +501,10 @@ def main() -> int:
         if (
             path.is_file()
             and path.suffix.lower() in IMAGE_SUFFIXES
-            # Candidate images are deliberately versioned staging artifacts;
-            # they enter the manifest only after visual and technical gates.
-            and "candidates" not in path.relative_to(ART_ROOT).parts
+            # Staging, concept, and reference art is not part of the shippable runtime inventory.
+            and not (NON_PRODUCT_ART_DIRS & set(path.relative_to(ART_ROOT).parts))
+            # The HD-2D SVG studies are rasterized by a dedicated concept test; they are not runtime art.
+            and not (path.suffix.lower() == ".svg" and path.parent == ART_ROOT / "characters" and path.name.startswith("hd2d_"))
         )
     }
     missing = sorted(registered_paths - actual_paths)

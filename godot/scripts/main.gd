@@ -28,6 +28,8 @@ const DialogueRepositoryScript = preload("res://scripts/dialogue/dialogue_reposi
 const DialogueDirectorScript = preload("res://scripts/dialogue/dialogue_director.gd")
 const DialogueUIScript = preload("res://scripts/dialogue/dialogue_ui.gd")
 const DialoguePortraitControllerScript = preload("res://scripts/dialogue/portrait_controller.gd")
+const IslandSurvivalScript = preload("res://scripts/survival_system.gd")
+const IslandMapViewScript = preload("res://scripts/island_map_view.gd")
 
 const DIALOGUE_ENEMY_NAMES := {
 	"star_echo_hunter": "星网猎忆者",
@@ -82,7 +84,7 @@ const DEFAULT_PLAYER := {
 
 enum ScreenState {
 	MENU, GAME, DIALOGUE, EVENT, EVENT_RESULT, JOURNAL, REINCARNATION, INVENTORY, COMBAT, ARMORY,
-	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE,
+	DUNGEON_ROUTE, DUNGEON_COMBAT, AUDIO_SETTINGS, CULTIVATION, OBJECTIVE, SURVIVAL, ARK_INTERIOR,
 }
 
 var state: ScreenState = ScreenState.MENU
@@ -157,6 +159,8 @@ func _refresh_screen_layout(expected_state: ScreenState) -> void:
 		ScreenState.REINCARNATION: _show_reincarnation()
 		ScreenState.AUDIO_SETTINGS: _show_audio_settings()
 		ScreenState.INVENTORY: _show_inventory()
+		ScreenState.SURVIVAL: _show_survival()
+		ScreenState.ARK_INTERIOR: _show_ark_interior()
 
 
 func _run_audio_device_music_smoke() -> void:
@@ -491,6 +495,11 @@ func _show_menu() -> void:
 	start_button.name = "MenuStartButton"
 	start_button.custom_minimum_size = Vector2(430, 48)
 	action_column.add_child(start_button)
+	var open_world_ark_button := _button("登上仙舟 · 开放世界试航", _enter_open_world_ark, false)
+	open_world_ark_button.name = "MenuOpenWorldArkButton"
+	open_world_ark_button.custom_minimum_size = Vector2(430, 48)
+	open_world_ark_button.tooltip_text = "进入独立的 3D 家园生存切片；此存档与六纪元长卷分开保存。"
+	action_column.add_child(open_world_ark_button)
 	name_input.text_submitted.connect(func(_submitted_text: String) -> void:
 		_start_new_game(name_input)
 	)
@@ -533,6 +542,10 @@ func _show_menu() -> void:
 	exit_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	secondary_actions.add_child(exit_button)
 	action_column.add_child(secondary_actions)
+	start_button.focus_next = open_world_ark_button.get_path()
+	open_world_ark_button.focus_previous = start_button.get_path()
+	open_world_ark_button.focus_next = secondary_actions.get_child(0).get_path()
+	secondary_actions.get_child(0).focus_previous = open_world_ark_button.get_path()
 	var save_status := menu_notice if not menu_notice.is_empty() else str(save_probe.get("message", ""))
 	var status_label := _label(save_status, 14,
 		Color("e9c67a") if not can_continue and save_probe.get("code", "") == "corrupt_save" else Color(0.72, 0.76, 0.78, 0.84),
@@ -555,6 +568,18 @@ func _show_menu() -> void:
 
 func _quit_game() -> void:
 	get_tree().quit()
+
+
+func _enter_open_world_ark() -> void:
+	var scene_path := "res://scenes/ark_greybox.tscn"
+	if not ResourceLoader.exists(scene_path):
+		menu_notice = "开放世界仙舟切片暂时不可用；六纪元存档没有受到影响。"
+		_show_menu()
+		return
+	var change_error := get_tree().change_scene_to_file(scene_path)
+	if change_error != OK:
+		menu_notice = "开放世界仙舟切片暂时无法打开；六纪元存档没有受到影响。"
+		_show_menu()
 
 
 func _start_new_game(name_input: LineEdit) -> void:
@@ -592,6 +617,8 @@ func _continue_game() -> void:
 		_show_dungeon()
 	elif CombatSystemScript.has_active_combat(run_state):
 		_show_combat()
+	elif bool((run_state.get("survival", {}) as Dictionary).get("in_mode", false)):
+		_show_survival()
 	elif _resume_saved_dialogue():
 		return
 	else:
@@ -1005,6 +1032,7 @@ func _build_secondary_navigation(compact: bool = false) -> Control:
 	grid.add_theme_constant_override("h_separation", 7)
 	grid.add_theme_constant_override("v_separation", 7)
 	var entries := [
+			["仙舟避世", _open_survival, "IslandSurvivalButton"],
 		["准备", _show_inventory, "InventoryButton"],
 		["传承", _show_armory, "ArmoryButton"],
 		["记录", _show_journal, "JournalButton"],
@@ -1020,6 +1048,404 @@ func _build_secondary_navigation(compact: bool = false) -> Control:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(button)
 	return grid
+
+
+func _open_survival() -> void:
+	var survival: Dictionary = run_state.get("survival", {})
+	if survival.is_empty() or not bool(survival.get("active", false)):
+		survival = IslandSurvivalScript.new_run(int(run_state.get("world_seed", 1)))
+	else:
+		survival = IslandSurvivalScript.normalize(survival)
+	survival["in_mode"] = true
+	run_state["survival"] = survival
+	_save_current_state("灵潮孤岛进度已封存")
+	_show_survival()
+
+
+func _show_survival() -> void:
+	var survival: Dictionary = IslandSurvivalScript.normalize(run_state.get("survival", {}))
+	survival["in_mode"] = true
+	run_state["survival"] = survival
+	state = ScreenState.SURVIVAL
+	_set_audio_context("world")
+	_clear_screen()
+	_apply_era_visuals("res://art/scenes/lantern_river_spirit_bazaar.png")
+
+	var page := VBoxContainer.new()
+	page.name = "IslandSurvivalPage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 12)
+	screen_host.add_child(page)
+
+	var header := _panel(0.84, Color("62b5a4"))
+	header.name = "IslandSurvivalHeader"
+	header.custom_minimum_size.y = 88
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 18)
+	header.add_child(header_row)
+	var heading := VBoxContainer.new()
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(_display_label("木筏仙舟 · 第 %d 日" % int(survival.day), 28, Color("f4e5b7")))
+	heading.add_child(_label("从几块浮木开始，建起能挡住灵潮的家。搜集材料、迎回同伴，让这艘舟慢慢有了灯火。", 15, Color("dce9df")))
+	header_row.add_child(heading)
+	var leave := _button("返回山河", _leave_survival, false)
+	leave.name = "IslandSurvivalLeaveButton"
+	leave.custom_minimum_size = Vector2(150, 48)
+	header_row.add_child(leave)
+	page.add_child(header)
+
+	var narrow_layout := screen_host.size.x < 1120.0
+	var body: BoxContainer = VBoxContainer.new() if narrow_layout else HBoxContainer.new()
+	body.name = "IslandSurvivalBody"
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 14)
+	if narrow_layout:
+		var scroll := ScrollContainer.new()
+		scroll.name = "IslandSurvivalScroll"
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.add_child(body)
+		page.add_child(scroll)
+	else:
+		page.add_child(body)
+
+	var map_panel := _panel(0.79, Color("62b5a4"))
+	map_panel.name = "IslandMapPanel"
+	map_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	map_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if narrow_layout:
+		map_panel.custom_minimum_size.y = 290
+	body.add_child(map_panel)
+	var map_view := IslandMapViewScript.new()
+	map_view.name = "IslandMapView"
+	map_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	map_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if narrow_layout:
+		map_view.custom_minimum_size = Vector2(360, 270)
+	map_view.node_selected.connect(_select_survival_node)
+	map_view.set_map(survival.nodes, str(survival.selected_node_id), int(survival.day))
+	map_panel.add_child(map_view)
+
+	var side := _panel(0.84, Color("c8a965"))
+	side.name = "IslandManagementPanel"
+	side.custom_minimum_size.x = 380
+	side.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(side)
+	var column := VBoxContainer.new()
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_theme_constant_override("separation", 8)
+	side.add_child(column)
+	column.add_child(_section_title("仙舟状态"))
+	column.add_child(_label("木筏 Lv.%d　护舟 %s" % [int(survival.shelter_level), _shelter_condition(int(survival.shelter_level))], 17, Color("f1dfad")))
+	column.add_child(_label("行动 %d/%d　灵潮 %d%%　体力 %d%%" % [int(survival.actions_left), IslandSurvivalScript.ACTIONS_PER_DAY, int(survival.tide), int(survival.vitality)], 15, Color("dce9df")))
+	var ark: Dictionary = survival.get("ark", {})
+	column.add_child(_label("同行者 %d　舟身耐久 %d%%" % [int(survival.survivors), int(ark.get("durability", 62))], 15, Color("dce9df")))
+	var exploration := _main_action_button("踏上实地 · 3D 自由探索", _enter_ark_exploration, true)
+	exploration.name = "EnterArkExplorationButton"
+	exploration.tooltip_text = "进入独立保存的实地灰盒；不会消耗此处的每日行动，也不改写旧仙舟进度。"
+	column.add_child(exploration)
+	var interior := _main_action_button("进入仙舟 · 看看家里", _open_ark_interior, true)
+	interior.name = "EnterArkInteriorButton"
+	column.add_child(interior)
+	var resources := _label(IslandSurvivalScript.resource_summary(survival), 14, Color("d6e5d9"))
+	resources.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(resources)
+	column.add_child(_divider())
+	var selected: Dictionary = IslandSurvivalScript.node_by_id(survival, str(survival.selected_node_id))
+	column.add_child(_section_title(str(selected.get("name", "未选地点"))))
+	var detail := _label(_survival_node_detail(selected), 14, Color("e4e5d8"))
+	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(detail)
+	var danger := int(selected.get("danger", 0))
+	var danger_names := ["零星异常", "妖影活动", "凶兽盘踞", "极高危域", "近乎绝境"]
+	var danger_hint := "附近暂未察觉明显威胁" if danger == 0 else str(danger_names[clampi(danger - 1, 0, danger_names.size() - 1)])
+	var risk_label := _label("风险参考 %d/5 · %s（仍可前往）" % [danger, danger_hint], 13,
+		Color("e5a38c") if danger >= 4 else Color("e8cc88"))
+	risk_label.name = "RegionRiskHint"
+	column.add_child(risk_label)
+	_build_survival_actions(column, selected, survival)
+	column.add_child(_divider())
+	column.add_child(_section_title("岛上记事"))
+	var log := RichTextLabel.new()
+	log.name = "IslandSurvivalLog"
+	log.bbcode_enabled = true
+	log.fit_content = true
+	log.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	log.add_theme_font_size_override("normal_font_size", 14)
+	var entries: Array = survival.get("log", [])
+	log.text = "\n".join(entries.slice(maxi(0, entries.size() - 4)))
+	column.add_child(log)
+
+	var footer := _panel(0.72, Color("62b5a4"))
+	footer.name = "IslandSurvivalFooter"
+	footer.custom_minimum_size.y = 48
+	var footer_text := "每天三次外出行动。升级舟身可解锁舱室、增加避难容量；入夜前回家吃一顿热饭。"
+	if bool(survival.escaped):
+		footer_text = "信标已点亮。远方的灵舟看见了这里的灯火——这艘木筏也已经是一个家。"
+	elif bool(survival.failed):
+		footer_text = "舟身抵不住灵潮，旅程中止。重启可以从另一条探索路线再搭起一个家。"
+	var footer_label := _label(footer_text, 15, Color("e6eadc"), HORIZONTAL_ALIGNMENT_CENTER)
+	footer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	footer.add_child(footer_label)
+	page.add_child(footer)
+
+
+func _select_survival_node(node_id: String) -> void:
+	var survival: Dictionary = run_state.get("survival", {})
+	survival["selected_node_id"] = node_id
+	run_state["survival"] = survival
+	_show_survival()
+
+
+func _build_survival_actions(column: VBoxContainer, selected: Dictionary, survival: Dictionary) -> void:
+	if bool(survival.escaped) or bool(survival.failed):
+		var restart := _main_action_button("重新启程", _restart_survival, true)
+		restart.name = "RestartIslandButton"
+		column.add_child(restart)
+		return
+	var node_id := str(selected.get("id", ""))
+	var explored := bool(selected.get("explored", false))
+	var revealed := bool(selected.get("revealed", false))
+	var actions_left := int(survival.actions_left)
+	if revealed and not explored:
+		var explore := _main_action_button("踏入并搜查", _perform_survival_action.bind("explore"), true)
+		explore.name = "ExploreIslandNodeButton"
+		explore.disabled = actions_left <= 0
+		column.add_child(explore)
+	if explored and node_id not in ["camp", "beacon"] and int(selected.get("gathered_day", 0)) != int(survival.day):
+		var gather := _main_action_button("采集今日材料", _perform_survival_action.bind("gather"), true)
+		gather.name = "GatherIslandMaterialsButton"
+		gather.disabled = actions_left <= 0
+		column.add_child(gather)
+	if node_id == "shelter" and explored and not bool(survival.survivor_rescued):
+		var rescue := _main_action_button("用灵草救出阵师", _perform_survival_action.bind("rescue"), false)
+		rescue.name = "RescueIslandSurvivorButton"
+		rescue.disabled = actions_left <= 0 or int((survival.resources as Dictionary).get("herb", 0)) < 1
+		column.add_child(rescue)
+	if node_id == "camp":
+		var upgrade := _main_action_button("加固营地", _perform_survival_action.bind("upgrade"), false)
+		upgrade.name = "UpgradeIslandShelterButton"
+		var level := int(survival.shelter_level)
+		upgrade.disabled = actions_left <= 0 or level >= 3 or not _survival_can_pay(survival, {"wood": 3, "stone": 2} if level == 1 else {"wood": 5, "stone": 4, "ore": 1})
+		column.add_child(upgrade)
+	if node_id == "beacon" and explored and not bool(survival.beacon_repaired):
+		var repair := _main_action_button("修复孤灯信标", _perform_survival_action.bind("repair_beacon"), true)
+		repair.name = "RepairIslandBeaconButton"
+		repair.disabled = actions_left <= 0 or not bool(survival.survivor_rescued) or not _survival_can_pay(survival, {"wood": 4, "stone": 3, "ore": 2, "crystal": 1})
+		column.add_child(repair)
+	var end_day := _main_action_button("结束今日 · 休整", _perform_survival_action.bind("end_day"), false)
+	end_day.name = "EndIslandDayButton"
+	column.add_child(end_day)
+
+
+func _perform_survival_action(action_id: String) -> void:
+	var survival: Dictionary = run_state.get("survival", {})
+	var result: Dictionary = IslandSurvivalScript.perform(survival, action_id, str(survival.get("selected_node_id", "")))
+	if not bool(result.get("ok", false)):
+		return
+	run_state["survival"] = result.run
+	_save_current_state("孤岛远征已封存")
+	_show_survival()
+
+
+func _restart_survival() -> void:
+	var survival: Dictionary = run_state.get("survival", {})
+	var seed_value := int(survival.get("seed", run_state.get("world_seed", 1))) + 1
+	run_state["survival"] = IslandSurvivalScript.new_run(seed_value)
+	_save_current_state("新的孤岛远征已开始")
+	_show_survival()
+
+
+func _leave_survival() -> void:
+	var survival: Dictionary = run_state.get("survival", {})
+	survival["in_mode"] = false
+	run_state["survival"] = survival
+	_save_current_state("孤岛远征已封存")
+	_show_game()
+
+
+func _enter_ark_exploration() -> void:
+	var survival: Dictionary = IslandSurvivalScript.normalize(run_state.get("survival", {}))
+	survival["in_mode"] = true
+	run_state["survival"] = survival
+	if not _save_current_state("仙舟行程已封存，开启实地探索"):
+		feedback = save_notice
+		_show_survival()
+		return
+	var scene_path := "res://scenes/ark_greybox.tscn"
+	if not ResourceLoader.exists(scene_path):
+		feedback = "3D 实地切片场景缺失，旧行程已保留。"
+		_show_survival()
+		return
+	var change_error := get_tree().change_scene_to_file(scene_path)
+	if change_error != OK:
+		feedback = "3D 实地切片暂时无法打开；旧仙舟行程仍已封存。"
+		_show_survival()
+
+
+func _open_ark_interior() -> void:
+	state = ScreenState.ARK_INTERIOR
+	_set_audio_context("world")
+	_show_ark_interior()
+
+
+func _show_ark_interior() -> void:
+	var survival: Dictionary = IslandSurvivalScript.normalize(run_state.get("survival", {}))
+	var ark: Dictionary = survival.get("ark", {})
+	state = ScreenState.ARK_INTERIOR
+	_clear_screen()
+	_apply_era_visuals("res://art/scenes/lantern_river_spirit_bazaar.png")
+	var page := VBoxContainer.new()
+	page.name = "ArkInteriorPage"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override("separation", 14)
+	screen_host.add_child(page)
+
+	var header := _panel(0.88, Color("d5a85f"))
+	header.custom_minimum_size.y = 104
+	var header_row := HBoxContainer.new()
+	header_row.add_theme_constant_override("separation", 18)
+	header.add_child(header_row)
+	var title_stack := VBoxContainer.new()
+	title_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_stack.add_child(_display_label("%s · 舟中一夜" % str(ark.get("name", "无名木筏")), 29, Color("f4e5b7")))
+	title_stack.add_child(_label("外面是逐渐逼近的灵潮，里面是你亲手钉起来的一盏灯。", 15, Color("dce9df")))
+	header_row.add_child(title_stack)
+	var return_button := _button("回到海岛", _show_survival, false)
+	return_button.name = "ReturnToIslandButton"
+	return_button.custom_minimum_size = Vector2(145, 48)
+	header_row.add_child(return_button)
+	page.add_child(header)
+
+	var body := HBoxContainer.new()
+	body.name = "ArkInteriorBody"
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 14)
+	page.add_child(body)
+	var cabin := _panel(0.90, Color("d5a85f"))
+	cabin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cabin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(cabin)
+	var cabin_column := VBoxContainer.new()
+	cabin_column.add_theme_constant_override("separation", 12)
+	cabin.add_child(cabin_column)
+	cabin_column.add_child(_section_title("此刻的家"))
+	var rooms: Array = ark.get("rooms", ["deck"])
+	var room_titles := {"deck": "避风甲板", "cabin": "小小舱房", "galley": "温暖灶间"}
+	var room_lines := {
+		"deck": "几块新旧木板被麻绳与阵钉固定在一起。雨水沿着船舷滴落，但你已经知道下一块板该钉在哪里。",
+		"cabin": "窄舱里铺着旧毯，有人把捡来的贝壳放在窗边。风浪响起时，这里终于能让人睡个安稳觉。",
+		"galley": "小灶台上有一口缺了边的锅。灵火很弱，却足够把今日的口粮煮成一顿热饭。",
+	}
+	for room_id in rooms:
+		var room_id_text := str(room_id)
+		var room_panel := _panel(0.62, Color("62b5a4"))
+		room_panel.custom_minimum_size.y = 96
+		var room_box := VBoxContainer.new()
+		room_box.add_child(_label(str(room_titles.get(room_id_text, room_id_text)), 18, Color("f1dfad")))
+		var room_text := _label(str(room_lines.get(room_id_text, "舟身仍在慢慢长大。")), 14, Color("dce9df"))
+		room_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		room_box.add_child(room_text)
+		room_panel.add_child(room_box)
+		cabin_column.add_child(room_panel)
+	var house_status := _label("舟身耐久 %d%%　·　舟上心气 %d%%　·　体力 %d%%" % [int(ark.get("durability", 62)), int(ark.get("mood", 68)), int(survival.vitality)], 15, Color("dce9df"))
+	cabin_column.add_child(house_status)
+	cabin_column.add_child(_label(IslandSurvivalScript.resource_summary(survival), 13, Color("d6e5d9")))
+	var meal := _main_action_button("围炉分一碗热粥 · 消耗口粮", _perform_survival_action.bind("share_meal"), true)
+	meal.name = "ShareArkMealButton"
+	meal.disabled = int((survival.resources as Dictionary).get("food", 0)) < 1
+	cabin_column.add_child(meal)
+
+	var people := _panel(0.86, Color("c8a965"))
+	people.custom_minimum_size.x = 350
+	people.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(people)
+	var people_column := VBoxContainer.new()
+	people_column.add_theme_constant_override("separation", 11)
+	people.add_child(people_column)
+	people_column.add_child(_section_title("舟上有人"))
+	var residents: Array = ark.get("residents", [])
+	if residents.is_empty():
+		var empty_note := _label("空舱里只有风声。海岛上的避难所可能还困着人。", 15, Color("dce9df"))
+		empty_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		people_column.add_child(empty_note)
+	else:
+		for resident_value in residents:
+			var resident: Dictionary = resident_value
+			var person_card := _panel(0.58, Color("d5a85f"))
+			var person_box := VBoxContainer.new()
+			person_box.add_child(_label("%s · %s" % [str(resident.get("name", "同伴")), str(resident.get("role", "旅人"))], 19, Color("f4e5b7")))
+			person_box.add_child(_label("心情 %d%%　·　信任 %d%%" % [int(resident.get("mood", 50)), int(resident.get("bond", 0))], 14, Color("dce9df")))
+			var schedule := _resident_schedule(resident, int(survival.day))
+			var schedule_label := _label(schedule, 14, Color("dce9df"))
+			schedule_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			person_box.add_child(schedule_label)
+			var person_quote := _label(_resident_quote(resident, survival), 14, Color("e5d6ad"))
+			person_quote.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			person_box.add_child(person_quote)
+			person_card.add_child(person_box)
+			people_column.add_child(person_card)
+		var talk := _main_action_button("坐下来聊一会", _perform_survival_action.bind("talk"), false)
+		talk.name = "TalkToArkResidentButton"
+		talk.disabled = residents.is_empty() or int(residents[0].get("last_talk_day", 0)) == int(survival.day)
+		people_column.add_child(talk)
+	var memory := _label("你离开的每一天，家里都有人等你回来。", 14, Color("e5d6ad"))
+	memory.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	people_column.add_child(memory)
+
+
+func _resident_schedule(resident: Dictionary, day: int) -> String:
+	var phase := (day + int(resident.get("bond", 0)) / 20) % 3
+	match str(resident.get("role", "")):
+		"阵师":
+			return ["今早在甲板补阵钉，午后查看舟底裂缝。", "正在舱边刻新阵纹，偶尔抬头看你回来没有。", "她抱着阵盘守在船头，听潮声判断明日风向。"][phase]
+	return "正在把今日捡回来的物件归置好。"
+
+
+func _resident_quote(resident: Dictionary, survival: Dictionary) -> String:
+	if int(resident.get("mood", 50)) < 35:
+		return "‘我只是有点担心，这几块木板撑不过下一场风暴。’"
+	if int(resident.get("bond", 0)) >= 20:
+		return "‘等仙舟再大些，我们把灯挂到最高的桅杆上吧。’"
+	return "‘等雨停了，我教你认几道最简单的护舟阵纹。’"
+
+
+func _survival_can_pay(survival: Dictionary, cost: Dictionary) -> bool:
+	var resources: Dictionary = survival.get("resources", {})
+	for key in cost:
+		if int(resources.get(key, 0)) < int(cost[key]):
+			return false
+	return true
+
+
+func _survival_node_detail(node: Dictionary) -> String:
+	if node.is_empty():
+		return "点击地图选择一处地点。"
+	if not bool(node.get("revealed", false)):
+		return "雾幕之后仍有岛屿，先探索相邻地区再决定路线。"
+	if not bool(node.get("explored", false)):
+		return "尚未踏查。进入后会揭开周边路线，也可能遇到新的麻烦。"
+	match str(node.get("kind", "")):
+		"camp": return "你的木筏停泊处。升级需要浮木与玄礁石，能减轻灵潮风暴造成的体力损耗。"
+		"beach": return "潮线退去后会留下浮木与口粮。今天搜集过后，明日可以再来。"
+		"grove": return "雾隐灵林里有灵草和果实。伤者需要灵草救治。"
+		"shelter": return "断墙后有一名受伤阵师。她不只认得旧信标阵纹，也许能帮你把木筏变成真正的仙舟。"
+		"ruins": return "沉没工坊里还能找到玄礁石和灵铁。"
+		"cave": return "石窟里有潮晶，碎岩回声会让探索者受伤。"
+		"reef": return "断潮礁脊连接着更深的海域，潮线适合采集。"
+		"beacon": return "修复需要木料、礁石、灵铁和潮晶；救出的阵师能够为仙舟绘制护航阵纹。"
+		"port": return "雾外旧港已有坐标。远处有妖影巡行，港湾里也许藏着改变舟身的旧构件。"
+		"wreck": return "坠星仙舟上灵风如刀。你可以现在就去，后果也由你承担。"
+	return "此地的潮痕还没有被读懂。"
+
+
+func _shelter_condition(level: int) -> String:
+	match level:
+		1: return "漏风木排"
+		2: return "加固舟身"
+		_: return "灵阵护舟"
 
 
 func _open_system_menu() -> void:
@@ -5674,6 +6100,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 				KEY_S: _manual_save()
 				KEY_O: _open_audio_settings()
 				KEY_ESCAPE: _return_to_menu()
+		ScreenState.SURVIVAL:
+			if event.keycode == KEY_ESCAPE:
+				_leave_survival()
 		ScreenState.DIALOGUE:
 			if event.keycode in [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE]:
 				if dialogue_director != null and bool(dialogue_director.active):
