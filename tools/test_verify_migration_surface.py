@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import struct
 import tempfile
 import unittest
@@ -66,6 +66,37 @@ class MigrationSurfaceTests(unittest.TestCase):
             (root / "main.gd").unlink()
             with self.assertRaisesRegex(RuntimeError, "missing"):
                 surface.check_exact_files(root, frozenset({"main.gd"}))
+
+    def test_nested_runtime_paths_are_platform_independent(self) -> None:
+        expected = frozenset({"main.gd", "modules/economy/ark_economy.gd"})
+        names = expected | {name + ".uid" for name in expected}
+        for path_type in (PurePosixPath, PureWindowsPath):
+            with self.subTest(platform=path_type.__name__):
+                directory = mock.Mock(spec=Path)
+                directory.name = "scripts"
+                files = []
+                for name in sorted(names):
+                    path = mock.Mock(spec=Path)
+                    path.is_file.return_value = True
+                    path.relative_to.return_value = path_type(name)
+                    files.append(path)
+                directory.rglob.return_value = files
+                surface.check_exact_files(directory, expected, (".uid",))
+
+    def test_normalized_nested_paths_still_reject_missing_and_unapproved_files(self) -> None:
+        expected = frozenset({"modules/economy/ark_economy.gd"})
+        for path_type in (PurePosixPath, PureWindowsPath):
+            for name, error in (("modules/economy/ark_economy.gd.uid", "missing=\\['modules/economy/ark_economy.gd'\\]"),
+                                ("modules/economy/retired.gd", "unapproved=\\['modules/economy/retired.gd'\\]")):
+                with self.subTest(platform=path_type.__name__, name=name):
+                    directory = mock.Mock(spec=Path)
+                    directory.name = "scripts"
+                    path = mock.Mock(spec=Path)
+                    path.is_file.return_value = True
+                    path.relative_to.return_value = path_type(name)
+                    directory.rglob.return_value = [path]
+                    with self.assertRaisesRegex(RuntimeError, error):
+                        surface.check_exact_files(directory, expected, (".uid",))
 
     def test_pck_versions_and_actual_payload_checksums(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

@@ -47,7 +47,7 @@ def canonical_tests(root: Path = ROOT) -> list[str]:
 
 
 def check_exact_files(directory: Path, expected: frozenset[str], sidecars: tuple[str, ...] = ()) -> None:
-    actual = {str(path.relative_to(directory)) for path in directory.rglob("*") if path.is_file()}
+    actual = {path.relative_to(directory).as_posix() for path in directory.rglob("*") if path.is_file()}
     allowed = set(expected)
     allowed.update(name + suffix for name in expected for suffix in sidecars)
     missing, extra = expected - actual, actual - allowed
