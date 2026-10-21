@@ -35,7 +35,7 @@ class VerifyGodotTests(unittest.TestCase):
 
     def test_version_is_exact(self) -> None:
         self.assertRegex("4.7.1.stable.official.a13da4feb", verify_godot.VERSION_PATTERN)
-        for version in ("4.6.3.stable.official.hash", "4.7.1.beta.official.hash", "4.7.1.stable.custom"):
+        for version in ("4.6.3.stable.official.hash", "4.7.1.beta.official.hash", "4.7.1.stable.custom", "4.7.1.stable.official.hash", "4.7.1.stable.official.a13da4feb.extra"):
             self.assertIsNone(verify_godot.VERSION_PATTERN.match(version))
 
     def test_success_retains_log(self) -> None:
@@ -47,9 +47,14 @@ class VerifyGodotTests(unittest.TestCase):
             self.execute("print('finished')")
 
     def test_error_even_with_marker_and_zero_exit_is_failure(self) -> None:
-        for text in ("SCRIPT ERROR: assertion failed", "ERROR: failed load", "  ERROR: indented"):
+        for text in ("SCRIPT ERROR: assertion failed", "ERROR: failed load", "  ERROR: indented", "\x1b[31mERROR: colored\x1b[0m", "FATAL ERROR: crash"):
             with self.subTest(text=text), self.assertRaises(RuntimeError):
                 self.execute(f"print({text!r}); print('PASS_OK:')")
+
+    def test_marker_inside_other_text_is_failure(self) -> None:
+        for text in ("NOT_PASS_OK:", "expected PASS_OK:", "'PASS_OK:'"):
+            with self.subTest(text=text), self.assertRaises(RuntimeError):
+                self.execute(f"print({text!r})")
 
     def test_nonzero_exit_is_failure(self) -> None:
         with self.assertRaises(RuntimeError):

@@ -16,6 +16,7 @@ const REEF_SURGE_CENTER := Vector2(35.0, -35.5)
 const REEF_SURGE_RADIUS := 2.0
 const REEF_SURGE_PUSH := Vector2(-0.52, -0.85)
 const REEF_SURGE_COOLDOWN := 1.6
+const ENVIRONMENT_PUSH_SECONDS := 0.32
 const REEF_BEAST_CENTER := Vector2(44.5, -27.5)
 const REEF_BEAST_TRIGGER_RADIUS := 3.6
 const REEF_BEAST_ESCAPE_RADIUS := 5.0
@@ -53,6 +54,7 @@ const RESIDENT_AUTO_GATHER_SPEED := 1.8
 const RESIDENT_AUTO_GATHER_PICKUP_SECONDS := 0.65
 const RESIDENT_ROUTE_CELL_SIZE := 0.75
 const RESIDENT_ROUTE_MARGIN := 4.5
+const RESIDENT_ROUTE_MAX_SPAN := 32.0
 const RESIDENT_ROUTE_BLOCKER_HEIGHT := 0.5
 const RESIDENT_ROUTE_SURFACE_OFFSET := 0.12
 const RESIDENT_DECK_POSITION := Vector3(-1.0, 0.12, 0.85)
@@ -75,6 +77,7 @@ const PLAYER_WORLD_EDGE_LIMIT := 140.0
 const PLAYER_WORLD_EDGE_RELEASE_MARGIN := 4.0
 const SaveScript = preload("res://scripts/ark_greybox_save.gd")
 const WorldChartScript = preload("res://scripts/ark_world_chart.gd")
+const UI_FONT = WorldChartScript.UI_FONT
 const LandmassBuilderScript = preload("res://scripts/ark_landmass_builder.gd")
 
 enum WeatherPhase { FORECAST, STORM, AFTER }
@@ -93,6 +96,7 @@ var note: Label
 var interaction_hint: Label
 var interaction_focus_ring: MeshInstance3D
 var world_chart: Control
+var save_status_notice: Label
 var raft_expansion_blueprint_button: Button
 var guest_cabin_blueprint_button: Button
 var reef_shell_brace_button: Button
@@ -204,6 +208,8 @@ var reef_beast_charge_remaining := 0.0
 var reef_beast_recovery_remaining := 0.0
 var reef_beast_knockback_remaining := 0.0
 var reef_beast_knockback_velocity := Vector3.ZERO
+var environment_push_remaining := 0.0
+var environment_push_velocity := Vector3.ZERO
 var player_attack_cooldown := 0.0
 var reef_beast_hit_flash_remaining := 0.0
 var ark_save_distance := 0.0
@@ -328,6 +334,13 @@ func _physics_process(_delta: float) -> void:
 	else:
 		player.velocity.x = move.x * current_speed
 		player.velocity.z = move.z * current_speed
+	if environment_push_remaining > 0.0:
+		environment_push_remaining = maxf(0.0, environment_push_remaining - _delta)
+		var push_strength := environment_push_remaining / ENVIRONMENT_PUSH_SECONDS
+		player.velocity.x += environment_push_velocity.x * push_strength
+		player.velocity.z += environment_push_velocity.z * push_strength
+		if environment_push_remaining <= 0.0:
+			environment_push_velocity = Vector3.ZERO
 	if is_swimming and player.velocity.y <= 0.0:
 		player.global_position.y = WATER_FLOAT_ROOT_Y
 		player.velocity.y = 0.0
@@ -420,13 +433,21 @@ func _sail_step(delta: float, throttle: float, steer: float) -> bool:
 
 
 func _is_ark_position_navigable(candidate: Vector3) -> bool:
-	if absf(candidate.x) > 130.0 or absf(candidate.z) > 130.0:
+	if ark_root == null or get_world_3d() == null or not candidate.is_finite() or absf(candidate.x) > 130.0 or absf(candidate.z) > 130.0:
 		return false
 	var hull_shape := BoxShape3D.new()
 	hull_shape.size = ARK_HULL_CLEARANCE
+	var hull_offset := ARK_HULL_QUERY_OFFSET
+	if raft_extension_built:
+		# The new bow is at -6.25; excluding its own colliders from this query
+		# must not also exclude the added deck from shoreline clearance.
+		var stern_edge := ARK_HULL_QUERY_OFFSET.z + ARK_HULL_CLEARANCE.z * 0.5
+		var bow_edge := -6.45
+		hull_shape.size.z = stern_edge - bow_edge
+		hull_offset.z = (stern_edge + bow_edge) * 0.5
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = hull_shape
-	query.transform = Transform3D(Basis(Vector3.UP, ark_root.global_rotation.y), candidate + Basis(Vector3.UP, ark_root.global_rotation.y) * ARK_HULL_QUERY_OFFSET)
+	query.transform = Transform3D(Basis(Vector3.UP, ark_root.global_rotation.y), candidate + Basis(Vector3.UP, ark_root.global_rotation.y) * hull_offset)
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
@@ -449,12 +470,17 @@ func _toggle_sailing() -> void:
 		_save_progress()
 		_update_hud()
 		return
+	if building_mode:
+		message = "先确认或取消正在进行的施工，再回到舵位启航。"
+		_update_hud()
+		return
 	if weather_phase != WeatherPhase.AFTER:
 		message = "风雨尚未过去，先把这段浅滩的避风与修理安排妥当，再离岸迁徙。"
 	elif raft_edge_damaged:
 		message = "筏舷还没修牢，暂时不能安全掌舵。先补好受损处。"
 	else:
 		var resident_recalled := _recall_resident_gatherer("ark_departure")
+		_clear_player_knockback()
 		sailing_mode = true
 		_record_world_event("ark_sailing_started", {"position": _position_facts(ark_root.global_position)})
 		message = "你握住舵柄。W/S 前后航行，A/D 转向；再按 E 或 Esc 离舵。靠近岸礁時船身会被挡住。"
@@ -469,6 +495,22 @@ func _current_walk_speed() -> float:
 	return WALK_SPEED * float(exposure_multipliers[_effective_cold_exposure_level()])
 
 
+func _push_player_from_environment(velocity: Vector3) -> void:
+	# Hazard callbacks run after move_and_slide; retain the impulse for the
+	# following physics frames instead of losing it to normal input velocity.
+	environment_push_velocity = velocity
+	environment_push_remaining = ENVIRONMENT_PUSH_SECONDS
+	player.velocity.x += velocity.x
+	player.velocity.z += velocity.z
+
+
+func _clear_player_knockback() -> void:
+	reef_beast_knockback_remaining = 0.0
+	reef_beast_knockback_velocity = Vector3.ZERO
+	environment_push_remaining = 0.0
+	environment_push_velocity = Vector3.ZERO
+
+
 func _apply_reef_surge(delta: float) -> void:
 	reef_surge_cooldown = maxf(0.0, reef_surge_cooldown - delta)
 	if not is_swimming or player == null or reef_surge_cooldown > 0.0:
@@ -476,8 +518,7 @@ func _apply_reef_surge(delta: float) -> void:
 	var player_xz := Vector2(player.global_position.x, player.global_position.z)
 	if player_xz.distance_to(REEF_SURGE_CENTER) > REEF_SURGE_RADIUS:
 		return
-	player.velocity.x += REEF_SURGE_PUSH.x * 4.2
-	player.velocity.z += REEF_SURGE_PUSH.y * 4.2
+	_push_player_from_environment(Vector3(REEF_SURGE_PUSH.x, 0.0, REEF_SURGE_PUSH.y) * 4.2)
 	reef_surge_cooldown = REEF_SURGE_COOLDOWN
 	_record_world_event("reef_surge_deflected", {"site_id": "far_reef_surge_channel", "position": _position_facts(player.global_position), "damage": 0, "recovery": "climb_onto_reef_or_swim_clear"})
 	message = "碎浪从礁脚横扫过来，把你推回浅海。前方的白沫标出水道；沿着较高礁脊绕行，仍能抵达沉筏。"
@@ -578,6 +619,7 @@ func _knock_out_player_from_reef_beast() -> void:
 	var knocked_out_position := player.global_position
 	player_health = 1
 	player.velocity = Vector3.ZERO
+	_clear_player_knockback()
 	if ark_root:
 		player.global_position = ark_root.to_global(Vector3(0.0, 1.1, 1.55))
 	reef_beast_charge_remaining = 0.0
@@ -661,8 +703,7 @@ func _process_pressure_vent(delta: float) -> void:
 		if away.length_squared() < 0.001:
 			away = Vector2(-1.0, 0.0)
 		away = away.normalized()
-		player.velocity.x = away.x * 5.0
-		player.velocity.z = away.y * 5.0
+		_push_player_from_environment(Vector3(away.x, 0.0, away.y) * 5.0)
 		_record_world_event("pressure_vent_hit", {"site_id": "steam_wreck_islet", "damage": health_before - player_health, "player_health_after": player_health, "inventory_lost": false, "recovery": "shelter_cot_or_shared_meal"})
 		if player_health <= 0:
 			_knock_out_player_from_pressure_vent()
@@ -680,6 +721,7 @@ func _knock_out_player_from_pressure_vent() -> void:
 	var knocked_out_position := player.global_position
 	player_health = 1
 	player.velocity = Vector3.ZERO
+	_clear_player_knockback()
 	if ark_root:
 		player.global_position = ark_root.to_global(Vector3(0.0, 1.1, 1.55))
 	_record_world_event("player_knocked_out", {"cause": "pressure_vent", "position": _position_facts(knocked_out_position), "recovery_position": _position_facts(player.global_position), "health_after": player_health, "inventory_lost": false})
@@ -884,7 +926,9 @@ func _move_ark_resident_toward(marker: Node3D, target: Vector3, delta: float, sp
 
 func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> PackedVector3Array:
 	var route := PackedVector3Array()
-	if ark_root == null or get_world_3d() == null or start.distance_to(destination) <= 0.06:
+	if ark_root == null or get_world_3d() == null or not start.is_finite() or not destination.is_finite() or start.distance_to(destination) <= 0.06:
+		return route
+	if not _ark_local_walk_position_supported(Vector2(start.x, start.z)) or not _ark_local_walk_position_supported(Vector2(destination.x, destination.z)):
 		return route
 	var margin := 2.0
 	var minimum := Vector2(minf(start.x, destination.x), minf(start.z, destination.z)) - Vector2.ONE * margin
@@ -922,7 +966,16 @@ func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> Packed
 	return route
 
 
+func _ark_local_walk_position_supported(local_xz: Vector2, actor_radius: float = 0.23) -> bool:
+	# A collision-free point is not necessarily a floor: residents must not
+	# bypass a blocked corridor by walking out over the surrounding sea.
+	var bow_edge := -6.25 if raft_extension_built else -2.25
+	return local_xz.is_finite() and absf(local_xz.x) <= 3.0 - actor_radius and local_xz.y >= bow_edge + actor_radius and local_xz.y <= 2.25 - actor_radius
+
+
 func _ark_local_walk_cell_blocked(local_xz: Vector2, extra_excluded: Array[RID] = [], actor_radius: float = 0.23) -> bool:
+	if not _ark_local_walk_position_supported(local_xz, actor_radius):
+		return true
 	var actor_center := ark_root.to_global(Vector3(local_xz.x, 1.15, local_xz.y))
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = actor_radius
@@ -988,6 +1041,7 @@ func _interaction_hint_action(interactable_id: String) -> String:
 		"storage": return "存取木料"
 		"workbench": return "查看阵灯工作台"
 		"home": return "整备仙舟"
+		"helm": return "掌舵仙舟"
 		"ruin": return "搜索风蚀遗迹"
 		"keel_wreck": return "打捞远礁沉筏"
 		"tide_station": return "调查旧潮讯台"
@@ -1010,8 +1064,11 @@ func _interaction_hint_action(interactable_id: String) -> String:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
-	if world_chart and world_chart.visible and event.keycode in [KEY_M, KEY_ESCAPE]:
-		_toggle_world_chart()
+	if world_chart and world_chart.visible:
+		if event.keycode in [KEY_M, KEY_ESCAPE]:
+			_toggle_world_chart()
+		elif event.keycode == KEY_F5:
+			_manual_save_progress()
 		return
 	if event.keycode == KEY_M:
 		_toggle_world_chart()
@@ -1060,22 +1117,27 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if traveler_choice_pending:
 		if event.keycode == KEY_1:
 			_choose_traveler_boarding(true)
-		elif event.keycode == KEY_2:
+		elif event.keycode in [KEY_2, KEY_ESCAPE]:
 			_choose_traveler_boarding(false)
 		return
 	if sailmaker_choice_pending:
 		if event.keycode == KEY_1:
 			_choose_sailmaker_boarding(true)
-		elif event.keycode == KEY_2:
+		elif event.keycode in [KEY_2, KEY_ESCAPE]:
 			_choose_sailmaker_boarding(false)
 		return
 	if resident_repair_choice_pending:
 		if event.keycode == KEY_1:
 			_choose_resident_repair(true)
-		elif event.keycode == KEY_2:
+		elif event.keycode in [KEY_2, KEY_ESCAPE]:
 			_choose_resident_repair(false)
 		return
 	if preparation_choice_pending:
+		if event.keycode == KEY_ESCAPE:
+			preparation_choice_pending = false
+			message = "你先收起准备安排，绳索仍留在手中。"
+			_update_hud()
+			return
 		if shelter_built:
 			if event.keycode == KEY_1:
 				_choose_weather_preparation("shelter")
@@ -1094,7 +1156,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_repair_damaged_part("shelter")
 		elif event.keycode == KEY_2:
 			_repair_damaged_part("raft")
-		elif event.keycode == KEY_3:
+		elif event.keycode in [KEY_3, KEY_ESCAPE]:
 			repair_choice_pending = false
 			message = "你先记下损伤，等找到合适木料再修。"
 			_update_hud()
@@ -1105,7 +1167,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		elif event.keycode in [KEY_ESCAPE, KEY_B, KEY_F]:
 			_cancel_build()
 		elif event.keycode == KEY_F5:
-			_save_progress() # Only committed transforms are persisted, never the ghost.
+			_manual_save_progress() # Only committed transforms are persisted, never the ghost.
 		return
 	if event.keycode == KEY_F:
 		_start_nearby_fixture_edit()
@@ -1123,9 +1185,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		else:
 			_start_build()
 	elif event.keycode == KEY_F5:
-		var save_result := _save_progress()
-		message = "这一刻已经记在旧玉里。" if save_result else "存档没有写入成功；请检查 D 盘工作目录权限。"
-		_update_hud()
+		_manual_save_progress()
 	elif event.keycode == KEY_ESCAPE:
 		if sailing_mode:
 			_toggle_sailing()
@@ -1283,11 +1343,13 @@ func _add_tidekeeper_floatbox() -> void:
 	buoy.material_override = _material(Color("cf8655"))
 	marker.add_child(buoy)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
-	sign.text = "守潮人的浮标箱 · E 查看"
+	sign.text = "浮标箱"
 	sign.position = Vector3(0.0, 0.68, 0.0)
 	sign.font_size = 20
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("f2dfae")
 	marker.add_child(sign)
 	interactables.append({"id": "tidekeeper_box", "node": marker, "amount": 0})
@@ -1341,6 +1403,9 @@ func _add_figure_mesh(parent: Node3D, mesh_name: String, mesh: PrimitiveMesh, po
 
 
 func _build_hud() -> void:
+	# Keep Chinese readable on clean systems after the legacy global theme is gone.
+	var ark_theme := Theme.new()
+	ark_theme.default_font = UI_FONT
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	storm_overlay = ColorRect.new()
@@ -1350,6 +1415,7 @@ func _build_hud() -> void:
 	storm_overlay.visible = false
 	layer.add_child(storm_overlay)
 	var panel := PanelContainer.new()
+	panel.theme = ark_theme
 	hud_panel = panel
 	panel.position = Vector2(24, 22)
 	panel.custom_minimum_size = Vector2(650, 280)
@@ -1371,6 +1437,7 @@ func _build_hud() -> void:
 	controls.add_theme_font_size_override("font_size", 14)
 	stack.add_child(controls)
 	interaction_hint = Label.new()
+	interaction_hint.theme = ark_theme
 	interaction_hint.name = "ArkInteractionHint"
 	interaction_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	interaction_hint.add_theme_font_size_override("font_size", 20)
@@ -1445,25 +1512,51 @@ func _build_hud() -> void:
 	stack.add_child(reef_shell_brace_button)
 	var return_button := Button.new()
 	return_button.name = "ArkReturnToMainButton"
-	return_button.text = "保存并返回山河界面"
+	return_button.text = "保存并返回主菜单"
 	return_button.custom_minimum_size.y = 36.0
 	return_button.pressed.connect(_return_to_main_menu)
 	stack.add_child(return_button)
 	world_chart = WorldChartScript.new()
+	world_chart.theme = ark_theme
 	world_chart.name = "ArkWorldChart"
 	world_chart.visible = false
 	world_chart.destination_selected.connect(_on_world_chart_destination_selected)
 	layer.add_child(world_chart)
+	# The chart covers the ordinary HUD; explicit F5 feedback must remain above it.
+	save_status_notice = Label.new()
+	save_status_notice.theme = ark_theme
+	save_status_notice.name = "ArkSaveStatus"
+	save_status_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	save_status_notice.offset_left = 24.0
+	save_status_notice.offset_right = -24.0
+	save_status_notice.offset_top = -90.0
+	save_status_notice.offset_bottom = -18.0
+	save_status_notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	save_status_notice.add_theme_color_override("font_color", Color("ffe0a0"))
+	save_status_notice.add_theme_color_override("font_shadow_color", Color.BLACK)
+	save_status_notice.add_theme_constant_override("shadow_offset_x", 2)
+	save_status_notice.add_theme_constant_override("shadow_offset_y", 2)
+	save_status_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	save_status_notice.visible = false
+	layer.add_child(save_status_notice)
 
 
 func _return_to_main_menu() -> void:
-	if not _save_progress():
-		message = "D 盘实地存档写入失败，暂不离开；请先检查工作目录权限。"
+	if not bool(get_meta("save_load_blocked", false)) and not _save_progress():
+		message = "存档写入失败，暂不离开；请按下方提示处理后重试。"
 		_update_hud()
 		return
-	var change_error := get_tree().change_scene_to_file("res://scenes/main.tscn")
+	# Direct scene runs and injected test roots must survive Ark -> menu too.
+	# Empty production roots explicitly clear stale session-only overrides.
+	var tree := get_tree()
+	if save_root_override.is_empty():
+		if tree.has_meta("ark_menu_save_root_override"):
+			tree.remove_meta("ark_menu_save_root_override")
+	else:
+		tree.set_meta("ark_menu_save_root_override", save_root_override)
+	var change_error := tree.change_scene_to_file("res://scenes/main.tscn")
 	if change_error != OK:
-		message = "实地已存档，但主界面暂时无法载入。"
+		message = "主界面暂时无法载入，当前仍停留在实地。"
 		_update_hud()
 
 
@@ -1485,6 +1578,7 @@ func _world_chart_destinations() -> Array[Dictionary]:
 func _toggle_world_chart() -> void:
 	if world_chart == null:
 		return
+	remove_meta("manual_save_notice")
 	world_chart.visible = not world_chart.visible
 	if world_chart.visible:
 		world_chart.refresh(player.global_position if player else Vector3.ZERO, _world_chart_destinations())
@@ -2458,7 +2552,7 @@ func _interact_workbench() -> void:
 
 
 func _build_pressure_galley() -> void:
-	if not pressure_galley_choice_pending:
+	if not pressure_galley_choice_pending or sailing_mode:
 		return
 	pressure_galley_choice_pending = false
 	if pressure_galley_built or not _has_blueprint("pressure_galley") or not shelter_built or pressure_cores < 1 or wood < PRESSURE_GALLEY_WOOD_COST:
@@ -2855,6 +2949,15 @@ func _process_resident_gathering(delta: float) -> bool:
 
 func _build_resident_walk_route(start: Vector3, destination: Vector3) -> PackedVector3Array:
 	var route := PackedVector3Array()
+	if not start.is_finite() or not destination.is_finite():
+		return route
+	for endpoint in [start, destination]:
+		if absf(endpoint.x) > PLAYER_WORLD_EDGE_LIMIT or absf(endpoint.z) > PLAYER_WORLD_EDGE_LIMIT:
+			return route
+	# Gathering is a near-shore trip, never a world-sized grid allocation.
+	# This also bounds work when interrupted or malformed task state is resumed.
+	if absf(destination.x - start.x) > RESIDENT_ROUTE_MAX_SPAN or absf(destination.z - start.z) > RESIDENT_ROUTE_MAX_SPAN:
+		return route
 	var minimum := Vector2(minf(start.x, destination.x), minf(start.z, destination.z)) - Vector2.ONE * RESIDENT_ROUTE_MARGIN
 	var maximum := Vector2(maxf(start.x, destination.x), maxf(start.z, destination.z)) + Vector2.ONE * RESIDENT_ROUTE_MARGIN
 	var grid_size := Vector2i(ceili((maximum.x - minimum.x) / RESIDENT_ROUTE_CELL_SIZE) + 1, ceili((maximum.y - minimum.y) / RESIDENT_ROUTE_CELL_SIZE) + 1)
@@ -3187,11 +3290,13 @@ func _add_sailmaker_awning() -> void:
 	marker.name = "SailmakerAwningInteractable"
 	marker.position = shelter_position + Vector3(0.0, 1.05, -0.92)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "补好的旧帆 · 棚口雨檐"
 	sign.position.y = 0.3
 	sign.font_size = 22
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	ark_root.add_child(marker)
@@ -3525,6 +3630,10 @@ func _start_build() -> void:
 
 
 func _start_starter_home_template() -> void:
+	if sailing_mode:
+		message = "掌舵时不能施工。先离开舵位，让仙舟停稳。"
+		_update_hud()
+		return
 	if building_mode:
 		_cancel_build(false)
 	if shelter_built or storage_built:
@@ -3544,12 +3653,16 @@ func _start_starter_home_template() -> void:
 	_add_shelter_template_ghost(build_preview)
 	_add_template_ghost_box(build_preview, "Storage", Vector3(0.98, 0.84, 0.86), Vector3(2.0, 0.54, -1.5))
 	ark_root.add_child(build_preview)
-	message = "潮棚之家模板：绿影处会一并建好棚屋、床铺、灯与储物箱，并保留正面通道；左键确认，右键或 Esc 取消。"
+	message = "潮棚之家模板 · 5 木（现有 %d）\n绿影处会一并建好棚屋、床铺、灯与储物箱；鼠标选位置，左键确认，右键或 Esc 取消。" % wood
 	_update_build_preview()
 	_update_hud()
 
 
 func _start_basic_shelter_template() -> void:
+	if sailing_mode:
+		message = "掌舵时不能施工。先离开舵位，让仙舟停稳。"
+		_update_hud()
+		return
 	if building_mode:
 		_cancel_build(false)
 	if shelter_built:
@@ -3568,7 +3681,7 @@ func _start_basic_shelter_template() -> void:
 	preview_invalid_material = _preview_material(Color("d78277"))
 	_add_shelter_template_ghost(build_preview)
 	ark_root.add_child(build_preview)
-	message = "基础避风棚模板：预览含棚顶、床铺与暖灯；入口朝筏首，左键确认，右键或 Esc 取消。"
+	message = "基础避风棚模板 · 3 木（现有 %d）\n预览含棚顶、床铺与暖灯；鼠标选位置，左键确认，右键或 Esc 取消。" % wood
 	_update_build_preview()
 	_update_hud()
 
@@ -3632,7 +3745,7 @@ func _start_guest_cabin_template() -> void:
 	preview_invalid_material = _preview_material(Color("d78277"))
 	_add_guest_cabin_template_ghost(build_preview)
 	ark_root.add_child(build_preview)
-	message = "听潮客舱模板会落在龙骨甲板左舷，保留右侧铺位与中央通道；左键确认，右键或 Esc 取消。"
+	message = "听潮客舱模板 · 3 木 + 1 舱骨\n落在龙骨甲板左舷，保留右侧铺位与中央通道；左键确认，右键或 Esc 取消。"
 	_update_build_preview()
 	_update_hud()
 
@@ -3657,7 +3770,9 @@ func _learn_blueprint(blueprint_id: String, source_site: String) -> void:
 
 
 func _install_reef_shell_brace() -> void:
-	if reef_shell_brace_installed:
+	if sailing_mode:
+		message = "掌舵时不能施工。先离开舵位，让仙舟停稳。"
+	elif reef_shell_brace_installed:
 		message = "礁壳风撑已经固定在棚顶，不需要重复施工。"
 	elif not _has_blueprint("reef_shell_storm_brace"):
 		message = "这套风撑结构还没学会；远礁礁背兽留下的甲片与受力纹路会告诉你怎么做。"
@@ -3691,11 +3806,14 @@ func _add_template_ghost_box(parent: Node3D, part_name: String, size: Vector3, l
 func _update_build_preview() -> void:
 	if not building_mode or camera == null or build_preview == null:
 		return
+	var previous_valid := preview_valid
 	if build_type == "guest_cabin_template":
 		preview_position = Vector3(0.0, 0.12, -4.2)
 		build_preview.position = preview_position
 		preview_valid = _is_valid_guest_cabin_position(preview_position)
 		_set_build_preview_material(preview_valid_material if preview_valid else preview_invalid_material)
+		if previous_valid != preview_valid:
+			_update_hud()
 		return
 	var mouse := get_viewport().get_mouse_position()
 	var ray_origin := camera.project_ray_origin(mouse)
@@ -3705,6 +3823,8 @@ func _update_build_preview() -> void:
 	if hit == null:
 		preview_valid = false
 		_set_build_preview_material(preview_invalid_material)
+		if previous_valid != preview_valid:
+			_update_hud()
 		return
 	var point: Vector3 = ark_root.to_local(hit)
 	preview_position = Vector3(snappedf(point.x, 0.5), 0.12, snappedf(point.z, 0.5))
@@ -3725,6 +3845,8 @@ func _update_build_preview() -> void:
 		preview_valid = _is_valid_raft_extension_position(preview_position)
 	build_preview.position = preview_position
 	_set_build_preview_material(preview_valid_material if preview_valid else preview_invalid_material)
+	if previous_valid != preview_valid:
+		_update_hud()
 
 
 func _set_build_preview_material(ghost_material: StandardMaterial3D) -> void:
@@ -3772,7 +3894,7 @@ func _try_place_starter_home_template(position: Vector3) -> bool:
 
 
 func _is_valid_shelter_position(position: Vector3) -> bool:
-	if shelter_built or absf(position.x) > 1.2 or absf(position.z) > 0.55:
+	if sailing_mode or not position.is_finite() or shelter_built or absf(position.x) > 1.2 or absf(position.z) > 0.55:
 		return false
 	if storage_built and _rectangles_overlap(position, Vector2(1.5, 1.2), storage_position, FixturePlacement.half_size("storage", storage_quarter_turns), 0.2):
 		return false
@@ -3786,14 +3908,14 @@ func _rectangles_overlap(first: Vector3, first_half_size: Vector2, second: Vecto
 
 
 func _is_valid_storage_position(position: Vector3) -> bool:
-	if storage_built or not _fixture_geometry_error("storage", position, 0).is_empty():
+	if sailing_mode or storage_built or not _fixture_geometry_error("storage", position, 0).is_empty():
 		return false
 	var horizontal_distance := Vector2(position.x - shelter_position.x, position.z - shelter_position.z).length()
 	return horizontal_distance >= 2.0
 
 
 func _is_valid_workbench_position(position: Vector3) -> bool:
-	if workbench_built or not _fixture_geometry_error("workbench", position, 0).is_empty():
+	if sailing_mode or workbench_built or not _fixture_geometry_error("workbench", position, 0).is_empty():
 		return false
 	var shelter_distance := Vector2(position.x - shelter_position.x, position.z - shelter_position.z).length()
 	var storage_distance := Vector2(position.x - storage_position.x, position.z - storage_position.z).length()
@@ -3801,11 +3923,11 @@ func _is_valid_workbench_position(position: Vector3) -> bool:
 
 
 func _is_valid_raft_extension_position(position: Vector3) -> bool:
-	return workbench_built and not raft_extension_built and keel_beams >= RAFT_EXTENSION_KEEL_COST and wood >= RAFT_EXTENSION_WOOD_COST and absf(position.x) <= 0.25 and absf(position.z + 4.2) <= 0.25
+	return not sailing_mode and position.is_finite() and workbench_built and not raft_extension_built and keel_beams >= RAFT_EXTENSION_KEEL_COST and wood >= RAFT_EXTENSION_WOOD_COST and absf(position.x) <= 0.25 and absf(position.z + 4.2) <= 0.25
 
 
 func _is_valid_guest_cabin_position(position: Vector3) -> bool:
-	return _has_blueprint("tide_guest_cabin") and raft_extension_built and not guest_cabin_built and guest_cabin_frames >= GUEST_CABIN_FRAME_COST and wood >= GUEST_CABIN_WOOD_COST and absf(position.x) <= 0.25 and absf(position.z + 4.2) <= 0.25
+	return not sailing_mode and position.is_finite() and _has_blueprint("tide_guest_cabin") and raft_extension_built and not guest_cabin_built and guest_cabin_frames >= GUEST_CABIN_FRAME_COST and wood >= GUEST_CABIN_WOOD_COST and absf(position.x) <= 0.25 and absf(position.z + 4.2) <= 0.25
 
 
 func _try_place_guest_cabin_template(position: Vector3) -> bool:
@@ -3939,6 +4061,9 @@ func _dismantle_raft_extension() -> bool:
 	_evacuate_residents_from_raft_extension()
 	var extension := _ark_node("BuiltRaftExtension")
 	if extension:
+		# Release the stable node name immediately; a rebuild can be confirmed
+		# before queued deletion runs at the end of the frame.
+		extension.get_parent().remove_child(extension)
 		extension.queue_free()
 	_set_raft_rail("RaftBow", Vector3(0, 0.35, -2.2), Vector3(5.2, 0.45, 0.16))
 	_set_raft_rail("RaftPort", Vector3(-2.95, 0.35, 0), Vector3(0.16, 0.45, 4.3))
@@ -3948,6 +4073,8 @@ func _dismantle_raft_extension() -> bool:
 		if str(entry.get("id", "")) in ["raft_extension", "guest_cabin"]:
 			var marker: Node = entry.get("node")
 			if is_instance_valid(marker):
+				if marker.get_parent():
+					marker.get_parent().remove_child(marker)
 				marker.queue_free()
 			interactables.remove_at(index)
 	raft_extension_built = false
@@ -3960,6 +4087,10 @@ func _dismantle_raft_extension() -> bool:
 		guest_cabin_frames += cabin_frame_returned
 	wood += wood_returned
 	keel_beams += RAFT_EXTENSION_KEEL_COST
+	traveler_routine_route.clear()
+	sailmaker_routine_route.clear()
+	traveler_routine_route_target_set = false
+	sailmaker_routine_route_target_set = false
 	_update_traveler_schedule()
 	_update_sailmaker_schedule()
 	_record_world_event("raft_extension_dismantled", {"wood_returned": wood_returned, "keel_beams_returned": RAFT_EXTENSION_KEEL_COST, "guest_cabin_frames_returned": cabin_frame_returned, "blueprint_retained": _has_blueprint("keel_deck_expansion"), "guest_cabin_blueprint_retained": _has_blueprint("tide_guest_cabin")})
@@ -4018,11 +4149,13 @@ func _build_shelter_at(position: Vector3) -> void:
 	hearth_marker.name = "HearthInteractable"
 	hearth_marker.position = position + Vector3(-1.05, 0.45, -0.75)
 	var hearth_sign := Label3D.new()
+	hearth_sign.font = UI_FONT
 	hearth_sign.name = "Name"
-	hearth_sign.text = "蒸汽饭釜 · E 煮鲜贝汤" if pressure_galley_built else "火盆小锅 · E 煮鲜贝汤"
+	hearth_sign.text = "蒸汽饭釜" if pressure_galley_built else "火盆小锅"
 	hearth_sign.position.y = 0.8
 	hearth_sign.font_size = 24
 	hearth_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(hearth_sign)
 	hearth_sign.modulate = Color("fff0c9")
 	hearth_marker.add_child(hearth_sign)
 	ark_root.add_child(hearth_marker)
@@ -4230,11 +4363,13 @@ func _add_resident_keepsake() -> void:
 	marker.name = "ResidentKeepsakeInteractable"
 	marker.position = shelter_position + Vector3(0.0, 1.02, -0.96)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "并排潮贝 · 两次共餐" if shared_meal_count >= 2 else "守潮人留下的潮贝"
 	sign.position.y = 0.28
 	sign.font_size = 20
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	ark_root.add_child(marker)
@@ -4256,11 +4391,14 @@ func _build_storage_at(position: Vector3) -> void:
 	marker.rotation.y = storage_quarter_turns * PI / 2.0
 	marker.position = position + Vector3(0, 0.5, 0)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
-	sign.text = "储物箱 · E 存取木料 · F 搬移"
-	sign.position.y = 0.65
+	sign.text = "储物箱\nE 存取木料"
+	sign.position.y = 0.3
+	sign.no_depth_test = true
 	sign.font_size = 24
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	ark_root.add_child(marker)
@@ -4282,11 +4420,13 @@ func _build_workbench_at(position: Vector3) -> void:
 	marker.rotation.y = workbench_quarter_turns * PI / 2.0
 	marker.position = position + Vector3(0, 0.5, 0)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
-	sign.text = "阵枢工作台 · E 调校旧灯 · F 搬移"
+	sign.text = "阵枢工作台"
 	sign.position.y = 0.75
 	sign.font_size = 24
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	ark_root.add_child(marker)
@@ -4319,6 +4459,7 @@ func _build_raft_extension_at(position: Vector3) -> void:
 	marker.name = "RaftExtensionInteractable"
 	marker.position = position + Vector3(0.0, 0.4, 1.45)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "龙骨甲板 · E 管理"
 	sign.position.y = 0.9
@@ -4364,11 +4505,13 @@ func _build_guest_cabin_at(extension: Node3D) -> void:
 	marker.name = "GuestCabinInteractable"
 	marker.position = Vector3(-1.3, 0.52, -4.2 + 1.42)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "听潮客舱 · 留给远客的一盏灯"
 	sign.position.y = 0.78
 	sign.font_size = 20
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	ark_root.add_child(marker)
@@ -4389,6 +4532,7 @@ func _add_expansion_berth(extension: Node3D) -> void:
 	_add_local_visual_box(berth, "CanvasAwning", Vector3(0.95, 1.49, -1.1), Vector3(1.82, 0.055, 1.48), Color("82988d"))
 	_add_local_visual_box(berth, "CanvasTie", Vector3(0.95, 1.47, -0.36), Vector3(1.72, 0.035, 0.07), Color("d0b98c"))
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "风帆下的夜铺"
 	sign.position = Vector3(0.95, 1.78, -1.1)
@@ -4467,6 +4611,7 @@ func _add_shellfish_patch(id: String, position: Vector3, amount: int) -> void:
 		shell.material_override = _material(Color("d6c5a1") if index % 2 == 0 else Color("9aab9a"))
 		patch.add_child(shell)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "潮池鲜贝 · E 拾取"
 	sign.position.y = 0.62
@@ -4505,6 +4650,7 @@ func _add_keel_wreck(position: Vector3) -> void:
 		beam.material_override = _material(Color("b79565"))
 		wreck.add_child(beam)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "遠礁沉筏 · 已拆取龍骨" if keel_wreck_searched else "遠礁沉筏 · 風口無屏障"
 	sign.position = Vector3(0, 2.0, 0)
@@ -4556,6 +4702,7 @@ func _add_tide_station(position: Vector3) -> void:
 	station.add_child(glow)
 	_add_local_visual_box(station, "WarningPlate", Vector3(1.17, 0.95, 0.35), Vector3(0.52, 0.68, 0.08), Color("b27a4f"))
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "旧潮汐观测台 · 信号微弱"
 	sign.position = Vector3(0.0, 3.0, 0.0)
@@ -4644,6 +4791,7 @@ func _add_jade_sail_ark(position: Vector3) -> void:
 	guest_lantern.omni_range = 4.0
 	wreck.add_child(guest_lantern)
 	var guest_cabin_sign := Label3D.new()
+	guest_cabin_sign.font = UI_FONT
 	guest_cabin_sign.name = "GuestCabinName"
 	guest_cabin_sign.text = "听潮舱 · 旧帆留客"
 	guest_cabin_sign.position = Vector3(0.35, 2.32, -0.91)
@@ -4674,6 +4822,7 @@ func _add_jade_sail_ark(position: Vector3) -> void:
 	_add_local_visual_box(salvage_frame, "SplitRib", Vector3(0.68, -0.06, 0.02), Vector3(0.58, 0.1, 0.1), Color("8d664e"))
 	salvage_frame.position = Vector3(-0.55, 1.02, 1.56)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "琼华舫遗址 · 阵灯尽熄" if not jade_sail_ark_searched else "琼华舫遗址 · 舱骨已取"
 	sign.position = Vector3(0.0, 3.15, 0.0)
@@ -4842,6 +4991,7 @@ func _add_pressure_wreck(position: Vector3) -> void:
 	marker.name = "PressureWreckInteractable"
 	marker.position = position + Vector3(0.0, 0.55, 2.8)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "蒸潮机坞 · 锈汽未散"
 	sign.position.y = 0.85
@@ -4892,6 +5042,7 @@ func _add_jade_sail_keeper() -> void:
 	ledger.material_override = _material(Color("d1ad72"))
 	marker.add_child(ledger)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.position = Vector3(0.0, 1.6, 0.0)
 	sign.font_size = 27
@@ -4903,6 +5054,18 @@ func _add_jade_sail_keeper() -> void:
 	jade_sail_keeper_action = "守着旧舫"
 	_update_jade_sail_keeper_nameplate()
 	interactables.append({"id": "jade_sail_keeper", "node": marker, "amount": 0})
+
+
+func _style_nearby_world_label(sign: Label3D) -> void:
+	# Default 0.005 world pixels shrink these labels to 5–8 screen pixels at
+	# the normal camera distance. Keep raft names readable, with bounded lines.
+	# Nearby E/F actions remain in the full-size focused interaction hint.
+	sign.font_size = 32
+	sign.pixel_size = 0.009
+	sign.outline_size = 4
+	sign.outline_modulate = Color("17252a")
+	sign.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	sign.width = 400.0
 
 
 func _add_interactable(id: String, title: String, position: Vector3, parent: Node) -> void:
@@ -4926,11 +5089,15 @@ func _add_interactable(id: String, title: String, position: Vector3, parent: Nod
 		pole.material_override = _material(Color("e0ca89"))
 		marker.add_child(pole)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = title
-	sign.position = Vector3(0, 1.25, 0)
+	# Stagger the two resident nameplates without moving their interaction targets.
+	var label_height := 2.7 if id == "resident" else 1.85 if id == "sailmaker" else 0.1 if id == "home" else 1.25
+	sign.position = Vector3(0, label_height, 0)
 	sign.font_size = 36
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_style_nearby_world_label(sign)
 	sign.modulate = Color("fff0c9")
 	marker.add_child(sign)
 	if parent:
@@ -5002,6 +5169,7 @@ func _add_safe_channel_mark() -> void:
 	cloth.material_override = _material(Color("d7c9a5"))
 	marker.add_child(cloth)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "退潮安全沟"
 	sign.position = Vector3(0, 1.25, 0)
@@ -5047,6 +5215,7 @@ func _add_raft_lantern(parent: Node3D) -> void:
 	light.omni_range = 5.0
 	marker.add_child(light)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "旧灯 · 回木筏取暖"
 	sign.position = Vector3(0, 1.35, 0)
@@ -5085,6 +5254,7 @@ func _add_distant_warning(position: Vector3) -> void:
 	glint.omni_range = 2.8
 	ruin.add_child(glint)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "遗迹 · 风声像裂帛"
 	sign.position = Vector3(0, 2.55, 0)
@@ -5131,6 +5301,7 @@ func _add_reef_surge_warning() -> void:
 	warning_cloth.material_override = _material(Color("d58d65"))
 	marker.add_child(warning_cloth)
 	var sign := Label3D.new()
+	sign.font = UI_FONT
 	sign.name = "Name"
 	sign.text = "碎浪水道 · 沿礁脊可绕行"
 	sign.position = Vector3(0.0, 1.18, 1.0)
@@ -5187,6 +5358,7 @@ func _add_reef_beast() -> void:
 		leg.material_override = _material(Color("554b43"))
 		beast.add_child(leg)
 	var beast_name := Label3D.new()
+	beast_name.font = UI_FONT
 	beast_name.name = "Name"
 	beast_name.text = "礁背兽 · 临时灰盒"
 	beast_name.position = Vector3(0.0, 1.28, 0.0)
@@ -5209,6 +5381,7 @@ func _add_reef_beast() -> void:
 		track.material_override = _material(Color("4b4138"))
 		warning.add_child(track)
 	var warning_sign := Label3D.new()
+	warning_sign.font = UI_FONT
 	warning_sign.name = "Name"
 	warning_sign.text = "碎壳拖痕 · 礁背兽出没"
 	warning_sign.position = Vector3(0.0, 0.82, 0.52)
@@ -5302,7 +5475,7 @@ func _opening_objective_hint() -> String:
 func _update_fixture_hud_layout() -> void:
 	if hud_panel == null or hud_stack == null:
 		return
-	var editing := not editing_fixture_id.is_empty()
+	var editing := building_mode
 	if editing == hud_edit_layout:
 		return
 	hud_edit_layout = editing
@@ -5319,6 +5492,10 @@ func _update_fixture_hud_layout() -> void:
 
 func _update_hud() -> void:
 	_update_fixture_hud_layout()
+	if save_status_notice:
+		var warning := str(get_meta("save_warning", ""))
+		save_status_notice.text = warning if not warning.is_empty() else str(get_meta("manual_save_notice", ""))
+		save_status_notice.visible = world_chart != null and world_chart.visible and not save_status_notice.text.is_empty()
 	if hud:
 		var weather_labels: Array[String] = ["风雨将至", "风雨正急", "雨后"]
 		var weather_text: String = "下一场风雨已预报" if _storm_forecast_due() else weather_labels[weather_phase]
@@ -5343,6 +5520,11 @@ func _update_hud() -> void:
 			hud.text += "\n远礁：礁背兽 %s · 礁壳 %d · 风撑 %s" % [beast_status, reef_shell_plates, "已安装" if reef_shell_brace_installed else "未安装"]
 	if note:
 		note.text = ("[搭建预览] " if building_mode else "") + message
+		if building_mode and editing_fixture_id.is_empty():
+			note.text += "\n" + ("可放置" if preview_valid else "位置不合适，请在甲板承重区内选择位置。")
+		var save_warning := str(get_meta("save_warning", ""))
+		if not save_warning.is_empty():
+			note.text += "\n" + save_warning
 		if raft_expansion_blueprint_button:
 			raft_expansion_blueprint_button.disabled = not _has_blueprint("keel_deck_expansion") or raft_extension_built
 			raft_expansion_blueprint_button.text = "蓝图册：龙骨扩甲 · 已学会" if _has_blueprint("keel_deck_expansion") else "蓝图册：龙骨扩甲 · 探索远礁沉筏解锁"
@@ -5615,8 +5797,40 @@ func _build_save_state() -> Dictionary:
 func _save_progress() -> bool:
 	if save_service == null:
 		return false
+	if bool(get_meta("save_load_blocked", false)):
+		message = str(get_meta("save_warning", "旧档已保留，本次试玩不会覆盖它。"))
+		if player and player.is_inside_tree() and ark_root and ark_root.is_inside_tree():
+			_update_hud()
+		return false
 	var result: Dictionary = save_service.save_state(_build_save_state())
-	return bool(result.get("ok", false))
+	if bool(result.get("ok", false)):
+		set_meta("save_warning", "")
+		return true
+	message = _save_failure_message(result)
+	set_meta("save_warning", message)
+	if player and player.is_inside_tree() and ark_root and ark_root.is_inside_tree():
+		_update_hud()
+	return false
+
+
+func _manual_save_progress() -> void:
+	if _save_progress():
+		message = "这一刻已经记在旧玉里。"
+	set_meta("manual_save_notice", message)
+	_update_hud()
+
+
+func _save_failure_message(result: Dictionary) -> String:
+	match str(result.get("code", "")):
+		"unsupported_version":
+			return "旧档来自更新版本，已保留且不会被覆盖。本次为临时试玩，不会保存；请用匹配版本续接。"
+		"corrupt_save":
+			return "主档和备份均无法读取，文件已保留。本次为临时试玩，不会保存；请先备份旧档并检查恢复。"
+		"invalid_state", "invalid_schema":
+			return "本次进度包含无效数据，尚未保存；原有存档保持不变。"
+		"save_too_large":
+			return "本次进度超过存档容量上限，尚未保存；原有存档保持不变。"
+	return "存档未写入，本次进度尚未保存；请检查可用空间与目录权限（%s）。" % str(result.get("error", result.get("code", "unknown")))
 
 
 func _load_progress() -> void:
@@ -5624,8 +5838,12 @@ func _load_progress() -> void:
 		return
 	var result: Dictionary = save_service.load_state()
 	if not bool(result.get("ok", false)):
+		if str(result.get("code", "")) != "no_save":
+			set_meta("save_load_blocked", true)
+			message = _save_failure_message(result)
+			set_meta("save_warning", message)
 		return
-	var saved: Dictionary = result.get("state", {})
+	var saved: Dictionary = _sanitize_saved_progress(result.get("state", {}))
 	var saved_schema := int(saved.get("schema_version", 0))
 	if not saved_schema in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]:
 		return
@@ -5868,6 +6086,43 @@ func _load_progress() -> void:
 		_add_safe_channel_mark()
 	_set_weather_visuals()
 	_refresh_reef_beast_visual()
+
+
+func _sanitize_saved_progress(source: Dictionary) -> Dictionary:
+	# Keep valid progress in partially malformed historical saves, but never let
+	# an unchecked JSON value reach int/float casts or typed collections below.
+	var saved := source.duplicate(true)
+	var defaults := _build_save_state()
+	for key in defaults:
+		if not saved.has(key):
+			continue
+		var value: Variant = saved[key]
+		var fallback: Variant = defaults[key]
+		if fallback is int or fallback is float:
+			if not _finite_saved_number(value):
+				saved[key] = fallback
+		elif typeof(value) != typeof(fallback):
+			saved[key] = fallback
+		elif fallback is Dictionary and str(key).ends_with("position"):
+			for axis in ["x", "y", "z"]:
+				if value.has(axis) and not _finite_saved_number(value[axis]):
+					value[axis] = fallback.get(axis, 0.0)
+	if saved.get("world_events", []) is Array:
+		var events: Array = []
+		for event in saved.get("world_events", []):
+			if event is Dictionary and _finite_saved_number(event.get("sequence", null)) and event.get("id", null) is String:
+				if not event.get("facts", {}) is Dictionary:
+					event["facts"] = {}
+				events.append(event)
+		saved["world_events"] = events.slice(-MAX_WORLD_EVENTS)
+	var storm_facts: Dictionary = saved.get("last_resolved_storm_facts", {})
+	if not _finite_saved_number(storm_facts.get("storm_number", 0)):
+		storm_facts["storm_number"] = 0
+	return saved
+
+
+func _finite_saved_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(float(value)) and absf(float(value)) < 9223372036854775808.0
 
 
 func _exit_tree() -> void:

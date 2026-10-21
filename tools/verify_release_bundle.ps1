@@ -21,22 +21,23 @@ $required = @(
     "wendao-changsheng.exe",
     "wendao-changsheng.pck",
     "README.md",
+    "wendao-ark.txt",
     "checksums.sha256",
     "licenses\AGPL-3.0.txt",
     "licenses\NotoSansSC-OFL.txt",
     "licenses\NotoSerifSC-OFL.txt",
-    "licenses\LICENSE-AUDIO.txt",
-    "licenses\audio_manifest_v2.json",
-    "licenses\0ad-audio-LICENSE.txt",
-    "licenses\kenney-cc0.txt",
-    "licenses\opengameart-dungeon-ambient-cc0.txt",
-    "licenses\opengameart-jade-throne-ccby3.txt"
+    "licenses\font_manifest.json"
 )
 foreach ($relativePath in $required) {
     $path = Join-Path $OutputDir $relativePath
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Release bundle is missing: $relativePath"
     }
+}
+
+$productMarker = (Get-Content -Raw -LiteralPath (Join-Path $OutputDir "wendao-ark.txt")).Trim()
+if ($productMarker -cne "WENDAO_ARK_3D_PRODUCT_V1") {
+    throw "This is not an identified 3D Ark release; refusing a stale legacy executable."
 }
 
 # The build directory is cleaned before export, but keep the release gate
@@ -56,45 +57,13 @@ if ($unexpectedFiles.Count -gt 0) {
     throw "Release bundle contains unapproved files: $($unexpectedFiles.FullName -join ', ')"
 }
 
-$legacyManifestPath = Join-Path $OutputDir "licenses\audio_manifest_v1.json"
-if (Test-Path -LiteralPath $legacyManifestPath) {
-    throw "Release bundle must not ship the legacy audio_manifest_v1.json."
-}
-$audioManifestPath = Join-Path $OutputDir "licenses\audio_manifest_v2.json"
-$audioManifest = Get-Content -Raw -LiteralPath $audioManifestPath | ConvertFrom-Json
-if ([int]$audioManifest.version -ne 2 -or [string]$audioManifest.schema -ne "curated-audio-v2") {
-    throw "Release bundle audio manifest is not curated-audio-v2."
-}
-$sourceAudioManifestPath = Join-Path $RepoRoot "godot\audio\audio_manifest_v2.json"
-if (-not (Test-Path -LiteralPath $sourceAudioManifestPath -PathType Leaf)) {
-    throw "Source audio manifest is missing: $sourceAudioManifestPath"
-}
-$sourceAudioManifestHash = (Get-FileHash -LiteralPath $sourceAudioManifestPath -Algorithm SHA256).Hash
-$bundleAudioManifestHash = (Get-FileHash -LiteralPath $audioManifestPath -Algorithm SHA256).Hash
-if ($sourceAudioManifestHash -ne $bundleAudioManifestHash) {
-    throw "Release bundle audio manifest does not match the source manifest (source=$sourceAudioManifestHash bundle=$bundleAudioManifestHash)."
-}
-if (@($audioManifest.assets).Count -lt 32) {
-    throw "Release bundle audio manifest contains too few curated assets."
-}
-$releaseSfx = @($audioManifest.assets | Where-Object { $_.kind -eq "sfx" })
-$semanticSfx = @($releaseSfx | Where-Object {
-    $_.PSObject.Properties.Name -contains "semantic_category" -and
-        -not [string]::IsNullOrWhiteSpace($_.semantic_category)
-})
-$retiredPunch = @($releaseSfx | Where-Object { $_.source_file -match "(?i)impactPunch" })
-$sourcePackages = @($audioManifest.source_packages.PSObject.Properties)
-if ($releaseSfx.Count -lt 27 -or $semanticSfx.Count -lt 18 -or
-        $sourcePackages.Count -lt 6 -or $retiredPunch.Count -ne 0) {
-    throw "Release audio contract regressed (SFX=$($releaseSfx.Count), semantic=$($semanticSfx.Count), packages=$($sourcePackages.Count), punch=$($retiredPunch.Count))."
-}
-$requiredAudioCategories = @(
-    "weapon_impact", "shield_guard", "spell_cast", "recovery", "status",
-    "phase_change", "victory", "defeat"
-)
-foreach ($category in $requiredAudioCategories) {
-    if (@($semanticSfx | Where-Object { $_.semantic_category -eq $category }).Count -eq 0) {
-        throw "Release audio manifest is missing semantic category: $category"
+# Retained font provenance and legal notices must match the source exactly.
+foreach ($name in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt", "font_manifest.json")) {
+    $source = Join-Path $RepoRoot "godot\art\fonts\$name"
+    $bundled = Join-Path $OutputDir "licenses\$name"
+    if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne
+        (Get-FileHash -LiteralPath $bundled -Algorithm SHA256).Hash) {
+        throw "Release font license/provenance differs from source: $name"
     }
 }
 
@@ -106,38 +75,11 @@ if ($forbidden.Count -gt 0) {
     throw "Release bundle contains source, model, training, or runtime payloads that must stay on-demand: $($forbidden.FullName -join ', ')"
 }
 
-# Godot resource paths remain visible in the PCK directory table even when
-# payloads are compressed. Catch retired content that slipped through an
-# all-resources export without unpacking or executing the bundle.
-$pckPath = Join-Path $OutputDir "wendao-changsheng.pck"
-$pckText = [System.Text.Encoding]::UTF8.GetString(
-    [System.IO.File]::ReadAllBytes($pckPath))
-$declaredAudioPaths = @($audioManifest.assets | ForEach-Object {
-    $runtimePath = [string]$_.runtime_path
-    if (-not $runtimePath.StartsWith("res://audio/")) {
-        throw "Release audio manifest contains an invalid runtime path: $runtimePath"
-    }
-    $runtimePath.Substring(6).Replace('\', '/')
-})
-foreach ($declaredAudioPath in $declaredAudioPaths) {
-    if (-not $pckText.Contains($declaredAudioPath)) {
-        throw "Release PCK is missing a manifest-declared audio resource: $declaredAudioPath"
-    }
-}
-$forbiddenPckMarkers = @(
-    "audio/generated/",
-    "audio_manifest_v1.json",
-    "local_ai_bridge",
-    "LocalAIBridge",
-    "ai_engine/",
-    "setup-local-ai"
-)
-foreach ($marker in $forbiddenPckMarkers) {
-    if ($pckText.Contains($marker)) {
-        throw "Release PCK contains retired or development-only content marker: $marker"
-    }
-}
-$pckText = $null
+# Parse the actual PCK directory and verify every payload checksum. An allowlist
+# permits only the six Ark scripts, two scenes, ocean shader and retained fonts;
+# tests, archives, legacy audio/data/art and arbitrary resources fail closed.
+& python -X utf8 (Join-Path $PSScriptRoot "verify_migration_surface.py") --pack (Join-Path $OutputDir "wendao-changsheng.pck")
+if ($LASTEXITCODE -ne 0) { throw "Exported Ark PCK boundary failed: $LASTEXITCODE" }
 
 $licenseText = [System.IO.File]::ReadAllText(
     (Join-Path $OutputDir "licenses\AGPL-3.0.txt"), [System.Text.Encoding]::UTF8)
@@ -186,4 +128,4 @@ if ($listed.Count -ne $bundleFiles.Count) {
     throw "Release checksum coverage is incomplete: $($unlisted.FullName -join ', ')"
 }
 
-Write-Host "Release bundle verified: $($bundleFiles.Count) files, licenses present, no AI/model/runtime payload bundled."
+Write-Host "ARK_RELEASE_BUNDLE_OK: $($bundleFiles.Count) files, font/AGPL licenses and complete checksums, Ark-only PCK."

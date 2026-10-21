@@ -2,7 +2,7 @@
 
 ## Preserve the authored writing
 
-The six chronicle files under `godot/data/chronicles/` remain the authoritative source. The current repository records six volumes, 24 chapters per volume, 144 chapters total, 432 choices and 945,377 Chinese characters. Do not bulk-rewrite, delete, or convert this corpus into cards. Keep chapter IDs, route IDs, authored choice text, consequences, and existing editorial review records intact unless a later, chapter-specific review approves a change.
+The six chronicle files under `archive/source_assets/godot/data/chronicles/` remain the authoritative source. The current repository records six volumes, 24 chapters per volume, 144 chapters total, 432 choices and 945,377 Chinese characters. Do not bulk-rewrite, delete, or convert this corpus into cards. Keep chapter IDs, route IDs, authored choice text, consequences, and existing editorial review records intact unless a later, chapter-specific review approves a change.
 
 The chronicle files are already data-driven and contain summaries, era identity, chapter prose, route variants, three authored choices per chapter, state deltas, and inheritance material. Preserve that structure so existing narrative and save logic continue to work.
 

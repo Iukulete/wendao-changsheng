@@ -36,12 +36,17 @@ func _run() -> void:
 	var moonback_grass := moonback.get_node("Grassland") as MeshInstance3D
 	var moonback_shore := moonback.get_node("Shoreline") as MeshInstance3D
 	assert(moonback_grass.mesh.get_faces().size() >= 1000 and moonback_shore.mesh.get_faces().size() >= 900, "the new mooring island should use the same triangulated walkable terrain and sloped shore")
-	for point in [Vector3(-28.0, 0.0, 23.0), Vector3(-28.0, 0.0, 11.0), Vector3(-14.0, 0.0, 23.0)]:
+	# East contour ends near x=-14.1168, not nominal radius x=-14.
+	# Probe inside the actual sloped shore rather than beyond its wavy mesh.
+	for point in [Vector3(-28.0, 0.0, 23.0), Vector3(-28.0, 0.0, 11.0), Vector3(-14.5, 0.0, 23.0)]:
 		var query := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 5.0, point + Vector3.DOWN * 3.0)
 		var hit: Dictionary = space.intersect_ray(query)
 		assert(hit.get("collider") == moonback, "the second mooring interior and coast must provide walkable collision at %s; got %s" % [point, hit])
 		assert(float(hit.get("normal", Vector3.ZERO).y) > 0.0, "the second island surface should face upward for ground movement")
-	print("ARK_LANDMASS_PHYSICS_OK")
+	var outside := Vector3(-13.5, 0.0, 23.0)
+	var outside_query := PhysicsRayQueryParameters3D.create(outside + Vector3.UP * 5.0, outside + Vector3.DOWN * 3.0)
+	assert(space.intersect_ray(outside_query).get("collider") != moonback, "water beyond the irregular east coast must not gain phantom land collision")
+	print("ARK_LANDMASS_PHYSICS_TEST_OK:")
 	game.queue_free()
 	await process_frame
 	save_helper.clear_for_test()
