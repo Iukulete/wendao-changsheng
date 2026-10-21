@@ -191,7 +191,7 @@ func _run() -> void:
 	game.set("sailing_mode", false)
 	assert(bool(game.call("_save_progress")), "confirmed fixtures must save")
 	var saved: Dictionary = save_helper.load_state().get("state", {})
-	assert(int(saved.get("schema_version", 0)) == 33, "fixture orientations use schema 33")
+	assert(int(saved.get("schema_version", 0)) == 34, "fixture orientations use schema 34")
 	game.queue_free()
 	await process_frame
 	game = await _new_game(scene, save_root)

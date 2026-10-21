@@ -121,6 +121,26 @@ func _run() -> void:
 
 	var return_to_helm := await _hold_until(KEY_W, 1000, func() -> bool: return Vector2(player.global_position.x - ark.global_position.x, player.global_position.z - (ark.global_position.z + 1.55)).length() < 2.0)
 	assert(return_to_helm < 1000, "the player should walk back onto the same ark after searching the station")
+	# Horizontal proximity cannot substitute for actually boarding the collidable deck.
+	if not player.is_on_floor():
+		_set_key(KEY_SPACE, true)
+		await physics_frame
+		_set_key(KEY_SPACE, false)
+		_set_key(KEY_W, true)
+		var blocked_apex := player.global_position.y
+		for _frame in range(35):
+			await physics_frame
+			blocked_apex = maxf(blocked_apex, player.global_position.y)
+		_set_key(KEY_W, false)
+		assert(blocked_apex < ark.global_position.y - 0.2 and not player.is_on_floor(), "the gangplank underside must block an underneath jump")
+		var clear_overhang := await _hold_until(KEY_S, 120, func() -> bool: return player.position.z > 4.05)
+		assert(clear_overhang < 120, "back clear of the overhanging plank before jumping")
+		_set_key(KEY_SPACE, true)
+		await physics_frame
+		_set_key(KEY_SPACE, false)
+	var board_frames := await _hold_until(KEY_W, 300, func() -> bool: return player.is_on_floor() and player.global_position.y > ark.global_position.y and Vector2(player.global_position.x - ark.global_position.x, player.global_position.z - (ark.global_position.z + 1.55)).length() < 1.4)
+	assert(board_frames < 300 and player.is_on_floor() and not bool(game.get("is_swimming")), "water jump must land on the real deck before using helm")
+
 	game.call("_interact")
 	assert(bool(game.get("sailing_mode")), "the same ark should be controllable after the expedition")
 	var second_leg := await _sail_to(game, Vector3(0.0, 0.0, 0.0))

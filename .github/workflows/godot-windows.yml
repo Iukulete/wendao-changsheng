@@ -6,6 +6,7 @@ on:
       - main
       - codex/island-survival-slice
       - codex/dot-ark-stability-audit
+      - codex/dot-ark-recovery
   pull_request:
     branches:
       - main

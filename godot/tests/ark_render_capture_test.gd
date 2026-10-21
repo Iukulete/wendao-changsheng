@@ -10,6 +10,8 @@ var output_root: String
 
 
 func _initialize() -> void:
+	root.mode = Window.MODE_MINIMIZED
+	root.unfocusable = true
 	_run.call_deferred()
 
 
@@ -20,7 +22,9 @@ func _run() -> void:
 		return
 	var test_root := ProjectSettings.globalize_path("res://../.local/test_ark_render").simplify_path()
 	assert(TestPaths.is_safe_save_root(test_root), "render saves must stay in this isolated test directory")
-	output_root = ProjectSettings.globalize_path("res://../.tmp/ark-render-captures").simplify_path()
+	output_root = OS.get_environment("ARK_RENDER_CAPTURE_ROOT")
+	if output_root.is_empty():
+		output_root = ProjectSettings.globalize_path("res://../.tmp/ark-render-captures").simplify_path()
 	DirAccess.make_dir_recursive_absolute(output_root)
 	var service := ArkSave.new(test_root)
 	service.clear_for_test()
@@ -83,11 +87,11 @@ func _check_menu(menu: Control) -> void:
 func _settle() -> void:
 	for _frame in range(6):
 		await process_frame
-	await RenderingServer.frame_post_draw
+	RenderingServer.force_draw(false)
 
 
 func _capture(filename: String, expected_size: Vector2i) -> void:
-	await RenderingServer.frame_post_draw
+	RenderingServer.force_draw(false)
 	var image := root.get_texture().get_image()
 	if image == null or image.is_empty():
 		failures.append("empty render capture: " + filename)

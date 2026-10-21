@@ -50,13 +50,13 @@ func _run() -> void:
 	var panel := game.get("hud_panel") as PanelContainer
 	var hud := game.get("hud") as Label
 	var note := game.get("note") as Label
-	assert(panel.custom_minimum_size == Vector2(440.0, 110.0) and not hud.visible and note.visible, "new construction must use the compact preview HUD instead of covering the deck")
+	assert(panel.custom_minimum_size == Vector2(360.0, 0.0) and hud.visible and note.visible, "new construction must use the compact preview HUD instead of covering the deck")
 	assert(note.text.contains("3 木") and note.text.contains("Esc") and note.text.contains("位置"), "compact construction retains cost, controls and placement feedback")
 	game.call("_toggle_sailing")
 	assert(not bool(game.get("sailing_mode")) and bool(game.get("building_mode")), "a live preview must be confirmed/cancelled before the helm can engage")
 	game.call("_cancel_build", false)
 	game.call("_update_hud")
-	assert(panel.custom_minimum_size == Vector2(650.0, 280.0) and hud.visible, "leaving build mode must restore the regular HUD")
+	assert(panel.custom_minimum_size == Vector2(360.0, 0.0) and hud.visible, "leaving build mode must restore the regular HUD")
 	game.call("_toggle_sailing")
 	assert(bool(game.get("sailing_mode")), "cancelling the preview must leave the helm available")
 	for starter in ["_start_basic_shelter_template", "_start_starter_home_template", "_start_build"]:

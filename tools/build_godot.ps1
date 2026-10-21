@@ -81,6 +81,8 @@ $pckSize = (Get-Item -LiteralPath $OutputPck).Length
 if ($exeSize -lt 1MB -or $pckSize -lt 1KB) {
     throw "Export artifacts look incomplete (EXE=$exeSize bytes, PCK=$pckSize bytes)."
 }
+& python -X utf8 (Join-Path $PSScriptRoot "game_version.py") --write (Join-Path $OutputDir "game-version.json")
+if ($LASTEXITCODE -ne 0) { throw "Game version metadata generation failed: $LASTEXITCODE" }
 New-Item -ItemType Directory -Force -Path $OutputLicenseDir | Out-Null
 Copy-Item -LiteralPath (Join-Path $Root "LICENSE") -Destination (Join-Path $OutputLicenseDir "AGPL-3.0.txt") -Force
 foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt", "font_manifest.json")) {

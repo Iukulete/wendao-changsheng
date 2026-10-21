@@ -502,7 +502,7 @@ func _run() -> void:
 	warmed_player.velocity.y = -1.0
 	warmed_explorer.call("_physics_process", 1.0 / 60.0)
 	assert(bool(warmed_explorer.get("is_swimming")), "falling off the raft or shore should enter swim movement rather than falling into the void")
-	assert(is_equal_approx(warmed_player.global_position.y, float(warmed_explorer.get("WATER_FLOAT_ROOT_Y"))), "the water surface should keep the player afloat")
+	assert(absf(warmed_player.global_position.y - (float(warmed_explorer.get("water").query(warmed_player.global_position).height) - 0.45)) < 0.002, "the water surface should keep the player afloat")
 	assert((warmed_explorer.get("hud") as Label).text.contains("游泳"), "the HUD should reflect entering the water")
 	warmed_explorer.call("_jump_player")
 	assert(not bool(warmed_explorer.get("is_swimming")), "a swim stroke should transition into an upward climb")
@@ -686,7 +686,7 @@ func _run() -> void:
 	meal_game.call("_interact")
 	meal_game.call("_choose_traveler_boarding", true)
 	meal_game.set("cold_exposure", true)
-	meal_player.global_position = Vector3(-1.0, 1.1, 0.85)
+	meal_player.global_position = Vector3(-1.0, 0.19, 0.85)
 	meal_game.call("_interact")
 	assert(int(meal_game.get("stew_servings")) == 0 and int(meal_game.get("shared_meal_count")) == 1, "sharing dinner should consume the serving and record a household moment")
 	assert(str(meal_game.get("message")).contains("今天已经一起吃过饭"), "sharing should not call the meal dinner when players can share food at any time")

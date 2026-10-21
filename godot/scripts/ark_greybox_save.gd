@@ -6,7 +6,7 @@ extends RefCounted
 const FORMAT := "wendao-ark-greybox"
 const VERSION := 1
 const FILE_NAME := "ark_greybox_v1.json"
-const MAX_SCHEMA_VERSION := 33
+const MAX_SCHEMA_VERSION := 34
 const MAX_FILE_BYTES := 16 * 1024 * 1024
 
 var _root_path := ""

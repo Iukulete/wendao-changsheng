@@ -132,8 +132,9 @@ func _run() -> void:
 	game.set("cold_exposure_level", 3)
 	game.set("cold_exposure", true)
 	var traveler := game.get("traveler_marker") as Node3D
-	player.global_position = traveler.global_position + Vector3(0.0, 1.1, 0.0)
-	game.call("_interact")
+	player.global_position = traveler.global_position + Vector3(0.0, 0.19, 0.0)
+	assert(bool(game.call("_player_at_shared_table")), "the solo meal requires actual deck-level table presence")
+	_send_key(game, KEY_E)
 	assert(int(game.get("cold_exposure_level")) == 1 and int(game.get("stew_servings")) == 0, "a shared meal from the pressure galley should relieve two of three cold levels")
 	var shared_event := _find_event(game, "resident_meal_shared")
 	var shared_facts: Dictionary = shared_event.get("facts", {})

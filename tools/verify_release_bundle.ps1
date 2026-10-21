@@ -22,6 +22,7 @@ $required = @(
     "wendao-changsheng.pck",
     "README.md",
     "wendao-ark.txt",
+    "game-version.json",
     "checksums.sha256",
     "licenses\AGPL-3.0.txt",
     "licenses\NotoSansSC-OFL.txt",
@@ -39,6 +40,9 @@ $productMarker = (Get-Content -Raw -LiteralPath (Join-Path $OutputDir "wendao-ar
 if ($productMarker -cne "WENDAO_ARK_3D_PRODUCT_V1") {
     throw "This is not an identified 3D Ark release; refusing a stale legacy executable."
 }
+
+& python -X utf8 (Join-Path $PSScriptRoot "game_version.py") --verify (Join-Path $OutputDir "game-version.json")
+if ($LASTEXITCODE -ne 0) { throw "Game version metadata validation failed: $LASTEXITCODE" }
 
 # The build directory is cleaned before export, but keep the release gate
 # closed to stale binaries, archives, debug logs, or files from a retired

@@ -110,7 +110,13 @@ func _build_menu() -> void:
 	var divider := HSeparator.new()
 	divider.add_theme_color_override("color", Color("425c50"))
 	body.add_child(divider)
-	_label(body, "ArkMenuFooter", "三维原型 · 一个持续的海上家园 · 进入或继续均不会重置进度", 16, Color("9bb9aa"))
+	var footer := HBoxContainer.new()
+	footer.add_theme_constant_override("separation", 20)
+	body.add_child(footer)
+	var version_label := _label(footer, "ArkMenuVersion", "版本 " + str(ProjectSettings.get_setting("application/config/version", "")), 16, Color("9bb9aa"))
+	version_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	var footer_note := _label(footer, "ArkMenuFooter", "三维原型 · 一个持续的海上家园 · 进入或继续均不会重置进度", 16, Color("9bb9aa"))
+	footer_note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 
 func _label(parent: Node, node_name: String, text: String, font_size: int, color: Color) -> Label:

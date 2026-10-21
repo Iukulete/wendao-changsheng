@@ -17,6 +17,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import shutil
 
 from verify_migration_surface import canonical_tests, verify_pack
 
@@ -100,12 +101,28 @@ func _run() -> void:
     var service = game.get("save_service")
     assert(str(service.call("get_save_path")).begins_with(save_root + "/"))
     assert(not ResourceLoader.exists("res://tests/ark_menu_integration_test.gd"))
+    assert(ProjectSettings.get_setting("display/window/size/mode", 0) == 0)
+    assert(not ProjectSettings.get_setting("display/window/flags/no_focus", false))
+    game.set("wood", 20)
+    assert(game.call("_try_place_shelter", Vector3.ZERO))
+    var paid: int = game.get("wood")
+    assert(game.call("_save_progress"))
     game.call("_return_to_main_menu")
     for frame in range(4):
         await process_frame
     assert(current_scene is Control, "packed Ark must return to the menu")
     assert(str(current_scene.get("save_root_override")) == save_root)
-    print("ARK_PACK_SCENE_SMOKE_OK: menu -> 3D Ark -> menu, isolated save, no packaged tests")
+    current_scene.call("_enter_ark")
+    for frame in range(4):
+        await process_frame
+    game = current_scene
+    assert(game is Node3D and not game.get_meta("save_load_blocked", false))
+    assert(game.get("shelter_built") and game.get("wood") == paid)
+    assert(game.get_node_or_null("ArkRoot/BuiltShelter") != null)
+    assert(game.get("economy").audit().ok)
+    game.call("_load_progress")
+    assert(game.get("wood") == paid and game.get("economy").audit().ok)
+    print("ARK_PACK_SCENE_SMOKE_OK: menu/build/save/return/recreate/repeat-load, normal window, isolated save, no packaged tests")
     quit()
 """, encoding="utf-8")
     local = ROOT / ".local"
@@ -147,11 +164,31 @@ def main() -> int:
         for name in RENDER_CAPTURES:
             (captures / name).unlink(missing_ok=True)
         display = ["--display-driver", args.display_driver] if args.display_driver else []
-        run([*common, *display, "--rendering-method", "gl_compatibility", "--position", "-32000,-32000",
+        # Set no-focus/minimized before startup; window managers can clamp offscreen
+        # positions, so a negative position is not a background-window guarantee.
+        render_project = temp / "render-project/godot"
+        shutil.copytree(ROOT / "godot", render_project, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns(".godot"))
+        config = render_project / "project.godot"
+        text = config.read_text(encoding="utf-8")
+        text = re.sub(r"(?m)^window/(?:size/mode|flags/no_focus)=.*\n", "", text)
+        text = text.replace("[display]", "[display]\nwindow/size/mode=1\nwindow/flags/no_focus=true", 1)
+        config.write_text(text, encoding="utf-8")
+        render_common = [str(engine), "--audio-driver", "Dummy", "--path", str(render_project)]
+        run([*render_common, "--headless", "--import"], "render_import", logs, env, 600)
+        env["ARK_RENDER_CAPTURE_ROOT"] = str(captures)
+        run([*render_common, *display, "--rendering-method", "gl_compatibility",
              "--resolution", "1440x900", "--quit-after", "10000", "--script", RENDER_SCRIPT],
             "ark_render_capture_test", logs, env, 600, "ARK_RENDER_CAPTURE_TEST_OK:")
         verify_captures(captures)
-        print(f"ARK_RENDER_VALIDATION_OK: {len(RENDER_CAPTURES)} captures; {captures}")
+        for name, output_env, output_dir in [
+                ("ark_gerstner_render_test", "ARK_GERSTNER_ARTIFACT_ROOT", ".tmp/gerstner-render"),
+                ("ark_pixel_protagonist_render_test", "ARK_PIXEL_ARTIFACT_ROOT", ".tmp/pixel-render")]:
+            env[output_env] = str(ROOT / output_dir)
+            run([*render_common, *display, "--rendering-method", "gl_compatibility",
+                 "--resolution", "64x64", "--quit-after", "10000", "--script", f"res://tests/{name}.gd"],
+                name, logs, env, 600, name.upper() + "_OK:")
+        print(f"ARK_RENDER_VALIDATION_OK: menu/Ark, Gerstner geometry/normals and pixel presentation; {captures}")
         return 0
     run([sys.executable, "-X", "utf8", "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"],
         "python_guards", logs, env, 600)
@@ -164,7 +201,7 @@ def main() -> int:
     scripts = regression_scripts()
     for script in scripts:
         name = Path(script).stem
-        frames = 30000 if name == "ark_world_travel_test" else 10000 if name == "ark_mooring_test" else 600
+        frames = 30000 if name in {"ark_world_travel_test", "ark_multifloor_risk_test"} else 10000 if name == "ark_mooring_test" else 6000
         run([*headless, "--quit-after", str(frames), "--script", script], name,
             logs, env, 900 if frames > 600 else 180, name.upper() + "_OK:")
     # Exported pack proof is portable and does not pretend Linux ran a Windows EXE.

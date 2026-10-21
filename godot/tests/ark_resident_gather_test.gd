@@ -73,6 +73,13 @@ func _run() -> void:
 	game.call("_set_traveler_boarded")
 	var slope_marker := game.get("traveler_marker") as Node3D
 	slope_marker.global_position = Vector3(18.0, 0.12, -14.0)
+	# The slope probe is a real reserved task, not orphaned facade flags.
+	assert(game.get("economy").seed_source("SlopeProbe", "wood", 1, "shore"))
+	var slope_task: Dictionary = game.get("gathering").dispatch("tidekeeper", "SlopeProbe", "player")
+	assert(slope_task.ok)
+	game.set("resident_task_id", str(slope_task.task_id))
+	game.set("resident_gather_target_id", "SlopeProbe")
+	game.set("resident_gather_resource", "wood")
 	game.set("resident_gather_pending", true)
 	game.set("resident_gather_phase", "outbound")
 	game.set("resident_gather_target_position", Vector3(24.0, 0.12, -14.0))
@@ -83,6 +90,7 @@ func _run() -> void:
 		if str(game.get("resident_gather_phase")) == "collecting":
 			break
 	assert(lowest_resident_y < 0.0 and str(game.get("resident_gather_phase")) == "collecting", "the resident should physically descend across the shore slope and reach the actual collection point")
+	game.get("gathering").cancel(str(slope_task.task_id), "slope_probe_complete")
 	game.set("resident_gather_pending", false)
 	game.set("resident_gather_phase", "")
 	game.set("shelter_built", true)
@@ -192,6 +200,11 @@ func _run_storage_free_delivery_checks(scene: PackedScene) -> void:
 	game.set("wood", 1)
 	game.set("resident_gather_pending", true)
 	game.set("resident_gather_resource", "wood")
+	assert(game.get("economy").seed_source("TestDriftwood", "wood", 2, "shore"))
+	var task_TestDriftwood: Dictionary = game.get("gathering").dispatch("tidekeeper", "TestDriftwood", "player")
+	assert(task_TestDriftwood.ok)
+	assert(game.get("gathering").harvest(str(task_TestDriftwood.task_id)).ok)
+	game.set("resident_task_id", str(task_TestDriftwood.task_id))
 	game.set("resident_gather_target_id", "TestDriftwood")
 	game.set("resident_gather_payload", 2)
 	game.call("_finish_resident_gathering", "returned")
@@ -209,6 +222,11 @@ func _run_storage_free_delivery_checks(scene: PackedScene) -> void:
 	game.set("wood", 1)
 	game.set("resident_gather_pending", true)
 	game.set("resident_gather_resource", "wood")
+	assert(game.get("economy").seed_source("TestStoredDriftwood", "wood", 2, "shore"))
+	var task_TestStoredDriftwood: Dictionary = game.get("gathering").dispatch("tidekeeper", "TestStoredDriftwood", "player")
+	assert(task_TestStoredDriftwood.ok)
+	assert(game.get("gathering").harvest(str(task_TestStoredDriftwood.task_id)).ok)
+	game.set("resident_task_id", str(task_TestStoredDriftwood.task_id))
 	game.set("resident_gather_target_id", "TestStoredDriftwood")
 	game.set("resident_gather_payload", 2)
 	game.call("_finish_resident_gathering", "returned")
@@ -247,7 +265,7 @@ func _run_policy_checks(scene: PackedScene) -> void:
 	key.keycode = KEY_2
 	game.call("_unhandled_key_input", key)
 	assert(str(game.get("resident_gather_policy")) == "shellfish_first" and not bool(game.get("resident_gather_policy_choice_pending")), "the actual choice key should set the food preference and close the prompt")
-	assert((game.get("hud") as Label).text.contains("鲜贝优先") and _count_events(game, "resident_gather_policy_set") == 1, "the work preference should be visible and recorded once")
+	assert((game.get("hud_details") as Label).text.contains("鲜贝优先") and _count_events(game, "resident_gather_policy_set") == 1, "the work preference should be visible and recorded once")
 	assert(bool(game.call("_begin_resident_daily_gather")) and str(game.get("resident_gather_resource")) == "shellfish", "food priority should select an existing shellfish source while real driftwood is also available")
 	var current_target := str(game.get("resident_gather_target_id"))
 	game.set("resident_gather_policy_choice_pending", true)
@@ -307,7 +325,7 @@ func _run_shared_table_meal_checks(scene: PackedScene) -> void:
 	var player := game.get("player") as CharacterBody3D
 	var tidekeeper := game.get("traveler_marker") as Node3D
 	var sailmaker := game.get("sailmaker_marker") as Node3D
-	player.global_position = tidekeeper.global_position
+	player.global_position = tidekeeper.global_position + Vector3(0, 0.19, 0)
 	game.call("_interact")
 	assert(bool(game.get("shared_meal_gathering_pending")) and int(game.get("stew_servings")) == 0, "serving soup to both residents should reserve exactly one meal while they walk to the firelight")
 	assert(int(game.get("shared_meal_count")) == 0 and _count_events(game, "resident_meal_shared") == 0, "the meal should not be recorded as shared until both residents physically arrive")
@@ -331,7 +349,15 @@ func _run_shared_table_meal_checks(scene: PackedScene) -> void:
 			break
 		game.call("_process", 0.1)
 		await physics_frame
-	assert(not bool(game.get("shared_meal_gathering_pending")) and int(game.get("shared_meal_count")) == 1, "the shared meal should complete once both residents reach the firelight")
+	assert(bool(game.get("shared_meal_gathering_pending")) and int(game.get("shared_meal_count")) == 0, "arrival alone must not complete a meal")
+	(game.get("player") as Node3D).position = Vector3(-0.65, 0.19, -0.35)
+	if game.get("shared_meal_paused"):
+		game.call("_interact_shared_table")
+		for _step in range(200):
+			game.call("_process", 0.1)
+			await physics_frame
+	game.call("_interact")
+	assert(not bool(game.get("shared_meal_gathering_pending")) and int(game.get("shared_meal_count")) == 1, "only present player explicit E completes")
 	assert(int(game.get("player_health")) == 3 and int(game.get("stew_servings")) == 0, "the shared serving should restore the player's meal benefit exactly once")
 	var meal_event: Dictionary = {}
 	for event in game.get("world_events") as Array:

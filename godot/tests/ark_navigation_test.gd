@@ -93,7 +93,7 @@ func _run() -> void:
 	var restored_shelter := restored_ark.get_node_or_null("BuiltShelter") as Node3D
 	assert(restored_shelter != null, "built homes must be reconstructed beneath the mobile ark")
 	assert(restored_shelter.global_position.distance_to(restored_ark.to_global(Vector3(0.0, 0.12, -0.5))) < 0.03, "the home must keep its deck-local placement after the ark turns and reloads")
-	assert(int((restored.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 33, "mobile ark, learned blueprints, home traces, residents, grounded memories, mooring rewards, accumulated exposure, resident work policies, guest cabin, vessel industry, operating rights, pressure galley, combat health, regional wildlife, luxury-ark guest stays, optional vessel title and resumable shared meals should use the current save schema")
+	assert(int((restored.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 34, "mobile ark, learned blueprints, home traces, residents, grounded memories, mooring rewards, accumulated exposure, resident work policies, guest cabin, vessel industry, operating rights, pressure galley, combat health, regional wildlife, luxury-ark guest stays, optional vessel title and resumable shared meals should use the current save schema")
 	restored.queue_free()
 	await process_frame
 	save_helper.clear_for_test()

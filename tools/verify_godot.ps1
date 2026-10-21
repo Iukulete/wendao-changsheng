@@ -32,7 +32,17 @@ $testScripts = @(
     "res://tests/ark_resident_gather_test.gd",
     "res://tests/ark_save_integrity_audit_test.gd",
     "res://tests/ark_test_paths_test.gd",
-    "res://tests/ark_world_travel_test.gd"
+    "res://tests/ark_world_travel_test.gd",
+    "res://tests/ark_multifloor_risk_test.gd",
+    "res://tests/ark_water_risk_test.gd",
+    "res://tests/ark_resource_consistency_test.gd",
+    "res://tests/ark_pixel_protagonist_test.gd",
+    "res://tests/ark_game_version_test.gd",
+    "res://tests/ark_module_chain_test.gd",
+    "res://tests/ark_native_water_test.gd",
+    "res://tests/ark_gerstner_water_test.gd",
+    "res://tests/ark_hud_clarity_test.gd",
+    "res://tests/ark_home_meal_test.gd"
 )
 
 if (-not $NoPrepare) {

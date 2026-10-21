@@ -28,7 +28,7 @@ func _run() -> void:
 	var ark_root: Node3D = game.get_node("ArkRoot") as Node3D
 	var player: CharacterBody3D = game.get("player") as CharacterBody3D
 	assert(bool(game.call("_is_within_ark_refuge")), "the player should begin inside the mobile ark's refuge radius")
-	assert(((game.get("hud") as Label).text).contains("仙舟庇护圈 8m"), "the HUD should make the base refuge radius legible")
+	assert(((game.get("hud_details") as Label).text).contains("仙舟庇护圈 8m"), "the HUD should make the base refuge radius legible")
 
 	player.position = Vector3(21.0, 1.1, 0.0)
 	game.call("_refresh_refuge_state")
@@ -68,7 +68,7 @@ func _run() -> void:
 	var tuned_event: Dictionary = (game.get("world_events") as Array).back()
 	var tuned_facts: Dictionary = tuned_event.get("facts", {})
 	assert(str(tuned_event.get("id", "")) == "lantern_tuned" and float(tuned_facts.get("home_refuge_radius", 0.0)) == 15.0, "the upgrade event must record the actual refuge radius")
-	assert(((game.get("hud") as Label).text).contains("仙舟庇护圈 15m"), "the refuge expansion should be visible in the HUD")
+	assert(((game.get("hud_details") as Label).text).contains("仙舟庇护圈 15m"), "the refuge expansion should be visible in the HUD")
 	game.call("_refresh_refuge_state")
 	player.position = Vector3(14.0, 1.1, 0.0)
 	game.call("_refresh_refuge_state")
