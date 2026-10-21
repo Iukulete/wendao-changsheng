@@ -4,10 +4,11 @@ from __future__ import annotations
 import contextlib
 import io
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 import verify_godot
 
@@ -37,6 +38,52 @@ class VerifyGodotTests(unittest.TestCase):
         self.assertRegex("4.7.1.stable.official.a13da4feb", verify_godot.VERSION_PATTERN)
         for version in ("4.6.3.stable.official.hash", "4.7.1.beta.official.hash", "4.7.1.stable.custom", "4.7.1.stable.official.hash", "4.7.1.stable.official.a13da4feb.extra"):
             self.assertIsNone(verify_godot.VERSION_PATTERN.match(version))
+
+    def test_render_environment_uses_godot_paths_on_windows(self) -> None:
+        # Exercise the real render branch with Windows path semantics on any OS.
+        # No engine, filesystem copy or display is used by this runner unit test.
+        class WindowsFixturePath(PureWindowsPath):
+            def resolve(self):
+                return self
+
+            def is_file(self):
+                return True
+
+            def mkdir(self, *args, **kwargs):
+                pass
+
+            def unlink(self, *args, **kwargs):
+                pass
+
+            def read_text(self, *args, **kwargs):
+                return "[display]\n"
+
+            def write_text(self, *args, **kwargs):
+                pass
+
+        captured = {}
+
+        def record(command, name, logs, env, *args, **kwargs):
+            captured[name] = (list(command), dict(env))
+            return "4.7.1.stable.official.a13da4feb" if name == "version" else ""
+
+        with mock.patch.object(verify_godot, "ROOT", WindowsFixturePath("D:/ark")), \
+                mock.patch.object(verify_godot, "Path", WindowsFixturePath), \
+                mock.patch.object(verify_godot.shutil, "copytree"), \
+                mock.patch.object(verify_godot, "verify_captures"), \
+                mock.patch.object(verify_godot, "run", side_effect=record), \
+                mock.patch.object(sys, "argv", ["verify_godot.py", "--godot", "D:/godot.exe",
+                                                "--render-only", "--display-driver", "windows"]), \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(verify_godot.main(), 0)
+        for name, variable, destination in (
+                ("ark_render_capture_test", "ARK_RENDER_CAPTURE_ROOT", "ark-render-captures"),
+                ("ark_gerstner_render_test", "ARK_GERSTNER_ARTIFACT_ROOT", "gerstner-render"),
+                ("ark_pixel_protagonist_render_test", "ARK_PIXEL_ARTIFACT_ROOT", "pixel-render")):
+            with self.subTest(script=name):
+                command, env = captured[name]
+                self.assertEqual(env[variable], "D:/ark/.tmp/" + destination)
+                self.assertNotIn("--headless", command)
 
     def test_success_retains_log(self) -> None:
         self.assertIn("PASS_OK:", self.execute("print('PASS_OK:')"))

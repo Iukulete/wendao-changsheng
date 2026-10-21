@@ -176,7 +176,7 @@ def main() -> int:
         config.write_text(text, encoding="utf-8")
         render_common = [str(engine), "--audio-driver", "Dummy", "--path", str(render_project)]
         run([*render_common, "--headless", "--import"], "render_import", logs, env, 600)
-        env["ARK_RENDER_CAPTURE_ROOT"] = str(captures)
+        env["ARK_RENDER_CAPTURE_ROOT"] = captures.as_posix()
         run([*render_common, *display, "--rendering-method", "gl_compatibility",
              "--resolution", "1440x900", "--quit-after", "10000", "--script", RENDER_SCRIPT],
             "ark_render_capture_test", logs, env, 600, "ARK_RENDER_CAPTURE_TEST_OK:")
@@ -184,7 +184,7 @@ def main() -> int:
         for name, output_env, output_dir in [
                 ("ark_gerstner_render_test", "ARK_GERSTNER_ARTIFACT_ROOT", ".tmp/gerstner-render"),
                 ("ark_pixel_protagonist_render_test", "ARK_PIXEL_ARTIFACT_ROOT", ".tmp/pixel-render")]:
-            env[output_env] = str(ROOT / output_dir)
+            env[output_env] = (ROOT / output_dir).as_posix()
             run([*render_common, *display, "--rendering-method", "gl_compatibility",
                  "--resolution", "64x64", "--quit-after", "10000", "--script", f"res://tests/{name}.gd"],
                 name, logs, env, 600, name.upper() + "_OK:")
