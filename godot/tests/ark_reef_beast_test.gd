@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -15,8 +17,9 @@ func _count_events(game: Node, event_id: String) -> int:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_reef_beast_save").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var wound_save_root := ProjectSettings.globalize_path("res://../.local/test_reef_wound_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:") and wound_save_root.to_lower().begins_with("d:"), "reef encounter test saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(wound_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	var wound_save_helper := preload("res://scripts/ark_greybox_save.gd").new(wound_save_root)
 	save_helper.clear_for_test()
@@ -62,7 +65,7 @@ func _run() -> void:
 	assert(not beast.visible and _count_events(game, "reef_beast_defeated") == 1, "a defeated creature should not respawn or duplicate its reward")
 	game.call("_attack_reef_beast")
 	assert(int(game.get("reef_shell_plates")) == 1 and _count_events(game, "reef_beast_defeated") == 1, "repeated attack input must not duplicate the unique reward")
-	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 32, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
+	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 33, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
 	assert(bool(game.call("_save_progress")), "the defeated-creature state should save")
 	game.queue_free()
 	await process_frame

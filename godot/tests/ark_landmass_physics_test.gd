@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -7,6 +9,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_save_landmass_physics").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -15,7 +17,7 @@ func _count_events(events: Array, event_id: String) -> int:
 
 func _run() -> void:
 	var test_save_root := ProjectSettings.globalize_path("res://../.local/test_save").simplify_path()
-	assert(test_save_root.to_lower().begins_with("d:"), "prototype saves must stay on D:")
+	assert(ArkTestPaths.is_safe_save_root(test_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(test_save_root)
 	save_helper.clear_for_test()
 	var packed := load("res://scenes/ark_greybox.tscn") as PackedScene
@@ -302,6 +304,7 @@ func _run() -> void:
 	blueprint_save_restore.queue_free()
 	await process_frame
 	var legacy_blueprint_save_root := ProjectSettings.globalize_path("res://../.local/test_save_legacy_blueprint").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(legacy_blueprint_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var legacy_blueprint_save_helper := preload("res://scripts/ark_greybox_save.gd").new(legacy_blueprint_save_root)
 	legacy_blueprint_save_helper.clear_for_test()
 	var legacy_blueprint_state: Dictionary = crafted_restored.call("_build_save_state")
@@ -399,6 +402,7 @@ func _run() -> void:
 	await process_frame
 	save_helper.clear_for_test()
 	var alternate_save_root := ProjectSettings.globalize_path("res://../.local/test_save_alternate").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(alternate_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var alternate_save_helper := preload("res://scripts/ark_greybox_save.gd").new(alternate_save_root)
 	alternate_save_helper.clear_for_test()
 	var alternate := packed.instantiate()
@@ -441,6 +445,7 @@ func _run() -> void:
 	await process_frame
 	alternate_save_helper.clear_for_test()
 	var ruin_save_root := ProjectSettings.globalize_path("res://../.local/test_save_ruin").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(ruin_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var ruin_save_helper := preload("res://scripts/ark_greybox_save.gd").new(ruin_save_root)
 	ruin_save_helper.clear_for_test()
 	var explorer := packed.instantiate()
@@ -507,6 +512,7 @@ func _run() -> void:
 	await process_frame
 	ruin_save_helper.clear_for_test()
 	var resident_job_root := ProjectSettings.globalize_path("res://../.local/test_save_resident_job").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(resident_job_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var resident_job_save := preload("res://scripts/ark_greybox_save.gd").new(resident_job_root)
 	resident_job_save.clear_for_test()
 	var resident_job_game := packed.instantiate()
@@ -569,6 +575,7 @@ func _run() -> void:
 	await process_frame
 	resident_job_save.clear_for_test()
 	var legacy_save_root := ProjectSettings.globalize_path("res://../.local/test_save_legacy_events").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(legacy_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var legacy_save_helper := preload("res://scripts/ark_greybox_save.gd").new(legacy_save_root)
 	legacy_save_helper.clear_for_test()
 	var legacy_result: Dictionary = legacy_save_helper.save_state({"schema_version": 7, "resident_met": true, "shelter_built": true, "wood": 2})
@@ -584,6 +591,7 @@ func _run() -> void:
 	await process_frame
 	legacy_save_helper.clear_for_test()
 	var previous_schema_root := ProjectSettings.globalize_path("res://../.local/test_save_schema9").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(previous_schema_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var previous_schema_save := preload("res://scripts/ark_greybox_save.gd").new(previous_schema_root)
 	previous_schema_save.clear_for_test()
 	var previous_schema_result: Dictionary = previous_schema_save.save_state({"schema_version": 9, "shelter_built": true, "wood": 2, "world_events": []})
@@ -598,7 +606,7 @@ func _run() -> void:
 	await process_frame
 	previous_schema_save.clear_for_test()
 	var template_save_root := ProjectSettings.globalize_path("res://../.local/test_save_template").simplify_path()
-	assert(template_save_root.to_lower().begins_with("d:"), "template test saves must stay on D:")
+	assert(ArkTestPaths.is_safe_save_root(template_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var template_save := preload("res://scripts/ark_greybox_save.gd").new(template_save_root)
 	template_save.clear_for_test()
 	var template_game := packed.instantiate()
@@ -636,6 +644,7 @@ func _run() -> void:
 	await process_frame
 	template_save.clear_for_test()
 	var basic_template_save_root := ProjectSettings.globalize_path("res://../.local/test_save_basic_template").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(basic_template_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var basic_template_save := preload("res://scripts/ark_greybox_save.gd").new(basic_template_save_root)
 	basic_template_save.clear_for_test()
 	var basic_template_game := packed.instantiate()
@@ -653,6 +662,7 @@ func _run() -> void:
 	await process_frame
 	basic_template_save.clear_for_test()
 	var meal_save_root := ProjectSettings.globalize_path("res://../.local/test_save_meals").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(meal_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var meal_save := preload("res://scripts/ark_greybox_save.gd").new(meal_save_root)
 	meal_save.clear_for_test()
 	var meal_game := packed.instantiate()
@@ -746,6 +756,7 @@ func _run() -> void:
 	await process_frame
 	meal_save.clear_for_test()
 	var sailmaker_save_root := ProjectSettings.globalize_path("res://../.local/test_save_sailmaker").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(sailmaker_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var sailmaker_save := preload("res://scripts/ark_greybox_save.gd").new(sailmaker_save_root)
 	sailmaker_save.clear_for_test()
 	var sailmaker_game := packed.instantiate()
@@ -862,6 +873,7 @@ func _run() -> void:
 	await process_frame
 	sailmaker_save.clear_for_test()
 	var storm_cycle_save_root := ProjectSettings.globalize_path("res://../.local/test_save_storm_cycle").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(storm_cycle_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var storm_cycle_save := preload("res://scripts/ark_greybox_save.gd").new(storm_cycle_save_root)
 	storm_cycle_save.clear_for_test()
 	var storm_cycle_game := packed.instantiate()
@@ -889,6 +901,7 @@ func _run() -> void:
 	first_storm_legacy_state["resident_met"] = true
 	first_storm_legacy_state["traveler_boarded"] = true
 	var legacy_storm_save_root := ProjectSettings.globalize_path("res://../.local/test_save_legacy_storm").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(legacy_storm_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var legacy_storm_save := preload("res://scripts/ark_greybox_save.gd").new(legacy_storm_save_root)
 	legacy_storm_save.clear_for_test()
 	assert(bool(legacy_storm_save.save_state(first_storm_legacy_state).get("ok", false)), "a schema 16 aftermath save should be seedable for recurring-weather migration coverage")

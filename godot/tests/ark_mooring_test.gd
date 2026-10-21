@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 const MOONBACK_STATION := Vector3(-28.0, 0.2, 23.0)
 const TEST_DELTA := 1.0 / 30.0
 
@@ -50,7 +52,7 @@ func _sail_to(game: Node, target: Vector3, max_steps: int = 2400) -> int:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_save_mooring").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "mooring regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 const PRESSURE_VENT_WINDUP_SECONDS := 1.4
 
 func _initialize() -> void:
@@ -42,7 +44,7 @@ func _send_key(game: Node, keycode: Key) -> void:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_pressure_galley_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "pressure galley regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
