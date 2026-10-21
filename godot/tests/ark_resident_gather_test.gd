@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -27,7 +29,7 @@ func _new_game(scene: PackedScene, save_root: String) -> Node:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_resident_gather_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "resident gathering regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
@@ -182,7 +184,7 @@ func _run() -> void:
 
 func _run_storage_free_delivery_checks(scene: PackedScene) -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_resident_delivery_storage_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "resident delivery regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var game := await _new_game(scene, save_root)
@@ -223,7 +225,7 @@ func _run_storage_free_delivery_checks(scene: PackedScene) -> void:
 
 func _run_policy_checks(scene: PackedScene) -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_resident_policy_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "resident work policy saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var game := await _new_game(scene, save_root)
@@ -284,7 +286,7 @@ func _run_policy_checks(scene: PackedScene) -> void:
 
 func _run_shared_table_meal_checks(scene: PackedScene) -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_shared_table_meal_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "shared-table meal regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var game := await _new_game(scene, save_root)
@@ -351,6 +353,7 @@ func _run_shared_table_meal_checks(scene: PackedScene) -> void:
 	save_helper.clear_for_test()
 
 	var busy_save_root := ProjectSettings.globalize_path("res://../.local/test_shared_table_meal_busy_save").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(busy_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var busy_save := preload("res://scripts/ark_greybox_save.gd").new(busy_save_root)
 	busy_save.clear_for_test()
 	var busy_game := await _new_game(scene, busy_save_root)
@@ -378,7 +381,7 @@ func _run_shared_table_meal_checks(scene: PackedScene) -> void:
 
 func _run_tidekeeper_box_checks(scene: PackedScene) -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_tidekeeper_box_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "the tidekeeper's physical keepsake box test must save on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var game := await _new_game(scene, save_root)
@@ -411,6 +414,7 @@ func _run_tidekeeper_box_checks(scene: PackedScene) -> void:
 	save_helper.clear_for_test()
 
 	var decline_root := ProjectSettings.globalize_path("res://../.local/test_tidekeeper_box_decline_save").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(decline_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var decline_save := preload("res://scripts/ark_greybox_save.gd").new(decline_root)
 	decline_save.clear_for_test()
 	var declined_game := await _new_game(scene, decline_root)

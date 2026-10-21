@@ -31,8 +31,10 @@ func _run() -> void:
 	_write_probe_file(accelerated_root.path_join("ai_engine/models/gemma-4-E4B_q4_0-it.gguf"))
 	_write_probe_file(accelerated_root.path_join("ai_engine/generate_event.ps1"))
 	var accelerated_probe: Dictionary = bridge.probe_runtime(accelerated_root)
-	_expect(bool(accelerated_probe.ready) and str(accelerated_probe.runtime_path).replace("\\", "/").contains("/runtime/vulkan/"),
-		"存在 Vulkan 后端时必须优先启用加速运行时，不能退回慢速 CPU")
+	_expect(str(accelerated_probe.runtime_path).replace("\\", "/").contains("/runtime/vulkan/"),
+		"存在 Vulkan 后端时必须优先选择加速运行时，不能退回慢速 CPU")
+	_expect(bool(accelerated_probe.ready) == (OS.get_name() == "Windows"),
+		"完整运行时在 Windows 就绪；非 Windows 不得把 PowerShell 生成器宣称为可运行")
 	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/runtime/vulkan/llama-completion.exe"))
 	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/models/gemma-4-E4B_q4_0-it.gguf"))
 	DirAccess.remove_absolute(accelerated_root.path_join("ai_engine/generate_event.ps1"))

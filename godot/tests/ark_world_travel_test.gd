@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	call_deferred("_run")
@@ -54,7 +56,7 @@ func _sail_to_waypoint(game: Node, target: Vector2, max_steps: int = 900) -> boo
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_save_world_travel").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "physical-travel test saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene

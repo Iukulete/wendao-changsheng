@@ -3,6 +3,8 @@ extends Node3D
 ## Standalone, art-free proof of the open-world home-building direction.
 ## This scene intentionally does not replace the existing game's main scene yet.
 
+const FixturePlacement = preload("res://scripts/ark_fixture_placement.gd")
+
 const WALK_SPEED := 5.0
 const SAIL_SPEED := 3.6
 const SAIL_TURN_SPEED := 0.72
@@ -83,6 +85,9 @@ enum DayPeriod { MORNING, DAY, EVENING, NIGHT }
 var player: CharacterBody3D
 var ark_root: Node3D
 var camera: Camera3D
+var hud_panel: PanelContainer
+var hud_stack: VBoxContainer
+var hud_edit_layout := false
 var hud: Label
 var note: Label
 var interaction_hint: Label
@@ -104,9 +109,13 @@ var shelter_built := false
 var shelter_position := Vector3.ZERO
 var storage_built := false
 var storage_position := Vector3.ZERO
+var storage_quarter_turns := 0
+var storage_collision_enabled := false
 var stored_wood := 0
 var workbench_built := false
 var workbench_position := Vector3.ZERO
+var workbench_quarter_turns := 0
+var workbench_collision_enabled := false
 var keel_beams := 0
 var keel_wreck_searched := false
 var learned_blueprint_ids: Array[String] = ["starter_shelter", "starter_home"]
@@ -207,6 +216,12 @@ var interactables: Array[Dictionary] = []
 var collected_ids: Array[String] = []
 var save_service: RefCounted
 var building_mode := false
+var editing_fixture_id := ""
+var preview_quarter_turns := 0
+var fixture_preview_error := ""
+var fixture_preview_checked_position := Vector3.INF
+var fixture_preview_checked_turns := -1
+var fixture_preview_checked_msec := 0
 var build_type := ""
 var build_preview: Node3D
 var preview_valid_material: StandardMaterial3D
@@ -907,10 +922,10 @@ func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> Packed
 	return route
 
 
-func _ark_local_walk_cell_blocked(local_xz: Vector2) -> bool:
+func _ark_local_walk_cell_blocked(local_xz: Vector2, extra_excluded: Array[RID] = [], actor_radius: float = 0.23) -> bool:
 	var actor_center := ark_root.to_global(Vector3(local_xz.x, 1.15, local_xz.y))
 	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.23
+	capsule.radius = actor_radius
 	capsule.height = 1.5
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = capsule
@@ -918,7 +933,7 @@ func _ark_local_walk_cell_blocked(local_xz: Vector2) -> bool:
 	query.collision_mask = 1
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
-	var excluded: Array[RID] = []
+	var excluded: Array[RID] = extra_excluded.duplicate()
 	if player:
 		excluded.append(player.get_rid())
 	for resident in [traveler_marker, sailmaker_marker]:
@@ -951,6 +966,8 @@ func _update_interaction_hint() -> void:
 	interaction_hint.visible = not nearest.is_empty()
 	if interaction_hint.visible:
 		interaction_hint.text = "E  ·  " + _interaction_hint_action(str(nearest.get("id", "")))
+		if str(nearest.get("id", "")) in ["storage", "workbench"]:
+			interaction_hint.text += "    F · 搬移/旋转"
 		var focus_target := nearest.get("node") as Node3D
 		if interaction_focus_ring and focus_target and is_instance_valid(focus_target):
 			interaction_focus_ring.global_position = focus_target.global_position + Vector3(0.0, 0.045, 0.0)
@@ -1082,7 +1099,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			message = "你先记下损伤，等找到合适木料再修。"
 			_update_hud()
 		return
-	if event.keycode == KEY_Q:
+	if not editing_fixture_id.is_empty():
+		if event.keycode == KEY_R:
+			_rotate_fixture_preview()
+		elif event.keycode in [KEY_ESCAPE, KEY_B, KEY_F]:
+			_cancel_build()
+		elif event.keycode == KEY_F5:
+			_save_progress() # Only committed transforms are persisted, never the ghost.
+		return
+	if event.keycode == KEY_F:
+		_start_nearby_fixture_edit()
+	elif event.keycode == KEY_Q:
 		_attack_reef_beast()
 	elif event.keycode == KEY_E:
 		_interact()
@@ -1127,7 +1154,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not building_mode or not event is InputEventMouseButton or not event.pressed:
 		return
 	if event.button_index == MOUSE_BUTTON_LEFT:
-		if build_type == "starter_home_template":
+		if not editing_fixture_id.is_empty():
+			if preview_valid:
+				_try_move_fixture(preview_position, preview_quarter_turns)
+		elif build_type == "starter_home_template":
 			_try_place_starter_home_template(preview_position)
 		elif build_type == "guest_cabin_template":
 			_try_place_guest_cabin_template(preview_position)
@@ -1320,10 +1350,12 @@ func _build_hud() -> void:
 	storm_overlay.visible = false
 	layer.add_child(storm_overlay)
 	var panel := PanelContainer.new()
+	hud_panel = panel
 	panel.position = Vector2(24, 22)
 	panel.custom_minimum_size = Vector2(650, 280)
 	layer.add_child(panel)
 	var stack := VBoxContainer.new()
+	hud_stack = stack
 	stack.add_theme_constant_override("separation", 8)
 	panel.add_child(stack)
 	hud = Label.new()
@@ -1335,7 +1367,7 @@ func _build_hud() -> void:
 	note.add_theme_font_size_override("font_size", 16)
 	stack.add_child(note)
 	var controls := Label.new()
-	controls.text = "WASD 行走/游泳 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F5 存档"
+	controls.text = "WASD 行走/游泳 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F 家具搬移 · F5 存档"
 	controls.add_theme_font_size_override("font_size", 14)
 	stack.add_child(controls)
 	interaction_hint = Label.new()
@@ -3052,6 +3084,7 @@ func _update_traveler_schedule() -> void:
 	else:
 		traveler_action = "查看潮势"
 		traveler_target_position = Vector3(0.5, 0.12, 1.35)
+	traveler_target_position = _fixture_safe_routine_target(traveler_target_position)
 	var sign := traveler_marker.get_node_or_null("Name") as Label3D
 	if sign:
 		sign.text = "守潮人 · %s" % traveler_action
@@ -3084,6 +3117,7 @@ func _update_sailmaker_schedule() -> void:
 	else:
 		sailmaker_action = "缝补旧帆"
 		sailmaker_target_position = Vector3(1.35, 0.12, -0.75)
+	sailmaker_target_position = _fixture_safe_routine_target(sailmaker_target_position)
 	var sign := sailmaker_marker.get_node_or_null("Name") as Label3D
 	if sign:
 		sign.text = "缝帆人 · %s" % sailmaker_action
@@ -3162,6 +3196,296 @@ func _add_sailmaker_awning() -> void:
 	marker.add_child(sign)
 	ark_root.add_child(marker)
 	interactables.append({"id": "sailmaker_awning", "node": marker, "amount": 0})
+
+
+func _fixture_safe_routine_target(target: Vector3) -> Vector3:
+	for id in ["storage", "workbench"]:
+		if not (storage_collision_enabled if id == "storage" else workbench_collision_enabled):
+			continue
+		var fixture := _fixture_node(id)
+		if fixture == null:
+			continue
+		var turns := storage_quarter_turns if id == "storage" else workbench_quarter_turns
+		if FixturePlacement.contains_actor(Vector2(target.x, target.z), fixture.position, FixturePlacement.half_size(id, turns)):
+			var half: Vector2 = FixturePlacement.half_size(id, turns)
+			var context := _fixture_walk_grid(id, fixture.position, turns)
+			for offset in [Vector3(0.0, 0.0, half.y + 0.42), Vector3(0.0, 0.0, -half.y - 0.42), Vector3(half.x + 0.42, 0.0, 0.0), Vector3(-half.x - 0.42, 0.0, 0.0)]:
+				var approach: Vector3 = fixture.position + offset
+				approach.y = target.y
+				if _fixture_grid_reaches(context.grid, context.minimum, context.cell_size, context.start, approach):
+					return approach
+			return Vector3(0.0, target.y, 1.55)
+	return target
+
+
+func _fixture_node(fixture_id: String) -> Node3D:
+	return _ark_node("BuiltStorage" if fixture_id == "storage" else "BuiltWorkbench") as Node3D
+
+
+# Old layouts were built with non-solid furniture and can have narrow corridors.
+# Activate physical collision only after an explicit, route-validated relocation.
+func _set_fixture_collision_enabled(fixture_id: String, enabled: bool) -> void:
+	if fixture_id == "storage":
+		storage_collision_enabled = enabled
+	else:
+		workbench_collision_enabled = enabled
+	var fixture := _fixture_node(fixture_id)
+	if fixture:
+		for child in fixture.get_children():
+			if child is CollisionObject3D:
+				child.collision_layer = 1 if enabled else 0
+				child.collision_mask = 1 if enabled else 0
+
+
+func _fixture_marker(fixture_id: String) -> Node3D:
+	return _ark_node("StorageInteractable" if fixture_id == "storage" else "WorkbenchInteractable") as Node3D
+
+
+func _start_nearby_fixture_edit() -> void:
+	if player == null:
+		return
+	var nearest_id := ""
+	var nearest_distance := 2.8
+	for fixture_id in ["storage", "workbench"]:
+		var marker := _fixture_marker(fixture_id)
+		if marker and player.global_position.distance_to(marker.global_position) < nearest_distance:
+			nearest_id = fixture_id
+			nearest_distance = player.global_position.distance_to(marker.global_position)
+	if nearest_id.is_empty():
+		message = "靠近已有储物箱或工作台，按 F 布置家具。"
+		_update_hud()
+	else:
+		_start_fixture_edit(nearest_id)
+
+
+func _start_fixture_edit(fixture_id: String) -> bool:
+	if fixture_id not in ["storage", "workbench"] or sailing_mode:
+		return false
+	if _fixture_node(fixture_id) == null:
+		return false
+	if building_mode:
+		_cancel_build(false)
+	editing_fixture_id = fixture_id
+	build_type = fixture_id
+	building_mode = true
+	preview_position = storage_position if fixture_id == "storage" else workbench_position
+	preview_quarter_turns = storage_quarter_turns if fixture_id == "storage" else workbench_quarter_turns
+	build_preview = Node3D.new()
+	build_preview.name = "FixtureMovePreview"
+	var ghost := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	var half: Vector2 = FixturePlacement.HALF_SIZES[fixture_id]
+	mesh.size = Vector3(half.x * 2.0, 0.8, half.y * 2.0)
+	ghost.mesh = mesh
+	ghost.position.y = 0.45
+	build_preview.add_child(ghost)
+	# A contrasting front lip makes 180-degree turns visually legible, even for a crate.
+	var front := MeshInstance3D.new()
+	var front_mesh := BoxMesh.new()
+	front_mesh.size = Vector3(half.x * 1.4, 0.08, 0.09)
+	front.mesh = front_mesh
+	front.position = Vector3(0.0, 0.9, half.y)
+	build_preview.add_child(front)
+	preview_valid_material = _preview_material(Color("a2d18f"))
+	preview_invalid_material = _preview_material(Color("d78277"))
+	ark_root.add_child(build_preview)
+	_refresh_fixture_preview()
+	return true
+
+
+func _rotate_fixture_preview() -> void:
+	if editing_fixture_id.is_empty():
+		return
+	preview_quarter_turns = FixturePlacement.normalize_turns(preview_quarter_turns + 1)
+	_refresh_fixture_preview()
+
+
+func _refresh_fixture_preview() -> void:
+	if editing_fixture_id.is_empty() or not is_instance_valid(build_preview):
+		return
+	build_preview.position = preview_position
+	build_preview.rotation.y = preview_quarter_turns * PI / 2.0
+	if preview_position != fixture_preview_checked_position or preview_quarter_turns != fixture_preview_checked_turns or Time.get_ticks_msec() - fixture_preview_checked_msec >= 200:
+		fixture_preview_error = _fixture_placement_error(editing_fixture_id, preview_position, preview_quarter_turns)
+		fixture_preview_checked_msec = Time.get_ticks_msec()
+		fixture_preview_checked_position = preview_position
+		fixture_preview_checked_turns = preview_quarter_turns
+	preview_valid = fixture_preview_error.is_empty()
+	_set_build_preview_material(preview_valid_material if preview_valid else preview_invalid_material)
+	message = "搬移%s · %d°\n鼠标选位置 · R 旋转 · 左键确认 · 右键/Esc 取消。不消耗木料。%s" % ["储物箱" if editing_fixture_id == "storage" else "工作台", preview_quarter_turns * 90, "可放置" if preview_valid else fixture_preview_error]
+	_update_hud()
+
+
+func _fixture_collision_rids(fixture_id: String) -> Array[RID]:
+	var excluded: Array[RID] = []
+	var fixture := _fixture_node(fixture_id)
+	if fixture:
+		for child in fixture.get_children():
+			if child is CollisionObject3D:
+				excluded.append(child.get_rid())
+	return excluded
+
+
+func _fixture_geometry_error(fixture_id: String, position: Vector3, quarter_turns: int) -> String:
+	if fixture_id not in ["storage", "workbench"] or not position.is_finite():
+		return "无效家具或坐标。"
+	var half: Vector2 = FixturePlacement.half_size(fixture_id, quarter_turns)
+	if not FixturePlacement.supported(position, half):
+		return "家具须完整落在原甲板内；本轮不支持移到扩建甲板。"
+	var lantern := _ark_node("LanternMarker") as Node3D
+	if lantern and FixturePlacement.overlaps(position, half, lantern.position, Vector2(0.18, 0.18)):
+		return "这里与固定的避风灯重叠。"
+	var other_id := "workbench" if fixture_id == "storage" else "storage"
+	var other := _fixture_node(other_id)
+	if other:
+		var other_turns := workbench_quarter_turns if other_id == "workbench" else storage_quarter_turns
+		if FixturePlacement.overlaps(position, half, other.position, FixturePlacement.half_size(other_id, other_turns)):
+			return "这里与另一件家具重叠。"
+	return ""
+
+
+func _fixture_placement_error(fixture_id: String, position: Vector3, quarter_turns: int) -> String:
+	var geometry_error := _fixture_geometry_error(fixture_id, position, quarter_turns)
+	if not geometry_error.is_empty():
+		return geometry_error
+	var half: Vector2 = FixturePlacement.half_size(fixture_id, quarter_turns)
+	if shelter_built and FixturePlacement.overlaps(position, half, shelter_position, Vector2(1.5, 1.2), 0.01):
+		return "这里与避风棚、床铺或炉台空间重叠。"
+	# Never place a solid fixture through a person currently standing on the deck.
+	for actor in [player, traveler_marker, sailmaker_marker]:
+		if is_instance_valid(actor) and actor.get_parent() == ark_root:
+			var actor_local: Vector3 = actor.position
+			if FixturePlacement.contains_actor(Vector2(actor_local.x, actor_local.z), position, half, 0.40 if actor == player else 0.25):
+				return "有人站在这里，请留出空间。"
+	if not _fixture_routes_clear(fixture_id, position, quarter_turns):
+		return "请保留家具使用面、舵位、棚门与居民通路。"
+	return ""
+
+
+func _fixture_walk_grid(fixture_id: String, position: Vector3, quarter_turns: int, actor_radius: float = 0.23) -> Dictionary:
+	var excluded := _fixture_collision_rids(fixture_id)
+	var minimum := Vector2(-2.5, -6.0 if raft_extension_built else -2.0)
+	var cell_size := 0.25
+	var grid_size := Vector2i(21, roundi((1.75 - minimum.y) / cell_size) + 1)
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(Vector2i.ZERO, grid_size)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	var half: Vector2 = FixturePlacement.half_size(fixture_id, quarter_turns)
+	var other_id := "workbench" if fixture_id == "storage" else "storage"
+	var other := _fixture_node(other_id)
+	var other_turns := workbench_quarter_turns if other_id == "workbench" else storage_quarter_turns
+	var other_half: Vector2 = FixturePlacement.half_size(other_id, other_turns)
+	var other_solid := workbench_collision_enabled if other_id == "workbench" else storage_collision_enabled
+	# Legacy furniture remains nonblocking until its own validated relocation.
+	for z in range(grid_size.y):
+		for x in range(grid_size.x):
+			var point := minimum + Vector2(x, z) * cell_size
+			grid.set_point_solid(Vector2i(x, z), FixturePlacement.contains_actor(point, position, half, actor_radius) or (other != null and other_solid and FixturePlacement.contains_actor(point, other.position, other_half, actor_radius)) or _ark_local_walk_cell_blocked(point, excluded, actor_radius))
+	var start_cell := Vector2i(roundi(-minimum.x / cell_size), roundi((1.75 - minimum.y) / cell_size))
+	return {"grid": grid, "minimum": minimum, "cell_size": cell_size, "start": start_cell, "actor_radius": actor_radius}
+
+
+func _fixture_routes_clear(fixture_id: String, position: Vector3, quarter_turns: int) -> bool:
+	if ark_root == null or get_world_3d() == null:
+		return false
+	var context := _fixture_walk_grid(fixture_id, position, quarter_turns)
+	var grid: AStarGrid2D = context.grid
+	var minimum: Vector2 = context.minimum
+	var cell_size: float = context.cell_size
+	var start_cell: Vector2i = context.start
+	if grid.is_point_solid(start_cell):
+		return false
+	var targets: Array[Vector3] = [RESIDENT_DECK_POSITION, Vector3(0.0, 0.12, 1.5)]
+	if shelter_built:
+		targets.append(shelter_position + Vector3(0.0, 0.0, 1.55))
+	if raft_extension_built:
+		targets.append(Vector3(0.0, 0.12, -2.5))
+	for target in targets:
+		if not _fixture_grid_reaches(grid, minimum, cell_size, start_cell, target):
+			return false
+	var player_context := _fixture_walk_grid(fixture_id, position, quarter_turns, 0.38)
+	var player_targets: Array[Vector3] = [Vector3(0.0, 0.12, 1.5)]
+	if shelter_built:
+		player_targets.append(shelter_position + Vector3(0.0, 0.0, 1.55))
+	if raft_extension_built:
+		player_targets.append(Vector3(0.0, 0.12, -2.5))
+	for target in player_targets:
+		if not _fixture_grid_reaches(player_context.grid, player_context.minimum, player_context.cell_size, player_context.start, target):
+			return false
+	# Lid and tabletop can be used from any side. Rotation affects occupied space,
+	# not a fictitious one-sided interaction rule that would trap legacy layouts.
+	for id in ["storage", "workbench"]:
+		var node := _fixture_node(id)
+		if node == null:
+			continue
+		var spot := position if id == fixture_id else node.position
+		var turns := quarter_turns if id == fixture_id else storage_quarter_turns if id == "storage" else workbench_quarter_turns
+		var size: Vector2 = FixturePlacement.half_size(id, turns)
+		if not _fixture_any_side_reachable(context, spot, size) or not _fixture_any_side_reachable(player_context, spot, size):
+			return false
+	return true
+
+
+func _fixture_any_side_reachable(context: Dictionary, spot: Vector3, size: Vector2) -> bool:
+	# Nearest-cell rounding can pull a sample inward by half a grid cell.
+	# Keep the entire actor clear after quantization, not only the ideal point.
+	var clearance: float = maxf(0.42, float(context.actor_radius) + float(context.cell_size) * 0.5 + 0.02)
+	for offset in [Vector3(size.x + clearance, 0.0, 0.0), Vector3(-size.x - clearance, 0.0, 0.0), Vector3(0.0, 0.0, size.y + clearance), Vector3(0.0, 0.0, -size.y - clearance)]:
+		if _fixture_grid_reaches(context.grid, context.minimum, context.cell_size, context.start, spot + offset):
+			return true
+	return false
+
+
+func _fixture_grid_reaches(grid: AStarGrid2D, minimum: Vector2, cell_size: float, start: Vector2i, target: Vector3) -> bool:
+	var cell := Vector2i(roundi((target.x - minimum.x) / cell_size), roundi((target.z - minimum.y) / cell_size))
+	return grid.is_in_boundsv(cell) and not grid.is_point_solid(cell) and not grid.get_id_path(start, cell).is_empty()
+
+
+func _try_move_fixture(position: Vector3, quarter_turns: int) -> bool:
+	if editing_fixture_id.is_empty() or sailing_mode:
+		return false
+	var id := editing_fixture_id
+	var fixture := _fixture_node(id)
+	var marker := _fixture_marker(id)
+	if fixture == null or marker == null or not position.is_finite():
+		return false
+	var snapped_position := Vector3(snappedf(position.x, 0.5), 0.12, snappedf(position.z, 0.5))
+	var turns: int = FixturePlacement.normalize_turns(quarter_turns)
+	var placement_error := _fixture_placement_error(id, snapped_position, turns)
+	if not placement_error.is_empty():
+		message = placement_error
+		_update_hud()
+		return false
+	# Commit in place, with no rebuilding, inventory writes, or construction costs.
+	var previous_position := fixture.position
+	var previous_turns := storage_quarter_turns if id == "storage" else workbench_quarter_turns
+	if id == "storage":
+		storage_position = snapped_position
+		storage_quarter_turns = turns
+	else:
+		workbench_position = snapped_position
+		workbench_quarter_turns = turns
+	_set_fixture_collision_enabled(id, true)
+	fixture.position = snapped_position
+	fixture.rotation.y = turns * PI / 2.0
+	marker.position = snapped_position + Vector3(0.0, 0.5, 0.0)
+	marker.rotation.y = turns * PI / 2.0
+	traveler_routine_route.clear()
+	sailmaker_routine_route.clear()
+	traveler_routine_route_target_set = false
+	sailmaker_routine_route_target_set = false
+	if resident_gather_pending:
+		resident_gather_route.clear()
+		resident_gather_route_index = 0
+	_update_traveler_schedule()
+	_update_sailmaker_schedule()
+	_record_world_event("fixture_moved", {"fixture_id": id, "from": _position_facts(previous_position), "to": _position_facts(snapped_position), "previous_quarter_turns": previous_turns, "quarter_turns": turns, "wood_spent": 0})
+	_cancel_build(false)
+	message = "家具已重新摆好；库存、升级与蓝图保持不变。"
+	_save_progress()
+	_update_hud()
+	return true
 
 
 func _start_build() -> void:
@@ -3384,6 +3708,9 @@ func _update_build_preview() -> void:
 		return
 	var point: Vector3 = ark_root.to_local(hit)
 	preview_position = Vector3(snappedf(point.x, 0.5), 0.12, snappedf(point.z, 0.5))
+	if not editing_fixture_id.is_empty():
+		_refresh_fixture_preview()
+		return
 	if build_type == "starter_home_template":
 		preview_valid = _is_valid_starter_home_template_position(preview_position)
 	elif build_type == "guest_cabin_template":
@@ -3447,9 +3774,9 @@ func _try_place_starter_home_template(position: Vector3) -> bool:
 func _is_valid_shelter_position(position: Vector3) -> bool:
 	if shelter_built or absf(position.x) > 1.2 or absf(position.z) > 0.55:
 		return false
-	if storage_built and _rectangles_overlap(position, Vector2(1.5, 1.2), storage_position, Vector2(0.55, 0.48), 0.2):
+	if storage_built and _rectangles_overlap(position, Vector2(1.5, 1.2), storage_position, FixturePlacement.half_size("storage", storage_quarter_turns), 0.2):
 		return false
-	if workbench_built and _rectangles_overlap(position, Vector2(1.5, 1.2), workbench_position, Vector2(0.65, 0.5), 0.2):
+	if workbench_built and _rectangles_overlap(position, Vector2(1.5, 1.2), workbench_position, FixturePlacement.half_size("workbench", workbench_quarter_turns), 0.2):
 		return false
 	return true
 
@@ -3459,14 +3786,14 @@ func _rectangles_overlap(first: Vector3, first_half_size: Vector2, second: Vecto
 
 
 func _is_valid_storage_position(position: Vector3) -> bool:
-	if storage_built or absf(position.x) > 2.2 or absf(position.z) > 1.55:
+	if storage_built or not _fixture_geometry_error("storage", position, 0).is_empty():
 		return false
 	var horizontal_distance := Vector2(position.x - shelter_position.x, position.z - shelter_position.z).length()
 	return horizontal_distance >= 2.0
 
 
 func _is_valid_workbench_position(position: Vector3) -> bool:
-	if workbench_built or absf(position.x) > 2.2 or absf(position.z) > 1.55:
+	if workbench_built or not _fixture_geometry_error("workbench", position, 0).is_empty():
 		return false
 	var shelter_distance := Vector2(position.x - shelter_position.x, position.z - shelter_position.z).length()
 	var storage_distance := Vector2(position.x - storage_position.x, position.z - storage_position.z).length()
@@ -3643,13 +3970,18 @@ func _dismantle_raft_extension() -> bool:
 
 
 func _cancel_build(show_message: bool = true) -> void:
+	var was_editing := not editing_fixture_id.is_empty()
+	editing_fixture_id = ""
+	preview_quarter_turns = 0
+	fixture_preview_checked_position = Vector3.INF
+	fixture_preview_checked_turns = -1
 	building_mode = false
 	preview_valid = false
 	if is_instance_valid(build_preview):
 		build_preview.queue_free()
 	build_preview = null
 	if show_message:
-		message = "你收起了搭建预览，木料还在。"
+		message = "已取消搬移；原家具、朝向和库存都没有改变。" if was_editing else "你收起了搭建预览，木料还在。"
 		_update_hud()
 
 
@@ -3913,15 +4245,19 @@ func _build_storage_at(position: Vector3) -> void:
 	var crate := Node3D.new()
 	crate.name = "BuiltStorage"
 	crate.position = position
+	crate.rotation.y = storage_quarter_turns * PI / 2.0
 	ark_root.add_child(crate)
-	_add_local_box(crate, "Body", Vector3(0, 0.42, 0), Vector3(0.9, 0.72, 0.78), Color("79583e"), false)
-	_add_local_box(crate, "Lid", Vector3(0, 0.82, 0), Vector3(0.98, 0.12, 0.86), Color("a47c53"), false)
+	_add_local_box(crate, "Body", Vector3(0, 0.42, 0), Vector3(0.9, 0.72, 0.78), Color("79583e"), true)
+	_add_local_box(crate, "Lid", Vector3(0, 0.82, 0), Vector3(0.98, 0.12, 0.86), Color("a47c53"), true)
+	_set_fixture_collision_enabled("storage", storage_collision_enabled)
+	_add_local_box(crate, "FrontHandle", Vector3(0, 0.55, 0.41), Vector3(0.25, 0.09, 0.06), Color("c4a66b"), false)
 	var marker := Node3D.new()
 	marker.name = "StorageInteractable"
+	marker.rotation.y = storage_quarter_turns * PI / 2.0
 	marker.position = position + Vector3(0, 0.5, 0)
 	var sign := Label3D.new()
 	sign.name = "Name"
-	sign.text = "储物箱 · E 存取木料"
+	sign.text = "储物箱 · E 存取木料 · F 搬移"
 	sign.position.y = 0.65
 	sign.font_size = 24
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -3935,16 +4271,19 @@ func _build_workbench_at(position: Vector3) -> void:
 	var bench := Node3D.new()
 	bench.name = "BuiltWorkbench"
 	bench.position = position
+	bench.rotation.y = workbench_quarter_turns * PI / 2.0
 	ark_root.add_child(bench)
-	_add_local_box(bench, "Legs", Vector3(0, 0.32, 0), Vector3(1.0, 0.58, 0.68), Color("594d43"), false)
-	_add_local_box(bench, "Top", Vector3(0, 0.66, 0), Vector3(1.12, 0.16, 0.78), Color("9a7551"), false)
+	_add_local_box(bench, "Legs", Vector3(0, 0.32, 0), Vector3(1.0, 0.58, 0.68), Color("594d43"), true)
+	_add_local_box(bench, "Top", Vector3(0, 0.66, 0), Vector3(1.12, 0.16, 0.78), Color("9a7551"), true)
+	_set_fixture_collision_enabled("workbench", workbench_collision_enabled)
 	_add_local_box(bench, "SpiritSocket", Vector3(0, 0.79, -0.12), Vector3(0.28, 0.08, 0.24), Color("729c92"), false)
 	var marker := Node3D.new()
 	marker.name = "WorkbenchInteractable"
+	marker.rotation.y = workbench_quarter_turns * PI / 2.0
 	marker.position = position + Vector3(0, 0.5, 0)
 	var sign := Label3D.new()
 	sign.name = "Name"
-	sign.text = "阵枢工作台 · E 调校旧灯"
+	sign.text = "阵枢工作台 · E 调校旧灯 · F 搬移"
 	sign.position.y = 0.75
 	sign.font_size = 24
 	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -4924,8 +5263,10 @@ func _preview_material(color: Color) -> StandardMaterial3D:
 
 
 func _opening_objective_hint() -> String:
+	if not editing_fixture_id.is_empty():
+		return "布置家园：R 旋转 · 左键确认 · 右键/Esc 取消；只编辑原甲板，不消耗材料。"
 	if building_mode:
-		return "选择避风棚落点；要搭建，木料至少 3 块。"
+		return "选择设施落点；左键确认，右键/Esc 取消。"
 	if weather_phase == WeatherPhase.STORM:
 		if not shelter_built:
 			return "风雨正急，眼下还没有避风棚；留在稳妥处或继续探索，按 R 等雨势过去。雨后先搭棚。"
@@ -4958,7 +5299,26 @@ func _opening_objective_hint() -> String:
 	return "风雨将至。检查避风棚与物资，准备好后按 R 推进天气。"
 
 
+func _update_fixture_hud_layout() -> void:
+	if hud_panel == null or hud_stack == null:
+		return
+	var editing := not editing_fixture_id.is_empty()
+	if editing == hud_edit_layout:
+		return
+	hud_edit_layout = editing
+	for child in hud_stack.get_children():
+		if child is Control and child != note:
+			child.visible = not editing
+	hud_panel.custom_minimum_size = Vector2(440, 110) if editing else Vector2(650, 280)
+	hud_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE if editing else Control.MOUSE_FILTER_STOP
+	hud_stack.mouse_filter = Control.MOUSE_FILTER_IGNORE if editing else Control.MOUSE_FILTER_PASS
+	note.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_panel.reset_size()
+	hud_stack.reset_size()
+
+
 func _update_hud() -> void:
+	_update_fixture_hud_layout()
 	if hud:
 		var weather_labels: Array[String] = ["风雨将至", "风雨正急", "雨后"]
 		var weather_text: String = "下一场风雨已预报" if _storm_forecast_due() else weather_labels[weather_phase]
@@ -5146,7 +5506,7 @@ func _build_save_state() -> Dictionary:
 	if ark_root:
 		ark_position = ark_root.global_position if ark_root.is_inside_tree() else ark_root.position
 	return {
-		"schema_version": 32,
+		"schema_version": 33,
 		"day_count": day_count,
 		"day_period": day_period,
 		"wood": wood,
@@ -5162,6 +5522,10 @@ func _build_save_state() -> Dictionary:
 		"shelter_built": shelter_built,
 		"shelter_position": {"x": shelter_position.x, "y": shelter_position.y, "z": shelter_position.z},
 		"storage_built": storage_built,
+		"storage_quarter_turns": storage_quarter_turns,
+		"storage_collision_enabled": storage_collision_enabled,
+		"workbench_collision_enabled": workbench_collision_enabled,
+		"workbench_quarter_turns": workbench_quarter_turns,
 		"storage_position": {"x": storage_position.x, "y": storage_position.y, "z": storage_position.z},
 		"workbench_built": workbench_built,
 		"workbench_position": {"x": workbench_position.x, "y": workbench_position.y, "z": workbench_position.z},
@@ -5263,7 +5627,7 @@ func _load_progress() -> void:
 		return
 	var saved: Dictionary = result.get("state", {})
 	var saved_schema := int(saved.get("schema_version", 0))
-	if not saved_schema in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]:
+	if not saved_schema in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]:
 		return
 	var ark_position_value = saved.get("ark_position", {})
 	if saved_schema >= 12 and ark_position_value is Dictionary and ark_root:
@@ -5422,6 +5786,10 @@ func _load_progress() -> void:
 	var shelter_value = saved.get("shelter_position", {})
 	if shelter_value is Dictionary:
 		shelter_position = Vector3(float(shelter_value.get("x", 0.0)), float(shelter_value.get("y", 0.12)), float(shelter_value.get("z", 0.0)))
+	storage_quarter_turns = FixturePlacement.saved_turns(saved.get("storage_quarter_turns", 0)) if saved_schema >= 33 else 0
+	workbench_quarter_turns = FixturePlacement.saved_turns(saved.get("workbench_quarter_turns", 0)) if saved_schema >= 33 else 0
+	storage_collision_enabled = saved_schema >= 33 and saved.get("storage_collision_enabled", false) is bool and saved.get("storage_collision_enabled", false) == true
+	workbench_collision_enabled = saved_schema >= 33 and saved.get("workbench_collision_enabled", false) is bool and saved.get("workbench_collision_enabled", false) == true
 	var storage_value = saved.get("storage_position", {})
 	if storage_value is Dictionary:
 		storage_position = Vector3(float(storage_value.get("x", 0.0)), float(storage_value.get("y", 0.12)), float(storage_value.get("z", 0.0)))
