@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 const MOONBACK_STATION := Vector3(-28.0, 0.2, 23.0)
 const TEST_DELTA := 1.0 / 30.0
 
@@ -12,11 +14,13 @@ func _key_event(keycode: Key, pressed: bool) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = keycode
 	event.pressed = pressed
+	event.shift_pressed = pressed if keycode == KEY_SHIFT else Input.is_key_pressed(KEY_SHIFT)
 	return event
 
 
 func _set_key(keycode: Key, pressed: bool) -> void:
 	Input.parse_input_event(_key_event(keycode, pressed))
+	Input.flush_buffered_events()
 
 
 func _hold_until(keycode: Key, max_frames: int, condition: Callable) -> int:
@@ -50,7 +54,7 @@ func _sail_to(game: Node, target: Vector3, max_steps: int = 2400) -> int:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_save_mooring").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "mooring regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
@@ -58,6 +62,8 @@ func _run() -> void:
 	var game := scene.instantiate()
 	game.set("save_root_override", save_root)
 	root.add_child(game)
+	# Keep this timed storm expedition at its original 5 m/s run speed.
+	_set_key(KEY_SHIFT, true)
 	await physics_frame
 	await physics_frame
 
@@ -119,6 +125,26 @@ func _run() -> void:
 
 	var return_to_helm := await _hold_until(KEY_W, 1000, func() -> bool: return Vector2(player.global_position.x - ark.global_position.x, player.global_position.z - (ark.global_position.z + 1.55)).length() < 2.0)
 	assert(return_to_helm < 1000, "the player should walk back onto the same ark after searching the station")
+	# Horizontal proximity cannot substitute for actually boarding the collidable deck.
+	if not player.is_on_floor():
+		_set_key(KEY_SPACE, true)
+		await physics_frame
+		_set_key(KEY_SPACE, false)
+		_set_key(KEY_W, true)
+		var blocked_apex := player.global_position.y
+		for _frame in range(35):
+			await physics_frame
+			blocked_apex = maxf(blocked_apex, player.global_position.y)
+		_set_key(KEY_W, false)
+		assert(blocked_apex < ark.global_position.y - 0.2 and not player.is_on_floor(), "the gangplank underside must block an underneath jump")
+		var clear_overhang := await _hold_until(KEY_S, 120, func() -> bool: return player.position.z > 4.05)
+		assert(clear_overhang < 120, "back clear of the overhanging plank before jumping")
+		_set_key(KEY_SPACE, true)
+		await physics_frame
+		_set_key(KEY_SPACE, false)
+	var board_frames := await _hold_until(KEY_W, 300, func() -> bool: return player.is_on_floor() and player.global_position.y > ark.global_position.y and Vector2(player.global_position.x - ark.global_position.x, player.global_position.z - (ark.global_position.z + 1.55)).length() < 1.4)
+	assert(board_frames < 300 and player.is_on_floor() and not bool(game.get("is_swimming")), "water jump must land on the real deck before using helm")
+
 	game.call("_interact")
 	assert(bool(game.get("sailing_mode")), "the same ark should be controllable after the expedition")
 	var second_leg := await _sail_to(game, Vector3(0.0, 0.0, 0.0))
@@ -146,6 +172,7 @@ func _run() -> void:
 	assert(is_equal_approx(float(restored.call("_current_sail_speed")), 4.6), "the upgraded sail speed should survive reload")
 	assert(restored.get_node("MoonbackTideStation").get_node_or_null("RelayCore") == null, "the collected world prop must remain absent after reload")
 	assert((restored.get("world_events") as Array).any(func(event: Dictionary) -> bool: return str(event.get("id", "")) == "tide_compass_tuned"), "the saved event ledger should explain the upgrade")
+	_set_key(KEY_SHIFT, false)
 	print("ARK_MOORING_TEST_OK: first_leg=%d return_leg=%d heading=%d" % [first_leg, second_leg, heading_steps])
 	restored.queue_free()
 	await process_frame

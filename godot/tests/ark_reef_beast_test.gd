@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -15,8 +17,9 @@ func _count_events(game: Node, event_id: String) -> int:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_reef_beast_save").simplify_path()
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var wound_save_root := ProjectSettings.globalize_path("res://../.local/test_reef_wound_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:") and wound_save_root.to_lower().begins_with("d:"), "reef encounter test saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(wound_save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	var wound_save_helper := preload("res://scripts/ark_greybox_save.gd").new(wound_save_root)
 	save_helper.clear_for_test()
@@ -62,7 +65,7 @@ func _run() -> void:
 	assert(not beast.visible and _count_events(game, "reef_beast_defeated") == 1, "a defeated creature should not respawn or duplicate its reward")
 	game.call("_attack_reef_beast")
 	assert(int(game.get("reef_shell_plates")) == 1 and _count_events(game, "reef_beast_defeated") == 1, "repeated attack input must not duplicate the unique reward")
-	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 32, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
+	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 34, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
 	assert(bool(game.call("_save_progress")), "the defeated-creature state should save")
 	game.queue_free()
 	await process_frame
@@ -151,12 +154,13 @@ func _run() -> void:
 	wound_game.call("_set_traveler_boarded")
 	var meal_player := wound_game.get("player") as CharacterBody3D
 	var meal_ark := wound_game.get("ark_root") as Node3D
-	meal_player.global_position = meal_ark.to_global(Vector3(0.0, 1.1, 0.0))
+	meal_player.global_position = meal_ark.to_global(Vector3(0.0, 0.31, 0.0))
 	var meal_resident := wound_game.get("traveler_marker") as Node3D
 	meal_resident.position = meal_ark.to_local(meal_player.global_position)
 	wound_game.set("player_health", 2)
 	wound_game.set("stew_servings", 1)
 	wound_game.set("shared_meal_day", int(wound_game.get("day_count")) - 1)
+	assert(bool(wound_game.call("_player_at_shared_table")), "healing meal requires deck-level presence")
 	wound_game.call("_interact")
 	assert(int(wound_game.get("player_health")) == 3 and int(wound_game.get("stew_servings")) == 0, "a real shared meal should consume one prepared serving and heal a wounded player")
 	assert(_count_events(wound_game, "resident_meal_shared") == 1 and _count_events(wound_game, "player_health_recovered") == 2, "the meal should record one shared event and a separate factual recovery")

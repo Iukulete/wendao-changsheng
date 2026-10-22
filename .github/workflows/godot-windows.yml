@@ -1,42 +1,37 @@
-name: Godot Windows Release
+name: Ark Windows Validation and Export
 
 on:
   push:
     branches:
       - main
-      - "agent/**"
+      - codex/island-survival-slice
+      - codex/dot-ark-stability-audit
+      - codex/dot-ark-recovery
   pull_request:
     branches:
       - main
+      - codex/island-survival-slice
   workflow_dispatch:
 
 permissions:
   contents: read
 
-env:
-  # Every push keeps the Godot regression signal. The formal product-art gate
-  # is reserved for an explicit manual release run so main can carry the
-  # verified engine while art is being produced in a parallel task.
-  PRODUCT_RELEASE: ${{ github.event_name == 'workflow_dispatch' }}
-
 jobs:
   validate-and-export:
-    name: Validate and export Godot 4.7.1
+    name: Validate 3D Ark and export Godot 4.7.1
     runs-on: windows-latest
     timeout-minutes: 45
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enforce Godot-only source boundary
+      - name: Validate active source and preserved archive boundaries
         shell: pwsh
         run: |
-          $legacy = git ls-files | Where-Object {
-            $_ -match '(?i)(^|/)(CMakeLists\.txt|Makefile|.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx|rc))$' -or
-            $_ -match '(?i)^\.github/workflows/(story-art-validation|windows-build(-v06)?)\.yml$'
-          }
-          if ($legacy) { throw "Legacy Win32/C++ runtime or CI returned: $($legacy -join ', ')" }
+          python -X utf8 ./tools/verify_migration_surface.py
+          if ($LASTEXITCODE -ne 0) { throw "Active Ark boundary failed." }
+          python -X utf8 ./tools/verify_source_archive.py
+          if ($LASTEXITCODE -ne 0) { throw "Reusable source archive validation failed." }
 
       - name: Cache verified Godot archives and templates
         uses: actions/cache@v4
@@ -50,100 +45,38 @@ jobs:
         shell: pwsh
         run: ./tools/prepare_godot.ps1
 
-      - name: Verify Godot art inventory
+      - name: Headless import, Ark menu, all Ark regressions and packed scene smoke
         shell: pwsh
-        env:
-          PYTHONUTF8: "1"
-        run: python -X utf8 ./tools/verify_godot_art.py
+        run: ./tools/verify_godot.ps1 -NoPrepare
 
-      - name: Validate project and load main scene
-        shell: pwsh
-        run: |
-          $verifyParameters = @{ NoPrepare = $true }
-          if ($env:PRODUCT_RELEASE -eq "true") {
-            $verifyParameters.RequireFinalAudio = $true
-            $verifyParameters.RequireProductArt = $true
-            Write-Host "Product release gates enabled for this ref."
-          } else {
-            Write-Host "Integration validation enabled; product-art gate remains deferred to an explicit product release run."
-          }
-          ./tools/verify_godot.ps1 @verifyParameters
-
-      - name: Validate rendered gameplay states
+      - name: Separate display-backed Ark menu and gameplay captures
         shell: pwsh
         run: ./tools/verify_render.ps1
 
-      - name: Install pinned virtual WASAPI validation endpoint
+      - name: Export and smoke-test actual Windows executable
         shell: pwsh
-        timeout-minutes: 5
-        run: |
-          # VB-CABLE is third-party donationware fetched from its official
-          # origin (https://vb-audio.com/Cable/). It is CI infrastructure only
-          # and is never bundled into the game or uploaded artifact.
-          $url = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip"
-          $expectedArchiveHash = "B950E39F01AF1D04EA623C8F6D8EB9B6EA5C477C637295FABF20631C85116BFB"
-          $expectedSetupSigner = "A77952D93229D0EC36E2543081EEA7D125732B9C"
-          $expectedCatalogSigner = "9A4A6CFEE73C6B65945FCAA083DFBCC1E9077E7E"
-          $archive = Join-Path $env:RUNNER_TEMP "VBCABLE_Driver_Pack45.zip"
-          $driverDir = Join-Path $env:RUNNER_TEMP "VBCABLE_Driver_Pack45"
-          Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $archive
-          $archiveHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
-          if ($archiveHash -ne $expectedArchiveHash) {
-            throw "VB-CABLE archive hash mismatch: $archiveHash"
-          }
-          Expand-Archive -LiteralPath $archive -DestinationPath $driverDir
-          $setup = Join-Path $driverDir "VBCABLE_Setup_x64.exe"
-          $catalog = Join-Path $driverDir "vbaudio_cable64_win10.cat"
-          $setupSignature = Get-AuthenticodeSignature -LiteralPath $setup
-          $catalogSignature = Get-AuthenticodeSignature -LiteralPath $catalog
-          if ($setupSignature.Status -ne "Valid" -or
-              $setupSignature.SignerCertificate.Thumbprint -ne $expectedSetupSigner) {
-            throw "VB-CABLE setup signature is not the pinned publisher signature."
-          }
-          if ($catalogSignature.Status -ne "Valid" -or
-              $catalogSignature.SignerCertificate.Thumbprint -ne $expectedCatalogSigner) {
-            throw "VB-CABLE catalog signature is not the pinned Microsoft hardware signature."
-          }
-          $installer = Start-Process -FilePath $setup -ArgumentList "-i", "-h" `
-            -WindowStyle Hidden -PassThru -Wait
-          if ($installer.ExitCode -ne 0) {
-            throw "VB-CABLE installation failed with exit code $($installer.ExitCode)."
-          }
-          pnputil /scan-devices
-          Stop-Service Audiosrv -Force -ErrorAction SilentlyContinue
-          Restart-Service AudioEndpointBuilder -Force
-          Start-Service Audiosrv
-          $deadline = (Get-Date).AddSeconds(60)
-          do {
-            $endpoint = Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue |
-              Where-Object { $_.FriendlyName -like "CABLE Input*" } |
-              Select-Object -First 1
-            if (-not $endpoint) { Start-Sleep -Seconds 2 }
-          } until ($endpoint -or (Get-Date) -ge $deadline)
-          if (-not $endpoint) {
-            Get-PnpDevice -Class Media -ErrorAction SilentlyContinue | Format-Table -AutoSize
-            Get-PnpDevice -Class AudioEndpoint -ErrorAction SilentlyContinue | Format-Table -AutoSize
-            throw "The pinned CI audio driver installed but exposed no active render endpoint."
-          }
-          Write-Host "Virtual WASAPI render endpoint enumerated: $($endpoint.FriendlyName) [$($endpoint.Status)]"
+        run: ./tools/build_godot.ps1 -NoPrepare -SkipVerify
 
-      - name: Export Windows x86_64 release
-        shell: pwsh
-        run: |
-          if ($env:PRODUCT_RELEASE -eq "true") {
-            ./tools/build_godot.ps1 -NoPrepare -SkipVerify -ProductRelease
-          } else {
-            ./tools/build_godot.ps1 -NoPrepare -SkipVerify
-          }
-
-      - name: Verify release boundary
+      - name: Verify font licenses, checksums and Ark-only resource pack
         shell: pwsh
         run: ./tools/verify_release_bundle.ps1
 
-      - name: Upload Godot-only Windows build
+      - name: Upload verified Ark Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: wendao-changsheng-4.7.1-windows-x86_64
+          name: wendao-ark-4.7.1-windows-x86_64
           path: release/godot/windows/
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Preserve validation logs and Ark captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ark-validation-evidence
+          path: |
+            .tmp/godot-verify/logs/
+            .tmp/godot-build/*.log
+            .tmp/ark-render-captures/*.png
+          if-no-files-found: warn
           retention-days: 14

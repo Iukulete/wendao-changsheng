@@ -1,24 +1,15 @@
-# 问道长生 Godot 工程
+# 归舟 Godot 3D 工程
 
-这是《问道长生》的唯一游戏工程，目标版本为 Godot 4.7.1 stable 标准版与 GDScript。
+固定 Godot 4.7.1 Stable 标准 GDScript。
 
-## 状态域
+- `scenes/main.tscn` / `scripts/main.gd`：仅面向仙舟的菜单、续接与入口。
+- `scenes/ark_greybox.tscn`：连续3D原型。
+- `scripts/ark_greybox.gd`：当前玩法编排。
+- `ark_fixture_placement.gd`、`ark_greybox_save.gd`、`ark_landmass_builder.gd`、
+  `ark_world_chart.gd`：放置、独立存档、岛岸几何与地图。
+- `shaders/ark_ocean.gdshader`：临时海面。
+- `art/fonts`：复用中文字体及OFL许可。
+- `tests/ark_*`：新原型的逻辑、持久化、菜单与真实渲染验证。
 
-- `GameStateSchema`：统一 v2 运行状态和 v1 JSON 迁移。
-- `SaveService`：校验、原子替换、备份恢复、坏档隔离和便携存档目录。
-- `LegacySaveImporter`：只读导入 Win32 `SAVE_V4/SAVE_V5` 六槽旧录。
-- `WorldSimulation`：势力、NPC、关系、世界事件和纪元连续性。
-- `CultivationSystem` / `ReincarnationSystem`：21 境界、寿元、死亡和多世继承。
-- `ItemSystem` / `CombatSystem`：背包、锻造、装备与普通战斗。
-- `StorySystem` / `AchievementSystem`：剧情图、跨世续章、成就和永久玉兵。
-- `DungeonSystem`：独立的可选秘境能力构筑，不替代普通战斗。
-- `LocalAIBridge`：本地进程调用、隐私边界、输出校验和规则回退。
-
-## 资源
-
-- `art/`：运行时场景与人物资源，完整性由 `art_manifest.json` 管理。
-- `data/`：事件、剧情、秘境能力和玉兵定义。
-- `scenes/main.tscn`：唯一主场景。
-- `tests/`：无窗口确定性回归与真实 GL 截图驱动。
-
-项目根目录的 [README](../README.md) 包含启动、构建、旧档导入和完整验证命令。
+不再含旧卡片战斗或六纪元运行时。旧源资产在工程外 `archive/source_assets`，
+不会被Godot打包；源资产库不是新原型的已接入内容。详见根目录README。

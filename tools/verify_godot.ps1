@@ -1,167 +1,56 @@
 [CmdletBinding()]
-param(
-    [switch]$NoPrepare,
-    [switch]$RequireFinalAudio,
-    [switch]$RequireProductArt
-)
+param([switch]$NoPrepare)
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
-
 $Root = Split-Path -Parent $PSScriptRoot
-$ProjectDir = Join-Path $Root "godot"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
-$TempDir = Join-Path $Root ".tmp\godot"
 
-New-Item -ItemType Directory -Force -Path $TempDir | Out-Null
-$env:TEMP = $TempDir
-$env:TMP = $TempDir
-
-Write-Host "Validating the Godot migration surface and regression wiring..."
-& python -X utf8 (Join-Path $PSScriptRoot "verify_migration_surface.py")
-if ($LASTEXITCODE -ne 0) {
-    throw "Godot migration surface validation failed with exit code $LASTEXITCODE."
-}
-
-Write-Host "Validating six playable reincarnation chronicles and the 500,000-character floor..."
-& python -X utf8 (Join-Path $PSScriptRoot "verify_chronicle_content.py")
-if ($LASTEXITCODE -ne 0) {
-    throw "Chronicle content validation failed with exit code $LASTEXITCODE."
-}
-
-Write-Host "Validating the self-contained Godot art inventory..."
-$artArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_godot_art.py"))
-if ($RequireProductArt) {
-    $artArguments += "--release"
-}
-& python @artArguments
-if ($LASTEXITCODE -ne 0) {
-    throw "Godot art validation failed with exit code $LASTEXITCODE."
-}
-
-Write-Host "Validating authored event path deltas..."
-& python (Join-Path $PSScriptRoot "verify_event_paths.py")
-if ($LASTEXITCODE -ne 0) {
-    throw "Event path validation failed with exit code $LASTEXITCODE."
-}
-
-Write-Host "Validating original audio assets, hashes, levels, and loop seams..."
-$audioArguments = @("-X", "utf8", (Join-Path $PSScriptRoot "verify_audio_assets.py"))
-if ($RequireFinalAudio) {
-    $audioArguments += "--require-final"
-}
-& python @audioArguments
-if ($LASTEXITCODE -ne 0) {
-    throw "Audio asset validation failed with exit code $LASTEXITCODE."
-}
+# Canonical headless suite. verify_migration_surface.py compares this exact list
+# to all Ark tests on disk, excluding only the helper and display-only capture.
+$testScripts = @(
+    "res://tests/ark_audit_construction_test.gd",
+    "res://tests/ark_audit_hazards_test.gd",
+    "res://tests/ark_audit_input_test.gd",
+    "res://tests/ark_audit_navigation_test.gd",
+    "res://tests/ark_chart_layout_audit_test.gd",
+    "res://tests/ark_exposure_test.gd",
+    "res://tests/ark_fixture_edit_test.gd",
+    "res://tests/ark_greybox_smoke.gd",
+    "res://tests/ark_jade_sail_ark_test.gd",
+    "res://tests/ark_jade_sail_guest_stay_test.gd",
+    "res://tests/ark_jade_sail_industry_test.gd",
+    "res://tests/ark_landmass_physics_test.gd",
+    "res://tests/ark_menu_integration_test.gd",
+    "res://tests/ark_mooring_test.gd",
+    "res://tests/ark_navigation_test.gd",
+    "res://tests/ark_persistence_sanitize_audit_test.gd",
+    "res://tests/ark_pressure_galley_test.gd",
+    "res://tests/ark_reef_beast_test.gd",
+    "res://tests/ark_reef_surge_test.gd",
+    "res://tests/ark_refuge_test.gd",
+    "res://tests/ark_resident_gather_test.gd",
+    "res://tests/ark_save_integrity_audit_test.gd",
+    "res://tests/ark_test_paths_test.gd",
+    "res://tests/ark_world_travel_test.gd",
+    "res://tests/ark_multifloor_risk_test.gd",
+    "res://tests/ark_water_risk_test.gd",
+    "res://tests/ark_resource_consistency_test.gd",
+    "res://tests/ark_pixel_protagonist_test.gd",
+    "res://tests/ark_emma_protagonist_test.gd",
+    "res://tests/ark_game_version_test.gd",
+    "res://tests/ark_module_chain_test.gd",
+    "res://tests/ark_native_water_test.gd",
+    "res://tests/ark_gerstner_water_test.gd",
+    "res://tests/ark_hud_clarity_test.gd",
+    "res://tests/ark_home_meal_test.gd"
+)
 
 if (-not $NoPrepare) {
     & (Join-Path $PSScriptRoot "prepare_godot.ps1") -SkipTemplates
-    if ($LASTEXITCODE -ne 0) {
-        throw "Godot environment preparation failed with exit code $LASTEXITCODE."
-    }
+    if ($LASTEXITCODE -ne 0) { throw "Pinned Godot preparation failed: $LASTEXITCODE" }
 }
-
-if (-not (Test-Path -LiteralPath (Join-Path $ProjectDir "project.godot"))) {
-    throw "Godot project was not found: $ProjectDir"
-}
-if (-not (Test-Path -LiteralPath $ConsolePath)) {
-    throw "Godot 4.7.1 console executable was not found: $ConsolePath"
-}
-
-$version = (& $ConsolePath --version | Select-Object -First 1).Trim()
-if ($version -notmatch '^4\.7\.1\.stable\.official\.') {
-    throw "Godot version drift detected: $version"
-}
-
-Write-Host "Importing resources and checking scripts..."
-$importPassed = $false
-for ($importAttempt = 1; $importAttempt -le 2; $importAttempt++) {
-    $importOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --import 2>&1)
-    $importExitCode = $LASTEXITCODE
-    $importOutput | ForEach-Object { Write-Host $_ }
-    $importText = $importOutput | Out-String
-    if ($importExitCode -eq 0 -and $importText -notmatch '(?m)^(SCRIPT ERROR|ERROR):') {
-        $importPassed = $true
-        break
-    }
-    # Godot 4.7.1 can raise an access violation while closing the editor after
-    # a first-time bulk WAV import on Windows.  A clean second scan must pass;
-    # every other error, or a repeated crash, remains a hard failure.
-    if ($importAttempt -eq 1 -and $importExitCode -eq -1073741819 -and
-            $importText.Contains("reimport")) {
-        Write-Warning "Godot exited during post-import cleanup; verifying the completed import with one clean rescan."
-        continue
-    }
-    break
-}
-if (-not $importPassed) {
-    throw "Godot resource import/script validation failed with exit code $importExitCode."
-}
-
-Write-Host "Loading the configured main scene for a headless smoke test..."
-$smokeOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after 5 2>&1)
-$smokeExitCode = $LASTEXITCODE
-$smokeOutput | ForEach-Object { Write-Host $_ }
-if ($smokeExitCode -ne 0 -or (($smokeOutput | Out-String) -match '(?m)^(SCRIPT ERROR|ERROR):')) {
-    throw "Godot main-scene smoke test failed with exit code $smokeExitCode."
-}
-
-$testScripts = @(
-    "res://tests/typography_system_test.gd",
-    "res://tests/audio_system_test.gd",
-    "res://tests/character_art_catalog_test.gd",
-    "res://tests/character_art_rig_test.gd",
-    "res://tests/supporting_character_art_test.gd",
-    "res://tests/game_state_test.gd",
-    "res://tests/objective_system_test.gd",
-    "res://tests/encounter_system_test.gd",
-    "res://tests/world_simulation_test.gd",
-    "res://tests/story_system_test.gd",
-	"res://tests/chronicle_authored_blocks_test.gd",
-	"res://tests/chronicle_system_test.gd",
-	"res://tests/chronicle_resource_reachability_test.gd",
-    "res://tests/narrative_consequence_system_test.gd",
-    "res://tests/achievement_system_test.gd",
-    "res://tests/dungeon_system_test.gd",
-    "res://tests/event_catalog_test.gd",
-    "res://tests/local_ai_bridge_test.gd",
-    "res://tests/item_system_test.gd",
-    "res://tests/combat_technique_catalog_test.gd",
-    "res://tests/combat_stage_pixel_pipeline_test.gd",
-    "res://tests/combat_event_pipeline_test.gd",
-    "res://tests/combat_system_test.gd",
-    "res://tests/save_service_test.gd",
-    "res://tests/legacy_save_importer_test.gd",
-    "res://tests/main_save_integration_test.gd",
-	"res://tests/ark_navigation_test.gd",
-	"res://tests/ark_refuge_test.gd",
-		"res://tests/ark_exposure_test.gd",
-		"res://tests/ark_resident_gather_test.gd",
-		"res://tests/ark_jade_sail_ark_test.gd",
-		"res://tests/ark_jade_sail_industry_test.gd",
-		"res://tests/ark_jade_sail_guest_stay_test.gd",
-			"res://tests/ark_pressure_galley_test.gd",
-	"res://tests/ark_reef_surge_test.gd",
-		"res://tests/ark_reef_beast_test.gd",
-		"res://tests/ark_world_travel_test.gd",
-			"res://tests/ark_mooring_test.gd",
-		"res://tests/ark_greybox_smoke.gd",
-    "res://tests/ten_life_long_run_test.gd"
-)
-foreach ($testScript in $testScripts) {
-    Write-Host "Running Godot regression: $testScript"
-	$quitAfterFrames = if ($testScript -eq "res://tests/ark_world_travel_test.gd") { 30000 } elseif ($testScript -eq "res://tests/ark_mooring_test.gd") { 10000 } else { 600 }
-    $testOutput = @(& $ConsolePath --headless --audio-driver Dummy --path $ProjectDir --quit-after $quitAfterFrames --script $testScript 2>&1)
-    $testExitCode = $LASTEXITCODE
-    $testOutput | ForEach-Object { Write-Host $_ }
-    $testText = $testOutput | Out-String
-    $testName = [IO.Path]::GetFileNameWithoutExtension($testScript).ToUpperInvariant()
-    $successMarker = $testName + "_OK:"
-    if ($testExitCode -ne 0 -or $testText -match '(?m)^(SCRIPT ERROR|ERROR):' -or
-            -not $testText.Contains($successMarker)) {
-        throw "Godot regression failed ($testScript): exit=$testExitCode, expected marker=$successMarker."
-    }
-}
-
-Write-Host "Godot validation passed: $version"
+# One implementation gives Windows and cloud runs the same timeout, log,
+# strict version, error and positive-marker protections, including PCK proof.
+& python -X utf8 (Join-Path $PSScriptRoot "verify_godot.py") --godot $ConsolePath
+if ($LASTEXITCODE -ne 0) { throw "Ark validation failed: $LASTEXITCODE" }

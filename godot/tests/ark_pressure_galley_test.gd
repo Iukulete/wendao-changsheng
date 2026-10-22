@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 const PRESSURE_VENT_WINDUP_SECONDS := 1.4
 
 func _initialize() -> void:
@@ -42,7 +44,7 @@ func _send_key(game: Node, keycode: Key) -> void:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_pressure_galley_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "pressure galley regression saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
@@ -130,8 +132,9 @@ func _run() -> void:
 	game.set("cold_exposure_level", 3)
 	game.set("cold_exposure", true)
 	var traveler := game.get("traveler_marker") as Node3D
-	player.global_position = traveler.global_position + Vector3(0.0, 1.1, 0.0)
-	game.call("_interact")
+	player.global_position = traveler.global_position + Vector3(0.0, 0.19, 0.0)
+	assert(bool(game.call("_player_at_shared_table")), "the solo meal requires actual deck-level table presence")
+	_send_key(game, KEY_E)
 	assert(int(game.get("cold_exposure_level")) == 1 and int(game.get("stew_servings")) == 0, "a shared meal from the pressure galley should relieve two of three cold levels")
 	var shared_event := _find_event(game, "resident_meal_shared")
 	var shared_facts: Dictionary = shared_event.get("facts", {})

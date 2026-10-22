@@ -4,12 +4,16 @@ signal destination_selected(destination_id: String, title: String)
 
 const WORLD_HALF_EXTENT := 140.0
 const PANEL_SIZE := Vector2(960.0, 620.0)
+const STATUS_RESERVE := 96.0
+const MAP_LABEL_SIZE := 15
+const UI_FONT = preload("res://art/fonts/ark_ui_font.tres")
 
 var player_position := Vector3.ZERO
 var destinations: Array[Dictionary] = []
 var selected_id := "home"
 var _panel_rect := Rect2()
 var _map_rect := Rect2()
+var _label_rects: Dictionary = {}
 
 
 func _ready() -> void:
@@ -30,11 +34,13 @@ func _draw() -> void:
 	if viewport_size.x < 1.0 or viewport_size.y < 1.0:
 		return
 	draw_rect(Rect2(Vector2.ZERO, viewport_size), Color(0.015, 0.035, 0.045, 0.82), true)
-	_panel_rect.size = Vector2(minf(PANEL_SIZE.x, viewport_size.x - 36.0), minf(PANEL_SIZE.y, viewport_size.y - 36.0))
-	_panel_rect.position = (viewport_size - _panel_rect.size) * 0.5
+	# Save feedback is a sibling anchored to the bottom 90 px. Keep both the
+	# map and its close instructions above that strip, even at 1280 x 720.
+	_panel_rect.size = Vector2(minf(PANEL_SIZE.x, viewport_size.x - 36.0), minf(PANEL_SIZE.y, viewport_size.y - STATUS_RESERVE - 36.0))
+	_panel_rect.position = (viewport_size - Vector2(0.0, STATUS_RESERVE) - _panel_rect.size) * 0.5
 	draw_rect(_panel_rect, Color("142d31"), true)
 	draw_rect(_panel_rect, Color("cfb77c"), false, 2.0)
-	var font := ThemeDB.fallback_font
+	var font: Font = UI_FONT
 	var left := _panel_rect.position.x + 24.0
 	var top := _panel_rect.position.y + 36.0
 	draw_string(font, Vector2(left, top), "潮痕图", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color("f2dfae"))
@@ -61,6 +67,11 @@ func _draw_map(font: Font) -> void:
 	_draw_island(Vector3(-53.0, 0.0, -45.0), Vector2(20.0, 16.0), 26, Color("596856"), Color("a09270"))
 	_draw_island(Vector3(92.0, 0.0, 86.0), Vector2(28.0, 22.0), 28, Color("555d54"), Color("98795e"))
 	var font_color := Color("f0e6c5")
+	_label_rects.clear()
+	var occupied: Array[Rect2] = []
+	for destination in destinations:
+		occupied.append(Rect2(_world_to_map(destination.get("position", Vector3.ZERO)) - Vector2(12, 12), Vector2(24, 24)))
+	occupied.append(Rect2(_world_to_map(player_position) - Vector2(12, 12), Vector2(24, 24)))
 	for destination in destinations:
 		var id := str(destination.get("id", ""))
 		var map_point := _world_to_map(destination.get("position", Vector3.ZERO))
@@ -71,11 +82,35 @@ func _draw_map(font: Font) -> void:
 		if id == "home":
 			draw_circle(map_point, 4.0, Color("d88556"))
 		var label := str(destination.get("title", "地点"))
-		draw_string(font, map_point + Vector2(10, -8), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, font_color)
+		var label_rect := _place_map_label(map_point, font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, MAP_LABEL_SIZE), occupied)
+		_label_rects[id] = label_rect
+		occupied.append(label_rect.grow(3.0))
+		var leader_end := Vector2(clampf(map_point.x, label_rect.position.x, label_rect.end.x), clampf(map_point.y, label_rect.position.y, label_rect.end.y))
+		draw_line(map_point, leader_end, Color("a8b9a0", 0.6), 1.0, true)
+		draw_rect(label_rect.grow(2.0), Color("092b3a", 0.9))
+		draw_string(font, label_rect.position + Vector2(0.0, font.get_ascent(MAP_LABEL_SIZE)), label, HORIZONTAL_ALIGNMENT_LEFT, -1, MAP_LABEL_SIZE, font_color)
 	var player_point := _world_to_map(player_position)
 	draw_circle(player_point, 6.0, Color("89dcce"))
 	draw_arc(player_point, 10.0, 0.0, TAU, 24, Color("89dcce", 0.8), 2.0)
 	draw_string(font, _map_rect.position + Vector2(8, _map_rect.size.y - 10.0), "N ↑", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("d9e6db"))
+
+
+func _place_map_label(point: Vector2, label_size: Vector2, occupied: Array[Rect2]) -> Rect2:
+	var bounds := _map_rect.grow(-8.0)
+	var candidate := Rect2(point + Vector2(14, -label_size.y - 4), label_size)
+	for row in range(8):
+		for offset in [Vector2(14, -label_size.y - 4 - row * 22), Vector2(-label_size.x - 14, -label_size.y - 4 - row * 22), Vector2(14, 14 + row * 22), Vector2(-label_size.x - 14, 14 + row * 22)]:
+			candidate.position = point + offset
+			candidate.position.x = clampf(candidate.position.x, bounds.position.x, bounds.end.x - label_size.x)
+			candidate.position.y = clampf(candidate.position.y, bounds.position.y, bounds.end.y - label_size.y)
+			var clear := true
+			for other in occupied:
+				if candidate.grow(3.0).intersects(other):
+					clear = false
+					break
+			if clear:
+				return candidate
+	return candidate
 
 
 func _draw_island(center: Vector3, extent: Vector2, vertex_count: int, fill: Color, shore: Color) -> void:
@@ -133,7 +168,7 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	for destination in destinations:
 		var id := str(destination.get("id", ""))
-		if event.position.distance_to(_world_to_map(destination.get("position", Vector3.ZERO))) <= 15.0:
+		if event.position.distance_to(_world_to_map(destination.get("position", Vector3.ZERO))) <= 15.0 or (_label_rects.has(id) and (_label_rects[id] as Rect2).has_point(event.position)):
 			selected_id = id
 			destination_selected.emit(id, str(destination.get("title", "地点")))
 			queue_redraw()

@@ -3,3 +3,8 @@
 *.py text eol=lf
 *.ps1 text eol=lf
 *.bat text eol=crlf
+
+# Exact-byte preservation baselines must survive checkout on every platform.
+/archive/** -text
+/LICENSE -text
+/godot/art/fonts/** -text

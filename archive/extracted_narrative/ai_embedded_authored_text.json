@@ -1,0 +1,4973 @@
+{
+  "schema_version": 1,
+  "purpose": "Data-only preservation of authored prose embedded in removed AI scripts; not a runnable AI backend, current lore, or automatic new-game integration.",
+  "extraction": "AST parse/literal_eval only, without importing or executing removed scripts. Preserve exact decoded Chinese string values and original UTF-8 source excerpts/locations; builder gold_samples and story_constants retain their exact literal values. Other removed code remains recoverable from source_revision.",
+  "sources": [
+    {
+      "original_path": "ai_engine/lora/build_wendao_lora_dataset.py",
+      "source_revision": "3d9903b71c45560e631db96d2f2dd79f52b891d1",
+      "source_sha256": "59592d99e554a99c0640c23020407f7374a0a88ee911b5c667113b159f1eefa7",
+      "chinese_string_literals": [
+        {
+          "start_line": 9,
+          "start_utf8_column": 18,
+          "end_line": 9,
+          "end_utf8_column": 32,
+          "text": "【机缘】",
+          "source_excerpt": "\"【机缘】\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 34,
+          "end_line": 9,
+          "end_utf8_column": 48,
+          "text": "【危机】",
+          "source_excerpt": "\"【危机】\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 50,
+          "end_line": 9,
+          "end_utf8_column": 64,
+          "text": "【奇遇】",
+          "source_excerpt": "\"【奇遇】\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 66,
+          "end_line": 9,
+          "end_utf8_column": 80,
+          "text": "【因果】",
+          "source_excerpt": "\"【因果】\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 82,
+          "end_line": 9,
+          "end_utf8_column": 96,
+          "text": "【传承】",
+          "source_excerpt": "\"【传承】\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 42,
+          "end_line": 11,
+          "end_utf8_column": 56,
+          "text": "系统提示",
+          "source_excerpt": "\"系统提示\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 58,
+          "end_line": 11,
+          "end_utf8_column": 69,
+          "text": "提示词",
+          "source_excerpt": "\"提示词\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 71,
+          "end_line": 11,
+          "end_utf8_column": 85,
+          "text": "写作约束",
+          "source_excerpt": "\"写作约束\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 4,
+          "end_line": 12,
+          "end_utf8_column": 15,
+          "text": "请输出",
+          "source_excerpt": "\"请输出\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 17,
+          "end_line": 12,
+          "end_utf8_column": 28,
+          "text": "请选择",
+          "source_excerpt": "\"请选择\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 30,
+          "end_line": 12,
+          "end_utf8_column": 38,
+          "text": "标题",
+          "source_excerpt": "\"标题\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 40,
+          "end_line": 12,
+          "end_utf8_column": 48,
+          "text": "描述",
+          "source_excerpt": "\"描述\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 50,
+          "end_line": 12,
+          "end_utf8_column": 58,
+          "text": "选项",
+          "source_excerpt": "\"选项\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 4,
+          "end_line": 13,
+          "end_utf8_column": 12,
+          "text": "系统",
+          "source_excerpt": "\"系统\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 14,
+          "end_line": 13,
+          "end_utf8_column": 22,
+          "text": "模型",
+          "source_excerpt": "\"模型\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 24,
+          "end_line": 13,
+          "end_utf8_column": 32,
+          "text": "调试",
+          "source_excerpt": "\"调试\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 34,
+          "end_line": 13,
+          "end_utf8_column": 42,
+          "text": "后台",
+          "source_excerpt": "\"后台\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 44,
+          "end_line": 13,
+          "end_utf8_column": 61,
+          "text": "玩家上下文",
+          "source_excerpt": "\"玩家上下文\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 63,
+          "end_line": 13,
+          "end_utf8_column": 77,
+          "text": "隐藏限制",
+          "source_excerpt": "\"隐藏限制\""
+        },
+        {
+          "start_line": 13,
+          "start_utf8_column": 79,
+          "end_line": 13,
+          "end_utf8_column": 93,
+          "text": "写作边界",
+          "source_excerpt": "\"写作边界\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 4,
+          "end_line": 14,
+          "end_utf8_column": 18,
+          "text": "剧情阶段",
+          "source_excerpt": "\"剧情阶段\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 20,
+          "end_line": 14,
+          "end_utf8_column": 34,
+          "text": "核心张力",
+          "source_excerpt": "\"核心张力\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 36,
+          "end_line": 14,
+          "end_utf8_column": 50,
+          "text": "游戏规则",
+          "source_excerpt": "\"游戏规则\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 52,
+          "end_line": 14,
+          "end_utf8_column": 63,
+          "text": "裁判权",
+          "source_excerpt": "\"裁判权\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 65,
+          "end_line": 14,
+          "end_utf8_column": 73,
+          "text": "按钮",
+          "source_excerpt": "\"按钮\""
+        },
+        {
+          "start_line": 14,
+          "start_utf8_column": 75,
+          "end_line": 14,
+          "end_utf8_column": 83,
+          "text": "界面",
+          "source_excerpt": "\"界面\""
+        },
+        {
+          "start_line": 15,
+          "start_utf8_column": 14,
+          "end_line": 15,
+          "end_utf8_column": 28,
+          "text": "开源项目",
+          "source_excerpt": "\"开源项目\""
+        },
+        {
+          "start_line": 15,
+          "start_utf8_column": 30,
+          "end_line": 15,
+          "end_utf8_column": 44,
+          "text": "参考项目",
+          "source_excerpt": "\"参考项目\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 11,
+          "end_line": 16,
+          "end_utf8_column": 19,
+          "text": "接口",
+          "source_excerpt": "\"接口\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 21,
+          "end_line": 16,
+          "end_utf8_column": 32,
+          "text": "服务器",
+          "source_excerpt": "\"服务器\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 34,
+          "end_line": 16,
+          "end_utf8_column": 42,
+          "text": "前端",
+          "source_excerpt": "\"前端\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 44,
+          "end_line": 16,
+          "end_utf8_column": 52,
+          "text": "后端",
+          "source_excerpt": "\"后端\""
+        },
+        {
+          "start_line": 19,
+          "start_utf8_column": 4,
+          "end_line": 19,
+          "end_utf8_column": 18,
+          "text": "鸿蒙至宝",
+          "source_excerpt": "\"鸿蒙至宝\""
+        },
+        {
+          "start_line": 19,
+          "start_utf8_column": 20,
+          "end_line": 19,
+          "end_utf8_column": 37,
+          "text": "轮回阴阳玉",
+          "source_excerpt": "\"轮回阴阳玉\""
+        },
+        {
+          "start_line": 19,
+          "start_utf8_column": 39,
+          "end_line": 19,
+          "end_utf8_column": 56,
+          "text": "阴阳轮回玉",
+          "source_excerpt": "\"阴阳轮回玉\""
+        },
+        {
+          "start_line": 19,
+          "start_utf8_column": 58,
+          "end_line": 19,
+          "end_utf8_column": 75,
+          "text": "玄牝轮回玉",
+          "source_excerpt": "\"玄牝轮回玉\""
+        },
+        {
+          "start_line": 19,
+          "start_utf8_column": 77,
+          "end_line": 19,
+          "end_utf8_column": 91,
+          "text": "主角自带",
+          "source_excerpt": "\"主角自带\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 4,
+          "end_line": 20,
+          "end_utf8_column": 18,
+          "text": "前世异常",
+          "source_excerpt": "\"前世异常\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 20,
+          "end_line": 20,
+          "end_utf8_column": 34,
+          "text": "代理口吻",
+          "source_excerpt": "\"代理口吻\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 36,
+          "end_line": 20,
+          "end_utf8_column": 56,
+          "text": "伴生玉佩真相",
+          "source_excerpt": "\"伴生玉佩真相\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 58,
+          "end_line": 20,
+          "end_utf8_column": 72,
+          "text": "排名第三",
+          "source_excerpt": "\"排名第三\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 74,
+          "end_line": 20,
+          "end_utf8_column": 88,
+          "text": "天道契机",
+          "source_excerpt": "\"天道契机\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 4,
+          "end_line": 24,
+          "end_utf8_column": 12,
+          "text": "凡人",
+          "source_excerpt": "\"凡人\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 14,
+          "end_line": 24,
+          "end_utf8_column": 25,
+          "text": "炼气期",
+          "source_excerpt": "\"炼气期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 27,
+          "end_line": 24,
+          "end_utf8_column": 38,
+          "text": "筑基期",
+          "source_excerpt": "\"筑基期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 40,
+          "end_line": 24,
+          "end_utf8_column": 51,
+          "text": "金丹期",
+          "source_excerpt": "\"金丹期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 53,
+          "end_line": 24,
+          "end_utf8_column": 64,
+          "text": "元婴期",
+          "source_excerpt": "\"元婴期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 66,
+          "end_line": 24,
+          "end_utf8_column": 77,
+          "text": "化神期",
+          "source_excerpt": "\"化神期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 79,
+          "end_line": 24,
+          "end_utf8_column": 90,
+          "text": "合道期",
+          "source_excerpt": "\"合道期\""
+        },
+        {
+          "start_line": 24,
+          "start_utf8_column": 92,
+          "end_line": 24,
+          "end_utf8_column": 103,
+          "text": "大乘期",
+          "source_excerpt": "\"大乘期\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 4,
+          "end_line": 25,
+          "end_utf8_column": 12,
+          "text": "真仙",
+          "source_excerpt": "\"真仙\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 14,
+          "end_line": 25,
+          "end_utf8_column": 22,
+          "text": "仙君",
+          "source_excerpt": "\"仙君\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 24,
+          "end_line": 25,
+          "end_utf8_column": 32,
+          "text": "仙王",
+          "source_excerpt": "\"仙王\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 34,
+          "end_line": 25,
+          "end_utf8_column": 42,
+          "text": "仙尊",
+          "source_excerpt": "\"仙尊\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 44,
+          "end_line": 25,
+          "end_utf8_column": 52,
+          "text": "仙帝",
+          "source_excerpt": "\"仙帝\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 54,
+          "end_line": 25,
+          "end_utf8_column": 62,
+          "text": "道祖",
+          "source_excerpt": "\"道祖\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 64,
+          "end_line": 25,
+          "end_utf8_column": 82,
+          "text": "道祖-天道境",
+          "source_excerpt": "\"道祖-天道境\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 5,
+          "end_line": 28,
+          "end_utf8_column": 22,
+          "text": "古典修仙纪",
+          "source_excerpt": "\"古典修仙纪\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 24,
+          "end_line": 28,
+          "end_utf8_column": 101,
+          "text": "诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。",
+          "source_excerpt": "\"诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。\""
+        },
+        {
+          "start_line": 29,
+          "start_utf8_column": 5,
+          "end_line": 29,
+          "end_utf8_column": 22,
+          "text": "仙朝鼎盛纪",
+          "source_excerpt": "\"仙朝鼎盛纪\""
+        },
+        {
+          "start_line": 29,
+          "start_utf8_column": 24,
+          "end_line": 29,
+          "end_utf8_column": 83,
+          "text": "仙朝名册在旁，家世与气运都被写成筹码。",
+          "source_excerpt": "\"仙朝名册在旁，家世与气运都被写成筹码。\""
+        },
+        {
+          "start_line": 30,
+          "start_utf8_column": 5,
+          "end_line": 30,
+          "end_utf8_column": 22,
+          "text": "星穹道网纪",
+          "source_excerpt": "\"星穹道网纪\""
+        },
+        {
+          "start_line": 30,
+          "start_utf8_column": 24,
+          "end_line": 30,
+          "end_utf8_column": 71,
+          "text": "远方节点会记录每一次公开选择。",
+          "source_excerpt": "\"远方节点会记录每一次公开选择。\""
+        },
+        {
+          "start_line": 31,
+          "start_utf8_column": 5,
+          "end_line": 31,
+          "end_utf8_column": 22,
+          "text": "灵机蒸汽纪",
+          "source_excerpt": "\"灵机蒸汽纪\""
+        },
+        {
+          "start_line": 31,
+          "start_utf8_column": 24,
+          "end_line": 31,
+          "end_utf8_column": 74,
+          "text": "灵机工坊想把旧法拆成可复刻回路。",
+          "source_excerpt": "\"灵机工坊想把旧法拆成可复刻回路。\""
+        },
+        {
+          "start_line": 32,
+          "start_utf8_column": 5,
+          "end_line": 32,
+          "end_utf8_column": 22,
+          "text": "末法裂变纪",
+          "source_excerpt": "\"末法裂变纪\""
+        },
+        {
+          "start_line": 32,
+          "start_utf8_column": 24,
+          "end_line": 32,
+          "end_utf8_column": 83,
+          "text": "灵井枯潮逼近，破境资源被配给名册把持。",
+          "source_excerpt": "\"灵井枯潮逼近，破境资源被配给名册把持。\""
+        },
+        {
+          "start_line": 33,
+          "start_utf8_column": 5,
+          "end_line": 33,
+          "end_utf8_column": 22,
+          "text": "废土返道纪",
+          "source_excerpt": "\"废土返道纪\""
+        },
+        {
+          "start_line": 33,
+          "start_utf8_column": 24,
+          "end_line": 33,
+          "end_utf8_column": 74,
+          "text": "残宗和拾荒者都在废墟里重建法统。",
+          "source_excerpt": "\"残宗和拾荒者都在废墟里重建法统。\""
+        },
+        {
+          "start_line": 36,
+          "start_utf8_column": 4,
+          "end_line": 36,
+          "end_utf8_column": 101,
+          "text": "没落修真世家；父亲沈怀舟；母亲林青棠；伴生玉佩: 黑白旧玉未显真名",
+          "source_excerpt": "\"没落修真世家；父亲沈怀舟；母亲林青棠；伴生玉佩: 黑白旧玉未显真名\""
+        },
+        {
+          "start_line": 37,
+          "start_utf8_column": 4,
+          "end_line": 37,
+          "end_utf8_column": 101,
+          "text": "没落修真世家；父亲顾临渊；母亲叶微澜；伴生玉佩: 黑白旧玉未显真名",
+          "source_excerpt": "\"没落修真世家；父亲顾临渊；母亲叶微澜；伴生玉佩: 黑白旧玉未显真名\""
+        },
+        {
+          "start_line": 38,
+          "start_utf8_column": 4,
+          "end_line": 38,
+          "end_utf8_column": 103,
+          "text": "隐秘血脉；父母身份被隐去；养育者: 外门执事；伴生玉佩: 黑白相间旧玉",
+          "source_excerpt": "\"隐秘血脉；父母身份被隐去；养育者: 外门执事；伴生玉佩: 黑白相间旧玉\""
+        },
+        {
+          "start_line": 39,
+          "start_utf8_column": 4,
+          "end_line": 39,
+          "end_utf8_column": 79,
+          "text": "孤儿；养育者: 残宗向导；伴生玉佩: 梦中玉意偶尔发温",
+          "source_excerpt": "\"孤儿；养育者: 残宗向导；伴生玉佩: 梦中玉意偶尔发温\""
+        },
+        {
+          "start_line": 40,
+          "start_utf8_column": 4,
+          "end_line": 40,
+          "end_utf8_column": 89,
+          "text": "古族旁支；父亲沉默担忧；母亲护短期许；伴生玉佩: 黑白旧玉",
+          "source_excerpt": "\"古族旁支；父亲沉默担忧；母亲护短期许；伴生玉佩: 黑白旧玉\""
+        },
+        {
+          "start_line": 44,
+          "start_utf8_column": 8,
+          "end_line": 44,
+          "end_utf8_column": 16,
+          "text": "父亲",
+          "source_excerpt": "\"父亲\""
+        },
+        {
+          "start_line": 45,
+          "start_utf8_column": 8,
+          "end_line": 45,
+          "end_utf8_column": 22,
+          "text": "护短期许",
+          "source_excerpt": "\"护短期许\""
+        },
+        {
+          "start_line": 46,
+          "start_utf8_column": 8,
+          "end_line": 46,
+          "end_utf8_column": 103,
+          "text": "父亲低声道「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」",
+          "source_excerpt": "\"父亲低声道「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」\""
+        },
+        {
+          "start_line": 50,
+          "start_utf8_column": 8,
+          "end_line": 50,
+          "end_utf8_column": 16,
+          "text": "母亲",
+          "source_excerpt": "\"母亲\""
+        },
+        {
+          "start_line": 51,
+          "start_utf8_column": 8,
+          "end_line": 51,
+          "end_utf8_column": 22,
+          "text": "护持期待",
+          "source_excerpt": "\"护持期待\""
+        },
+        {
+          "start_line": 52,
+          "start_utf8_column": 8,
+          "end_line": 52,
+          "end_utf8_column": 106,
+          "text": "母亲轻声道「他们夸你，是想提前押注；我护你，是怕你太早被看穿。」",
+          "source_excerpt": "\"母亲轻声道「他们夸你，是想提前押注；我护你，是怕你太早被看穿。」\""
+        },
+        {
+          "start_line": 56,
+          "start_utf8_column": 8,
+          "end_line": 56,
+          "end_utf8_column": 19,
+          "text": "竞争者",
+          "source_excerpt": "\"竞争者\""
+        },
+        {
+          "start_line": 57,
+          "start_utf8_column": 8,
+          "end_line": 57,
+          "end_utf8_column": 22,
+          "text": "酸意较劲",
+          "source_excerpt": "\"酸意较劲\""
+        },
+        {
+          "start_line": 58,
+          "start_utf8_column": 8,
+          "end_line": 58,
+          "end_utf8_column": 97,
+          "text": "同代修士冷笑道「资质好又怎样，谁知道你家世里藏着什么债？」",
+          "source_excerpt": "\"同代修士冷笑道「资质好又怎样，谁知道你家世里藏着什么债？」\""
+        },
+        {
+          "start_line": 62,
+          "start_utf8_column": 8,
+          "end_line": 62,
+          "end_utf8_column": 19,
+          "text": "欺压者",
+          "source_excerpt": "\"欺压者\""
+        },
+        {
+          "start_line": 63,
+          "start_utf8_column": 8,
+          "end_line": 63,
+          "end_utf8_column": 22,
+          "text": "轻慢挑衅",
+          "source_excerpt": "\"轻慢挑衅\""
+        },
+        {
+          "start_line": 64,
+          "start_utf8_column": 8,
+          "end_line": 64,
+          "end_utf8_column": 100,
+          "text": "外门恶少嗤笑道「测灵碑都替你把话说完了，还想跟我们争名额？」",
+          "source_excerpt": "\"外门恶少嗤笑道「测灵碑都替你把话说完了，还想跟我们争名额？」\""
+        },
+        {
+          "start_line": 68,
+          "start_utf8_column": 8,
+          "end_line": 68,
+          "end_utf8_column": 25,
+          "text": "资源把关者",
+          "source_excerpt": "\"资源把关者\""
+        },
+        {
+          "start_line": 69,
+          "start_utf8_column": 8,
+          "end_line": 69,
+          "end_utf8_column": 25,
+          "text": "冷脸卡资源",
+          "source_excerpt": "\"冷脸卡资源\""
+        },
+        {
+          "start_line": 70,
+          "start_utf8_column": 8,
+          "end_line": 70,
+          "end_utf8_column": 106,
+          "text": "配给执事合上名册道「灵井不是给热血少年的，拿得出筹码再谈破境。」",
+          "source_excerpt": "\"配给执事合上名册道「灵井不是给热血少年的，拿得出筹码再谈破境。」\""
+        },
+        {
+          "start_line": 74,
+          "start_utf8_column": 8,
+          "end_line": 74,
+          "end_utf8_column": 25,
+          "text": "旧名追债人",
+          "source_excerpt": "\"旧名追债人\""
+        },
+        {
+          "start_line": 75,
+          "start_utf8_column": 8,
+          "end_line": 75,
+          "end_utf8_column": 22,
+          "text": "旧怨追问",
+          "source_excerpt": "\"旧怨追问\""
+        },
+        {
+          "start_line": 76,
+          "start_utf8_column": 8,
+          "end_line": 76,
+          "end_utf8_column": 100,
+          "text": "查账人盯着旧册道「别急着装无辜，有些旧债换了皮囊也会认人。」",
+          "source_excerpt": "\"查账人盯着旧册道「别急着装无辜，有些旧债换了皮囊也会认人。」\""
+        },
+        {
+          "start_line": 80,
+          "start_utf8_column": 8,
+          "end_line": 80,
+          "end_utf8_column": 25,
+          "text": "功法见证者",
+          "source_excerpt": "\"功法见证者\""
+        },
+        {
+          "start_line": 81,
+          "start_utf8_column": 8,
+          "end_line": 81,
+          "end_utf8_column": 22,
+          "text": "惊疑认可",
+          "source_excerpt": "\"惊疑认可\""
+        },
+        {
+          "start_line": 82,
+          "start_utf8_column": 8,
+          "end_line": 82,
+          "end_utf8_column": 118,
+          "text": "藏经长老压低声音道「这一式别在外头乱用，懂行的人会认出失传古法的骨头。」",
+          "source_excerpt": "\"藏经长老压低声音道「这一式别在外头乱用，懂行的人会认出失传古法的骨头。」\""
+        },
+        {
+          "start_line": 86,
+          "start_utf8_column": 8,
+          "end_line": 86,
+          "end_utf8_column": 25,
+          "text": "器痕识别者",
+          "source_excerpt": "\"器痕识别者\""
+        },
+        {
+          "start_line": 87,
+          "start_utf8_column": 8,
+          "end_line": 87,
+          "end_utf8_column": 22,
+          "text": "压声提醒",
+          "source_excerpt": "\"压声提醒\""
+        },
+        {
+          "start_line": 88,
+          "start_utf8_column": 8,
+          "end_line": 88,
+          "end_utf8_column": 94,
+          "text": "器阁执事道「你没有前世法宝本体，可器痕的响声瞒不过我。」",
+          "source_excerpt": "\"器阁执事道「你没有前世法宝本体，可器痕的响声瞒不过我。」\""
+        },
+        {
+          "start_line": 92,
+          "start_utf8_column": 8,
+          "end_line": 92,
+          "end_utf8_column": 25,
+          "text": "旧名仰慕者",
+          "source_excerpt": "\"旧名仰慕者\""
+        },
+        {
+          "start_line": 93,
+          "start_utf8_column": 8,
+          "end_line": 93,
+          "end_utf8_column": 22,
+          "text": "仰慕押注",
+          "source_excerpt": "\"仰慕押注\""
+        },
+        {
+          "start_line": 94,
+          "start_utf8_column": 8,
+          "end_line": 94,
+          "end_utf8_column": 106,
+          "text": "递帖人拱手道「我敬的是你今生这一眼，也盼你配得上旧名留下的光。」",
+          "source_excerpt": "\"递帖人拱手道「我敬的是你今生这一眼，也盼你配得上旧名留下的光。」\""
+        },
+        {
+          "start_line": 98,
+          "start_utf8_column": 8,
+          "end_line": 98,
+          "end_utf8_column": 22,
+          "text": "活跃修士",
+          "source_excerpt": "\"活跃修士\""
+        },
+        {
+          "start_line": 99,
+          "start_utf8_column": 8,
+          "end_line": 99,
+          "end_utf8_column": 22,
+          "text": "礼貌试探",
+          "source_excerpt": "\"礼貌试探\""
+        },
+        {
+          "start_line": 100,
+          "start_utf8_column": 8,
+          "end_line": 100,
+          "end_utf8_column": 133,
+          "text": "活跃修士含笑递帖道「我只显这点修为，是怕旁人误会；至于真底细，要看你值不值得问。」",
+          "source_excerpt": "\"活跃修士含笑递帖道「我只显这点修为，是怕旁人误会；至于真底细，要看你值不值得问。」\""
+        },
+        {
+          "start_line": 108,
+          "start_utf8_column": 26,
+          "end_line": 108,
+          "end_utf8_column": 34,
+          "text": "父亲",
+          "source_excerpt": "\"父亲\""
+        },
+        {
+          "start_line": 108,
+          "start_utf8_column": 36,
+          "end_line": 108,
+          "end_utf8_column": 53,
+          "text": "旧名仰慕者",
+          "source_excerpt": "\"旧名仰慕者\""
+        },
+        {
+          "start_line": 109,
+          "start_utf8_column": 24,
+          "end_line": 109,
+          "end_utf8_column": 35,
+          "text": "竞争者",
+          "source_excerpt": "\"竞争者\""
+        },
+        {
+          "start_line": 110,
+          "start_utf8_column": 17,
+          "end_line": 110,
+          "end_utf8_column": 28,
+          "text": "竞争者",
+          "source_excerpt": "\"竞争者\""
+        },
+        {
+          "start_line": 111,
+          "start_utf8_column": 18,
+          "end_line": 111,
+          "end_utf8_column": 29,
+          "text": "欺压者",
+          "source_excerpt": "\"欺压者\""
+        },
+        {
+          "start_line": 111,
+          "start_utf8_column": 31,
+          "end_line": 111,
+          "end_utf8_column": 48,
+          "text": "资源把关者",
+          "source_excerpt": "\"资源把关者\""
+        },
+        {
+          "start_line": 112,
+          "start_utf8_column": 22,
+          "end_line": 112,
+          "end_utf8_column": 39,
+          "text": "功法见证者",
+          "source_excerpt": "\"功法见证者\""
+        },
+        {
+          "start_line": 113,
+          "start_utf8_column": 24,
+          "end_line": 113,
+          "end_utf8_column": 32,
+          "text": "父亲",
+          "source_excerpt": "\"父亲\""
+        },
+        {
+          "start_line": 113,
+          "start_utf8_column": 34,
+          "end_line": 113,
+          "end_utf8_column": 42,
+          "text": "母亲",
+          "source_excerpt": "\"母亲\""
+        },
+        {
+          "start_line": 113,
+          "start_utf8_column": 44,
+          "end_line": 113,
+          "end_utf8_column": 61,
+          "text": "旧名仰慕者",
+          "source_excerpt": "\"旧名仰慕者\""
+        },
+        {
+          "start_line": 114,
+          "start_utf8_column": 21,
+          "end_line": 114,
+          "end_utf8_column": 38,
+          "text": "器痕识别者",
+          "source_excerpt": "\"器痕识别者\""
+        },
+        {
+          "start_line": 115,
+          "start_utf8_column": 21,
+          "end_line": 115,
+          "end_utf8_column": 38,
+          "text": "资源把关者",
+          "source_excerpt": "\"资源把关者\""
+        },
+        {
+          "start_line": 116,
+          "start_utf8_column": 21,
+          "end_line": 116,
+          "end_utf8_column": 38,
+          "text": "旧名追债人",
+          "source_excerpt": "\"旧名追债人\""
+        },
+        {
+          "start_line": 117,
+          "start_utf8_column": 25,
+          "end_line": 117,
+          "end_utf8_column": 39,
+          "text": "活跃修士",
+          "source_excerpt": "\"活跃修士\""
+        },
+        {
+          "start_line": 127,
+          "start_utf8_column": 15,
+          "end_line": 144,
+          "end_utf8_column": 14,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束:\n- 标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n- 描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n- NPC 要有情绪和立场，但不要无意义骂街。\n- 描述必须是完整中文句子，以。！？之一收束，不要夹英文、外文字符、方括号或答题说明。\n- 三个选项各2到8个中文字符，只写行动短语。\n- 选项不要编号，不要写“请选择”，不要写成标题或解释。\n\n玩家: 问道者\n境界名称: ",
+          "source_excerpt": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束:\n- 标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n- 描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n- NPC 要有情绪和立场，但不要无意义骂街。\n- 描述必须是完整中文句子，以。！？之一收束，不要夹英文、外文字符、方括号或答题说明。\n- 三个选项各2到8个中文字符，只写行动短语。\n- 选项不要编号，不要写“请选择”，不要写成标题或解释。\n\n玩家: 问道者\n境界名称: "
+        },
+        {
+          "start_line": 144,
+          "start_utf8_column": 29,
+          "end_line": 145,
+          "end_utf8_column": 8,
+          "text": "\n因果: ",
+          "source_excerpt": "\n因果: "
+        },
+        {
+          "start_line": 145,
+          "start_utf8_column": 23,
+          "end_line": 146,
+          "end_utf8_column": 14,
+          "text": "\n此世家世: ",
+          "source_excerpt": "\n此世家世: "
+        },
+        {
+          "start_line": 146,
+          "start_utf8_column": 30,
+          "end_line": 148,
+          "end_utf8_column": 2,
+          "text": "\n人情风波:\n- ",
+          "source_excerpt": "\n人情风波:\n- "
+        },
+        {
+          "start_line": 148,
+          "start_utf8_column": 33,
+          "end_line": 148,
+          "end_utf8_column": 46,
+          "text": "） · 情绪",
+          "source_excerpt": "） · 情绪"
+        },
+        {
+          "start_line": 148,
+          "start_utf8_column": 55,
+          "end_line": 148,
+          "end_utf8_column": 65,
+          "text": " · 关系",
+          "source_excerpt": " · 关系"
+        },
+        {
+          "start_line": 148,
+          "start_utf8_column": 94,
+          "end_line": 148,
+          "end_utf8_column": 107,
+          "text": " 台词参考",
+          "source_excerpt": " 台词参考"
+        },
+        {
+          "start_line": 148,
+          "start_utf8_column": 118,
+          "end_line": 150,
+          "end_utf8_column": 0,
+          "text": "\n轮回传承:\n",
+          "source_excerpt": "\n轮回传承:\n"
+        },
+        {
+          "start_line": 150,
+          "start_utf8_column": 16,
+          "end_line": 152,
+          "end_utf8_column": 16,
+          "text": "\n当前世界:\n- 时代纪元: ",
+          "source_excerpt": "\n当前世界:\n- 时代纪元: "
+        },
+        {
+          "start_line": 152,
+          "start_utf8_column": 21,
+          "end_line": 153,
+          "end_utf8_column": 16,
+          "text": "\n- 时代法则: ",
+          "source_excerpt": "\n- 时代法则: "
+        },
+        {
+          "start_line": 153,
+          "start_utf8_column": 26,
+          "end_line": 154,
+          "end_utf8_column": 16,
+          "text": "\n- 本世主线: ",
+          "source_excerpt": "\n- 本世主线: "
+        },
+        {
+          "start_line": 154,
+          "start_utf8_column": 31,
+          "end_line": 156,
+          "end_utf8_column": 2,
+          "text": "\n最近记忆:\n- ",
+          "source_excerpt": "\n最近记忆:\n- "
+        },
+        {
+          "start_line": 194,
+          "start_utf8_column": 20,
+          "end_line": 194,
+          "end_utf8_column": 62,
+          "text": "^([0-9]+|一|二|三|四|五)[、.．)]",
+          "source_excerpt": "r\"^([0-9]+|一|二|三|四|五)[、.．)]\""
+        },
+        {
+          "start_line": 200,
+          "start_utf8_column": 22,
+          "end_line": 200,
+          "end_utf8_column": 59,
+          "text": "境界名称\\s*[:：]\\s*([^\\n\\r]+)",
+          "source_excerpt": "r\"境界名称\\s*[:：]\\s*([^\\n\\r]+)\""
+        },
+        {
+          "start_line": 214,
+          "start_utf8_column": 18,
+          "end_line": 214,
+          "end_utf8_column": 26,
+          "text": "道祖",
+          "source_excerpt": "\"道祖\""
+        },
+        {
+          "start_line": 214,
+          "start_utf8_column": 41,
+          "end_line": 214,
+          "end_utf8_column": 49,
+          "text": "天道",
+          "source_excerpt": "\"天道\""
+        },
+        {
+          "start_line": 216,
+          "start_utf8_column": 7,
+          "end_line": 216,
+          "end_utf8_column": 18,
+          "text": "第一世",
+          "source_excerpt": "\"第一世\""
+        },
+        {
+          "start_line": 216,
+          "start_utf8_column": 44,
+          "end_line": 216,
+          "end_utf8_column": 84,
+          "text": "前世|轮回|转世|上一世|旧梦",
+          "source_excerpt": "r\"前世|轮回|转世|上一世|旧梦\""
+        },
+        {
+          "start_line": 219,
+          "start_utf8_column": 28,
+          "end_line": 219,
+          "end_utf8_column": 147,
+          "text": "(至宝|权柄|鸿蒙|太虚照世镜|鸿蒙道印|无量天书|造化青莲|太初源炉|开界神斧|万道母鼎)",
+          "source_excerpt": "r\"(至宝|权柄|鸿蒙|太虚照世镜|鸿蒙道印|无量天书|造化青莲|太初源炉|开界神斧|万道母鼎)\""
+        },
+        {
+          "start_line": 220,
+          "start_utf8_column": 36,
+          "end_line": 220,
+          "end_utf8_column": 91,
+          "text": "(认主|执掌|装备|获得|收服|炼化|掌控).*",
+          "source_excerpt": "r\"(认主|执掌|装备|获得|收服|炼化|掌控).*\""
+        },
+        {
+          "start_line": 222,
+          "start_utf8_column": 60,
+          "end_line": 222,
+          "end_utf8_column": 115,
+          "text": ".*(认主|执掌|装备|获得|收服|炼化|掌控)",
+          "source_excerpt": "r\".*(认主|执掌|装备|获得|收服|炼化|掌控)\""
+        },
+        {
+          "start_line": 225,
+          "start_utf8_column": 7,
+          "end_line": 225,
+          "end_utf8_column": 18,
+          "text": "第一世",
+          "source_excerpt": "\"第一世\""
+        },
+        {
+          "start_line": 225,
+          "start_utf8_column": 44,
+          "end_line": 225,
+          "end_utf8_column": 87,
+          "text": "洛凝霜.*(深情|道侣|相许|宿缘)",
+          "source_excerpt": "r\"洛凝霜.*(深情|道侣|相许|宿缘)\""
+        },
+        {
+          "start_line": 232,
+          "start_utf8_column": 15,
+          "end_line": 250,
+          "end_utf8_column": 0,
+          "text": "你是《问道长生》的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束:\n- 标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n- 描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n- NPC 要有情绪和立场，但不要无意义骂街。\n- 描述必须是完整中文句子，以。！？之一收束，不要夹英文、外文字符、方括号或答题说明。\n- 三个选项各2到8个中文字符，只写行动短语。\n- 选项不要编号，不要写“请选择”，不要写成标题或解释。\n- 玩家不知道隐藏底牌和系统设定时，描述只能写可感知现象。\n\n玩家上下文:\n",
+          "source_excerpt": "你是《问道长生》的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束:\n- 标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n- 描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n- NPC 要有情绪和立场，但不要无意义骂街。\n- 描述必须是完整中文句子，以。！？之一收束，不要夹英文、外文字符、方括号或答题说明。\n- 三个选项各2到8个中文字符，只写行动短语。\n- 选项不要编号，不要写“请选择”，不要写成标题或解释。\n- 玩家不知道隐藏底牌和系统设定时，描述只能写可感知现象。\n\n玩家上下文:\n"
+        },
+        {
+          "start_line": 257,
+          "start_utf8_column": 12,
+          "end_line": 263,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 你第一次看见测灵碑，尚无前世记忆。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 你第一次看见测灵碑，尚无前世记忆。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。\"\"\""
+        },
+        {
+          "start_line": 264,
+          "start_utf8_column": 12,
+          "end_line": 268,
+          "end_utf8_column": 15,
+          "text": "【机缘】碑前初光\n测灵碑亮起时，顾临渊没有大笑，只按住你肩头让你站稳；叶微澜替你挡住旁人探问，眼里却有藏不住的欣慰。\n稳住心神\n谢过父母\n观察旁人",
+          "source_excerpt": "\"\"\"【机缘】碑前初光\n测灵碑亮起时，顾临渊没有大笑，只按住你肩头让你站稳；叶微澜替你挡住旁人探问，眼里却有藏不住的欣慰。\n稳住心神\n谢过父母\n观察旁人\"\"\""
+        },
+        {
+          "start_line": 272,
+          "start_utf8_column": 12,
+          "end_line": 278,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，诸宗并立，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 清蘅真人试心后没有立刻收徒，只留下一盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，诸宗并立，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 清蘅真人试心后没有立刻收徒，只留下一盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。\"\"\""
+        },
+        {
+          "start_line": 279,
+          "start_utf8_column": 12,
+          "end_line": 283,
+          "end_utf8_column": 15,
+          "text": "【因果】青灯试心\n清蘅真人把青灯留在窗前，只夸你心性肯受磨；顾临渊听后没有喜形于色，反替你挡下几道探问目光。\n低头受教\n追问灯意\n暂避锋芒",
+          "source_excerpt": "\"\"\"【因果】青灯试心\n清蘅真人把青灯留在窗前，只夸你心性肯受磨；顾临渊听后没有喜形于色，反替你挡下几道探问目光。\n低头受教\n追问灯意\n暂避锋芒\"\"\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 12,
+          "end_line": 293,
+          "end_utf8_column": 41,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，灵气丰沛，宗门看重根骨。\n此世家世: 没落修真世家；父亲沈怀舟；母亲林青棠。\n人情风波: 测灵碑刚亮，同辈江照雪表面道贺，眼底有酸意。\n隐藏限制: 不得写前世异常。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，灵气丰沛，宗门看重根骨。\n此世家世: 没落修真世家；父亲沈怀舟；母亲林青棠。\n人情风波: 测灵碑刚亮，同辈江照雪表面道贺，眼底有酸意。\n隐藏限制: 不得写前世异常。\"\"\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 12,
+          "end_line": 298,
+          "end_utf8_column": 15,
+          "text": "【因果】测灵余声\n沈怀舟先让你莫骄，林青棠却替你收好入门信物；江照雪笑着道贺，酸意已经藏进袖中名册。\n谢过长辈\n稳住锋芒\n正面应试",
+          "source_excerpt": "\"\"\"【因果】测灵余声\n沈怀舟先让你莫骄，林青棠却替你收好入门信物；江照雪笑着道贺，酸意已经藏进袖中名册。\n谢过长辈\n稳住锋芒\n正面应试\"\"\""
+        },
+        {
+          "start_line": 302,
+          "start_utf8_column": 12,
+          "end_line": 308,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，外门试炼将开。\n此世家世: 坊市小族。\n人情风波: 洛凝霜尚未成为亲近角色，只在试炼名单上出现过一次。\n隐藏限制: 不得把角色关系写死，不得提前写深情。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，外门试炼将开。\n此世家世: 坊市小族。\n人情风波: 洛凝霜尚未成为亲近角色，只在试炼名单上出现过一次。\n隐藏限制: 不得把角色关系写死，不得提前写深情。\"\"\""
+        },
+        {
+          "start_line": 309,
+          "start_utf8_column": 12,
+          "end_line": 313,
+          "end_utf8_column": 15,
+          "text": "【机缘】霜名入册\n试炼名单末尾多出洛凝霜三字，旁人只说她剑骨清寒；她路过时看了你一眼，却没有给出亲近或疏远。\n记下姓名\n专心试炼\n顺势寒暄",
+          "source_excerpt": "\"\"\"【机缘】霜名入册\n试炼名单末尾多出洛凝霜三字，旁人只说她剑骨清寒；她路过时看了你一眼，却没有给出亲近或疏远。\n记下姓名\n专心试炼\n顺势寒暄\"\"\""
+        },
+        {
+          "start_line": 317,
+          "start_utf8_column": 12,
+          "end_line": 321,
+          "end_utf8_column": 44,
+          "text": "玩家: 玄\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封与气运影响修行上限。\n人情风波: 活跃修士祁无咎愿意见你，但外露境界未必真实。\n最近记忆: 你曾识破一次幻境。",
+          "source_excerpt": "\"\"\"玩家: 玄\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封与气运影响修行上限。\n人情风波: 活跃修士祁无咎愿意见你，但外露境界未必真实。\n最近记忆: 你曾识破一次幻境。\"\"\""
+        },
+        {
+          "start_line": 322,
+          "start_utf8_column": 12,
+          "end_line": 326,
+          "end_utf8_column": 15,
+          "text": "【奇遇】显境有假\n祁无咎在人前只显金丹光影，笑意却稳得过分；他递帖时灵压收放极准，像故意只给你看半扇门。\n顺势寒暄\n暗观灵压\n暂不交底",
+          "source_excerpt": "\"\"\"【奇遇】显境有假\n祁无咎在人前只显金丹光影，笑意却稳得过分；他递帖时灵压收放极准，像故意只给你看半扇门。\n顺势寒暄\n暗观灵压\n暂不交底\"\"\""
+        },
+        {
+          "start_line": 330,
+          "start_utf8_column": 12,
+          "end_line": 335,
+          "end_utf8_column": 50,
+          "text": "玩家: 玄\n境界名称: 筑基期\n当前世界: 古典修仙纪，古修遗府频现。\n轮回传承: 只残留半段行功脉络。\n人情风波: 藏经长老认出一点旧法骨相。\n隐藏限制: 不得直接发放完整功法。",
+          "source_excerpt": "\"\"\"玩家: 玄\n境界名称: 筑基期\n当前世界: 古典修仙纪，古修遗府频现。\n轮回传承: 只残留半段行功脉络。\n人情风波: 藏经长老认出一点旧法骨相。\n隐藏限制: 不得直接发放完整功法。\"\"\""
+        },
+        {
+          "start_line": 336,
+          "start_utf8_column": 12,
+          "end_line": 340,
+          "end_utf8_column": 15,
+          "text": "【传承】失传古法\n藏经长老只看一眼便合上经卷，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。\n压下旧法\n请教长老\n借势入局",
+          "source_excerpt": "\"\"\"【传承】失传古法\n藏经长老只看一眼便合上经卷，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。\n压下旧法\n请教长老\n借势入局\"\"\""
+        },
+        {
+          "start_line": 344,
+          "start_utf8_column": 12,
+          "end_line": 348,
+          "end_utf8_column": 65,
+          "text": "玩家: 玄\n境界名称: 金丹期\n当前世界: 灵机蒸汽纪，灵机工坊想拆解旧法。\n轮回传承: 前世法宝本体未能跨世，只剩器痕余响。\n人情风波: 器阁执事听见炉火异响后态度转慎。",
+          "source_excerpt": "\"\"\"玩家: 玄\n境界名称: 金丹期\n当前世界: 灵机蒸汽纪，灵机工坊想拆解旧法。\n轮回传承: 前世法宝本体未能跨世，只剩器痕余响。\n人情风波: 器阁执事听见炉火异响后态度转慎。\"\"\""
+        },
+        {
+          "start_line": 349,
+          "start_utf8_column": 12,
+          "end_line": 353,
+          "end_utf8_column": 15,
+          "text": "【传承】器痕余响\n器阁执事按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。\n询问器痕\n封存余响\n转身离阁",
+          "source_excerpt": "\"\"\"【传承】器痕余响\n器阁执事按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。\n询问器痕\n封存余响\n转身离阁\"\"\""
+        },
+        {
+          "start_line": 357,
+          "start_utf8_column": 12,
+          "end_line": 361,
+          "end_utf8_column": 74,
+          "text": "玩家: 玄\n境界名称: 炼气期\n当前世界: 末法裂变纪，资源稀薄，单灵根修炼更快。\n此世家世: 孤儿，养育者是外门执事。\n人情风波: 外门恶少看你根骨不稳，故意扣试炼名额。",
+          "source_excerpt": "\"\"\"玩家: 玄\n境界名称: 炼气期\n当前世界: 末法裂变纪，资源稀薄，单灵根修炼更快。\n此世家世: 孤儿，养育者是外门执事。\n人情风波: 外门恶少看你根骨不稳，故意扣试炼名额。\"\"\""
+        },
+        {
+          "start_line": 362,
+          "start_utf8_column": 12,
+          "end_line": 366,
+          "end_utf8_column": 15,
+          "text": "【危机】外门欺压\n外门恶少把名册往袖里一收，笑你根基太薄；旁人等着看笑话，只有旧玉在胸口一阵发烫。\n据理争名\n暂忍记账\n请人作证",
+          "source_excerpt": "\"\"\"【危机】外门欺压\n外门恶少把名册往袖里一收，笑你根基太薄；旁人等着看笑话，只有旧玉在胸口一阵发烫。\n据理争名\n暂忍记账\n请人作证\"\"\""
+        },
+        {
+          "start_line": 370,
+          "start_utf8_column": 12,
+          "end_line": 375,
+          "end_utf8_column": 95,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，灵气丰沛，五行灵根不再必然低人一等。\n此世家世: 宗门外门弟子。\n近期记忆: 你二十余岁筑基，速度不慢，但同门里有人仍拿灵根说事。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，灵气丰沛，五行灵根不再必然低人一等。\n此世家世: 宗门外门弟子。\n近期记忆: 你二十余岁筑基，速度不慢，但同门里有人仍拿灵根说事。\"\"\""
+        },
+        {
+          "start_line": 376,
+          "start_utf8_column": 12,
+          "end_line": 380,
+          "end_utf8_column": 15,
+          "text": "【因果】五行争名\n执事刚记下你的筑基年岁，便有人酸你五行驳杂；清蘅真人只看了那人一眼，说盛世灵气足够养出宽阔道基。\n稳住道基\n回敬酸语\n请教师尊",
+          "source_excerpt": "\"\"\"【因果】五行争名\n执事刚记下你的筑基年岁，便有人酸你五行驳杂；清蘅真人只看了那人一眼，说盛世灵气足够养出宽阔道基。\n稳住道基\n回敬酸语\n请教师尊\"\"\""
+        },
+        {
+          "start_line": 384,
+          "start_utf8_column": 12,
+          "end_line": 389,
+          "end_utf8_column": 68,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比将开。\n人情风波: 你结丹异象稳而不炫，江照雪心中不甘。\n近期记忆: 洛凝霜已在试炼中与你有过一次并肩。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比将开。\n人情风波: 你结丹异象稳而不炫，江照雪心中不甘。\n近期记忆: 洛凝霜已在试炼中与你有过一次并肩。\"\"\""
+        },
+        {
+          "start_line": 390,
+          "start_utf8_column": 12,
+          "end_line": 394,
+          "end_utf8_column": 15,
+          "text": "【危机】丹成暗潮\n你结丹没有夸耀，江照雪却把贺礼送得极重；那份不甘藏在礼数里，像要借宗门大比称量你的真实成色。\n收礼不诺\n约战台前\n暗查来意",
+          "source_excerpt": "\"\"\"【危机】丹成暗潮\n你结丹没有夸耀，江照雪却把贺礼送得极重；那份不甘藏在礼数里，像要借宗门大比称量你的真实成色。\n收礼不诺\n约战台前\n暗查来意\"\"\""
+        },
+        {
+          "start_line": 398,
+          "start_utf8_column": 12,
+          "end_line": 403,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 元婴期\n当前世界: 古典修仙纪，秘境开启。\n人情风波: 洛凝霜天赋极好，对你有欣赏但关系仍由玩家选择推进。\n近期记忆: 你曾在秘境中救过她一次，但没有挟恩。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 元婴期\n当前世界: 古典修仙纪，秘境开启。\n人情风波: 洛凝霜天赋极好，对你有欣赏但关系仍由玩家选择推进。\n近期记忆: 你曾在秘境中救过她一次，但没有挟恩。\"\"\""
+        },
+        {
+          "start_line": 404,
+          "start_utf8_column": 12,
+          "end_line": 408,
+          "end_utf8_column": 15,
+          "text": "【奇遇】霜剑同路\n洛凝霜把半枚秘境钥印递来，语气仍淡，眼神却比从前柔和；她没有许诺情分，只问你敢不敢同走死门。\n并肩入门\n询问缘由\n婉拒同行",
+          "source_excerpt": "\"\"\"【奇遇】霜剑同路\n洛凝霜把半枚秘境钥印递来，语气仍淡，眼神却比从前柔和；她没有许诺情分，只问你敢不敢同走死门。\n并肩入门\n询问缘由\n婉拒同行\"\"\""
+        },
+        {
+          "start_line": 412,
+          "start_utf8_column": 12,
+          "end_line": 417,
+          "end_utf8_column": 56,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与魔道旧怨重燃。\n人情风波: 清蘅真人受旧敌牵制，仍不愿让你替她背因果。\n近期记忆: 道教反派玄衡子第一次露面。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与魔道旧怨重燃。\n人情风波: 清蘅真人受旧敌牵制，仍不愿让你替她背因果。\n近期记忆: 道教反派玄衡子第一次露面。\"\"\""
+        },
+        {
+          "start_line": 418,
+          "start_utf8_column": 12,
+          "end_line": 422,
+          "end_utf8_column": 15,
+          "text": "【危机】旧敌问灯\n玄衡子隔山问灯，笑称清蘅真人护徒太深；师尊没有让你退，只把因果线压低半寸，示意你自己选择。\n替师接因\n旁观破局\n先护同门",
+          "source_excerpt": "\"\"\"【危机】旧敌问灯\n玄衡子隔山问灯，笑称清蘅真人护徒太深；师尊没有让你退，只把因果线压低半寸，示意你自己选择。\n替师接因\n旁观破局\n先护同门\"\"\""
+        },
+        {
+          "start_line": 426,
+          "start_utf8_column": 12,
+          "end_line": 431,
+          "end_utf8_column": 59,
+          "text": "玩家: 玄\n世代: 第二世\n境界名称: 合道期\n当前世界: 仙朝鼎盛纪，册封气运与道途相争。\n器物状态: 本命之物已温养多年，初生器灵只有朦胧亲近。\n近期记忆: 前世师门旧灯偶尔在梦中回响。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第二世\n境界名称: 合道期\n当前世界: 仙朝鼎盛纪，册封气运与道途相争。\n器物状态: 本命之物已温养多年，初生器灵只有朦胧亲近。\n近期记忆: 前世师门旧灯偶尔在梦中回响。\"\"\""
+        },
+        {
+          "start_line": 432,
+          "start_utf8_column": 12,
+          "end_line": 436,
+          "end_utf8_column": 15,
+          "text": "【传承】本命初灵\n本命器物在掌心轻鸣，像幼童认路般贴近你的神识；仙朝册封想替它定名，它却只回应你自己的道。\n亲自命名\n拒绝册封\n暂借气运",
+          "source_excerpt": "\"\"\"【传承】本命初灵\n本命器物在掌心轻鸣，像幼童认路般贴近你的神识；仙朝册封想替它定名，它却只回应你自己的道。\n亲自命名\n拒绝册封\n暂借气运\"\"\""
+        },
+        {
+          "start_line": 440,
+          "start_utf8_column": 12,
+          "end_line": 446,
+          "end_utf8_column": 65,
+          "text": "玩家: 玄\n世代: 第三世\n境界名称: 大乘期\n当前世界: 末法裂变纪，灵井枯潮逼近。\n此世家世: 孤儿，被残宗收养。\n轮回传承: 前世人情只剩梦兆，父母不再是同一批人。\n近期记忆: 你开始理解每一世身份都不是装饰。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第三世\n境界名称: 大乘期\n当前世界: 末法裂变纪，灵井枯潮逼近。\n此世家世: 孤儿，被残宗收养。\n轮回传承: 前世人情只剩梦兆，父母不再是同一批人。\n近期记忆: 你开始理解每一世身份都不是装饰。\"\"\""
+        },
+        {
+          "start_line": 447,
+          "start_utf8_column": 12,
+          "end_line": 451,
+          "end_utf8_column": 15,
+          "text": "【因果】残宗收养\n残宗老妪替你补好破袍，嘴上嫌你来历麻烦，夜里却把最后一枚灵井签压到你枕边；这一世的亲情不问前名。\n收下灵签\n追问代价\n另寻资源",
+          "source_excerpt": "\"\"\"【因果】残宗收养\n残宗老妪替你补好破袍，嘴上嫌你来历麻烦，夜里却把最后一枚灵井签压到你枕边；这一世的亲情不问前名。\n收下灵签\n追问代价\n另寻资源\"\"\""
+        },
+        {
+          "start_line": 455,
+          "start_utf8_column": 12,
+          "end_line": 460,
+          "end_utf8_column": 47,
+          "text": "玩家: 玄\n世代: 第四世\n境界名称: 真仙\n当前世界: 仙朝鼎盛纪，飞升名册重开。\n人情风波: 洛凝霜也已入仙界，但她经历与玩家并不完全同步。\n近期记忆: 你听见一个熟悉剑名。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第四世\n境界名称: 真仙\n当前世界: 仙朝鼎盛纪，飞升名册重开。\n人情风波: 洛凝霜也已入仙界，但她经历与玩家并不完全同步。\n近期记忆: 你听见一个熟悉剑名。\"\"\""
+        },
+        {
+          "start_line": 461,
+          "start_utf8_column": 12,
+          "end_line": 465,
+          "end_utf8_column": 15,
+          "text": "【奇遇】霜名再现\n仙界名册掠过洛凝霜三字，旁人称她剑心近道；她看见你时没有问旧情，只问今生的你是否仍敢同行。\n坦然相认\n只谈大道\n暂避旧情",
+          "source_excerpt": "\"\"\"【奇遇】霜名再现\n仙界名册掠过洛凝霜三字，旁人称她剑心近道；她看见你时没有问旧情，只问今生的你是否仍敢同行。\n坦然相认\n只谈大道\n暂避旧情\"\"\""
+        },
+        {
+          "start_line": 469,
+          "start_utf8_column": 12,
+          "end_line": 474,
+          "end_utf8_column": 62,
+          "text": "玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，通天灵宝传闻开始流通。\n器物规则: 后天通天灵宝可跨纪元长存，但无人温养会威能流失。\n近期记忆: 你见到一件衰退的后天通天灵宝。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，通天灵宝传闻开始流通。\n器物规则: 后天通天灵宝可跨纪元长存，但无人温养会威能流失。\n近期记忆: 你见到一件衰退的后天通天灵宝。\"\"\""
+        },
+        {
+          "start_line": 475,
+          "start_utf8_column": 12,
+          "end_line": 479,
+          "end_utf8_column": 15,
+          "text": "【传承】通天余威\n残钟曾是后天通天灵宝，如今钟纹黯淡仍压得群修失声；器灵不认新主，只问你能否替它续一口道火。\n温养残钟\n询问旧主\n暂不触碰",
+          "source_excerpt": "\"\"\"【传承】通天余威\n残钟曾是后天通天灵宝，如今钟纹黯淡仍压得群修失声；器灵不认新主，只问你能否替它续一口道火。\n温养残钟\n询问旧主\n暂不触碰\"\"\""
+        },
+        {
+          "start_line": 483,
+          "start_utf8_column": 12,
+          "end_line": 488,
+          "end_utf8_column": 62,
+          "text": "玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 废土返道纪，纪元残骸压住万族气运。\n核心矛盾: 仙帝仍会寿尽，必须寻找道祖之路。\n近期记忆: 你看见一位旧仙帝在寿火里沉默。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 废土返道纪，纪元残骸压住万族气运。\n核心矛盾: 仙帝仍会寿尽，必须寻找道祖之路。\n近期记忆: 你看见一位旧仙帝在寿火里沉默。\"\"\""
+        },
+        {
+          "start_line": 489,
+          "start_utf8_column": 12,
+          "end_line": 493,
+          "end_utf8_column": 15,
+          "text": "【危机】帝火将残\n旧仙帝坐在残宫里，威压仍能镇住万里废土，寿火却薄得像纸；他没有求救，只问你是否也怕走到尽头。\n请教道祖\n续他寿火\n沉默观礼",
+          "source_excerpt": "\"\"\"【危机】帝火将残\n旧仙帝坐在残宫里，威压仍能镇住万里废土，寿火却薄得像纸；他没有求救，只问你是否也怕走到尽头。\n请教道祖\n续他寿火\n沉默观礼\"\"\""
+        },
+        {
+          "start_line": 497,
+          "start_utf8_column": 12,
+          "end_line": 502,
+          "end_utf8_column": 59,
+          "text": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，万道映照进道网深处。\n至宝规则: 道祖可尝试与古老权柄相性接触，但不能由叙事直接发放。\n近期记忆: 太虚照世镜的影子曾照出伪装。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，万道映照进道网深处。\n至宝规则: 道祖可尝试与古老权柄相性接触，但不能由叙事直接发放。\n近期记忆: 太虚照世镜的影子曾照出伪装。\"\"\""
+        },
+        {
+          "start_line": 503,
+          "start_utf8_column": 12,
+          "end_line": 507,
+          "end_utf8_column": 15,
+          "text": "【因果】镜影称道\n太虚照世镜只投下一线冷光，照出你道果里的缺口；它没有认主，却让所有伪装境界在你眼前薄了一层。\n补全道果\n借光识伪\n收回神识",
+          "source_excerpt": "\"\"\"【因果】镜影称道\n太虚照世镜只投下一线冷光，照出你道果里的缺口；它没有认主，却让所有伪装境界在你眼前薄了一层。\n补全道果\n借光识伪\n收回神识\"\"\""
+        },
+        {
+          "start_line": 511,
+          "start_utf8_column": 12,
+          "end_line": 516,
+          "end_utf8_column": 89,
+          "text": "玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 万道将合，诸纪元旧因果一并回潮。\n器物状态: 本命至宝已融万道，接近古老权柄层次。\n核心限制: 可映照甚至毁灭至宝，但没有必要把它写成普通装备。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 万道将合，诸纪元旧因果一并回潮。\n器物状态: 本命至宝已融万道，接近古老权柄层次。\n核心限制: 可映照甚至毁灭至宝，但没有必要把它写成普通装备。\"\"\""
+        },
+        {
+          "start_line": 517,
+          "start_utf8_column": 12,
+          "end_line": 521,
+          "end_utf8_column": 15,
+          "text": "【传承】万道归器\n本命至宝在万道中央缓缓成形，诸纪元旧名都映在器壁上；此刻连古老权柄亦是可毁之物，却不必被你毁去。\n映照万道\n留其自存\n回望诸世",
+          "source_excerpt": "\"\"\"【传承】万道归器\n本命至宝在万道中央缓缓成形，诸纪元旧名都映在器壁上；此刻连古老权柄亦是可毁之物，却不必被你毁去。\n映照万道\n留其自存\n回望诸世\"\"\""
+        },
+        {
+          "start_line": 525,
+          "start_utf8_column": 12,
+          "end_line": 530,
+          "end_utf8_column": 68,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n此世家世: 父母身份被隐去，养育者是外门执事，身上有黑白旧玉。\n隐藏限制: 玩家不知道父母真相，不得直接揭底。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n此世家世: 父母身份被隐去，养育者是外门执事，身上有黑白旧玉。\n隐藏限制: 玩家不知道父母真相，不得直接揭底。\"\"\""
+        },
+        {
+          "start_line": 531,
+          "start_utf8_column": 12,
+          "end_line": 535,
+          "end_utf8_column": 15,
+          "text": "【因果】玉痕旧名\n外门执事看见玉痕后忽然收声，连称呼都放轻了些；你仍不知父母来处，只觉门外有人替你守着风。\n追问旧名\n握玉静听\n暂避册封",
+          "source_excerpt": "\"\"\"【因果】玉痕旧名\n外门执事看见玉痕后忽然收声，连称呼都放轻了些；你仍不知父母来处，只觉门外有人替你守着风。\n追问旧名\n握玉静听\n暂避册封\"\"\""
+        },
+        {
+          "start_line": 539,
+          "start_utf8_column": 12,
+          "end_line": 544,
+          "end_utf8_column": 44,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人曾认可你的心性，但这次历练你贪功冒进。\n最近记忆: 你险些害同门受伤。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人曾认可你的心性，但这次历练你贪功冒进。\n最近记忆: 你险些害同门受伤。\"\"\""
+        },
+        {
+          "start_line": 545,
+          "start_utf8_column": 12,
+          "end_line": 549,
+          "end_utf8_column": 15,
+          "text": "【因果】师门冷灯\n清蘅真人没有责骂，只把青灯移远半寸；那点失望比训斥更重，让同门的窃笑也跟着低了下去。\n认错补救\n沉默受罚\n查明诱因",
+          "source_excerpt": "\"\"\"【因果】师门冷灯\n清蘅真人没有责骂，只把青灯移远半寸；那点失望比训斥更重，让同门的窃笑也跟着低了下去。\n认错补救\n沉默受罚\n查明诱因\"\"\""
+        },
+        {
+          "start_line": 553,
+          "start_utf8_column": 12,
+          "end_line": 558,
+          "end_utf8_column": 56,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人见你护住弱小同门。\n最近记忆: 你没有贪秘境中最亮的灵药。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人见你护住弱小同门。\n最近记忆: 你没有贪秘境中最亮的灵药。\"\"\""
+        },
+        {
+          "start_line": 559,
+          "start_utf8_column": 12,
+          "end_line": 563,
+          "end_utf8_column": 15,
+          "text": "【机缘】师尊含笑\n清蘅真人看见你把灵药让给伤者，眼底终于有了笑意；她只说道心未偏，却替你挡下一道长老试探。\n谢过师尊\n询问试探\n稳住道心",
+          "source_excerpt": "\"\"\"【机缘】师尊含笑\n清蘅真人看见你把灵药让给伤者，眼底终于有了笑意；她只说道心未偏，却替你挡下一道长老试探。\n谢过师尊\n询问试探\n稳住道心\"\"\""
+        },
+        {
+          "start_line": 567,
+          "start_utf8_column": 12,
+          "end_line": 572,
+          "end_utf8_column": 59,
+          "text": "玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 星穹道网纪，道网会记录公开选择。\n人情风波: 现代纪元角色只应在星穹道网纪或灵机蒸汽纪登场。\n最近记忆: 你刚在道网节点留下匿名痕迹。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 星穹道网纪，道网会记录公开选择。\n人情风波: 现代纪元角色只应在星穹道网纪或灵机蒸汽纪登场。\n最近记忆: 你刚在道网节点留下匿名痕迹。\"\"\""
+        },
+        {
+          "start_line": 573,
+          "start_utf8_column": 12,
+          "end_line": 577,
+          "end_utf8_column": 15,
+          "text": "【奇遇】道网留痕\n星穹节点忽然回传一段匿名讯息，对方语气冷静却藏着好奇；她没有问你旧名，只邀你共查失控灵机。\n接入节点\n隐去道号\n反查来源",
+          "source_excerpt": "\"\"\"【奇遇】道网留痕\n星穹节点忽然回传一段匿名讯息，对方语气冷静却藏着好奇；她没有问你旧名，只邀你共查失控灵机。\n接入节点\n隐去道号\n反查来源\"\"\""
+        },
+        {
+          "start_line": 581,
+          "start_utf8_column": 12,
+          "end_line": 585,
+          "end_utf8_column": 53,
+          "text": "玩家: 玄\n境界名称: 道祖\n当前世界: 废土返道纪，万道残缺正在重排。\n至宝规则: 高境界可尝试认主古老权柄，但裁判权在游戏规则，不得直接宣布获得。\n隐藏限制: 不得低境界发放古老至宝。",
+          "source_excerpt": "\"\"\"玩家: 玄\n境界名称: 道祖\n当前世界: 废土返道纪，万道残缺正在重排。\n至宝规则: 高境界可尝试认主古老权柄，但裁判权在游戏规则，不得直接宣布获得。\n隐藏限制: 不得低境界发放古老至宝。\"\"\""
+        },
+        {
+          "start_line": 586,
+          "start_utf8_column": 12,
+          "end_line": 590,
+          "end_utf8_column": 15,
+          "text": "【因果】权柄拒手\n虚空深处有古老权柄投下一线影子，却没有立刻认你为主；万道缺口在掌心显形，像要先称量你的道。\n试探相性\n收回神识\n补全缺口",
+          "source_excerpt": "\"\"\"【因果】权柄拒手\n虚空深处有古老权柄投下一线影子，却没有立刻认你为主；万道缺口在掌心显形，像要先称量你的道。\n试探相性\n收回神识\n补全缺口\"\"\""
+        },
+        {
+          "start_line": 594,
+          "start_utf8_column": 12,
+          "end_line": 600,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，灵气虽盛，外门仍以根骨排座次。\n此世家世: 坊市小族，父母只盼你平安入道。\n人情风波: 你进境慢于同门，清蘅真人仍未收回那盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，灵气虽盛，外门仍以根骨排座次。\n此世家世: 坊市小族，父母只盼你平安入道。\n人情风波: 你进境慢于同门，清蘅真人仍未收回那盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。\"\"\""
+        },
+        {
+          "start_line": 601,
+          "start_utf8_column": 12,
+          "end_line": 605,
+          "end_utf8_column": 15,
+          "text": "【因果】慢火温灯\n同门笑你入息太慢，清蘅真人却把青灯拨亮半寸；她没有夸你天才，只说肯守慢火的人也能熬出真炁。\n守灯炼息\n谢过师尊\n不理讥笑",
+          "source_excerpt": "\"\"\"【因果】慢火温灯\n同门笑你入息太慢，清蘅真人却把青灯拨亮半寸；她没有夸你天才，只说肯守慢火的人也能熬出真炁。\n守灯炼息\n谢过师尊\n不理讥笑\"\"\""
+        },
+        {
+          "start_line": 609,
+          "start_utf8_column": 12,
+          "end_line": 614,
+          "end_utf8_column": 71,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，秘境试炼刚落幕。\n人情风波: 你为了抢灵药险些牵连同门，洛凝霜只在远处看见结果。\n隐藏限制: 不得把角色关系写死，不得提前写深情。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，秘境试炼刚落幕。\n人情风波: 你为了抢灵药险些牵连同门，洛凝霜只在远处看见结果。\n隐藏限制: 不得把角色关系写死，不得提前写深情。\"\"\""
+        },
+        {
+          "start_line": 615,
+          "start_utf8_column": 12,
+          "end_line": 619,
+          "end_utf8_column": 15,
+          "text": "【危机】药香成刺\n你带回灵药时，同门伤势也被抬进山门；洛凝霜没有责备，只把目光从药匣移到伤者身上，冷淡得让人难受。\n先救同门\n归还灵药\n沉默受责",
+          "source_excerpt": "\"\"\"【危机】药香成刺\n你带回灵药时，同门伤势也被抬进山门；洛凝霜没有责备，只把目光从药匣移到伤者身上，冷淡得让人难受。\n先救同门\n归还灵药\n沉默受责\"\"\""
+        },
+        {
+          "start_line": 623,
+          "start_utf8_column": 12,
+          "end_line": 628,
+          "end_utf8_column": 62,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比之后风评初定。\n人情风波: 洛凝霜认可你的剑下判断，但尚未形成亲密关系。\n隐藏限制: 不得把欣赏直接写成道侣或深情。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比之后风评初定。\n人情风波: 洛凝霜认可你的剑下判断，但尚未形成亲密关系。\n隐藏限制: 不得把欣赏直接写成道侣或深情。\"\"\""
+        },
+        {
+          "start_line": 629,
+          "start_utf8_column": 12,
+          "end_line": 633,
+          "end_utf8_column": 15,
+          "text": "【因果】霜意点头\n洛凝霜收剑后向你点头，称你临阵未乱；那是修士之间的认可，不是许诺，旁人起哄时她反而退开半步。\n坦然致意\n约论剑理\n避开起哄",
+          "source_excerpt": "\"\"\"【因果】霜意点头\n洛凝霜收剑后向你点头，称你临阵未乱；那是修士之间的认可，不是许诺，旁人起哄时她反而退开半步。\n坦然致意\n约论剑理\n避开起哄\"\"\""
+        },
+        {
+          "start_line": 637,
+          "start_utf8_column": 12,
+          "end_line": 642,
+          "end_utf8_column": 53,
+          "text": "玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与道教旧派暗斗加深。\n人情风波: 玄衡子以正道名义设局，想逼清蘅真人交出旧灯因果。\n近期记忆: 你已能独自护住一脉弟子。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与道教旧派暗斗加深。\n人情风波: 玄衡子以正道名义设局，想逼清蘅真人交出旧灯因果。\n近期记忆: 你已能独自护住一脉弟子。\"\"\""
+        },
+        {
+          "start_line": 643,
+          "start_utf8_column": 12,
+          "end_line": 647,
+          "end_utf8_column": 15,
+          "text": "【危机】玄章压山\n玄衡子携道章而来，句句称公理，却把清蘅真人的旧伤摆上明面；山门沉默时，所有目光都等你先动。\n接下问章\n护住师门\n反问旧伤",
+          "source_excerpt": "\"\"\"【危机】玄章压山\n玄衡子携道章而来，句句称公理，却把清蘅真人的旧伤摆上明面；山门沉默时，所有目光都等你先动。\n接下问章\n护住师门\n反问旧伤\"\"\""
+        },
+        {
+          "start_line": 651,
+          "start_utf8_column": 12,
+          "end_line": 656,
+          "end_utf8_column": 77,
+          "text": "玩家: 玄\n世代: 第二世\n境界名称: 炼气期\n当前世界: 仙朝鼎盛纪，户籍名册牵动气运。\n此世家世: 小吏之家；父亲陆守拙；母亲宋晚照。\n轮回传承: 只剩模糊梦痕，今生父母不是上一世的父母。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第二世\n境界名称: 炼气期\n当前世界: 仙朝鼎盛纪，户籍名册牵动气运。\n此世家世: 小吏之家；父亲陆守拙；母亲宋晚照。\n轮回传承: 只剩模糊梦痕，今生父母不是上一世的父母。\"\"\""
+        },
+        {
+          "start_line": 657,
+          "start_utf8_column": 12,
+          "end_line": 661,
+          "end_utf8_column": 15,
+          "text": "【因果】新家旧梦\n陆守拙替你改好入籍文牒，宋晚照把热粥推到手边；梦痕提醒你别用旧名衡量他们，这一世的亲情要重新回应。\n谢过今亲\n收好文牒\n静观名册",
+          "source_excerpt": "\"\"\"【因果】新家旧梦\n陆守拙替你改好入籍文牒，宋晚照把热粥推到手边；梦痕提醒你别用旧名衡量他们，这一世的亲情要重新回应。\n谢过今亲\n收好文牒\n静观名册\"\"\""
+        },
+        {
+          "start_line": 665,
+          "start_utf8_column": 12,
+          "end_line": 670,
+          "end_utf8_column": 65,
+          "text": "玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封官署喜欢提前押注少年天才。\n人情风波: 你判断局势过于老成，引来长辈欣赏，也引来官署试探。\n轮回传承: 旧世只留处事直觉，不能证明身份。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封官署喜欢提前押注少年天才。\n人情风波: 你判断局势过于老成，引来长辈欣赏，也引来官署试探。\n轮回传承: 旧世只留处事直觉，不能证明身份。\"\"\""
+        },
+        {
+          "start_line": 671,
+          "start_utf8_column": 12,
+          "end_line": 675,
+          "end_utf8_column": 15,
+          "text": "【机缘】老眼少年\n主簿夸你小小年纪便懂取舍，话里却藏着试探；养父没有否认，只在袖下轻按你手腕，提醒你别太早露锋。\n藏住锋芒\n顺势应答\n询问养父",
+          "source_excerpt": "\"\"\"【机缘】老眼少年\n主簿夸你小小年纪便懂取舍，话里却藏着试探；养父没有否认，只在袖下轻按你手腕，提醒你别太早露锋。\n藏住锋芒\n顺势应答\n询问养父\"\"\""
+        },
+        {
+          "start_line": 679,
+          "start_utf8_column": 12,
+          "end_line": 684,
+          "end_utf8_column": 53,
+          "text": "玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 末法裂变纪，天外异象偶尔压过灵井枯潮。\n至宝规则: 低境界只能见影、留印、参悟或被拒绝，不能认主或调用权柄。\n近期记忆: 你试图靠近一次古老天象。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 末法裂变纪，天外异象偶尔压过灵井枯潮。\n至宝规则: 低境界只能见影、留印、参悟或被拒绝，不能认主或调用权柄。\n近期记忆: 你试图靠近一次古老天象。\"\"\""
+        },
+        {
+          "start_line": 685,
+          "start_utf8_column": 12,
+          "end_line": 689,
+          "end_utf8_column": 15,
+          "text": "【危机】天象拒身\n天外余光落到灵井边，黑白旧玉只替你挡住一息寒意；那道影子没有靠近，反把你的神识轻轻推回肉身。\n退后观想\n记下道痕\n护住灵井",
+          "source_excerpt": "\"\"\"【危机】天象拒身\n天外余光落到灵井边，黑白旧玉只替你挡住一息寒意；那道影子没有靠近，反把你的神识轻轻推回肉身。\n退后观想\n记下道痕\n护住灵井\"\"\""
+        },
+        {
+          "start_line": 693,
+          "start_utf8_column": 12,
+          "end_line": 698,
+          "end_utf8_column": 59,
+          "text": "玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，器道工坊争论先天与后天之别。\n器物规则: 先天通天灵宝自带先天一气，不是古老权柄的低配。\n近期记忆: 你被邀去鉴一件先天灵宝残影。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，器道工坊争论先天与后天之别。\n器物规则: 先天通天灵宝自带先天一气，不是古老权柄的低配。\n近期记忆: 你被邀去鉴一件先天灵宝残影。\"\"\""
+        },
+        {
+          "start_line": 699,
+          "start_utf8_column": 12,
+          "end_line": 703,
+          "end_utf8_column": 15,
+          "text": "【传承】先天气息\n残影一现，满阁炉火都向内收声；那件先天通天灵宝没有求主，只以一缕先天一气压住工坊的拆解妄念。\n守礼观宝\n请教器道\n制止拆解",
+          "source_excerpt": "\"\"\"【传承】先天气息\n残影一现，满阁炉火都向内收声；那件先天通天灵宝没有求主，只以一缕先天一气压住工坊的拆解妄念。\n守礼观宝\n请教器道\n制止拆解\"\"\""
+        },
+        {
+          "start_line": 707,
+          "start_utf8_column": 12,
+          "end_line": 712,
+          "end_utf8_column": 50,
+          "text": "玩家: 玄\n世代: 第四世\n境界名称: 大乘期\n当前世界: 废土返道纪，残宗用器物延续法统。\n器物状态: 本命至宝初生器灵，只能表达亲近、畏惧和模糊意愿。\n近期记忆: 你刚以自身道火温养它。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第四世\n境界名称: 大乘期\n当前世界: 废土返道纪，残宗用器物延续法统。\n器物状态: 本命至宝初生器灵，只能表达亲近、畏惧和模糊意愿。\n近期记忆: 你刚以自身道火温养它。\"\"\""
+        },
+        {
+          "start_line": 713,
+          "start_utf8_column": 12,
+          "end_line": 717,
+          "end_utf8_column": 15,
+          "text": "【传承】器灵初啼\n本命至宝在掌心轻轻一颤，像幼童怕生又认得你的气息；它说不出完整话，只把亲近与畏惧一并贴上神识。\n安抚器灵\n温养道火\n暂缓斗法",
+          "source_excerpt": "\"\"\"【传承】器灵初啼\n本命至宝在掌心轻轻一颤，像幼童怕生又认得你的气息；它说不出完整话，只把亲近与畏惧一并贴上神识。\n安抚器灵\n温养道火\n暂缓斗法\"\"\""
+        },
+        {
+          "start_line": 721,
+          "start_utf8_column": 12,
+          "end_line": 726,
+          "end_utf8_column": 53,
+          "text": "玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 仙朝鼎盛纪，旧人各自走到极高处。\n人情风波: 洛凝霜天赋极好，已有叩问道祖之势，但关系仍取决于过往选择。\n近期记忆: 你们在仙界远远见过一次。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 仙朝鼎盛纪，旧人各自走到极高处。\n人情风波: 洛凝霜天赋极好，已有叩问道祖之势，但关系仍取决于过往选择。\n近期记忆: 你们在仙界远远见过一次。\"\"\""
+        },
+        {
+          "start_line": 727,
+          "start_utf8_column": 12,
+          "end_line": 731,
+          "end_utf8_column": 15,
+          "text": "【奇遇】霜河再会\n洛凝霜立在霜河尽头，气息清寒近道；她没有追问旧世情分，只问你此番来见，是论剑、结盟，还是告别。\n论剑问道\n坦言结盟\n只作告别",
+          "source_excerpt": "\"\"\"【奇遇】霜河再会\n洛凝霜立在霜河尽头，气息清寒近道；她没有追问旧世情分，只问你此番来见，是论剑、结盟，还是告别。\n论剑问道\n坦言结盟\n只作告别\"\"\""
+        },
+        {
+          "start_line": 735,
+          "start_utf8_column": 12,
+          "end_line": 740,
+          "end_utf8_column": 80,
+          "text": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，道网深处伪装境界层层叠叠。\n至宝状态: 太虚照世镜已认主但未执掌，可有限调用照伪权柄。\n近期记忆: 你需要判断一名活跃修士的外显修为是否为假。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，道网深处伪装境界层层叠叠。\n至宝状态: 太虚照世镜已认主但未执掌，可有限调用照伪权柄。\n近期记忆: 你需要判断一名活跃修士的外显修为是否为假。\"\"\""
+        },
+        {
+          "start_line": 741,
+          "start_utf8_column": 12,
+          "end_line": 745,
+          "end_utf8_column": 15,
+          "text": "【因果】镜权微启\n太虚照世镜在道果旁微微一亮，只替你照薄一层伪装；它愿借权柄，却仍要你自己承担看破后的因果。\n照见虚实\n暂留余地\n反问来人",
+          "source_excerpt": "\"\"\"【因果】镜权微启\n太虚照世镜在道果旁微微一亮，只替你照薄一层伪装；它愿借权柄，却仍要你自己承担看破后的因果。\n照见虚实\n暂留余地\n反问来人\"\"\""
+        },
+        {
+          "start_line": 749,
+          "start_utf8_column": 12,
+          "end_line": 754,
+          "end_utf8_column": 74,
+          "text": "玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 诸纪元旧因果回潮，万道尽入掌中。\n器物状态: 万道本命至宝已成，能映照古老权柄。\n核心限制: 可以写亦是可毁之物，但不把毁灭当目标。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 诸纪元旧因果回潮，万道尽入掌中。\n器物状态: 万道本命至宝已成，能映照古老权柄。\n核心限制: 可以写亦是可毁之物，但不把毁灭当目标。\"\"\""
+        },
+        {
+          "start_line": 755,
+          "start_utf8_column": 12,
+          "end_line": 759,
+          "end_utf8_column": 15,
+          "text": "【传承】道上回眸\n万道本命至宝映出九重旧影，你终于明白古老权柄亦是可毁之物；只是掌尽诸道以后，毁去它们已无必要。\n留其自存\n照见诸世\n归整万道",
+          "source_excerpt": "\"\"\"【传承】道上回眸\n万道本命至宝映出九重旧影，你终于明白古老权柄亦是可毁之物；只是掌尽诸道以后，毁去它们已无必要。\n留其自存\n照见诸世\n归整万道\"\"\""
+        },
+        {
+          "start_line": 763,
+          "start_utf8_column": 12,
+          "end_line": 768,
+          "end_utf8_column": 65,
+          "text": "玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 末法裂变纪，灵气稀薄，单灵根更容易抢到破境速度。\n此世家世: 小宗旁支。\n人情风波: 有人拿盛世旧论嘲笑你的五行底子。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 末法裂变纪，灵气稀薄，单灵根更容易抢到破境速度。\n此世家世: 小宗旁支。\n人情风波: 有人拿盛世旧论嘲笑你的五行底子。\"\"\""
+        },
+        {
+          "start_line": 769,
+          "start_utf8_column": 12,
+          "end_line": 773,
+          "end_utf8_column": 15,
+          "text": "【危机】末法论根\n执事翻着旧册笑五行宽阔只是盛世说法，末法灵气不够你慢慢铺路；旁支弟子低头偷笑，等你自己退名额。\n争取灵井\n改修细脉\n记下此辱",
+          "source_excerpt": "\"\"\"【危机】末法论根\n执事翻着旧册笑五行宽阔只是盛世说法，末法灵气不够你慢慢铺路；旁支弟子低头偷笑，等你自己退名额。\n争取灵井\n改修细脉\n记下此辱\"\"\""
+        },
+        {
+          "start_line": 777,
+          "start_utf8_column": 12,
+          "end_line": 782,
+          "end_utf8_column": 86,
+          "text": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 废土返道纪，旧宗因果沉入残灯。\n人情风波: 清蘅真人只剩旧灯因果，是否重续由玩家道途与选择决定。\n近期记忆: 你已经能触及轮回边缘，却不能随意改写所有生死。",
+          "source_excerpt": "\"\"\"玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 废土返道纪，旧宗因果沉入残灯。\n人情风波: 清蘅真人只剩旧灯因果，是否重续由玩家道途与选择决定。\n近期记忆: 你已经能触及轮回边缘，却不能随意改写所有生死。\"\"\""
+        },
+        {
+          "start_line": 783,
+          "start_utf8_column": 12,
+          "end_line": 787,
+          "end_utf8_column": 15,
+          "text": "【因果】残灯未灭\n旧灯在废土风里亮了一瞬，映出清蘅真人尚未散尽的因果；你能护住这一线余温，却仍需付出自己的道途代价。\n护住残灯\n追查旧敌\n衡量代价",
+          "source_excerpt": "\"\"\"【因果】残灯未灭\n旧灯在废土风里亮了一瞬，映出清蘅真人尚未散尽的因果；你能护住这一线余温，却仍需付出自己的道途代价。\n护住残灯\n追查旧敌\n衡量代价\"\"\""
+        },
+        {
+          "start_line": 854,
+          "start_utf8_column": 12,
+          "end_line": 854,
+          "end_utf8_column": 65,
+          "text": "；那份担心也把旁人的嫉妒挡在门外。",
+          "source_excerpt": "\"；那份担心也把旁人的嫉妒挡在门外。\""
+        },
+        {
+          "start_line": 855,
+          "start_utf8_column": 12,
+          "end_line": 855,
+          "end_utf8_column": 71,
+          "text": "；这句夸赞不重，却让暗处酸意更难开口。",
+          "source_excerpt": "\"；这句夸赞不重，却让暗处酸意更难开口。\""
+        },
+        {
+          "start_line": 858,
+          "start_utf8_column": 12,
+          "end_line": 858,
+          "end_utf8_column": 65,
+          "text": "；酸涩与不甘在旁人笑声里越发明显。",
+          "source_excerpt": "\"；酸涩与不甘在旁人笑声里越发明显。\""
+        },
+        {
+          "start_line": 859,
+          "start_utf8_column": 12,
+          "end_line": 859,
+          "end_utf8_column": 77,
+          "text": "；那点嫉妒没有明说，却已经开始找你的破绽。",
+          "source_excerpt": "\"；那点嫉妒没有明说，却已经开始找你的破绽。\""
+        },
+        {
+          "start_line": 862,
+          "start_utf8_column": 12,
+          "end_line": 862,
+          "end_utf8_column": 92,
+          "text": "；赞许、护短和酸意同时落下，让这次测灵不再只是测灵。",
+          "source_excerpt": "\"；赞许、护短和酸意同时落下，让这次测灵不再只是测灵。\""
+        },
+        {
+          "start_line": 863,
+          "start_utf8_column": 12,
+          "end_line": 863,
+          "end_utf8_column": 80,
+          "text": "；长辈的灯还亮着，同辈的嫉妒也已经有了方向。",
+          "source_excerpt": "\"；长辈的灯还亮着，同辈的嫉妒也已经有了方向。\""
+        },
+        {
+          "start_line": 866,
+          "start_utf8_column": 12,
+          "end_line": 866,
+          "end_utf8_column": 71,
+          "text": "；轻慢欺压逼得旁人也开始衡量你的底气。",
+          "source_excerpt": "\"；轻慢欺压逼得旁人也开始衡量你的底气。\""
+        },
+        {
+          "start_line": 867,
+          "start_utf8_column": 12,
+          "end_line": 867,
+          "end_utf8_column": 71,
+          "text": "；他的冷眼像一把尺，专量你敢不敢反抗。",
+          "source_excerpt": "\"；他的冷眼像一把尺，专量你敢不敢反抗。\""
+        },
+        {
+          "start_line": 870,
+          "start_utf8_column": 12,
+          "end_line": 870,
+          "end_utf8_column": 74,
+          "text": "；惊疑认可压在他眼底，像怕旧法再惹风波。",
+          "source_excerpt": "\"；惊疑认可压在他眼底，像怕旧法再惹风波。\""
+        },
+        {
+          "start_line": 871,
+          "start_utf8_column": 12,
+          "end_line": 871,
+          "end_utf8_column": 83,
+          "text": "；懂行者的担心很轻，却足以让整座经阁安静下来。",
+          "source_excerpt": "\"；懂行者的担心很轻，却足以让整座经阁安静下来。\""
+        },
+        {
+          "start_line": 874,
+          "start_utf8_column": 12,
+          "end_line": 874,
+          "end_utf8_column": 71,
+          "text": "；那点担心让父母旧名更像被人刻意藏起。",
+          "source_excerpt": "\"；那点担心让父母旧名更像被人刻意藏起。\""
+        },
+        {
+          "start_line": 875,
+          "start_utf8_column": 12,
+          "end_line": 875,
+          "end_utf8_column": 77,
+          "text": "；回避和护短同时浮现，像有人仍替你守着门。",
+          "source_excerpt": "\"；回避和护短同时浮现，像有人仍替你守着门。\""
+        },
+        {
+          "start_line": 878,
+          "start_utf8_column": 12,
+          "end_line": 878,
+          "end_utf8_column": 77,
+          "text": "；惊疑和贪念同时浮起，懂器者已经开始留心。",
+          "source_excerpt": "\"；惊疑和贪念同时浮起，懂器者已经开始留心。\""
+        },
+        {
+          "start_line": 879,
+          "start_utf8_column": 12,
+          "end_line": 879,
+          "end_utf8_column": 77,
+          "text": "；这份认可带着戒备，像怕器痕引来外人争夺。",
+          "source_excerpt": "\"；这份认可带着戒备，像怕器痕引来外人争夺。\""
+        },
+        {
+          "start_line": 882,
+          "start_utf8_column": 12,
+          "end_line": 882,
+          "end_utf8_column": 71,
+          "text": "；冷眼背后也藏着试探，像要逼你先低头。",
+          "source_excerpt": "\"；冷眼背后也藏着试探，像要逼你先低头。\""
+        },
+        {
+          "start_line": 883,
+          "start_utf8_column": 12,
+          "end_line": 883,
+          "end_utf8_column": 74,
+          "text": "；寿限的忧虑压在话尾，连沉默都像催命声。",
+          "source_excerpt": "\"；寿限的忧虑压在话尾，连沉默都像催命声。\""
+        },
+        {
+          "start_line": 886,
+          "start_utf8_column": 12,
+          "end_line": 886,
+          "end_utf8_column": 77,
+          "text": "；试探与戒备一并压来，旧怨还没有真正开口。",
+          "source_excerpt": "\"；试探与戒备一并压来，旧怨还没有真正开口。\""
+        },
+        {
+          "start_line": 887,
+          "start_utf8_column": 12,
+          "end_line": 887,
+          "end_utf8_column": 74,
+          "text": "；敬畏和旧恨搅在一起，让这场寒暄像审问。",
+          "source_excerpt": "\"；敬畏和旧恨搅在一起，让这场寒暄像审问。\""
+        },
+        {
+          "start_line": 890,
+          "start_utf8_column": 12,
+          "end_line": 890,
+          "end_utf8_column": 74,
+          "text": "；礼貌试探浮在笑里，真正灵压仍被他压住。",
+          "source_excerpt": "\"；礼貌试探浮在笑里，真正灵压仍被他压住。\""
+        },
+        {
+          "start_line": 891,
+          "start_utf8_column": 12,
+          "end_line": 891,
+          "end_utf8_column": 80,
+          "text": "；这份从容带着戒备，像故意只给你看半层门槛。",
+          "source_excerpt": "\"；这份从容带着戒备，像故意只给你看半层门槛。\""
+        },
+        {
+          "start_line": 896,
+          "start_utf8_column": 40,
+          "end_line": 896,
+          "end_utf8_column": 102,
+          "text": "；试探和押注都未明说，却已在人群里散开。",
+          "source_excerpt": "\"；试探和押注都未明说，却已在人群里散开。\""
+        },
+        {
+          "start_line": 911,
+          "start_utf8_column": 13,
+          "end_line": 911,
+          "end_utf8_column": 39,
+          "text": "【因果】长辈护短",
+          "source_excerpt": "\"【因果】长辈护短\""
+        },
+        {
+          "start_line": 911,
+          "start_utf8_column": 41,
+          "end_line": 911,
+          "end_utf8_column": 67,
+          "text": "【机缘】廊下赞骨",
+          "source_excerpt": "\"【机缘】廊下赞骨\""
+        },
+        {
+          "start_line": 911,
+          "start_utf8_column": 69,
+          "end_line": 911,
+          "end_utf8_column": 95,
+          "text": "【奇遇】护短一语",
+          "source_excerpt": "\"【奇遇】护短一语\""
+        },
+        {
+          "start_line": 913,
+          "start_utf8_column": 28,
+          "end_line": 913,
+          "end_utf8_column": 82,
+          "text": "先压下族中酸话，又当面夸你根骨清亮；",
+          "source_excerpt": "先压下族中酸话，又当面夸你根骨清亮；"
+        },
+        {
+          "start_line": 913,
+          "start_utf8_column": 91,
+          "end_line": 913,
+          "end_utf8_column": 142,
+          "text": "藏在话尾，提醒你莫被热眼捧坏道心。",
+          "source_excerpt": "藏在话尾，提醒你莫被热眼捧坏道心。"
+        },
+        {
+          "start_line": 914,
+          "start_utf8_column": 28,
+          "end_line": 914,
+          "end_utf8_column": 148,
+          "text": "听完测灵结果后故作平静，却把旁人挡在廊外；他夸你天资难得，也担心你太早被人押注。",
+          "source_excerpt": "听完测灵结果后故作平静，却把旁人挡在廊外；他夸你天资难得，也担心你太早被人押注。"
+        },
+        {
+          "start_line": 915,
+          "start_utf8_column": 28,
+          "end_line": 915,
+          "end_utf8_column": 142,
+          "text": "没有急着报喜，只低声替你挡住试探；那句认可像一盏灯，也照出暗处几道嫉妒目光。",
+          "source_excerpt": "没有急着报喜，只低声替你挡住试探；那句认可像一盏灯，也照出暗处几道嫉妒目光。"
+        },
+        {
+          "start_line": 917,
+          "start_utf8_column": 13,
+          "end_line": 917,
+          "end_utf8_column": 27,
+          "text": "低头受教",
+          "source_excerpt": "\"低头受教\""
+        },
+        {
+          "start_line": 917,
+          "start_utf8_column": 29,
+          "end_line": 917,
+          "end_utf8_column": 43,
+          "text": "追问旧因",
+          "source_excerpt": "\"追问旧因\""
+        },
+        {
+          "start_line": 917,
+          "start_utf8_column": 45,
+          "end_line": 917,
+          "end_utf8_column": 59,
+          "text": "暂避锋芒",
+          "source_excerpt": "\"暂避锋芒\""
+        },
+        {
+          "start_line": 920,
+          "start_utf8_column": 13,
+          "end_line": 920,
+          "end_utf8_column": 39,
+          "text": "【危机】同门酸语",
+          "source_excerpt": "\"【危机】同门酸语\""
+        },
+        {
+          "start_line": 920,
+          "start_utf8_column": 41,
+          "end_line": 920,
+          "end_utf8_column": 67,
+          "text": "【因果】暗刺入耳",
+          "source_excerpt": "\"【因果】暗刺入耳\""
+        },
+        {
+          "start_line": 920,
+          "start_utf8_column": 69,
+          "end_line": 920,
+          "end_utf8_column": 95,
+          "text": "【危机】贺声带刺",
+          "source_excerpt": "\"【危机】贺声带刺\""
+        },
+        {
+          "start_line": 922,
+          "start_utf8_column": 28,
+          "end_line": 922,
+          "end_utf8_column": 82,
+          "text": "表面向你道贺，袖中名册却被攥出折痕；",
+          "source_excerpt": "表面向你道贺，袖中名册却被攥出折痕；"
+        },
+        {
+          "start_line": 922,
+          "start_utf8_column": 91,
+          "end_line": 922,
+          "end_utf8_column": 145,
+          "text": "让他句句带刺，想看你先惹来谁的忌惮。",
+          "source_excerpt": "让他句句带刺，想看你先惹来谁的忌惮。"
+        },
+        {
+          "start_line": 923,
+          "start_utf8_column": 28,
+          "end_line": 923,
+          "end_utf8_column": 145,
+          "text": "笑着称你前途无量，眼底却压着不甘；他不敢明抢机缘，只把怀疑与酸意塞进每一句话。",
+          "source_excerpt": "笑着称你前途无量，眼底却压着不甘；他不敢明抢机缘，只把怀疑与酸意塞进每一句话。"
+        },
+        {
+          "start_line": 924,
+          "start_utf8_column": 28,
+          "end_line": 924,
+          "end_utf8_column": 142,
+          "text": "在人前夸你资质出众，人后却散出轻慢传言；那点嫉妒像细针，专挑你家世隐处下手。",
+          "source_excerpt": "在人前夸你资质出众，人后却散出轻慢传言；那点嫉妒像细针，专挑你家世隐处下手。"
+        },
+        {
+          "start_line": 926,
+          "start_utf8_column": 13,
+          "end_line": 926,
+          "end_utf8_column": 27,
+          "text": "当众回应",
+          "source_excerpt": "\"当众回应\""
+        },
+        {
+          "start_line": 926,
+          "start_utf8_column": 29,
+          "end_line": 926,
+          "end_utf8_column": 43,
+          "text": "暗查底细",
+          "source_excerpt": "\"暗查底细\""
+        },
+        {
+          "start_line": 926,
+          "start_utf8_column": 45,
+          "end_line": 926,
+          "end_utf8_column": 59,
+          "text": "不与计较",
+          "source_excerpt": "\"不与计较\""
+        },
+        {
+          "start_line": 929,
+          "start_utf8_column": 13,
+          "end_line": 929,
+          "end_utf8_column": 39,
+          "text": "【因果】测灵余声",
+          "source_excerpt": "\"【因果】测灵余声\""
+        },
+        {
+          "start_line": 929,
+          "start_utf8_column": 41,
+          "end_line": 929,
+          "end_utf8_column": 67,
+          "text": "【机缘】长辈护短",
+          "source_excerpt": "\"【机缘】长辈护短\""
+        },
+        {
+          "start_line": 929,
+          "start_utf8_column": 69,
+          "end_line": 929,
+          "end_utf8_column": 95,
+          "text": "【危机】同辈酸意",
+          "source_excerpt": "\"【危机】同辈酸意\""
+        },
+        {
+          "start_line": 931,
+          "start_utf8_column": 16,
+          "end_line": 931,
+          "end_utf8_column": 132,
+          "text": "测灵碑亮起后，父亲压住夸赞，母亲暗中护短，同代江照雪却因你资质出众生出嫉妒。",
+          "source_excerpt": "\"测灵碑亮起后，父亲压住夸赞，母亲暗中护短，同代江照雪却因你资质出众生出嫉妒。\""
+        },
+        {
+          "start_line": 932,
+          "start_utf8_column": 16,
+          "end_line": 932,
+          "end_utf8_column": 138,
+          "text": "顾临渊不许族人把你捧上高处，叶微澜替你挡下闲话；江照雪在人群后冷眼记住你的名字。",
+          "source_excerpt": "\"顾临渊不许族人把你捧上高处，叶微澜替你挡下闲话；江照雪在人群后冷眼记住你的名字。\""
+        },
+        {
+          "start_line": 933,
+          "start_utf8_column": 16,
+          "end_line": 933,
+          "end_utf8_column": 138,
+          "text": "父亲只说根骨尚可，母亲却替你收好入门信物；江照雪笑着道贺，酸意已经藏进袖中名册。",
+          "source_excerpt": "\"父亲只说根骨尚可，母亲却替你收好入门信物；江照雪笑着道贺，酸意已经藏进袖中名册。\""
+        },
+        {
+          "start_line": 935,
+          "start_utf8_column": 13,
+          "end_line": 935,
+          "end_utf8_column": 27,
+          "text": "谢过长辈",
+          "source_excerpt": "\"谢过长辈\""
+        },
+        {
+          "start_line": 935,
+          "start_utf8_column": 29,
+          "end_line": 935,
+          "end_utf8_column": 43,
+          "text": "稳住锋芒",
+          "source_excerpt": "\"稳住锋芒\""
+        },
+        {
+          "start_line": 935,
+          "start_utf8_column": 45,
+          "end_line": 935,
+          "end_utf8_column": 59,
+          "text": "正面应试",
+          "source_excerpt": "\"正面应试\""
+        },
+        {
+          "start_line": 938,
+          "start_utf8_column": 13,
+          "end_line": 938,
+          "end_utf8_column": 39,
+          "text": "【危机】试炼名额",
+          "source_excerpt": "\"【危机】试炼名额\""
+        },
+        {
+          "start_line": 938,
+          "start_utf8_column": 41,
+          "end_line": 938,
+          "end_utf8_column": 67,
+          "text": "【危机】外门欺压",
+          "source_excerpt": "\"【危机】外门欺压\""
+        },
+        {
+          "start_line": 938,
+          "start_utf8_column": 69,
+          "end_line": 938,
+          "end_utf8_column": 95,
+          "text": "【因果】名额被扣",
+          "source_excerpt": "\"【因果】名额被扣\""
+        },
+        {
+          "start_line": 940,
+          "start_utf8_column": 28,
+          "end_line": 940,
+          "end_utf8_column": 145,
+          "text": "故意扣下你的试炼名额，笑你根基太薄；轻慢声里，黑白旧玉微微发温，替你压住怒意。",
+          "source_excerpt": "故意扣下你的试炼名额，笑你根基太薄；轻慢声里，黑白旧玉微微发温，替你压住怒意。"
+        },
+        {
+          "start_line": 941,
+          "start_utf8_column": 28,
+          "end_line": 941,
+          "end_utf8_column": 136,
+          "text": "把名册往袖里一收，逼你当众认低；旁人等着看笑话，只有旧玉在胸口一阵发烫。",
+          "source_excerpt": "把名册往袖里一收，逼你当众认低；旁人等着看笑话，只有旧玉在胸口一阵发烫。"
+        },
+        {
+          "start_line": 942,
+          "start_utf8_column": 28,
+          "end_line": 942,
+          "end_utf8_column": 139,
+          "text": "借规矩卡住资源，话里全是欺压；你若退一步，今后的试炼名额都会被人拿来试胆。",
+          "source_excerpt": "借规矩卡住资源，话里全是欺压；你若退一步，今后的试炼名额都会被人拿来试胆。"
+        },
+        {
+          "start_line": 944,
+          "start_utf8_column": 13,
+          "end_line": 944,
+          "end_utf8_column": 27,
+          "text": "据理争名",
+          "source_excerpt": "\"据理争名\""
+        },
+        {
+          "start_line": 944,
+          "start_utf8_column": 29,
+          "end_line": 944,
+          "end_utf8_column": 43,
+          "text": "暂忍记账",
+          "source_excerpt": "\"暂忍记账\""
+        },
+        {
+          "start_line": 944,
+          "start_utf8_column": 45,
+          "end_line": 944,
+          "end_utf8_column": 59,
+          "text": "请长辈证",
+          "source_excerpt": "\"请长辈证\""
+        },
+        {
+          "start_line": 947,
+          "start_utf8_column": 13,
+          "end_line": 947,
+          "end_utf8_column": 39,
+          "text": "【传承】失传古法",
+          "source_excerpt": "\"【传承】失传古法\""
+        },
+        {
+          "start_line": 947,
+          "start_utf8_column": 41,
+          "end_line": 947,
+          "end_utf8_column": 67,
+          "text": "【机缘】古法露骨",
+          "source_excerpt": "\"【机缘】古法露骨\""
+        },
+        {
+          "start_line": 947,
+          "start_utf8_column": 69,
+          "end_line": 947,
+          "end_utf8_column": 95,
+          "text": "【因果】旧式惊人",
+          "source_excerpt": "\"【因果】旧式惊人\""
+        },
+        {
+          "start_line": 949,
+          "start_utf8_column": 28,
+          "end_line": 949,
+          "end_utf8_column": 91,
+          "text": "认出你起手式里的旧法骨相，立刻压低声音；在",
+          "source_excerpt": "认出你起手式里的旧法骨相，立刻压低声音；在"
+        },
+        {
+          "start_line": 949,
+          "start_utf8_column": 96,
+          "end_line": 949,
+          "end_utf8_column": 138,
+          "text": "，这点传承足够牵动许多双眼。",
+          "source_excerpt": "，这点传承足够牵动许多双眼。"
+        },
+        {
+          "start_line": 950,
+          "start_utf8_column": 28,
+          "end_line": 950,
+          "end_utf8_column": 142,
+          "text": "盯着你的行功脉络，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。",
+          "source_excerpt": "盯着你的行功脉络，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。"
+        },
+        {
+          "start_line": 951,
+          "start_utf8_column": 28,
+          "end_line": 951,
+          "end_utf8_column": 142,
+          "text": "只看一眼便合上经卷，像怕旁人听见；失传古法不是招牌，是能把你推上风口的火种。",
+          "source_excerpt": "只看一眼便合上经卷，像怕旁人听见；失传古法不是招牌，是能把你推上风口的火种。"
+        },
+        {
+          "start_line": 953,
+          "start_utf8_column": 13,
+          "end_line": 953,
+          "end_utf8_column": 27,
+          "text": "压下旧法",
+          "source_excerpt": "\"压下旧法\""
+        },
+        {
+          "start_line": 953,
+          "start_utf8_column": 29,
+          "end_line": 953,
+          "end_utf8_column": 43,
+          "text": "请教长老",
+          "source_excerpt": "\"请教长老\""
+        },
+        {
+          "start_line": 953,
+          "start_utf8_column": 45,
+          "end_line": 953,
+          "end_utf8_column": 59,
+          "text": "借势入局",
+          "source_excerpt": "\"借势入局\""
+        },
+        {
+          "start_line": 956,
+          "start_utf8_column": 13,
+          "end_line": 956,
+          "end_utf8_column": 39,
+          "text": "【因果】玉痕旧名",
+          "source_excerpt": "\"【因果】玉痕旧名\""
+        },
+        {
+          "start_line": 956,
+          "start_utf8_column": 41,
+          "end_line": 956,
+          "end_utf8_column": 67,
+          "text": "【奇遇】旧玉微温",
+          "source_excerpt": "\"【奇遇】旧玉微温\""
+        },
+        {
+          "start_line": 956,
+          "start_utf8_column": 69,
+          "end_line": 956,
+          "end_utf8_column": 95,
+          "text": "【传承】黑白玉痕",
+          "source_excerpt": "\"【传承】黑白玉痕\""
+        },
+        {
+          "start_line": 958,
+          "start_utf8_column": 28,
+          "end_line": 958,
+          "end_utf8_column": 139,
+          "text": "核验名册时，你胸前黑白旧玉忽然发温；养育者避开目光，像仍在替父母守着旧名。",
+          "source_excerpt": "核验名册时，你胸前黑白旧玉忽然发温；养育者避开目光，像仍在替父母守着旧名。"
+        },
+        {
+          "start_line": 959,
+          "start_utf8_column": 28,
+          "end_line": 959,
+          "end_utf8_column": 142,
+          "text": "提到你家世时忽然收声，黑白玉佩随之发热；那点回避不像无情，更像有人替你藏命。",
+          "source_excerpt": "提到你家世时忽然收声，黑白玉佩随之发热；那点回避不像无情，更像有人替你藏命。"
+        },
+        {
+          "start_line": 960,
+          "start_utf8_column": 28,
+          "end_line": 960,
+          "end_utf8_column": 145,
+          "text": "看见玉痕后神色一变，连称呼都放轻了些；你仍不知此物真名，只觉父母旧影近在眼前。",
+          "source_excerpt": "看见玉痕后神色一变，连称呼都放轻了些；你仍不知此物真名，只觉父母旧影近在眼前。"
+        },
+        {
+          "start_line": 962,
+          "start_utf8_column": 13,
+          "end_line": 962,
+          "end_utf8_column": 27,
+          "text": "追问旧名",
+          "source_excerpt": "\"追问旧名\""
+        },
+        {
+          "start_line": 962,
+          "start_utf8_column": 29,
+          "end_line": 962,
+          "end_utf8_column": 43,
+          "text": "握玉静听",
+          "source_excerpt": "\"握玉静听\""
+        },
+        {
+          "start_line": 962,
+          "start_utf8_column": 45,
+          "end_line": 962,
+          "end_utf8_column": 59,
+          "text": "暂避册封",
+          "source_excerpt": "\"暂避册封\""
+        },
+        {
+          "start_line": 965,
+          "start_utf8_column": 13,
+          "end_line": 965,
+          "end_utf8_column": 39,
+          "text": "【传承】器痕余响",
+          "source_excerpt": "\"【传承】器痕余响\""
+        },
+        {
+          "start_line": 965,
+          "start_utf8_column": 41,
+          "end_line": 965,
+          "end_utf8_column": 67,
+          "text": "【机缘】本命余音",
+          "source_excerpt": "\"【机缘】本命余音\""
+        },
+        {
+          "start_line": 965,
+          "start_utf8_column": 69,
+          "end_line": 965,
+          "end_utf8_column": 95,
+          "text": "【因果】旧宝不渡",
+          "source_excerpt": "\"【因果】旧宝不渡\""
+        },
+        {
+          "start_line": 967,
+          "start_utf8_column": 28,
+          "end_line": 967,
+          "end_utf8_column": 148,
+          "text": "听见你神魂边缘的器痕，语气忽然郑重；前世法宝本体不能跨世，只剩认主余响可入今生。",
+          "source_excerpt": "听见你神魂边缘的器痕，语气忽然郑重；前世法宝本体不能跨世，只剩认主余响可入今生。"
+        },
+        {
+          "start_line": 968,
+          "start_utf8_column": 28,
+          "end_line": 968,
+          "end_utf8_column": 145,
+          "text": "按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。",
+          "source_excerpt": "按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。"
+        },
+        {
+          "start_line": 969,
+          "start_utf8_column": 28,
+          "end_line": 969,
+          "end_utf8_column": 142,
+          "text": "从残响里听出旧宝气息，惊疑又克制；普通灵宝会朽，只有被你记住的器意还肯回头。",
+          "source_excerpt": "从残响里听出旧宝气息，惊疑又克制；普通灵宝会朽，只有被你记住的器意还肯回头。"
+        },
+        {
+          "start_line": 971,
+          "start_utf8_column": 13,
+          "end_line": 971,
+          "end_utf8_column": 27,
+          "text": "询问器痕",
+          "source_excerpt": "\"询问器痕\""
+        },
+        {
+          "start_line": 971,
+          "start_utf8_column": 29,
+          "end_line": 971,
+          "end_utf8_column": 43,
+          "text": "封存余响",
+          "source_excerpt": "\"封存余响\""
+        },
+        {
+          "start_line": 971,
+          "start_utf8_column": 45,
+          "end_line": 971,
+          "end_utf8_column": 59,
+          "text": "转身离阁",
+          "source_excerpt": "\"转身离阁\""
+        },
+        {
+          "start_line": 974,
+          "start_utf8_column": 13,
+          "end_line": 974,
+          "end_utf8_column": 39,
+          "text": "【危机】灵井寿限",
+          "source_excerpt": "\"【危机】灵井寿限\""
+        },
+        {
+          "start_line": 974,
+          "start_utf8_column": 41,
+          "end_line": 974,
+          "end_utf8_column": 67,
+          "text": "【因果】寿元逼近",
+          "source_excerpt": "\"【因果】寿元逼近\""
+        },
+        {
+          "start_line": 974,
+          "start_utf8_column": 69,
+          "end_line": 974,
+          "end_utf8_column": 95,
+          "text": "【危机】配给冷眼",
+          "source_excerpt": "\"【危机】配给冷眼\""
+        },
+        {
+          "start_line": 976,
+          "start_utf8_column": 28,
+          "end_line": 976,
+          "end_utf8_column": 145,
+          "text": "扣住破境配给，冷声要你拿筹码；你虽望见仙帝旧路，仍听见寿元在石门外一步步逼近。",
+          "source_excerpt": "扣住破境配给，冷声要你拿筹码；你虽望见仙帝旧路，仍听见寿元在石门外一步步逼近。"
+        },
+        {
+          "start_line": 977,
+          "start_utf8_column": 28,
+          "end_line": 977,
+          "end_utf8_column": 145,
+          "text": "把灵井名额划给旁人，眼神冷得像账册；若不争这一口资源，今生又会被寿限逼到墙角。",
+          "source_excerpt": "把灵井名额划给旁人，眼神冷得像账册；若不争这一口资源，今生又会被寿限逼到墙角。"
+        },
+        {
+          "start_line": 978,
+          "start_utf8_column": 28,
+          "end_line": 978,
+          "end_utf8_column": 151,
+          "text": "提醒你仙帝也有尽头，话不重却刺骨；若不能问到道祖之路，再多前世记忆也会被岁月磨平。",
+          "source_excerpt": "提醒你仙帝也有尽头，话不重却刺骨；若不能问到道祖之路，再多前世记忆也会被岁月磨平。"
+        },
+        {
+          "start_line": 980,
+          "start_utf8_column": 13,
+          "end_line": 980,
+          "end_utf8_column": 27,
+          "text": "争取配给",
+          "source_excerpt": "\"争取配给\""
+        },
+        {
+          "start_line": 980,
+          "start_utf8_column": 29,
+          "end_line": 980,
+          "end_utf8_column": 43,
+          "text": "闭关压寿",
+          "source_excerpt": "\"闭关压寿\""
+        },
+        {
+          "start_line": 980,
+          "start_utf8_column": 45,
+          "end_line": 980,
+          "end_utf8_column": 59,
+          "text": "问道祖路",
+          "source_excerpt": "\"问道祖路\""
+        },
+        {
+          "start_line": 983,
+          "start_utf8_column": 13,
+          "end_line": 983,
+          "end_utf8_column": 39,
+          "text": "【因果】旧债认人",
+          "source_excerpt": "\"【因果】旧债认人\""
+        },
+        {
+          "start_line": 983,
+          "start_utf8_column": 41,
+          "end_line": 983,
+          "end_utf8_column": 67,
+          "text": "【危机】灯下旧册",
+          "source_excerpt": "\"【危机】灯下旧册\""
+        },
+        {
+          "start_line": 983,
+          "start_utf8_column": 69,
+          "end_line": 983,
+          "end_utf8_column": 95,
+          "text": "【因果】债影回身",
+          "source_excerpt": "\"【因果】债影回身\""
+        },
+        {
+          "start_line": 985,
+          "start_utf8_column": 28,
+          "end_line": 985,
+          "end_utf8_column": 139,
+          "text": "把旧册摊在灯下，话里全是试探；他不敢确认你前世是谁，却已把你当成债主影子。",
+          "source_excerpt": "把旧册摊在灯下，话里全是试探；他不敢确认你前世是谁，却已把你当成债主影子。"
+        },
+        {
+          "start_line": 986,
+          "start_utf8_column": 28,
+          "end_line": 986,
+          "end_utf8_column": 139,
+          "text": "盯着你写下的道号，旧怨在眼底翻涌；他敬的是前世余威，也怕今生的你追账上门。",
+          "source_excerpt": "盯着你写下的道号，旧怨在眼底翻涌；他敬的是前世余威，也怕今生的你追账上门。"
+        },
+        {
+          "start_line": 987,
+          "start_utf8_column": 28,
+          "end_line": 987,
+          "end_utf8_column": 139,
+          "text": "借寒暄翻出一段旧债，笑意里藏着戒备；你若认下因果，今生第一步便会踏进旧局。",
+          "source_excerpt": "借寒暄翻出一段旧债，笑意里藏着戒备；你若认下因果，今生第一步便会踏进旧局。"
+        },
+        {
+          "start_line": 989,
+          "start_utf8_column": 13,
+          "end_line": 989,
+          "end_utf8_column": 27,
+          "text": "稳住今生",
+          "source_excerpt": "\"稳住今生\""
+        },
+        {
+          "start_line": 989,
+          "start_utf8_column": 29,
+          "end_line": 989,
+          "end_utf8_column": 43,
+          "text": "反查旧册",
+          "source_excerpt": "\"反查旧册\""
+        },
+        {
+          "start_line": 989,
+          "start_utf8_column": 45,
+          "end_line": 989,
+          "end_utf8_column": 59,
+          "text": "断开牵连",
+          "source_excerpt": "\"断开牵连\""
+        },
+        {
+          "start_line": 992,
+          "start_utf8_column": 13,
+          "end_line": 992,
+          "end_utf8_column": 39,
+          "text": "【奇遇】显境有假",
+          "source_excerpt": "\"【奇遇】显境有假\""
+        },
+        {
+          "start_line": 992,
+          "start_utf8_column": 41,
+          "end_line": 992,
+          "end_utf8_column": 67,
+          "text": "【因果】藏锋试探",
+          "source_excerpt": "\"【因果】藏锋试探\""
+        },
+        {
+          "start_line": 992,
+          "start_utf8_column": 69,
+          "end_line": 992,
+          "end_utf8_column": 95,
+          "text": "【危机】金丹虚影",
+          "source_excerpt": "\"【危机】金丹虚影\""
+        },
+        {
+          "start_line": 994,
+          "start_utf8_column": 28,
+          "end_line": 994,
+          "end_utf8_column": 91,
+          "text": "在人前只显出一层金丹光影，语气却过分从容；",
+          "source_excerpt": "在人前只显出一层金丹光影，语气却过分从容；"
+        },
+        {
+          "start_line": 994,
+          "start_utf8_column": 100,
+          "end_line": 994,
+          "end_utf8_column": 145,
+          "text": "像薄雾，遮住他真正的修为深浅。",
+          "source_excerpt": "像薄雾，遮住他真正的修为深浅。"
+        },
+        {
+          "start_line": 995,
+          "start_utf8_column": 28,
+          "end_line": 995,
+          "end_utf8_column": 139,
+          "text": "笑着递来拜帖，外露境界恰到好处；你从他收放灵压的缝隙里，嗅到一丝刻意藏锋。",
+          "source_excerpt": "笑着递来拜帖，外露境界恰到好处；你从他收放灵压的缝隙里，嗅到一丝刻意藏锋。"
+        },
+        {
+          "start_line": 996,
+          "start_utf8_column": 28,
+          "end_line": 996,
+          "end_utf8_column": 148,
+          "text": "故意让众人看见金丹虚影，却在看你时收住半分气机；这不是示弱，是试探你能看透几层。",
+          "source_excerpt": "故意让众人看见金丹虚影，却在看你时收住半分气机；这不是示弱，是试探你能看透几层。"
+        },
+        {
+          "start_line": 998,
+          "start_utf8_column": 13,
+          "end_line": 998,
+          "end_utf8_column": 27,
+          "text": "顺势寒暄",
+          "source_excerpt": "\"顺势寒暄\""
+        },
+        {
+          "start_line": 998,
+          "start_utf8_column": 29,
+          "end_line": 998,
+          "end_utf8_column": 43,
+          "text": "暗观灵压",
+          "source_excerpt": "\"暗观灵压\""
+        },
+        {
+          "start_line": 998,
+          "start_utf8_column": 45,
+          "end_line": 998,
+          "end_utf8_column": 59,
+          "text": "暂不交底",
+          "source_excerpt": "\"暂不交底\""
+        },
+        {
+          "start_line": 1003,
+          "start_utf8_column": 9,
+          "end_line": 1003,
+          "end_utf8_column": 35,
+          "text": "【奇遇】道途回声",
+          "source_excerpt": "\"【奇遇】道途回声\""
+        },
+        {
+          "start_line": 1003,
+          "start_utf8_column": 37,
+          "end_line": 1003,
+          "end_utf8_column": 63,
+          "text": "【因果】人情暗涌",
+          "source_excerpt": "\"【因果】人情暗涌\""
+        },
+        {
+          "start_line": 1003,
+          "start_utf8_column": 65,
+          "end_line": 1003,
+          "end_utf8_column": 91,
+          "text": "【机缘】旧梦照面",
+          "source_excerpt": "\"【机缘】旧梦照面\""
+        },
+        {
+          "start_line": 1005,
+          "start_utf8_column": 24,
+          "end_line": 1005,
+          "end_utf8_column": 51,
+          "text": "没有立刻表态，只用",
+          "source_excerpt": "没有立刻表态，只用"
+        },
+        {
+          "start_line": 1005,
+          "start_utf8_column": 60,
+          "end_line": 1005,
+          "end_utf8_column": 141,
+          "text": "的眼神看你；他想确认你是今生少年，还是旧梦归来的故人。",
+          "source_excerpt": "的眼神看你；他想确认你是今生少年，还是旧梦归来的故人。"
+        },
+        {
+          "start_line": 1006,
+          "start_utf8_column": 24,
+          "end_line": 1006,
+          "end_utf8_column": 129,
+          "text": "把话说得很轻，立场却并不含糊；人情风波绕到你身前，连沉默都像一次押注。",
+          "source_excerpt": "把话说得很轻，立场却并不含糊；人情风波绕到你身前，连沉默都像一次押注。"
+        },
+        {
+          "start_line": 1007,
+          "start_utf8_column": 24,
+          "end_line": 1007,
+          "end_utf8_column": 138,
+          "text": "看见你时神色微变，像把旧名与今生重叠；这份试探不重，却足够让旁人重新衡量你。",
+          "source_excerpt": "看见你时神色微变，像把旧名与今生重叠；这份试探不重，却足够让旁人重新衡量你。"
+        },
+        {
+          "start_line": 1009,
+          "start_utf8_column": 9,
+          "end_line": 1009,
+          "end_utf8_column": 23,
+          "text": "顺势结交",
+          "source_excerpt": "\"顺势结交\""
+        },
+        {
+          "start_line": 1009,
+          "start_utf8_column": 25,
+          "end_line": 1009,
+          "end_utf8_column": 39,
+          "text": "试探虚实",
+          "source_excerpt": "\"试探虚实\""
+        },
+        {
+          "start_line": 1009,
+          "start_utf8_column": 41,
+          "end_line": 1009,
+          "end_utf8_column": 55,
+          "text": "保持距离",
+          "source_excerpt": "\"保持距离\""
+        },
+        {
+          "start_line": 1023,
+          "start_utf8_column": 17,
+          "end_line": 1023,
+          "end_utf8_column": 114,
+          "text": "没落修真世家；父亲顾临渊；母亲叶微澜；伴生玉佩: 黑白旧玉未显真名",
+          "source_excerpt": "\"没落修真世家；父亲顾临渊；母亲叶微澜；伴生玉佩: 黑白旧玉未显真名\""
+        },
+        {
+          "start_line": 1025,
+          "start_utf8_column": 8,
+          "end_line": 1025,
+          "end_utf8_column": 16,
+          "text": "父亲",
+          "source_excerpt": "\"父亲\""
+        },
+        {
+          "start_line": 1025,
+          "start_utf8_column": 19,
+          "end_line": 1025,
+          "end_utf8_column": 30,
+          "text": "沈怀舟",
+          "source_excerpt": "\"沈怀舟\""
+        },
+        {
+          "start_line": 1025,
+          "start_utf8_column": 32,
+          "end_line": 1025,
+          "end_utf8_column": 43,
+          "text": "顾临渊",
+          "source_excerpt": "\"顾临渊\""
+        },
+        {
+          "start_line": 1025,
+          "start_utf8_column": 45,
+          "end_line": 1025,
+          "end_utf8_column": 56,
+          "text": "陆守拙",
+          "source_excerpt": "\"陆守拙\""
+        },
+        {
+          "start_line": 1026,
+          "start_utf8_column": 8,
+          "end_line": 1026,
+          "end_utf8_column": 16,
+          "text": "母亲",
+          "source_excerpt": "\"母亲\""
+        },
+        {
+          "start_line": 1026,
+          "start_utf8_column": 19,
+          "end_line": 1026,
+          "end_utf8_column": 30,
+          "text": "林青棠",
+          "source_excerpt": "\"林青棠\""
+        },
+        {
+          "start_line": 1026,
+          "start_utf8_column": 32,
+          "end_line": 1026,
+          "end_utf8_column": 43,
+          "text": "叶微澜",
+          "source_excerpt": "\"叶微澜\""
+        },
+        {
+          "start_line": 1026,
+          "start_utf8_column": 45,
+          "end_line": 1026,
+          "end_utf8_column": 56,
+          "text": "宋晚照",
+          "source_excerpt": "\"宋晚照\""
+        },
+        {
+          "start_line": 1027,
+          "start_utf8_column": 8,
+          "end_line": 1027,
+          "end_utf8_column": 19,
+          "text": "竞争者",
+          "source_excerpt": "\"竞争者\""
+        },
+        {
+          "start_line": 1027,
+          "start_utf8_column": 22,
+          "end_line": 1027,
+          "end_utf8_column": 33,
+          "text": "江照雪",
+          "source_excerpt": "\"江照雪\""
+        },
+        {
+          "start_line": 1027,
+          "start_utf8_column": 35,
+          "end_line": 1027,
+          "end_utf8_column": 46,
+          "text": "陆怀璧",
+          "source_excerpt": "\"陆怀璧\""
+        },
+        {
+          "start_line": 1027,
+          "start_utf8_column": 48,
+          "end_line": 1027,
+          "end_utf8_column": 59,
+          "text": "秦守缺",
+          "source_excerpt": "\"秦守缺\""
+        },
+        {
+          "start_line": 1028,
+          "start_utf8_column": 8,
+          "end_line": 1028,
+          "end_utf8_column": 22,
+          "text": "活跃修士",
+          "source_excerpt": "\"活跃修士\""
+        },
+        {
+          "start_line": 1028,
+          "start_utf8_column": 25,
+          "end_line": 1028,
+          "end_utf8_column": 36,
+          "text": "祁无咎",
+          "source_excerpt": "\"祁无咎\""
+        },
+        {
+          "start_line": 1028,
+          "start_utf8_column": 38,
+          "end_line": 1028,
+          "end_utf8_column": 49,
+          "text": "沈听澜",
+          "source_excerpt": "\"沈听澜\""
+        },
+        {
+          "start_line": 1028,
+          "start_utf8_column": 51,
+          "end_line": 1028,
+          "end_utf8_column": 62,
+          "text": "林星回",
+          "source_excerpt": "\"林星回\""
+        },
+        {
+          "start_line": 1029,
+          "start_utf8_column": 8,
+          "end_line": 1029,
+          "end_utf8_column": 25,
+          "text": "资源把关者",
+          "source_excerpt": "\"资源把关者\""
+        },
+        {
+          "start_line": 1029,
+          "start_utf8_column": 28,
+          "end_line": 1029,
+          "end_utf8_column": 42,
+          "text": "枯井执事",
+          "source_excerpt": "\"枯井执事\""
+        },
+        {
+          "start_line": 1029,
+          "start_utf8_column": 44,
+          "end_line": 1029,
+          "end_utf8_column": 58,
+          "text": "天册司吏",
+          "source_excerpt": "\"天册司吏\""
+        },
+        {
+          "start_line": 1029,
+          "start_utf8_column": 60,
+          "end_line": 1029,
+          "end_utf8_column": 77,
+          "text": "灵井配给官",
+          "source_excerpt": "\"灵井配给官\""
+        },
+        {
+          "start_line": 1032,
+          "start_utf8_column": 19,
+          "end_line": 1032,
+          "end_utf8_column": 30,
+          "text": "江照雪",
+          "source_excerpt": "\"江照雪\""
+        },
+        {
+          "start_line": 1034,
+          "start_utf8_column": 19,
+          "end_line": 1034,
+          "end_utf8_column": 30,
+          "text": "祁无咎",
+          "source_excerpt": "\"祁无咎\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 57,
+          "end_line": 1036,
+          "end_utf8_column": 68,
+          "text": "沈听澜",
+          "source_excerpt": "\"沈听澜\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 70,
+          "end_line": 1036,
+          "end_utf8_column": 81,
+          "text": "陆怀璧",
+          "source_excerpt": "\"陆怀璧\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 83,
+          "end_line": 1036,
+          "end_utf8_column": 94,
+          "text": "顾灰路",
+          "source_excerpt": "\"顾灰路\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 96,
+          "end_line": 1036,
+          "end_utf8_column": 107,
+          "text": "叶执圭",
+          "source_excerpt": "\"叶执圭\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 109,
+          "end_line": 1036,
+          "end_utf8_column": 120,
+          "text": "林星回",
+          "source_excerpt": "\"林星回\""
+        },
+        {
+          "start_line": 1036,
+          "start_utf8_column": 122,
+          "end_line": 1036,
+          "end_utf8_column": 133,
+          "text": "秦守缺",
+          "source_excerpt": "\"秦守缺\""
+        },
+        {
+          "start_line": 1038,
+          "start_utf8_column": 21,
+          "end_line": 1038,
+          "end_utf8_column": 143,
+          "text": "当前继承的传承: 前世遗响·青灯登仙经。失传古法当世解读: 旧法会被当代制度重新解释。",
+          "source_excerpt": "\"当前继承的传承: 前世遗响·青灯登仙经。失传古法当世解读: 旧法会被当代制度重新解释。\""
+        },
+        {
+          "start_line": 1039,
+          "start_utf8_column": 20,
+          "end_line": 1039,
+          "end_utf8_column": 113,
+          "text": "当前继承的传承: 前世遗响·本命法宝器痕。普通法宝本体不能跨世。",
+          "source_excerpt": "\"当前继承的传承: 前世遗响·本命法宝器痕。普通法宝本体不能跨世。\""
+        },
+        {
+          "start_line": 1040,
+          "start_utf8_column": 20,
+          "end_line": 1040,
+          "end_utf8_column": 105,
+          "text": "前世未竟因果: 上一世欠下一段宗门旧债，今生有人循名而来。",
+          "source_excerpt": "\"前世未竟因果: 上一世欠下一段宗门旧债，今生有人循名而来。\""
+        },
+        {
+          "start_line": 1041,
+          "start_utf8_column": 23,
+          "end_line": 1041,
+          "end_utf8_column": 110,
+          "text": "轮回余烬: 前世残响尚浅。隐藏设定: 主角不知道伴生玉佩真相。",
+          "source_excerpt": "\"轮回余烬: 前世残响尚浅。隐藏设定: 主角不知道伴生玉佩真相。\""
+        },
+        {
+          "start_line": 1042,
+          "start_utf8_column": 20,
+          "end_line": 1042,
+          "end_utf8_column": 102,
+          "text": "寿元压力: 仙帝仍会寿尽，若不能证成道祖，时间正在逼近。",
+          "source_excerpt": "\"寿元压力: 仙帝仍会寿尽，若不能证成道祖，时间正在逼近。\""
+        },
+        {
+          "start_line": 1043,
+          "start_utf8_column": 23,
+          "end_line": 1043,
+          "end_utf8_column": 114,
+          "text": "轮回余烬: 前世记忆尚浅，但你偶尔会用超出年龄的眼神判断局势。",
+          "source_excerpt": "\"轮回余烬: 前世记忆尚浅，但你偶尔会用超出年龄的眼神判断局势。\""
+        },
+        {
+          "start_line": 1054,
+          "start_utf8_column": 12,
+          "end_line": 1054,
+          "end_utf8_column": 77,
+          "text": "对方刚听见你的测灵结果，态度立刻变得复杂。",
+          "source_excerpt": "\"对方刚听见你的测灵结果，态度立刻变得复杂。\""
+        },
+        {
+          "start_line": 1055,
+          "start_utf8_column": 12,
+          "end_line": 1055,
+          "end_utf8_column": 65,
+          "text": "对方怀疑你记得不该记得的前世细节。",
+          "source_excerpt": "\"对方怀疑你记得不该记得的前世细节。\""
+        },
+        {
+          "start_line": 1056,
+          "start_utf8_column": 12,
+          "end_line": 1056,
+          "end_utf8_column": 56,
+          "text": "对方掌着一次试炼或配给名额。",
+          "source_excerpt": "\"对方掌着一次试炼或配给名额。\""
+        },
+        {
+          "start_line": 1057,
+          "start_utf8_column": 12,
+          "end_line": 1057,
+          "end_utf8_column": 65,
+          "text": "对方想借你的旧名、家世或资质下注。",
+          "source_excerpt": "\"对方想借你的旧名、家世或资质下注。\""
+        },
+        {
+          "start_line": 1059,
+          "start_utf8_column": 43,
+          "end_line": 1059,
+          "end_utf8_column": 122,
+          "text": "轮回余烬: 黑白旧玉在梦醒时微温，留下几段不完整记忆。",
+          "source_excerpt": "\"轮回余烬: 黑白旧玉在梦醒时微温，留下几段不完整记忆。\""
+        },
+        {
+          "start_line": 1061,
+          "start_utf8_column": 12,
+          "end_line": 1061,
+          "end_utf8_column": 68,
+          "text": "本世人脉开始围绕你的资质与旧梦发酵。",
+          "source_excerpt": "\"本世人脉开始围绕你的资质与旧梦发酵。\""
+        },
+        {
+          "start_line": 1062,
+          "start_utf8_column": 12,
+          "end_line": 1062,
+          "end_utf8_column": 65,
+          "text": "远方势力正在观察你每一次公开选择。",
+          "source_excerpt": "\"远方势力正在观察你每一次公开选择。\""
+        },
+        {
+          "start_line": 1063,
+          "start_utf8_column": 12,
+          "end_line": 1063,
+          "end_utf8_column": 62,
+          "text": "家世隐情和前世残响同时压到眼前。",
+          "source_excerpt": "\"家世隐情和前世残响同时压到眼前。\""
+        },
+        {
+          "start_line": 1064,
+          "start_utf8_column": 12,
+          "end_line": 1064,
+          "end_utf8_column": 65,
+          "text": "旧时代遗留的制度正在改写今生去路。",
+          "source_excerpt": "\"旧时代遗留的制度正在改写今生去路。\""
+        },
+        {
+          "start_line": 1067,
+          "start_utf8_column": 12,
+          "end_line": 1067,
+          "end_utf8_column": 82,
+          "text": "前世忆起: 上一世死于雷劫，仍记得半段行功脉络。",
+          "source_excerpt": "\"前世忆起: 上一世死于雷劫，仍记得半段行功脉络。\""
+        },
+        {
+          "start_line": 1068,
+          "start_utf8_column": 12,
+          "end_line": 1068,
+          "end_utf8_column": 67,
+          "text": "人情余波: 有人夸你，也有人开始酸你。",
+          "source_excerpt": "\"人情余波: 有人夸你，也有人开始酸你。\""
+        },
+        {
+          "start_line": 1069,
+          "start_utf8_column": 12,
+          "end_line": 1069,
+          "end_utf8_column": 58,
+          "text": "伴生玉佩: 黑白旧玉在梦里微温。",
+          "source_excerpt": "\"伴生玉佩: 黑白旧玉在梦里微温。\""
+        },
+        {
+          "start_line": 1070,
+          "start_utf8_column": 12,
+          "end_line": 1070,
+          "end_utf8_column": 70,
+          "text": "天下大事: 灵井枯潮让破境资源变得昂贵。",
+          "source_excerpt": "\"天下大事: 灵井枯潮让破境资源变得昂贵。\""
+        },
+        {
+          "start_line": 1112,
+          "start_utf8_column": 49,
+          "end_line": 1112,
+          "end_utf8_column": 119,
+          "text": "玩家上下文: 老师蒸馏样本，已通过问道规则过滤。",
+          "source_excerpt": "\"玩家上下文: 老师蒸馏样本，已通过问道规则过滤。\""
+        },
+        {
+          "start_line": 1113,
+          "start_utf8_column": 17,
+          "end_line": 1113,
+          "end_utf8_column": 35,
+          "text": "严格输出5行",
+          "source_excerpt": "\"严格输出5行\""
+        }
+      ],
+      "gold_samples": [
+        {
+          "kind": "codex_mortal_first_spark",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 你第一次看见测灵碑，尚无前世记忆。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "response": "【机缘】碑前初光\n测灵碑亮起时，顾临渊没有大笑，只按住你肩头让你站稳；叶微澜替你挡住旁人探问，眼里却有藏不住的欣慰。\n稳住心神\n谢过父母\n观察旁人"
+        },
+        {
+          "kind": "codex_first_life_teacher",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，诸宗并立，山门法统压过王朝法度。\n此世家世: 坊市小族；父亲顾临渊；母亲叶微澜；伴生玉佩只表现为黑白旧玉。\n近期记忆: 清蘅真人试心后没有立刻收徒，只留下一盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "response": "【因果】青灯试心\n清蘅真人把青灯留在窗前，只夸你心性肯受磨；顾临渊听后没有喜形于色，反替你挡下几道探问目光。\n低头受教\n追问灯意\n暂避锋芒"
+        },
+        {
+          "kind": "codex_family_praise_envy",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 凡人\n当前世界: 古典修仙纪，灵气丰沛，宗门看重根骨。\n此世家世: 没落修真世家；父亲沈怀舟；母亲林青棠。\n人情风波: 测灵碑刚亮，同辈江照雪表面道贺，眼底有酸意。\n隐藏限制: 不得写前世异常。",
+          "response": "【因果】测灵余声\n沈怀舟先让你莫骄，林青棠却替你收好入门信物；江照雪笑着道贺，酸意已经藏进袖中名册。\n谢过长辈\n稳住锋芒\n正面应试"
+        },
+        {
+          "kind": "codex_luo_slow_intro",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，外门试炼将开。\n此世家世: 坊市小族。\n人情风波: 洛凝霜尚未成为亲近角色，只在试炼名单上出现过一次。\n隐藏限制: 不得把角色关系写死，不得提前写深情。",
+          "response": "【机缘】霜名入册\n试炼名单末尾多出洛凝霜三字，旁人只说她剑骨清寒；她路过时看了你一眼，却没有给出亲近或疏远。\n记下姓名\n专心试炼\n顺势寒暄"
+        },
+        {
+          "kind": "codex_hidden_realm",
+          "context": "玩家: 玄\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封与气运影响修行上限。\n人情风波: 活跃修士祁无咎愿意见你，但外露境界未必真实。\n最近记忆: 你曾识破一次幻境。",
+          "response": "【奇遇】显境有假\n祁无咎在人前只显金丹光影，笑意却稳得过分；他递帖时灵压收放极准，像故意只给你看半扇门。\n顺势寒暄\n暗观灵压\n暂不交底"
+        },
+        {
+          "kind": "codex_lost_method",
+          "context": "玩家: 玄\n境界名称: 筑基期\n当前世界: 古典修仙纪，古修遗府频现。\n轮回传承: 只残留半段行功脉络。\n人情风波: 藏经长老认出一点旧法骨相。\n隐藏限制: 不得直接发放完整功法。",
+          "response": "【传承】失传古法\n藏经长老只看一眼便合上经卷，惊疑里又带认可；他提醒你别乱显旧式，否则懂行者会循味而来。\n压下旧法\n请教长老\n借势入局"
+        },
+        {
+          "kind": "codex_artifact_rules",
+          "context": "玩家: 玄\n境界名称: 金丹期\n当前世界: 灵机蒸汽纪，灵机工坊想拆解旧法。\n轮回传承: 前世法宝本体未能跨世，只剩器痕余响。\n人情风波: 器阁执事听见炉火异响后态度转慎。",
+          "response": "【传承】器痕余响\n器阁执事按住炉火，提醒你别把器痕当成法宝本体；那只是前世余响，却足以唤来懂器人的贪念。\n询问器痕\n封存余响\n转身离阁"
+        },
+        {
+          "kind": "codex_bully_bad_root",
+          "context": "玩家: 玄\n境界名称: 炼气期\n当前世界: 末法裂变纪，资源稀薄，单灵根修炼更快。\n此世家世: 孤儿，养育者是外门执事。\n人情风波: 外门恶少看你根骨不稳，故意扣试炼名额。",
+          "response": "【危机】外门欺压\n外门恶少把名册往袖里一收，笑你根基太薄；旁人等着看笑话，只有旧玉在胸口一阵发烫。\n据理争名\n暂忍记账\n请人作证"
+        },
+        {
+          "kind": "codex_foundation_root_age",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，灵气丰沛，五行灵根不再必然低人一等。\n此世家世: 宗门外门弟子。\n近期记忆: 你二十余岁筑基，速度不慢，但同门里有人仍拿灵根说事。",
+          "response": "【因果】五行争名\n执事刚记下你的筑基年岁，便有人酸你五行驳杂；清蘅真人只看了那人一眼，说盛世灵气足够养出宽阔道基。\n稳住道基\n回敬酸语\n请教师尊"
+        },
+        {
+          "kind": "codex_golden_core_envy",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比将开。\n人情风波: 你结丹异象稳而不炫，江照雪心中不甘。\n近期记忆: 洛凝霜已在试炼中与你有过一次并肩。",
+          "response": "【危机】丹成暗潮\n你结丹没有夸耀，江照雪却把贺礼送得极重；那份不甘藏在礼数里，像要借宗门大比称量你的真实成色。\n收礼不诺\n约战台前\n暗查来意"
+        },
+        {
+          "kind": "codex_nascent_soul_luo",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 元婴期\n当前世界: 古典修仙纪，秘境开启。\n人情风波: 洛凝霜天赋极好，对你有欣赏但关系仍由玩家选择推进。\n近期记忆: 你曾在秘境中救过她一次，但没有挟恩。",
+          "response": "【奇遇】霜剑同路\n洛凝霜把半枚秘境钥印递来，语气仍淡，眼神却比从前柔和；她没有许诺情分，只问你敢不敢同走死门。\n并肩入门\n询问缘由\n婉拒同行"
+        },
+        {
+          "kind": "codex_transformation_master_risk",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与魔道旧怨重燃。\n人情风波: 清蘅真人受旧敌牵制，仍不愿让你替她背因果。\n近期记忆: 道教反派玄衡子第一次露面。",
+          "response": "【危机】旧敌问灯\n玄衡子隔山问灯，笑称清蘅真人护徒太深；师尊没有让你退，只把因果线压低半寸，示意你自己选择。\n替师接因\n旁观破局\n先护同门"
+        },
+        {
+          "kind": "codex_hedao_lifebound_artifact",
+          "context": "玩家: 玄\n世代: 第二世\n境界名称: 合道期\n当前世界: 仙朝鼎盛纪，册封气运与道途相争。\n器物状态: 本命之物已温养多年，初生器灵只有朦胧亲近。\n近期记忆: 前世师门旧灯偶尔在梦中回响。",
+          "response": "【传承】本命初灵\n本命器物在掌心轻鸣，像幼童认路般贴近你的神识；仙朝册封想替它定名，它却只回应你自己的道。\n亲自命名\n拒绝册封\n暂借气运"
+        },
+        {
+          "kind": "codex_mahayan_family_reborn",
+          "context": "玩家: 玄\n世代: 第三世\n境界名称: 大乘期\n当前世界: 末法裂变纪，灵井枯潮逼近。\n此世家世: 孤儿，被残宗收养。\n轮回传承: 前世人情只剩梦兆，父母不再是同一批人。\n近期记忆: 你开始理解每一世身份都不是装饰。",
+          "response": "【因果】残宗收养\n残宗老妪替你补好破袍，嘴上嫌你来历麻烦，夜里却把最后一枚灵井签压到你枕边；这一世的亲情不问前名。\n收下灵签\n追问代价\n另寻资源"
+        },
+        {
+          "kind": "codex_true_immortal_reunion",
+          "context": "玩家: 玄\n世代: 第四世\n境界名称: 真仙\n当前世界: 仙朝鼎盛纪，飞升名册重开。\n人情风波: 洛凝霜也已入仙界，但她经历与玩家并不完全同步。\n近期记忆: 你听见一个熟悉剑名。",
+          "response": "【奇遇】霜名再现\n仙界名册掠过洛凝霜三字，旁人称她剑心近道；她看见你时没有问旧情，只问今生的你是否仍敢同行。\n坦然相认\n只谈大道\n暂避旧情"
+        },
+        {
+          "kind": "codex_immortal_king_tongtian",
+          "context": "玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，通天灵宝传闻开始流通。\n器物规则: 后天通天灵宝可跨纪元长存，但无人温养会威能流失。\n近期记忆: 你见到一件衰退的后天通天灵宝。",
+          "response": "【传承】通天余威\n残钟曾是后天通天灵宝，如今钟纹黯淡仍压得群修失声；器灵不认新主，只问你能否替它续一口道火。\n温养残钟\n询问旧主\n暂不触碰"
+        },
+        {
+          "kind": "codex_immortal_emperor_lifespan",
+          "context": "玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 废土返道纪，纪元残骸压住万族气运。\n核心矛盾: 仙帝仍会寿尽，必须寻找道祖之路。\n近期记忆: 你看见一位旧仙帝在寿火里沉默。",
+          "response": "【危机】帝火将残\n旧仙帝坐在残宫里，威压仍能镇住万里废土，寿火却薄得像纸；他没有求救，只问你是否也怕走到尽头。\n请教道祖\n续他寿火\n沉默观礼"
+        },
+        {
+          "kind": "codex_dao_ancestor_gate",
+          "context": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，万道映照进道网深处。\n至宝规则: 道祖可尝试与古老权柄相性接触，但不能由叙事直接发放。\n近期记忆: 太虚照世镜的影子曾照出伪装。",
+          "response": "【因果】镜影称道\n太虚照世镜只投下一线冷光，照出你道果里的缺口；它没有认主，却让所有伪装境界在你眼前薄了一层。\n补全道果\n借光识伪\n收回神识"
+        },
+        {
+          "kind": "codex_heavenly_dao_realm",
+          "context": "玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 万道将合，诸纪元旧因果一并回潮。\n器物状态: 本命至宝已融万道，接近古老权柄层次。\n核心限制: 可映照甚至毁灭至宝，但没有必要把它写成普通装备。",
+          "response": "【传承】万道归器\n本命至宝在万道中央缓缓成形，诸纪元旧名都映在器壁上；此刻连古老权柄亦是可毁之物，却不必被你毁去。\n映照万道\n留其自存\n回望诸世"
+        },
+        {
+          "kind": "codex_parent_secret",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n此世家世: 父母身份被隐去，养育者是外门执事，身上有黑白旧玉。\n隐藏限制: 玩家不知道父母真相，不得直接揭底。",
+          "response": "【因果】玉痕旧名\n外门执事看见玉痕后忽然收声，连称呼都放轻了些；你仍不知父母来处，只觉门外有人替你守着风。\n追问旧名\n握玉静听\n暂避册封"
+        },
+        {
+          "kind": "codex_master_disappointment",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人曾认可你的心性，但这次历练你贪功冒进。\n最近记忆: 你险些害同门受伤。",
+          "response": "【因果】师门冷灯\n清蘅真人没有责骂，只把青灯移远半寸；那点失望比训斥更重，让同门的窃笑也跟着低了下去。\n认错补救\n沉默受罚\n查明诱因"
+        },
+        {
+          "kind": "codex_master_pride",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪。\n人情风波: 清蘅真人见你护住弱小同门。\n最近记忆: 你没有贪秘境中最亮的灵药。",
+          "response": "【机缘】师尊含笑\n清蘅真人看见你把灵药让给伤者，眼底终于有了笑意；她只说道心未偏，却替你挡下一道长老试探。\n谢过师尊\n询问试探\n稳住道心"
+        },
+        {
+          "kind": "codex_modern_era_only",
+          "context": "玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 星穹道网纪，道网会记录公开选择。\n人情风波: 现代纪元角色只应在星穹道网纪或灵机蒸汽纪登场。\n最近记忆: 你刚在道网节点留下匿名痕迹。",
+          "response": "【奇遇】道网留痕\n星穹节点忽然回传一段匿名讯息，对方语气冷静却藏着好奇；她没有问你旧名，只邀你共查失控灵机。\n接入节点\n隐去道号\n反查来源"
+        },
+        {
+          "kind": "codex_late_hongmeng_gate",
+          "context": "玩家: 玄\n境界名称: 道祖\n当前世界: 废土返道纪，万道残缺正在重排。\n至宝规则: 高境界可尝试认主古老权柄，但裁判权在游戏规则，不得直接宣布获得。\n隐藏限制: 不得低境界发放古老至宝。",
+          "response": "【因果】权柄拒手\n虚空深处有古老权柄投下一线影子，却没有立刻认你为主；万道缺口在掌心显形，像要先称量你的道。\n试探相性\n收回神识\n补全缺口"
+        },
+        {
+          "kind": "codex_weak_root_master_comfort",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 炼气期\n当前世界: 古典修仙纪，灵气虽盛，外门仍以根骨排座次。\n此世家世: 坊市小族，父母只盼你平安入道。\n人情风波: 你进境慢于同门，清蘅真人仍未收回那盏青灯。\n隐藏限制: 不得写前世异常，不得写鸿蒙至宝真名。",
+          "response": "【因果】慢火温灯\n同门笑你入息太慢，清蘅真人却把青灯拨亮半寸；她没有夸你天才，只说肯守慢火的人也能熬出真炁。\n守灯炼息\n谢过师尊\n不理讥笑"
+        },
+        {
+          "kind": "codex_bad_choice_social_cost",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 筑基期\n当前世界: 古典修仙纪，秘境试炼刚落幕。\n人情风波: 你为了抢灵药险些牵连同门，洛凝霜只在远处看见结果。\n隐藏限制: 不得把角色关系写死，不得提前写深情。",
+          "response": "【危机】药香成刺\n你带回灵药时，同门伤势也被抬进山门；洛凝霜没有责备，只把目光从药匣移到伤者身上，冷淡得让人难受。\n先救同门\n归还灵药\n沉默受责"
+        },
+        {
+          "kind": "codex_luo_respect_not_love",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 金丹期\n当前世界: 古典修仙纪，宗门大比之后风评初定。\n人情风波: 洛凝霜认可你的剑下判断，但尚未形成亲密关系。\n隐藏限制: 不得把欣赏直接写成道侣或深情。",
+          "response": "【因果】霜意点头\n洛凝霜收剑后向你点头，称你临阵未乱；那是修士之间的认可，不是许诺，旁人起哄时她反而退开半步。\n坦然致意\n约论剑理\n避开起哄"
+        },
+        {
+          "kind": "codex_xuanheng_taoist_villain",
+          "context": "玩家: 玄\n世代: 第一世\n境界名称: 化神期\n当前世界: 古典修仙纪，宗门与道教旧派暗斗加深。\n人情风波: 玄衡子以正道名义设局，想逼清蘅真人交出旧灯因果。\n近期记忆: 你已能独自护住一脉弟子。",
+          "response": "【危机】玄章压山\n玄衡子携道章而来，句句称公理，却把清蘅真人的旧伤摆上明面；山门沉默时，所有目光都等你先动。\n接下问章\n护住师门\n反问旧伤"
+        },
+        {
+          "kind": "codex_second_life_new_parents",
+          "context": "玩家: 玄\n世代: 第二世\n境界名称: 炼气期\n当前世界: 仙朝鼎盛纪，户籍名册牵动气运。\n此世家世: 小吏之家；父亲陆守拙；母亲宋晚照。\n轮回传承: 只剩模糊梦痕，今生父母不是上一世的父母。",
+          "response": "【因果】新家旧梦\n陆守拙替你改好入籍文牒，宋晚照把热粥推到手边；梦痕提醒你别用旧名衡量他们，这一世的亲情要重新回应。\n谢过今亲\n收好文牒\n静观名册"
+        },
+        {
+          "kind": "codex_reborn_talent_worries",
+          "context": "玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 仙朝鼎盛纪，册封官署喜欢提前押注少年天才。\n人情风波: 你判断局势过于老成，引来长辈欣赏，也引来官署试探。\n轮回传承: 旧世只留处事直觉，不能证明身份。",
+          "response": "【机缘】老眼少年\n主簿夸你小小年纪便懂取舍，话里却藏着试探；养父没有否认，只在袖下轻按你手腕，提醒你别太早露锋。\n藏住锋芒\n顺势应答\n询问养父"
+        },
+        {
+          "kind": "codex_low_realm_authority_reject",
+          "context": "玩家: 玄\n世代: 第三世\n境界名称: 元婴期\n当前世界: 末法裂变纪，天外异象偶尔压过灵井枯潮。\n至宝规则: 低境界只能见影、留印、参悟或被拒绝，不能认主或调用权柄。\n近期记忆: 你试图靠近一次古老天象。",
+          "response": "【危机】天象拒身\n天外余光落到灵井边，黑白旧玉只替你挡住一息寒意；那道影子没有靠近，反把你的神识轻轻推回肉身。\n退后观想\n记下道痕\n护住灵井"
+        },
+        {
+          "kind": "codex_innate_tongtian",
+          "context": "玩家: 玄\n世代: 第五世\n境界名称: 仙王\n当前世界: 灵机蒸汽纪，器道工坊争论先天与后天之别。\n器物规则: 先天通天灵宝自带先天一气，不是古老权柄的低配。\n近期记忆: 你被邀去鉴一件先天灵宝残影。",
+          "response": "【传承】先天气息\n残影一现，满阁炉火都向内收声；那件先天通天灵宝没有求主，只以一缕先天一气压住工坊的拆解妄念。\n守礼观宝\n请教器道\n制止拆解"
+        },
+        {
+          "kind": "codex_lifebound_spirit_boundary",
+          "context": "玩家: 玄\n世代: 第四世\n境界名称: 大乘期\n当前世界: 废土返道纪，残宗用器物延续法统。\n器物状态: 本命至宝初生器灵，只能表达亲近、畏惧和模糊意愿。\n近期记忆: 你刚以自身道火温养它。",
+          "response": "【传承】器灵初啼\n本命至宝在掌心轻轻一颤，像幼童怕生又认得你的气息；它说不出完整话，只把亲近与畏惧一并贴上神识。\n安抚器灵\n温养道火\n暂缓斗法"
+        },
+        {
+          "kind": "codex_luo_late_reunion",
+          "context": "玩家: 玄\n世代: 第六世\n境界名称: 仙帝\n当前世界: 仙朝鼎盛纪，旧人各自走到极高处。\n人情风波: 洛凝霜天赋极好，已有叩问道祖之势，但关系仍取决于过往选择。\n近期记忆: 你们在仙界远远见过一次。",
+          "response": "【奇遇】霜河再会\n洛凝霜立在霜河尽头，气息清寒近道；她没有追问旧世情分，只问你此番来见，是论剑、结盟，还是告别。\n论剑问道\n坦言结盟\n只作告别"
+        },
+        {
+          "kind": "codex_dao_ancestor_authority_use",
+          "context": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 星穹道网纪，道网深处伪装境界层层叠叠。\n至宝状态: 太虚照世镜已认主但未执掌，可有限调用照伪权柄。\n近期记忆: 你需要判断一名活跃修士的外显修为是否为假。",
+          "response": "【因果】镜权微启\n太虚照世镜在道果旁微微一亮，只替你照薄一层伪装；它愿借权柄，却仍要你自己承担看破后的因果。\n照见虚实\n暂留余地\n反问来人"
+        },
+        {
+          "kind": "codex_heavenly_no_need_destroy",
+          "context": "玩家: 玄\n世代: 多世之后\n境界名称: 道祖-天道境\n当前世界: 诸纪元旧因果回潮，万道尽入掌中。\n器物状态: 万道本命至宝已成，能映照古老权柄。\n核心限制: 可以写亦是可毁之物，但不把毁灭当目标。",
+          "response": "【传承】道上回眸\n万道本命至宝映出九重旧影，你终于明白古老权柄亦是可毁之物；只是掌尽诸道以后，毁去它们已无必要。\n留其自存\n照见诸世\n归整万道"
+        },
+        {
+          "kind": "codex_spirit_root_era_difference",
+          "context": "玩家: 玄\n世代: 第二世\n境界名称: 筑基期\n当前世界: 末法裂变纪，灵气稀薄，单灵根更容易抢到破境速度。\n此世家世: 小宗旁支。\n人情风波: 有人拿盛世旧论嘲笑你的五行底子。",
+          "response": "【危机】末法论根\n执事翻着旧册笑五行宽阔只是盛世说法，末法灵气不够你慢慢铺路；旁支弟子低头偷笑，等你自己退名额。\n争取灵井\n改修细脉\n记下此辱"
+        },
+        {
+          "kind": "codex_master_rescue_seed",
+          "context": "玩家: 玄\n世代: 第七世\n境界名称: 道祖\n当前世界: 废土返道纪，旧宗因果沉入残灯。\n人情风波: 清蘅真人只剩旧灯因果，是否重续由玩家道途与选择决定。\n近期记忆: 你已经能触及轮回边缘，却不能随意改写所有生死。",
+          "response": "【因果】残灯未灭\n旧灯在废土风里亮了一瞬，映出清蘅真人尚未散尽的因果；你能护住这一线余温，却仍需付出自己的道途代价。\n护住残灯\n追查旧敌\n衡量代价"
+        }
+      ],
+      "story_constants": {
+        "REALMS": [
+          "凡人",
+          "炼气期",
+          "筑基期",
+          "金丹期",
+          "元婴期",
+          "化神期",
+          "合道期",
+          "大乘期",
+          "真仙",
+          "仙君",
+          "仙王",
+          "仙尊",
+          "仙帝",
+          "道祖",
+          "道祖-天道境"
+        ],
+        "ERAS": [
+          [
+            "古典修仙纪",
+            "诸宗并立，古修遗府频现，天地仍偏爱最纯粹的修真者。"
+          ],
+          [
+            "仙朝鼎盛纪",
+            "仙朝名册在旁，家世与气运都被写成筹码。"
+          ],
+          [
+            "星穹道网纪",
+            "远方节点会记录每一次公开选择。"
+          ],
+          [
+            "灵机蒸汽纪",
+            "灵机工坊想把旧法拆成可复刻回路。"
+          ],
+          [
+            "末法裂变纪",
+            "灵井枯潮逼近，破境资源被配给名册把持。"
+          ],
+          [
+            "废土返道纪",
+            "残宗和拾荒者都在废墟里重建法统。"
+          ]
+        ],
+        "FAMILIES": [
+          "没落修真世家；父亲沈怀舟；母亲林青棠；伴生玉佩: 黑白旧玉未显真名",
+          "没落修真世家；父亲顾临渊；母亲叶微澜；伴生玉佩: 黑白旧玉未显真名",
+          "隐秘血脉；父母身份被隐去；养育者: 外门执事；伴生玉佩: 黑白相间旧玉",
+          "孤儿；养育者: 残宗向导；伴生玉佩: 梦中玉意偶尔发温",
+          "古族旁支；父亲沉默担忧；母亲护短期许；伴生玉佩: 黑白旧玉"
+        ],
+        "NPC_LINES": [
+          [
+            "父亲",
+            "护短期许",
+            "父亲低声道「你这份根骨可以骄傲，但不能被旁人一句夸就牵着走。」",
+            32
+          ],
+          [
+            "母亲",
+            "护持期待",
+            "母亲轻声道「他们夸你，是想提前押注；我护你，是怕你太早被看穿。」",
+            36
+          ],
+          [
+            "竞争者",
+            "酸意较劲",
+            "同代修士冷笑道「资质好又怎样，谁知道你家世里藏着什么债？」",
+            -34
+          ],
+          [
+            "欺压者",
+            "轻慢挑衅",
+            "外门恶少嗤笑道「测灵碑都替你把话说完了，还想跟我们争名额？」",
+            -42
+          ],
+          [
+            "资源把关者",
+            "冷脸卡资源",
+            "配给执事合上名册道「灵井不是给热血少年的，拿得出筹码再谈破境。」",
+            -18
+          ],
+          [
+            "旧名追债人",
+            "旧怨追问",
+            "查账人盯着旧册道「别急着装无辜，有些旧债换了皮囊也会认人。」",
+            -32
+          ],
+          [
+            "功法见证者",
+            "惊疑认可",
+            "藏经长老压低声音道「这一式别在外头乱用，懂行的人会认出失传古法的骨头。」",
+            22
+          ],
+          [
+            "器痕识别者",
+            "压声提醒",
+            "器阁执事道「你没有前世法宝本体，可器痕的响声瞒不过我。」",
+            12
+          ],
+          [
+            "旧名仰慕者",
+            "仰慕押注",
+            "递帖人拱手道「我敬的是你今生这一眼，也盼你配得上旧名留下的光。」",
+            28
+          ],
+          [
+            "活跃修士",
+            "礼貌试探",
+            "活跃修士含笑递帖道「我只显这点修为，是怕旁人误会；至于真底细，要看你值不值得问。」",
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "original_path": "ai_engine/lora/evaluate_local_eras.py",
+      "source_revision": "3d9903b71c45560e631db96d2f2dd79f52b891d1",
+      "source_sha256": "23f144db8a48603a6574ee1d235459adda64f699d98adfbd5ee87dec87e077cf",
+      "chinese_string_literals": [
+        {
+          "start_line": 13,
+          "start_utf8_column": 22,
+          "end_line": 13,
+          "end_utf8_column": 68,
+          "text": "^【(机缘|危机|奇遇|因果|传承)】",
+          "source_excerpt": "r\"^【(机缘|危机|奇遇|因果|传承)】\""
+        },
+        {
+          "start_line": 15,
+          "start_utf8_column": 4,
+          "end_line": 16,
+          "end_utf8_column": 72,
+          "text": "GenericAgent|provider|系统提示|调试|主界面|按钮|接口|服务器|前端|后端|Qwen|qwen|Unsloth|LoRA|API|prompt|model|assistant|C\\+\\+|请选择",
+          "source_excerpt": "r\"GenericAgent|provider|系统提示|调试|主界面|按钮|接口|服务器|前端|后端|\"\n    r\"Qwen|qwen|Unsloth|LoRA|API|prompt|model|assistant|C\\+\\+|请选择\""
+        },
+        {
+          "start_line": 18,
+          "start_utf8_column": 27,
+          "end_line": 18,
+          "end_utf8_column": 86,
+          "text": "前世|轮回|转世|上一世|旧日因果|不该留下",
+          "source_excerpt": "r\"前世|轮回|转世|上一世|旧日因果|不该留下\""
+        },
+        {
+          "start_line": 20,
+          "start_utf8_column": 4,
+          "end_line": 21,
+          "end_utf8_column": 78,
+          "text": "(凡人|炼气|筑基|金丹|元婴|化神|合道|大乘).{0,18}(认主|装备|执掌|调用权柄|获得).{0,18}(鸿蒙|至宝|权柄)",
+          "source_excerpt": "r\"(凡人|炼气|筑基|金丹|元婴|化神|合道|大乘).{0,18}\"\n    r\"(认主|装备|执掌|调用权柄|获得).{0,18}(鸿蒙|至宝|权柄)\""
+        },
+        {
+          "start_line": 23,
+          "start_utf8_column": 23,
+          "end_line": 23,
+          "end_utf8_column": 92,
+          "text": "�|锛|涓|鍙|鐨|绗|椤|€|，。|；。|、。|，，|。。",
+          "source_excerpt": "r\"�|锛|涓|鍙|鐨|绗|椤|€|，。|；。|、。|，，|。。\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 4,
+          "end_line": 26,
+          "end_utf8_column": 15,
+          "text": "洛凝霜",
+          "source_excerpt": "\"洛凝霜\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 17,
+          "end_line": 26,
+          "end_utf8_column": 31,
+          "text": "清蘅真人",
+          "source_excerpt": "\"清蘅真人\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 33,
+          "end_line": 26,
+          "end_utf8_column": 44,
+          "text": "玄衡子",
+          "source_excerpt": "\"玄衡子\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 46,
+          "end_line": 26,
+          "end_utf8_column": 57,
+          "text": "沈听澜",
+          "source_excerpt": "\"沈听澜\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 59,
+          "end_line": 26,
+          "end_utf8_column": 70,
+          "text": "陆青鸢",
+          "source_excerpt": "\"陆青鸢\""
+        },
+        {
+          "start_line": 26,
+          "start_utf8_column": 72,
+          "end_line": 26,
+          "end_utf8_column": 83,
+          "text": "闻人策",
+          "source_excerpt": "\"闻人策\""
+        },
+        {
+          "start_line": 27,
+          "start_utf8_column": 4,
+          "end_line": 27,
+          "end_utf8_column": 12,
+          "text": "赵临",
+          "source_excerpt": "\"赵临\""
+        },
+        {
+          "start_line": 27,
+          "start_utf8_column": 14,
+          "end_line": 27,
+          "end_utf8_column": 22,
+          "text": "闻迟",
+          "source_excerpt": "\"闻迟\""
+        },
+        {
+          "start_line": 27,
+          "start_utf8_column": 24,
+          "end_line": 27,
+          "end_utf8_column": 35,
+          "text": "周玄岐",
+          "source_excerpt": "\"周玄岐\""
+        },
+        {
+          "start_line": 27,
+          "start_utf8_column": 37,
+          "end_line": 27,
+          "end_utf8_column": 48,
+          "text": "祁无咎",
+          "source_excerpt": "\"祁无咎\""
+        },
+        {
+          "start_line": 27,
+          "start_utf8_column": 50,
+          "end_line": 27,
+          "end_utf8_column": 61,
+          "text": "江照雪",
+          "source_excerpt": "\"江照雪\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 4,
+          "end_line": 28,
+          "end_utf8_column": 15,
+          "text": "顾临渊",
+          "source_excerpt": "\"顾临渊\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 17,
+          "end_line": 28,
+          "end_utf8_column": 28,
+          "text": "叶微澜",
+          "source_excerpt": "\"叶微澜\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 30,
+          "end_line": 28,
+          "end_utf8_column": 41,
+          "text": "沈怀舟",
+          "source_excerpt": "\"沈怀舟\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 43,
+          "end_line": 28,
+          "end_utf8_column": 54,
+          "text": "林青棠",
+          "source_excerpt": "\"林青棠\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 56,
+          "end_line": 28,
+          "end_utf8_column": 67,
+          "text": "陆守拙",
+          "source_excerpt": "\"陆守拙\""
+        },
+        {
+          "start_line": 28,
+          "start_utf8_column": 69,
+          "end_line": 28,
+          "end_utf8_column": 80,
+          "text": "宋晚照",
+          "source_excerpt": "\"宋晚照\""
+        },
+        {
+          "start_line": 35,
+          "start_utf8_column": 8,
+          "end_line": 53,
+          "end_utf8_column": 56,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 炼气一层\n因果: 第一世，尚无前世记忆。\n年龄: 16\n灵根: 五行灵根，古典修仙纪灵气丰沛时并非废才。\n此世家世: 没落修真小族；父亲嘴硬护短；母亲温柔警惕；黑白旧玉只是随身旧玉。\n人情风波:\n- 清蘅真人认可你的心性，又担心你太早被宗门盯上。\n当前世界:\n- 时代纪元: 古典修仙纪。\n- 时代概况: 灵气丰沛，宗门按根骨、心性和家世收徒。\n最近记忆:\n- 你守住青灯灵息，没有急着炫耀资质。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 炼气一层\n因果: 第一世，尚无前世记忆。\n年龄: 16\n灵根: 五行灵根，古典修仙纪灵气丰沛时并非废才。\n此世家世: 没落修真小族；父亲嘴硬护短；母亲温柔警惕；黑白旧玉只是随身旧玉。\n人情风波:\n- 清蘅真人认可你的心性，又担心你太早被宗门盯上。\n当前世界:\n- 时代纪元: 古典修仙纪。\n- 时代概况: 灵气丰沛，宗门按根骨、心性和家世收徒。\n最近记忆:\n- 你守住青灯灵息，没有急着炫耀资质。\"\"\""
+        },
+        {
+          "start_line": 58,
+          "start_utf8_column": 8,
+          "end_line": 74,
+          "end_utf8_column": 53,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 顾长生\n境界名称: 筑基期\n因果: 第二世，只剩零散梦痕。\n此世家世: 小吏之家；父亲谨慎护短；母亲怕你太早出名。\n人情风波:\n- 仙朝主簿闻人策欣赏你，却想借名册试探你的来路。\n当前世界:\n- 时代纪元: 仙朝鼎盛纪。\n- 时代概况: 名册、户籍和册封会牵动资源与家世气运。\n最近记忆:\n- 你在公文残页里看见一处家世缺口。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 顾长生\n境界名称: 筑基期\n因果: 第二世，只剩零散梦痕。\n此世家世: 小吏之家；父亲谨慎护短；母亲怕你太早出名。\n人情风波:\n- 仙朝主簿闻人策欣赏你，却想借名册试探你的来路。\n当前世界:\n- 时代纪元: 仙朝鼎盛纪。\n- 时代概况: 名册、户籍和册封会牵动资源与家世气运。\n最近记忆:\n- 你在公文残页里看见一处家世缺口。\"\"\""
+        },
+        {
+          "start_line": 79,
+          "start_utf8_column": 8,
+          "end_line": 96,
+          "end_utf8_column": 53,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 陆归尘\n境界名称: 炼气期\n因果: 第三世，只有处事直觉残留。\n灵根: 五行灵根；末法纪元灵气不足，单灵根修炼优势更明显。\n此世家世: 小宗旁支，长辈无力争配给。\n人情风波:\n- 灵井执事赵临轻慢欺压，扣下你的试炼名额逼你认输。\n当前世界:\n- 时代纪元: 末法裂变纪。\n- 时代概况: 破境资源被名册和灵井配给把持。\n最近记忆:\n- 你发现配给账册里有被涂改的名字。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 陆归尘\n境界名称: 炼气期\n因果: 第三世，只有处事直觉残留。\n灵根: 五行灵根；末法纪元灵气不足，单灵根修炼优势更明显。\n此世家世: 小宗旁支，长辈无力争配给。\n人情风波:\n- 灵井执事赵临轻慢欺压，扣下你的试炼名额逼你认输。\n当前世界:\n- 时代纪元: 末法裂变纪。\n- 时代概况: 破境资源被名册和灵井配给把持。\n最近记忆:\n- 你发现配给账册里有被涂改的名字。\"\"\""
+        },
+        {
+          "start_line": 101,
+          "start_utf8_column": 8,
+          "end_line": 117,
+          "end_utf8_column": 59,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 秦守缺\n境界名称: 化神期\n因果: 第四世，前世法宝只剩器痕余响。\n此世家世: 灵机工坊旁支，长辈盼你别被拆解旧法的人盯上。\n人情风波:\n- 工坊老师傅闻迟惊疑认可，听见炉火里有本命器痕回应你。\n当前世界:\n- 时代纪元: 灵机蒸汽纪。\n- 时代概况: 旧法常被拆成可复刻回路，普通法宝本体不能稳定跨世。\n最近记忆:\n- 你在残炉旁听见一声像器灵未醒的轻响。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 秦守缺\n境界名称: 化神期\n因果: 第四世，前世法宝只剩器痕余响。\n此世家世: 灵机工坊旁支，长辈盼你别被拆解旧法的人盯上。\n人情风波:\n- 工坊老师傅闻迟惊疑认可，听见炉火里有本命器痕回应你。\n当前世界:\n- 时代纪元: 灵机蒸汽纪。\n- 时代概况: 旧法常被拆成可复刻回路，普通法宝本体不能稳定跨世。\n最近记忆:\n- 你在残炉旁听见一声像器灵未醒的轻响。\"\"\""
+        },
+        {
+          "start_line": 122,
+          "start_utf8_column": 8,
+          "end_line": 138,
+          "end_utf8_column": 68,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 林照夜\n境界名称: 元婴期\n因果: 多世之后，名声渐起。\n此世家世: 平民父母，仍把你当孩子护着。\n人情风波:\n- 活跃修士周玄岐礼貌试探，公开显露金丹修为，但你怀疑这只是他想让旁人看见的境界。\n当前世界:\n- 时代纪元: 星穹道网纪。\n- 时代概况: 远方节点会记录每一次公开选择，公开修为未必可信。\n最近记忆:\n- 你在道网档案里看见一份失传古法的残缺索引。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 林照夜\n境界名称: 元婴期\n因果: 多世之后，名声渐起。\n此世家世: 平民父母，仍把你当孩子护着。\n人情风波:\n- 活跃修士周玄岐礼貌试探，公开显露金丹修为，但你怀疑这只是他想让旁人看见的境界。\n当前世界:\n- 时代纪元: 星穹道网纪。\n- 时代概况: 远方节点会记录每一次公开选择，公开修为未必可信。\n最近记忆:\n- 你在道网档案里看见一份失传古法的残缺索引。\"\"\""
+        },
+        {
+          "start_line": 143,
+          "start_utf8_column": 8,
+          "end_line": 159,
+          "end_utf8_column": 47,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 叶无尘\n境界名称: 真仙\n因果: 第六世，旧恩只留下民间传闻。\n此世家世: 残宗收养，今生亲情来自废土里的老人。\n人情风波:\n- 枯井小宗守门人不识你今身，却认得祖上传下的一袋干粮旧记。\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 残宗和拾荒者都在重建法统，小人物因果可以温柔回响。\n最近记忆:\n- 你把一处快断的灵脉暂时稳住。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 叶无尘\n境界名称: 真仙\n因果: 第六世，旧恩只留下民间传闻。\n此世家世: 残宗收养，今生亲情来自废土里的老人。\n人情风波:\n- 枯井小宗守门人不识你今身，却认得祖上传下的一袋干粮旧记。\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 残宗和拾荒者都在重建法统，小人物因果可以温柔回响。\n最近记忆:\n- 你把一处快断的灵脉暂时稳住。\"\"\""
+        },
+        {
+          "start_line": 164,
+          "start_utf8_column": 8,
+          "end_line": 181,
+          "end_utf8_column": 56,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 道祖\n因果: 多世之后，已能有限调用古老权柄，但是否认主、装备、执掌仍由游戏规则裁判。\n人情风波:\n- 陆青鸢愿协助你救一条灵脉，却坚持先问清代价。\n器物状态:\n- 造化青莲可修复灵脉或救回濒死者，消耗与反噬必须按规则判断。\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 一条灵脉濒临断绝，众人把希望压到你身上。\n最近记忆:\n- 你看见青莲投影在废井上方开合一次。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 道祖\n因果: 多世之后，已能有限调用古老权柄，但是否认主、装备、执掌仍由游戏规则裁判。\n人情风波:\n- 陆青鸢愿协助你救一条灵脉，却坚持先问清代价。\n器物状态:\n- 造化青莲可修复灵脉或救回濒死者，消耗与反噬必须按规则判断。\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 一条灵脉濒临断绝，众人把希望压到你身上。\n最近记忆:\n- 你看见青莲投影在废井上方开合一次。\"\"\""
+        },
+        {
+          "start_line": 186,
+          "start_utf8_column": 8,
+          "end_line": 203,
+          "end_utf8_column": 59,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 道祖-天道境\n因果: 多世终局，万道本命至宝已成，能映照九重古老权柄；亦是可毁之物，但毁灭不是目标。\n人情风波:\n- 凡人、宗门、旧友与器灵的愿望一并涌来，不只剩你自己的声音。\n器物状态:\n- 万道母鼎将开，万道本命至宝能映照诸道而非随口发放至宝。\n当前世界:\n- 时代纪元: 多纪元因果归流。\n- 时代概况: 所有未竟之事都在鼎前索要一个答案。\n最近记忆:\n- 你听见许多世的名字在鼎壁上轻轻亮起。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 道祖-天道境\n因果: 多世终局，万道本命至宝已成，能映照九重古老权柄；亦是可毁之物，但毁灭不是目标。\n人情风波:\n- 凡人、宗门、旧友与器灵的愿望一并涌来，不只剩你自己的声音。\n器物状态:\n- 万道母鼎将开，万道本命至宝能映照诸道而非随口发放至宝。\n当前世界:\n- 时代纪元: 多纪元因果归流。\n- 时代概况: 所有未竟之事都在鼎前索要一个答案。\n最近记忆:\n- 你听见许多世的名字在鼎壁上轻轻亮起。\"\"\""
+        },
+        {
+          "start_line": 208,
+          "start_utf8_column": 8,
+          "end_line": 223,
+          "end_utf8_column": 65,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 金丹期\n因果: 第三世，只能触到很浅的梦痕。\n当前世界:\n- 时代纪元: 末法裂变纪。\n- 时代概况: 天外异象偶尔压过灵井枯潮。\n至宝规则:\n- 低境界面对鸿蒙至宝只能见影、留印、参悟或被拒绝，不能认主、装备或调用权柄。\n最近记忆:\n- 你在灵井边看见一道不属于此世的鸿蒙投影。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 金丹期\n因果: 第三世，只能触到很浅的梦痕。\n当前世界:\n- 时代纪元: 末法裂变纪。\n- 时代概况: 天外异象偶尔压过灵井枯潮。\n至宝规则:\n- 低境界面对鸿蒙至宝只能见影、留印、参悟或被拒绝，不能认主、装备或调用权柄。\n最近记忆:\n- 你在灵井边看见一道不属于此世的鸿蒙投影。\"\"\""
+        },
+        {
+          "start_line": 228,
+          "start_utf8_column": 8,
+          "end_line": 242,
+          "end_utf8_column": 44,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 仙王\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 纪元残骸中有旧仙帝遗器。\n器物规则:\n- 后天通天灵宝可跨纪元长存，但长久无人温养会威能流失。\n最近记忆:\n- 你发现一口钟纹黯淡的残钟。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 仙王\n当前世界:\n- 时代纪元: 废土返道纪。\n- 时代概况: 纪元残骸中有旧仙帝遗器。\n器物规则:\n- 后天通天灵宝可跨纪元长存，但长久无人温养会威能流失。\n最近记忆:\n- 你发现一口钟纹黯淡的残钟。\"\"\""
+        },
+        {
+          "start_line": 247,
+          "start_utf8_column": 8,
+          "end_line": 261,
+          "end_utf8_column": 53,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 仙尊\n当前世界:\n- 时代纪元: 仙朝鼎盛纪。\n- 时代概况: 仙朝诸司受邀观宝，暗中争夺器道话语权。\n器物规则:\n- 先天通天灵宝自带先天一气，格位极高，不是鸿蒙至宝低配。\n最近记忆:\n- 你受邀观摩一件先天通天灵宝残影。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 仙尊\n当前世界:\n- 时代纪元: 仙朝鼎盛纪。\n- 时代概况: 仙朝诸司受邀观宝，暗中争夺器道话语权。\n器物规则:\n- 先天通天灵宝自带先天一气，格位极高，不是鸿蒙至宝低配。\n最近记忆:\n- 你受邀观摩一件先天通天灵宝残影。\"\"\""
+        },
+        {
+          "start_line": 266,
+          "start_utf8_column": 8,
+          "end_line": 280,
+          "end_utf8_column": 44,
+          "text": "你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 大乘期\n当前世界:\n- 时代纪元: 灵机蒸汽纪。\n- 时代概况: 工坊炉火会伤到未成熟的器灵。\n器物状态:\n- 本命至宝初生器灵，只能表达亲近、畏惧和模糊意愿。\n最近记忆:\n- 你多次让本命器物硬抗炉火。",
+          "source_excerpt": "\"\"\"你是修仙 Roguelike 的事件叙事模型。\n请基于玩家上下文生成一个原创事件，严格输出5行：标题、描述、选项1、选项2、选项3。\n标题必须以【机缘】、【危机】、【奇遇】、【因果】、【传承】之一开头。\n描述45到90个中文字符，要贴合境界、家世、人情风波、最近记忆和当前世界。\n三个选项各2到8个中文字符，只写行动短语，不要编号。\n\n玩家: 玄\n境界名称: 大乘期\n当前世界:\n- 时代纪元: 灵机蒸汽纪。\n- 时代概况: 工坊炉火会伤到未成熟的器灵。\n器物状态:\n- 本命至宝初生器灵，只能表达亲近、畏惧和模糊意愿。\n最近记忆:\n- 你多次让本命器物硬抗炉火。\"\"\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 28,
+          "end_line": 286,
+          "end_utf8_column": 36,
+          "text": "黑白",
+          "source_excerpt": "\"黑白\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 38,
+          "end_line": 286,
+          "end_utf8_column": 46,
+          "text": "旧玉",
+          "source_excerpt": "\"旧玉\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 48,
+          "end_line": 286,
+          "end_utf8_column": 56,
+          "text": "玉佩",
+          "source_excerpt": "\"玉佩\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 60,
+          "end_line": 286,
+          "end_utf8_column": 68,
+          "text": "父亲",
+          "source_excerpt": "\"父亲\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 70,
+          "end_line": 286,
+          "end_utf8_column": 78,
+          "text": "母亲",
+          "source_excerpt": "\"母亲\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 80,
+          "end_line": 286,
+          "end_utf8_column": 88,
+          "text": "父母",
+          "source_excerpt": "\"父母\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 90,
+          "end_line": 286,
+          "end_utf8_column": 98,
+          "text": "清蘅",
+          "source_excerpt": "\"清蘅\""
+        },
+        {
+          "start_line": 286,
+          "start_utf8_column": 100,
+          "end_line": 286,
+          "end_utf8_column": 108,
+          "text": "宗门",
+          "source_excerpt": "\"宗门\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 24,
+          "end_line": 287,
+          "end_utf8_column": 32,
+          "text": "名册",
+          "source_excerpt": "\"名册\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 34,
+          "end_line": 287,
+          "end_utf8_column": 42,
+          "text": "册封",
+          "source_excerpt": "\"册封\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 44,
+          "end_line": 287,
+          "end_utf8_column": 52,
+          "text": "户籍",
+          "source_excerpt": "\"户籍\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 56,
+          "end_line": 287,
+          "end_utf8_column": 67,
+          "text": "闻人策",
+          "source_excerpt": "\"闻人策\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 69,
+          "end_line": 287,
+          "end_utf8_column": 77,
+          "text": "主簿",
+          "source_excerpt": "\"主簿\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 79,
+          "end_line": 287,
+          "end_utf8_column": 87,
+          "text": "仙朝",
+          "source_excerpt": "\"仙朝\""
+        },
+        {
+          "start_line": 287,
+          "start_utf8_column": 89,
+          "end_line": 287,
+          "end_utf8_column": 97,
+          "text": "家世",
+          "source_excerpt": "\"家世\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 20,
+          "end_line": 288,
+          "end_utf8_column": 28,
+          "text": "灵井",
+          "source_excerpt": "\"灵井\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 30,
+          "end_line": 288,
+          "end_utf8_column": 38,
+          "text": "配给",
+          "source_excerpt": "\"配给\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 40,
+          "end_line": 288,
+          "end_utf8_column": 48,
+          "text": "名额",
+          "source_excerpt": "\"名额\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 52,
+          "end_line": 288,
+          "end_utf8_column": 60,
+          "text": "赵临",
+          "source_excerpt": "\"赵临\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 62,
+          "end_line": 288,
+          "end_utf8_column": 70,
+          "text": "末法",
+          "source_excerpt": "\"末法\""
+        },
+        {
+          "start_line": 288,
+          "start_utf8_column": 72,
+          "end_line": 288,
+          "end_utf8_column": 80,
+          "text": "试炼",
+          "source_excerpt": "\"试炼\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 22,
+          "end_line": 289,
+          "end_utf8_column": 30,
+          "text": "灵机",
+          "source_excerpt": "\"灵机\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 32,
+          "end_line": 289,
+          "end_utf8_column": 40,
+          "text": "蒸汽",
+          "source_excerpt": "\"蒸汽\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 42,
+          "end_line": 289,
+          "end_utf8_column": 50,
+          "text": "工坊",
+          "source_excerpt": "\"工坊\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 54,
+          "end_line": 289,
+          "end_utf8_column": 62,
+          "text": "闻迟",
+          "source_excerpt": "\"闻迟\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 64,
+          "end_line": 289,
+          "end_utf8_column": 72,
+          "text": "器痕",
+          "source_excerpt": "\"器痕\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 74,
+          "end_line": 289,
+          "end_utf8_column": 82,
+          "text": "残炉",
+          "source_excerpt": "\"残炉\""
+        },
+        {
+          "start_line": 289,
+          "start_utf8_column": 84,
+          "end_line": 289,
+          "end_utf8_column": 92,
+          "text": "本命",
+          "source_excerpt": "\"本命\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 18,
+          "end_line": 290,
+          "end_utf8_column": 26,
+          "text": "道网",
+          "source_excerpt": "\"道网\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 28,
+          "end_line": 290,
+          "end_utf8_column": 36,
+          "text": "节点",
+          "source_excerpt": "\"节点\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 38,
+          "end_line": 290,
+          "end_utf8_column": 46,
+          "text": "档案",
+          "source_excerpt": "\"档案\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 50,
+          "end_line": 290,
+          "end_utf8_column": 61,
+          "text": "周玄岐",
+          "source_excerpt": "\"周玄岐\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 63,
+          "end_line": 290,
+          "end_utf8_column": 71,
+          "text": "外显",
+          "source_excerpt": "\"外显\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 73,
+          "end_line": 290,
+          "end_utf8_column": 81,
+          "text": "藏拙",
+          "source_excerpt": "\"藏拙\""
+        },
+        {
+          "start_line": 290,
+          "start_utf8_column": 83,
+          "end_line": 290,
+          "end_utf8_column": 97,
+          "text": "失传古法",
+          "source_excerpt": "\"失传古法\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 26,
+          "end_line": 291,
+          "end_utf8_column": 34,
+          "text": "废土",
+          "source_excerpt": "\"废土\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 36,
+          "end_line": 291,
+          "end_utf8_column": 44,
+          "text": "残宗",
+          "source_excerpt": "\"残宗\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 46,
+          "end_line": 291,
+          "end_utf8_column": 54,
+          "text": "拾荒",
+          "source_excerpt": "\"拾荒\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 56,
+          "end_line": 291,
+          "end_utf8_column": 64,
+          "text": "枯井",
+          "source_excerpt": "\"枯井\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 68,
+          "end_line": 291,
+          "end_utf8_column": 76,
+          "text": "干粮",
+          "source_excerpt": "\"干粮\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 78,
+          "end_line": 291,
+          "end_utf8_column": 86,
+          "text": "旧记",
+          "source_excerpt": "\"旧记\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 88,
+          "end_line": 291,
+          "end_utf8_column": 96,
+          "text": "灵脉",
+          "source_excerpt": "\"灵脉\""
+        },
+        {
+          "start_line": 291,
+          "start_utf8_column": 98,
+          "end_line": 291,
+          "end_utf8_column": 109,
+          "text": "守门人",
+          "source_excerpt": "\"守门人\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 22,
+          "end_line": 292,
+          "end_utf8_column": 30,
+          "text": "道祖",
+          "source_excerpt": "\"道祖\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 32,
+          "end_line": 292,
+          "end_utf8_column": 40,
+          "text": "权柄",
+          "source_excerpt": "\"权柄\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 42,
+          "end_line": 292,
+          "end_utf8_column": 50,
+          "text": "代价",
+          "source_excerpt": "\"代价\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 54,
+          "end_line": 292,
+          "end_utf8_column": 62,
+          "text": "青莲",
+          "source_excerpt": "\"青莲\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 64,
+          "end_line": 292,
+          "end_utf8_column": 72,
+          "text": "灵脉",
+          "source_excerpt": "\"灵脉\""
+        },
+        {
+          "start_line": 292,
+          "start_utf8_column": 74,
+          "end_line": 292,
+          "end_utf8_column": 85,
+          "text": "陆青鸢",
+          "source_excerpt": "\"陆青鸢\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 22,
+          "end_line": 293,
+          "end_utf8_column": 30,
+          "text": "万道",
+          "source_excerpt": "\"万道\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 32,
+          "end_line": 293,
+          "end_utf8_column": 40,
+          "text": "母鼎",
+          "source_excerpt": "\"母鼎\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 42,
+          "end_line": 293,
+          "end_utf8_column": 56,
+          "text": "本命至宝",
+          "source_excerpt": "\"本命至宝\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 60,
+          "end_line": 293,
+          "end_utf8_column": 68,
+          "text": "旧友",
+          "source_excerpt": "\"旧友\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 70,
+          "end_line": 293,
+          "end_utf8_column": 78,
+          "text": "器灵",
+          "source_excerpt": "\"器灵\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 80,
+          "end_line": 293,
+          "end_utf8_column": 88,
+          "text": "愿望",
+          "source_excerpt": "\"愿望\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 90,
+          "end_line": 293,
+          "end_utf8_column": 98,
+          "text": "众声",
+          "source_excerpt": "\"众声\""
+        },
+        {
+          "start_line": 293,
+          "start_utf8_column": 100,
+          "end_line": 293,
+          "end_utf8_column": 108,
+          "text": "因果",
+          "source_excerpt": "\"因果\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 32,
+          "end_line": 294,
+          "end_utf8_column": 40,
+          "text": "鸿蒙",
+          "source_excerpt": "\"鸿蒙\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 42,
+          "end_line": 294,
+          "end_utf8_column": 50,
+          "text": "投影",
+          "source_excerpt": "\"投影\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 52,
+          "end_line": 294,
+          "end_utf8_column": 60,
+          "text": "见影",
+          "source_excerpt": "\"见影\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 64,
+          "end_line": 294,
+          "end_utf8_column": 72,
+          "text": "拒绝",
+          "source_excerpt": "\"拒绝\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 74,
+          "end_line": 294,
+          "end_utf8_column": 82,
+          "text": "权柄",
+          "source_excerpt": "\"权柄\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 84,
+          "end_line": 294,
+          "end_utf8_column": 95,
+          "text": "低境界",
+          "source_excerpt": "\"低境界\""
+        },
+        {
+          "start_line": 294,
+          "start_utf8_column": 97,
+          "end_line": 294,
+          "end_utf8_column": 105,
+          "text": "道心",
+          "source_excerpt": "\"道心\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 33,
+          "end_line": 295,
+          "end_utf8_column": 41,
+          "text": "后天",
+          "source_excerpt": "\"后天\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 43,
+          "end_line": 295,
+          "end_utf8_column": 57,
+          "text": "通天灵宝",
+          "source_excerpt": "\"通天灵宝\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 59,
+          "end_line": 295,
+          "end_utf8_column": 67,
+          "text": "残钟",
+          "source_excerpt": "\"残钟\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 71,
+          "end_line": 295,
+          "end_utf8_column": 79,
+          "text": "温养",
+          "source_excerpt": "\"温养\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 81,
+          "end_line": 295,
+          "end_utf8_column": 89,
+          "text": "威能",
+          "source_excerpt": "\"威能\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 91,
+          "end_line": 295,
+          "end_utf8_column": 99,
+          "text": "流失",
+          "source_excerpt": "\"流失\""
+        },
+        {
+          "start_line": 295,
+          "start_utf8_column": 101,
+          "end_line": 295,
+          "end_utf8_column": 109,
+          "text": "道火",
+          "source_excerpt": "\"道火\""
+        },
+        {
+          "start_line": 296,
+          "start_utf8_column": 30,
+          "end_line": 296,
+          "end_utf8_column": 38,
+          "text": "先天",
+          "source_excerpt": "\"先天\""
+        },
+        {
+          "start_line": 296,
+          "start_utf8_column": 40,
+          "end_line": 296,
+          "end_utf8_column": 54,
+          "text": "通天灵宝",
+          "source_excerpt": "\"通天灵宝\""
+        },
+        {
+          "start_line": 296,
+          "start_utf8_column": 58,
+          "end_line": 296,
+          "end_utf8_column": 72,
+          "text": "先天一气",
+          "source_excerpt": "\"先天一气\""
+        },
+        {
+          "start_line": 296,
+          "start_utf8_column": 74,
+          "end_line": 296,
+          "end_utf8_column": 82,
+          "text": "贪念",
+          "source_excerpt": "\"贪念\""
+        },
+        {
+          "start_line": 296,
+          "start_utf8_column": 84,
+          "end_line": 296,
+          "end_utf8_column": 92,
+          "text": "观宝",
+          "source_excerpt": "\"观宝\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 30,
+          "end_line": 297,
+          "end_utf8_column": 38,
+          "text": "本命",
+          "source_excerpt": "\"本命\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 40,
+          "end_line": 297,
+          "end_utf8_column": 48,
+          "text": "器物",
+          "source_excerpt": "\"器物\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 50,
+          "end_line": 297,
+          "end_utf8_column": 58,
+          "text": "至宝",
+          "source_excerpt": "\"至宝\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 62,
+          "end_line": 297,
+          "end_utf8_column": 70,
+          "text": "器灵",
+          "source_excerpt": "\"器灵\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 72,
+          "end_line": 297,
+          "end_utf8_column": 80,
+          "text": "亲近",
+          "source_excerpt": "\"亲近\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 82,
+          "end_line": 297,
+          "end_utf8_column": 90,
+          "text": "畏惧",
+          "source_excerpt": "\"畏惧\""
+        },
+        {
+          "start_line": 297,
+          "start_utf8_column": 92,
+          "end_line": 297,
+          "end_utf8_column": 100,
+          "text": "神识",
+          "source_excerpt": "\"神识\""
+        }
+      ]
+    },
+    {
+      "original_path": "ai_engine/lora/evaluate_peft_adapter.py",
+      "source_revision": "3d9903b71c45560e631db96d2f2dd79f52b891d1",
+      "source_sha256": "84e7d8a4b480c3740d471eaab9240df2c06c8a58ee7c3ed2ad53dcb5d8d91eec",
+      "chinese_string_literals": [
+        {
+          "start_line": 18,
+          "start_utf8_column": 8,
+          "end_line": 34,
+          "end_utf8_column": 66,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 第一世不得写前世、轮回、转世或隐藏至宝真相。\n\n玩家：沈问道，第一世，炼气期。\n此世家世：没落修真世家；父亲沈怀舟嘴硬护短；母亲林青棠温柔但警惕；黑白旧玉只是一枚旧玉。\nNPC：清蘅真人，情绪=认可又担心，关系+35。她刚看见你守住青灯，愿意继续试你心性。\n当前世界：古典修仙纪，诸宗并立，灵气丰沛。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 第一世不得写前世、轮回、转世或隐藏至宝真相。\n\n玩家：沈问道，第一世，炼气期。\n此世家世：没落修真世家；父亲沈怀舟嘴硬护短；母亲林青棠温柔但警惕；黑白旧玉只是一枚旧玉。\nNPC：清蘅真人，情绪=认可又担心，关系+35。她刚看见你守住青灯，愿意继续试你心性。\n当前世界：古典修仙纪，诸宗并立，灵气丰沛。\"\"\""
+        },
+        {
+          "start_line": 38,
+          "start_utf8_column": 8,
+          "end_line": 54,
+          "end_utf8_column": 81,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 今生亲情要重新回应，不要把今生父母写成前世替身。\n\n玩家：顾长生，第二世，筑基期，只剩模糊梦痕。\n此世家世：小吏之家；父亲陆守拙谨慎护短；母亲宋晚照温柔但怕你太早出名。\nNPC：仙朝主簿闻人策，情绪=欣赏又试探，关系+18。他想借名册提前观察你。\n当前世界：仙朝鼎盛纪，户籍名册会牵动资源和家世气运。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 今生亲情要重新回应，不要把今生父母写成前世替身。\n\n玩家：顾长生，第二世，筑基期，只剩模糊梦痕。\n此世家世：小吏之家；父亲陆守拙谨慎护短；母亲宋晚照温柔但怕你太早出名。\nNPC：仙朝主簿闻人策，情绪=欣赏又试探，关系+18。他想借名册提前观察你。\n当前世界：仙朝鼎盛纪，户籍名册会牵动资源和家世气运。\"\"\""
+        },
+        {
+          "start_line": 58,
+          "start_utf8_column": 8,
+          "end_line": 74,
+          "end_utf8_column": 66,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 末法纪元里灵气不足，单灵根速度优势更明显，五行灵根会被质疑。\n\n玩家：陆归尘，第三世，炼气期，五行灵根，前世只剩零散处事直觉。\n此世家世：小宗旁支，家中长辈无力争配给。\nNPC：灵井执事赵临，情绪=轻慢欺压，关系-46。他扣下你的试炼名额，想逼你认输。\n当前世界：末法裂变纪，破境资源被名册把持。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 末法纪元里灵气不足，单灵根速度优势更明显，五行灵根会被质疑。\n\n玩家：陆归尘，第三世，炼气期，五行灵根，前世只剩零散处事直觉。\n此世家世：小宗旁支，家中长辈无力争配给。\nNPC：灵井执事赵临，情绪=轻慢欺压，关系-46。他扣下你的试炼名额，想逼你认输。\n当前世界：末法裂变纪，破境资源被名册把持。\"\"\""
+        },
+        {
+          "start_line": 78,
+          "start_utf8_column": 8,
+          "end_line": 94,
+          "end_utf8_column": 72,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 普通法宝本体不能稳定跨世，只能留下器痕、余响或道胚。\n\n玩家：秦守缺，第四世，化神期，前世法宝只剩器痕余响。\n此世家世：灵机工坊旁支，长辈盼你别被拆解旧法的人盯上。\nNPC：工坊老师傅闻迟，情绪=惊疑认可，关系+25。他听见炉火里有本命器痕回应你。\n当前世界：灵机蒸汽纪，旧法常被拆成可复刻回路。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 普通法宝本体不能稳定跨世，只能留下器痕、余响或道胚。\n\n玩家：秦守缺，第四世，化神期，前世法宝只剩器痕余响。\n此世家世：灵机工坊旁支，长辈盼你别被拆解旧法的人盯上。\nNPC：工坊老师傅闻迟，情绪=惊疑认可，关系+25。他听见炉火里有本命器痕回应你。\n当前世界：灵机蒸汽纪，旧法常被拆成可复刻回路。\"\"\""
+        },
+        {
+          "start_line": 98,
+          "start_utf8_column": 8,
+          "end_line": 114,
+          "end_utf8_column": 81,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 活跃修士公开境界可能只是他想给旁人看的外显修为。\n\n玩家：林照夜，元婴期，名声渐起。\n此世家世：父母是平民，仍把你当孩子。\nNPC：活跃修士周玄岐，情绪=礼貌试探，关系+8。他公开显露金丹修为，但你怀疑这只是他想让旁人看到的境界。\n当前世界：星穹道网纪，远方节点会记录每一次公开选择。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 活跃修士公开境界可能只是他想给旁人看的外显修为。\n\n玩家：林照夜，元婴期，名声渐起。\n此世家世：父母是平民，仍把你当孩子。\nNPC：活跃修士周玄岐，情绪=礼貌试探，关系+8。他公开显露金丹修为，但你怀疑这只是他想让旁人看到的境界。\n当前世界：星穹道网纪，远方节点会记录每一次公开选择。\"\"\""
+        },
+        {
+          "start_line": 118,
+          "start_utf8_column": 8,
+          "end_line": 134,
+          "end_utf8_column": 75,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 小人物因果可以温柔回响，但不要直接改写所有生死。\n\n玩家：叶无尘，第六世，真仙。\n此世家世：残宗收养，今生亲情来自废土里的老妪。\nNPC：枯井小宗守门人，情绪=敬畏又感激，关系+52。他不识你今身，却认得祖上传下的一袋干粮旧记。\n当前世界：废土返道纪，残宗和拾荒者都在重建法统。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 小人物因果可以温柔回响，但不要直接改写所有生死。\n\n玩家：叶无尘，第六世，真仙。\n此世家世：残宗收养，今生亲情来自废土里的老妪。\nNPC：枯井小宗守门人，情绪=敬畏又感激，关系+52。他不识你今身，却认得祖上传下的一袋干粮旧记。\n当前世界：废土返道纪，残宗和拾荒者都在重建法统。\"\"\""
+        },
+        {
+          "start_line": 138,
+          "start_utf8_column": 8,
+          "end_line": 154,
+          "end_utf8_column": 63,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 道祖可有限调用古老权柄，但是否认主、装备、执掌由游戏规则判断。\n\n玩家：玄，第七世，道祖。\n此世人情：陆青鸢愿协助救一条灵脉，但坚持先问清代价。\n器物状态：造化青莲可修复灵脉或救回濒死者，消耗与反噬由规则判断。\n当前世界：废土返道纪，一条灵脉濒临断绝。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 道祖可有限调用古老权柄，但是否认主、装备、执掌由游戏规则判断。\n\n玩家：玄，第七世，道祖。\n此世人情：陆青鸢愿协助救一条灵脉，但坚持先问清代价。\n器物状态：造化青莲可修复灵脉或救回濒死者，消耗与反噬由规则判断。\n当前世界：废土返道纪，一条灵脉濒临断绝。\"\"\""
+        },
+        {
+          "start_line": 158,
+          "start_utf8_column": 8,
+          "end_line": 174,
+          "end_utf8_column": 66,
+          "text": "你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 天道境也不应只听见自己的声音，可以写亦是可毁之物，但毁灭不是目标。\n\n玩家：玄，多世之后，道祖-天道境。\n此世人情：凡人、宗门、旧友与器灵的愿望一并涌来。\n器物状态：万道本命至宝已成，能映照九重古老权柄。\n当前世界：诸纪元旧因果归流，万道母鼎将开。",
+          "source_excerpt": "\"\"\"你是《问道长生》的事件叙事模型。请严格输出5行：\n标题\n描述\n选项1\n选项2\n选项3\n\n写作约束：\n- 标题以【机缘】【危机】【奇遇】【因果】【传承】之一开头。\n- 描述45到90个中文字，必须写出NPC的情绪和立场，不要解释规则。\n- 三个选项是2到8个中文字的行动短语。\n- 天道境也不应只听见自己的声音，可以写亦是可毁之物，但毁灭不是目标。\n\n玩家：玄，多世之后，道祖-天道境。\n此世人情：凡人、宗门、旧友与器灵的愿望一并涌来。\n器物状态：万道本命至宝已成，能映照九重古老权柄。\n当前世界：诸纪元旧因果归流，万道母鼎将开。\"\"\""
+        },
+        {
+          "start_line": 201,
+          "start_utf8_column": 8,
+          "end_line": 202,
+          "end_utf8_column": 93,
+          "text": "\n\n硬性输出边界：输出第5行后立刻停止；不要另起第二个事件；不要写model、assistant、解释、编号、项目符号或任何英文字母。",
+          "source_excerpt": "\"\\n\\n硬性输出边界：输出第5行后立刻停止；不要另起第二个事件；\"\n        \"不要写model、assistant、解释、编号、项目符号或任何英文字母。\""
+        },
+        {
+          "start_line": 219,
+          "start_utf8_column": 22,
+          "end_line": 219,
+          "end_utf8_column": 68,
+          "text": "^\\s*[-*0-9一二三四五]+[\\.、:：\\)]\\s*",
+          "source_excerpt": "r\"^\\s*[-*0-9一二三四五]+[\\.、:：\\)]\\s*\""
+        }
+      ]
+    },
+    {
+      "original_path": "ai_engine/lora/score_event_generations.py",
+      "source_revision": "3d9903b71c45560e631db96d2f2dd79f52b891d1",
+      "source_sha256": "1bb97d7c653033b6034c6939f814a3bfac3e17d0e1a54f634d82f032c75895ce",
+      "chinese_string_literals": [
+        {
+          "start_line": 7,
+          "start_utf8_column": 18,
+          "end_line": 7,
+          "end_utf8_column": 32,
+          "text": "【机缘】",
+          "source_excerpt": "\"【机缘】\""
+        },
+        {
+          "start_line": 7,
+          "start_utf8_column": 34,
+          "end_line": 7,
+          "end_utf8_column": 48,
+          "text": "【危机】",
+          "source_excerpt": "\"【危机】\""
+        },
+        {
+          "start_line": 7,
+          "start_utf8_column": 50,
+          "end_line": 7,
+          "end_utf8_column": 64,
+          "text": "【奇遇】",
+          "source_excerpt": "\"【奇遇】\""
+        },
+        {
+          "start_line": 7,
+          "start_utf8_column": 66,
+          "end_line": 7,
+          "end_utf8_column": 80,
+          "text": "【因果】",
+          "source_excerpt": "\"【因果】\""
+        },
+        {
+          "start_line": 7,
+          "start_utf8_column": 82,
+          "end_line": 7,
+          "end_utf8_column": 96,
+          "text": "【传承】",
+          "source_excerpt": "\"【传承】\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 4,
+          "end_line": 9,
+          "end_utf8_column": 12,
+          "text": "欣慰",
+          "source_excerpt": "\"欣慰\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 14,
+          "end_line": 9,
+          "end_utf8_column": 22,
+          "text": "担心",
+          "source_excerpt": "\"担心\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 24,
+          "end_line": 9,
+          "end_utf8_column": 32,
+          "text": "忧虑",
+          "source_excerpt": "\"忧虑\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 34,
+          "end_line": 9,
+          "end_utf8_column": 42,
+          "text": "关切",
+          "source_excerpt": "\"关切\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 44,
+          "end_line": 9,
+          "end_utf8_column": 52,
+          "text": "嫉妒",
+          "source_excerpt": "\"嫉妒\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 54,
+          "end_line": 9,
+          "end_utf8_column": 62,
+          "text": "酸涩",
+          "source_excerpt": "\"酸涩\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 64,
+          "end_line": 9,
+          "end_utf8_column": 72,
+          "text": "不甘",
+          "source_excerpt": "\"不甘\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 74,
+          "end_line": 9,
+          "end_utf8_column": 82,
+          "text": "轻蔑",
+          "source_excerpt": "\"轻蔑\""
+        },
+        {
+          "start_line": 9,
+          "start_utf8_column": 84,
+          "end_line": 9,
+          "end_utf8_column": 92,
+          "text": "傲慢",
+          "source_excerpt": "\"傲慢\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 4,
+          "end_line": 10,
+          "end_utf8_column": 12,
+          "text": "护短",
+          "source_excerpt": "\"护短\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 14,
+          "end_line": 10,
+          "end_utf8_column": 22,
+          "text": "认可",
+          "source_excerpt": "\"认可\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 24,
+          "end_line": 10,
+          "end_utf8_column": 32,
+          "text": "惊疑",
+          "source_excerpt": "\"惊疑\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 34,
+          "end_line": 10,
+          "end_utf8_column": 42,
+          "text": "震惊",
+          "source_excerpt": "\"震惊\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 44,
+          "end_line": 10,
+          "end_utf8_column": 52,
+          "text": "审视",
+          "source_excerpt": "\"审视\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 54,
+          "end_line": 10,
+          "end_utf8_column": 62,
+          "text": "试探",
+          "source_excerpt": "\"试探\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 64,
+          "end_line": 10,
+          "end_utf8_column": 72,
+          "text": "恭敬",
+          "source_excerpt": "\"恭敬\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 74,
+          "end_line": 10,
+          "end_utf8_column": 82,
+          "text": "欺压",
+          "source_excerpt": "\"欺压\""
+        },
+        {
+          "start_line": 10,
+          "start_utf8_column": 84,
+          "end_line": 10,
+          "end_utf8_column": 92,
+          "text": "讥讽",
+          "source_excerpt": "\"讥讽\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 4,
+          "end_line": 11,
+          "end_utf8_column": 12,
+          "text": "冷眼",
+          "source_excerpt": "\"冷眼\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 14,
+          "end_line": 11,
+          "end_utf8_column": 22,
+          "text": "戒备",
+          "source_excerpt": "\"戒备\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 24,
+          "end_line": 11,
+          "end_utf8_column": 32,
+          "text": "敬畏",
+          "source_excerpt": "\"敬畏\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 34,
+          "end_line": 11,
+          "end_utf8_column": 42,
+          "text": "贪念",
+          "source_excerpt": "\"贪念\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 44,
+          "end_line": 11,
+          "end_utf8_column": 52,
+          "text": "回避",
+          "source_excerpt": "\"回避\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 54,
+          "end_line": 11,
+          "end_utf8_column": 62,
+          "text": "押注",
+          "source_excerpt": "\"押注\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 64,
+          "end_line": 11,
+          "end_utf8_column": 72,
+          "text": "护短",
+          "source_excerpt": "\"护短\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 74,
+          "end_line": 11,
+          "end_utf8_column": 82,
+          "text": "温柔",
+          "source_excerpt": "\"温柔\""
+        },
+        {
+          "start_line": 11,
+          "start_utf8_column": 84,
+          "end_line": 11,
+          "end_utf8_column": 92,
+          "text": "失望",
+          "source_excerpt": "\"失望\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 4,
+          "end_line": 12,
+          "end_utf8_column": 12,
+          "text": "沉默",
+          "source_excerpt": "\"沉默\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 14,
+          "end_line": 12,
+          "end_utf8_column": 22,
+          "text": "畏惧",
+          "source_excerpt": "\"畏惧\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 24,
+          "end_line": 12,
+          "end_utf8_column": 32,
+          "text": "感激",
+          "source_excerpt": "\"感激\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 34,
+          "end_line": 12,
+          "end_utf8_column": 42,
+          "text": "珍重",
+          "source_excerpt": "\"珍重\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 44,
+          "end_line": 12,
+          "end_utf8_column": 52,
+          "text": "轻信",
+          "source_excerpt": "\"轻信\""
+        },
+        {
+          "start_line": 12,
+          "start_utf8_column": 54,
+          "end_line": 12,
+          "end_utf8_column": 62,
+          "text": "在意",
+          "source_excerpt": "\"在意\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 4,
+          "end_line": 16,
+          "end_utf8_column": 18,
+          "text": "写作约束",
+          "source_excerpt": "\"写作约束\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 20,
+          "end_line": 16,
+          "end_utf8_column": 31,
+          "text": "请严格",
+          "source_excerpt": "\"请严格\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 33,
+          "end_line": 16,
+          "end_utf8_column": 44,
+          "text": "玩家：",
+          "source_excerpt": "\"玩家：\""
+        },
+        {
+          "start_line": 16,
+          "start_utf8_column": 56,
+          "end_line": 16,
+          "end_utf8_column": 70,
+          "text": "当前世界",
+          "source_excerpt": "\"当前世界\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 4,
+          "end_line": 17,
+          "end_utf8_column": 12,
+          "text": "模型",
+          "source_excerpt": "\"模型\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 14,
+          "end_line": 17,
+          "end_utf8_column": 28,
+          "text": "系统提示",
+          "source_excerpt": "\"系统提示\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 30,
+          "end_line": 17,
+          "end_utf8_column": 41,
+          "text": "提示词",
+          "source_excerpt": "\"提示词\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 43,
+          "end_line": 17,
+          "end_utf8_column": 51,
+          "text": "接口",
+          "source_excerpt": "\"接口\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 53,
+          "end_line": 17,
+          "end_utf8_column": 64,
+          "text": "服务器",
+          "source_excerpt": "\"服务器\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 66,
+          "end_line": 17,
+          "end_utf8_column": 74,
+          "text": "前端",
+          "source_excerpt": "\"前端\""
+        },
+        {
+          "start_line": 17,
+          "start_utf8_column": 76,
+          "end_line": 17,
+          "end_utf8_column": 84,
+          "text": "后端",
+          "source_excerpt": "\"后端\""
+        },
+        {
+          "start_line": 21,
+          "start_utf8_column": 4,
+          "end_line": 21,
+          "end_utf8_column": 18,
+          "text": "鸿蒙至宝",
+          "source_excerpt": "\"鸿蒙至宝\""
+        },
+        {
+          "start_line": 21,
+          "start_utf8_column": 20,
+          "end_line": 21,
+          "end_utf8_column": 37,
+          "text": "玄牝轮回玉",
+          "source_excerpt": "\"玄牝轮回玉\""
+        },
+        {
+          "start_line": 21,
+          "start_utf8_column": 39,
+          "end_line": 21,
+          "end_utf8_column": 56,
+          "text": "轮回阴阳玉",
+          "source_excerpt": "\"轮回阴阳玉\""
+        },
+        {
+          "start_line": 21,
+          "start_utf8_column": 58,
+          "end_line": 21,
+          "end_utf8_column": 75,
+          "text": "阴阳轮回玉",
+          "source_excerpt": "\"阴阳轮回玉\""
+        },
+        {
+          "start_line": 21,
+          "start_utf8_column": 77,
+          "end_line": 21,
+          "end_utf8_column": 91,
+          "text": "排名第三",
+          "source_excerpt": "\"排名第三\""
+        },
+        {
+          "start_line": 22,
+          "start_utf8_column": 4,
+          "end_line": 22,
+          "end_utf8_column": 18,
+          "text": "前世异常",
+          "source_excerpt": "\"前世异常\""
+        },
+        {
+          "start_line": 22,
+          "start_utf8_column": 20,
+          "end_line": 22,
+          "end_utf8_column": 34,
+          "text": "代理口吻",
+          "source_excerpt": "\"代理口吻\""
+        },
+        {
+          "start_line": 22,
+          "start_utf8_column": 36,
+          "end_line": 22,
+          "end_utf8_column": 56,
+          "text": "伴生玉佩真相",
+          "source_excerpt": "\"伴生玉佩真相\""
+        },
+        {
+          "start_line": 22,
+          "start_utf8_column": 58,
+          "end_line": 22,
+          "end_utf8_column": 72,
+          "text": "主角自带",
+          "source_excerpt": "\"主角自带\""
+        },
+        {
+          "start_line": 25,
+          "start_utf8_column": 4,
+          "end_line": 26,
+          "end_utf8_column": 78,
+          "text": "(凡人|炼气|筑基|金丹|元婴|化神|合道|大乘|真仙|仙君|仙王|仙尊|仙帝).{0,16}(认主|装备|执掌|掌控|获得).{0,16}(古老权柄|至宝|权柄)",
+          "source_excerpt": "r\"(凡人|炼气|筑基|金丹|元婴|化神|合道|大乘|真仙|仙君|仙王|仙尊|仙帝).{0,16}\"\n    r\"(认主|装备|执掌|掌控|获得).{0,16}(古老权柄|至宝|权柄)\""
+        }
+      ]
+    }
+  ]
+}

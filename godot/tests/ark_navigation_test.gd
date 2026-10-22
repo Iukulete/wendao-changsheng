@@ -1,5 +1,7 @@
 extends SceneTree
 
+const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
+
 
 func _initialize() -> void:
 	_run.call_deferred()
@@ -7,7 +9,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_navigation_save").simplify_path()
-	assert(save_root.to_lower().begins_with("d:"), "navigation saves must remain on D:")
+	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
 	var save_helper := preload("res://scripts/ark_greybox_save.gd").new(save_root)
 	save_helper.clear_for_test()
 	var packed := load("res://scenes/ark_greybox.tscn") as PackedScene
@@ -91,7 +93,7 @@ func _run() -> void:
 	var restored_shelter := restored_ark.get_node_or_null("BuiltShelter") as Node3D
 	assert(restored_shelter != null, "built homes must be reconstructed beneath the mobile ark")
 	assert(restored_shelter.global_position.distance_to(restored_ark.to_global(Vector3(0.0, 0.12, -0.5))) < 0.03, "the home must keep its deck-local placement after the ark turns and reloads")
-	assert(int((restored.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 32, "mobile ark, learned blueprints, home traces, residents, grounded memories, mooring rewards, accumulated exposure, resident work policies, guest cabin, vessel industry, operating rights, pressure galley, combat health, regional wildlife, luxury-ark guest stays, optional vessel title and resumable shared meals should use the current save schema")
+	assert(int((restored.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 34, "mobile ark, learned blueprints, home traces, residents, grounded memories, mooring rewards, accumulated exposure, resident work policies, guest cabin, vessel industry, operating rights, pressure galley, combat health, regional wildlife, luxury-ark guest stays, optional vessel title and resumable shared meals should use the current save schema")
 	restored.queue_free()
 	await process_frame
 	save_helper.clear_for_test()
