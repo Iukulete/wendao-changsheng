@@ -11,11 +11,13 @@ func _key_event(keycode: Key, pressed: bool) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = keycode
 	event.pressed = pressed
+	event.shift_pressed = pressed if keycode == KEY_SHIFT else Input.is_key_pressed(KEY_SHIFT)
 	return event
 
 
 func _set_key(keycode: Key, pressed: bool) -> void:
 	Input.parse_input_event(_key_event(keycode, pressed))
+	Input.flush_buffered_events()
 
 
 func _count_events(events: Array, event_id: String) -> int:
@@ -64,6 +66,8 @@ func _run() -> void:
 	var game := scene.instantiate()
 	game.set("save_root_override", save_root)
 	root.add_child(game)
+	# This timed expedition uses the retained 5 m/s Shift run speed.
+	_set_key(KEY_SHIFT, true)
 	await process_frame
 	var player: CharacterBody3D = game.get("player")
 	# Prepare the home-side prerequisites through the normal construction methods.
@@ -186,6 +190,7 @@ func _run() -> void:
 	assert(int(game.get("pressure_cores")) == 1 and bool(game.get("pressure_wreck_searched")), "the unique outer-islet salvage should return aboard intact")
 	game.call("_save_progress")
 	var elapsed := first_leg + second_leg + reef_approach + reef_walk + wreck_approach + return_north + return_west_channel + return_south + return_to_ark + board_ark
+	_set_key(KEY_SHIFT, false)
 	print("ARK_WORLD_TRAVEL_TEST_OK: x=%.1f z=%.1f elapsed=%d" % [player.global_position.x, player.global_position.z, elapsed])
 	game.queue_free()
 	await process_frame

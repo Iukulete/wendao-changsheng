@@ -86,7 +86,7 @@ func _run() -> void:
 	game.call("_set_weather_visuals")
 	var player: CharacterBody3D = game.get("player")
 	var avatar := game.get("avatar_visual") as Node3D
-	assert(avatar != null and avatar.get_node_or_null("Head") is MeshInstance3D, "the player should use a volumetric 3D graybox, not a flat character sticker")
+	assert(avatar != null and avatar.get("skeleton") is Skeleton3D, "the player should use the skinned Emma 3D avatar")
 	var resident_marker := game.get_node("residentMarker") as Node3D
 	var resident_figure := resident_marker.get_node("TidekeeperFigure") as Node3D
 	assert(resident_figure != null and resident_figure.get_node_or_null("Head") is MeshInstance3D, "the first resident should also have visible 3D volume")

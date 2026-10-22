@@ -1,5 +1,5 @@
 extends Node3D
-## Presentation-only recovered trial. F8 compares retained 3D placeholder.
+## Presentation-only recovered trial. F8 compares the supplied pixel art with the default Emma 3D model.
 ## Original PNG bytes stay unchanged; left mirrors the only supplied side sheet.
 const HEIGHT := 1.65
 const FPS := 7.0

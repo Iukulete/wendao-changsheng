@@ -34,6 +34,7 @@ def minimal_pack() -> dict[str, bytes]:
     files.update({"scripts/" + name: b"script" for name in surface.RUNTIME_SCRIPTS})
     files.update({"scenes/" + name: b"scene" for name in surface.SCENES})
     files.update({"art/fonts/" + name: b"font" for name in surface.FONT_FILES})
+    files.update({"art/player_emma/" + name: b"model" for name in surface.EMMA_FILES})
     files.update({"art/player_pixel/" + name: b"pixel" for name in surface.PIXEL_FILES})
     return files
 

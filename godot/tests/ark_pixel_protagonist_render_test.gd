@@ -38,6 +38,7 @@ func _run() -> void:
 	var camera := game.get("camera") as Camera3D
 	var visual := player.get_node("PixelProtagonistTrial")
 	visual.set_physics_process(false)
+	visual.set_enabled(true)
 	for frame in range(45):
 		game.call("_physics_process", 1.0 / 60.0)
 		await physics_frame

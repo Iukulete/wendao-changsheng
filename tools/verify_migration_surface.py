@@ -17,7 +17,8 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SCRIPTS = frozenset({"main.gd", "ark_fixture_placement.gd", "ark_greybox.gd",
                              "ark_greybox_save.gd", "ark_landmass_builder.gd", "ark_world_chart.gd"})
-RUNTIME_SCRIPTS |= frozenset(['modules/economy/ark_economy.gd', 'modules/construction/ark_construction.gd', 'modules/memory/ark_memory.gd', 'modules/residents/ark_gathering.gd', 'adapters/ark_analytic_water.gd', 'adapters/ark_vessel_navigation.gd', 'presentation/ark_pixel_protagonist.gd'])
+RUNTIME_SCRIPTS |= frozenset(['modules/economy/ark_economy.gd', 'modules/construction/ark_construction.gd', 'modules/memory/ark_memory.gd', 'modules/residents/ark_gathering.gd', 'adapters/ark_analytic_water.gd', 'adapters/ark_vessel_navigation.gd', 'presentation/ark_pixel_protagonist.gd', 'presentation/ark_emma_protagonist.gd'])
+EMMA_FILES = frozenset({"emma.glb", "emma_locomotion.tres", "Quaternius-CC0.txt"})
 PIXEL_FILES = frozenset(['image(20261021-085642).png', 'image(20261021-085643).png', 'image(20261021-085645).png', 'image(20261021-085646).png'])
 SCENES = frozenset({"main.tscn", "ark_greybox.tscn"})
 SHADERS = frozenset({"ark_ocean.gdshader"})
@@ -82,11 +83,12 @@ def verify(root: Path = ROOT) -> None:
         check_exact_files(project / directory, expected, sidecars)
     allowed_roots = {".godot", "art", "scripts", "scenes", "shaders", "tests", "project.godot", "export_presets.cfg", "README.md"}
     unexpected = {item.name for item in project.iterdir()} - allowed_roots
-    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel"}:
+    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma"}:
         raise RuntimeError(f"Retired data/audio/art remains inside res://: {sorted(unexpected)}")
     check_exact_files(project / "art/player_pixel", PIXEL_FILES, (".import",))
+    check_exact_files(project / "art/player_emma", EMMA_FILES, (".import",))
     verify_fonts(root)
-    resources = {f"art/player_pixel/{name}" for name in PIXEL_FILES} | {f"scripts/{name}" for name in RUNTIME_SCRIPTS} | {f"scenes/{name}" for name in SCENES} | {f"shaders/{name}" for name in SHADERS} | {f"art/fonts/{name}" for name in FONT_FILES}
+    resources = {f"art/player_emma/{name}" for name in EMMA_FILES} | {f"art/player_pixel/{name}" for name in PIXEL_FILES} | {f"scripts/{name}" for name in RUNTIME_SCRIPTS} | {f"scenes/{name}" for name in SCENES} | {f"shaders/{name}" for name in SHADERS} | {f"art/fonts/{name}" for name in FONT_FILES}
     for relative in sorted(resources):
         if not relative.endswith((".gd", ".tscn", ".gdshader", ".tres")):
             continue
@@ -210,8 +212,9 @@ def verify_pack(path: Path) -> int:
     allowed |= {f"scenes/{name}" + suffix for name in SCENES for suffix in ("", ".remap")}
     allowed |= {f"shaders/{name}" + suffix for name in SHADERS for suffix in ("", ".uid")}
     allowed |= {f"art/fonts/{name}" + suffix for name in FONT_FILES for suffix in ("", ".import", ".remap")}
+    allowed |= {f"art/player_emma/{name}" + suffix for name in EMMA_FILES for suffix in ("", ".import", ".remap")}
     allowed |= {f"art/player_pixel/{name}" + suffix for name in PIXEL_FILES for suffix in ("", ".import", ".remap")}
-    generated = re.compile(r"^\.godot/(?:imported/image\(20261021-(?:085642|085643|085645|085646)\)\.png-[0-9a-f]+\.ctex|imported/Noto(?:Sans|Serif)SC-Variable\.ttf-[0-9a-f]+\.fontdata|exported/[^/]+/export-[0-9a-f]+-(?:(?:main|ark_greybox)\.scn|ark_ui_font\.res))$")
+    generated = re.compile(r"^\.godot/(?:imported/emma\.glb-[0-9a-f]+\.scn|imported/image\(20261021-(?:085642|085643|085645|085646)\)\.png-[0-9a-f]+\.ctex|imported/Noto(?:Sans|Serif)SC-Variable\.ttf-[0-9a-f]+\.fontdata|exported/[^/]+/export-[0-9a-f]+-(?:(?:main|ark_greybox)\.scn|(?:ark_ui_font|emma_locomotion)\.res))$")
     extra = sorted(name for name in files if name not in allowed and not generated.fullmatch(name))
     if extra:
         raise RuntimeError("PCK contains non-Ark or unapproved resources: " + ", ".join(extra))
@@ -219,7 +222,7 @@ def verify_pack(path: Path) -> int:
     required |= {f"art/fonts/{name}" for name in FONT_FILES if name.endswith(".txt")}
     if not required <= files.keys():
         raise RuntimeError("PCK omits required runtime/font-license resources: " + ", ".join(sorted(required-files.keys())))
-    for relative in [*scripts, *(f"art/player_pixel/{name}" for name in PIXEL_FILES), *(f"scenes/{name}" for name in SCENES), *(f"art/fonts/{name}" for name in FONT_FILES if name.endswith((".ttf", ".tres")))]:
+    for relative in [*scripts, *(f"art/player_emma/{name}" for name in EMMA_FILES), *(f"art/player_pixel/{name}" for name in PIXEL_FILES), *(f"scenes/{name}" for name in SCENES), *(f"art/fonts/{name}" for name in FONT_FILES if name.endswith((".ttf", ".tres")))]:
         if relative not in files and relative + ".remap" not in files and relative + ".import" not in files:
             raise RuntimeError(f"PCK omits required Ark dependency: {relative}")
     return len(files)
@@ -231,10 +234,10 @@ def main() -> int:
     args = parser.parse_args()
     if args.pack:
         count = verify_pack(args.pack)
-        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime, retained fonts and supplied pixel images only")
+        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime, retained fonts and supplied Emma model and pixel images only")
     else:
         verify()
-        print(f"MIGRATION_SURFACE_OK: approved Ark scripts, two scenes, licensed fonts and supplied pixel images, {len(canonical_tests())} headless regressions; retired product excluded")
+        print(f"MIGRATION_SURFACE_OK: approved Ark scripts, two scenes, licensed fonts and supplied Emma model and pixel images, {len(canonical_tests())} headless regressions; retired product excluded")
     return 0
 
 

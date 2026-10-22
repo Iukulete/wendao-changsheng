@@ -14,11 +14,13 @@ func _key_event(keycode: Key, pressed: bool) -> InputEventKey:
 	var event := InputEventKey.new()
 	event.keycode = keycode
 	event.pressed = pressed
+	event.shift_pressed = pressed if keycode == KEY_SHIFT else Input.is_key_pressed(KEY_SHIFT)
 	return event
 
 
 func _set_key(keycode: Key, pressed: bool) -> void:
 	Input.parse_input_event(_key_event(keycode, pressed))
+	Input.flush_buffered_events()
 
 
 func _hold_until(keycode: Key, max_frames: int, condition: Callable) -> int:
@@ -60,6 +62,8 @@ func _run() -> void:
 	var game := scene.instantiate()
 	game.set("save_root_override", save_root)
 	root.add_child(game)
+	# Keep this timed storm expedition at its original 5 m/s run speed.
+	_set_key(KEY_SHIFT, true)
 	await physics_frame
 	await physics_frame
 
@@ -168,6 +172,7 @@ func _run() -> void:
 	assert(is_equal_approx(float(restored.call("_current_sail_speed")), 4.6), "the upgraded sail speed should survive reload")
 	assert(restored.get_node("MoonbackTideStation").get_node_or_null("RelayCore") == null, "the collected world prop must remain absent after reload")
 	assert((restored.get("world_events") as Array).any(func(event: Dictionary) -> bool: return str(event.get("id", "")) == "tide_compass_tuned"), "the saved event ledger should explain the upgrade")
+	_set_key(KEY_SHIFT, false)
 	print("ARK_MOORING_TEST_OK: first_leg=%d return_leg=%d heading=%d" % [first_leg, second_leg, heading_steps])
 	restored.queue_free()
 	await process_frame

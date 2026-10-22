@@ -22,7 +22,9 @@ var _construction_sequence := 0
 var _new_water_session := false
 const FixturePlacement = preload("res://scripts/ark_fixture_placement.gd")
 
-const WALK_SPEED := 5.0
+const WALK_SPEED := 1.2
+const SPRINT_SPEED := 5.0
+const SWIM_SPEED := 2.9
 const SAIL_SPEED := 3.6
 const SAIL_TURN_SPEED := 0.72
 const ARK_REFUGE_RADIUS := 8.0
@@ -325,7 +327,6 @@ var jade_sail_keeper_body: Node3D
 var jade_sail_keeper_action := ""
 var jade_sail_keeper_motion_clock := 0.0
 var avatar_visual: Node3D
-var avatar_clock := 0.0
 var day_count := 1
 var day_period := DayPeriod.MORNING
 var world_events: Array[Dictionary] = []
@@ -380,9 +381,6 @@ func _physics_process(_delta: float) -> void:
 		var throttle := float(Input.is_key_pressed(KEY_W)) - float(Input.is_key_pressed(KEY_S))
 		var steer := float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A))
 		_sail_step(_delta, throttle, steer)
-		if avatar_visual:
-			avatar_clock += _delta
-			avatar_visual.position.y = sin(avatar_clock * 2.0) * 0.006
 		if camera:
 			var sail_target := player.global_position + Vector3(0, 1.0, 0)
 			camera.global_position = sail_target + Vector3(0, 8.5, 10.5)
@@ -398,7 +396,7 @@ func _physics_process(_delta: float) -> void:
 	var move := Vector3(input.x, 0.0, input.y)
 	var was_swimming := is_swimming
 	is_swimming = player.global_position.y <= float(water.query(player.global_position).height) - 0.45 + 0.08 and not player.is_on_floor() and player.velocity.y <= 0.0
-	var current_speed := _current_walk_speed() * (0.58 if is_swimming else 1.0)
+	var current_speed := SWIM_SPEED * _cold_movement_multiplier() if is_swimming else _current_walk_speed()
 	if reef_beast_knockback_remaining > 0.0:
 		reef_beast_knockback_remaining = maxf(0.0, reef_beast_knockback_remaining - _delta)
 		var shove_strength := reef_beast_knockback_remaining / REEF_BEAST_KNOCKBACK_SECONDS
@@ -429,11 +427,8 @@ func _physics_process(_delta: float) -> void:
 	_process_reef_beast(_delta)
 	_process_pressure_vent(_delta)
 	if avatar_visual:
-		avatar_clock += _delta
-		var walking := move.length_squared() > 0.001 and not is_swimming
-		if walking:
-			avatar_visual.rotation.y = atan2(move.x, move.z)
-		avatar_visual.position.y = sin(avatar_clock * (11.0 if walking else 2.0)) * (0.025 if walking else 0.006)
+		if move.length_squared() > 0.001:
+			avatar_visual.rotation.y = lerp_angle(avatar_visual.rotation.y, atan2(move.x, move.z), 1.0 - exp(-12.0 * _delta))
 	if was_swimming != is_swimming:
 		_update_hud()
 	_refresh_refuge_state()
@@ -567,8 +562,13 @@ func _toggle_sailing() -> void:
 
 
 func _current_walk_speed() -> float:
+	var speed := SPRINT_SPEED if Input.is_key_pressed(KEY_SHIFT) else WALK_SPEED
+	return speed * _cold_movement_multiplier()
+
+
+func _cold_movement_multiplier() -> float:
 	var exposure_multipliers := [1.0, 0.62, 0.42, 0.28]
-	return WALK_SPEED * float(exposure_multipliers[_effective_cold_exposure_level()])
+	return float(exposure_multipliers[_effective_cold_exposure_level()])
 
 
 func _push_player_from_environment(velocity: Vector3) -> void:
@@ -1461,9 +1461,10 @@ func _build_player() -> void:
 	shape.shape = capsule
 	shape.position.y = 0.82
 	player.add_child(shape)
-	avatar_visual = _build_graybox_character("PlayerFigure", Color("547c87"), Color("342d32"))
+	avatar_visual = preload("res://scripts/presentation/ark_emma_protagonist.gd").new()
 	player.add_child(avatar_visual)
 	ark_root.add_child(player)
+	avatar_visual.setup(player, self)
 	camera = Camera3D.new()
 	camera.current = true
 	camera.fov = 54.0
@@ -1471,6 +1472,7 @@ func _build_player() -> void:
 	var pixel_trial := preload("res://scripts/presentation/ark_pixel_protagonist.gd").new()
 	player.add_child(pixel_trial)
 	pixel_trial.setup(player, avatar_visual, camera)
+	pixel_trial.set_enabled(false)
 
 
 func _build_graybox_character(character_name: String, clothes_color: Color, hair_color: Color) -> Node3D:
@@ -1583,7 +1585,7 @@ func _build_hud() -> void:
 	hud_details.add_theme_font_size_override("font_size", 16)
 	stack.add_child(hud_details)
 	var controls := Label.new()
-	controls.text = "WASD 行走/游泳 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F 家具搬移 · F5 存档"
+	controls.text = "WASD 行走/游泳 · Shift 快跑 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F 家具搬移 · F5 存档"
 	controls.name = "ArkControlsHelp"
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls.add_theme_font_size_override("font_size", 16)
