@@ -10,7 +10,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var original: Variant = ProjectSettings.get_setting("application/config/version")
-	assert(original is String and original == "0.1.002", "game version preserves its three-digit repair field")
+	assert(original is String and original == "0.1.003", "game version preserves its three-digit repair field")
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_ark_game_version").simplify_path()
 	assert(TestPaths.is_safe_save_root(save_root))
 	# The second instance proves the menu reads the authority, not a copied literal.

@@ -8,3 +8,4 @@
 /archive/** -text
 /LICENSE -text
 /godot/art/fonts/** -text
+/godot/art/surface_sample/** -text

@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "status": "bounded opening-surface candidate; not completed environment art",
+  "provenance": {
+    "source": "original deterministic procedural bake",
+    "external_assets": false,
+    "runtime_generation": false,
+    "generator": "tools/generate_surface_sample.py",
+    "generator_sha256": "6d1fc9c2d336bccd6a9298a93c01b1cda29160dacec9f3a1a3b1c7c7560ca299",
+    "dependencies": "Python standard library only",
+    "license": "AGPL-3.0, repository LICENSE"
+  },
+  "recipe": {
+    "size": [
+      256,
+      256
+    ],
+    "format": "RGB8 opaque",
+    "terrain_seed": 48011,
+    "wood_seed": 48023,
+    "deck_source": "wood_grain.png plus shallow colour-only seams",
+    "deck_planks_per_tile": 4,
+    "deck_pitch_meters": 0.37,
+    "wood_tile_meters_xz": [
+      1.48,
+      3.2
+    ],
+    "terrain_tile_meters": {
+      "shore": 1.8,
+      "grass": 2.8
+    },
+    "mapping": {
+      "terrain": "2 main-island surfaces: ordinary local-XZ UV; uv1_triplanar=false",
+      "terrain_uv": "UV=(vertex.x, vertex.z) in local meters; +X to +U, +Z to +V; emitted during original mesh construction",
+      "ship": "10 ship surfaces: unchanged local triplanar; uv1_triplanar=true",
+      "world_triplanar": false
+    },
+    "preserved": "base albedo, roughness, culling, lighting, positions, normals, indices, triangles, bounds, collision, gameplay and save state; only two terrain UV arrays added"
+  },
+  "textures": [
+    {
+      "path": "godot/art/surface_sample/terrain_detail.png",
+      "bytes": 5358,
+      "sha256": "04e687230183356bfe450f06d81f6003767d3fb4c266328cd66c9c887a46c59a",
+      "statistics": {
+        "min_byte": 237,
+        "median_byte": 255,
+        "max_byte": 255,
+        "mean_byte": 253.715607,
+        "mean_linear_multiplier": 0.988796,
+        "median_linear_multiplier": 1.0
+      }
+    },
+    {
+      "path": "godot/art/surface_sample/wood_grain.png",
+      "bytes": 9944,
+      "sha256": "967ee279dc5d8180e669976ad04795cd0791c13a0957892c8b8f3bfe2fda45fa",
+      "statistics": {
+        "min_byte": 238,
+        "median_byte": 255,
+        "max_byte": 255,
+        "mean_byte": 253.997345,
+        "mean_linear_multiplier": 0.991189,
+        "median_linear_multiplier": 1.0
+      }
+    },
+    {
+      "path": "godot/art/surface_sample/deck_planks.png",
+      "bytes": 10160,
+      "sha256": "f6ace5d7a780b03f0dabdc0356a07937a1270a03e2964ee5e5d2459a476a4f0d",
+      "statistics": {
+        "min_byte": 228,
+        "median_byte": 255,
+        "max_byte": 255,
+        "mean_byte": 253.670319,
+        "mean_linear_multiplier": 0.988374,
+        "median_linear_multiplier": 1.0
+      }
+    }
+  ]
+}

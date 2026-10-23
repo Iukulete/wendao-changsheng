@@ -99,7 +99,7 @@ func _run() -> void:
 
 	for _period in range(4):
 		game.call("_advance_world_period", "industry_regression")
-	assert(bool(game.get("jade_sail_industry_pending")) and str(game.get("jade_sail_industry_target_id")) != first_target, "the next in-game morning should assign a different still-existing finite node")
+	assert(bool(game.get("jade_sail_industry_pending")) and str(game.get("jade_sail_industry_target_id")) == first_target and _count_events(game, "shore_supply_replenished") > 0, "the next morning may claim the same site only after a real, recorded tide replenishment")
 	var storm_target := str(game.get("jade_sail_industry_target_id"))
 	game.set("weather_phase", 1)
 	game.call("_process", 0.1)
@@ -129,7 +129,7 @@ func _run() -> void:
 		game.call("_process", 0.1)
 	assert(not bool(game.get("jade_sail_industry_pending")) and int(game.get("jade_sail_industry_shellfish")) == 1, "the keeper should walk to an actual node, harvest it once, and deliver one unit to the vessel hold")
 	assert(int(game.get("raw_shellfish")) == player_shellfish_after_race and _count_events(game, "jade_sail_industry_supply_delivered") == 1, "delivery must affect only the independent vessel hold and be recorded once")
-	assert(second_target in (game.get("collected_ids") as Array), "a delivered industry resource must be permanently marked collected in the world")
+	assert(second_target in (game.get("collected_ids") as Array), "a delivered industry resource must stay marked collected until a subsequent unoccupied dawn replenishment")
 	assert(bool(game.call("_save_progress")), "the delivered cargo state must be persisted")
 	game.set("save_service", null)
 	game.queue_free()
@@ -147,7 +147,7 @@ func _run() -> void:
 		game.call("_advance_world_period", "industry_regression")
 	assert(bool(game.get("jade_sail_industry_pending")), "the next morning should start a second real delivery for the trial contract")
 	var trial_target := str(game.get("jade_sail_industry_target_id"))
-	assert(trial_target != second_target, "the second trial delivery must claim a different finite patch")
+	assert(trial_target == second_target and not trial_target in game.get("collected_ids"), "the second trial delivery must claim replenished physical stock, not replay its old shipment")
 	for _step in range(600):
 		if not bool(game.get("jade_sail_industry_pending")):
 			break

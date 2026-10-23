@@ -5,7 +5,7 @@ config_version=5
 [application]
 
 config/name="问道：归舟"
-config/version="0.1.002"
+config/version="0.1.003"
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 

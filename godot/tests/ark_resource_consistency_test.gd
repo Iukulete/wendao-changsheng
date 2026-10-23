@@ -126,8 +126,19 @@ func _actual_chain() -> void:
 	save.clear_for_test()
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
 	var game := await _new_game(scene,save_root)
-	game.set("traveler_boarded",true)
-	game.call("_set_traveler_boarded")
+	# A resident needs a real, paid-for home and an accepted invitation before
+	# production gathering; do not bypass that invariant with a boarded flag.
+	var player := game.get("player") as CharacterBody3D
+	player.global_position = (game.get_node("DriftwoodNear") as Node3D).global_position + Vector3.UP
+	game.call("_interact")
+	assert(int(game.get("wood")) == 3 and int(game.get("economy").source("DriftwoodNear").remaining) == 0)
+	assert(game.call("_try_place_shelter", Vector3.ZERO) and int(game.get("wood")) == 0, "the real starting plank and two collected planks should pay for a shelter")
+	player.global_position = (game.get_node("residentMarker") as Node3D).global_position + Vector3.UP
+	game.call("_interact")
+	game.call("_interact")
+	assert(bool(game.get("resident_met")) and bool(game.get("traveler_choice_pending")) and not bool(game.get("traveler_boarded")))
+	game.call("_choose_traveler_boarding", true)
+	assert(bool(game.get("traveler_boarded")) and bool(game.get("economy").audit().ok), "a consenting resident may now gather for the real household")
 	game.set("weather_phase",2)
 	game.set("day_count",2)
 	game.set("day_period",0)

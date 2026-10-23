@@ -31,7 +31,7 @@ func _run() -> void:
 	var opening_hud := game.get("hud") as Label
 	assert(return_button != null and not return_button.disabled, "the 3D slice should offer a clear route back to the saved main interface")
 	assert(exploration_blueprint_button != null and exploration_blueprint_button.disabled, "the distinctive expansion blueprint should remain locked until its remote exploration source is found")
-	assert(opening_hud != null and opening_hud.text.contains("当前目标：收集 2 块漂木") and opening_hud.text.contains("木料 1（随身）"), "the first HUD should make the immediate shelter goal and current starting resource obvious")
+	assert(opening_hud != null and opening_hud.text.contains("现在就能掌舵") and opening_hud.text.contains("收集 2 块漂木") and opening_hud.text.contains("木料 1（随身）"), "the first HUD should make immediate sailing, shore supplies, and current starting resource obvious")
 	assert(not opening_hud.text.contains("产业簿") and not opening_hud.text.contains("蒸潮饭釜"), "late-game ark systems should not crowd out the opening survival objective")
 	game.set("weather_phase", 1)
 	game.call("_update_hud")
@@ -120,7 +120,7 @@ func _run() -> void:
 	assert(bool(game.call("_try_place_shelter", Vector3(0.0, 0.12, 0.0))), "a valid raft position should accept the shelter")
 	assert(bool(game.get("shelter_built")), "the shelter should be physically placed")
 	game.call("_update_hud")
-	assert(opening_hud.text.contains("避风棚已就位") and opening_hud.text.contains("当前目标：避风棚已就位"), "building the first shelter should advance the HUD objective to meeting nearby residents and preparing for weather")
+	assert(opening_hud.text.contains("棚屋已能随舟远行") and opening_hud.text.contains("可邀请岸上居民同行"), "building the first shelter should advance the HUD to mobile-home growth and optional resident invitation")
 	assert(_count_events(game.get("world_events"), "shelter_built") == 1, "the shelter event should record the completed construction once")
 	var shelter_event: Dictionary = (game.get("world_events") as Array)[2]
 	assert(int((shelter_event.get("facts") as Dictionary).get("wood_spent", 0)) == 3, "construction history should preserve the actual material cost")
@@ -169,7 +169,7 @@ func _run() -> void:
 	game.call("_choose_traveler_boarding", true)
 	assert(bool(game.get("traveler_boarded")), "the traveler should board only after accepting the invitation")
 	assert(_count_events(game.get("world_events"), "resident_invitation_decided") == 1, "the resident's explicit boarding choice should be recorded once")
-	assert(str(game.get("traveler_action")) == "查看潮势", "the boarded traveler should select a context-appropriate activity")
+	assert(str(game.get("traveler_action")) == "整理浮标箱", "the boarded traveler should follow her daytime routine even before the first storm")
 	game.call("_process", 10.0)
 	var traveler_marker: Node3D = game.get("traveler_marker")
 	assert(traveler_marker.position.is_equal_approx(game.get("traveler_target_position")), "the traveler should physically move to her current activity")
@@ -239,9 +239,9 @@ func _run() -> void:
 	assert(int(restored.get("day_period")) == (repaired_period + 1) % 4, "resting should move the world into the next time period")
 	assert(str(restored.get("traveler_action")) == "照看灯火", "the resident should tend the lantern in the evening")
 	restored.call("_interact")
-	assert(str(restored.get("traveler_action")) == "棚下歇息", "after the storm the resident should choose the shelter cot as a real destination")
+	assert(str(restored.get("traveler_action")) == "棚下临时歇脚", "after the storm the resident should choose temporary refuge without claiming the player's cot")
 	restored.call("_process", 10.0)
-	assert((restored.get("traveler_marker") as Node3D).position.is_equal_approx(restored.get("traveler_target_position")), "the resident should walk to the shelter cot after the player rests")
+	assert((restored.get("traveler_marker") as Node3D).position.is_equal_approx(restored.get("traveler_target_position")), "the resident should walk to her temporary refuge point after the player rests")
 	var night_count := int(restored.get("day_count"))
 	restored.call("_interact")
 	assert(int(restored.get("day_period")) == 0 and int(restored.get("day_count")) == night_count + 1, "sleeping through the night should begin a new morning and increment the day")
@@ -367,7 +367,7 @@ func _run() -> void:
 	expanded_restored.call("_unhandled_key_input", confirm_dismantle_key)
 	await process_frame
 	assert(not bool(expanded_restored.get("raft_extension_built")) and expanded_restored.get_node_or_null("ArkRoot/BuiltRaftExtension") == null, "confirming dismantle should remove the extension geometry and construction state")
-	assert(str(expanded_restored.get("traveler_action")) == "棚下歇息", "dismantling the extension should send the resident back to the original sheltered cot")
+	assert(str(expanded_restored.get("traveler_action")) == "棚下临时歇脚", "dismantling optional accommodation should return the resident to temporary refuge, not the player's cot")
 	assert(int(expanded_restored.get("wood")) == 4 and int(expanded_restored.get("keel_beams")) == 1 and (expanded_restored.get("learned_blueprint_ids") as Array).has("keel_deck_expansion"), "dismantle should return the exact materials without consuming permanent blueprint knowledge")
 	var restored_bow_rail := expanded_restored.get_node("ArkRoot/RaftBow") as StaticBody3D
 	var restored_bow_collision := restored_bow_rail.get_child(1) as CollisionShape3D
@@ -707,6 +707,19 @@ func _run() -> void:
 	meal_game.call("_rest_at_cot")
 	for _period_step in range(4):
 		meal_game.call("_rest_at_cot")
+	# Pre-storm mornings now permit a real shift. Let the worker return rather
+	# than making dinner preempt her job or inventing a completed-work day.
+	assert(bool(meal_game.get("resident_gather_pending")), "crossing dawn before the first storm should start a real nearby gathering shift")
+	var meal_wood_before_delivery := int(meal_game.get("wood")) + int(meal_game.get("stored_wood"))
+	var meal_shellfish_before_delivery := int(meal_game.get("raw_shellfish"))
+	assert(str(meal_game.get("resident_gather_target_id")) == "DriftwoodNear", "this cooking fixture should first collect its untouched nearby two-plank pile")
+	for _gather_step in range(600):
+		if not bool(meal_game.get("resident_gather_pending")):
+			break
+		meal_game.call("_process_resident_gathering", 0.1)
+	assert(not bool(meal_game.get("resident_gather_pending")), "the dawn worker must physically return before taking up evening cooking")
+	assert(_count_events(meal_game.get("world_events"), "resident_gather_delivered") == 1 and int(meal_game.get("wood")) + int(meal_game.get("stored_wood")) == meal_wood_before_delivery + 2, "the completed trip must deliver the two real planks exactly once")
+	assert(int(meal_game.get("raw_shellfish")) == meal_shellfish_before_delivery and bool(meal_game.get("economy").audit().ok), "gathering wood must preserve cooking ingredients and the resource ledger")
 	meal_game.set("weather_phase", 2)
 	meal_game.call("_update_traveler_schedule")
 	assert(str(meal_game.get("traveler_action")) == "准备潮滩晚饭", "at dusk the resident should choose the hearth when food is available; action=%s period=%d day=%d shared_day=%d raw=%d" % [str(meal_game.get("traveler_action")), int(meal_game.get("day_period")), int(meal_game.get("day_count")), int(meal_game.get("shared_meal_day")), int(meal_game.get("raw_shellfish"))])
@@ -723,7 +736,12 @@ func _run() -> void:
 	await process_frame
 	assert(int(meal_restored.get("shared_meal_count")) == 1 and int(meal_restored.get("shared_meal_day")) == 1 and int(meal_restored.get("day_count")) == 2, "the shared-meal daily limit should survive reload and be available again on the next day")
 	assert(int(meal_restored.get("stew_servings")) == 1, "a resident-prepared serving should survive reload without being consumed")
-	assert(meal_restored.get_node_or_null("ArkRoot/BuiltShelter/HearthPot") != null and meal_restored.find_child("TidalShellsNear", true, false) == null, "the hearth should reconstruct while consumed forage should remain gone")
+	assert(meal_restored.get_node_or_null("ArkRoot/BuiltShelter/HearthPot") != null, "the actual cooking hearth should reconstruct")
+	assert(int(meal_restored.get("last_shore_replenish_day")) == 2 and _count_events(meal_restored.get("world_events"), "shore_supply_replenished") == 2, "the two consumed patches should each renew once at day-two dawn, not again on load")
+	for renewed_id in ["TidalShellsNear", "TidalShellsCove"]:
+		assert(meal_restored.get_node_or_null(NodePath(renewed_id)) != null and not renewed_id in meal_restored.get("collected_ids"), "dawn-renewed forage must reconstruct with an uncollected mirror")
+		assert(int(meal_restored.get("economy").source(renewed_id).remaining) == 1, "reload must preserve exactly one new physical serving at each patch, without stacking or regranting inventory")
+	assert(int(meal_restored.get("raw_shellfish")) == 0 and meal_restored.get("economy").audit().ok, "renewed shore food stays in the world, not in the player meal inventory")
 	assert(bool(meal_restored.get("resident_keepsake_present")) and meal_restored.get_node_or_null("ArkRoot/BuiltShelter/TideShellKeepsake/PolishedShell") is MeshInstance3D, "the personal reminder should reconstruct from the saved household state")
 	assert(_count_events(meal_restored.get("world_events"), "meal_prepared") == 1 and _count_events(meal_restored.get("world_events"), "resident_meal_prepared") == 1 and _count_events(meal_restored.get("world_events"), "resident_meal_shared") == 1, "cooking and sharing should not replay on load")
 	assert(_count_events(meal_restored.get("world_events"), "resident_keepsake_placed") == 1, "loading should not replay or duplicate the keepsake placement event")
@@ -823,8 +841,14 @@ func _run() -> void:
 				wait_cause_count += 1
 				assert(int(facts.get("period", -1)) in [0, 1, 2, 3], "wait facts should preserve a valid target period")
 	assert(wait_cause_count == 4, "the event ledger should distinguish each voluntary wait from bed rest")
-	assert(int(sailmaker_game.get("day_count")) == 2 and bool(sailmaker_game.get("sailmaker_awning_raised")), "after spending a day aboard she should make a visible home improvement from her own sail scrap")
-	assert(str(sailmaker_game.get("message")).contains("缝成棚口的小雨檐"), "the new resident's work should be reported when it becomes visible")
+	assert(int(sailmaker_game.get("day_count")) == 2 and not bool(sailmaker_game.get("sailmaker_awning_raised")), "dawn makes the personal gift eligible; four T presses cannot fabricate sewing and installation")
+	assert(sailmaker_game.get_node_or_null("ArkRoot/BuiltShelter/SailmakerAwning") == null and _count_events(sailmaker_game.get("world_events"), "resident_sail_awning_raised") == 0, "calendar advancement alone must not create a mesh or completed work fact")
+	for _work_step in range(700):
+		if bool(sailmaker_game.get("sailmaker_awning_raised")):
+			break
+		sailmaker_game.call("_process", 0.05)
+	assert(bool(sailmaker_game.get("sailmaker_awning_raised")), "ordinary resident processing must physically sew, carry, and install the one-time personal contribution")
+	assert(str(sailmaker_game.get("message")).contains("雨檐"), "the new resident's work should be reported when it becomes visible")
 	assert(sailmaker_game.get_node_or_null("ArkRoot/BuiltShelter/SailmakerAwning/PatchedCanvas") is MeshInstance3D and sailmaker_game.get_node_or_null("ArkRoot/SailmakerAwningInteractable") != null, "the patched rain awning should be physical, visible, and inspectable")
 	assert(_count_events(sailmaker_game.get("world_events"), "resident_sail_awning_raised") == 1, "raising the awning should produce exactly one factual resident event")
 	sailmaker_game.call("_process", 0.5)
@@ -856,7 +880,7 @@ func _run() -> void:
 	assert(saved_traveler_deck_position.distance_to(Vector3(-1.0, 0.12, 0.85)) > 0.1 and saved_sailmaker_deck_position.distance_to(Vector3(1.15, 0.12, 0.75)) > 0.1, "the save fixture should capture both residents partway through their routines")
 	assert(restored_traveler_marker.position.distance_to(saved_traveler_deck_position) < 0.05 and restored_sailmaker_marker.position.distance_to(saved_sailmaker_deck_position) < 0.05, "both residents should resume near their saved deck positions instead of snapping back to spawn points")
 	legacy_sailmaker_state["schema_version"] = 14
-	for field in ["traveler_position", "sailmaker_position", "sailmaker_met", "sailmaker_boarded", "sailmaker_joined_day", "sailmaker_awning_raised"]:
+	for field in ["traveler_position", "sailmaker_position", "sailmaker_met", "sailmaker_boarded", "sailmaker_joined_day", "sailmaker_awning_raised", "sailmaker_awning_phase", "sailmaker_awning_sewing_elapsed", "sailmaker_awning_install_elapsed"]:
 		legacy_sailmaker_state.erase(field)
 	legacy_sailmaker_state["world_events"] = []
 	legacy_sailmaker_state["event_sequence"] = 0

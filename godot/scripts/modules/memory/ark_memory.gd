@@ -96,6 +96,35 @@ static func _plain(value: Variant, depth: int = 0) -> bool:
 		return true
 	return false
 
+## Exact equality for plain persisted facts: JSON changes integers to floats,
+## but never equates booleans, strings, or nearby coordinates with numbers.
+static func facts_equal(left: Variant, right: Variant, depth: int = 0) -> bool:
+	if depth > 32:
+		return false
+	if (left is int and right is float) or (left is float and right is int):
+		var integer: int = left if left is int else right
+		var number: float = right if right is float else left
+		# Compare through the integer only after range/integrality checks; casting
+		# the integer to float would collapse distinct values above 2^53.
+		return is_finite(number) and number >= -9223372036854775808.0 and number < 9223372036854775808.0 and number == floor(number) and int(number) == integer
+	if typeof(left) != typeof(right):
+		return false
+	if left is Dictionary:
+		if left.size() != right.size():
+			return false
+		for key in left:
+			if not key is String or not right.has(key) or not facts_equal(left[key], right[key], depth + 1):
+				return false
+		return true
+	if left is Array:
+		if left.size() != right.size():
+			return false
+		for index in range(left.size()):
+			if not facts_equal(left[index], right[index], depth + 1):
+				return false
+		return true
+	return _plain(left, depth) and _plain(right, depth) and left == right
+
 static func _valid_event(value: Variant) -> bool:
 	if not value is Dictionary or not _plain(value) or not value.get("id") is String or value.id.is_empty() or not value.get("facts") is Dictionary:
 		return false

@@ -29,7 +29,11 @@ func _transaction(kind: String, operation_id: String, owner: String, amounts: Di
 	if _receipts.has(operation_id):
 		var previous: Dictionary = _receipts[operation_id].duplicate(true)
 		previous.erase("sequence")
-		if previous != command:
+		var same_facts := structure_facts_equal(previous.facts, command.facts)
+		previous.erase("facts")
+		var command_header := command.duplicate()
+		command_header.erase("facts")
+		if not same_facts or not Memory.facts_equal(previous, command_header):
 			return {"ok": false, "code": "operation_conflict"}
 		return {"ok": true, "duplicate": true, "facts": facts.duplicate(true)}
 	if not validate.is_valid() or (kind != "move" and (_economy == null or owner.is_empty())):
@@ -106,7 +110,7 @@ func restore(saved: Dictionary) -> bool:
 			structures[structure_id] = _project(entry.facts)[structure_id]
 	if saved.get("sequence", sequence) != sequence:
 		return false
-	if saved.get("structures", structures) != structures:
+	if not Memory.facts_equal(saved.get("structures", structures), structures):
 		return false
 	if not _economic_receipts_match(saved.receipts):
 		return false
@@ -166,3 +170,26 @@ static func _valid_structure(value: Variant) -> bool:
 		if not (number is int or number is float) or not is_finite(float(number)):
 			return false
 	return true
+
+## Position facts represent Godot Vector3 coordinates, not arbitrary doubles.
+## Compare only those validated axes at the engine's actual Vector3 precision;
+## old JSON decimal truncation must not invent a new move. Other facts stay exact.
+static func structure_facts_equal(left: Dictionary, right: Dictionary) -> bool:
+	if not Memory._plain(left) or not Memory._plain(right) or not _valid_structure_facts(left) or not _valid_structure_facts(right):
+		return false
+	return Memory.facts_equal(_coordinate_projection(left), _coordinate_projection(right))
+
+static func _coordinate_projection(facts: Dictionary) -> Dictionary:
+	var projected := facts.duplicate(true)
+	var structures: Dictionary = _project(projected)
+	for id in structures:
+		var position: Dictionary = structures[id].position
+		var coordinate := Vector3(float(position.x), float(position.y), float(position.z))
+		position.x = coordinate.x
+		position.y = coordinate.y
+		position.z = coordinate.z
+	if projected.has("structures"):
+		projected.structures = structures
+	elif projected.has("structure_id"):
+		projected = structures[projected.structure_id]
+	return projected

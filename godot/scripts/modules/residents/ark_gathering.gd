@@ -15,6 +15,11 @@ func configure(economy: RefCounted) -> void: _economy = economy
 func task(id: String) -> Dictionary: return _tasks.get(id, {}).duplicate(true)
 func active_task(resident: String) -> Dictionary: return task(str(_active.get(resident, "")))
 
+func source_in_use(source_id: String) -> bool:
+	for id in _active.values():
+		if _tasks[id].source_id == source_id: return true
+	return false
+
 func dispatch(resident: String, source_id: String, destination: String, region: String = "shore") -> Dictionary:
 	if _economy == null or resident.is_empty() or _inactive_regions.has(region): return {"ok":false,"code":"inactive"}
 	if _active.has(resident):

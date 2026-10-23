@@ -18,7 +18,7 @@ class GameVersionTests(unittest.TestCase):
         self.project.write_text('config_version=5\n[application]\nconfig/version=' + raw + '\n', encoding='utf-8')
 
     def test_authority_and_leading_zeros(self):
-        self.assertEqual(game_version.read_version(), "0.1.002")
+        self.assertEqual(game_version.read_version(), "0.1.003")
         for version in ("0.0.000", "0.1.002", "12.9.999", "999999999999999999999.8.010"):
             with self.subTest(version=version):
                 self.project_with(json.dumps(version))

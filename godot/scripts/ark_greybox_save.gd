@@ -6,7 +6,9 @@ extends RefCounted
 const FORMAT := "wendao-ark-greybox"
 const VERSION := 1
 const FILE_NAME := "ark_greybox_v1.json"
-const MAX_SCHEMA_VERSION := 34
+const MAX_SCHEMA_VERSION := 36
+const SAILMAKER_AWNING_SEW_SECONDS := 3.0
+const SAILMAKER_AWNING_INSTALL_SECONDS := 2.0
 const MAX_FILE_BYTES := 16 * 1024 * 1024
 
 var _root_path := ""
@@ -169,9 +171,58 @@ func _validate_state(state: Dictionary) -> Dictionary:
 		return {"ok": false, "code": "invalid_schema"}
 	if float(schema) > MAX_SCHEMA_VERSION:
 		return {"ok": false, "code": "unsupported_version"}
+	if int(schema) >= 35:
+		var elapsed: Variant = state.get("life_period_elapsed")
+		var renewed: Variant = state.get("last_shore_replenish_day")
+		var day: Variant = state.get("day_count")
+		if not (elapsed is float or elapsed is int) or not is_finite(float(elapsed)) or float(elapsed) < 0.0 or float(elapsed) >= 180.0:
+			return {"ok": false, "code": "invalid_state"}
+		if not _is_integer(day) or float(day) < 1 or not _is_integer(renewed) or float(renewed) < 1 or float(renewed) > float(day):
+			return {"ok": false, "code": "invalid_state"}
+	if int(schema) >= 36 and not _valid_sailmaker_awning_work(state):
+		return {"ok": false, "code": "invalid_state"}
 	if not _json_safe(state):
 		return {"ok": false, "code": "invalid_state"}
 	return {"ok": true}
+
+
+func _valid_sailmaker_awning_work(state: Dictionary) -> bool:
+	var phase: Variant = state.get("sailmaker_awning_phase")
+	var sewing: Variant = state.get("sailmaker_awning_sewing_elapsed")
+	var installing: Variant = state.get("sailmaker_awning_install_elapsed")
+	if not phase is String or not phase in ["unstarted", "to_sew", "sewing", "carrying", "installing", "complete"]:
+		return false
+	for timer in [sewing, installing]:
+		if not (timer is int or timer is float) or not is_finite(float(timer)) or float(timer) < 0.0:
+			return false
+	if float(sewing) > SAILMAKER_AWNING_SEW_SECONDS or float(installing) > SAILMAKER_AWNING_INSTALL_SECONDS:
+		return false
+	for field in ["sailmaker_met", "sailmaker_boarded", "sailmaker_awning_raised", "shelter_built"]:
+		if not state.get(field) is bool:
+			return false
+	var completed: bool = state.sailmaker_awning_raised
+	if completed != (phase == "complete"):
+		return false
+	if phase in ["unstarted", "to_sew", "complete"] and (float(sewing) != 0.0 or float(installing) != 0.0):
+		return false
+	if phase == "sewing" and (float(sewing) >= SAILMAKER_AWNING_SEW_SECONDS or float(installing) != 0.0):
+		return false
+	if phase in ["carrying", "installing"] and float(sewing) != SAILMAKER_AWNING_SEW_SECONDS:
+		return false
+	if phase == "carrying" and float(installing) != 0.0:
+		return false
+	if phase == "installing" and float(installing) >= SAILMAKER_AWNING_INSTALL_SECONDS:
+		return false
+	if phase != "unstarted":
+		if not state.sailmaker_met or not state.sailmaker_boarded or not state.shelter_built:
+			return false
+		# Completed legacy gifts contain no reconstructed sewing history; only
+		# unfinished work requires explicit next-day eligibility.
+		if phase != "complete":
+			var joined: Variant = state.get("sailmaker_joined_day")
+			if not _is_integer(joined) or float(joined) < 0.0 or float(joined) >= float(state.day_count):
+				return false
+	return true
 
 
 func _is_integer(value: Variant) -> bool:

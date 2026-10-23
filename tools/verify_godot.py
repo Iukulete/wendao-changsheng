@@ -29,6 +29,36 @@ RENDER_SCRIPT = "res://tests/ark_render_capture_test.gd"
 RENDER_CAPTURES = {"menu_1280x720.png": (1280, 720), "menu_1440x900.png": (1440, 900),
                    "ark_1280x720.png": (1280, 720), "menu_return_1280x720.png": (1280, 720)}
 
+EMMA_CAPTURES = {name + ".png": (1280, 720) for name in (
+    "01_game_walk", "02_game_idle", "03_emma_front", "04_emma_back",
+    "05_emma_side", "05b_emma_side_stride", "06_emma_swim_pose",
+    *(f"{clip}_{frame:02d}" for clip in ("walk", "run") for frame in range(48)))}
+
+
+def clear_emma_captures(directory: Path) -> None:
+    """Old evidence must never satisfy a new run that exits before capturing."""
+    directory.mkdir(parents=True, exist_ok=True)
+    for name in EMMA_CAPTURES:
+        (directory / name).unlink(missing_ok=True)
+
+
+def verify_emma_captures(directory: Path) -> None:
+    """Check complete evidence and motion, not subjective animation quality."""
+    hashes: dict[str, str] = {}
+    for name, dimensions in EMMA_CAPTURES.items():
+        path = directory / name
+        data = path.read_bytes()
+        if len(data) < 10000 or data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+            raise RuntimeError(f"Missing, tiny or invalid Emma capture: {path}")
+        if struct.unpack(">II", data[16:24]) != dimensions:
+            raise RuntimeError(f"Emma capture dimensions differ from {dimensions}: {path}")
+        hashes[name] = hashlib.sha256(data).hexdigest()
+    # Two cycles intentionally repeat poses; requiring every frame to differ
+    # would reject valid evidence. Reject an entirely frozen sequence instead.
+    for clip in ("walk", "run"):
+        if len({hashes[f"{clip}_{frame:02d}.png"] for frame in range(48)}) < 2:
+            raise RuntimeError(f"Emma {clip} captures show no frame changes")
+
 
 def regression_scripts() -> list[str]:
     return canonical_tests(ROOT)
@@ -188,7 +218,15 @@ def main() -> int:
             run([*render_common, *display, "--rendering-method", "gl_compatibility",
                  "--resolution", "64x64", "--quit-after", "10000", "--script", f"res://tests/{name}.gd"],
                 name, logs, env, 600, name.upper() + "_OK:")
-        print(f"ARK_RENDER_VALIDATION_OK: menu/Ark, Gerstner geometry/normals and pixel presentation; {captures}")
+        emma_captures = ROOT / ".tmp/emma-preview"
+        clear_emma_captures(emma_captures)
+        env["ARK_EMMA_ARTIFACT_ROOT"] = emma_captures.as_posix()
+        run([*render_common, *display, "--rendering-method", "gl_compatibility",
+             "--resolution", "64x64", "--quit-after", "10000", "--script",
+             "res://tests/ark_emma_protagonist_test.gd"],
+            "ark_emma_protagonist_render", logs, env, 600, "ARK_EMMA_PROTAGONIST_TEST_OK:")
+        verify_emma_captures(emma_captures)
+        print(f"ARK_RENDER_VALIDATION_OK: menu/Ark, Gerstner geometry/normals, pixel and Emma presentation; {captures}")
         return 0
     run([sys.executable, "-X", "utf8", "-m", "unittest", "discover", "-s", "tools", "-p", "test_*.py"],
         "python_guards", logs, env, 600)

@@ -96,10 +96,10 @@ func _run() -> void:
 	game.set("shelter_built", true)
 	game.set("traveler_boarded", true)
 	game.set("sailmaker_boarded", true)
-	assert(int(game.call("_resident_capacity")) == 2 and int(game.call("_resident_occupancy")) == 2, "the first habitable ark should have finite resident berths")
-	assert(not bool(game.call("_can_board_resident", "future_resident")), "the ark should refuse residents beyond its physical berth capacity")
+	assert(int(game.call("_resident_capacity")) == 2 and int(game.call("_resident_occupancy")) == 2, "the initial refuge should have finite NPC admission, separate from dedicated beds")
+	assert(not bool(game.call("_can_board_resident", "future_resident")), "the ark should refuse residents beyond its finite refuge admission limit")
 	game.set("raft_extension_built", true)
-	assert(int(game.call("_resident_capacity")) == 3 and bool(game.call("_can_board_resident", "future_resident")), "a real ark expansion should add one resident berth")
+	assert(int(game.call("_resident_capacity")) == 3 and bool(game.call("_can_board_resident", "future_resident")), "a real ark expansion should add one dedicated berth and admission place")
 	game.set("raft_extension_built", false)
 	game.set("sailmaker_boarded", false)
 	game.set("weather_phase", 2)
@@ -156,15 +156,17 @@ func _run() -> void:
 
 	for _period in range(4):
 		game.call("_advance_world_period", "resident_gather_race_test")
-	assert(bool(game.get("resident_gather_pending")) and str(game.get("resident_gather_target_id")) == "DriftwoodShore", "the worker should autonomously use the next real nearby pile on a later day")
+	assert(bool(game.get("resident_gather_pending")) and str(game.get("resident_gather_target_id")) == "DriftwoodNear", "the worker should autonomously select the nearest newly replenished physical pile on a later day")
+	assert(_count_events(game, "shore_supply_replenished") == 1 and int(game.get("last_shore_replenish_day")) == 3, "the collected starter pile renews exactly once on the following dawn")
+	assert(int(game.get("economy").source("DriftwoodNear").remaining) == 2 and not "DriftwoodNear" in game.get("collected_ids"), "a second shift must reserve two new world planks, not replay its completed cargo")
 	var shore_pile: Node3D = null
 	for entry in game.get("interactables") as Array:
-		if str(entry.get("item_id", "")) == "DriftwoodShore":
+		if str(entry.get("item_id", "")) == "DriftwoodNear":
 			shore_pile = entry.get("node") as Node3D
-	assert(shore_pile != null, "the second wood source should still exist before either collector reaches it")
+	assert(shore_pile != null, "the replenished wood source must physically exist before either collector reaches it")
 	(game.get("player") as CharacterBody3D).global_position = shore_pile.global_position + Vector3(0.0, 1.0, 0.0)
 	game.call("_interact")
-	assert((game.get("collected_ids") as Array).has("DriftwoodShore"), "the player should remain able to take a source before the worker arrives")
+	assert((game.get("collected_ids") as Array).has("DriftwoodNear"), "the player should remain able to take a source before the worker arrives")
 	for _step in range(160):
 		if not bool(game.get("resident_gather_pending")):
 			break
@@ -172,13 +174,26 @@ func _run() -> void:
 		await physics_frame
 	assert(not bool(game.get("resident_gather_pending")) and int(game.get("wood")) == 5 and int(game.get("stored_wood")) == 0, "a resident must not duplicate a resource collected by the player in a race")
 	assert(_count_events(game, "resident_gather_cancelled") == 1, "a vanished source should cancel the work trip with an auditable reason")
+	# Sail through dawn so no job is claimed until the player has depleted both
+	# renewed nearby wood sites that same morning. This preserves fallback coverage.
+	game.call("_toggle_sailing")
+	assert(bool(game.get("sailing_mode")))
 	for _period in range(4):
 		game.call("_advance_world_period", "resident_gather_departure_test")
+	assert(not bool(game.get("resident_gather_pending")))
+	game.call("_toggle_sailing")
+	for depleted_id in ["DriftwoodNear", "DriftwoodShore"]:
+		var pile := game.get_node(NodePath(depleted_id)) as Node3D
+		(game.get("player") as CharacterBody3D).global_position = pile.global_position + Vector3(0, 1, 0)
+		game.call("_interact")
+		assert(int(game.get("economy").source(depleted_id).remaining) == 0)
+	assert(int(game.get("wood")) == 9 and int(game.call("_replenish_shore_supplies")) == 0, "same-day depletion must remain depleted and each actual pickup adds only its two planks")
+	assert(bool(game.call("_begin_resident_daily_gather")))
 	assert(bool(game.get("resident_gather_pending")) and str(game.get("resident_gather_target_id")) == "TidalShellsNear", "the worker should fall back to the next real local resource after nearby wood is depleted")
 	game.call("_toggle_sailing")
 	assert(bool(game.get("sailing_mode")) and not bool(game.get("resident_gather_pending")), "the player must be free to sail without waiting for a resident work trip")
 	assert((game.get("interactables") as Array).any(func(entry: Dictionary) -> bool: return str(entry.get("item_id", "")) == "TidalShellsNear"), "recalling before collection must leave the world resource available")
-	assert(int(game.get("wood")) == 5 and int(game.get("stored_wood")) == 0 and int(game.get("raw_shellfish")) == 0 and marker.get_parent() == game.get_node("ArkRoot"), "recall should preserve usable supplies, avoid phantom collection, and bring the resident aboard")
+	assert(int(game.get("wood")) == 9 and int(game.get("stored_wood")) == 0 and int(game.get("raw_shellfish")) == 0 and game.get("economy").audit().ok and marker.get_parent() == game.get_node("ArkRoot"), "recall should preserve usable supplies, avoid phantom collection, and bring the resident aboard")
 	game.queue_free()
 	await process_frame
 	save_helper.clear_for_test()

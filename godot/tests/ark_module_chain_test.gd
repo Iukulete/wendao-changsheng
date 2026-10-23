@@ -16,7 +16,60 @@ func spawn() -> Node3D:
 func dispose(game: Node) -> void:
 	game.free()
 	await process_frame
+func test_numeric_fact_idempotence() -> void:
+	var Memory = preload("res://scripts/modules/memory/ark_memory.gd")
+	assert(Memory.facts_equal({"a": [1, 2.5]}, {"a": [1.0, 2.5]}))
+	assert(not Memory.facts_equal(1, true))
+	assert(not Memory.facts_equal(1, "1"))
+	assert(not Memory.facts_equal([1, 2], [2, 1]))
+	assert(not Memory.facts_equal({"a": 1}, {"b": 1}))
+	assert(not Memory.facts_equal(9007199254740993, 9007199254740992.0))
+	assert(Memory.facts_equal(9007199254740992, 9007199254740992.0))
+	var Construction = preload("res://scripts/modules/construction/ark_construction.gd")
+	var construction = Construction.new()
+	var facts := {"structures": {"shelter": {"built": true, "position": {"x": 1, "y": Vector3(0, 0.12, 0).y, "z": -2}, "quarter_turns": 1}}, "nested": [1, {"value": 2}]}
+	assert(construction.move("numeric-replay", func(): return true, facts).ok)
+	for full_precision in [false, true]:
+		var serialized: Dictionary = JSON.parse_string(JSON.stringify(construction.snapshot(), "", true, full_precision))
+		var candidate = Construction.new()
+		assert(candidate.restore(serialized))
+		var untouched := candidate.snapshot()
+		assert(candidate.move("numeric-replay", func(): return true, facts).get("duplicate", false), "Vector3 coordinates replay after both legacy and full-precision JSON")
+		assert(Construction.structure_facts_equal({"structures": candidate.state()}, {"structures": construction.state()}))
+		assert(Memory.facts_equal(candidate.snapshot(), untouched), "coordinate comparison never rewrites persisted facts or receipt sequence")
+	var saved: Dictionary = JSON.parse_string(JSON.stringify(construction.snapshot()))
+	var restored = Construction.new()
+	assert(restored.restore(saved))
+	var replay: Dictionary = restored.move("numeric-replay", func(): assert(false, "duplicate must not validate again"), facts)
+	assert(replay.get("duplicate", false), "JSON numeric representation must not conflict on identical replay")
+	assert(restored.snapshot().sequence == 1 and restored.snapshot().receipts.size() == 1)
+	var changed := facts.duplicate(true)
+	changed.structures.shelter.position.x = 1.000001
+	assert(restored.move("numeric-replay", func(): return true, changed).code == "operation_conflict")
+	changed = facts.duplicate(true)
+	changed.nested[0] = true
+	assert(restored.move("numeric-replay", func(): return true, changed).code == "operation_conflict")
+	changed = facts.duplicate(true)
+	changed.structures.shelter.position.x = true
+	assert(restored.move("numeric-replay", func(): return true, changed).code == "invalid_command")
+	for value in [true, "1", 1.000000001]:
+		var broken := saved.duplicate(true)
+		broken.structures.shelter.position.x = value
+		assert(not restored.restore(broken), "corrupt projected structures must reject bool, string and unequal number")
+	var bad_built := saved.duplicate(true)
+	bad_built.structures.shelter.built = 1
+	assert(not restored.restore(bad_built), "projected bool cannot become integer")
+	bad_built = saved.duplicate(true)
+	bad_built.receipts["numeric-replay"].facts.structures.shelter.built = 1
+	bad_built.structures.shelter.built = 1
+	assert(not restored.restore(bad_built), "receipt validation still rejects malformed built flag")
+	assert(Memory.facts_equal(restored.snapshot(), saved), "failed restore must preserve committed facts")
+	var mixed := saved.duplicate(true)
+	mixed.structures.shelter.position.x = 1
+	assert(restored.restore(mixed), "equal integer/float facts must restore")
+
 func run() -> void:
+	test_numeric_fact_idempotence()
 	save_root = ProjectSettings.globalize_path("res://../.local/test_save_module_chain").simplify_path()
 	assert(Paths.is_safe_save_root(save_root))
 	var helper = Save.new(save_root)
@@ -32,7 +85,7 @@ func run() -> void:
 	for i in range(300): game._record_world_event("weather_observed", {"index": i})
 	assert(game._latest_shared_meal_included_sailmaker(), "durable recorded meal survives short-log clipping")
 	var saved: Dictionary = game._build_save_state()
-	assert(saved.schema_version == 34 and game.MemoryScript._plain(saved))
+	assert(saved.schema_version == 36 and game.MemoryScript._plain(saved))
 	assert(game.economy.audit().ok)
 	assert(game._save_progress())
 	await dispose(game)

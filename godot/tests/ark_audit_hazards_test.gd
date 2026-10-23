@@ -26,7 +26,9 @@ func _run() -> void:
 	assert(Vector2(delta.x, delta.z).dot(Vector2(-0.52, -0.85).normalized()) > 0.25, "the reef surge must actually displace a swimmer across subsequent physics frames")
 	assert(int(game.get("player_health")) == 4, "the reef surge remains a non-damaging warning")
 	game.call("_clear_player_knockback")
-	player.global_position = Vector3(95.65, 1.1, 85.88)
+	# Explicit hit fixture measured from the live, rotated physical vent.
+	var vent_position := (game.get_node("PressureWreck/BentVent") as Node3D).global_position
+	player.global_position = Vector3(vent_position.x + 2.0, 1.1, vent_position.z)
 	player.velocity = Vector3.ZERO
 	game.set("is_swimming", false)
 	game.call("_process_pressure_vent", 0.0)

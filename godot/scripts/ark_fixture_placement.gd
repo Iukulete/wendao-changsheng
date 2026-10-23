@@ -32,3 +32,25 @@ static func supported(position: Vector3, half: Vector2) -> bool:
 static func approach(position: Vector3, id: String, turns: int) -> Vector3:
 	var original: Vector2 = HALF_SIZES.get(id, Vector2.ZERO)
 	return position + Vector3(0.0, 0.0, original.y + 0.42).rotated(Vector3.UP, normalize_turns(turns) * PI / 2.0)
+
+## A complete proposed home, before any of its Nodes exist. All furniture is
+## considered solid, including legacy fixtures, so validation cannot rely on
+## walking through an unedited legacy crate. World obstacles remain adapter-owned.
+static func home_grid(shelter: Vector3, fixtures: Array[Dictionary], radius: float, blocked: Callable) -> Dictionary:
+	var minimum := Vector2(-2.5, -2.0)
+	var cell_size := 0.25
+	var grid := AStarGrid2D.new()
+	grid.region = Rect2i(0, 0, 21, 16)
+	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	grid.update()
+	for z in range(16):
+		for x in range(21):
+			var point := minimum + Vector2(x, z) * cell_size
+			var solid := home_wall_contains(point, shelter, radius) or bool(blocked.call(point, radius))
+			for fixture in fixtures:
+				solid = solid or contains_actor(point, fixture.position, half_size(fixture.id, fixture.turns), radius)
+			grid.set_point_solid(Vector2i(x, z), solid)
+	return {"grid": grid, "minimum": minimum, "cell_size": cell_size, "start": Vector2i(10, 15), "actor_radius": radius}
+
+static func home_wall_contains(point: Vector2, shelter: Vector3, radius: float) -> bool:
+	return contains_actor(point, shelter + Vector3(0, 0, -1.12), Vector2(1.5, 0.07), radius) or contains_actor(point, shelter + Vector3(-1.42, 0, 0), Vector2(0.07, 1.1), radius) or contains_actor(point, shelter + Vector3(1.42, 0, 0), Vector2(0.07, 1.1), radius)

@@ -24,6 +24,7 @@ var previous_parent_id := 0
 var phase := 0.0
 var idle_clock := 0.0
 var swim_clock := 0.0
+var swim_idle_clock := 0.0
 var stride := 0.0
 var swimming := false
 var swim_blend := 0.0
@@ -82,7 +83,10 @@ func update_pose(motion: Vector3, delta: float, in_water: bool) -> void:
     var swim_idle: Animation = LOCOMOTION.get_animation("Swim_Idle_Loop")
     var swim: Animation = LOCOMOTION.get_animation("Swim_Fwd_Loop")
     idle_clock = fmod(idle_clock + delta, idle.length)
+    # Clips have different durations; wrapping the idle clock by the forward
+    # clip would truncate treading water and snap its pose every 1.33 seconds.
     swim_clock = fmod(swim_clock + delta, swim.length)
+    swim_idle_clock = fmod(swim_idle_clock + delta, swim_idle.length)
     var reference_speed := lerpf(float(walk.get_meta("reference_speed")), float(running.get_meta("reference_speed")), run_blend)
     var playback_rate := clampf(speed / maxf(reference_speed, 0.1), 0.25, 1.7)
     var cycle_length := lerpf(walk.length, running.length, run_blend)
@@ -96,12 +100,12 @@ func update_pose(motion: Vector3, delta: float, in_water: bool) -> void:
             var resting := idle.rotation_track_interpolate(track, idle_clock)
             var moving := walk.rotation_track_interpolate(track, walk_time).slerp(running.rotation_track_interpolate(track, run_time), run_blend)
             var land := resting.slerp(moving, stride)
-            var water := swim_idle.rotation_track_interpolate(track, fmod(swim_clock, swim_idle.length)).slerp(swim.rotation_track_interpolate(track, swim_clock), stride)
+            var water := swim_idle.rotation_track_interpolate(track, swim_idle_clock).slerp(swim.rotation_track_interpolate(track, swim_clock), stride)
             skeleton.set_bone_pose_rotation(index, land.slerp(water, swim_blend))
         elif entry.type == Animation.TYPE_POSITION_3D:
             var moving := walk.position_track_interpolate(track, walk_time).lerp(running.position_track_interpolate(track, run_time), run_blend)
             var land := idle.position_track_interpolate(track, idle_clock).lerp(moving, stride)
-            var water := swim_idle.position_track_interpolate(track, fmod(swim_clock, swim_idle.length)).lerp(swim.position_track_interpolate(track, swim_clock), stride)
+            var water := swim_idle.position_track_interpolate(track, swim_idle_clock).lerp(swim.position_track_interpolate(track, swim_clock), stride)
             skeleton.set_bone_pose_position(index, land.lerp(water, swim_blend))
     skeleton.force_update_all_bone_transforms()
     # A per-clip calibrated floor offset preserves the authored pelvis bounce

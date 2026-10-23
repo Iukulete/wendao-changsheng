@@ -1,6 +1,6 @@
 extends Node3D
 
-## Standalone, art-free proof of the open-world home-building direction.
+## Standalone proof of the open-world home-building direction.
 ## This scene intentionally does not replace the existing game's main scene yet.
 
 const GatheringScript = preload("res://scripts/modules/residents/ark_gathering.gd")
@@ -22,6 +22,21 @@ var _construction_sequence := 0
 var _new_water_session := false
 const FixturePlacement = preload("res://scripts/ark_fixture_placement.gd")
 
+# Online life only: one period every three active minutes; no offline catch-up.
+const LIFE_PERIOD_SECONDS := 180.0
+const SHORE_SUPPLIES := [
+	["DriftwoodNear", "wood", Vector3(-4.0, 0.15, 1.5), 2],
+	["DriftwoodShore", "wood", Vector3(9.0, 0.22, -4.0), 2],
+	["DriftwoodRidge", "wood", Vector3(19.0, 0.22, -5.5), 3],
+	["MoonbackDriftwood", "wood", Vector3(-20.0, 0.22, 18.0), 2],
+	["JadeSailDriftwood", "wood", Vector3(-47.0, 0.22, -48.0), 3],
+	["TidalShellsNear", "shellfish", Vector3(8.4, 0.1, -6.1), 1],
+	["TidalShellsCove", "shellfish", Vector3(13.8, 0.12, -11.8), 1],
+	["MoonbackTidalShells", "shellfish", Vector3(-31.0, 0.12, 27.0), 2],
+	["JadeSailTidalShells", "shellfish", Vector3(-60.0, 0.12, -49.0), 2],
+	["JadeSailTidalShellsWest", "shellfish", Vector3(-48.0, 0.12, -50.5), 1],
+	["JadeSailTidalShellsNorth", "shellfish", Vector3(-56.0, 0.12, -39.5), 1],
+]
 const WALK_SPEED := 1.2
 const SPRINT_SPEED := 5.0
 const SWIM_SPEED := 2.9
@@ -66,6 +81,15 @@ const GUEST_CABIN_WOOD_COST := 3
 const GUEST_CABIN_FRAME_COST := 1
 const PRESSURE_GALLEY_WOOD_COST := 3
 const GUEST_CABIN_SAILMAKER_POSITION := Vector3(-0.85, 0.12, -4.34)
+# These clear floor positions are temporary refuge, not extra beds. The Cot
+# remains the player's; dedicated resident accommodation comes from expansion.
+const TIDEKEEPER_REFUGE_REST_OFFSET := Vector3(0.5, 0.12, -0.5)
+const SAILMAKER_REFUGE_REST_OFFSET := Vector3(-0.72, 0.12, 0.25)
+# Keep the full-size meal mat left of the player's Cot, with one resident
+# approaching each long edge rather than putting a body against the bed.
+const SHARED_MEAL_MAT_OFFSET := Vector3(-0.55, 0.25, 0.4)
+const TIDEKEEPER_SHARED_MEAL_OFFSET := Vector3(-0.95, 0.12, -0.15)
+const SAILMAKER_SHARED_MEAL_OFFSET := Vector3(0.05, 0.12, 0.95)
 const TIDEKEEPER_BOX_SHORE_POSITION := Vector3(14.25, 0.08, -6.45)
 const TIDEKEEPER_BOX_ARK_POSITION := Vector3(2.15, 0.12, -0.45)
 const RESIDENT_AUTO_GATHER_RADIUS := 11.0
@@ -95,9 +119,22 @@ const WATER_FLOAT_ROOT_Y := WATER_SURFACE_Y - 0.45
 const PLAYER_WORLD_EDGE_LIMIT := 140.0
 const PLAYER_WORLD_EDGE_RELEASE_MARGIN := 4.0
 const SaveScript = preload("res://scripts/ark_greybox_save.gd")
+const SAILMAKER_AWNING_SEW_SECONDS := SaveScript.SAILMAKER_AWNING_SEW_SECONDS
+const SAILMAKER_AWNING_INSTALL_SECONDS := SaveScript.SAILMAKER_AWNING_INSTALL_SECONDS
+const SAILMAKER_AWNING_MAX_STEP := 0.1
+const SAILMAKER_AWNING_ARRIVAL_TOLERANCE := 0.06
+const SAILMAKER_AWNING_ROUTE_RETRY_SECONDS := 0.5
+const SAILMAKER_AWNING_SEW_OFFSET := Vector3(-0.72, 0.12, 0.9)
+# Stand outside the future canvas footprint, including real head/face extents
+# and the arrival tolerance, rather than creating the old low awning through her.
+const SAILMAKER_AWNING_INSTALL_OFFSET := Vector3(-0.2, 0.12, 0.2)
+# Clear both residents at the existing refuge/meal positions, below the unchanged roof.
+const SAILMAKER_AWNING_CANVAS_OFFSET := Vector3(0.0, 1.95, -0.72)
 const WorldChartScript = preload("res://scripts/ark_world_chart.gd")
 const UI_FONT = WorldChartScript.UI_FONT
 const LandmassBuilderScript = preload("res://scripts/ark_landmass_builder.gd")
+const SurfaceSampleScript = preload("res://scripts/presentation/ark_surface_sample.gd")
+var surface_sample = SurfaceSampleScript.new()
 
 enum WeatherPhase { FORECAST, STORM, AFTER }
 enum DayPeriod { MORNING, DAY, EVENING, NIGHT }
@@ -312,6 +349,11 @@ var sailmaker_boarded := false
 var sailmaker_joined_day := 0
 var sailmaker_choice_pending := false
 var sailmaker_awning_raised := false
+var sailmaker_awning_phase := "unstarted"
+var sailmaker_awning_sewing_elapsed := 0.0
+var sailmaker_awning_install_elapsed := 0.0
+var sailmaker_awning_route_retry_remaining := 0.0
+var sailmaker_awning_route_starts_blocked := false
 var sailmaker_marker: Node3D
 var sailmaker_body: Node3D
 var sailmaker_target_position := Vector3.ZERO
@@ -327,6 +369,8 @@ var jade_sail_keeper_body: Node3D
 var jade_sail_keeper_action := ""
 var jade_sail_keeper_motion_clock := 0.0
 var avatar_visual: Node3D
+var life_period_elapsed := 0.0
+var last_shore_replenish_day := 1
 var day_count := 1
 var day_period := DayPeriod.MORNING
 var world_events: Array[Dictionary] = []
@@ -353,6 +397,7 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	_step_water(_delta)
+	_tick_life_clock(_delta)
 	if hud_drawer and hud_drawer.visible:
 		if player:
 			player.velocity = Vector3.ZERO
@@ -419,7 +464,9 @@ func _physics_process(_delta: float) -> void:
 		player.velocity.y = 0.0
 	elif not player.is_on_floor():
 		player.velocity.y -= 22.0 * _delta
-	else:
+	elif player.velocity.y <= 0.0:
+		# Preserve the positive launch set by Space until move_and_slide leaves
+		# the floor; only resting/downward grounded motion needs the floor bias.
 		player.velocity.y = -0.1
 	player.move_and_slide()
 	_apply_player_world_edge()
@@ -428,7 +475,9 @@ func _physics_process(_delta: float) -> void:
 	_process_pressure_vent(_delta)
 	if avatar_visual:
 		if move.length_squared() > 0.001:
-			avatar_visual.rotation.y = lerp_angle(avatar_visual.rotation.y, atan2(move.x, move.z), 1.0 - exp(-12.0 * _delta))
+			# Input/velocity are world-space; the avatar inherits the vessel/actor basis.
+			var local_direction := avatar_visual.get_parent_node_3d().global_basis.inverse() * move
+			avatar_visual.rotation.y = lerp_angle(avatar_visual.rotation.y, atan2(local_direction.x, local_direction.z), 1.0 - exp(-12.0 * _delta))
 	if was_swimming != is_swimming:
 		_update_hud()
 	_refresh_refuge_state()
@@ -544,14 +593,15 @@ func _toggle_sailing() -> void:
 		message = "先确认或取消正在进行的施工，再回到舵位启航。"
 		_update_hud()
 		return
-	if weather_phase != WeatherPhase.AFTER:
-		message = "风雨尚未过去，先把这段浅滩的避风与修理安排妥当，再离岸迁徙。"
+	if weather_phase == WeatherPhase.STORM:
+		message = "风雨正急，暂时不能掌舵；仙舟留在当前海面。按 R 等雨势过去，再检查筏舷。"
 	elif raft_edge_damaged:
 		message = "筏舷还没修牢，暂时不能安全掌舵。先补好受损处。"
 	else:
 		var resident_recalled := _recall_resident_gatherer("ark_departure")
 		_clear_player_knockback()
 		sailing_mode = true
+		player.velocity = Vector3.ZERO
 		_pause_shared_table_meal()
 		_record_world_event("ark_sailing_started", {"position": _position_facts(ark_root.global_position)})
 		message = "你握住舵柄。W/S 前后航行，A/D 转向；再按 E 或 Esc 离舵。靠近岸礁時船身会被挡住。"
@@ -722,24 +772,42 @@ func _refresh_reef_beast_visual() -> void:
 				sign.text = "礁背兽 %d/%d · 碎壳拖痕" % [reef_beast_health, REEF_BEAST_MAX_HEALTH]
 
 
+func _pressure_vent_source() -> Node3D:
+	var wreck := get_node_or_null("PressureWreck") as Node3D
+	if wreck == null or wreck.is_queued_for_deletion() or not wreck.is_inside_tree():
+		return null
+	var vent := wreck.get_node_or_null("BentVent") as Node3D
+	if vent == null or vent.is_queued_for_deletion() or not vent.is_inside_tree():
+		return null
+	return vent
+
+
 func _process_pressure_vent(delta: float) -> void:
 	if player == null:
+		return
+	var vent := _pressure_vent_source()
+	if vent == null or pressure_wreck_searched:
+		# An absent or unloading wreck must never leave a phantom hazard behind.
+		pressure_vent_warning_active = false
+		pressure_vent_warning_remaining = 0.0
+		pressure_vent_cooldown_remaining = 0.0
+		pressure_vent_burst_remaining = 0.0
+		var inactive_steam := get_node_or_null("PressureWreck/SteamBurst") as GPUParticles3D
+		if inactive_steam:
+			inactive_steam.emitting = false
+		_refresh_pressure_vent_visual()
 		return
 	pressure_vent_burst_remaining = maxf(0.0, pressure_vent_burst_remaining - maxf(0.0, delta))
 	if pressure_vent_burst_remaining <= 0.0:
 		var steam := get_node_or_null("PressureWreck/SteamBurst") as GPUParticles3D
 		if steam:
 			steam.emitting = false
-	var vent_position := PRESSURE_WRECK_POSITION + Vector3(1.65, 0.0, -0.12)
+	# Damage, knockback, event facts and the ground telegraph share this live XZ
+	# center, including the wreck's rotation and any authored vent displacement.
+	var vent_position := vent.global_position
 	var player_xz := Vector2(player.global_position.x, player.global_position.z)
 	var vent_xz := Vector2(vent_position.x, vent_position.z)
 	var distance := player_xz.distance_to(vent_xz)
-	if pressure_wreck_searched:
-		pressure_vent_warning_active = false
-		pressure_vent_warning_remaining = 0.0
-		pressure_vent_burst_remaining = 0.0
-		_refresh_pressure_vent_visual()
-		return
 	if sailing_mode or is_swimming or distance > PRESSURE_VENT_NOTICE_RADIUS:
 		if pressure_vent_warning_active:
 			pressure_vent_warning_active = false
@@ -755,8 +823,8 @@ func _process_pressure_vent(delta: float) -> void:
 	if not pressure_vent_warning_active:
 		pressure_vent_warning_active = true
 		pressure_vent_warning_remaining = PRESSURE_VENT_WINDUP_SECONDS
-		_record_world_event("pressure_vent_warning", {"site_id": "steam_wreck_islet", "position": _position_facts(player.global_position), "windup_seconds": PRESSURE_VENT_WINDUP_SECONDS, "damage": 0})
-		message = "蒸汽阀发出尖锐的两段鸣响，喷口正在蓄压！离开亮起的铜管附近就能避开。"
+		_record_world_event("pressure_vent_warning", {"site_id": "steam_wreck_islet", "position": _position_facts(player.global_position), "source_position": _position_facts(vent_position), "radius": PRESSURE_VENT_DANGER_RADIUS, "windup_seconds": PRESSURE_VENT_WINDUP_SECONDS, "damage": 0})
+		message = "蒸汽阀发出尖锐的两段鸣响，喷口正在蓄压！退到地面亮起的警示圈外，就能避开热汽。"
 		_refresh_pressure_vent_visual()
 		_save_progress()
 		_update_hud()
@@ -780,11 +848,11 @@ func _process_pressure_vent(delta: float) -> void:
 			away = Vector2(-1.0, 0.0)
 		away = away.normalized()
 		_push_player_from_environment(Vector3(away.x, 0.0, away.y) * 5.0)
-		_record_world_event("pressure_vent_hit", {"site_id": "steam_wreck_islet", "damage": health_before - player_health, "player_health_after": player_health, "inventory_lost": false, "recovery": "shelter_cot_or_shared_meal"})
+		_record_world_event("pressure_vent_hit", {"site_id": "steam_wreck_islet", "position": _position_facts(player.global_position), "source_position": _position_facts(vent_position), "radius": PRESSURE_VENT_DANGER_RADIUS, "damage": health_before - player_health, "player_health_after": player_health, "inventory_lost": false, "recovery": "shelter_cot_or_shared_meal"})
 		if player_health <= 0:
 			_knock_out_player_from_pressure_vent()
 		else:
-			message = "高压热汽擦过肩背，生命 %d/%d。你被推离喷口，没有丢失行囊；退到安全距离，等阀门重新泄压。" % [player_health, PLAYER_MAX_HEALTH]
+			message = "高压热汽擦过肩背，生命 %d/%d。你被推离喷口，没有丢失行囊；下次蓄压时退到警示圈外，等阀门重新泄压。" % [player_health, PLAYER_MAX_HEALTH]
 		_refresh_refuge_state()
 	else:
 		message = "压力阀轰然喷出白汽，幸好你已经退开。热浪散去后，蒸潮坞仍能继续探索。"
@@ -807,20 +875,34 @@ func _knock_out_player_from_pressure_vent() -> void:
 
 func _refresh_pressure_vent_visual() -> void:
 	var wreck := get_node_or_null("PressureWreck") as Node3D
+	var vent := _pressure_vent_source()
+	var warning_visible := pressure_vent_warning_active and vent != null and not pressure_wreck_searched
 	var warning_ring := wreck.get_node_or_null("VentWarningRing") as MeshInstance3D if wreck else null
 	if warning_ring:
-		warning_ring.visible = pressure_vent_warning_active
-		var pulse := 1.0 + sin(pressure_vent_warning_remaining * 18.0) * 0.12
-		warning_ring.scale = Vector3.ONE * pulse
+		warning_ring.visible = warning_visible
+		if vent:
+			# The island's flat ground is 0.16m below the wreck origin. Keep the
+			# rim just above it and world-sized even if the wreck is scaled.
+			var ground_center := vent.global_position
+			ground_center.y = wreck.global_position.y - 0.1
+			warning_ring.global_transform = Transform3D(Basis.IDENTITY, ground_center)
+		var ring_material := warning_ring.material_override as StandardMaterial3D
+		if ring_material:
+			var pulse := 0.89 + sin(pressure_vent_warning_remaining * 18.0) * 0.11
+			var base_color := Color("ffd080")
+			ring_material.albedo_color = Color(base_color.r * pulse, base_color.g * pulse, base_color.b * pulse)
+			ring_material.emission_energy_multiplier = 1.4 * pulse
 	var glow := wreck.get_node_or_null("PressureGlow") as OmniLight3D if wreck else null
 	if glow:
-		glow.light_energy = 1.8 if pressure_vent_warning_active else (2.2 if pressure_vent_burst_remaining > 0.0 else 0.16 if pressure_wreck_searched else 0.6)
+		glow.light_energy = 0.0 if vent == null else 1.8 if warning_visible else (2.2 if pressure_vent_burst_remaining > 0.0 else 0.16 if pressure_wreck_searched else 0.6)
 	var sign_node := get_node_or_null("PressureWreckInteractable/Name") as Label3D
 	if sign_node:
 		if pressure_wreck_searched:
 			sign_node.text = "蒸潮机坞 · 核心已回收"
-		elif pressure_vent_warning_active:
-			sign_node.text = "压力阀蓄压 · 快离开喷口"
+		elif vent == null:
+			sign_node.text = "蒸潮机坞 · 阀门已静"
+		elif warning_visible:
+			sign_node.text = "压力阀蓄压 · 退到警示圈外"
 		else:
 			sign_node.text = "蒸潮机坞 · 间歇喷汽"
 
@@ -944,17 +1026,25 @@ func _process(delta: float) -> void:
 			jade_sail_keeper_body.position.y = sin(jade_sail_keeper_motion_clock * (8.0 if keeper_moving else 2.0)) * (0.03 if keeper_moving else 0.007)
 	if sailmaker_boarded and sailmaker_marker != null and is_instance_valid(sailmaker_marker):
 		sailmaker_motion_clock += delta
-		var sailmaker_moving := _move_ark_resident_toward(sailmaker_marker, sailmaker_target_position, delta, 0.64, "sailmaker")
+		_update_sailmaker_schedule()
+		var sailmaker_moving := false
+		if _sailmaker_awning_work_can_run():
+			sailmaker_moving = _process_sailmaker_awning_work(delta)
+		elif not building_mode:
+			sailmaker_moving = _move_ark_resident_toward(sailmaker_marker, sailmaker_target_position, delta, 0.64, "sailmaker")
+		_update_sailmaker_work_visuals()
 		if sailmaker_body:
 			sailmaker_body.position.y = sin(sailmaker_motion_clock * (8.0 if sailmaker_moving else 2.0)) * (0.03 if sailmaker_moving else 0.007)
 			if not sailmaker_moving:
 				_record_sailmaker_guest_cabin_occupancy()
 	if shared_meal_gathering_pending and (not _can_share_with_both_residents() or not _player_at_shared_table()):
 		_pause_shared_table_meal()
+	# Place cabin labels after the residents' final rendered poses, not one step behind.
+	_update_shelter_roof_cutaway()
 	_update_interaction_hint()
 
 
-func _move_ark_resident_toward(marker: Node3D, target: Vector3, delta: float, speed: float, resident_id: String) -> bool:
+func _move_ark_resident_toward(marker: Node3D, target: Vector3, delta: float, speed: float, resident_id: String, strict_work_route: bool = false) -> bool:
 	var route := traveler_routine_route if resident_id == "tidekeeper" else sailmaker_routine_route
 	var route_index := traveler_routine_route_index if resident_id == "tidekeeper" else sailmaker_routine_route_index
 	var previous_target := traveler_routine_route_target if resident_id == "tidekeeper" else sailmaker_routine_route_target
@@ -962,6 +1052,9 @@ func _move_ark_resident_toward(marker: Node3D, target: Vector3, delta: float, sp
 	var target_changed := not target_set or not target.is_equal_approx(previous_target)
 	var finished_route_displaced := not route.is_empty() and route_index >= route.size() and marker.position.distance_to(target) > 0.06
 	if target_changed or finished_route_displaced:
+		if strict_work_route:
+			var start_point := Vector2(marker.position.x, marker.position.z)
+			sailmaker_awning_route_starts_blocked = _ark_local_walk_cell_blocked(start_point, [], 0.25) or _shared_meal_route_point_blocked(start_point, _shared_meal_route_obstacles(target))
 		route = _build_ark_local_walk_route(marker.position, target)
 		route_index = 1 if route.size() > 1 else 0
 		previous_target = target
@@ -971,16 +1064,23 @@ func _move_ark_resident_toward(marker: Node3D, target: Vector3, delta: float, sp
 		var movement_target := route[route_index]
 		var offset := movement_target - marker.position
 		var distance_to_target := offset.length()
-		if distance_to_target <= 0.06:
-			marker.position = movement_target
+		# Only numerical-zero waypoints may be skipped, without moving the actor.
+		# Every real residual, even inside the arrival tolerance, spends its budget.
+		if distance_to_target <= 0.00001:
 			route_index += 1
 			continue
 		var step_distance := minf(distance_remaining, distance_to_target)
-		marker.position = marker.position.move_toward(movement_target, step_distance)
+		var next_position := marker.position.move_toward(movement_target, step_distance)
+		if strict_work_route and not _sailmaker_awning_walk_step_clear(marker.position, next_position, target, sailmaker_awning_route_starts_blocked and route_index <= 1):
+			route.clear()
+			route_index = 0
+			break
+		marker.position = next_position
 		distance_remaining -= step_distance
 		var facing := Vector3(offset.x, 0.0, offset.z).normalized()
 		if not facing.is_zero_approx():
-			marker.rotation.y = atan2(-facing.x, -facing.z)
+			# All resident figures face +Z; this offset is in their ark-local frame.
+			marker.rotation.y = atan2(facing.x, facing.z)
 		if step_distance >= distance_to_target:
 			route_index += 1
 		else:
@@ -1005,6 +1105,13 @@ func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> Packed
 		return route
 	if not _ark_local_walk_position_supported(Vector2(start.x, start.z)) or not _ark_local_walk_position_supported(Vector2(destination.x, destination.z)):
 		return route
+	# The Cot and hearth are visual-only fixtures. Meal and awning work routes
+	# still walk around their footprint without changing player collision.
+	var meal_obstacles := _shared_meal_route_obstacles(destination)
+	var saved_start := start
+	start = _shared_meal_route_clear_start(start, meal_obstacles)
+	if not start.is_finite():
+		return route
 	var margin := 2.0
 	var minimum := Vector2(minf(start.x, destination.x), minf(start.z, destination.z)) - Vector2.ONE * margin
 	var maximum := Vector2(maxf(start.x, destination.x), maxf(start.z, destination.z)) + Vector2.ONE * margin
@@ -1021,7 +1128,9 @@ func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> Packed
 	for cell_z in range(grid_size.y):
 		for cell_x in range(grid_size.x):
 			var local_xz := minimum + Vector2(cell_x, cell_z) * cell_size
-			if _ark_local_walk_cell_blocked(local_xz):
+			# The 0.23-radius body needs a small planning margin: two clear grid
+			# nodes can otherwise connect tangentially through a cabin door corner.
+			if _ark_local_walk_cell_blocked(local_xz, [], 0.25) or _shared_meal_route_point_blocked(local_xz, meal_obstacles):
 				grid.set_point_solid(Vector2i(cell_x, cell_z), true)
 	var start_cell := Vector2i(roundi((start.x - minimum.x) / cell_size), roundi((start.z - minimum.y) / cell_size))
 	var end_cell := Vector2i(roundi((destination.x - minimum.x) / cell_size), roundi((destination.z - minimum.y) / cell_size))
@@ -1032,13 +1141,74 @@ func _build_ark_local_walk_route(start: Vector3, destination: Vector3) -> Packed
 	var cell_path := grid.get_id_path(start_cell, end_cell)
 	if cell_path.is_empty():
 		return route
-	route.append(start)
+	route.append(saved_start)
+	if not saved_start.is_equal_approx(start):
+		route.append(start)
 	for index in range(1, cell_path.size() - 1):
 		var cell: Vector2i = cell_path[index]
 		route.append(Vector3(minimum.x + float(cell.x) * cell_size, start.y, minimum.y + float(cell.y) * cell_size))
 	if start.distance_to(destination) > 0.06:
 		route.append(destination)
 	return route
+
+
+func _shared_meal_route_obstacles(destination: Vector3) -> Array[Rect2]:
+	var obstacles: Array[Rect2] = []
+	var meal_destination := destination.is_equal_approx(shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET) or destination.is_equal_approx(shelter_position + SAILMAKER_SHARED_MEAL_OFFSET)
+	var work_destination := destination.is_equal_approx(_sailmaker_awning_work_target(false)) or destination.is_equal_approx(_sailmaker_awning_work_target(true))
+	if not shelter_built or not (meal_destination or work_destination):
+		return obstacles
+	for id in ["Cot", "HearthStone"]:
+		var fixture := _ark_node("BuiltShelter/" + id) as Node3D
+		if fixture == null or fixture.get_child_count() == 0:
+			continue
+		var visual := fixture.get_child(0) as MeshInstance3D
+		if visual == null or not visual.mesh is BoxMesh:
+			continue
+		var bounds := visual.get_aabb()
+		var minimum := Vector2(INF, INF)
+		var maximum := Vector2(-INF, -INF)
+		for x in [bounds.position.x, bounds.end.x]:
+			for y in [bounds.position.y, bounds.end.y]:
+				for z in [bounds.position.z, bounds.end.z]:
+					var point := ark_root.to_local(visual.to_global(Vector3(x, y, z)))
+					minimum = minimum.min(Vector2(point.x, point.z))
+					maximum = maximum.max(Vector2(point.x, point.z))
+		obstacles.append(Rect2(minimum, maximum - minimum).grow(0.25))
+	return obstacles
+
+
+func _shared_meal_route_point_blocked(point: Vector2, obstacles: Array[Rect2]) -> bool:
+	for bounds in obstacles:
+		if bounds.has_point(point):
+			return true
+	return false
+
+
+func _shared_meal_route_clear_start(start: Vector3, obstacles: Array[Rect2]) -> Vector3:
+	var point := Vector2(start.x, start.z)
+	if not _shared_meal_route_point_blocked(point, obstacles):
+		return start
+	# Old active meals can resume inside the Cot's new exclusion footprint.
+	# Add a short outward walking leg; never teleport or rewrite saved positions.
+	var nearest := Vector3.INF
+	for bounds in obstacles:
+		if not bounds.has_point(point):
+			continue
+		for candidate in [Vector2(floorf((bounds.position.x - 0.01) / 0.25) * 0.25, point.y), Vector2(ceilf((bounds.end.x + 0.01) / 0.25) * 0.25, point.y), Vector2(point.x, floorf((bounds.position.y - 0.01) / 0.25) * 0.25), Vector2(point.x, ceilf((bounds.end.y + 0.01) / 0.25) * 0.25)]:
+			if _shared_meal_route_point_blocked(candidate, obstacles) or _ark_local_walk_cell_blocked(candidate, [], 0.25):
+				continue
+			var clear := Vector3(candidate.x, start.y, candidate.y)
+			var steps := maxi(1, ceili(start.distance_to(clear) / 0.05))
+			var clear_leg := true
+			for step in range(1, steps + 1):
+				var sample := point.lerp(candidate, float(step) / float(steps))
+				if _ark_local_walk_cell_blocked(sample, [], 0.25):
+					clear_leg = false
+					break
+			if clear_leg and start.distance_squared_to(clear) < start.distance_squared_to(nearest):
+				nearest = clear
+	return nearest
 
 
 func _ark_local_walk_position_supported(local_xz: Vector2, actor_radius: float = 0.23) -> bool:
@@ -1113,7 +1283,7 @@ func _interaction_hint_action(interactable_id: String) -> String:
 		"resident": return "与守潮人交谈"
 		"tidekeeper_box": return "查看守潮人的浮标箱"
 		"sailmaker": return "与缝帆人交谈"
-		"cot": return "在床铺休息"
+		"cot": return "在自己的床铺休息"
 		"hearth": return "使用火盆煮汤"
 		"storage": return "存取木料"
 		"workbench": return "查看阵灯工作台"
@@ -1312,6 +1482,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not editing_fixture_id.is_empty():
 			if preview_valid:
 				_try_move_fixture(preview_position, preview_quarter_turns)
+		elif build_type == "workshop_home_template":
+			_try_place_workshop_home_template(preview_position)
 		elif build_type == "starter_home_template":
 			_try_place_starter_home_template(preview_position)
 		elif build_type == "guest_cabin_template":
@@ -1369,7 +1541,7 @@ func _build_world() -> void:
 	sea.material_override = sea_material
 	add_child(sea)
 	var landmass_builder := LandmassBuilderScript.new()
-	add_child(landmass_builder.build_island("IslandLandmass", Vector3(11, 0, -14), Vector2(12, 10), 1.2))
+	add_child(landmass_builder.build_island("IslandLandmass", Vector3(11, 0, -14), Vector2(12, 10), 1.2, Color("536d50"), Color("77735b"), true))
 	add_child(landmass_builder.build_island("FarReefLandmass", Vector3(39, 0, -29), Vector2(7.5, 6), 3.7, Color("626451"), Color("b4a274")))
 	add_child(landmass_builder.build_island("MoonbackIsland", Vector3(-28, 0, 23), Vector2(14, 12), 5.4, Color("4e615a"), Color("87928a")))
 	add_child(landmass_builder.build_island("JadeSailShoal", Vector3(JADE_SAIL_ARK_POSITION.x, 0.0, JADE_SAIL_ARK_POSITION.z), Vector2(10.0, 8.0), 9.1, Color("596856"), Color("a09270")))
@@ -1386,17 +1558,8 @@ func _build_world() -> void:
 	_add_box("RaftPort", Vector3(-2.95, 0.35, 0), Vector3(0.16, 0.45, 4.3), Color("805a3c"), true, ark_root)
 	_add_box("RaftStarboard", Vector3(2.95, 0.35, 0), Vector3(0.16, 0.45, 4.3), Color("805a3c"), true, ark_root)
 	_add_raft_lantern(ark_root)
-	_add_pile("DriftwoodNear", Vector3(-4.0, 0.15, 1.5), 2)
-	_add_pile("DriftwoodShore", Vector3(9.0, 0.22, -4.0), 2)
-	_add_pile("DriftwoodRidge", Vector3(19.0, 0.22, -5.5), 3)
-	_add_pile("MoonbackDriftwood", Vector3(-20.0, 0.22, 18.0), 2)
-	_add_pile("JadeSailDriftwood", Vector3(-47.0, 0.22, -48.0), 3)
-	_add_shellfish_patch("TidalShellsNear", Vector3(8.4, 0.1, -6.1), 1)
-	_add_shellfish_patch("TidalShellsCove", Vector3(13.8, 0.12, -11.8), 1)
-	_add_shellfish_patch("MoonbackTidalShells", Vector3(-31.0, 0.12, 27.0), 2)
-	_add_shellfish_patch("JadeSailTidalShells", Vector3(-60.0, 0.12, -49.0), 2)
-	_add_shellfish_patch("JadeSailTidalShellsWest", Vector3(-48.0, 0.12, -50.5), 1)
-	_add_shellfish_patch("JadeSailTidalShellsNorth", Vector3(-56.0, 0.12, -39.5), 1)
+	for supply in SHORE_SUPPLIES:
+		_spawn_shore_supply(supply)
 	_add_interactable("home", "木筏", Vector3(0, 0.6, 0.6), ark_root)
 	_add_interactable("helm", "舵位 · E 掌舵", Vector3(0, 0.55, 1.55), ark_root)
 	_add_interactable("resident", "守潮人", Vector3(13.0, 0.3, -6.0), null)
@@ -1414,6 +1577,7 @@ func _build_world() -> void:
 	_add_jade_sail_ark(JADE_SAIL_ARK_POSITION)
 	_add_pressure_wreck(PRESSURE_WRECK_POSITION)
 	_set_weather_visuals()
+	surface_sample.apply_world(self)
 
 
 func _add_tidekeeper_floatbox() -> void:
@@ -1585,7 +1749,7 @@ func _build_hud() -> void:
 	hud_details.add_theme_font_size_override("font_size", 16)
 	stack.add_child(hud_details)
 	var controls := Label.new()
-	controls.text = "WASD 行走/游泳 · Shift 快跑 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F 家具搬移 · F5 存档"
+	controls.text = "WASD 行走/游泳 · Shift 快跑 · Space 跳跃/蹬水 · Q 近身反击 · E 互动 · T 等待 · M 潮痕图 · R 天气 · F 家具搬移 · F5 存档\n每3分钟自动换时段；清晨补回采空的漂木/潮贝，不叠加库存。"
 	controls.name = "ArkControlsHelp"
 	controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls.add_theme_font_size_override("font_size", 16)
@@ -1628,15 +1792,21 @@ func _build_hud() -> void:
 	var basic_shelter_button := Button.new()
 	basic_shelter_button.name = "ArkBasicShelterTemplateButton"
 	basic_shelter_button.text = "基础避风棚 · 3 木"
-	basic_shelter_button.tooltip_text = "开局实用模板：避风棚、床铺与暖灯；留出入口，可后续扩建。"
+	basic_shelter_button.tooltip_text = "开局避难所：玩家床铺与暖灯，另可临时接纳两位避难者；居民专用床位须后续扩建。"
 	basic_shelter_button.pressed.connect(func(): _activate_hud_action(_start_basic_shelter_template))
 	build_buttons.add_child(basic_shelter_button)
 	var template_button := Button.new()
 	template_button.name = "ArkStarterHomeTemplateButton"
 	template_button.text = "模板：潮棚之家 · 5 木"
-	template_button.tooltip_text = "一键搭好避风棚、床铺、灯和储物箱；自动留出进出通道。"
+	template_button.tooltip_text = "一键搭好避风棚、玩家床铺、灯和储物箱；两位居民可临时避难，不增加居民专用床位。"
 	template_button.pressed.connect(func(): _activate_hud_action(_start_starter_home_template))
 	build_buttons.add_child(template_button)
+	var workshop_button := Button.new()
+	workshop_button.name = "ArkWorkshopHomeTemplateButton"
+	workshop_button.text = "模板：起居工坊 · 7 木"
+	workshop_button.tooltip_text = "整套避风棚、储物箱与工作台；先校验通路再施工。玩家床铺另计，两位居民仍为临时避难。"
+	workshop_button.pressed.connect(func(): _activate_hud_action(_start_workshop_home_template))
+	build_buttons.add_child(workshop_button)
 	var free_build_button := Button.new()
 	free_build_button.name = "ArkFreeBuildButton"
 	free_build_button.text = "自由逐件搭建 · B"
@@ -1777,9 +1947,9 @@ func _begin_shared_table_meal() -> void:
 	shared_meal_gathering_pending = true
 	shared_meal_participants = ["player", "tidekeeper", "sailmaker"]
 	traveler_action = "把热汤端到桌边"
-	traveler_target_position = shelter_position + Vector3(-0.35, 0.12, -0.12)
+	traveler_target_position = shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET
 	sailmaker_action = "收起针线赴饭"
-	sailmaker_target_position = shelter_position + Vector3(0.42, 0.12, -0.12)
+	sailmaker_target_position = shelter_position + SAILMAKER_SHARED_MEAL_OFFSET
 	traveler_routine_route_target_set = false
 	sailmaker_routine_route_target_set = false
 	_update_gatherer_nameplate()
@@ -1796,7 +1966,7 @@ func _player_at_shared_table() -> bool:
 	if player == null or ark_root == null or not shelter_built or is_swimming:
 		return false
 	var local := ark_root.to_local(player.global_position)
-	var center := shelter_position + Vector3(0, 0.19, 0.15)
+	var center := shelter_position + Vector3(SHARED_MEAL_MAT_OFFSET.x, 0.19, SHARED_MEAL_MAT_OFFSET.z)
 	return local.y >= shelter_position.y + 0.04 and absf(local.y - center.y) <= 0.45 and local.distance_to(center) <= 1.65 and _ark_local_walk_position_supported(Vector2(local.x, local.z))
 
 func _shared_table_ready() -> bool:
@@ -1806,7 +1976,7 @@ func _shared_table_ready() -> bool:
 		return false
 	if traveler_marker.get_parent() != ark_root or sailmaker_marker.get_parent() != ark_root:
 		return false
-	if traveler_target_position.distance_to(shelter_position + Vector3(-0.35, 0.12, -0.12)) > 0.2 or sailmaker_target_position.distance_to(shelter_position + Vector3(0.42, 0.12, -0.12)) > 0.2:
+	if traveler_target_position.distance_to(shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET) > 0.2 or sailmaker_target_position.distance_to(shelter_position + SAILMAKER_SHARED_MEAL_OFFSET) > 0.2:
 		return false
 	return traveler_marker.position.distance_to(traveler_target_position) <= 0.09 and sailmaker_marker.position.distance_to(sailmaker_target_position) <= 0.09
 
@@ -1866,9 +2036,9 @@ func _complete_shared_table_meal() -> void:
 		_record_world_event("resident_keepsake_pair_completed", {"resident_id": "tidekeeper", "artifact_id": "second_shared_meal_tide_shell", "day": meal_day, "shared_meal_count": shared_meal_count})
 	shared_meal_day = maxi(shared_meal_day, day_count)
 	traveler_action = "收拾饭后碗盏"
-	traveler_target_position = shelter_position + Vector3(-0.35, 0.12, -0.12)
+	traveler_target_position = shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET
 	sailmaker_action = "收好饭碗与针线"
-	sailmaker_target_position = shelter_position + Vector3(0.42, 0.12, -0.12)
+	sailmaker_target_position = shelter_position + SAILMAKER_SHARED_MEAL_OFFSET
 	shared_meal_participants.clear()
 	_update_gatherer_nameplate()
 	var sailmaker_sign := sailmaker_marker.get_node_or_null("Name") as Label3D
@@ -2004,7 +2174,7 @@ func _interact() -> void:
 						_add_resident_keepsake()
 						_record_world_event("resident_keepsake_pair_completed", {"resident_id": "tidekeeper", "artifact_id": "second_shared_meal_tide_shell", "day": day_count, "shared_meal_count": shared_meal_count})
 					traveler_action = "收拾饭后碗盏"
-					traveler_target_position = Vector3(-0.35, 0.12, 0.7)
+					traveler_target_position = shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET
 					if shared_meal_count == 2:
 							message = "你们第二次分着喝完热汤。守潮人把一枚海水磨圆的潮贝系到第一枚旁边：‘这回我知道，灯下不只会有我一个人的碗。’%s%s" % ["热汤让手脚稍稍回暖。" if warmth_restored and exposure_after_meal > 0 else "热汤也驱散了旅途寒意。" if warmth_restored else "", "伤处也暖和了些，生命恢复 %d 点。" % health_restored if health_restored > 0 else ""]
 					else:
@@ -2015,9 +2185,9 @@ func _interact() -> void:
 					resident_repair_choice_pending = true
 					var repair_name := "筏舷" if raft_edge_damaged else "棚顶"
 					message = "守潮人检查完损伤：‘储物箱里还有木料，我可以用 1 块修好%s。’\n1 请她来修　　2 我自己处理或稍后再说" % repair_name
-				elif weather_phase == WeatherPhase.AFTER:
+				elif weather_phase != WeatherPhase.STORM and not raft_edge_damaged and not shelter_roof_damaged:
 					resident_gather_policy_choice_pending = true
-					message = "守潮人把湿衣挂在灯边，顺手整理浮标箱：‘明早我会自己去收拾附近现成的物资。你若有急需，可以替我定个方针。’\n当前方针：%s。\n1 木料优先　　2 鲜贝优先　　3 就近均衡　　Esc 保持原安排\n方针只影响之后的出工；一天最多一趟，风雨和启航时我会自行停工或回来。" % _resident_gather_policy_label()
+					message = "守潮人顺手整理浮标箱：‘晴稳的清晨，我会去收拾停泊处附近现成的物资。你若有急需，可以替我定个方针。’\n当前方针：%s。\n1 木料优先　　2 鲜贝优先　　3 就近均衡　　Esc 保持原安排\n方针只影响之后的出工；一天最多一趟，风雨和启航时我会自行停工或回来。" % _resident_gather_policy_label()
 				else:
 					message = "守潮人看向西边云墙：‘等会儿风会转向。你决定怎么用那条绳，我都能帮着打结。’"
 			elif shelter_built:
@@ -2025,7 +2195,7 @@ func _interact() -> void:
 					traveler_choice_pending = true
 					message = "守潮人看了看棚顶和岸边的旧浮标箱。‘我可以在这里避一晚，但不想欠下没说清的承诺。’\n1 邀请上筏，共同过夜　　2 尊重对方，暂不同行"
 				else:
-					message = "守潮人愿意同行，但仙舟的居住泊位已满。扩建出新的住处后，再来邀请她；她不会因此离开这片海岸。"
+					message = "守潮人愿意同行，但仙舟的避难接纳名额已满。扩建出新的住处后，再来邀请她；她不会因此离开这片海岸。"
 			else:
 				message = "守潮人没有登筏：‘先把能挡雨的地方搭起来吧。我要看见它稳，才敢把箱子搬过去。’"
 		"sailmaker":
@@ -2040,7 +2210,7 @@ func _interact() -> void:
 					sailmaker_choice_pending = true
 					message = "缝帆人看过棚顶和甲板上的空位：‘这处至少能避雨。我可以先同行一程，帆布和针线我自己带。’\n1 邀请上筏　　2 暂不同路"
 				else:
-					message = "缝帆人愿意同行，但仙舟的居住泊位已满。扩建出新的住处后，再来邀请她；她会留在这片海域继续缝帆。"
+					message = "缝帆人愿意同行，但仙舟的避难接纳名额已满。扩建出新的住处后，再来邀请她；她会留在这片海域继续缝帆。"
 			else:
 				message = "缝帆人没有收起旧帆：‘棚子还没立稳，我就先留在礁边。你不必为了我赶工。’"
 		"sailmaker_awning":
@@ -2313,6 +2483,8 @@ func _begin_jade_sail_industry_daily_gather() -> bool:
 		return false
 	var selected: Dictionary = {}
 	var selected_distance := JADE_INDUSTRY_GATHER_RADIUS
+	var selected_priority := 99
+	var preferred_resource := "wood" if jade_sail_industry_acquired and jade_sail_industry_deliveries % 2 == 0 else "shellfish"
 	for entry in interactables:
 		var resource := str(entry.get("id", ""))
 		var item_id := str(entry.get("item_id", ""))
@@ -2324,9 +2496,11 @@ func _begin_jade_sail_industry_daily_gather() -> bool:
 		if target == null or not is_instance_valid(target) or collected_ids.has(item_id):
 			continue
 		var distance := jade_sail_keeper_marker.global_position.distance_to(target.global_position)
-		if distance < selected_distance:
+		var priority := 0 if resource == preferred_resource else 1
+		if distance < JADE_INDUSTRY_GATHER_RADIUS and (priority < selected_priority or (priority == selected_priority and distance < selected_distance)):
 			selected = entry
 			selected_distance = distance
+			selected_priority = priority
 	if selected.is_empty():
 		_record_world_event("jade_sail_industry_gather_unavailable", {"vessel_id": "jade_sail_ark", "day": day_count, "reason": "no_uncollected_local_supply"})
 		return false
@@ -2362,17 +2536,24 @@ func _process_jade_sail_industry_gathering(delta: float) -> bool:
 		_abort_jade_sail_industry_gathering("resource_taken_before_arrival")
 		return false
 	var target_position := jade_sail_industry_target_position
-	if jade_sail_industry_phase == "returning":
+	var returning := jade_sail_industry_phase == "returning"
+	if returning:
 		target_position = JADE_INDUSTRY_HOME_POSITION
-	target_position.y = jade_sail_keeper_marker.global_position.y
+	else:
+		target_position.y = jade_sail_keeper_marker.global_position.y
 	var offset := target_position - jade_sail_keeper_marker.global_position
-	offset.y = 0.0
-	var moving := offset.length() > 0.06
+	# Pickup may stop nearby; a normal delivery must pay for the full 3D home leg.
+	var arrival_tolerance := 0.0 if returning else 0.06
+	var moving := offset.length() > arrival_tolerance
 	if moving:
-		var moved: Dictionary = gathering.advance_route(jade_sail_keeper_marker.global_position, PackedVector3Array([target_position]), 0, delta, JADE_INDUSTRY_GATHER_SPEED, 0.06)
+		var old_position := jade_sail_keeper_marker.global_position
+		var moved: Dictionary = gathering.advance_route(old_position, PackedVector3Array([target_position]), 0, delta, JADE_INDUSTRY_GATHER_SPEED, arrival_tolerance)
 		jade_sail_keeper_marker.global_position = moved.position
+		if returning:
+			moving = not bool(moved.arrived)
 		var direction := Vector3(offset.x, 0.0, offset.z).normalized()
-		jade_sail_keeper_marker.rotation.y = atan2(-direction.x, -direction.z)
+		if not direction.is_zero_approx() and (not returning or jade_sail_keeper_marker.global_position != old_position):
+			jade_sail_keeper_marker.rotation.y = atan2(direction.x, direction.z)
 	if jade_sail_industry_phase == "outbound" and not moving:
 		if not gathering.mark_collecting(jade_task_id):
 			return false
@@ -2439,7 +2620,9 @@ func _finish_jade_sail_industry_gathering(delivery_mode: String) -> void:
 	jade_sail_industry_target_id = ""
 	jade_sail_industry_payload = 0
 	jade_sail_industry_pickup_remaining = 0.0
-	jade_sail_keeper_marker.global_position = JADE_INDUSTRY_HOME_POSITION
+	# Only emergency/cancellation recalls place the keeper without walking.
+	if delivery_mode != "vessel_hold":
+		jade_sail_keeper_marker.global_position = JADE_INDUSTRY_HOME_POSITION
 	jade_sail_keeper_action = "整理琼华舫货舱"
 	if amount > 0:
 		jade_sail_industry_deliveries += 1
@@ -2498,17 +2681,12 @@ func _interact_home() -> void:
 	if weather_phase == WeatherPhase.FORECAST and rope_available:
 		preparation_choice_pending = true
 		if shelter_built:
-				message = "旧浮标开始急促地敲石。手里只有一条好绳：\n1 固定避风棚　　2 固定筏舷　　3 暂不使用，接受风雨损伤"
+				message = "仙舟现在可以掌舵出航，也可先加固备雨。手里只有一条好绳：\n1 固定避风棚　　2 固定筏舷　　3 暂不使用，接受风雨损伤"
 		else:
-				message = "云墙将在下一次涨潮时抵岸。手里只有一条好绳：\n1 固定筏舷　　2 暂不使用，之后可能要修筏"
+				message = "风雨尚未抵岸，仙舟现在就能启航。手里只有一条好绳：\n1 固定筏舷　　2 暂不使用，之后可能要修筏"
 		return
 	if weather_phase == WeatherPhase.FORECAST:
-		if not shelter_built:
-			message = "木筏仍能浮，但外沿已经松了。云墙和浮标的敲击声都在提醒你：下一次涨潮时会有强风雨。可以继续探索，按 R 让时间推进。"
-		elif wood >= BUILD_COST:
-			message = "棚子已经有了遮蔽。云墙会在下一次涨潮时抵岸；按 R 推进天气，或先继续准备与探索。"
-		else:
-			message = "木板间已有一处遮蔽，浮标却敲得越来越急。按 R 推进天气，或先继续探索。"
+		message = "风雨还未抵岸，完好的仙舟现在就能启航：到船尾舵位按 E，靠岸后再按 E 停船，上岸采集后把木料带回船上营造。M 查看远礁沉筏与航路；不必先推进风雨。\n" + _opening_objective_hint()
 		return
 	if weather_phase == WeatherPhase.STORM:
 		message = "雨斜着打过浅滩，木筏在浪里摇晃。你仍能行动；按 R 等这阵风雨过去。"
@@ -2530,7 +2708,7 @@ func _interact_hearth() -> void:
 	if not shelter_built or (_ark_node("BuiltShelter/HearthPot") == null and _ark_node("BuiltShelter/PressureGalley") == null):
 		message = "还没有可以生火做饭的地方。先搭起避风棚，再在棚下安置火盆。"
 	elif raw_shellfish < 1:
-		message = "饭釜里还留着余温。潮池的鲜贝已经吃完，退潮时可以再去岸边找找。" if pressure_galley_built else "火盆里还留着温度。潮池的鲜贝已经吃完，退潮时可以再去岸边找找。"
+		message = "饭釜里还留着余温。潮池的鲜贝已经吃完，下一次清晨退潮会为采空且无人搬运的潮池补回一批鲜贝。" if pressure_galley_built else "火盆里还留着温度。潮池的鲜贝已经吃完，下一次清晨退潮会为采空且无人搬运的潮池补回一批鲜贝。"
 	else:
 		raw_shellfish -= 1
 		stew_servings += 1
@@ -2594,6 +2772,58 @@ func _rest_at_jade_sail_guest_berth() -> void:
 	_update_interaction_hint()
 
 
+func _life_clock_paused() -> bool:
+	if not _modules_ready or _restoring_progress or get_tree().paused or building_mode or not editing_fixture_id.is_empty():
+		return true
+	if (hud_drawer != null and hud_drawer.visible) or (world_chart != null and world_chart.visible):
+		return true
+	return _hud_choice_open()
+
+
+func _tick_life_clock(delta: float) -> void:
+	if not is_finite(delta) or delta <= 0.0 or _life_clock_paused():
+		return
+	# Do not turn an OS suspend / stalled frame into days of catch-up production.
+	life_period_elapsed += minf(delta, 1.0)
+	if life_period_elapsed < LIFE_PERIOD_SECONDS:
+		return
+	var advancement := _advance_world_period("life_clock")
+	message = "天色渐变，现在是%s。" % _day_period_label()
+	_append_period_outcomes(advancement)
+	_save_progress()
+	_update_hud()
+
+
+func _spawn_shore_supply(supply: Array) -> void:
+	if supply[1] == "wood":
+		_add_pile(supply[0], supply[2], supply[3])
+	else:
+		_add_shellfish_patch(supply[0], supply[2], supply[3])
+
+
+func _replenish_shore_supplies() -> int:
+	if day_period != DayPeriod.MORNING or day_count <= last_shore_replenish_day:
+		return 0
+	last_shore_replenish_day = day_count
+	var replenished := 0
+	for supply in SHORE_SUPPLIES:
+		var id: String = supply[0]
+		if not collected_ids.has(id) or gathering.source_in_use(id):
+			continue
+		var result: Dictionary = economy.replenish_source(id, supply[1], supply[3], "shore_renewal:%d:%s" % [day_count, id])
+		if not result.ok or result.get("duplicate", false):
+			continue
+		collected_ids.erase(id)
+		# A same-frame pickup may still have its queued node attached.
+		var old_node := get_node_or_null(NodePath(id))
+		if old_node != null and old_node.is_queued_for_deletion():
+			remove_child(old_node)
+		_spawn_shore_supply(supply)
+		_record_world_event("shore_supply_replenished", {"node_id":id,"resource":supply[1],"amount":supply[3],"day":day_count,"source":"dawn_tide"})
+		replenished += 1
+	return replenished
+
+
 func _wait_one_period() -> void:
 	if building_mode or sailing_mode or (world_chart != null and world_chart.visible):
 		message = "现在不适合停下脚步；先收起建造、航行或潮痕图界面。"
@@ -2609,6 +2839,7 @@ func _wait_one_period() -> void:
 
 
 func _advance_world_period(cause: String) -> Dictionary:
+	life_period_elapsed = 0.0
 	_pause_shared_table_meal()
 	var resident_prepared_meal := _complete_resident_cooking()
 	var previous_day := day_count
@@ -2618,17 +2849,17 @@ func _advance_world_period(cause: String) -> Dictionary:
 	_set_weather_visuals()
 	var storm_forecast_became_due := day_period == DayPeriod.MORNING and previous_day < next_storm_day and day_count >= next_storm_day and weather_phase == WeatherPhase.AFTER
 	_record_world_event("time_advanced", {"cause": cause, "day": day_count, "period": day_period})
-	var sailmaker_awning_completed := false
-	if day_period == DayPeriod.MORNING:
-		sailmaker_awning_completed = _raise_sailmaker_awning()
+	var replenished_sites := _replenish_shore_supplies() if day_period == DayPeriod.MORNING else 0
+	var sailmaker_awning_ready := day_period == DayPeriod.MORNING and sailmaker_boarded and not sailmaker_awning_raised and sailmaker_awning_phase == "unstarted" and day_count == sailmaker_joined_day + 1
 	var repaired_part := _complete_resident_repair()
 	var resident_gather_started := _begin_resident_daily_gather() if day_period == DayPeriod.MORNING else false
 	var jade_industry_gather_started := _begin_jade_sail_industry_daily_gather() if day_period == DayPeriod.MORNING else false
 	_update_traveler_schedule()
 	_update_sailmaker_schedule()
 	return {
+		"replenished_sites": replenished_sites,
 		"resident_prepared_meal": resident_prepared_meal,
-		"sailmaker_awning_completed": sailmaker_awning_completed,
+		"sailmaker_awning_ready": sailmaker_awning_ready,
 		"repaired_part": repaired_part,
 		"resident_gather_started": resident_gather_started,
 		"jade_industry_gather_started": jade_industry_gather_started,
@@ -2637,13 +2868,15 @@ func _advance_world_period(cause: String) -> Dictionary:
 
 
 func _append_period_outcomes(advancement: Dictionary) -> void:
+	if int(advancement.get("replenished_sites", 0)) > 0:
+		message += "\n清晨退潮带来了新漂木，也露出新一批鲜贝；已采空且无人搬运的岸边物资点各补回一批，不会囤叠。"
 	var repaired_part := str(advancement.get("repaired_part", ""))
 	if not repaired_part.is_empty():
 		message += "\n守潮人用储物箱里的木料修好了%s。" % repaired_part
 	if bool(advancement.get("resident_prepared_meal", false)):
 		message += "\n守潮人守着火候煮好了潮滩鲜贝汤，留了一碗给你。"
-	if bool(advancement.get("sailmaker_awning_completed", false)):
-		message += "\n清晨，缝帆人把自带的旧帆边缝成棚口的小雨檐；她说这挡不了大风，却能让进出的人少淋一阵。"
+	if bool(advancement.get("sailmaker_awning_ready", false)):
+		message += "\n缝帆人取出了自带的旧帆边，打算闲下来时缝成一片雨檐；还要缝好、带到棚下并亲手安上。"
 	if bool(advancement.get("resident_gather_started", false)):
 		message += "\n守潮人看见仙舟泊在可步行抵达的岸边，自动去收集附近现存的%s；她会把东西带回船上，不会阻止你启航。" % ("漂木" if resident_gather_resource == "wood" else "潮池鲜贝")
 	if bool(advancement.get("jade_industry_gather_started", false)):
@@ -2847,11 +3080,22 @@ func _choose_weather_preparation(target: String) -> void:
 	_update_hud()
 
 
+func _stop_sailing_for_storm() -> void:
+	if not sailing_mode:
+		return
+	sailing_mode = false
+	_clear_player_knockback()
+	if player:
+		player.velocity = Vector3.ZERO
+	_record_world_event("ark_sailing_stopped", {"position": _position_facts(ark_root.global_position), "reason": "storm_arrival"})
+
+
 func _advance_weather() -> void:
 	_pause_shared_table_meal()
 	if weather_phase == WeatherPhase.FORECAST:
 		preparation_choice_pending = false
 		weather_phase = WeatherPhase.STORM
+		_stop_sailing_for_storm()
 		var storm_start_exposed := not _is_within_ark_refuge()
 		var start_exposure_level := _effective_cold_exposure_level()
 		if storm_start_exposed:
@@ -2862,9 +3106,10 @@ func _advance_weather() -> void:
 		_set_weather_visuals()
 		_update_traveler_schedule()
 		_update_sailmaker_schedule()
-		message = "云墙压过礁岛，风雨抵岸。你仍可在岛上行动；圈外的寒意会随着暴露加深，可回仙舟或找棚下恢复。等风势稍缓后再按 R。"
+		message = "云墙压过礁岛，风雨抵岸。仙舟暂不能掌舵，留在当前泊位；你仍可在岛上行动；圈外的寒意会随着暴露加深，可回仙舟或找棚下恢复。等风势稍缓后再按 R。"
 	elif weather_phase == WeatherPhase.AFTER and _storm_forecast_due():
 		weather_phase = WeatherPhase.STORM
+		_stop_sailing_for_storm()
 		var storm_start_exposed := not _is_within_ark_refuge()
 		var start_exposure_level := _effective_cold_exposure_level()
 		if storm_start_exposed:
@@ -2875,7 +3120,7 @@ func _advance_weather() -> void:
 		_set_weather_visuals()
 		_update_traveler_schedule()
 		_update_sailmaker_schedule()
-		message = "第二场风雨按预报抵岸。你当初固定的绳结仍留在原处；未加固的结构仍要留心。圈外寒意会继续加深；等风势稍缓后再按 R。"
+		message = "新一场风雨按预报抵岸，仙舟留在当前泊位，暂不能掌舵。你当初固定的绳结仍留在原处；未加固的结构仍要留心。圈外寒意会继续加深；等风势稍缓后再按 R。"
 	elif weather_phase == WeatherPhase.STORM:
 		weather_phase = WeatherPhase.AFTER
 		resolved_storm_count += 1
@@ -2974,7 +3219,7 @@ func _choose_traveler_boarding(accept: bool) -> void:
 	if accept and shelter_built:
 		if not _can_board_resident("tidekeeper"):
 			_record_world_event("resident_boarding_deferred", {"resident_id": "tidekeeper", "reason": "berth_capacity", "occupancy": _resident_occupancy(), "capacity": _resident_capacity()})
-			message = "你愿意邀请她，但眼下没有空余泊位。守潮人理解地点有限，先留在岸边；扩建后仍可再谈。"
+			message = "你愿意邀请她，但眼下没有空余避难名额。守潮人理解地点有限，先留在岸边；扩建后仍可再谈。"
 		else:
 			traveler_boarded = true
 			_set_traveler_boarded()
@@ -2997,7 +3242,7 @@ func _choose_sailmaker_boarding(accept: bool) -> void:
 	if accept and shelter_built:
 		if not _can_board_resident("sailmaker"):
 			_record_world_event("resident_boarding_deferred", {"resident_id": "sailmaker", "reason": "berth_capacity", "occupancy": _resident_occupancy(), "capacity": _resident_capacity()})
-			message = "你愿意邀请她，但眼下没有空余泊位。缝帆人不勉强同行；扩建后仍可再谈。"
+			message = "你愿意邀请她，但眼下没有空余避难名额。缝帆人不勉强同行；扩建后仍可再谈。"
 		else:
 			sailmaker_boarded = true
 			sailmaker_joined_day = day_count
@@ -3052,9 +3297,20 @@ func _set_sailmaker_boarded() -> void:
 
 
 func _resident_capacity() -> int:
-	if not shelter_built:
+	# Acceptance capacity includes temporary refuge; it is not a bed count.
+	return _resident_temporary_refuge_capacity() + _resident_berth_capacity()
+
+
+func _resident_temporary_refuge_capacity() -> int:
+	return 2 if shelter_built else 0
+
+
+func _resident_berth_capacity() -> int:
+	# Derive from existing structures, without new ownership or save state.
+	# The original Cot is reserved for the player and is never counted here.
+	if not shelter_built or not raft_extension_built:
 		return 0
-	return 2 + (1 if raft_extension_built else 0) + (1 if guest_cabin_built and raft_extension_built else 0)
+	return 1 + int(guest_cabin_built)
 
 
 func _resident_occupancy() -> int:
@@ -3072,7 +3328,7 @@ func _can_board_resident(resident_id: String) -> bool:
 func _begin_resident_daily_gather() -> bool:
 	if not traveler_boarded or resident_gather_pending or resident_repair_pending or sailing_mode or day_period != DayPeriod.MORNING:
 		return false
-	if day_count <= resident_gather_last_day or weather_phase != WeatherPhase.AFTER:
+	if day_count <= resident_gather_last_day or weather_phase == WeatherPhase.STORM or not shelter_built or raft_edge_damaged or shelter_roof_damaged:
 		return false
 	var target_entry: Dictionary = {}
 	var best_distance := RESIDENT_AUTO_GATHER_RADIUS + 0.001
@@ -3161,22 +3417,29 @@ func _process_resident_gathering(delta: float) -> bool:
 		_abort_resident_gathering("storm_arrival")
 		return false
 	var target_position := resident_gather_target_position
-	if resident_gather_phase == "returning":
+	var returning := resident_gather_phase == "returning"
+	if returning:
 		target_position = ark_root.to_global(RESIDENT_DECK_POSITION)
+		# A cached world route must still end at the ark's current home point.
+		if not resident_gather_route.is_empty() and resident_gather_route[-1] != target_position:
+			resident_gather_route.clear()
 	if resident_gather_route.is_empty():
 		resident_gather_route = _build_resident_walk_route(traveler_marker.global_position, target_position)
-		resident_gather_route_index = 1 if resident_gather_route.size() > 1 else 0
 		if resident_gather_route.is_empty():
 			_abort_resident_gathering("no_safe_route")
 			return false
+		# The shared planner's short pickup tolerance is not a delivery radius.
+		if returning and resident_gather_route[-1] != target_position:
+			resident_gather_route.append(target_position)
+		resident_gather_route_index = 1 if resident_gather_route.size() > 1 else 0
 	var old_position := traveler_marker.global_position
-	var movement: Dictionary = gathering.advance_route(old_position, resident_gather_route, resident_gather_route_index, delta, RESIDENT_AUTO_GATHER_SPEED)
+	var movement: Dictionary = gathering.advance_route(old_position, resident_gather_route, resident_gather_route_index, delta, RESIDENT_AUTO_GATHER_SPEED, 0.0 if returning else 0.22)
 	traveler_marker.global_position = movement.position
 	resident_gather_route_index = int(movement.index)
 	var moving := not bool(movement.arrived)
 	var direction: Vector3 = movement.position - old_position
 	if direction.length_squared() > 0.000001:
-		traveler_marker.rotation.y = atan2(-direction.x, -direction.z)
+		traveler_marker.rotation.y = atan2(direction.x, direction.z)
 	if resident_gather_phase == "outbound" and not moving:
 		if not gathering.mark_collecting(resident_task_id):
 			return false
@@ -3323,7 +3586,9 @@ func _finish_resident_gathering(delivery_mode: String) -> void:
 	if traveler_marker != null and is_instance_valid(traveler_marker):
 		if traveler_marker.get_parent() != ark_root:
 			traveler_marker.reparent(ark_root, true)
-		traveler_marker.position = RESIDENT_DECK_POSITION
+		# Ordinary arrival already walked home; transfer ownership, not position.
+		if delivery_mode != "ark_return":
+			traveler_marker.position = RESIDENT_DECK_POSITION
 	var resource_id := resident_gather_resource
 	var target_id := resident_gather_target_id
 	var amount := resident_gather_payload
@@ -3409,7 +3674,7 @@ func _update_traveler_schedule() -> void:
 		return
 	if shared_meal_gathering_pending and not shared_meal_paused and weather_phase != WeatherPhase.STORM and shared_meal_participants.has("tidekeeper"):
 		traveler_action = "把热汤端到桌边"
-		traveler_target_position = shelter_position + Vector3(-0.35, 0.12, -0.12)
+		traveler_target_position = shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET
 	elif resident_repair_pending and resident_repair_part == "raft_edge":
 		traveler_action = "修补筏舷"
 		traveler_target_position = Vector3(0.2, 0.12, -1.55)
@@ -3418,10 +3683,7 @@ func _update_traveler_schedule() -> void:
 		traveler_target_position = Vector3(0.8, 0.12, 1.05)
 	elif weather_phase == WeatherPhase.STORM:
 		traveler_action = "棚下避雨"
-		traveler_target_position = shelter_position + Vector3(0.45, 0.12, -0.25)
-	elif weather_phase == WeatherPhase.FORECAST:
-		traveler_action = "查看潮势"
-		traveler_target_position = Vector3(0.5, 0.12, 1.35)
+		traveler_target_position = shelter_position + TIDEKEEPER_REFUGE_REST_OFFSET
 	elif raft_edge_damaged:
 		traveler_action = "查看筏舷"
 		traveler_target_position = Vector3(0.2, 0.12, -1.55)
@@ -3430,7 +3692,7 @@ func _update_traveler_schedule() -> void:
 		traveler_target_position = Vector3(0.8, 0.12, 1.05)
 	elif day_period == DayPeriod.EVENING and shared_meal_day == day_count:
 			traveler_action = "收拾饭后碗盏"
-			traveler_target_position = Vector3(-0.35, 0.12, 0.7)
+			traveler_target_position = shelter_position + TIDEKEEPER_SHARED_MEAL_OFFSET
 	elif day_period == DayPeriod.EVENING and raw_shellfish > 0 and shelter_built:
 			traveler_action = "准备潮滩晚饭"
 			traveler_target_position = shelter_position + Vector3(-1.05, 0.12, -0.75)
@@ -3439,8 +3701,8 @@ func _update_traveler_schedule() -> void:
 			traveler_action = "甲板铺位歇息"
 			traveler_target_position = Vector3(0.95, 0.24, -5.35)
 		else:
-			traveler_action = "棚下歇息"
-			traveler_target_position = shelter_position + Vector3(0.72, 0.12, 0.2)
+			traveler_action = "棚下临时歇脚"
+			traveler_target_position = shelter_position + TIDEKEEPER_REFUGE_REST_OFFSET
 	elif day_period == DayPeriod.EVENING:
 		traveler_action = "照看灯火"
 		traveler_target_position = Vector3(0.8, 0.12, -0.35)
@@ -3461,13 +3723,10 @@ func _update_sailmaker_schedule() -> void:
 		return
 	if shared_meal_gathering_pending and not shared_meal_paused and weather_phase != WeatherPhase.STORM and shared_meal_participants.has("sailmaker"):
 		sailmaker_action = "收起针线赴饭"
-		sailmaker_target_position = shelter_position + Vector3(0.42, 0.12, -0.12)
+		sailmaker_target_position = shelter_position + SAILMAKER_SHARED_MEAL_OFFSET
 	elif weather_phase == WeatherPhase.STORM:
 		sailmaker_action = "收拢旧帆"
-		sailmaker_target_position = shelter_position + Vector3(-0.55, 0.12, -0.35)
-	elif weather_phase == WeatherPhase.FORECAST:
-		sailmaker_action = "看云脚收帆"
-		sailmaker_target_position = Vector3(1.1, 0.12, 1.25)
+		sailmaker_target_position = shelter_position + SAILMAKER_REFUGE_REST_OFFSET
 	elif raft_edge_damaged or shelter_roof_damaged:
 		sailmaker_action = "检查帆缆"
 		sailmaker_target_position = Vector3(1.45, 0.12, -1.25)
@@ -3475,15 +3734,27 @@ func _update_sailmaker_schedule() -> void:
 		sailmaker_action = "在听潮客舱歇息"
 		sailmaker_target_position = GUEST_CABIN_SAILMAKER_POSITION
 	elif day_period == DayPeriod.NIGHT:
-		sailmaker_action = "棚下歇息"
-		sailmaker_target_position = shelter_position + Vector3(-0.72, 0.12, 0.25)
+		sailmaker_action = "棚下临时歇脚"
+		sailmaker_target_position = shelter_position + SAILMAKER_REFUGE_REST_OFFSET
+	elif _sailmaker_awning_work_can_run():
+		var installing := sailmaker_awning_phase in ["carrying", "installing"]
+		sailmaker_target_position = _sailmaker_awning_work_target(installing)
+		if installing:
+			sailmaker_action = "把旧帆雨檐系在棚下" if sailmaker_awning_phase == "installing" and _sailmaker_at_awning_work_target(sailmaker_target_position) else "抱着缝好的雨檐去棚下"
+		else:
+			sailmaker_action = "用自带的旧帆边缝雨檐" if sailmaker_awning_phase == "sewing" and _sailmaker_at_awning_work_target(sailmaker_target_position) else "带上针线去缝雨檐"
 	elif day_period == DayPeriod.EVENING:
 		sailmaker_action = "晾晒补好的帆布"
 		sailmaker_target_position = Vector3(1.05, 0.12, -0.95)
+	elif weather_phase == WeatherPhase.FORECAST and day_period == DayPeriod.MORNING:
+		sailmaker_action = "看云脚收帆"
+		sailmaker_target_position = Vector3(1.1, 0.12, 1.25)
 	else:
 		sailmaker_action = "缝补旧帆"
 		sailmaker_target_position = Vector3(1.35, 0.12, -0.75)
-	sailmaker_target_position = _fixture_safe_routine_target(sailmaker_target_position)
+	# A work facility is never substituted by a generic safe routine fallback.
+	if not _sailmaker_awning_work_can_run():
+		sailmaker_target_position = _fixture_safe_routine_target(sailmaker_target_position)
 	var sign := sailmaker_marker.get_node_or_null("Name") as Label3D
 	if sign:
 		sign.text = "缝帆人 · %s" % sailmaker_action
@@ -3514,12 +3785,192 @@ func _evacuate_residents_from_raft_extension() -> void:
 		sailmaker_marker.position = Vector3(1.15, 0.12, 0.75)
 
 
+# A one-time personal gift, not a production job. Calendar changes only make it
+# eligible; all sewing/installing time is earned here at real deck locations.
+func _sailmaker_awning_structure() -> Node3D:
+	var structure := _ark_node("BuiltShelter") as Node3D
+	if not shelter_built or ark_root == null or structure == null or not is_instance_valid(structure):
+		return null
+	if structure.get_parent() != ark_root or not structure.is_inside_tree() or not structure.is_visible_in_tree() or structure.process_mode == Node.PROCESS_MODE_DISABLED:
+		return null
+	return structure
+
+
+func _sailmaker_awning_work_target(installing: bool) -> Vector3:
+	var structure := _sailmaker_awning_structure()
+	if structure == null:
+		return Vector3.INF
+	var offset := SAILMAKER_AWNING_INSTALL_OFFSET if installing else SAILMAKER_AWNING_SEW_OFFSET
+	return ark_root.to_local(structure.to_global(offset))
+
+
+func _sailmaker_awning_work_can_run() -> bool:
+	if not sailmaker_met or not sailmaker_boarded or sailmaker_awning_raised or day_count <= sailmaker_joined_day or _sailmaker_awning_structure() == null:
+		return false
+	if weather_phase == WeatherPhase.STORM or sailing_mode or building_mode or day_period == DayPeriod.NIGHT or raft_edge_damaged or shelter_roof_damaged:
+		return false
+	return not (shared_meal_gathering_pending and not shared_meal_paused and shared_meal_participants.has("sailmaker"))
+
+
+func _sailmaker_awning_endpoint_clear(target: Vector3) -> bool:
+	if not target.is_finite() or ark_root == null or get_world_3d() == null:
+		return false
+	var point := Vector2(target.x, target.z)
+	return not _ark_local_walk_cell_blocked(point, [], 0.25) and not _shared_meal_route_point_blocked(point, _shared_meal_route_obstacles(target))
+
+
+func _sailmaker_at_awning_work_target(target: Vector3) -> bool:
+	if sailmaker_marker == null or not is_instance_valid(sailmaker_marker) or sailmaker_marker.get_parent() != ark_root:
+		return false
+	if not _sailmaker_awning_endpoint_clear(target) or not sailmaker_marker.position.is_finite():
+		return false
+	return absf(sailmaker_marker.position.y - target.y) <= 0.025 and sailmaker_marker.position.distance_to(target) <= SAILMAKER_AWNING_ARRIVAL_TOLERANCE
+
+
+func _process_sailmaker_awning_work(delta: float) -> bool:
+	# Do not turn a suspended frame, a wall-clock gap or malformed dt into work.
+	if not is_finite(delta) or delta <= 0.0 or not _sailmaker_awning_work_can_run():
+		return false
+	var active_delta := minf(delta, SAILMAKER_AWNING_MAX_STEP)
+	if sailmaker_marker == null or not is_instance_valid(sailmaker_marker) or sailmaker_marker.get_parent() != ark_root:
+		return false
+	var installing := sailmaker_awning_phase in ["carrying", "installing"]
+	var target := _sailmaker_awning_work_target(installing)
+	var position := sailmaker_marker.position
+	# Ordinary resident routes span the deck and slightly raised shelter floor.
+	# An actor above/below those surfaces must not be snapped into a work pose.
+	if not position.is_finite() or not target.is_finite() or position.y < 0.12 - 0.025 or position.y > maxf(0.12, target.y) + 0.025 or not _ark_local_walk_position_supported(Vector2(position.x, position.z)):
+		return false
+	if not _sailmaker_awning_endpoint_clear(target):
+		sailmaker_routine_route.clear()
+		sailmaker_routine_route_target_set = false
+		return false
+	if sailmaker_awning_phase == "unstarted":
+		sailmaker_awning_phase = "to_sew"
+		sailmaker_routine_route_target_set = false
+		_save_progress()
+	_update_sailmaker_schedule()
+	if not _sailmaker_at_awning_work_target(target):
+		sailmaker_awning_route_retry_remaining = maxf(0.0, sailmaker_awning_route_retry_remaining - active_delta)
+		if sailmaker_routine_route.is_empty() and sailmaker_routine_route_target_set:
+			if sailmaker_awning_route_retry_remaining > 0.0:
+				return false
+			sailmaker_routine_route_target_set = false
+		var moving := _move_ark_resident_toward(sailmaker_marker, target, active_delta, 0.64, "sailmaker", true)
+		if sailmaker_routine_route.is_empty():
+			sailmaker_awning_route_retry_remaining = SAILMAKER_AWNING_ROUTE_RETRY_SECONDS
+		return moving
+	match sailmaker_awning_phase:
+		"to_sew":
+			sailmaker_awning_phase = "sewing"
+			_save_progress()
+		"sewing":
+			sailmaker_awning_sewing_elapsed = minf(SAILMAKER_AWNING_SEW_SECONDS, sailmaker_awning_sewing_elapsed + active_delta)
+			if sailmaker_awning_sewing_elapsed >= SAILMAKER_AWNING_SEW_SECONDS:
+				sailmaker_awning_phase = "carrying"
+				sailmaker_routine_route_target_set = false
+				_save_progress()
+		"carrying":
+			sailmaker_awning_phase = "installing"
+			_save_progress()
+		"installing":
+			sailmaker_awning_install_elapsed = minf(SAILMAKER_AWNING_INSTALL_SECONDS, sailmaker_awning_install_elapsed + active_delta)
+			if sailmaker_awning_install_elapsed >= SAILMAKER_AWNING_INSTALL_SECONDS:
+				_raise_sailmaker_awning()
+	_update_sailmaker_schedule()
+	_update_sailmaker_work_visuals()
+	return false
+
+
+func _sailmaker_awning_walk_step_clear(from: Vector3, to: Vector3, target: Vector3, allow_initial_escape: bool = false) -> bool:
+	var obstacles := _shared_meal_route_obstacles(target)
+	var from_point := Vector2(from.x, from.z)
+	var was_clear := not _ark_local_walk_cell_blocked(from_point, [], 0.25) and not _shared_meal_route_point_blocked(from_point, obstacles)
+	if not was_clear and not allow_initial_escape:
+		return false
+	# Legacy boarding positions can begin inside a fixture margin. Allow only
+	# their existing planned outward walking leg, never a teleport; once clear,
+	# every sampled step must stay clear of both real and visual-only fixtures.
+	var steps := maxi(1, ceili(from.distance_to(to) / 0.04))
+	for index in range(1, steps + 1):
+		var sample := from.lerp(to, float(index) / float(steps))
+		var point := Vector2(sample.x, sample.z)
+		if not _ark_local_walk_position_supported(point, 0.25):
+			return false
+		var clear := not _ark_local_walk_cell_blocked(point, [], 0.25) and not _shared_meal_route_point_blocked(point, obstacles)
+		if was_clear and not clear:
+			return false
+		was_clear = was_clear or clear
+	return true
+
+
+func _update_sailmaker_work_visuals() -> void:
+	if sailmaker_marker == null or not is_instance_valid(sailmaker_marker):
+		return
+	var bundle := sailmaker_marker.get_node_or_null("OldSailBundle") as MeshInstance3D
+	var spool := sailmaker_marker.get_node_or_null("ThreadSpool") as Node3D
+	if bundle == null or spool == null:
+		return
+	var prepared := sailmaker_awning_phase in ["carrying", "installing"]
+	var work_active := _sailmaker_awning_work_can_run()
+	var active_prepared := prepared and work_active
+	var sewing := sailmaker_awning_phase == "sewing" and work_active and _sailmaker_at_awning_work_target(_sailmaker_awning_work_target(false))
+	var installing := sailmaker_awning_phase == "installing" and work_active and _sailmaker_at_awning_work_target(_sailmaker_awning_work_target(true))
+	if sewing or installing:
+		var facing_target := _sailmaker_awning_work_target(true)
+		if installing:
+			facing_target = ark_root.to_local(_sailmaker_awning_structure().to_global(SAILMAKER_AWNING_CANVAS_OFFSET))
+		var facing := Vector3(facing_target.x - sailmaker_marker.position.x, 0.0, facing_target.z - sailmaker_marker.position.z)
+		if not facing.is_zero_approx():
+			sailmaker_marker.rotation.y = atan2(facing.x, facing.z)
+	bundle.visible = not sailmaker_awning_raised
+	# The prepared personal cloth remains hers during meals/rest/weather, but is
+	# folded at her side rather than pretending she is still carrying/installing.
+	bundle.scale = Vector3(2.0, 0.65, 1.3) if active_prepared else Vector3(1.6, 0.32, 1.3) if sewing else Vector3(1.25, 0.8, 1.1) if prepared else Vector3.ONE
+	# Face and the hands of negatively tilted arms point along figure-local +Z.
+	bundle.position = Vector3(0.0, 1.81, 0.6) if installing else Vector3(0.0, 0.78, 0.32) if active_prepared else Vector3(0.0, 0.66, 0.3) if sewing else Vector3(0.42, 0.34, 0.02)
+	bundle.rotation = Vector3.ZERO if active_prepared or sewing else Vector3(0, 0, -0.18)
+	spool.position = Vector3(-0.25, 0.7, 0.25) if sewing else Vector3(-0.4, 0.18, 0.05)
+	if sailmaker_body:
+		for arm_name in ["ArmLeft", "ArmRight"]:
+			var arm := sailmaker_body.get_node_or_null(arm_name) as MeshInstance3D
+			if arm:
+				if not arm.has_meta("awning_rest_transform"):
+					arm.set_meta("awning_rest_transform", arm.transform)
+				var rest_transform: Transform3D = arm.get_meta("awning_rest_transform")
+				arm.transform = rest_transform
+				if installing:
+					# Rotate around the original upper capsule endpoint (shoulder),
+					# not its centre: raised hands reach the cloth without floating arms.
+					var bounds := arm.get_aabb()
+					var shoulder := Vector3(bounds.get_center().x, bounds.end.y, bounds.get_center().z)
+					var shoulder_position := rest_transform * shoulder
+					arm.rotation.x = -2.3
+					arm.position = shoulder_position - arm.basis * shoulder
+				elif sewing:
+					arm.rotation.x = -1.3 + sin(sailmaker_motion_clock * 11.0) * 0.12
+				elif active_prepared:
+					arm.rotation.x = -1.4
+
+
 func _raise_sailmaker_awning() -> bool:
-	if not sailmaker_boarded or sailmaker_awning_raised or day_count <= sailmaker_joined_day:
+	if not _sailmaker_awning_work_can_run() or sailmaker_awning_phase != "installing" or sailmaker_awning_sewing_elapsed != SAILMAKER_AWNING_SEW_SECONDS or sailmaker_awning_install_elapsed != SAILMAKER_AWNING_INSTALL_SECONDS:
+		return false
+	if not _sailmaker_at_awning_work_target(_sailmaker_awning_work_target(true)):
+		return false
+	_add_sailmaker_awning()
+	if _ark_node("BuiltShelter/SailmakerAwning") == null:
 		return false
 	sailmaker_awning_raised = true
-	_add_sailmaker_awning()
+	sailmaker_awning_phase = "complete"
+	sailmaker_awning_sewing_elapsed = 0.0
+	sailmaker_awning_install_elapsed = 0.0
 	_record_world_event("resident_sail_awning_raised", {"resident_id": "sailmaker", "day": day_count, "source_material": "personal_sail_scrap", "wood_spent": 0})
+	message = "缝帆人把亲手缝好的旧帆雨檐系稳，收起针线。她说这挡不了大风，却能让进出的人少淋一阵。"
+	_update_sailmaker_schedule()
+	_update_sailmaker_work_visuals()
+	_save_progress()
+	_update_hud()
 	return true
 
 
@@ -3534,7 +3985,7 @@ func _add_sailmaker_awning() -> void:
 	var cloth_mesh := BoxMesh.new()
 	cloth_mesh.size = Vector3(1.7, 0.07, 1.08)
 	cloth.mesh = cloth_mesh
-	cloth.position = Vector3(0.0, 1.55, -0.72)
+	cloth.position = SAILMAKER_AWNING_CANVAS_OFFSET
 	cloth.rotation.x = -0.1
 	cloth.material_override = _material(Color("78908a"))
 	awning.add_child(cloth)
@@ -3543,9 +3994,12 @@ func _add_sailmaker_awning() -> void:
 		var support_mesh := CylinderMesh.new()
 		support_mesh.top_radius = 0.025
 		support_mesh.bottom_radius = 0.035
-		support_mesh.height = 0.76
+		# Preserve the original lower anchors; extend only to the raised cloth.
+		var support_bottom := 0.8
+		var support_top := SAILMAKER_AWNING_CANVAS_OFFSET.y + 0.01
+		support_mesh.height = support_top - support_bottom
 		support.mesh = support_mesh
-		support.position = Vector3(side * 0.72, 1.18, -0.72)
+		support.position = Vector3(side * 0.72, (support_top + support_bottom) * 0.5, -0.72)
 		support.material_override = _material(Color("80664c"))
 		awning.add_child(support)
 	structure.add_child(awning)
@@ -3895,30 +4349,42 @@ func _start_build() -> void:
 
 
 func _start_starter_home_template() -> void:
+	_start_home_template(false)
+
+
+func _start_workshop_home_template() -> void:
+	_start_home_template(true)
+
+
+func _start_home_template(include_workbench: bool) -> void:
 	if sailing_mode:
 		message = "掌舵时不能施工。先离开舵位，让仙舟停稳。"
 		_update_hud()
 		return
 	if building_mode:
 		_cancel_build(false)
-	if shelter_built or storage_built:
-		message = "潮棚之家模板需要一块完整空地；已有棚屋或储物箱时，可继续用自由搭建补齐。"
+	var title := "起居工坊" if include_workbench else "潮棚之家"
+	var cost := BUILD_COST + STORAGE_COST + (WORKBENCH_COST if include_workbench else 0)
+	if shelter_built or storage_built or (include_workbench and workbench_built):
+		message = "%s模板需要完整空地；已有设施时，可继续自由逐件搭建。" % title
 		_update_hud()
 		return
-	if wood < BUILD_COST + STORAGE_COST:
-		message = "潮棚之家模板需要 5 块木料（避风棚 3、储物箱 2）；先从近岸带些漂木回来。"
+	if wood < cost:
+		message = "%s模板需要 %d 块木料（现有 %d）；先收集现有漂木。" % [title, cost, wood]
 		_update_hud()
 		return
 	building_mode = true
-	build_type = "starter_home_template"
+	build_type = "workshop_home_template" if include_workbench else "starter_home_template"
 	build_preview = Node3D.new()
-	build_preview.name = "StarterHomeTemplatePreview"
+	build_preview.name = "WorkshopHomeTemplatePreview" if include_workbench else "StarterHomeTemplatePreview"
 	preview_valid_material = _preview_material(Color("a2d18f"))
 	preview_invalid_material = _preview_material(Color("d78277"))
 	_add_shelter_template_ghost(build_preview)
-	_add_template_ghost_box(build_preview, "Storage", Vector3(0.98, 0.84, 0.86), Vector3(2.0, 0.54, -1.5))
+	_add_template_ghost_box(build_preview, "Storage", Vector3(0.98, 0.84, 0.86), Vector3(2.0, 0.54, 1.5 if include_workbench else -1.5))
+	if include_workbench:
+		_add_template_ghost_box(build_preview, "Workbench", Vector3(0.78, 0.74, 1.12), Vector3(2.0, 0.49, -0.5))
 	ark_root.add_child(build_preview)
-	message = "潮棚之家模板 · 5 木（现有 %d）\n绿影处会一并建好棚屋、床铺、灯与储物箱；鼠标选位置，左键确认，右键或 Esc 取消。" % wood
+	message = "%s模板 · %d 木（现有 %d）\n绿影处整套施工；鼠标选位置，左键确认，右键或 Esc 取消。" % [title, cost, wood]
 	_update_build_preview()
 	_update_hud()
 
@@ -3946,7 +4412,7 @@ func _start_basic_shelter_template() -> void:
 	preview_invalid_material = _preview_material(Color("d78277"))
 	_add_shelter_template_ghost(build_preview)
 	ark_root.add_child(build_preview)
-	message = "基础避风棚模板 · 3 木（现有 %d）\n预览含棚顶、床铺与暖灯；鼠标选位置，左键确认，右键或 Esc 取消。" % wood
+	message = "基础避风棚模板 · 3 木（现有 %d）\n含玩家床铺与暖灯；可临时接纳两位避难者，不提供居民专用床位。鼠标选位置，左键确认，右键或 Esc 取消。" % wood
 	_update_build_preview()
 	_update_hud()
 
@@ -4096,8 +4562,13 @@ func _update_build_preview() -> void:
 	if not editing_fixture_id.is_empty():
 		_refresh_fixture_preview()
 		return
-	if build_type == "starter_home_template":
-		preview_valid = _is_valid_starter_home_template_position(preview_position)
+	if build_type in ["workshop_home_template", "starter_home_template"]:
+		# Preview checks include physical routes. Like furniture edits, refresh on
+		# snapped movement or periodically; the transaction always rechecks live.
+		if preview_position != fixture_preview_checked_position or Time.get_ticks_msec() - fixture_preview_checked_msec >= 200:
+			fixture_preview_checked_position = preview_position
+			fixture_preview_checked_msec = Time.get_ticks_msec()
+			preview_valid = _home_template_layout_error(preview_position, build_type == "workshop_home_template").is_empty()
 	elif build_type == "guest_cabin_template":
 		preview_valid = _is_valid_guest_cabin_position(preview_position)
 	elif build_type == "shelter":
@@ -4123,37 +4594,110 @@ func _set_build_preview_material(ghost_material: StandardMaterial3D) -> void:
 				(child as MeshInstance3D).material_override = ghost_material
 
 
+func _home_template_layout_error(position: Vector3, include_workbench: bool) -> String:
+	if shelter_built or storage_built or (include_workbench and workbench_built) or not _is_valid_shelter_position(position):
+		return "棚屋占地无效，或模板内的设施已经建好。"
+	var fixtures: Array[Dictionary] = [{"id": "storage", "position": position + Vector3(2, 0, 1.5 if include_workbench else -1.5), "turns": 0}]
+	if include_workbench:
+		fixtures.append({"id": "workbench", "position": position + Vector3(2, 0, -0.5), "turns": 1})
+	elif workbench_built:
+		fixtures.append({"id": "workbench", "position": workbench_position, "turns": workbench_quarter_turns})
+	var lantern := _ark_node("LanternMarker") as Node3D
+	for fixture in fixtures:
+		var half: Vector2 = FixturePlacement.half_size(fixture.id, fixture.turns)
+		if not FixturePlacement.supported(fixture.position, half) or FixturePlacement.overlaps(fixture.position, half, position, Vector2(1.5, 1.2), 0.001):
+			return "家具须落在甲板内，并避开棚屋。"
+		if lantern and FixturePlacement.overlaps(fixture.position, half, lantern.position, Vector2(0.18, 0.18)):
+			return "家具与固定避风灯重叠。"
+	if fixtures.size() == 2 and FixturePlacement.overlaps(fixtures[0].position, FixturePlacement.half_size(fixtures[0].id, fixtures[0].turns), fixtures[1].position, FixturePlacement.half_size(fixtures[1].id, fixtures[1].turns)):
+		return "储物箱与工作台重叠。"
+	for actor in [player, traveler_marker, sailmaker_marker]:
+		if not is_instance_valid(actor):
+			continue
+		var local: Vector3 = ark_root.to_local(actor.global_position)
+		if absf(local.y) > 2.0:
+			continue
+		var point := Vector2(local.x, local.z)
+		var radius := 0.40 if actor == player else 0.25
+		if FixturePlacement.home_wall_contains(point, position, radius):
+			return "有人站在棚墙位置，请留出空间。"
+		for fixture in fixtures:
+			if fixture.id == "workbench" and not include_workbench:
+				continue
+			if FixturePlacement.contains_actor(point, fixture.position, FixturePlacement.half_size(fixture.id, fixture.turns), radius):
+				return "有人站在家具位置，请留出空间。"
+	var excluded := _fixture_collision_rids("workbench")
+	var blocked := func(point: Vector2, radius: float) -> bool: return _ark_local_walk_cell_blocked(point, excluded, radius)
+	for radius in [0.23, 0.38]:
+		var context := FixturePlacement.home_grid(position, fixtures, radius, blocked)
+		# The rear route is reserved now, not only after buying an extension.
+		for target in [Vector3(0, 0.12, 1.5), position + Vector3(0, 0, 1.55), position + Vector3(0.72, 0, 0.2), position + TIDEKEEPER_REFUGE_REST_OFFSET, position + SAILMAKER_REFUGE_REST_OFFSET, Vector3(0, 0.12, -1.75)]:
+			if not _fixture_grid_reaches(context.grid, context.minimum, context.cell_size, context.start, target):
+				return "请保留棚门、床边、舵位及通往扩建甲板的通路。"
+		for fixture in fixtures:
+			if not _fixture_any_side_reachable(context, fixture.position, FixturePlacement.half_size(fixture.id, fixture.turns)):
+				return "请为储物箱和工作台留出可达的使用面。"
+	return ""
+
+
 func _is_valid_starter_home_template_position(position: Vector3) -> bool:
-	if shelter_built or storage_built or not _is_valid_shelter_position(position):
-		return false
-	var storage_spot := position + Vector3(2.0, 0.0, -1.5)
-	return absf(storage_spot.x) <= 2.2 and absf(storage_spot.z) <= 1.55
+	return _home_template_layout_error(position, false).is_empty()
+
+
+func _is_valid_workshop_home_template_position(position: Vector3) -> bool:
+	return _home_template_layout_error(position, true).is_empty()
 
 
 func _try_place_starter_home_template(position: Vector3) -> bool:
+	return _try_place_home_template(position, false)
+
+
+func _try_place_workshop_home_template(position: Vector3) -> bool:
+	return _try_place_home_template(position, true)
+
+
+func _try_place_home_template(position: Vector3, include_workbench: bool) -> bool:
+	if not position.is_finite():
+		return false
 	var snapped_position := Vector3(snappedf(position.x, 0.5), 0.12, snappedf(position.z, 0.5))
-	if not _is_valid_starter_home_template_position(snapped_position):
-		message = "模板占地或通道放不下；请把棚屋入口朝向筏首，避开筏边。"
+	var error := _home_template_layout_error(snapped_position, include_workbench)
+	if not error.is_empty():
+		message = error
 		_update_hud()
 		return false
-	if wood < BUILD_COST + STORAGE_COST:
+	var cost := BUILD_COST + STORAGE_COST + (WORKBENCH_COST if include_workbench else 0)
+	if wood < cost:
 		_cancel_build()
-		message = "木料不足，潮棚之家模板暂时无法完成。"
+		message = "木料不足，整套模板暂时无法完成。"
 		_update_hud()
 		return false
-	var storage_spot := snapped_position + Vector3(2.0, 0.0, -1.5)
-	if not _commit_construction({"wood": BUILD_COST + STORAGE_COST}, {"shelter": {"built": true, "position": _position_exact(snapped_position)}, "storage": {"built": true, "position": _position_exact(storage_spot), "quarter_turns": 0}}, "build", func() -> bool: return _is_valid_starter_home_template_position(snapped_position)):
+	var storage_spot := snapped_position + Vector3(2, 0, 1.5 if include_workbench else -1.5)
+	var bench_spot := snapped_position + Vector3(2, 0, -0.5)
+	var states := {"shelter": {"built": true, "position": _position_exact(snapped_position)}, "storage": {"built": true, "position": _position_exact(storage_spot), "quarter_turns": 0}}
+	if include_workbench:
+		states["workbench"] = {"built": true, "position": _position_exact(bench_spot), "quarter_turns": 1}
+	if not _commit_construction({"wood": cost}, states, "build", func() -> bool: return _home_template_layout_error(snapped_position, include_workbench).is_empty()):
 		return false
+	var mode := "workshop_home_template" if include_workbench else "starter_home_template"
 	shelter_built = true
 	shelter_position = snapped_position
 	storage_built = true
 	storage_position = storage_spot
-	_record_world_event("shelter_built", {"wood_spent": BUILD_COST, "position": {"x": shelter_position.x, "z": shelter_position.z}, "construction_mode": "starter_home_template"})
+	storage_quarter_turns = 0
+	storage_collision_enabled = true
+	_record_world_event("shelter_built", {"wood_spent": BUILD_COST, "position": {"x": shelter_position.x, "z": shelter_position.z}, "construction_mode": mode})
 	_build_shelter_at(shelter_position)
-	_record_world_event("storage_built", {"wood_spent": STORAGE_COST, "position": {"x": storage_position.x, "z": storage_position.z}, "construction_mode": "starter_home_template"})
+	_record_world_event("storage_built", {"wood_spent": STORAGE_COST, "position": {"x": storage_position.x, "z": storage_position.z}, "construction_mode": mode})
 	_build_storage_at(storage_position)
+	if include_workbench:
+		workbench_built = true
+		workbench_position = bench_spot
+		workbench_quarter_turns = 1
+		workbench_collision_enabled = true
+		_record_world_event("workbench_built", {"wood_spent": WORKBENCH_COST, "position": {"x": bench_spot.x, "z": bench_spot.z}, "construction_mode": mode})
+		_build_workbench_at(workbench_position)
 	_cancel_build(false)
-	message = "潮棚之家落成了：棚屋、床铺、灯与储物箱都已就位，正面通道也留了出来。此后仍可自由逐件扩建。"
+	message = "起居工坊落成：避风棚、储物箱和工作台已就位，可休息、存取和制作；玩家床铺另计，两位居民仍为临时避难。" if include_workbench else "潮棚之家落成：棚屋、玩家床铺、灯与储物箱已就位；另可临时接纳两位避难者，通路也已留出。"
 	_save_progress()
 	_update_hud()
 	return true
@@ -4386,9 +4930,9 @@ func _build_shared_meal_setting(structure: Node3D) -> void:
 	var setting := Node3D.new()
 	setting.name = "SharedMealSetting"
 	structure.add_child(setting)
-	_add_local_visual_box(setting, "WovenMat", Vector3(0, 0.25, 0.4), Vector3(1.35, 0.035, 0.55), Color("896646"))
+	_add_local_visual_box(setting, "WovenMat", SHARED_MEAL_MAT_OFFSET, Vector3(1.35, 0.035, 0.55), Color("896646"))
 	for index in range(3):
-		var x := float(index - 1) * 0.43
+		var x := SHARED_MEAL_MAT_OFFSET.x + float(index - 1) * 0.43
 		_add_local_visual_cylinder(setting, "Bowl%d" % index, Vector3(x, 0.30, 0.4), 0.15, 0.09, Color("8d958e"))
 		_add_local_visual_cylinder(setting, "Soup%d" % index, Vector3(x, 0.349, 0.4), 0.12, 0.008, Color("de9b4f"))
 	_add_local_visual_cylinder(setting, "CoveredPot", Vector3(-1.05, 0.70, -0.75), 0.21, 0.035, Color("b39667"))
@@ -4412,7 +4956,123 @@ func _refresh_shared_meal_visuals() -> void:
 		for part in ["PotLid", "LidHandle"]:
 			(pot.get_node(part) as Node3D).visible = not shared_meal_gathering_pending or shared_meal_paused
 
+func _clear_shelter_for_rebuild() -> void:
+	# Same-scene loads must replace this cabin, not stack an opaque second roof.
+	# Only these four interactions belong to it; other fixtures remain untouched.
+	_update_shelter_cutaway_nameplates()
+	for index in range(interactables.size() - 1, -1, -1):
+		var entry: Dictionary = interactables[index]
+		if str(entry.get("id", "")) not in ["cot", "hearth", "resident_keepsake", "sailmaker_awning"]:
+			continue
+		var marker: Node = entry.get("node")
+		if is_instance_valid(marker):
+			if marker.get_parent():
+				marker.get_parent().remove_child(marker)
+			marker.queue_free()
+		interactables.remove_at(index)
+	for path in ["BuiltShelter", "CotInteractable", "HearthInteractable", "ResidentKeepsakeInteractable", "SailmakerAwningInteractable"]:
+		var previous := _ark_node(path)
+		if previous:
+			ark_root.remove_child(previous)
+			previous.queue_free()
+
+
+func _update_shelter_roof_cutaway() -> void:
+	var structure := _ark_node("BuiltShelter") as Node3D
+	if structure == null:
+		_update_shelter_cutaway_nameplates()
+		return
+	var roof := structure.get_node_or_null("Roof") as Node3D
+	if roof == null:
+		_update_shelter_cutaway_nameplates()
+		return
+	var cutaway := false
+	if shelter_built and is_instance_valid(player) and structure.is_visible_in_tree() and not is_swimming:
+		var local := structure.to_local(player.global_position)
+		var deck_local := ark_root.to_local(player.global_position)
+		var was_open := bool(roof.get_meta("cutaway_active", false))
+		# Enter at the supported doorway as well as inside. A wider exit region
+		# avoids flicker on the threshold or during an ordinary jump.
+		var half_width := 1.30 if was_open else 1.05
+		var back := -1.00 if was_open else -0.80
+		var front := 2.10 if was_open else 1.85
+		var low := -0.35 if was_open else -0.25
+		var high := 1.85 if was_open else 0.75
+		var supported := _ark_local_walk_position_supported(Vector2(deck_local.x, deck_local.z), 0.38)
+		if was_open and (player.is_on_floor() or deck_local.y >= 0.03):
+			# The conservative entry footprint ends before the actual deck edge.
+			# Grounded feet or an ordinary jump above the raft's 0.03 m deck may
+			# use the exit band. Its height cap stays below the roof underside;
+			# projected feet must still be on deck, never off-boat or underwater.
+			# This presentation-only exception does not weaken any route guard.
+			supported = _ark_local_walk_position_supported(Vector2(deck_local.x, deck_local.z), 0.0)
+		cutaway = absf(local.x) <= half_width and local.z >= back and local.z <= front and local.y >= low and local.y <= high and supported
+	roof.set_meta("cutaway_active", cutaway)
+	# Roof.visible remains the damage/repair flag. Only its central face and
+	# attached surface details yield to the camera; the eaves/frame stay opaque.
+	for part in ["CenterFace", "RoofRidgeBinding", "RoofCanvasPatch", "RoofCanvasPatchSeam"]:
+		var visual := roof.get_node_or_null(part) as Node3D
+		if visual:
+			visual.visible = not cutaway
+	var brace := structure.get_node_or_null("ReefShellStormBrace") as Node3D
+	if brace:
+		brace.visible = roof.visible and not cutaway
+	_update_shelter_cutaway_nameplates(structure, cutaway)
+
+
+func _update_shelter_cutaway_nameplates(structure: Node3D = null, cutaway: bool = false) -> void:
+	# Only the three nearby labels which can cover the cabin's hands/cloth yield.
+	# Projected lanes stay ordered when residents move or the raft turns, without
+	# changing the camera, text, label style, interaction targets or actor geometry.
+	_place_shelter_cutaway_nameplate(_ark_node("HearthInteractable") as Node3D, structure, cutaway, 3.1)
+	_place_shelter_cutaway_nameplate(traveler_marker, structure, cutaway and traveler_boarded, 4.2)
+	_place_shelter_cutaway_nameplate(sailmaker_marker, structure, cutaway and sailmaker_boarded, 5.3)
+
+
+func _place_shelter_cutaway_nameplate(marker: Node3D, structure: Node3D, cutaway: bool, lane: float) -> void:
+	if not is_instance_valid(marker):
+		return
+	var sign := marker.get_node_or_null("Name") as Label3D
+	if sign == null:
+		return
+	var nearby := false
+	if cutaway and is_instance_valid(structure) and is_instance_valid(camera) and marker.get_parent() == ark_root:
+		var local := structure.to_local(marker.global_position)
+		nearby = absf(local.x) <= 2.1 and local.z >= -1.6 and local.z <= 2.1 and local.y >= -0.35 and local.y <= 0.8 and camera.global_basis.y.y > 0.1
+	if not nearby:
+		if sign.has_meta("cutaway_base_position"):
+			sign.position = sign.get_meta("cutaway_base_position")
+			sign.remove_meta("cutaway_base_position")
+		return
+	if not sign.has_meta("cutaway_base_position"):
+		sign.set_meta("cutaway_base_position", sign.position)
+	var base: Vector3 = sign.get_meta("cutaway_base_position")
+	var anchor := marker.to_global(base)
+	var view := camera.get_camera_transform().affine_inverse()
+	var projection := camera.get_camera_projection()
+	var local_anchor := view * anchor
+	var local_target := view * (structure.global_position + camera.global_basis.y * lane)
+	var local_up := view.basis * Vector3.UP
+	var clip := projection * Vector4(local_anchor.x, local_anchor.y, local_anchor.z, 1.0)
+	var target := projection * Vector4(local_target.x, local_target.y, local_target.z, 1.0)
+	var step := projection * Vector4(local_up.x, local_up.y, local_up.z, 0.0)
+	# Fresh load can rebuild the cabin before the first normal camera pose.
+	if target.w <= 0.0001:
+		sign.position = base
+		sign.remove_meta("cutaway_base_position")
+		return
+	# Equal camera-up world heights are not equal screen heights in perspective.
+	# Solve (clip.y + lift * step.y) / (clip.w + lift * step.w) for this lane;
+	# only world Y changes, so the name keeps its owner's horizontal anchor.
+	var target_y := target.y / target.w
+	var divisor := step.y - target_y * step.w
+	if absf(divisor) > 0.0001:
+		anchor.y += (target_y * clip.w - clip.y) / divisor
+	sign.position = marker.to_local(anchor)
+
+
 func _build_shelter_at(position: Vector3) -> void:
+	_clear_shelter_for_rebuild()
 	var structure := Node3D.new()
 	structure.name = "BuiltShelter"
 	structure.position = position
@@ -4421,8 +5081,15 @@ func _build_shelter_at(position: Vector3) -> void:
 	_add_local_box(structure, "Back", Vector3(0, 1.25, -1.12), Vector3(3.0, 2.2, 0.14), Color("76593f"), true)
 	_add_local_box(structure, "Left", Vector3(-1.42, 1.25, 0), Vector3(0.14, 2.2, 2.2), Color("76593f"), true)
 	_add_local_box(structure, "Right", Vector3(1.42, 1.25, 0), Vector3(0.14, 2.2, 2.2), Color("76593f"), true)
-	_add_local_box(structure, "Roof", Vector3(0, 2.38, 0), Vector3(3.2, 0.18, 2.6), Color("a58b66"), false)
-	var roof := structure.get_node("Roof") as Node3D
+	var roof := Node3D.new()
+	roof.name = "Roof"
+	roof.position = Vector3(0, 2.38, 0)
+	structure.add_child(roof)
+	# Same outer footprint and material, split into a central face and 18 cm rim.
+	_add_local_visual_box(roof, "CenterFace", Vector3.ZERO, Vector3(2.84, 0.18, 2.24), Color("a58b66"))
+	for side in [-1.0, 1.0]:
+		_add_local_visual_box(roof, "EaveLeft" if side < 0.0 else "EaveRight", Vector3(side * 1.51, 0, 0), Vector3(0.18, 0.18, 2.24), Color("a58b66"))
+		_add_local_visual_box(roof, "EaveBack" if side < 0.0 else "EaveFront", Vector3(0, 0, side * 1.21), Vector3(3.2, 0.18, 0.18), Color("a58b66"))
 	roof.visible = not shelter_roof_damaged
 	_add_shelter_visual_details(structure, roof)
 	if reef_shell_brace_installed:
@@ -4466,7 +5133,13 @@ func _build_shelter_at(position: Vector3) -> void:
 	structure.add_child(warm_light)
 	_build_shelter_lamp(structure)
 	_build_shared_meal_setting(structure)
+	if resident_keepsake_present:
+		_add_resident_keepsake()
+	if sailmaker_awning_raised:
+		_add_sailmaker_awning()
 	_update_lantern_lighting(weather_phase == WeatherPhase.STORM)
+	_update_shelter_roof_cutaway()
+	surface_sample.apply_shelter(structure)
 
 
 func _add_reef_shell_brace_visual(structure: Node3D) -> void:
@@ -4480,6 +5153,7 @@ func _add_reef_shell_brace_visual(structure: Node3D) -> void:
 		_add_local_visual_box(brace, "ShellPlate_%d" % index, Vector3(offset_x, 2.53, 0.0), Vector3(0.42, 0.055, 2.28), Color("638a83") if index % 2 == 0 else Color("756d58"))
 	for side in [-1.0, 1.0]:
 		_add_local_visual_box(brace, "Lashing_%d" % int(side), Vector3(side * 1.32, 2.46, 0.0), Vector3(0.12, 0.07, 2.36), Color("b69b6c"))
+	_update_shelter_roof_cutaway()
 
 
 func _add_shelter_visual_details(structure: Node3D, roof: Node3D) -> void:
@@ -4673,7 +5347,38 @@ func _add_resident_keepsake() -> void:
 	interactables.append({"id": "resident_keepsake", "node": marker, "amount": 0})
 
 
+func _clear_fixture_for_rebuild(fixture_id: String) -> void:
+	if fixture_id not in ["storage", "workbench"]:
+		return
+	# Only these two builders own these exact ark-local roots and markers.
+	# Remove registrations before freeing; interaction/edit lookups use their names.
+	for index in range(interactables.size() - 1, -1, -1):
+		if str(interactables[index].get("id", "")) == fixture_id:
+			interactables.remove_at(index)
+	for previous in [_fixture_node(fixture_id), _fixture_marker(fixture_id)]:
+		if is_instance_valid(previous):
+			ark_root.remove_child(previous)
+			# These scriptless subtrees have no callbacks to finish. Free now so
+			# repeated rebuilds leave neither queued bodies nor occupied names.
+			previous.free()
+	if editing_fixture_id == fixture_id:
+		if is_instance_valid(build_preview):
+			build_preview.get_parent().remove_child(build_preview)
+			build_preview.free()
+		build_preview = null
+		_cancel_build(false)
+	# Routes are transient layout caches, not saved work, stock or history.
+	traveler_routine_route.clear()
+	sailmaker_routine_route.clear()
+	traveler_routine_route_target_set = false
+	sailmaker_routine_route_target_set = false
+	resident_gather_route.clear()
+	resident_gather_route_index = 0
+	vessel_navigation.invalidate_layout()
+
+
 func _build_storage_at(position: Vector3) -> void:
+	_clear_fixture_for_rebuild("storage")
 	var crate := Node3D.new()
 	crate.name = "BuiltStorage"
 	crate.position = position
@@ -4703,6 +5408,7 @@ func _build_storage_at(position: Vector3) -> void:
 
 
 func _build_workbench_at(position: Vector3) -> void:
+	_clear_fixture_for_rebuild("workbench")
 	var bench := Node3D.new()
 	bench.name = "BuiltWorkbench"
 	bench.position = position
@@ -5238,16 +5944,18 @@ func _add_pressure_wreck(position: Vector3) -> void:
 	wreck.add_child(warm_glow)
 	var warning_ring := MeshInstance3D.new()
 	warning_ring.name = "VentWarningRing"
+	warning_ring.top_level = true
+	warning_ring.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var ring_mesh := TorusMesh.new()
-	ring_mesh.inner_radius = 0.28
-	ring_mesh.outer_radius = 0.36
-	ring_mesh.ring_segments = 16
-	ring_mesh.rings = 5
+	# The outer rim is the real damage boundary, not a decorative source glow.
+	ring_mesh.inner_radius = PRESSURE_VENT_DANGER_RADIUS - 0.18
+	ring_mesh.outer_radius = PRESSURE_VENT_DANGER_RADIUS
+	ring_mesh.ring_segments = 8
+	ring_mesh.rings = 96
 	warning_ring.mesh = ring_mesh
-	warning_ring.position = Vector3(1.65, 0.12, -0.12)
 	var ring_material := StandardMaterial3D.new()
 	ring_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	ring_material.albedo_color = Color("ff9b57")
+	ring_material.albedo_color = Color("ffd080")
 	ring_material.emission_enabled = true
 	ring_material.emission = Color("ff6d38")
 	ring_material.emission_energy_multiplier = 1.4
@@ -5737,13 +6445,15 @@ func _opening_objective_hint() -> String:
 		return "布置家园：R 旋转 · 左键确认 · 右键/Esc 取消；只编辑原甲板，不消耗材料。"
 	if building_mode:
 		return "选择设施落点；左键确认，右键/Esc 取消。"
+	if sailing_mode:
+		return "家随舟走：W/S 航行、A/D 转向；E 停船后上岸采集，回船建造。M 查看远礁与航路。"
 	if weather_phase == WeatherPhase.STORM:
 		if not shelter_built:
-			return "风雨正急，眼下还没有避风棚；留在稳妥处或继续探索，按 R 等雨势过去。雨后先搭棚。"
-		return "风雨正急。靠近避风棚避险，或继续探索；按 R 等待雨势过去。"
+			return "风雨正急，眼下还没有避风棚；仙舟原位停航，仍可探索。按 R 等雨势过去，再检查筏舷。"
+		return "风雨正急，仙舟原位停航；可在棚下避雨或继续探索。按 R 等雨势过去，再检查筏舷。"
 	if shelter_roof_damaged or raft_edge_damaged:
 		if wood > 0:
-			return "回木筏与家园交互，修复受损处（每处 1 木）。"
+			return "回木筏与家园交互，修复受损处（每处 1 木）；筏舷修好即可继续航行。"
 		return "先找木料，再回家修复受损的棚顶或筏舷。"
 	if not shelter_built:
 		if wood < BUILD_COST:
@@ -5752,21 +6462,19 @@ func _opening_objective_hint() -> String:
 				return "从储物箱取出全部 %d 块木料（多余可留作扩建），再回木筏搭起避风棚。" % stored_wood
 			if stored_wood > 0:
 				return "还需 %d 块木料；储物箱里另有 %d 块，凑齐后取出再搭避风棚。" % [carried_shortage - stored_wood, stored_wood]
-			return "收集 %d 块漂木；凑够 3 块后，回木筏搭起避风棚。" % carried_shortage
-		return "回木筏选择基础避风棚模板，或按 B 自由搭建。"
-	if weather_phase == WeatherPhase.AFTER:
-		if not resident_met:
-			return "风雨已过。沿岸寻找守潮人，听听她接下来的打算。"
-		if not traveler_boarded:
-			return "与守潮人交谈，决定是否邀请她登舟。"
-		if not sailmaker_met:
-			return "沿岸寻找缝帆人；结伴后可让居民外出采集。"
-		return "打开潮痕图规划探索；岛外有船骸、独特资源与新蓝图。"
-	if not resident_met:
-		return "避风棚已就位。可去见守潮人，也可继续探索，再按 R 推进天气。"
-	if not traveler_boarded:
-		return "与守潮人交谈，决定是否邀请她登舟；风雨前仍可继续准备。"
-	return "风雨将至。检查避风棚与物资，准备好后按 R 推进天气。"
+			return "船尾 E 现在就能掌舵；停船上岸收集 %d 块漂木，回船用 3 木搭棚。M 查看航路。" % carried_shortage
+		return "木料已够：回船用基础避风棚模板或 B 搭棚；房屋随船移动，不必先经历风雨。"
+	if not storage_built:
+		return "棚屋已能随舟远行。可邀请岸上居民同行；B 用 2 木造储物箱，继续准备工作台与扩甲。"
+	if not workbench_built:
+		return "停船用 B 建阵枢工作台（2 木）；不足可靠岸采集，箱内木料需先取出。居民同行须亲自邀请。"
+	if not _has_blueprint("keel_deck_expansion"):
+		return "家园已备好：船尾 E 掌舵，M 查看远礁沉筏；靠岸上岛打捞龙骨、4 木与永久扩甲图样。"
+	if not raft_extension_built:
+		if wood < RAFT_EXTENSION_WOOD_COST or keel_beams < RAFT_EXTENSION_KEEL_COST:
+			return "扩甲图样已记住：需要 4 木与 1 龙骨；取出储木或靠岸补给，停船后施工。"
+		return "远行所得已够：停船后打开 H 的龙骨扩甲蓝图，消耗 4 木与 1 龙骨，添一段甲板和夜铺。"
+	return "新甲板已随舟同行。自由选下一处泊地；可邀请居民同行，让她们在船上休息、与守潮人采集共餐。"
 
 
 func _hud_choice_open() -> bool:
@@ -5840,7 +6548,7 @@ func _update_hud() -> void:
 		var refuge_text := "仙舟庇护圈 %.0fm%s · %s" % [_current_refuge_radius(), "（阵灯增幅）" if lantern_tuned else "", "圈内" if _is_within_ark_refuge() else "圈外 %.0fm" % _distance_to_ark()]
 		var shelter_status := "避风棚已建" if shelter_built else "避风棚未建"
 		var objective_text := _opening_objective_hint()
-		var detailed_text := "第 %d 天·%s  ·  生命 %d/%d\n木料 %d（随身）+ %d（储存） · 鲜贝 %d · 热汤 %d%s%s\n%s  ·  %s%s\n避难者 %d/%d  ·  %s\n当前目标：%s" % [day_count, _day_period_label(), player_health, PLAYER_MAX_HEALTH, wood, stored_wood, raw_shellfish, stew_servings, exposure_text, swim_text, weather_text, shelter_status, (" · " + damage_text) if not damage_text.is_empty() else "", _resident_occupancy(), _resident_capacity(), refuge_text, objective_text]
+		var detailed_text := "第 %d 天·%s  ·  生命 %d/%d\n木料 %d（随身）+ %d（储存） · 鲜贝 %d · 热汤 %d%s%s\n%s  ·  %s%s\n避难者 %d/%d（不含玩家）\n居民专用床位 %d · 临时避难名额 %d\n玩家床铺 %d · %s\n当前目标：%s" % [day_count, _day_period_label(), player_health, PLAYER_MAX_HEALTH, wood, stored_wood, raw_shellfish, stew_servings, exposure_text, swim_text, weather_text, shelter_status, (" · " + damage_text) if not damage_text.is_empty() else "", _resident_occupancy(), _resident_capacity(), _resident_berth_capacity(), _resident_temporary_refuge_capacity(), int(shelter_built), refuge_text, objective_text]
 		if _resident_occupancy() > 0:
 			detailed_text += "\n居民采集偏好：%s" % _resident_gather_policy_label()
 		if reef_beast_spooked or reef_beast_defeated:
@@ -5989,9 +6697,9 @@ func _daylight_profile() -> Dictionary:
 			}
 		DayPeriod.NIGHT:
 			return {
-				"ambient": Color("35445f"), "ambient_energy": 0.22,
-				"sun_color": Color("8097b9"), "sun_energy": 0.025,
-				"sun_rotation": Vector3(5.0, 36.0, 0.0),
+				"ambient": Color("35445f"), "ambient_energy": 0.45,
+				"sun_color": Color("8097b9"), "sun_energy": 0.20,
+				"sun_rotation": Vector3(-35.0, 36.0, 0.0),
 				"sky_top": Color("111b35"), "sky_horizon": Color("3e4a67"), "ground": Color("202d45"),
 			}
 	return _daylight_profile_for_morning()
@@ -6024,12 +6732,14 @@ func _build_save_state() -> Dictionary:
 	if ark_root:
 		ark_position = ark_root.global_position if ark_root.is_inside_tree() else ark_root.position
 	return {
-		"schema_version": 34,
+		"schema_version": 36,
 		"resident_task_id": resident_task_id,
 		"jade_task_id": jade_task_id,
 		"modules": _module_snapshot(),
 		"water": water.snapshot(),
 		"vessel_navigation": vessel_navigation.snapshot(),
+		"life_period_elapsed": life_period_elapsed,
+		"last_shore_replenish_day": last_shore_replenish_day,
 		"day_count": day_count,
 		"day_period": day_period,
 		"wood": wood,
@@ -6088,6 +6798,9 @@ func _build_save_state() -> Dictionary:
 		"sailmaker_position": {"x": sailmaker_position.x, "y": sailmaker_position.y, "z": sailmaker_position.z},
 		"sailmaker_joined_day": sailmaker_joined_day,
 		"sailmaker_awning_raised": sailmaker_awning_raised,
+		"sailmaker_awning_phase": sailmaker_awning_phase,
+		"sailmaker_awning_sewing_elapsed": sailmaker_awning_sewing_elapsed,
+		"sailmaker_awning_install_elapsed": sailmaker_awning_install_elapsed,
 		"sailmaker_guest_cabin_first_night": sailmaker_guest_cabin_first_night,
 		"resident_repair_pending": resident_repair_pending,
 		"resident_repair_part": resident_repair_part,
@@ -6187,6 +6900,7 @@ func _load_progress() -> void:
 	_load_progress_impl()
 	_initialize_module_state()
 	_restoring_progress = false
+	_update_shelter_roof_cutaway()
 
 
 func _load_progress_impl() -> void:
@@ -6201,13 +6915,13 @@ func _load_progress_impl() -> void:
 			set_meta("save_warning", message)
 		return
 	var raw: Dictionary = result.get("state", {})
-	if int(raw.get("schema_version", 0)) == 34 and not _prepare_module_restore(raw):
+	if int(raw.get("schema_version", 0)) >= 34 and not _prepare_module_restore(raw):
 		set_meta("save_load_blocked", true)
 		set_meta("save_warning", "存档模块不一致，原档已保留。")
 		return
 	var saved: Dictionary = _sanitize_saved_progress(raw)
 	var saved_schema := int(saved.get("schema_version", 0))
-	if not saved_schema in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]:
+	if not saved_schema in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]:
 		return
 	var ark_position_value = saved.get("ark_position", {})
 	if saved_schema >= 12 and ark_position_value is Dictionary and ark_root:
@@ -6224,6 +6938,8 @@ func _load_progress_impl() -> void:
 		event_sequence = maxi(event_sequence, int(world_events.back().get("sequence", 0)))
 	day_count = clampi(int(saved.get("day_count", 1)), 1, 9999)
 	day_period = clampi(int(saved.get("day_period", DayPeriod.MORNING)), DayPeriod.MORNING, DayPeriod.NIGHT)
+	life_period_elapsed = float(saved.get("life_period_elapsed", 0.0)) if saved_schema >= 35 else 0.0
+	last_shore_replenish_day = int(saved.get("last_shore_replenish_day", day_count)) if saved_schema >= 35 else day_count
 	wood = clampi(int(saved.get("wood", 1)), 0, 999)
 	player_health = clampi(int(saved.get("player_health", PLAYER_MAX_HEALTH)), 1, PLAYER_MAX_HEALTH) if saved_schema >= 30 else PLAYER_MAX_HEALTH
 	raw_shellfish = clampi(int(saved.get("raw_shellfish", 0)), 0, 999)
@@ -6315,6 +7031,19 @@ func _load_progress_impl() -> void:
 	sailmaker_boarded = bool(saved.get("sailmaker_boarded", false)) and sailmaker_met and shelter_built
 	sailmaker_joined_day = clampi(int(saved.get("sailmaker_joined_day", day_count)), 0, day_count) if sailmaker_boarded else 0
 	sailmaker_awning_raised = bool(saved.get("sailmaker_awning_raised", false)) and sailmaker_boarded and shelter_built
+	# Legacy completion stays completed without reconstructing unobserved work.
+	# Legacy unfinished gifts earn all progress online from an unstarted state.
+	sailmaker_awning_phase = str(saved.sailmaker_awning_phase) if saved_schema >= 36 else "complete" if sailmaker_awning_raised else "unstarted"
+	sailmaker_awning_sewing_elapsed = float(saved.sailmaker_awning_sewing_elapsed) if saved_schema >= 36 else 0.0
+	sailmaker_awning_install_elapsed = float(saved.sailmaker_awning_install_elapsed) if saved_schema >= 36 else 0.0
+	# Cached paths belong to the previous live scene layout, never the save.
+	# This also matters when reloading into this same already-instantiated scene.
+	sailmaker_routine_route.clear()
+	sailmaker_routine_route_index = 0
+	sailmaker_routine_route_target = Vector3.ZERO
+	sailmaker_routine_route_target_set = false
+	sailmaker_awning_route_starts_blocked = false
+	sailmaker_awning_route_retry_remaining = 0.0
 	sailmaker_guest_cabin_first_night = saved_schema >= 23 and bool(saved.get("sailmaker_guest_cabin_first_night", false)) and sailmaker_boarded
 	resident_repair_pending = bool(saved.get("resident_repair_pending", false))
 	resident_repair_part = str(saved.get("resident_repair_part", ""))
@@ -6391,14 +7120,16 @@ func _load_progress_impl() -> void:
 			interactables.remove_at(index)
 	if shelter_built:
 		_build_shelter_at(shelter_position)
-		if resident_keepsake_present:
-			_add_resident_keepsake()
-		if sailmaker_awning_raised:
-			_add_sailmaker_awning()
+	else:
+		_clear_shelter_for_rebuild()
 	if storage_built:
 		_build_storage_at(storage_position)
+	else:
+		_clear_fixture_for_rebuild("storage")
 	if workbench_built:
 		_build_workbench_at(workbench_position)
+	else:
+		_clear_fixture_for_rebuild("workbench")
 	if keel_wreck_searched:
 		_refresh_keel_wreck_visual()
 	if tide_station_searched:
@@ -6435,6 +7166,8 @@ func _load_progress_impl() -> void:
 	var sailmaker_position_value = saved.get("sailmaker_position", {})
 	if sailmaker_boarded and sailmaker_position_value is Dictionary and sailmaker_marker:
 		sailmaker_marker.position = Vector3(float(sailmaker_position_value.get("x", sailmaker_marker.position.x)), float(sailmaker_position_value.get("y", sailmaker_marker.position.y)), float(sailmaker_position_value.get("z", sailmaker_marker.position.z)))
+	_update_sailmaker_schedule()
+	_update_sailmaker_work_visuals()
 	var jade_keeper_position_value = saved.get("jade_sail_keeper_position", {})
 	if jade_sail_keeper_marker:
 		if jade_sail_industry_pending and jade_keeper_position_value is Dictionary:
@@ -6555,7 +7288,7 @@ func _module_snapshot() -> Dictionary:
 	# through one declared structure command before taking an ownership snapshot;
 	# no material charge or historical memory is fabricated by this compatibility path.
 	var legacy := _legacy_structures()
-	if construction.state() != legacy:
+	if not construction.structure_facts_equal({"structures": construction.state()}, {"structures": legacy}):
 		_commit_construction({}, legacy, "move")
 	return {"economy": economy.snapshot(), "construction": construction.snapshot(), "gathering": gathering.snapshot(), "memories": memories.snapshot(), "construction_sequence": _construction_sequence}
 

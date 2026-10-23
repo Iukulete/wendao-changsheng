@@ -47,6 +47,22 @@ func seed_source(id: String, resource: String, amount: int, region: String = "sh
 	_bucket(resource).initial += amount
 	return true
 
+# A named depleted world source receives new physical stock, never inventory.
+# The caller owns the fixed per-site quota and excludes active resident jobs.
+func replenish_source(id: String, resource: String, amount: int, operation_id: String) -> Dictionary:
+	if operation_id.is_empty() or id.is_empty() or resource.is_empty() or amount <= 0 or not _quantity(amount):
+		return {"ok":false,"code":"invalid"}
+	if _receipts.has(operation_id): return {"ok":true,"duplicate":true}
+	if _reservations.has(id): return {"ok":false,"code":"reserved"}
+	if _sources.has(id) and (_sources[id].resource != resource or int(_sources[id].remaining) != 0):
+		return {"ok":false,"code":"not_depleted"}
+	# Legacy saves may omit already collected sources entirely.
+	var region := str(_sources.get(id, {}).get("region", "shore"))
+	_sources[id] = {"resource":resource,"remaining":amount,"region":region}
+	_bucket(resource).input += amount
+	_receipts[operation_id] = true
+	return {"ok":true,"amount":amount}
+
 func seed_carried(task_id: String, resource: String, amount: int) -> bool:
 	if task_id.is_empty() or resource.is_empty() or amount <= 0 or _cargo.has(task_id): return false
 	_cargo[task_id] = {"resource":resource,"amount":amount}

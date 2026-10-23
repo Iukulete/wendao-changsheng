@@ -75,13 +75,16 @@ func _run() -> void:
 
 	var player := game.get("player") as CharacterBody3D
 	var wreck_marker := game.get_node("PressureWreckInteractable") as Node3D
-	var vent_position := Vector3(93.65, 1.1, 85.88)
+	var vent_position := (game.get_node("PressureWreck/BentVent") as Node3D).global_position
+	vent_position.y = 1.1
 	player.global_position = vent_position
 	game.call("_process_pressure_vent", 0.0)
 	assert(bool(game.get("pressure_vent_warning_active")) and bool((game.get_node("PressureWreck/VentWarningRing") as MeshInstance3D).visible), "approaching the hot-pressure vent should visibly warn before it bursts")
+	# Explicit outside-radius fixture; the dedicated boundary acceptance proves
+	# actual input-driven walking retreat rather than treating this as a dodge.
 	player.global_position += Vector3(4.0, 0.0, 0.0)
 	game.call("_process_pressure_vent", PRESSURE_VENT_WINDUP_SECONDS)
-	assert(int(game.get("player_health")) == 4 and _count_events(game, "pressure_vent_burst") == 1 and _count_events(game, "pressure_vent_hit") == 0, "the warning window should let the player dodge the vent without a level gate")
+	assert(int(game.get("player_health")) == 4 and _count_events(game, "pressure_vent_burst") == 1 and _count_events(game, "pressure_vent_hit") == 0, "an explicitly outside-radius fixture must not receive vent damage")
 	game.set("pressure_vent_cooldown_remaining", 0.0)
 	player.global_position = vent_position
 	game.call("_process_pressure_vent", 0.0)
@@ -148,6 +151,14 @@ func _run() -> void:
 	assert(game.get_node_or_null("ArkRoot/BuiltShelter/PressureGalley") != null and game.get_node_or_null("ArkRoot/BuiltShelter/HearthPot") == null, "the installed galley should reconstruct as the shelter's only cooking appliance")
 	assert(int(game.get("cold_exposure_level")) == 1 and int(game.get("player_health")) == 4 and int(game.get("stew_servings")) == 0 and _count_events(game, "resident_meal_shared") == 1, "the shared meal should heal the vent injury and preserve its exact post-meal state once")
 	assert(game.get_node_or_null("PressureWreck/PressureCore") == null, "reload must not restore the recovered core to the wreck")
+	# Explicit re-entry fixture: loading the same disarmed wreck must not restore
+	# even a hidden phantom hazard under the recovered core.
+	var restored_player := game.get("player") as CharacterBody3D
+	restored_player.global_position = (game.get_node("PressureWreck/BentVent") as Node3D).global_position
+	var restored_hits := _count_events(game, "pressure_vent_hit")
+	game.call("_process_pressure_vent", 8.0)
+	assert(int(game.get("player_health")) == 4 and _count_events(game, "pressure_vent_hit") == restored_hits and not bool(game.get("pressure_vent_warning_active")), "saved unique salvage must keep the real vent harmless on re-entry after reload")
+	assert(not (game.get_node("PressureWreck/VentWarningRing") as MeshInstance3D).visible and not (game.get_node("PressureWreck/SteamBurst") as GPUParticles3D).emitting, "reload of the disarmed wreck must keep warning and steam effects off")
 	var legacy_state: Dictionary = {"schema_version": 25}
 	game.queue_free()
 	await process_frame

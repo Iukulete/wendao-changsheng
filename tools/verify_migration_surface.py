@@ -13,17 +13,40 @@ from pathlib import Path, PurePosixPath
 import re
 import struct
 import subprocess
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SCRIPTS = frozenset({"main.gd", "ark_fixture_placement.gd", "ark_greybox.gd",
                              "ark_greybox_save.gd", "ark_landmass_builder.gd", "ark_world_chart.gd"})
 RUNTIME_SCRIPTS |= frozenset(['modules/economy/ark_economy.gd', 'modules/construction/ark_construction.gd', 'modules/memory/ark_memory.gd', 'modules/residents/ark_gathering.gd', 'adapters/ark_analytic_water.gd', 'adapters/ark_vessel_navigation.gd', 'presentation/ark_pixel_protagonist.gd', 'presentation/ark_emma_protagonist.gd'])
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_surface_sample.gd"})
 EMMA_FILES = frozenset({"emma.glb", "emma_locomotion.tres", "Quaternius-CC0.txt"})
 PIXEL_FILES = frozenset(['image(20261021-085642).png', 'image(20261021-085643).png', 'image(20261021-085645).png', 'image(20261021-085646).png'])
 SCENES = frozenset({"main.tscn", "ark_greybox.tscn"})
 SHADERS = frozenset({"ark_ocean.gdshader"})
 FONT_FILES = frozenset({"NotoSansSC-Variable.ttf", "NotoSerifSC-Variable.ttf",
                        "NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt", "font_manifest.json", "ark_ui_font.tres"})
+# Independent reviewed identities, not hashes trusted from an asset's own manifest.
+# A rebake requires reviewing and intentionally updating this bounded allowlist.
+SURFACE_TEXTURES = {
+    "terrain_detail.png": (5358, "04e687230183356bfe450f06d81f6003767d3fb4c266328cd66c9c887a46c59a"),
+    "wood_grain.png": (9944, "967ee279dc5d8180e669976ad04795cd0791c13a0957892c8b8f3bfe2fda45fa"),
+    "deck_planks.png": (10160, "f6ace5d7a780b03f0dabdc0356a07937a1270a03e2964ee5e5d2459a476a4f0d"),
+}
+SURFACE_GENERATOR = "tools/generate_surface_sample.py"
+SURFACE_GENERATOR_SHA256 = "6d1fc9c2d336bccd6a9298a93c01b1cda29160dacec9f3a1a3b1c7c7560ca299"
+SURFACE_MANIFEST_SHA256 = "ce3ac268697a16bb67d7470af9f1bac7f62bf8f3f66fdb59aa980acab56fac68"
+SURFACE_MANIFEST = "art/surface_sample/asset_manifest.json"
+SURFACE_SOURCE_FILES = frozenset({*SURFACE_TEXTURES, "asset_manifest.json", "README.md",
+                                 *(name + ".import" for name in SURFACE_TEXTURES)})
+SURFACE_IMPORTED = {
+    name: ".godot/imported/" + name + "-" + hashlib.md5(
+        ("res://art/surface_sample/" + name).encode(), usedforsecurity=False).hexdigest() + ".ctex"
+    for name in SURFACE_TEXTURES
+}
+EXPORT_INCLUDE_FILTERS = frozenset({"art/player_emma/*.txt", "art/fonts/*.ttf", "art/fonts/*.txt",
+                                    "art/fonts/font_manifest.json", SURFACE_MANIFEST})
+EXPORT_EXCLUDE_FILTERS = frozenset({"tests/*", "archive/*", "data/*", "audio/*"})
 NON_HEADLESS_TESTS = frozenset({"ark_test_paths.gd", "ark_render_capture_test.gd", "ark_pixel_protagonist_render_test.gd", "ark_gerstner_render_test.gd"})
 REQUIRED_TESTS = frozenset({"ark_menu_integration_test.gd", "ark_test_paths_test.gd",
                            "ark_fixture_edit_test.gd", "ark_world_travel_test.gd",
@@ -72,6 +95,123 @@ def verify_fonts(root: Path) -> None:
             raise RuntimeError(f"Retained font license text is invalid: {entry['license_file']}")
 
 
+def verify_surface_manifest(data: bytes) -> None:
+    def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise RuntimeError(f"Duplicate surface manifest key: {key}")
+            result[key] = value
+        return result
+
+    manifest = json.loads(data, object_pairs_hook=unique_object)
+    provenance = {
+        "source": "original deterministic procedural bake", "external_assets": False,
+        "runtime_generation": False, "generator": SURFACE_GENERATOR,
+        "generator_sha256": SURFACE_GENERATOR_SHA256, "dependencies": "Python standard library only",
+        "license": "AGPL-3.0, repository LICENSE",
+    }
+    if not isinstance(manifest, dict) or type(manifest.get("schema")) is not int or manifest["schema"] != 1:
+        raise RuntimeError("Surface sample manifest schema is invalid")
+    if manifest.get("provenance") != provenance:
+        raise RuntimeError("Surface sample manifest provenance/generator identity mismatch")
+    entries = manifest.get("textures")
+    expected = {"godot/art/surface_sample/" + name for name in SURFACE_TEXTURES}
+    if (not isinstance(entries, list) or len(entries) != len(expected) or
+            any(not isinstance(entry, dict) or not isinstance(entry.get("path"), str) for entry in entries) or
+            {entry["path"] for entry in entries} != expected):
+        raise RuntimeError("Surface sample manifest must declare exactly the three approved texture paths")
+    for entry in entries:
+        name = entry["path"].removeprefix("godot/art/surface_sample/")
+        size, digest = SURFACE_TEXTURES[name]
+        if type(entry.get("bytes")) is not int or entry["bytes"] != size or entry.get("sha256") != digest:
+            raise RuntimeError(f"Surface sample manifest reviewed byte/hash mismatch: {name}")
+    # Pins recipe, statistics, status and all other fields too; neither new fields
+    # nor a self-consistent replacement manifest can silently expand provenance.
+    if hashlib.sha256(data).hexdigest() != SURFACE_MANIFEST_SHA256:
+        raise RuntimeError("Surface sample manifest reviewed checksum mismatch")
+
+
+def verify_surface_png(data: bytes, name: str) -> None:
+    """Validate our deliberately minimal RGB8 PNG encoding, not arbitrary imagery."""
+    if name not in SURFACE_TEXTURES or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+        raise RuntimeError(f"Invalid surface PNG signature/name: {name}")
+    position, chunks = 8, []
+    while position < len(data):
+        if position + 12 > len(data):
+            raise RuntimeError(f"Truncated surface PNG: {name}")
+        size = struct.unpack_from(">I", data, position)[0]
+        end = position + 12 + size
+        if end > len(data):
+            raise RuntimeError(f"Truncated surface PNG chunk: {name}")
+        kind, payload = data[position + 4:position + 8], data[position + 8:end - 4]
+        if zlib.crc32(kind + payload) & 0xFFFFFFFF != struct.unpack_from(">I", data, end - 4)[0]:
+            raise RuntimeError(f"Surface PNG CRC mismatch: {name}")
+        chunks.append((kind, payload))
+        position = end
+    if [kind for kind, _ in chunks] != [b"IHDR", b"IDAT", b"IEND"] or chunks[-1][1]:
+        raise RuntimeError(f"Surface PNG format/chunk layout mismatch: {name}")
+    if chunks[0][1] != struct.pack(">IIBBBBB", 256, 256, 8, 2, 0, 0, 0):
+        raise RuntimeError(f"Surface PNG must be 256x256 opaque RGB8: {name}")
+    # Bound decompression even for a corrupted replacement; our bake uses filter 0.
+    decoder = zlib.decompressobj()
+    try:
+        pixels = decoder.decompress(chunks[1][1], 256 * 769 + 1)
+    except zlib.error as error:
+        raise RuntimeError(f"Surface PNG compressed data is invalid: {name}") from error
+    if (len(pixels) != 256 * 769 or not decoder.eof or decoder.unused_data or
+            decoder.unconsumed_tail or any(pixels[row * 769] != 0 for row in range(256))):
+        raise RuntimeError(f"Surface PNG decoded size/encoding mismatch: {name}")
+    size, digest = SURFACE_TEXTURES[name]
+    if len(data) != size or hashlib.sha256(data).hexdigest() != digest:
+        raise RuntimeError(f"Surface PNG reviewed byte/hash mismatch: {name}")
+
+
+def verify_surface_import(data: bytes, name: str, *, packed: bool = False) -> str:
+    source = "res://art/surface_sample/" + name
+    target = "res://" + SURFACE_IMPORTED[name]
+    text = data.decode("utf-8").replace("\r\n", "\n").rstrip("\0")
+    required = {"importer": '"texture"', "type": '"CompressedTexture2D"', "path": '"' + target + '"'}
+    if not packed:
+        required.update({"source_file": '"' + source + '"', "dest_files": '["' + target + '"]',
+                         "compress/mode": "0", "mipmaps/generate": "true", "process/size_limit": "0",
+                         "detect_3d/compress_to": "0"})
+    for key, value in required.items():
+        if re.findall(r"(?m)^" + re.escape(key) + r"=(.*)$", text) != [value]:
+            raise RuntimeError(f"Surface texture import contract mismatch: {name}/{key}")
+    refs = set(re.findall(r'"(res://[^"\n]+)"', text))
+    if refs != ({target} if packed else {source, target}):
+        raise RuntimeError(f"Surface texture import escapes approved dependencies: {name}")
+    return SURFACE_IMPORTED[name]
+
+
+def verify_surface_assets(root: Path) -> None:
+    directory = root / "godot/art/surface_sample"
+    if directory.is_symlink() or any(path.is_symlink() for path in directory.rglob("*")):
+        raise RuntimeError("Surface sample must not contain symlinked assets")
+    check_exact_files(directory, SURFACE_SOURCE_FILES)
+    verify_surface_manifest((directory / "asset_manifest.json").read_bytes())
+    generator = root / SURFACE_GENERATOR
+    if (generator.is_symlink() or not generator.is_file() or
+            hashlib.sha256(generator.read_bytes()).hexdigest() != SURFACE_GENERATOR_SHA256):
+        raise RuntimeError("Surface sample generator reviewed checksum mismatch")
+    for name in SURFACE_TEXTURES:
+        verify_surface_png((directory / name).read_bytes(), name)
+        verify_surface_import((directory / (name + ".import")).read_bytes(), name)
+
+
+def verify_export_preset(preset: str, resources: set[str]) -> None:
+    selected = re.findall(r'(?m)^export_files=PackedStringArray\(([^\n]*)\)$', preset)
+    expected_exports = {"res://" + resource for resource in resources if not resource.endswith((".txt", ".json"))}
+    if (re.findall(r'(?m)^export_filter="([^"\n]*)"$', preset) != ["resources"] or len(selected) != 1 or
+            set(re.findall(r'"([^"\n]+)"', selected[0])) != expected_exports):
+        raise RuntimeError("Export must explicitly select all and only Ark runtime/font/surface resources")
+    for key, expected in (("include_filter", EXPORT_INCLUDE_FILTERS), ("exclude_filter", EXPORT_EXCLUDE_FILTERS)):
+        values = re.findall(r'(?m)^' + key + r'="([^"\n]*)"$', preset)
+        if len(values) != 1 or set(values[0].split(",")) != expected:
+            raise RuntimeError(f"Export {key} must preserve exact runtime provenance and archive/test exclusions")
+
+
 def verify(root: Path = ROOT) -> None:
     project = root / "godot"
     project_text = read(project / "project.godot")
@@ -83,12 +223,14 @@ def verify(root: Path = ROOT) -> None:
         check_exact_files(project / directory, expected, sidecars)
     allowed_roots = {".godot", "art", "scripts", "scenes", "shaders", "tests", "project.godot", "export_presets.cfg", "README.md"}
     unexpected = {item.name for item in project.iterdir()} - allowed_roots
-    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma"}:
+    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma", "surface_sample"}:
         raise RuntimeError(f"Retired data/audio/art remains inside res://: {sorted(unexpected)}")
     check_exact_files(project / "art/player_pixel", PIXEL_FILES, (".import",))
     check_exact_files(project / "art/player_emma", EMMA_FILES, (".import",))
     verify_fonts(root)
+    verify_surface_assets(root)
     resources = {f"art/player_emma/{name}" for name in EMMA_FILES} | {f"art/player_pixel/{name}" for name in PIXEL_FILES} | {f"scripts/{name}" for name in RUNTIME_SCRIPTS} | {f"scenes/{name}" for name in SCENES} | {f"shaders/{name}" for name in SHADERS} | {f"art/fonts/{name}" for name in FONT_FILES}
+    resources |= {f"art/surface_sample/{name}" for name in SURFACE_TEXTURES} | {SURFACE_MANIFEST}
     for relative in sorted(resources):
         if not relative.endswith((".gd", ".tscn", ".gdshader", ".tres")):
             continue
@@ -112,12 +254,7 @@ def verify(root: Path = ROOT) -> None:
     if "ark_render_capture_test.gd" not in render or "ARK_RENDER_CAPTURE_TEST_OK:" not in render:
         raise RuntimeError("Separate display-backed Ark render gate is missing")
     preset = read(project / "export_presets.cfg")
-    selected = re.search(r'(?m)^export_files=PackedStringArray\(([^\n]*)\)$', preset)
-    expected_exports = {"res://" + resource for resource in resources if not resource.endswith((".txt", ".json"))}
-    if 'export_filter="resources"' not in preset or selected is None or set(re.findall(r'"([^"\n]+)"', selected.group(1))) != expected_exports:
-        raise RuntimeError("Export must explicitly select all and only Ark runtime/font resources")
-    if not re.search(r'(?m)^exclude_filter="[^"\n]*tests/\*[^"\n]*archive/\*', preset):
-        raise RuntimeError("Export exclusion must explicitly reject tests and archives")
+    verify_export_preset(preset, resources)
     build = read(root / "tools/build_godot.ps1")
     release = read(root / "tools/verify_release_bundle.ps1")
     workflow = read(root / ".github/workflows/godot-windows.yml")
@@ -214,14 +351,27 @@ def verify_pack(path: Path) -> int:
     allowed |= {f"art/fonts/{name}" + suffix for name in FONT_FILES for suffix in ("", ".import", ".remap")}
     allowed |= {f"art/player_emma/{name}" + suffix for name in EMMA_FILES for suffix in ("", ".import", ".remap")}
     allowed |= {f"art/player_pixel/{name}" + suffix for name in PIXEL_FILES for suffix in ("", ".import", ".remap")}
+    allowed |= {f"art/surface_sample/{name}" + suffix for name in SURFACE_TEXTURES for suffix in ("", ".import")}
+    allowed |= {SURFACE_MANIFEST, *SURFACE_IMPORTED.values()}
     generated = re.compile(r"^\.godot/(?:imported/emma\.glb-[0-9a-f]+\.scn|imported/image\(20261021-(?:085642|085643|085645|085646)\)\.png-[0-9a-f]+\.ctex|imported/Noto(?:Sans|Serif)SC-Variable\.ttf-[0-9a-f]+\.fontdata|exported/[^/]+/export-[0-9a-f]+-(?:(?:main|ark_greybox)\.scn|(?:ark_ui_font|emma_locomotion)\.res))$")
     extra = sorted(name for name in files if name not in allowed and not generated.fullmatch(name))
     if extra:
         raise RuntimeError("PCK contains non-Ark or unapproved resources: " + ", ".join(extra))
-    required = {"project.binary", "shaders/ark_ocean.gdshader", "art/fonts/font_manifest.json"}
+    required = {"project.binary", "shaders/ark_ocean.gdshader", "art/fonts/font_manifest.json", SURFACE_MANIFEST}
     required |= {f"art/fonts/{name}" for name in FONT_FILES if name.endswith(".txt")}
     if not required <= files.keys():
         raise RuntimeError("PCK omits required runtime/font-license resources: " + ", ".join(sorted(required-files.keys())))
+    verify_surface_manifest(files[SURFACE_MANIFEST])
+    for name in SURFACE_TEXTURES:
+        relative = "art/surface_sample/" + name
+        if relative in files:
+            verify_surface_png(files[relative], name)
+        elif relative + ".import" not in files:
+            raise RuntimeError(f"PCK omits required surface dependency: {relative}")
+        if relative + ".import" in files:
+            target = verify_surface_import(files[relative + ".import"], name, packed=True)
+            if not files.get(target):
+                raise RuntimeError(f"PCK omits required imported surface texture: {target}")
     for relative in [*scripts, *(f"art/player_emma/{name}" for name in EMMA_FILES), *(f"art/player_pixel/{name}" for name in PIXEL_FILES), *(f"scenes/{name}" for name in SCENES), *(f"art/fonts/{name}" for name in FONT_FILES if name.endswith((".ttf", ".tres")))]:
         if relative not in files and relative + ".remap" not in files and relative + ".import" not in files:
             raise RuntimeError(f"PCK omits required Ark dependency: {relative}")
@@ -234,10 +384,10 @@ def main() -> int:
     args = parser.parse_args()
     if args.pack:
         count = verify_pack(args.pack)
-        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime, retained fonts and supplied Emma model and pixel images only")
+        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime, retained fonts, supplied Emma model/pixel images and three reviewed procedural surface textures only")
     else:
         verify()
-        print(f"MIGRATION_SURFACE_OK: approved Ark scripts, two scenes, licensed fonts and supplied Emma model and pixel images, {len(canonical_tests())} headless regressions; retired product excluded")
+        print(f"MIGRATION_SURFACE_OK: approved Ark scripts, two scenes, licensed fonts, supplied Emma model/pixel images and three reviewed procedural surface textures, {len(canonical_tests())} headless regressions; retired product excluded")
     return 0
 
 

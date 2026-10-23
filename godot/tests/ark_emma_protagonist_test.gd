@@ -11,7 +11,10 @@ func capture(label: String) -> void:
     for i in range(5):
         await process_frame
         RenderingServer.force_draw(false)
-    var directory := ProjectSettings.globalize_path("res://../.tmp/emma-preview")
+    var directory := OS.get_environment("ARK_EMMA_ARTIFACT_ROOT")
+    if directory.is_empty():
+        directory = ProjectSettings.globalize_path("res://../.tmp/emma-preview")
+    assert(directory.is_absolute_path(), "Emma artifact root must be absolute")
     DirAccess.make_dir_recursive_absolute(directory)
     assert(view.get_texture().get_image().save_png(directory.path_join(label + ".png")) == OK)
 func _run() -> void:
@@ -42,6 +45,7 @@ func _run() -> void:
     for tick in range(45): game.call("_physics_process", 1.0 / 60.0)
     # Exercise the actual input/physics route, not only the visual speed blend.
     var initial_transform := body.transform
+    var initial_camera_transform: Transform3D = game.camera.global_transform
     body.position = Vector3(0.0, 40.0, 0.0)
     var right := InputEventKey.new()
     right.keycode = KEY_D
@@ -68,11 +72,27 @@ func _run() -> void:
     await physics_frame
     game.call("_physics_process", 1.0 / 60.0)
     assert(is_equal_approx(body.velocity.x, game.WALK_SPEED), "releasing Shift must restore walking")
+    # A rotated vessel (or a retained actor basis after disembarking) must not
+    # rotate world-space movement a second time in the presentation layer.
+    var hull_transform: Transform3D = game.ark_root.transform
+    for yaw in [PI * 0.5, PI]:
+        game.ark_root.rotation.y = yaw
+        body.position = Vector3(0.0, 40.0, 0.0)
+        body.velocity = Vector3.ZERO
+        for tick in range(60): game.call("_physics_process", 1.0 / 60.0)
+        assert(emma.global_basis.z.normalized().dot(Vector3.RIGHT) > 0.999, "Emma must face world movement after the vessel turns")
+        assert(is_equal_approx(body.velocity.x, game.WALK_SPEED) and is_zero_approx(body.velocity.z), "facing must not change movement")
+    game.ark_root.transform = hull_transform
     right.pressed = false
     Input.parse_input_event(right.duplicate())
     Input.flush_buffered_events()
     body.transform = initial_transform
     body.velocity = Vector3.ZERO
+    # Input probes move both actor and camera; restore the game framing too.
+    game.camera.global_transform = initial_camera_transform
+    var camera_target: Vector3 = body.global_position + Vector3.UP
+    var camera_direction: Vector3 = (camera_target - game.camera.global_position).normalized()
+    assert((-game.camera.global_basis.z).dot(camera_direction) > 0.999, "game captures must frame the restored actor")
     var start := body.transform
     var shape := (body.get_child(0) as CollisionShape3D).shape
     var state: Dictionary = game.call("_build_save_state")
@@ -82,6 +102,8 @@ func _run() -> void:
     assert(emma.authored_tracks.size() == 50, "49 retargeted human joints plus pelvis translation must be loaded")
     assert(emma.LOCOMOTION.has_animation("Walk_Loop") and emma.LOCOMOTION.has_animation("Idle_Loop"))
     assert(emma.LOCOMOTION.get_animation("Walk_Loop").length > 1.0)
+    _test_swim_cycles(emma)
+    for tick in range(30): emma.update_pose(Vector3.ZERO, 1.0 / 60.0, false)
     for tick in range(120):
         emma.update_pose(Vector3(1.2, 0, 0), 1.0 / 60.0, false)
         for entry in emma.authored_tracks:
@@ -184,9 +206,64 @@ func _run() -> void:
             await capture("run_%02d" % frame)
     for tick in range(30): emma.update_pose(Vector3(1, 0, 0), 1.0 / 60.0, true)
     assert(emma.swimming)
+    # This diagnostic ground plane is not water; do not let it cut the swim pose.
+    floor_mesh.visible = false
+    # Swimming rotates the body below the standing portrait's aim point. Frame
+    # the posed skeleton in this side view, with padding for the skinned mesh.
+    var pose_min := Vector3(INF, INF, INF)
+    var pose_max := Vector3(-INF, -INF, -INF)
+    for bone in range(emma.skeleton.get_bone_count()):
+        var joint: Vector3 = emma.skeleton.global_transform * emma.skeleton.get_bone_global_pose(bone).origin
+        pose_min = pose_min.min(joint)
+        pose_max = pose_max.max(joint)
+    var pose_center := (pose_min + pose_max) * 0.5
+    var pose_half := (pose_max - pose_min) * 0.5 + Vector3.ONE * 0.35
+    var vertical_tangent := tan(deg_to_rad(camera.fov * 0.5))
+    var aspect := float(view.size.x) / float(view.size.y)
+    var distance := maxf(pose_half.y / vertical_tangent, pose_half.x / (vertical_tangent * aspect)) + pose_half.z + 0.5
+    camera.global_position = pose_center + Vector3(0, 0, distance)
+    camera.look_at(pose_center, Vector3.UP)
     await capture("06_emma_swim_pose")
     view.queue_free()
     await process_frame
     saver.clear_for_test()
     print("ARK_EMMA_PROTAGONIST_TEST_OK:")
     quit()
+
+# Exercise more than two complete idle cycles, including the shorter forward
+# clip's wrap points, then both directions of the motion/idle blend.
+func _test_swim_cycles(emma) -> void:
+    var idle: Animation = emma.LOCOMOTION.get_animation("Swim_Idle_Loop")
+    var moving: Animation = emma.LOCOMOTION.get_animation("Swim_Fwd_Loop")
+    emma.swim_clock = 0.0
+    emma.swim_idle_clock = 0.0
+    emma.stride = 0.0
+    emma.swim_blend = 1.0
+    var elapsed := 0.0
+    for tick in range(450):
+        elapsed += 1.0 / 60.0
+        emma.update_pose(Vector3.ZERO, 1.0 / 60.0, true)
+        _assert_swim_pose(emma, idle, moving, elapsed, 0.0)
+    assert(elapsed > idle.length * 2.0)
+    for motion in [Vector3(2.9, 0, 0), Vector3.ZERO]:
+        var expected_stride := float(emma.stride)
+        for tick in range(30):
+            elapsed += 1.0 / 60.0
+            expected_stride = move_toward(expected_stride, 0.0 if motion == Vector3.ZERO else 1.0, 5.0 / 60.0)
+            emma.update_pose(motion, 1.0 / 60.0, true)
+            assert(is_equal_approx(emma.stride, expected_stride))
+            _assert_swim_pose(emma, idle, moving, elapsed, expected_stride)
+
+func _assert_swim_pose(emma, idle: Animation, moving: Animation, elapsed: float, blend: float) -> void:
+    # Derive expected times from elapsed time, not the implementation's clocks.
+    var idle_time := fmod(elapsed, idle.length)
+    var moving_time := fmod(elapsed, moving.length)
+    for entry in emma.authored_tracks:
+        if entry.type == Animation.TYPE_ROTATION_3D:
+            var expected := idle.rotation_track_interpolate(entry.track, idle_time).slerp(moving.rotation_track_interpolate(entry.track, moving_time), blend)
+            var actual: Quaternion = emma.skeleton.get_bone_pose_rotation(entry.bone)
+            assert(absf(actual.dot(expected)) > 0.99999, "swimming must sample each clip at its own full-length clock")
+        elif entry.type == Animation.TYPE_POSITION_3D:
+            var expected := idle.position_track_interpolate(entry.track, idle_time).lerp(moving.position_track_interpolate(entry.track, moving_time), blend)
+            var actual: Vector3 = emma.skeleton.get_bone_pose_position(entry.bone)
+            assert(actual.distance_to(expected) < 0.0001, "swimming pelvis blend must use each clip's full cycle")
