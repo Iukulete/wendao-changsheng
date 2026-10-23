@@ -265,7 +265,7 @@ func _tick_life(context: String, delta: float = 0.05) -> void:
 			work_pose = phase in ["sewing", "installing"] and marker.position.distance_to(target) <= 0.06001 and absf(marker.position.y - target.y) <= 0.02501
 			if work_pose:
 				var facing_target: Vector3 = game.call("_sailmaker_awning_work_target", true)
-				var cloth := marker.get_node("OldSailBundle") as Node3D
+				var cloth := (game.get("opening_coast") as RefCounted).call("visual_child", marker, "OldSailBundle") as Node3D
 				var body := marker.find_child("Body", true, false) as Node3D
 				_check((cloth.global_position - body.global_position).dot(_front(marker)) > 0.1, "stationary work must retain cloth in the actual front half-plane")
 				if not installing:

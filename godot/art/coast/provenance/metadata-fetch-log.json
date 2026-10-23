@@ -1,0 +1,20 @@
+[
+  {
+    "source_url": "https://api.polyhaven.com/files/sparse_grass",
+    "metadata_evidence_file": "sparse_grass.files.json",
+    "bytes": 29490,
+    "sha256": "385455d28cb04effb36e7775527b88b1e637b3dbf228b0cf37474aa4ae05b54b"
+  },
+  {
+    "source_url": "https://api.polyhaven.com/files/sand_03",
+    "metadata_evidence_file": "sand_03.files.json",
+    "bytes": 24188,
+    "sha256": "d75439136556011e5d09f3e39fd8041b79064af1abb3426e033e4b1a309e776f"
+  },
+  {
+    "source_url": "https://api.polyhaven.com/files/rock_boulder_dry",
+    "metadata_evidence_file": "rock_boulder_dry.files.json",
+    "bytes": 34137,
+    "sha256": "c413c5c8ceeed4e92f9456a8785f06c96123e21dcd8da0d1b782c50fb4432fe5"
+  }
+]

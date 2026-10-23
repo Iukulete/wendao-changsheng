@@ -61,6 +61,16 @@ func _resident() -> Node3D:
 	return game.get("sailmaker_marker") as Node3D
 
 
+
+
+func _visual(child_path: String) -> Node3D:
+	var coast: RefCounted = game.get("opening_coast")
+	assert(coast != null, "production coast visual resolver must exist")
+	var visual := coast.call("visual_child", _resident(), child_path) as Node3D
+	assert(visual != null, "required existing resident visual is absent: " + child_path)
+	return visual
+
+
 func _target(installing: bool = false) -> Vector3:
 	return game.call("_sailmaker_awning_work_target", installing)
 
@@ -153,8 +163,8 @@ func _reset_geometry_guard() -> void:
 func _face_front() -> Vector3:
 	# Derive forward from the actual rendered face/body, not a presumed model
 	# axis or the runtime yaw formula that this independent test is checking.
-	var face := _resident().get_node("SailmakerFigure/Face") as Node3D
-	var torso := _resident().get_node("SailmakerFigure/Body") as Node3D
+	var face := _visual("SailmakerFigure/Face") as Node3D
+	var torso := _visual("SailmakerFigure/Body") as Node3D
 	var front := face.global_position - torso.global_position
 	front.y = 0.0
 	assert(front.length() > 0.1, "graybox face must visibly establish a body-front direction")
@@ -169,11 +179,11 @@ func _assert_active_work_geometry() -> void:
 		return
 	assert(bool(game.call("_sailmaker_awning_work_can_run")))
 	var front := _face_front()
-	var torso := _resident().get_node("SailmakerFigure/Body") as Node3D
-	var cloth := _resident().get_node("OldSailBundle") as MeshInstance3D
+	var torso := _visual("SailmakerFigure/Body") as Node3D
+	var cloth := _visual("OldSailBundle") as MeshInstance3D
 	assert((cloth.global_position - torso.global_position).dot(front) > 0.1, "active cloth must be in front of the actual face/body, not behind her back")
 	for name in ["ArmLeft", "ArmRight"]:
-		var arm := _resident().get_node("SailmakerFigure/" + name) as MeshInstance3D
+		var arm := _visual("SailmakerFigure/" + name) as MeshInstance3D
 		# The distal end is the lower local-Y end of the real capsule mesh.
 		# World conversion includes actual arm rotation, mesh scale and body bob.
 		var bounds := arm.get_aabb()
@@ -190,7 +200,7 @@ func _assert_active_work_geometry() -> void:
 			var shoulder := (game.get("sailmaker_body") as Node3D).to_global(original * upper_tip)
 			assert(arm.to_global(upper_tip).distance_to(shoulder) < 0.0001, "raised installation arms must rotate around their actual original shoulders, not slide the whole limb upward")
 	if sewing:
-		var spool := _resident().get_node("ThreadSpool") as Node3D
+		var spool := _visual("ThreadSpool") as Node3D
 		assert((spool.global_position - torso.global_position).dot(front) > 0.1, "active sewing spool must share the front workspace")
 	if phase == "installing" and _resident().position.distance_to(_target(true)) <= 0.06001:
 		installation_facing_samples.append({"origin": _resident().global_position, "front": front, "cloth_corners": _mesh_box_vertices(cloth)})
@@ -241,7 +251,7 @@ func _assert_completed_canvas_clearance(canvas: MeshInstance3D) -> void:
 	assert(not _mesh_boxes_separated(canvas, canvas), "separating-axis oracle must reject an exactly overlapping box")
 	var centre_shift := _ark().to_global(_target(true)) - _resident().global_position
 	for name in ["Head", "Hair", "HairTail", "Face"]:
-		var part := _resident().get_node("SailmakerFigure/" + name) as MeshInstance3D
+		var part := _visual("SailmakerFigure/" + name) as MeshInstance3D
 		assert(_mesh_boxes_separated(part, canvas), "completed canvas intersects actual installer " + name + " at the genuine arrival position")
 		# A spherical 6cm expansion is conservative: actual allowed vertical error
 		# is only 2.5cm. No actor teleport or production target helper is substituted
@@ -252,7 +262,7 @@ func _assert_completed_canvas_clearance(canvas: MeshInstance3D) -> void:
 
 func _assert_arms_fully_restored() -> void:
 	for name in ["ArmLeft", "ArmRight"]:
-		var arm := _resident().get_node("SailmakerFigure/" + name) as Node3D
+		var arm := _visual("SailmakerFigure/" + name) as Node3D
 		assert(arm.transform.is_equal_approx(resting_arm_transforms[name]), "pause/completion must restore the full original arm transform, not only its angle")
 
 
@@ -408,9 +418,11 @@ func _observed_step() -> void:
 	if float(game.get(INSTALL)) > previous_install:
 		assert(after.distance_to(_target(true)) <= 0.06001 and absf(after.y - _target(true).y) <= 0.02501, "installation credit requires real shelter arrival")
 	if str(game.get(PHASE)) in ["carrying", "installing"]:
-		var cloth := _resident().get_node("OldSailBundle") as MeshInstance3D
+		var cloth := _visual("OldSailBundle") as MeshInstance3D
 		assert(cloth.is_visible_in_tree() and cloth.mesh != null and cloth.position.y > 0.6 and cloth.scale.x > 1.0, "prepared scrap must visibly travel in her hands, not only in an action label")
-		assert(cloth.get_parent() == _resident() and cloth.global_position.is_equal_approx(_resident().to_global(cloth.position)))
+		var pivot := cloth.get_parent() as Node3D
+		assert(pivot == _resident().get_node("CoastVisualGroundOffset") and pivot.get_parent() == _resident() and pivot.transform == Transform3D.IDENTITY, "boarded work retains only the exact identity visual-ground pivot")
+		assert(cloth.global_position.is_equal_approx(_resident().to_global(cloth.position)))
 
 
 func _reload_exact() -> void:
@@ -454,11 +466,11 @@ func _test_interruptions() -> void:
 				"damage": game.set("shelter_roof_damaged", true)
 			game.call("_update_sailmaker_schedule")
 			game.call("_update_sailmaker_work_visuals")
-			var cloth := _resident().get_node("OldSailBundle") as Node3D
+			var cloth := _visual("OldSailBundle") as Node3D
 			assert(cloth.visible and cloth.position.y < 0.6, "interrupted work must visibly stow the cloth, not keep installing")
 			for arm in ["ArmLeft", "ArmRight"]:
-				var resting_arm := _resident().get_node("SailmakerFigure/" + arm) as Node3D
-				var torso := _resident().get_node("SailmakerFigure/Body") as Node3D
+				var resting_arm := _visual("SailmakerFigure/" + arm) as Node3D
+				var torso := _visual("SailmakerFigure/Body") as Node3D
 				assert(absf(resting_arm.rotation.x) < 0.01 and absf(resting_arm.position.y - torso.position.y) < 0.05, "paused resident arms must lower from installation and return to ordinary life")
 			_assert_arms_fully_restored()
 			var before := _progress()
@@ -692,7 +704,7 @@ func _observed_chain(reload_phases: bool) -> void:
 			await _reload_exact()
 			for _pause_step in range(5):
 				game.call("_process", 0.05)
-			assert(_progress() == paused and (_resident().get_node("OldSailBundle") as Node3D).position.y < 0.6, "paused restore changed progress/pose: before=%s after=%s weather=%s cloth_y=%s" % [paused, _progress(), game.get("weather_phase"), (_resident().get_node("OldSailBundle") as Node3D).position.y])
+			assert(_progress() == paused and (_visual("OldSailBundle") as Node3D).position.y < 0.6, "paused restore changed progress/pose: before=%s after=%s weather=%s cloth_y=%s" % [paused, _progress(), game.get("weather_phase"), (_visual("OldSailBundle") as Node3D).position.y])
 			game.set("weather_phase", 2)
 			game.call("_update_sailmaker_schedule")
 			_reset_geometry_guard()
@@ -721,7 +733,7 @@ func _observed_chain(reload_phases: bool) -> void:
 			var closest := installed.to_local(corner).clamp(canvas_bounds.position, canvas_bounds.end)
 			nearest_cloth_gap = minf(nearest_cloth_gap, corner.distance_to(installed.to_global(closest)))
 		assert(nearest_cloth_gap <= 0.08, "held installation cloth must actually reach the final raised canvas, not float far below it")
-	assert(not (_resident().get_node("OldSailBundle") as Node3D).visible, "prepared cloth becomes the single installed gift")
+	assert(not (_visual("OldSailBundle") as Node3D).visible, "prepared cloth becomes the single installed gift")
 	var event: Dictionary = game.get("memories").latest(EVENT).event
 	assert(event.facts.resident_id == "sailmaker" and event.facts.source_material == "personal_sail_scrap" and int(event.facts.wood_spent) == 0)
 	for _step in range(80):
@@ -781,7 +793,7 @@ func _prepare_eligible(origin: Vector3) -> void:
 	game.set("sailmaker_choice_pending", true)
 	game.call("_choose_sailmaker_boarding", true)
 	for name in ["ArmLeft", "ArmRight"]:
-		resting_arm_transforms[name] = (_resident().get_node("SailmakerFigure/" + name) as Node3D).transform
+		resting_arm_transforms[name] = (_visual("SailmakerFigure/" + name) as Node3D).transform
 	game.set("weather_phase", 2)
 	_guarded_ticks(100)
 	assert(game.get(PHASE) == "unstarted" and _events() == 0, "joining day is not next-day eligibility")

@@ -34,7 +34,8 @@ def write_pack(path: Path, files: dict[str, bytes], version: int = 3) -> None:
 
 
 def minimal_pack() -> dict[str, bytes]:
-    files = {"project.binary": b"project", "shaders/ark_ocean.gdshader": b"shader"}
+    files = {"project.binary": b"project"}
+    files.update({"shaders/" + name: b"shader" for name in surface.SHADERS})
     files.update({"scripts/" + name: b"script" for name in surface.RUNTIME_SCRIPTS})
     files.update({"scenes/" + name: b"scene" for name in surface.SCENES})
     files.update({"art/fonts/" + name: b"font" for name in surface.FONT_FILES})
@@ -43,6 +44,16 @@ def minimal_pack() -> dict[str, bytes]:
     files.update({"art/surface_sample/" + name: (surface.ROOT / "godot/art/surface_sample" / name).read_bytes()
                   for name in surface.SURFACE_TEXTURES})
     files[surface.SURFACE_MANIFEST] = (surface.ROOT / "godot" / surface.SURFACE_MANIFEST).read_bytes()
+    # A positive synthetic PCK must carry every newly required reviewed coast
+    # document and packed import. The payload stubs test the boundary parser;
+    # the separate actual Godot export gate validates native resource loading.
+    files.update({"art/coast/" + name: (surface.ROOT / "godot/art/coast" / name).read_bytes()
+                  for name in surface.COAST_DOCUMENTS})
+    for name, target in surface.COAST_IMPORTED.items():
+        files["art/coast/" + name + ".import"] = (
+            '[remap]\n\nimporter="texture"\ntype="CompressedTexture2D"\n'
+            'path="res://' + target + '"\n\0').encode()
+        files[target] = b"imported-coast-texture-fixture"
     return files
 
 
@@ -321,7 +332,7 @@ class MigrationSurfaceTests(unittest.TestCase):
     def test_successfully_exported_pack_still_requires_dynamic_dependencies(self) -> None:
         # A selected-scenes export can exit 0 yet omit script-loaded resources.
         dynamic = ["scripts/" + name for name in surface.RUNTIME_SCRIPTS - {"main.gd", "ark_greybox.gd"}]
-        dynamic += ["shaders/ark_ocean.gdshader", "art/fonts/ark_ui_font.tres"]
+        dynamic += [*("shaders/" + name for name in surface.SHADERS), "art/fonts/ark_ui_font.tres"]
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "ark.pck"
             for missing in dynamic:

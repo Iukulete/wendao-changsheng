@@ -1,0 +1,52 @@
+{
+  "schema": "coast-public-source-evidence-v1",
+  "provider": "Poly Haven",
+  "license": {
+    "identifier": "CC0-1.0",
+    "provider_license_url": "https://polyhaven.com/license",
+    "legal_instrument_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "assets": {
+    "sparse_grass": {
+      "source_url": "https://polyhaven.com/a/sparse_grass",
+      "name": "Sparse Grass",
+      "authors": [
+        {
+          "name": "Amal Kumar"
+        }
+      ],
+      "scale_label": "2m",
+      "scale_axis_label": "wide",
+      "source_1k_texel_density_label": "1K 5.1px/cm"
+    },
+    "sand_03": {
+      "source_url": "https://polyhaven.com/a/sand_03",
+      "name": "Sand 03",
+      "authors": [
+        {
+          "name": "Charlotte Baglioni"
+        }
+      ],
+      "scale_label": "2m",
+      "scale_axis_label": "wide",
+      "source_1k_texel_density_label": "1K 5.1px/cm"
+    },
+    "rock_boulder_dry": {
+      "source_url": "https://polyhaven.com/a/rock_boulder_dry",
+      "name": "Rock Boulder Dry",
+      "authors": [
+        {
+          "name": "Dimitrios Savva",
+          "role": "Photography"
+        },
+        {
+          "name": "Rico Cilliers",
+          "role": "Processing"
+        }
+      ],
+      "scale_label": "1.8m",
+      "scale_axis_label": "tall",
+      "source_1k_texel_density_label": "1K 5.7px/cm"
+    }
+  }
+}

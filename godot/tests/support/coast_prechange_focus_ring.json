@@ -1,0 +1,46 @@
+{
+  "provenance": {
+    "source": "pre-coast official47 actual earned-actions surface observation",
+    "source_sha256": "91ad936ce2d079ec53c828f6ad1f2b6d00189cb5a12daef416549d9380c34f6a",
+    "unchanged_before_geometry": "7d03058de485c8a2f119ca4d84a54ed9cab57baf6b12537afb4281184b914394",
+    "scope": "Only the observed historical focus-ring Y is projected after an independent frozen-terrain plus0.022 contract. All other fields remain exact."
+  },
+  "row": {
+    "cast_shadow": 1,
+    "class": "MeshInstance3D",
+    "layers": 1,
+    "mesh_class": "TorusMesh",
+    "path": "ArkInteractionFocusRing",
+    "surfaces": [
+      {
+        "arrays": "53971eb209113db16b7b5341d54222c4c3da254f6f4fb95c8028271c57dec873",
+        "primitive": 3
+      }
+    ],
+    "transform": [
+      [
+        [
+          100000,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          100000
+        ],
+        [
+          0,
+          -100000,
+          0
+        ]
+      ],
+      [
+        1300000,
+        34500,
+        -600000
+      ]
+    ],
+    "visible": false
+  }
+}

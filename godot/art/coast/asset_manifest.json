@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "purpose": "Production paths and exact original texture identities; public-only attribution is in provenance/manifest.json.",
+  "source_manifest_sha256": "8f54f8fb6d9ad1dc66b5ee4ed6caa7a0c8ddd2291dbfabe55000763e5d248e59",
+  "license": "CC0-1.0 applies only to nine texture files; no model relicensing.",
+  "textures": [
+    {
+      "path": "rock_boulder_dry/rock_boulder_dry_diff_1k.jpg",
+      "bytes": 859211,
+      "sha256": "20f653a42fb24f42aa40641663070d578678da49af18cc1049dbdd4ed8679f3c"
+    },
+    {
+      "path": "rock_boulder_dry/rock_boulder_dry_nor_gl_1k.jpg",
+      "bytes": 802497,
+      "sha256": "5915fea28a97357c78a04fb31c2516f1f7ed1b3a9cef4ae25aa93e4655e6c595"
+    },
+    {
+      "path": "rock_boulder_dry/rock_boulder_dry_rough_1k.jpg",
+      "bytes": 668127,
+      "sha256": "cc5229dd6bbdc4e817cb647e60242224b8e4f0237473ac018861ea243f2e8130"
+    },
+    {
+      "path": "sand_03/sand_03_diff_1k.jpg",
+      "bytes": 703132,
+      "sha256": "e72144f9d7b81bdb7bbdb34222b53431738dcef79346dd89412d2abd541e4d30"
+    },
+    {
+      "path": "sand_03/sand_03_nor_gl_1k.jpg",
+      "bytes": 884706,
+      "sha256": "1bde5f49ea78f94bcad73592696bf3949711c4ac197133b710c0c8521b6e996b"
+    },
+    {
+      "path": "sand_03/sand_03_rough_1k.jpg",
+      "bytes": 291218,
+      "sha256": "5c9ead290a94913cfa2d0452a576ba527b50301fe208f2ffc4861e42a8fea45b"
+    },
+    {
+      "path": "sparse_grass/sparse_grass_diff_1k.jpg",
+      "bytes": 955945,
+      "sha256": "ae94f2b34597b9108eefd88217f55eccaec6d6b382e858a478ee92df90e66617"
+    },
+    {
+      "path": "sparse_grass/sparse_grass_nor_gl_1k.jpg",
+      "bytes": 1440314,
+      "sha256": "1c840a24807346ddaaf94a5057aee4078fcec3a4cd84bfe45da7d3b480ef460b"
+    },
+    {
+      "path": "sparse_grass/sparse_grass_rough_1k.jpg",
+      "bytes": 463340,
+      "sha256": "9ebe6d03a9551c17d1802835c92c1442acb8f5d38d4874ee8c37770f11c4bed1"
+    }
+  ],
+  "import": "Lossless CompressedTexture2D, full mipmaps, no normal inversion/channel conversion, linear non-color normals/roughness; shader source_color handles diffuse."
+}

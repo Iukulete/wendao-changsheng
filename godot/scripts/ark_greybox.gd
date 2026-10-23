@@ -20,6 +20,8 @@ var _restoring_progress := false
 var _pending_modules: Dictionary = {}
 var _construction_sequence := 0
 var _new_water_session := false
+const NearfutureHudScript = preload("res://scripts/presentation/ark_nearfuture_hud.gd")
+var nearfuture_hud: Node
 const FixturePlacement = preload("res://scripts/ark_fixture_placement.gd")
 
 # Online life only: one period every three active minutes; no offline catch-up.
@@ -135,6 +137,12 @@ const UI_FONT = WorldChartScript.UI_FONT
 const LandmassBuilderScript = preload("res://scripts/ark_landmass_builder.gd")
 const SurfaceSampleScript = preload("res://scripts/presentation/ark_surface_sample.gd")
 var surface_sample = SurfaceSampleScript.new()
+const OpeningCoastScript = preload("res://scripts/terrain/ark_opening_coast.gd")
+const CoastMaterialsScript = preload("res://scripts/presentation/ark_coast_materials.gd")
+var opening_coast = OpeningCoastScript.new()
+var opening_coast_result: Dictionary = {}
+# Frozen run02 directional calibration; unchanged day/weather profiles own time.
+const COAST_SUN_ENERGY_SCALE := 0.36453125
 
 enum WeatherPhase { FORECAST, STORM, AFTER }
 enum DayPeriod { MORNING, DAY, EVENING, NIGHT }
@@ -387,12 +395,37 @@ func _ready() -> void:
 	_build_world()
 	_build_player()
 	_build_hud()
+	if not opening_coast_result.get("ok", false):
+		_block_coast_load(opening_coast_result.get("errors", []))
+		_update_hud()
+		_ensure_nearfuture_hud()
+		return
 	save_service = SaveScript.new(save_root_override)
 	vessel_navigation.configure(ark_root, "starter_ark")
 	vessel_navigation.bind_actor("player", player, "deck")
 	_load_progress()
 	player_inside_refuge = _is_within_ark_refuge()
 	_update_hud()
+	_ensure_nearfuture_hud()
+
+
+# Scene-owned presentation only; attach after the world, saved state and native
+# HUD are initialized. Repeated setup reuses the same reversible adapter.
+func _ensure_nearfuture_hud() -> bool:
+	if not is_instance_valid(nearfuture_hud):
+		nearfuture_hud = NearfutureHudScript.new()
+	if nearfuture_hud.attach(self):
+		return true
+	nearfuture_hud.queue_free()
+	nearfuture_hud = null
+	return false
+
+
+# Rebuilds must expose the same presentation immediately as a fresh load, not
+# leave replacement nameplates in their legacy visibility for one frame.
+func _refresh_nearfuture_hud() -> void:
+	if not _restoring_progress and is_instance_valid(nearfuture_hud):
+		nearfuture_hud.refresh()
 
 
 func _physics_process(_delta: float) -> void:
@@ -1039,6 +1072,7 @@ func _process(delta: float) -> void:
 				_record_sailmaker_guest_cabin_occupancy()
 	if shared_meal_gathering_pending and (not _can_share_with_both_residents() or not _player_at_shared_table()):
 		_pause_shared_table_meal()
+	opening_coast.refresh_moving_actors()
 	# Place cabin labels after the residents' final rendered poses, not one step behind.
 	_update_shelter_roof_cutaway()
 	_update_interaction_hint()
@@ -1272,6 +1306,8 @@ func _update_interaction_hint() -> void:
 			interaction_focus_ring.visible = true
 	elif interaction_focus_ring:
 		interaction_focus_ring.visible = false
+	if opening_coast.initialized:
+		opening_coast.ground_focus_ring()
 
 
 func _interaction_hint_action(interactable_id: String) -> String:
@@ -1576,8 +1612,17 @@ func _build_world() -> void:
 	_add_tide_station(TIDE_STATION_POSITION)
 	_add_jade_sail_ark(JADE_SAIL_ARK_POSITION)
 	_add_pressure_wreck(PRESSURE_WRECK_POSITION)
-	_set_weather_visuals()
 	surface_sample.apply_world(self)
+	var coast_materials: Dictionary = CoastMaterialsScript.new().build()
+	opening_coast_result = opening_coast.initialize(self, coast_materials.materials) if coast_materials.ok else coast_materials
+	if opening_coast_result.get("ok", false):
+		sea_material.set_shader_parameter("opening_heights", opening_coast.height_texture)
+		sun_light.shadow_enabled = true
+		sun_light.shadow_opacity = 0.62
+		sun_light.shadow_bias = 0.04
+		sun_light.shadow_normal_bias = 0.8
+		sun_light.directional_shadow_max_distance = 45.0
+	_set_weather_visuals()
 
 
 func _add_tidekeeper_floatbox() -> void:
@@ -2799,6 +2844,7 @@ func _spawn_shore_supply(supply: Array) -> void:
 		_add_pile(supply[0], supply[2], supply[3])
 	else:
 		_add_shellfish_patch(supply[0], supply[2], supply[3])
+	opening_coast.ground_resource(get_node_or_null(str(supply[0])) as Node3D)
 
 
 func _replenish_shore_supplies() -> int:
@@ -3265,6 +3311,7 @@ func _set_traveler_boarded() -> void:
 			if marker.get_parent() != ark_root:
 				marker.reparent(ark_root, false)
 			traveler_marker = marker
+			opening_coast.reset_shore_offset(marker)
 			marker.position = RESIDENT_DECK_POSITION
 			if resident_gather_pending:
 				marker.reparent(self, true)
@@ -3279,6 +3326,7 @@ func _set_tidekeeper_box_aboard() -> void:
 		return
 	if tidekeeper_box_marker.get_parent() != ark_root:
 		tidekeeper_box_marker.reparent(ark_root, false)
+	opening_coast.reset_shore_offset(tidekeeper_box_marker)
 	tidekeeper_box_marker.position = TIDEKEEPER_BOX_ARK_POSITION
 
 
@@ -3291,6 +3339,7 @@ func _set_sailmaker_boarded() -> void:
 			if marker.get_parent() != ark_root:
 				marker.reparent(ark_root, false)
 			sailmaker_marker = marker
+			opening_coast.reset_shore_offset(marker)
 			marker.position = Vector3(1.15, 0.12, 0.75)
 			_update_sailmaker_schedule()
 		return
@@ -3907,8 +3956,8 @@ func _sailmaker_awning_walk_step_clear(from: Vector3, to: Vector3, target: Vecto
 func _update_sailmaker_work_visuals() -> void:
 	if sailmaker_marker == null or not is_instance_valid(sailmaker_marker):
 		return
-	var bundle := sailmaker_marker.get_node_or_null("OldSailBundle") as MeshInstance3D
-	var spool := sailmaker_marker.get_node_or_null("ThreadSpool") as Node3D
+	var bundle := opening_coast.visual_child(sailmaker_marker, "OldSailBundle") as MeshInstance3D
+	var spool := opening_coast.visual_child(sailmaker_marker, "ThreadSpool") as Node3D
 	if bundle == null or spool == null:
 		return
 	var prepared := sailmaker_awning_phase in ["carrying", "installing"]
@@ -5405,6 +5454,7 @@ func _build_storage_at(position: Vector3) -> void:
 	marker.add_child(sign)
 	ark_root.add_child(marker)
 	interactables.append({"id": "storage", "node": marker, "amount": 0})
+	_refresh_nearfuture_hud()
 
 
 func _build_workbench_at(position: Vector3) -> void:
@@ -5434,6 +5484,7 @@ func _build_workbench_at(position: Vector3) -> void:
 	marker.add_child(sign)
 	ark_root.add_child(marker)
 	interactables.append({"id": "workbench", "node": marker, "amount": 0})
+	_refresh_nearfuture_hud()
 
 
 func _build_raft_extension_at(position: Vector3) -> void:
@@ -6642,7 +6693,7 @@ func _set_weather_visuals() -> void:
 		sky_material.ground_horizon_color = base_sky_horizon.lerp(sky_weather_horizon.darkened(0.12), weather_blend)
 	if sun_light:
 		sun_light.rotation_degrees = base_sun_rotation
-		sun_light.light_energy = float(daylight["sun_energy"]) * sun_energy_scale
+		sun_light.light_energy = float(daylight["sun_energy"]) * sun_energy_scale * COAST_SUN_ENERGY_SCALE
 		sun_light.light_color = base_sun_color.lerp(sun_weather_tint, weather_blend)
 	_update_lantern_lighting(storm_active)
 
@@ -6890,23 +6941,79 @@ func _save_failure_message(result: Dictionary) -> String:
 	return "存档未写入，本次进度尚未保存；请检查可用空间与目录权限（%s）。" % str(result.get("error", result.get("code", "unknown")))
 
 
+func _block_coast_load(dependencies: Array) -> void:
+	# A missing required dependency must not manufacture resources or overwrite
+	# the original save. Keep menu access and a visible error, but stop simulation.
+	set_meta("save_load_blocked", true)
+	message = "海岸场景与存档不匹配，进度未应用；请返回主界面后继续，以重新创建场景。"
+	set_meta("save_warning", message)
+	set_meta("coast_dependency_errors", dependencies.duplicate())
+	set_process(false)
+	set_physics_process(false)
+	_present_progress_warning(message)
+
+
+func _present_progress_warning(warning: String) -> void:
+	# Rejection can stop simulation before the next ordinary HUD update. Make
+	# the existing save notice usable immediately, without gameplay selectors.
+	if is_instance_valid(save_status_notice):
+		save_status_notice.text = warning
+		save_status_notice.visible = true
+	_refresh_nearfuture_hud()
+
+
+func _reject_progress_load(warning: String) -> void:
+	# A fresh blocked session still needs its ordinary default module bindings.
+	# For any initialized session, do not shut down/recreate water or mutate any
+	# gameplay module when a load is rejected.
+	if not _modules_ready:
+		_initialize_module_state()
+	set_meta("save_load_blocked", true)
+	message = warning
+	set_meta("save_warning", warning)
+	_present_progress_warning(warning)
+
+
 func _load_progress() -> void:
+	# Read once, and reject a missing *uncollected* scene dependency before any
+	# water/module reset. Collection/replenishment remain canonical-owned.
+	var loaded: Dictionary = save_service.load_state() if save_service != null else {"ok": false, "code": "no_save"}
+	if not loaded.get("ok", false) and str(loaded.get("code", "")) != "no_save":
+		_reject_progress_load(_save_failure_message(loaded))
+		return
+	if loaded.get("ok", false):
+		var raw: Dictionary = loaded.get("state", {})
+		if int(raw.get("schema_version", 0)) >= 34 and not _prepare_module_restore(raw, false):
+			_reject_progress_load("存档模块不一致，原档与当前会话已保留。")
+			return
+	if loaded.get("ok", false) and opening_coast.initialized:
+		var expected_ids: Variant = loaded.get("state", {}).get("collected_ids", [])
+		var missing: Array[String] = opening_coast.validate_live_contract(expected_ids if expected_ids is Array else [])
+		if not missing.is_empty():
+			_block_coast_load(missing)
+			return
 	_restoring_progress = true
 	_modules_ready = false
 	_pending_modules = {}
 	_new_water_session = false
 	water.shutdown()
 	water = WaterScript.new()
-	_load_progress_impl()
+	_load_progress_impl(loaded)
 	_initialize_module_state()
+	if opening_coast.initialized:
+		var grounded: Dictionary = opening_coast.refresh_loaded_visuals()
+		if grounded.ok:
+			opening_coast.reconcile_loaded_player()
+		else:
+			_block_coast_load(grounded.errors)
 	_restoring_progress = false
 	_update_shelter_roof_cutaway()
+	_refresh_nearfuture_hud()
 
 
-func _load_progress_impl() -> void:
+func _load_progress_impl(result: Dictionary) -> void:
 	if save_service == null:
 		return
-	var result: Dictionary = save_service.load_state()
 	if not bool(result.get("ok", false)):
 		_new_water_session = str(result.get("code", "")) == "no_save"
 		if str(result.get("code", "")) != "no_save":
@@ -7293,7 +7400,7 @@ func _module_snapshot() -> Dictionary:
 	return {"economy": economy.snapshot(), "construction": construction.snapshot(), "gathering": gathering.snapshot(), "memories": memories.snapshot(), "construction_sequence": _construction_sequence}
 
 
-func _prepare_module_restore(saved: Dictionary) -> bool:
+func _prepare_module_restore(saved: Dictionary, stage: bool = true) -> bool:
 	# Validate the entire ownership bundle before the legacy shell can mutate nodes.
 	if not MemoryScript._plain(saved) or not saved.get("collected_ids") is Array:
 		return false
@@ -7341,9 +7448,10 @@ func _prepare_module_restore(saved: Dictionary) -> bool:
 			return false
 	if bool(saved.get("guest_cabin_built", false)) and (not bool(saved.get("raft_extension_built", false)) or not "tide_guest_cabin" in saved.get("learned_blueprint_ids", [])):
 		return false
-	_pending_modules = bundle.duplicate(true)
-	_pending_modules["water"] = saved.water.duplicate(true)
-	_pending_modules["navigation"] = saved.vessel_navigation.duplicate(true)
+	if stage:
+		_pending_modules = bundle.duplicate(true)
+		_pending_modules["water"] = saved.water.duplicate(true)
+		_pending_modules["navigation"] = saved.vessel_navigation.duplicate(true)
 	return true
 
 

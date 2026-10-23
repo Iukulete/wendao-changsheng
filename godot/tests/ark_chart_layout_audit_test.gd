@@ -45,7 +45,16 @@ func _run() -> void:
 	var home := game.get_node("ArkRoot/homeMarker/Name") as Label3D
 	var helm := game.get_node("ArkRoot/helmMarker/Name") as Label3D
 	assert(is_equal_approx(home.pixel_size, 0.009) and is_equal_approx(helm.pixel_size, 0.009), "nearby labels must not regress to 5–8 screen pixels")
-	assert(home.visible and helm.visible, "readability must not hide interaction names")
+	assert(not home.visible and not helm.visible, "approved compact names are hidden while the map owns the view")
+	var presentation: Node = game.get("nearfuture_hud")
+	var player := game.get("player") as Node3D
+	chart.visible = false
+	player.global_position = (helm.get_parent() as Node3D).global_position
+	presentation.call("refresh")
+	assert(helm.visible and not home.visible, "closing the map restores the focused helm label, not all competing names")
+	player.global_position = (home.get_parent() as Node3D).global_position
+	presentation.call("refresh")
+	assert(home.visible and not helm.visible, "moving focus restores the complete home label and suppresses the old focus")
 	assert(home.position.y < helm.position.y, "home and helm nameplates need distinct heights")
 	assert(str(game.call("_interaction_hint_action", "helm")) == "掌舵仙舟", "the focused helm hint must name the steering action")
 	game.call("_build_storage_at", Vector3(2.0, 0.12, -1.5))

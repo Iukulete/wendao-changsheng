@@ -129,7 +129,42 @@ func _assert_roof_geometry() -> void:
 	assert(roof.find_children("*", "CollisionObject3D", true, false).is_empty(), "visual roof splitting must not create player or NPC collisions")
 
 
+# Independent visibility oracle for only the explicitly approved HUD whitelist.
+# Every unlisted label/actor keeps the original strict visibility comparison.
+func _assert_hud_name_visibility() -> Dictionary:
+	var presentation: Node = game.get("nearfuture_hud")
+	presentation.call("refresh")
+	var focus: Node3D = null
+	var nearest := 2.8
+	for entry in game.get("interactables"):
+		var marker := entry.get("node") as Node3D
+		if not is_instance_valid(marker):
+			continue
+		var distance := _player().global_position.distance_to(marker.global_position)
+		if distance < nearest:
+			nearest = distance
+			focus = marker
+	var result := {}
+	for entry in game.get("interactables"):
+		var id := str(entry.get("id", ""))
+		if id not in ["home", "helm", "storage", "workbench", "cot", "hearth", "resident", "sailmaker", "tidekeeper_box", "sailmaker_awning", "resident_keepsake", "wood", "shellfish"]:
+			continue
+		var marker := entry.get("node") as Node3D
+		if not is_instance_valid(marker):
+			continue
+		var sign := marker.get_node_or_null("Name") as Label3D
+		if sign == null:
+			continue
+		var distance := _player().global_position.distance_to(marker.global_position)
+		var nearby := (id in ["resident", "sailmaker"] and distance <= 7.0) or (id in ["wood", "shellfish"] and distance <= 4.0)
+		var expected := (marker == focus or nearby) and not (game.get("world_chart") as Control).visible
+		assert(sign.visible == expected, "approved Name visibility must follow real focus/distance/map state: " + id)
+		result[sign.get_instance_id()] = true
+	return result
+
+
 func _preserved_state(ignore_nameplate_lift: bool = false) -> Dictionary:
+	var hud_names := _assert_hud_name_visibility()
 	var result: Dictionary = {}
 	var nodes := _shelter().find_children("*", "Node3D", true, false)
 	nodes.append_array(_ark().find_children("*", "Label3D", true, false))
@@ -144,7 +179,7 @@ func _preserved_state(ignore_nameplate_lift: bool = false) -> Dictionary:
 		if node == _roof() or _roof().is_ancestor_of(node) or str(node.get_path()).contains("ReefShellStormBrace"):
 			continue
 		var pose: Variant = node.basis if ignore_nameplate_lift and _targeted_nameplate(node) else node.transform
-		var value: Array = [node.get_instance_id(), pose, node.visible, node.process_mode]
+		var value: Array = [node.get_instance_id(), pose, "hud-prioritized" if hud_names.has(node.get_instance_id()) else node.visible, node.process_mode]
 		if node is CollisionObject3D:
 			value.append_array([node.collision_layer, node.collision_mask])
 		if node is CollisionShape3D:
@@ -173,13 +208,14 @@ func _nameplate_rows() -> Array[Dictionary]:
 
 
 func _assert_nameplate_geometry(active: bool) -> void:
+	_assert_hud_name_visibility()
 	var camera := game.get("camera") as Camera3D
 	for row in _nameplate_rows():
 		var marker := row.marker as Node3D
 		assert(is_instance_valid(marker))
 		var sign := marker.get_node("Name") as Label3D
 		var base_global := marker.to_global(row.base)
-		assert(sign.basis.is_equal_approx(Basis.IDENTITY) and sign.is_visible_in_tree(), "label lanes may not rotate, scale or hide text")
+		assert(sign.basis.is_equal_approx(Basis.IDENTITY) and sign.is_inside_tree(), "label lanes retain identity transform and live label; visibility follows the independently asserted HUD policy")
 		assert(Vector2(sign.global_position.x, sign.global_position.z).is_equal_approx(Vector2(base_global.x, base_global.z)), "only vertical label lift is authorized; the actor's horizontal label anchor must remain")
 		if active:
 			var reference := _shelter().global_position + camera.global_basis.y * float(row.lane)
@@ -207,7 +243,7 @@ func _assert_nameplate_lifecycle() -> void:
 	for repeat in range(12):
 		_stand(Vector3(0, 0.2, 0))
 		_assert_nameplate_geometry(true)
-		assert(_preserved_state(true) == unchanged, "only the three approved Name Y offsets may change; exact text/font/visibility/camera/geometry must remain")
+		assert(_preserved_state(true) == unchanged, "only the three approved Name Y offsets and explicitly checked HUD name visibility may change; exact text/font/camera/geometry must remain")
 		_stand(Vector3(0, 0.2, 2.3))
 		_assert_nameplate_geometry(false)
 	assert(_ownership() == ownership, "label presentation must not touch resources, history or construction")

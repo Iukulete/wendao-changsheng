@@ -1,0 +1,288 @@
+{
+  "schema": "coast-public-provenance-v1",
+  "source": "Poly Haven",
+  "license": {
+    "identifier": "CC0-1.0",
+    "provider_license_url": "https://polyhaven.com/license",
+    "legal_instrument_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "map_count": 9,
+  "original_texture_bytes": 7068490,
+  "path_base": "godot/art/coast",
+  "assets": {
+    "sparse_grass": {
+      "name": "Sparse Grass",
+      "authors": [
+        {
+          "name": "Amal Kumar"
+        }
+      ],
+      "asset_page_url": "https://polyhaven.com/a/sparse_grass",
+      "files_api_url": "https://api.polyhaven.com/files/sparse_grass",
+      "metadata_evidence_file": "sparse_grass.files.json",
+      "source_texel_density_label": "1K 5.1px/cm",
+      "type": "texture_set_only_not_model",
+      "physical_sample_reference": {
+        "value_m": 2.0,
+        "official_axis_label": "wide",
+        "source_label": "2m"
+      }
+    },
+    "sand_03": {
+      "name": "Sand 03",
+      "authors": [
+        {
+          "name": "Charlotte Baglioni"
+        }
+      ],
+      "asset_page_url": "https://polyhaven.com/a/sand_03",
+      "files_api_url": "https://api.polyhaven.com/files/sand_03",
+      "metadata_evidence_file": "sand_03.files.json",
+      "source_texel_density_label": "1K 5.1px/cm",
+      "type": "texture_set_only_not_model",
+      "physical_sample_reference": {
+        "value_m": 2.0,
+        "official_axis_label": "wide",
+        "source_label": "2m"
+      }
+    },
+    "rock_boulder_dry": {
+      "name": "Rock Boulder Dry",
+      "authors": [
+        {
+          "name": "Dimitrios Savva",
+          "role": "Photography"
+        },
+        {
+          "name": "Rico Cilliers",
+          "role": "Processing"
+        }
+      ],
+      "asset_page_url": "https://polyhaven.com/a/rock_boulder_dry",
+      "files_api_url": "https://api.polyhaven.com/files/rock_boulder_dry",
+      "metadata_evidence_file": "rock_boulder_dry.files.json",
+      "source_texel_density_label": "1K 5.7px/cm",
+      "type": "texture_set_only_not_model",
+      "physical_sample_reference": {
+        "value_m": 1.8,
+        "official_axis_label": "tall",
+        "source_label": "1.8m"
+      }
+    }
+  },
+  "files": [
+    {
+      "asset": "sparse_grass",
+      "metadata_role": "Diffuse",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_diff_1k.jpg",
+      "metadata_size_bytes": 955945,
+      "actual_bytes": 955945,
+      "metadata_md5": "5d0aba796e1b5882555161c16b10ee9d",
+      "actual_md5": "5d0aba796e1b5882555161c16b10ee9d",
+      "sha256": "ae94f2b34597b9108eefd88217f55eccaec6d6b382e858a478ee92df90e66617",
+      "source_bytes_modified": false,
+      "material_role": "base_color",
+      "color_space_usage": "sRGB",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sparse_grass/sparse_grass_diff_1k.jpg"
+    },
+    {
+      "asset": "sparse_grass",
+      "metadata_role": "nor_gl",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_nor_gl_1k.jpg",
+      "metadata_size_bytes": 1440314,
+      "actual_bytes": 1440314,
+      "metadata_md5": "3307e6ce47413c6b4e85885d4b8ae932",
+      "actual_md5": "3307e6ce47413c6b4e85885d4b8ae932",
+      "sha256": "1c840a24807346ddaaf94a5057aee4078fcec3a4cd84bfe45da7d3b480ef460b",
+      "source_bytes_modified": false,
+      "material_role": "tangent_space_normal_OpenGL",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sparse_grass/sparse_grass_nor_gl_1k.jpg"
+    },
+    {
+      "asset": "sparse_grass",
+      "metadata_role": "Rough",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_rough_1k.jpg",
+      "metadata_size_bytes": 463340,
+      "actual_bytes": 463340,
+      "metadata_md5": "acf2fd7e352e7635f67f24ecda01e485",
+      "actual_md5": "acf2fd7e352e7635f67f24ecda01e485",
+      "sha256": "9ebe6d03a9551c17d1802835c92c1442acb8f5d38d4874ee8c37770f11c4bed1",
+      "source_bytes_modified": false,
+      "material_role": "roughness",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "L",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sparse_grass/sparse_grass_rough_1k.jpg"
+    },
+    {
+      "asset": "sand_03",
+      "metadata_role": "Diffuse",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_03/sand_03_diff_1k.jpg",
+      "metadata_size_bytes": 703132,
+      "actual_bytes": 703132,
+      "metadata_md5": "84bde2b8bea6351805f67a15682b36b2",
+      "actual_md5": "84bde2b8bea6351805f67a15682b36b2",
+      "sha256": "e72144f9d7b81bdb7bbdb34222b53431738dcef79346dd89412d2abd541e4d30",
+      "source_bytes_modified": false,
+      "material_role": "base_color",
+      "color_space_usage": "sRGB",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sand_03/sand_03_diff_1k.jpg"
+    },
+    {
+      "asset": "sand_03",
+      "metadata_role": "nor_gl",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_03/sand_03_nor_gl_1k.jpg",
+      "metadata_size_bytes": 884706,
+      "actual_bytes": 884706,
+      "metadata_md5": "ad8d6ce28344b1d8f241cbd7796243dc",
+      "actual_md5": "ad8d6ce28344b1d8f241cbd7796243dc",
+      "sha256": "1bde5f49ea78f94bcad73592696bf3949711c4ac197133b710c0c8521b6e996b",
+      "source_bytes_modified": false,
+      "material_role": "tangent_space_normal_OpenGL",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sand_03/sand_03_nor_gl_1k.jpg"
+    },
+    {
+      "asset": "sand_03",
+      "metadata_role": "Rough",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sand_03/sand_03_rough_1k.jpg",
+      "metadata_size_bytes": 291218,
+      "actual_bytes": 291218,
+      "metadata_md5": "b09beddb9981ec5fb402c12f04751c15",
+      "actual_md5": "b09beddb9981ec5fb402c12f04751c15",
+      "sha256": "5c9ead290a94913cfa2d0452a576ba527b50301fe208f2ffc4861e42a8fea45b",
+      "source_bytes_modified": false,
+      "material_role": "roughness",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "L",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "sand_03/sand_03_rough_1k.jpg"
+    },
+    {
+      "asset": "rock_boulder_dry",
+      "metadata_role": "Diffuse",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_diff_1k.jpg",
+      "metadata_size_bytes": 859211,
+      "actual_bytes": 859211,
+      "metadata_md5": "da794cd9be3db91e3160cf081109f322",
+      "actual_md5": "da794cd9be3db91e3160cf081109f322",
+      "sha256": "20f653a42fb24f42aa40641663070d578678da49af18cc1049dbdd4ed8679f3c",
+      "source_bytes_modified": false,
+      "material_role": "base_color",
+      "color_space_usage": "sRGB",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "rock_boulder_dry/rock_boulder_dry_diff_1k.jpg"
+    },
+    {
+      "asset": "rock_boulder_dry",
+      "metadata_role": "nor_gl",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_nor_gl_1k.jpg",
+      "metadata_size_bytes": 802497,
+      "actual_bytes": 802497,
+      "metadata_md5": "6f1c575ceed560ae253f65518cf748e2",
+      "actual_md5": "6f1c575ceed560ae253f65518cf748e2",
+      "sha256": "5915fea28a97357c78a04fb31c2516f1f7ed1b3a9cef4ae25aa93e4655e6c595",
+      "source_bytes_modified": false,
+      "material_role": "tangent_space_normal_OpenGL",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "rock_boulder_dry/rock_boulder_dry_nor_gl_1k.jpg"
+    },
+    {
+      "asset": "rock_boulder_dry",
+      "metadata_role": "Rough",
+      "format": "jpg",
+      "resolution": "1k",
+      "source_url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_boulder_dry/rock_boulder_dry_rough_1k.jpg",
+      "metadata_size_bytes": 668127,
+      "actual_bytes": 668127,
+      "metadata_md5": "0c8b15df3e31c15256da5f8e1b0d0759",
+      "actual_md5": "0c8b15df3e31c15256da5f8e1b0d0759",
+      "sha256": "cc5229dd6bbdc4e817cb647e60242224b8e4f0237473ac018861ea243f2e8130",
+      "source_bytes_modified": false,
+      "material_role": "roughness",
+      "color_space_usage": "linear_non_color",
+      "decoded_dimensions_px": [
+        1024,
+        1024
+      ],
+      "decoded_mode": "RGB",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "path": "rock_boulder_dry/rock_boulder_dry_rough_1k.jpg"
+    }
+  ],
+  "verification_files": [
+    "metadata-fetch-log.json",
+    "download-log.json",
+    "image-inspection.json",
+    "research-evidence.json"
+  ]
+}

@@ -1,7 +1,8 @@
 extends RefCounted
 
 ## A bounded surface candidate, not a replacement for the environment art.
-## Exactly four opening-world meshes and the eight existing cabin floorboards.
+## Exactly two ship-world meshes and the eight existing cabin floorboards.
+## Opening terrain is owned separately by ark_opening_coast, never overwritten here.
 ## Terrain uses existing local XZ UVs; ship meshes keep local triplanar mapping.
 ## Both follow their mesh transforms without per-frame work.
 const TERRAIN_DETAIL = preload("res://art/surface_sample/terrain_detail.png")
@@ -17,8 +18,6 @@ var _materials: Dictionary = {}
 
 
 func apply_world(world: Node3D) -> void:
-	_apply(world.get_node_or_null("IslandLandmass/Shoreline") as MeshInstance3D, "shore", TERRAIN_DETAIL, SHORE_SCALE, false)
-	_apply(world.get_node_or_null("IslandLandmass/Grassland") as MeshInstance3D, "grass", TERRAIN_DETAIL, GRASS_SCALE, false)
 	_apply(_unique_mesh(world.get_node_or_null("ArkRoot/RaftTop")), "deck", DECK_PLANKS, WOOD_SCALE)
 	_apply(_unique_mesh(world.get_node_or_null("ArkRoot/RaftBoardingGangplank")), "gangplank", DECK_PLANKS, WOOD_SCALE)
 

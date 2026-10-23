@@ -40,7 +40,9 @@ func _run() -> void:
 	game.set_physics_process(false)
 	var drawer := game.get("hud_drawer") as Control
 	var toggle := game.get("hud_toggle") as Button
-	var status := game.get("hud_panel") as Control
+	var presentation: Node = game.get("nearfuture_hud")
+	var status := presentation.get("status_panel") as Control
+	assert(not (game.get("hud_panel") as Control).visible and status.is_visible_in_tree())
 	var context := game.get("note_panel") as Control
 	var player := game.get("player") as CharacterBody3D
 	for screen in [Vector2i(1280, 720), Vector2i(1440, 900)]:
@@ -76,7 +78,7 @@ func _run() -> void:
 	await _settle()
 	await _click(game.find_child("ArkBasicShelterTemplateButton", true, false) as Control)
 	assert(game.get("building_mode") and not drawer.visible)
-	assert((game.get("hud") as Control).visible and context.mouse_filter == Control.MOUSE_FILTER_IGNORE)
+	assert((presentation.get("build_panel") as Control).is_visible_in_tree() and context.mouse_filter == Control.MOUSE_FILTER_IGNORE)
 	_tap(KEY_H)
 	var wood := int(game.get("wood"))
 	var click := InputEventMouseButton.new()
@@ -132,6 +134,7 @@ func _run() -> void:
 	assert(not status.get_global_rect().intersects(context.get_global_rect()))
 	assert(not warning.get_global_rect().intersects(context.get_global_rect()))
 	assert(warning.visible and (game.get("hud") as Label).text.contains("生命 1/4"))
+	assert((presentation.get("health_label") as Label).text == "生命 1/4" and (presentation.get("alert_panel") as Control).is_visible_in_tree())
 	_tap(KEY_H)
 	assert(warning.visible)
 	_tap(KEY_M)

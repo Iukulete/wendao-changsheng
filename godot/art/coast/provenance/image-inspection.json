@@ -1,0 +1,119 @@
+[
+  {
+    "asset": "sparse_grass",
+    "path": "sparse_grass/sparse_grass_diff_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "ae94f2b34597b9108eefd88217f55eccaec6d6b382e858a478ee92df90e66617",
+    "material_role": "base_color",
+    "color_space_usage": "sRGB"
+  },
+  {
+    "asset": "sparse_grass",
+    "path": "sparse_grass/sparse_grass_nor_gl_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "1c840a24807346ddaaf94a5057aee4078fcec3a4cd84bfe45da7d3b480ef460b",
+    "material_role": "tangent_space_normal_OpenGL",
+    "color_space_usage": "linear_non_color"
+  },
+  {
+    "asset": "sparse_grass",
+    "path": "sparse_grass/sparse_grass_rough_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "L",
+    "sha256": "9ebe6d03a9551c17d1802835c92c1442acb8f5d38d4874ee8c37770f11c4bed1",
+    "material_role": "roughness",
+    "color_space_usage": "linear_non_color"
+  },
+  {
+    "asset": "sand_03",
+    "path": "sand_03/sand_03_diff_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "e72144f9d7b81bdb7bbdb34222b53431738dcef79346dd89412d2abd541e4d30",
+    "material_role": "base_color",
+    "color_space_usage": "sRGB"
+  },
+  {
+    "asset": "sand_03",
+    "path": "sand_03/sand_03_nor_gl_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "1bde5f49ea78f94bcad73592696bf3949711c4ac197133b710c0c8521b6e996b",
+    "material_role": "tangent_space_normal_OpenGL",
+    "color_space_usage": "linear_non_color"
+  },
+  {
+    "asset": "sand_03",
+    "path": "sand_03/sand_03_rough_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "L",
+    "sha256": "5c9ead290a94913cfa2d0452a576ba527b50301fe208f2ffc4861e42a8fea45b",
+    "material_role": "roughness",
+    "color_space_usage": "linear_non_color"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "path": "rock_boulder_dry/rock_boulder_dry_diff_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "20f653a42fb24f42aa40641663070d578678da49af18cc1049dbdd4ed8679f3c",
+    "material_role": "base_color",
+    "color_space_usage": "sRGB"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "path": "rock_boulder_dry/rock_boulder_dry_nor_gl_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "5915fea28a97357c78a04fb31c2516f1f7ed1b3a9cef4ae25aa93e4655e6c595",
+    "material_role": "tangent_space_normal_OpenGL",
+    "color_space_usage": "linear_non_color"
+  },
+  {
+    "asset": "rock_boulder_dry",
+    "path": "rock_boulder_dry/rock_boulder_dry_rough_1k.jpg",
+    "format": "JPEG",
+    "dimensions_px": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "sha256": "cc5229dd6bbdc4e817cb647e60242224b8e4f0237473ac018861ea243f2e8130",
+    "material_role": "roughness",
+    "color_space_usage": "linear_non_color"
+  }
+]

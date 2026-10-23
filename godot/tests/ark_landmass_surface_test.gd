@@ -4,6 +4,7 @@ extends SceneTree
 ## Two-sided collision made the old inverted surfaces physically walkable.
 const Paths = preload("res://tests/ark_test_paths.gd")
 const Save = preload("res://scripts/ark_greybox_save.gd")
+const CoastHistory = preload("res://tests/support/coast_historical_projection.gd")
 # Captured from the pre-fix official 4.7.1 world (builder SHA256 b2d4f029df9724a55ed1cc1b57e2172016f2b6c4ded279f8d9600b324dccaac7).
 # Each SHA sorts vertices WITHIN each triangle, then sorts the triangles. A winding
 # reversal is permitted; changing contour, height, triangulation or multiplicity is not.
@@ -34,6 +35,8 @@ var game: Node3D
 var saves: RefCounted
 var save_root: String
 var failures := 0
+var legacy_opening_grass_arrays := PackedByteArray()
+var legacy_opening_grass_faces := PackedByteArray()
 
 
 func _initialize() -> void:
@@ -99,11 +102,11 @@ func _calibrate_oracle() -> void:
 	_check(_geometry(faces) != _geometry(reversed), "geometry oracle must reject a contour change")
 
 
-func _inspect_world(label: String) -> Dictionary:
+func _inspect_legacy_world(label: String, fixtures: Dictionary, expected_total: int) -> Dictionary:
 	var result := {}
 	var total := 0
-	for id in OLD_WORLD:
-		var island := game.get_node_or_null(NodePath(id)) as StaticBody3D
+	for id in fixtures:
+		var island := fixtures[id] as StaticBody3D
 		_check(island != null, label + " must reconstruct " + id)
 		if island == null:
 			continue
@@ -166,7 +169,161 @@ func _inspect_world(label: String) -> Dictionary:
 			total += nondegenerate
 			print("LANDMASS_SURFACE_OBSERVATION: ", label, " ", key, " triangles=", nondegenerate, " upward_faces=", up_faces, " upward_normals=", up_normals, " geometry=", digest)
 		_check(island_total == 800, id + " must retain all 800 nondegenerate triangles")
-	_check(total == 4000, label + " must inspect all 4000 actual generated world triangles")
+	_check(total == expected_total, "%s must inspect all %d actual generated legacy triangles" % [label, expected_total])
+	return result
+
+
+
+# The unchanged OLD_WORLD opening rows still gate the original builder. This
+# isolated fixture is not substituted for the actual live opening coast below.
+func _inspect_original_opening_builder() -> void:
+	var builder := load("res://scripts/ark_landmass_builder.gd").new() as RefCounted
+	var fixture: StaticBody3D = builder.call("build_island", "IslandLandmass", Vector3(11, 0, -14), Vector2(12, 10), 1.2, Color("536d50"), Color("77735b"), true)
+	root.add_child(fixture)
+	var observed := _inspect_legacy_world("isolated_original_opening_builder", {"IslandLandmass": fixture}, 800)
+	_check(observed.size() == 2, "separate legacy opening fixture must retain both original golden rows")
+	legacy_opening_grass_arrays = var_to_bytes(fixture.get_node("Grassland").mesh.surface_get_arrays(0))
+	legacy_opening_grass_faces = var_to_bytes(fixture.get_node("GrasslandCollision").shape.get_faces())
+	fixture.free()
+
+
+# No quantization, inverse projection, old golden substitution or resource IDs
+# in current-runtime comparisons. Recreated resource objects may have new IDs;
+# every serialized material property and every actual array byte must match.
+func _plain(value: Variant) -> Variant:
+	if value is Shader:
+		return {"class": value.get_class(), "code": value.code}
+	if value is Texture2D:
+		var image: Image = value.get_image()
+		return {"class": value.get_class(), "path": value.resource_path, "width": value.get_width(), "height": value.get_height(), "format": image.get_format() if image else -1, "mipmaps": image.has_mipmaps() if image else false, "bytes": _bytes(image.get_data()) if image else ""}
+	if value is Resource:
+		return _resource(value)
+	if value is Dictionary:
+		var result := {}
+		for key in value:
+			result[key] = _plain(value[key])
+		return result
+	if value is Array:
+		var result: Array = []
+		for entry in value:
+			result.append(_plain(entry))
+		return result
+	return value
+
+
+func _resource(resource: Resource) -> Dictionary:
+	var result := {"class": resource.get_class()}
+	for item in resource.get_property_list():
+		var id := str(item.name)
+		if int(item.usage) & PROPERTY_USAGE_STORAGE and id not in ["resource_name", "resource_path", "resource_local_to_scene", "script"]:
+			result[id] = _plain(resource.get(id))
+	return result
+
+
+func _bytes(value: Variant) -> String:
+	return var_to_bytes(value).hex_encode().sha256_text()
+
+
+func _current_opening_snapshot(reference: RefCounted) -> Dictionary:
+	var snapshot := {}
+	var roots: Array[String] = ["IslandLandmass", "ShoreRockA", "ShoreRockB", "ShelteredGrassGroups"]
+	for index in range(9):
+		roots.append("CoastClusterRock%02d" % index)
+	for path in roots:
+		var parent := game.get_node(path)
+		var nodes: Array[Node] = [parent]
+		nodes.append_array(parent.find_children("*", "", true, false))
+		for node in nodes:
+			var row := {"class": node.get_class(), "children": node.get_child_count()}
+			if node is Node3D:
+				row.transform = node.transform
+				row.visible = node.visible
+			if node is CollisionObject3D:
+				row.layer = node.collision_layer
+				row.mask = node.collision_mask
+			if node is MeshInstance3D:
+				row.mesh_class = node.mesh.get_class()
+				row.surfaces = []
+				for index in range(node.mesh.get_surface_count()):
+					row.surfaces.append({"primitive": node.mesh.surface_get_primitive_type(index), "arrays": _bytes(node.mesh.surface_get_arrays(index)), "material": _plain(node.get_active_material(index))})
+				row.override = _plain(node.material_override)
+				row.overlay = _plain(node.material_overlay)
+				row.cast_shadow = node.cast_shadow
+			if node is CollisionShape3D:
+				row.disabled = node.disabled
+				row.shape = _resource(node.shape)
+			# Byte snapshot freezes packed arrays/resources rather than retaining a
+			# mutable reference that could make a later comparison pass falsely.
+			snapshot[str(reference.call("node_path", node))] = _bytes(row)
+	return snapshot
+
+
+func _inspect_live_opening(label: String) -> Dictionary:
+	var reference := CoastHistory.new()
+	reference.configure(game, self)
+	# Validation calls only byte-pinned pure reference routines. No historical
+	# geometry()/materials() projection is used by this live-world regression.
+	reference.validate_geometry()
+	var island := game.get_node("IslandLandmass") as StaticBody3D
+	_check(island.transform == Transform3D(Basis.IDENTITY, OLD_WORLD.IslandLandmass.center) and island.visible and island.collision_layer == 1 and island.collision_mask == 1 and island.get_child_count() == 5, "live opening retains original root transform/policy and exactly five visual/collision children")
+	var top := island.get_node("Shoreline") as MeshInstance3D
+	var collision := island.get_node("ShorelineCollision") as CollisionShape3D
+	var shape := collision.shape as ConcavePolygonShape3D
+	_check(top.transform == Transform3D.IDENTITY and top.visible and collision.transform == Transform3D.IDENTITY and not collision.disabled, "new live top/collider remain visible/enabled and untransformed")
+	var faces := top.mesh.get_faces()
+	var arrays := top.mesh.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var tangents: PackedFloat32Array = arrays[Mesh.ARRAY_TANGENT]
+	_check(top.mesh.get_surface_count() == 1 and top.mesh.surface_get_primitive_type(0) == Mesh.PRIMITIVE_TRIANGLES and faces.size() == 7127 * 3 and vertices.size() == faces.size(), "actual opening top is one7127-triangle nonindexed surface")
+	_check(arrays[Mesh.ARRAY_INDEX] == null or (arrays[Mesh.ARRAY_INDEX] as PackedInt32Array).is_empty(), "new top remains nonindexed")
+	_check(normals.size() == vertices.size() and uv.size() == vertices.size() and tangents.size() == vertices.size() * 4, "new top has one normal/UV and four tangent components per actual vertex")
+	var valid_faces := 0
+	var valid_normals := 0
+	var valid_uvs := 0
+	for index in range(0, faces.size(), 3):
+		var front := (faces[index + 2] - faces[index]).cross(faces[index + 1] - faces[index])
+		if front.y > 0.000000001:
+			valid_faces += 1
+	for index in range(vertices.size()):
+		if index < normals.size() and normals[index].is_finite() and normals[index].y > 0 and absf(normals[index].length() - 1.0) < 0.0001:
+			valid_normals += 1
+		if index < uv.size() and uv[index] == Vector2(vertices[index].x, vertices[index].z):
+			valid_uvs += 1
+	for value in tangents:
+		_check(is_finite(value), "new top tangent components must remain finite")
+	_check(valid_faces == 7127 and valid_normals == 7127 * 3 and valid_uvs == 7127 * 3, "all actual new top faces are nondegenerate clockwise/up with unit up normals and exact localXZ UV")
+	_check(shape != null and shape.backface_collision and var_to_bytes(shape.get_faces()) == var_to_bytes(faces), "live top collider bytes must exactly match actual rendered faces")
+	var legacy_grass := island.get_node("Grassland") as MeshInstance3D
+	var legacy_collision := island.get_node("GrasslandCollision") as CollisionShape3D
+	_check(not legacy_grass.visible and legacy_collision.disabled and legacy_grass.transform == Transform3D.IDENTITY and legacy_collision.transform == Transform3D.IDENTITY, "old grass is retained only as hidden/disabled untransformed legacy geometry")
+	_check(var_to_bytes(legacy_grass.mesh.surface_get_arrays(0)) == legacy_opening_grass_arrays and var_to_bytes(legacy_collision.shape.get_faces()) == legacy_opening_grass_faces, "retained old grass keeps every independent original-builder array/collider byte")
+	var grass_material := legacy_grass.material_override as StandardMaterial3D
+	_check(grass_material != null and grass_material.albedo_color == OLD_WORLD.IslandLandmass.Grassland[1] and grass_material.roughness == 1.0 and not grass_material.vertex_color_use_as_albedo and grass_material.cull_mode == BaseMaterial3D.CULL_BACK and grass_material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED, "hidden old grass retains original plain material and culling")
+	var cap := island.get_node("SubmergedVisualCap") as MeshInstance3D
+	_check(cap.transform == Transform3D.IDENTITY and cap.visible and cap.mesh.get_faces().size() == 96 * 3 and cap.material_override == top.material_override, "actual96-triangle submerged visual cap shares top material without transforming")
+	for path in ["IslandLandmass/Shoreline", "IslandLandmass/SubmergedVisualCap", "ShoreRockA", "ShoreRockB", "ShelteredGrassGroups"]:
+		var node := game.get_node(path)
+		var visual := node as MeshInstance3D if node is MeshInstance3D else node.get_child(0) as MeshInstance3D
+		var material_kind := "terrain" if path.begins_with("IslandLandmass/") else "grass" if path == "ShelteredGrassGroups" else "rock"
+		_check(_resource(visual.material_override) == _resource(reference.expected_materials[material_kind]) and visual.get_active_material(0) == visual.material_override and visual.material_overlay == null, "actual complete material equals frozen independent specification: " + path)
+	for index in range(9):
+		var visual := game.get_node("CoastClusterRock%02d" % index).get_child(0) as MeshInstance3D
+		_check(_resource(visual.material_override) == _resource(reference.expected_materials.rock) and visual.get_active_material(0) == visual.material_override and visual.material_overlay == null, "satellite actual complete material remains frozen")
+	print("LANDMASS_COAST_OBSERVATION: ", label, " frozen_top_triangles=7127 cap=96 raw_mesh/collider/UV/materials=checked")
+	return _current_opening_snapshot(reference)
+
+
+func _inspect_world(label: String) -> Dictionary:
+	var unchanged := {}
+	for id in OLD_WORLD:
+		if id != "IslandLandmass":
+			unchanged[id] = game.get_node_or_null(NodePath(id))
+	_check(unchanged.size() == 4, "all four other islands remain in the untouched historical oracle")
+	var result := _inspect_legacy_world(label, unchanged, 3200)
+	_check(result.size() == 8, "all eight untouched other-island surfaces retain old golden checks")
+	result["actual_opening_raw"] = _inspect_live_opening(label)
 	return result
 
 
@@ -254,6 +411,7 @@ func _run() -> void:
 	saves = Save.new(save_root)
 	saves.clear_for_test()
 	_calibrate_oracle()
+	_inspect_original_opening_builder()
 	await _spawn()
 	var original_state := _state()
 	var geometry := _inspect_world("fresh_world")
@@ -319,7 +477,7 @@ func _run() -> void:
 			await _drop()
 	saves.clear_for_test()
 	if failures == 0:
-		print("ARK_LANDMASS_SURFACE_TEST_OK: all five actual islands, 4000 clockwise faces, 12000 normals, old geometry/material/collision policy, current/legacy/repeated save reconstruction")
+		print("ARK_LANDMASS_SURFACE_TEST_OK: four live islands3200 old-golden triangles plus separate original opening800; actual opening7127+96 frozen/raw mesh-collision-UV-material contract on every current/legacy/repeated reconstruction")
 	else:
 		print("ARK_LANDMASS_SURFACE_TEST_RED: failures=", failures)
 	quit(1 if failures > 0 else 0)

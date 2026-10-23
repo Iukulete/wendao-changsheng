@@ -88,7 +88,7 @@ func _run() -> void:
 	var avatar := game.get("avatar_visual") as Node3D
 	assert(avatar != null and avatar.get("skeleton") is Skeleton3D, "the player should use the skinned Emma 3D avatar")
 	var resident_marker := game.get_node("residentMarker") as Node3D
-	var resident_figure := resident_marker.get_node("TidekeeperFigure") as Node3D
+	var resident_figure := (game.get("opening_coast") as RefCounted).call("visual_child", resident_marker, "TidekeeperFigure") as Node3D
 	assert(resident_figure != null and resident_figure.get_node_or_null("Head") is MeshInstance3D, "the first resident should also have visible 3D volume")
 	player.global_position = Vector3(-4.0, 1.1, 1.5)
 	game.call("_update_interaction_hint")
@@ -809,7 +809,7 @@ func _run() -> void:
 	accept_sailmaker_key.keycode = KEY_1
 	sailmaker_game.call("_unhandled_key_input", accept_sailmaker_key)
 	assert(bool(sailmaker_game.get("sailmaker_boarded")) and bool(sailmaker_game.get("traveler_boarded")), "boarding the sailmaker should preserve the first resident's independently boarded state")
-	assert(sailmaker_game.get_node("ArkRoot/sailmakerMarker/SailmakerFigure/Head") is MeshInstance3D and sailmaker_game.get_node("ArkRoot/sailmakerMarker/OldSailBundle") is MeshInstance3D, "the second resident should have a distinct volumetric placeholder and visible personal kit")
+	assert((sailmaker_game.get("opening_coast") as RefCounted).call("visual_child", sailmaker_game.get("sailmaker_marker"), "SailmakerFigure/Head") is MeshInstance3D and (sailmaker_game.get("opening_coast") as RefCounted).call("visual_child", sailmaker_game.get("sailmaker_marker"), "OldSailBundle") is MeshInstance3D, "the second resident should have a distinct volumetric placeholder and visible personal kit")
 	var sailmaker_ark := sailmaker_game.get_node("ArkRoot") as Node3D
 	var boarded_sailmaker_marker := sailmaker_game.get("sailmaker_marker") as Node3D
 	var boarded_traveler_marker := sailmaker_game.get("traveler_marker") as Node3D

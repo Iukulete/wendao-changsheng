@@ -108,8 +108,10 @@ func _run() -> void:
 	_at_interaction(game, "helm")
 	assert(bool(game.get("sailing_mode")))
 	# No direct ship-transform assignment: all legs turn and translate through
-	# the production swept-hull navigation method.
-	for waypoint in [Vector2(0, 8), Vector2(27, 8), Vector2(27, -42), Vector2(39, -42)]:
+	# the production swept-hull navigation method. The authored opening coast
+	# intersects the old x=27 straight lane. This test-only dogleg clears its
+	# actual hull footprint, then returns west of FarReef; navigation is unchanged.
+	for waypoint in [Vector2(0, 8), Vector2(29, 8), Vector2(29, -22), Vector2(27, -25), Vector2(27, -42), Vector2(39, -42)]:
 		await _sail_to(game, waypoint)
 	assert(not bool(game.call("_is_ark_position_navigable", Vector3(39, 0, -29))), "a reef interior must not be navigable")
 	# Aim toward the reef using the real rudder, then try one oversized move.
@@ -132,7 +134,7 @@ func _run() -> void:
 	assert(int(game.get("keel_beams")) == 1 and int(game.get("wood")) == 5 and _event_count(game, "keel_wreck_salvaged") == 1)
 	assert(ark.global_position.is_equal_approx(reef_mooring), "shore interaction must leave the home at its real mooring")
 	_at_interaction(game, "helm")
-	for waypoint in [Vector2(27, -42), Vector2(27, 8), Vector2(0, 8), Vector2(-10, 0)]:
+	for waypoint in [Vector2(27, -42), Vector2(27, -25), Vector2(29, -22), Vector2(29, 8), Vector2(0, 8), Vector2(-10, 0)]:
 		await _sail_to(game, waypoint)
 	_tap(KEY_E)
 	assert(bool(game.call("_try_place_raft_extension", Vector3(0, 0.12, -4.2))), "bring unique salvage home and construct the deck through the normal cost transaction")

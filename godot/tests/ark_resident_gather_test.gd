@@ -27,6 +27,34 @@ func _new_game(scene: PackedScene, save_root: String) -> Node:
 	return game
 
 
+# Historical numerical route oracle: these exact dimensions were the original
+# ShoreRockA box. The production opening now has a different convex mesh, so
+# the old rectangular numbers belong to this explicit temporary fixture only.
+func _original_shore_rock_box_fixture(game: Node3D) -> StaticBody3D:
+	var fixture := StaticBody3D.new()
+	fixture.name = "LegacyShoreRockABoxFixture"
+	fixture.position = Vector3(5.0, 0.7, -7.0)
+	fixture.collision_layer = 1
+	fixture.collision_mask = 1
+	var visual := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(2.0, 1.6, 2.2)
+	visual.mesh = mesh
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color("686c68")
+	material.roughness = 0.84
+	visual.material_override = material
+	fixture.add_child(visual)
+	var collision := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(2.0, 1.6, 2.2)
+	collision.shape = shape
+	fixture.add_child(collision)
+	game.add_child(fixture)
+	assert(fixture.transform == Transform3D(Basis.IDENTITY, Vector3(5.0, 0.7, -7.0)) and collision.transform == Transform3D.IDENTITY, "original box fixture must preserve exact transform, not impersonate the new live convex coast")
+	return fixture
+
+
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_resident_gather_save").simplify_path()
 	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
@@ -35,6 +63,11 @@ func _run() -> void:
 	var scene := load("res://scenes/ark_greybox.tscn") as PackedScene
 	assert(scene != null, "the ark scene must load for resident gathering")
 	var game := await _new_game(scene, save_root)
+	# Keep this original numerical regression unchanged, but supply its exact
+	# old box explicitly. Do not claim these rectangle bounds describe the new
+	# convex rock or prove current visual-foot clearance; that is a separate gate.
+	var legacy_rock_fixture := _original_shore_rock_box_fixture(game as Node3D)
+	await physics_frame
 	var rock_detour: PackedVector3Array = game.call("_build_resident_walk_route", Vector3(2.0, 0.12, -7.0), Vector3(8.0, 0.12, -7.0))
 	assert(rock_detour.size() > 2, "the resident route planner should create intermediate waypoints around a blocking shore rock")
 	var moved_around_rock := false
@@ -43,6 +76,9 @@ func _run() -> void:
 		if waypoint.distance_to(Vector3(2.0, 0.12, -7.0)) > 0.1 and waypoint.distance_to(Vector3(8.0, 0.12, -7.0)) > 0.1:
 			moved_around_rock = moved_around_rock or waypoint.x < 3.5 or waypoint.x > 6.5 or waypoint.z < -8.5 or waypoint.z > -5.5
 	assert(moved_around_rock, "a blocked straight-line trip should bend around the shore instead of walking through the rock")
+	legacy_rock_fixture.free()
+	await physics_frame
+	assert(game.get_node_or_null("LegacyShoreRockABoxFixture") == null, "temporary historical obstacle must be gone before every later live route/economy/save assertion")
 	var deck_blocker := StaticBody3D.new()
 	deck_blocker.name = "RoutinePathBlockerTest"
 	var deck_blocker_shape := CollisionShape3D.new()
@@ -63,16 +99,24 @@ func _run() -> void:
 	assert(walked_around_fixture, "a blocked shipboard route should bend around the fixture rather than walk through it")
 	deck_blocker.queue_free()
 	await physics_frame
-	var shoreline_route: PackedVector3Array = game.call("_build_resident_walk_route", Vector3(18.0, 0.12, -14.0), Vector3(24.0, 0.12, -14.0))
+	# Equivalent live slope fixture: authored raised shoulder blocks the old
+	# z=-14 input. Keep its 6m length, Y, budgets and every descent/task assertion;
+	# z=-10 crosses actual native IslandLandmass slope (not a mocked support).
+	var shoreline_route: PackedVector3Array = game.call("_build_resident_walk_route", Vector3(18.0, 0.12, -10.0), Vector3(24.0, 0.12, -10.0))
 	assert(shoreline_route.size() > 2, "a resident route crossing the island's sloped shoreline should include sampled ground waypoints")
 	var follows_shore_slope := false
 	for waypoint in shoreline_route:
 		follows_shore_slope = follows_shore_slope or waypoint.y < -0.02
+		if waypoint.y < -0.02:
+			var query := PhysicsRayQueryParameters3D.create(Vector3(waypoint.x, 4.0, waypoint.z), Vector3(waypoint.x, -3.0, waypoint.z), 1)
+			var native_hit: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(query)
+			assert(not native_hit.is_empty() and native_hit.collider == game.get_node("IslandLandmass"), "descent must be supported by the real authored island collider")
+			assert(is_equal_approx(waypoint.y, native_hit.position.y + 0.12), "live slope waypoints retain the existing native support offset")
 	assert(follows_shore_slope, "a resident should descend with the real shoreline instead of hovering at the route's starting height")
 	game.set("traveler_boarded", true)
 	game.call("_set_traveler_boarded")
 	var slope_marker := game.get("traveler_marker") as Node3D
-	slope_marker.global_position = Vector3(18.0, 0.12, -14.0)
+	slope_marker.global_position = Vector3(18.0, 0.12, -10.0)
 	# The slope probe is a real reserved task, not orphaned facade flags.
 	assert(game.get("economy").seed_source("SlopeProbe", "wood", 1, "shore"))
 	var slope_task: Dictionary = game.get("gathering").dispatch("tidekeeper", "SlopeProbe", "player")
@@ -82,7 +126,7 @@ func _run() -> void:
 	game.set("resident_gather_resource", "wood")
 	game.set("resident_gather_pending", true)
 	game.set("resident_gather_phase", "outbound")
-	game.set("resident_gather_target_position", Vector3(24.0, 0.12, -14.0))
+	game.set("resident_gather_target_position", Vector3(24.0, 0.12, -10.0))
 	var lowest_resident_y := slope_marker.global_position.y
 	for _step in range(400):
 		game.call("_process_resident_gathering", 0.1)
@@ -427,7 +471,7 @@ func _run_tidekeeper_box_checks(scene: PackedScene) -> void:
 	save_helper.clear_for_test()
 	var game := await _new_game(scene, save_root)
 	var box := game.get_node("TidekeeperFloatboxInteractable") as Node3D
-	assert(box != null and box.get_node_or_null("SaltWornCrate") is MeshInstance3D and box.get_node_or_null("SpareBuoyFloat") is MeshInstance3D, "the opening story's old float box should exist as an inspectable physical world prop")
+	assert(box != null and game.opening_coast.visual_child(box, "SaltWornCrate") is MeshInstance3D and game.opening_coast.visual_child(box, "SpareBuoyFloat") is MeshInstance3D, "the opening story's old float box should exist as an inspectable physical world prop")
 	assert(box.get_parent() == game and box.position.is_equal_approx(Vector3(14.25, 0.08, -6.45)), "before inviting the tidekeeper, her box should remain beside her on shore")
 	assert((game.get("interactables") as Array).any(func(entry: Dictionary) -> bool: return str(entry.get("id", "")) == "tidekeeper_box"), "the physical box should also have a real inspect interaction")
 	var player := game.get("player") as CharacterBody3D

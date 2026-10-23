@@ -25,7 +25,6 @@ const OLD_SURFACES := {
 	"3_2": "bd1bda3e1422be7065af45ce7b0e4c29a26020841cb45fdb83700ac9aeb4673e"
 }
 const TARGETS := [
-	"IslandLandmass/Shoreline", "IslandLandmass/Grassland",
 	"ArkRoot/RaftTop/MeshInstance3D#0", "ArkRoot/RaftBoardingGangplank/MeshInstance3D#0",
 	"ArkRoot/BuiltShelter/CabinFloorboards/FloorPlank0", "ArkRoot/BuiltShelter/CabinFloorboards/FloorPlank1",
 	"ArkRoot/BuiltShelter/CabinFloorboards/FloorPlank2", "ArkRoot/BuiltShelter/CabinFloorboards/FloorPlank3",
@@ -80,7 +79,7 @@ func _target_nodes() -> Dictionary:
 	return result
 
 
-func _inspect_install(label: String, expected_count: int = 12) -> void:
+func _inspect_install(label: String, expected_count: int = 10) -> void:
 	var targets := _target_nodes()
 	_check(targets.size() == expected_count, label + " must resolve exactly the independent target whitelist")
 	var sampled: Array[String] = []
@@ -98,7 +97,7 @@ func _inspect_install(label: String, expected_count: int = 12) -> void:
 		if not material or not texture:
 			continue
 		_check(texture.resource_path == "res://art/surface_sample/" + _expected_texture(path), label + " wrong actual texture: " + path)
-		_check(material.uv1_triplanar == (not path in UV_TARGETS) and not material.uv1_world_triplanar, label + " must use ordinary local XZ UV on only two terrain meshes; ten ship meshes retain local triplanar: " + path)
+		_check(material.uv1_triplanar == (not path in UV_TARGETS) and not material.uv1_world_triplanar, label + " ten ship meshes must retain local triplanar mapping; coast is independently owned: " + path)
 		_check(material.uv1_scale.is_equal_approx(_expected_scale(path)) and material.uv1_offset == Vector3.ZERO and is_equal_approx(material.uv1_triplanar_sharpness, 1.0), label + " changed scale/offset/blend contract: " + path)
 		_check(material.texture_filter == BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS and material.texture_repeat, label + " must retain repeat + mipmapped linear filtering: " + path)
 		_check(material.cull_mode == BaseMaterial3D.CULL_BACK and material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and material.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL, label + " must not hide geometry/lighting with two-sided, transparent or unshaded material: " + path)
@@ -109,7 +108,7 @@ func _inspect_install(label: String, expected_count: int = 12) -> void:
 	_check(sampled.size() == expected_count and material_ids.size() == expected_count, label + " must install one duplicated material on only each target, not other islands/characters/walls/roof/trim")
 	for path in sampled:
 		_check(path in TARGETS, label + " texture escaped whitelist: " + path)
-	_check(texture_ids.size() == (3 if expected_count == 12 else 2), label + " must share exactly the three offline textures, no per-board texture generation")
+	_check(texture_ids.size() == (2 if expected_count == 10 else 1), label + " must share exactly the two ship textures (only deck texture before construction), no per-board texture generation")
 	var helper: RefCounted = game.get("surface_sample")
 	_check(helper != null and not helper.has_method("_process") and not helper.has_method("_physics_process"), label + " helper must not add a real process loop")
 	if helper:
@@ -216,7 +215,7 @@ func _duplicate_contract() -> void:
 	for visual in visuals:
 		_check(visual.material_override != source, "target must receive a duplicate, not mutate the original")
 		_check(_old_surface_fields(_resource(visual.material_override)) == before, "duplication may alter only the three explicit sampled fields")
-	_check((helper.get("_materials") as Dictionary).size() == 12, "isolated helper cache must have exactly 12 fixed slots")
+	_check((helper.get("_materials") as Dictionary).size() == 10, "isolated helper cache must have exactly 10 ship-only fixed slots")
 	world.free()
 
 
@@ -283,6 +282,48 @@ func _save_roundtrip(expected: Dictionary, label: String) -> void:
 	await _drop()
 
 
+func _pre_hud_geometry_contract(rows: Array) -> Array:
+	# Project only the historical pre-HUD graph; never regenerate its golden or
+	# filter geometry from same-runtime idempotence/instance/raw-array checks.
+	var hud: Node = game.get("nearfuture_hud")
+	var overlay: Control = hud.get("overlay")
+	_check(hud.get_parent() == game and hud.get_child_count() == 0 and hud.get_script().resource_path == "res://scripts/presentation/ark_nearfuture_hud.gd", "historical HUD exception owns exactly the scene-local adapter")
+	_check(overlay.get_parent() == (game.get("hud_panel") as Node).get_parent() and str(overlay.name) == "QANearfutureHud", "historical HUD exception owns only its native CanvasLayer overlay")
+	var presentation_nodes := overlay.find_children("*", "", true, false)
+	presentation_nodes.append(overlay)
+	_check(presentation_nodes.size() == 23, "historical HUD exception allows exactly the approved 23 Control nodes")
+	var excluded := {_stable_path(hud): true}
+	for node in presentation_nodes:
+		_check(node is Control, "HUD historical exception cannot hide a world/mesh/collision node")
+		excluded[_stable_path(node)] = true
+	# Exact historical fixture paths, including the collected shell marker whose
+	# node remains after its interactable entry retires. Baseline visibility=true.
+	var names := [
+		"ArkRoot/HearthInteractable/Name", "ArkRoot/StorageInteractable/Name",
+		"ArkRoot/WorkbenchInteractable/Name", "ArkRoot/helmMarker/Name", "ArkRoot/homeMarker/Name",
+		"JadeSailTidalShells/Name", "JadeSailTidalShellsNorth/Name", "JadeSailTidalShellsWest/Name",
+		"MoonbackTidalShells/Name", "TidalShellsCove/Name", "TidalShellsNear/Name",
+		"TidekeeperFloatboxInteractable/Name", "residentMarker/Name", "sailmakerMarker/Name"
+	]
+	var name_count := 0
+	var projected: Array = []
+	var excluded_count := 0
+	for source in rows:
+		if excluded.has(source.path):
+			excluded_count += 1
+			continue
+		var row: Dictionary = source.duplicate(true)
+		if row.path in names:
+			name_count += 1
+			_check(row.get("class") == "Label3D", "only whitelisted Name visibility may differ from the historical graph")
+			row.visible = true # All these original Name labels were visible in BEFORE_GEOMETRY.
+		projected.append(row)
+	_check(excluded_count == 24, "historical projection must exclude exactly one adapter and its 23 Control nodes")
+	_check(name_count == 14, "historical projection must find exactly the 14 originally visible Name labels")
+	print("HUD_PRE47_PROJECTION: excluded=", excluded_count, " names=", names.size(), " hash=", _digest(projected))
+	return projected
+
+
 func _run() -> void:
 	save_root = ProjectSettings.globalize_path("res://../.local/test_surface_sample_%d_%d" % [OS.get_process_id(), int(Time.get_unix_time_from_system() * 1000000)]).simplify_path()
 	assert(Paths.is_safe_save_root(save_root), "surface contract must never touch normal preview/user saves")
@@ -292,9 +333,9 @@ func _run() -> void:
 	_default_builder_contract()
 	_duplicate_contract()
 	await _spawn()
-	_inspect_install("fresh_world", 4)
+	_inspect_install("fresh_world", 2)
 	await _setup_actions()
-	_check(_digest(_geometry_rows(true)) == BEFORE_GEOMETRY, "actual complete node graph/geometry/normals/UVs/collision/poses must match repeated pre-edit47 observations")
+	_check(_digest(_pre_hud_geometry_contract(_history().geometry(_geometry_rows(true)))) == BEFORE_GEOMETRY, "independently validated inverse coast/HUD projection must match the unchanged pre-edit47 graph; raw current arrays remain separately strict")
 	_uv_scope_contract()
 	_inspect_install("built_home")
 	_idempotence()
@@ -304,7 +345,7 @@ func _run() -> void:
 			game.set("weather_phase", weather)
 			_inspect("initial")
 			var key := "%d_%d" % [period, weather]
-			_check(_digest(_surface_contract(_surface_rows())) == OLD_SURFACES[key], "exact-path full material contract differs outside three fields: " + key)
+			_check(_digest(_surface_contract(_history().materials(_surface_rows()))) == OLD_SURFACES[key], "historical exact-path material contract differs outside three ship sample fields and independently verified coast replacement: " + key)
 			_apply_again()
 			_inspect_install(key)
 	_boat_local_mapping()
@@ -344,7 +385,7 @@ func _run() -> void:
 		print("ARK_SURFACE_ACTUAL_PRE_EDIT47_NOT_REQUESTED: set ARK_SURFACE_OLD_TEST_SAVE for external baseline fixture")
 	saves.clear_for_test()
 	if failures == 0:
-		print("ARK_SURFACE_SAMPLE_TEST_OK: exact12 mesh installation; baked PNG bytes/imported pixels/mipmaps; original geometry/normals/collision/materials; exact2 opt-in localXZ UV arrays with all other mesh bytes preserved and default builder unchanged; 12 lighting/weather/save invariants; actual vessel local mapping; bounded idempotent cache; current36/synthetic35 repeated reconstruction. Known pre-edit47 whole-world repeated-load storage/workbench duplication remains; this is NOT a whole-world reload idempotency claim. Aesthetic/performance gates remain independent.")
+		print("ARK_SURFACE_SAMPLE_TEST_OK: exact10 ship-only mesh installation; baked PNG bytes/imported pixels/mipmaps; full raw current geometry/material idempotence and narrowly validated historical coast/HUD projection; exact2 opt-in localXZ UV arrays with all other mesh bytes preserved and default builder unchanged; 12 lighting/weather/save invariants; actual vessel local mapping; bounded idempotent cache; current36/synthetic35 repeated reconstruction. Pre-edit47 storage/workbench duplication remains historical evidence; whole-world fixture rebuild is checked separately. Aesthetic/performance gates remain independent.")
 	else:
 		print("ARK_SURFACE_SAMPLE_TEST_RED: failures=", failures)
 	quit(1 if failures > 0 else 0)
@@ -507,8 +548,12 @@ func _uv_scope_contract() -> void:
 				continue
 			count += 1
 			_check(mesh.get_surface_count() == 1 and _valid_local_xz(arrays), "every emitted UV must equal corresponding local vertex X,Z without topology/reordering: " + path)
-			var material := visual.material_override as StandardMaterial3D
-			_check(not material.uv1_triplanar and not material.uv1_world_triplanar and material.uv1_scale.is_equal_approx(_expected_scale(path)), "terrain must use ordinary UV at unchanged physical scale: " + path)
+			if path == "IslandLandmass/Shoreline":
+				var material := visual.material_override as ShaderMaterial
+				_check(material != null and material.shader.resource_path == "res://shaders/ark_coast_textured.gdshader", "opening top uses the separately verified opaque coast shader, not the retired terrain sample")
+			else:
+				var material := visual.material_override as StandardMaterial3D
+				_check(material != null and not material.uv1_triplanar and not material.uv1_world_triplanar and material.albedo_texture == null, "hidden legacy grass retains plain builder material and localXZ arrays")
 			var changed := arrays.duplicate(true)
 			var wrong_uv: PackedVector2Array = changed[Mesh.ARRAY_TEX_UV]
 			wrong_uv[0] += Vector2(0.01, 0.02)

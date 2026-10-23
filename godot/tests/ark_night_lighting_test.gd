@@ -43,6 +43,18 @@ var game: Node3D
 var saves: RefCounted
 var save_root: String
 var failures := 0
+const CoastHistory = preload("res://tests/support/coast_historical_projection.gd")
+var _coast_history: RefCounted
+
+func _history() -> RefCounted:
+	if _coast_history == null or not is_instance_valid(_coast_history.get("game")) or _coast_history.get("game") != game:
+		_coast_history = CoastHistory.new()
+		_coast_history.configure(game, self)
+	return _coast_history
+
+func _historical_material_digest(materials: Array) -> String:
+	return _material_digest(_history().materials(materials, true))
+
 
 
 func _initialize() -> void:
@@ -144,7 +156,7 @@ func _old_surface_fields(material: Variant) -> Variant:
 func _materials() -> Array:
 	var result: Array = []
 	for node in game.find_children("*", "MeshInstance3D", true, false):
-		var entry := {"_surface_sample_path": _surface_sample_path(node), "name": str(node.name), "override": _plain(node.material_override), "overlay": _plain(node.material_overlay), "surfaces": []}
+		var entry := {"_history_path": _history().node_path(node), "_surface_sample_path": _surface_sample_path(node), "name": str(node.name), "override": _plain(node.material_override), "overlay": _plain(node.material_overlay), "surfaces": []}
 		if node.mesh:
 			for index in range(node.mesh.get_surface_count()):
 				entry.surfaces.append(_plain(node.get_active_material(index)))
@@ -207,6 +219,7 @@ func _material_digest(materials: Array) -> String:
 			for index in range(record.surfaces.size()):
 				record.surfaces[index] = _old_surface_fields(record.surfaces[index])
 		record.erase("_surface_sample_path")
+		record.erase("_history_path")
 		if str(record.name).begins_with("@"):
 			record.name = "MeshInstance3D"
 		rows.append(JSON.stringify(_canonical(record), "", true))
@@ -215,7 +228,7 @@ func _material_digest(materials: Array) -> String:
 
 
 func _output_contract(observation: Dictionary, period: int) -> Dictionary:
-	var result := observation.duplicate(true)
+	var result: Dictionary = _history().lighting(observation)
 	result.erase("materials")
 	if period == 3:
 		# Exactly three designed inputs are allowed to differ from OLD. Corresponding
@@ -241,16 +254,24 @@ func _output_contract(observation: Dictionary, period: int) -> Dictionary:
 func _check_screen_policy(label: String) -> void:
 	# Independently observed OLD screen policy: one unmodified WorldEnvironment,
 	# one camera, one unshaded storm ColorRect; no compositor/exposure override.
+	# Approved HUD health cells are bounded status widgets, not screen tints.
 	var environments := game.find_children("*", "WorldEnvironment", true, false)
 	var cameras := game.find_children("*", "Camera3D", true, false)
 	var rectangles := game.find_children("*", "ColorRect", true, false)
-	_check(environments.size() == 1 and cameras.size() == 1 and rectangles.size() == 1, label + " must not add an environment, camera or full-screen tint rectangle")
+	var hud: Node = game.get("nearfuture_hud")
+	var cells: Array = hud.get("health_cells")
+	_check(cells.size() == 4 and rectangles.size() == 5, label + " permits exactly four approved health cells plus the original storm overlay")
+	_check(environments.size() == 1 and cameras.size() == 1, label + " must not add an environment or camera")
+	for index in range(cells.size()):
+		var cell := cells[index] as ColorRect
+		_check(cell != null and (hud.get("status_panel") as Node).is_ancestor_of(cell) and str(cell.name) == "HealthCell%d" % index, label + " health cells stay inside their one approved HUD status panel")
+		_check(cell.custom_minimum_size == Vector2(5, 13) and cell.size.x <= 5 and cell.size.y <= 13 and cell.mouse_filter == Control.MOUSE_FILTER_IGNORE, label + " health cells cannot become input-blocking or full-screen tint rectangles")
 	for world_environment in environments:
 		_check(world_environment.environment == game.get("weather_environment") and world_environment.camera_attributes == null and world_environment.compositor == null, label + " must not add world exposure/compositor compensation")
 	for camera in cameras:
 		_check(camera.environment == null and camera.attributes == null and camera.compositor == null, label + " must not override camera exposure/environment/compositor")
 	for rectangle in rectangles:
-		_check(rectangle == game.get("storm_overlay") and rectangle.material == null, label + " must retain only the original unshaded storm overlay")
+		_check((rectangle == game.get("storm_overlay") or rectangle in cells) and rectangle.material == null, label + " permits only the original unshaded storm overlay and bounded unshaded health cells")
 	for canvas in game.find_children("*", "CanvasItem", true, false):
 		_check(canvas.material == null, label + " must not introduce a screen/UI shader")
 	_check(game.find_children("*", "CanvasModulate", true, false).is_empty(), label + " must not introduce whole-canvas tinting")
@@ -269,12 +290,17 @@ func _calibrate_oracle(observation: Dictionary) -> void:
 	changed.overlay.color[3] += 0.01
 	_check(_digest(_output_contract(changed, 0)) != original, "oracle must detect changed storm opacity")
 	changed = observation.duplicate(true)
-	changed.materials[0].override["shader_parameter/mean_height"] += 0.01
+	var sea_row_found := false
+	for row in changed.materials:
+		if row.get("_history_path") == "Sea":
+			row.override["shader_parameter/mean_height"] += 0.01
+			sea_row_found = true
+	_check(sea_row_found, "water mutation calibration requires the exact Sea row, never array order")
 	_check(_material_digest(changed.materials) != _material_digest(observation.materials), "oracle must detect changed sea material authority parameters")
 	# Mutate and restore ACTUAL scene resources: all must still trip preservation.
 	# The selected grass's base color is deliberately NOT a normalized field.
 	var baseline := _material_digest(_materials())
-	for path in ["residentMarker/TidekeeperFigure/Body", "FarReefLandmass/Grassland", "IslandLandmass/Grassland"]:
+	for path in ["residentMarker/CoastVisualGroundOffset/TidekeeperFigure/Body", "FarReefLandmass/Grassland", "IslandLandmass/Grassland"]:
 		var visual := game.get_node(path) as MeshInstance3D
 		var material := visual.material_override as StandardMaterial3D
 		var old_color := material.albedo_color
@@ -297,20 +323,21 @@ func _inspect(label: String, compare_materials: bool = true) -> Dictionary:
 	var before := _state()
 	game.call("_set_weather_visuals")
 	var observation := _lighting()
+	_history().validate_lighting()
 	_check_screen_policy(label)
 	if label == "initial" and period == 0 and weather == 0:
 		_calibrate_oracle(observation)
 	_check(_state() == before, label + " visual update must preserve the COMPLETE same-state save (economy/history/health/water/time/actors), without exclusions")
-	_check(_digest(_output_contract(observation, period)) == OLD_OUTPUT.get(key, ""), label + " changed OLD output outside the three allowed NIGHT fields: " + key)
+	_check(_digest(_output_contract(observation, period)) == OLD_OUTPUT.get(key, ""), label + " changed OLD output outside independently validated coast Sun and three NIGHT fields: " + key)
 	if compare_materials:
-		_check(_material_digest(observation.materials) == OLD_MATERIALS.get(key, ""), label + " changed OLD terrain/NPC/Emma/sea/home material or shader parameters: " + key)
+		_check(_historical_material_digest(observation.materials) == OLD_MATERIALS.get(key, ""), label + " changed OLD terrain/NPC/Emma/sea/home material or shader parameters: " + key)
 	if period == 3:
 		var profile: Dictionary = game.call("_daylight_profile")
 		var sun: DirectionalLight3D = game.get("sun_light")
 		var env: Environment = game.get("weather_environment")
 		_check(is_equal_approx(float(profile.ambient_energy), NIGHT_AMBIENT) and is_equal_approx(float(profile.sun_energy), NIGHT_SUN) and (profile.sun_rotation as Vector3).is_equal_approx(Vector3(NIGHT_PITCH, 36, 0)), label + " must install exactly the renderer-reviewed NIGHT profile, not arbitrary brightness")
 		_check(is_equal_approx(env.ambient_light_energy, NIGHT_AMBIENT * [0.88, 0.58, 0.94][weather]), label + " must preserve original forecast/storm/after ambient attenuation")
-		_check(is_equal_approx(sun.light_energy, NIGHT_SUN * [0.76, 0.18, 0.82][weather]) and sun.rotation_degrees.is_equal_approx(Vector3(NIGHT_PITCH, 36, 0)), label + " must preserve original directional attenuation/rotation application")
+		_check(is_equal_approx(sun.light_energy, NIGHT_SUN * [0.76, 0.18, 0.82][weather] * 0.36453125) and sun.rotation_degrees.is_equal_approx(Vector3(NIGHT_PITCH, 36, 0)), label + " must preserve original directional attenuation/rotation application")
 	print("NIGHT_LIGHTING_OBSERVATION: ", label, " matrix=", key, " complete_state_equal=", _state() == before, " sun=", observation.sun, " ambient=", observation.environment.ambient_light_energy)
 	return observation
 
@@ -415,7 +442,7 @@ func _run() -> void:
 			await _drop()
 	saves.clear_for_test()
 	if failures == 0:
-		print("ARK_NIGHT_LIGHTING_TEST_OK: 12 OLD output/material contracts; NIGHT profile and attenuation; unchanged home lamps/exposure/shadows; complete same-state save preservation; current36/repeated/synthetic35 reconstruction. Readability requires separate renderer review.")
+		print("ARK_NIGHT_LIGHTING_TEST_OK: 12 OLD output/material contracts; NIGHT profile and attenuation; unchanged home lamps/exposure; independently validated coast Sun shadows/calibration; complete same-state save preservation; current36/repeated/synthetic35 reconstruction. Readability requires separate renderer review.")
 	else:
 		print("ARK_NIGHT_LIGHTING_TEST_RED: failures=", failures)
 	quit(1 if failures > 0 else 0)

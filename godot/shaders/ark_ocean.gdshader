@@ -68,38 +68,80 @@ float shore_band(vec2 position, vec2 center, vec2 radii) {
 }
 
 
+// Candidate derived from reconstructed suffix; water-only correction run02, 2026-10-23.
+// Not retrieved from the lost workspace; not asserted byte-exact to that file.
+// run01 compiled/rendered; this correction requires a separate native run02.
+// Append to a verified canonical ark_ocean.gdshader prefix before void fragment().
+// Preserve original declarations, add_wave(), vertex(), and shore_band().
+// Existing vertex displacement must remain byte-exact to the chosen verified base.
+// Opaque depth tint, not SSR, refraction, or scene-object reflection.
+uniform sampler2D opening_heights : filter_linear, repeat_disable;
+uniform vec4 depth_tint : source_color = vec4(0.042,0.19,0.235,1.0);
+uniform vec4 shallow_tint : source_color = vec4(0.12,0.265,0.265,1.0);
+uniform vec4 foam_tint : source_color = vec4(0.62,0.67,0.61,1.0);
+uniform bool ripple_probe = false;
+
+// Smooth derivative-noise normal fields avoid a visibly crossing sine lattice.
+float hash12(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+vec3 noise_gradient(vec2 p) {
+ vec2 i=floor(p); vec2 f=fract(p);
+ float a=hash12(i), b=hash12(i+vec2(1,0));
+ float c=hash12(i+vec2(0,1)), d=hash12(i+vec2(1,1));
+ vec2 u=f*f*f*(f*(f*6.0-15.0)+10.0);
+ vec2 du=30.0*f*f*(f*(f-2.0)+1.0);
+ return vec3(mix(mix(a,b,u.x),mix(c,d,u.x),u.y),
+   mix(b-a,d-c,u.y)*du.x,mix(c-a,d-b,u.x)*du.y);
+}
+vec2 ripple_slope(vec2 p,float footprint) {
+ float t=water_time;
+ vec2 warp=vec2(noise_gradient(p*.17).x,noise_gradient(p*.19+vec2(7.3,4.1)).x)-.5;
+ vec2 q=p+warp*1.8;
+ vec3 a=noise_gradient(vec2(q.x*.82,q.y*1.14)+vec2(-t*.12,t*.06));
+ vec2 r=vec2(.8*q.x-.6*q.y,.6*q.x+.8*q.y);
+ vec3 b=noise_gradient(r*3.1+vec2(t*.23,-t*.18)+vec2(9.2,3.7));
+ vec2 coarse=a.yz*vec2(.82,1.14)*.085*exp(-18.0*footprint*footprint);
+ vec2 fine=vec2(.8*b.y+.6*b.z,-.6*b.y+.8*b.z)*.030*exp(-100.0*footprint*footprint);
+ return coarse+fine;
+}
+
 void fragment() {
-	vec2 position = world_position.xz;
-	float broad_wave = sin(dot(position, vec2(0.085, 0.045)) + water_time * 0.24);
-	float cross_wave = cos(dot(position, vec2(-0.035, 0.09)) - water_time * 0.19);
-	float wave = 0.5 + 0.5 * (broad_wave * 0.58 + cross_wave * 0.42);
-	float glint = smoothstep(0.84, 0.98, wave) * 0.12;
-	float shore = max(
-		shore_band(position, island_center, island_radii),
-		max(
-			shore_band(position, reef_center, reef_radii),
-			max(
-				shore_band(position, moonback_center, moonback_radii),
-				max(
-					shore_band(position, jade_sail_center, jade_sail_radii),
-					shore_band(position, steam_wreck_center, steam_wreck_radii)
-				)
-			)
-		)
-	);
-	vec3 color = mix(deep_water.rgb, wave_color.rgb, wave * 0.38);
-	color = mix(color, shore_color.rgb, shore * 0.44);
-	color += vec3(0.24, 0.38, 0.34) * glint;
-	ALBEDO = color;
-	if (height_probe || normal_probe) {
-		ALBEDO = vec3(0.0);
-		if (normal_probe) {
-			EMISSION = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz) * 0.5 + 0.5;
-		} else {
-			float encoded = height_probe_reference >= 0.0 ? height_probe_reference : world_position.y - mean_height + 0.5;
-			EMISSION = vec3(encoded);
-		}
-	}
-	ROUGHNESS = 0.34;
-	METALLIC = 0.06;
+ vec3 simulated_normal=normalize(NORMAL);
+ vec3 wn=normalize((INV_VIEW_MATRIX*vec4(simulated_normal,0.0)).xyz);
+ vec2 p=world_position.xz;
+ float footprint=max(length(dFdx(p)),length(dFdy(p)));
+ vec2 slope=-wn.xz/max(wn.y,0.25)+ripple_slope(p,footprint);
+ vec3 shading_world=normalize(vec3(-slope.x,1.0,-slope.y));
+ NORMAL=normalize((VIEW_MATRIX*vec4(shading_world,0.0)).xyz);
+
+ vec2 q=p-island_center;
+ float depth=8.0;
+ if(abs(q.x)<16.0&&abs(q.y)<16.0){
+   float h=texture(opening_heights,(q+vec2(16.0))/32.0).r;
+   if(h>-2.99)depth=max(0.0,world_position.y-h);
+ }
+ float shallow=exp(-depth*6.5);
+ vec3 body=mix(depth_tint.rgb,shallow_tint.rgb,shallow);
+ float contact=smoothstep(.008,.028,depth)*(1.0-smoothstep(.045,.13,depth));
+ float broken=smoothstep(.62,.88,noise_gradient(q*3.2).x)
+             *smoothstep(.40,.70,noise_gradient(q*.73+vec2(4.1,8.7)).x);
+ float foam=contact*broken*.14;
+ ALBEDO=mix(body,foam_tint.rgb,foam);
+ METALLIC=0.0;
+ SPECULAR=0.25;
+ ROUGHNESS=mix(.235,.52,foam);
+
+ if(height_probe||normal_probe||ripple_probe){
+   ALBEDO=vec3(0.0);
+   SPECULAR=0.0;
+   if(ripple_probe){
+     EMISSION=shading_world*.5+.5;
+   }else if(normal_probe){
+     EMISSION=normalize(
+       (INV_VIEW_MATRIX*vec4(simulated_normal,0.0)).xyz)*.5+.5;
+   }else{
+     float encoded=height_probe_reference>=0.0
+       ?height_probe_reference:world_position.y-mean_height+.5;
+     EMISSION=vec3(encoded);
+   }
+ }
 }
