@@ -8,7 +8,8 @@ const Paths = preload("res://tests/ark_test_paths.gd")
 const Save = preload("res://scripts/ark_greybox_save.gd")
 # Renderer-reviewed bounded NIGHT terrain/light improvement; not universal
 # NPC/storm readability, and not an independently proven old functional bug.
-const NIGHT_AMBIENT := 0.45
+const NIGHT_AMBIENT := 0.85
+const NIGHT_AMBIENT_COLOR := Color("8b9caf")
 const NIGHT_SUN := 0.20
 const NIGHT_PITCH := -35.0
 const OLD_OUTPUT := {
@@ -227,11 +228,26 @@ func _material_digest(materials: Array) -> String:
 	return "\n".join(rows).sha256_text()
 
 
+func _ambient_history(actual: Array, old_color: Color, expected_color: Color) -> Array:
+	var old_values: Array = _plain(old_color)
+	var expected_values: Array = _plain(expected_color)
+	var result: Array = []
+	for index in range(4):
+		result.append(float(old_values[index]) + float(actual[index]) - float(expected_values[index]))
+	return result
+
+
 func _output_contract(observation: Dictionary, period: int) -> Dictionary:
 	var result: Dictionary = _history().lighting(observation)
 	result.erase("materials")
 	if period == 3:
-		# Exactly three designed inputs are allowed to differ from OLD. Corresponding
+		# Historical blue ambient is projected with observed residuals preserved;
+		# independently checked current NIGHT color/blend never replaces OLD hashes.
+		var weather: int = game.get("weather_phase")
+		var tint: Color = [Color("a8c1c7"),Color("566a7b"),Color("b8a68e")][weather]
+		result.profile.ambient = _ambient_history(result.profile.ambient, Color("35445f"), NIGHT_AMBIENT_COLOR)
+		result.environment.ambient_light_color = _ambient_history(result.environment.ambient_light_color, Color("35445f").lerp(tint,[0.22,0.72,0.14][weather]), NIGHT_AMBIENT_COLOR.lerp(tint,[0.22,0.40,0.14][weather]))
+		# Existing three designed inputs are allowed to differ from OLD. Corresponding
 		# installed values are checked independently against the approved contract.
 		result.profile.erase("ambient_energy")
 		result.profile.erase("sun_energy")
@@ -316,6 +332,11 @@ func _calibrate_oracle(observation: Dictionary) -> void:
 	_check(_material_digest(_materials()) == baseline, "oracle must restore actual water authority")
 
 
+func _night_ambient_installed(profile: Dictionary, env: Environment, weather: int) -> bool:
+	var tint: Color = [Color("a8c1c7"),Color("566a7b"),Color("b8a68e")][weather]
+	return profile.ambient == NIGHT_AMBIENT_COLOR and is_equal_approx(float(profile.ambient_energy), NIGHT_AMBIENT) and env.ambient_light_color.is_equal_approx(NIGHT_AMBIENT_COLOR.lerp(tint,[0.22,0.40,0.14][weather])) and is_equal_approx(env.ambient_light_energy, NIGHT_AMBIENT * [0.88,0.88,0.94][weather])
+
+
 func _inspect(label: String, compare_materials: bool = true) -> Dictionary:
 	var period := int(game.get("day_period"))
 	var weather := int(game.get("weather_phase"))
@@ -323,21 +344,43 @@ func _inspect(label: String, compare_materials: bool = true) -> Dictionary:
 	var before := _state()
 	game.call("_set_weather_visuals")
 	var observation := _lighting()
+	game.call("_set_weather_visuals")
+	_check(_lighting() == observation, label + " repeated visual application must be exactly idempotent")
 	_history().validate_lighting()
 	_check_screen_policy(label)
 	if label == "initial" and period == 0 and weather == 0:
 		_calibrate_oracle(observation)
 	_check(_state() == before, label + " visual update must preserve the COMPLETE same-state save (economy/history/health/water/time/actors), without exclusions")
-	_check(_digest(_output_contract(observation, period)) == OLD_OUTPUT.get(key, ""), label + " changed OLD output outside independently validated coast Sun and three NIGHT fields: " + key)
+	_check(_digest(_output_contract(observation, period)) == OLD_OUTPUT.get(key, ""), label + " changed OLD output outside independently validated coast Sun and reviewed NIGHT-only calibration: " + key)
 	if compare_materials:
 		_check(_historical_material_digest(observation.materials) == OLD_MATERIALS.get(key, ""), label + " changed OLD terrain/NPC/Emma/sea/home material or shader parameters: " + key)
 	if period == 3:
 		var profile: Dictionary = game.call("_daylight_profile")
+		_check(_night_ambient_installed(profile, game.get("weather_environment"), weather), label + " must install exact reviewed NIGHT ambient color/energy and storm-only blend")
 		var sun: DirectionalLight3D = game.get("sun_light")
 		var env: Environment = game.get("weather_environment")
 		_check(is_equal_approx(float(profile.ambient_energy), NIGHT_AMBIENT) and is_equal_approx(float(profile.sun_energy), NIGHT_SUN) and (profile.sun_rotation as Vector3).is_equal_approx(Vector3(NIGHT_PITCH, 36, 0)), label + " must install exactly the renderer-reviewed NIGHT profile, not arbitrary brightness")
-		_check(is_equal_approx(env.ambient_light_energy, NIGHT_AMBIENT * [0.88, 0.58, 0.94][weather]), label + " must preserve original forecast/storm/after ambient attenuation")
+		_check(is_equal_approx(env.ambient_light_energy, NIGHT_AMBIENT * [0.88, 0.88, 0.94][weather]), label + " must install reviewed NIGHT ambient attenuation without altering other periods")
 		_check(is_equal_approx(sun.light_energy, NIGHT_SUN * [0.76, 0.18, 0.82][weather] * 0.36453125) and sun.rotation_degrees.is_equal_approx(Vector3(NIGHT_PITCH, 36, 0)), label + " must preserve original directional attenuation/rotation application")
+	if period == 3 and label == "initial":
+		var env := game.get("weather_environment") as Environment
+		var saved_color := env.ambient_light_color
+		var saved_energy := env.ambient_light_energy
+		env.ambient_light_color.r += 0.01
+		_check(not _night_ambient_installed(game.call("_daylight_profile"),env,weather), "actual wrong NIGHT ambient color must fail installation oracle")
+		_check(_digest(_output_contract(_lighting(),period)) != _digest(_output_contract(observation,period)), "actual wrong NIGHT ambient color must survive historical projection")
+		env.ambient_light_color = saved_color
+		env.ambient_light_energy += 0.01
+		_check(not _night_ambient_installed(game.call("_daylight_profile"),env,weather), "actual wrong NIGHT ambient energy must fail installation oracle")
+		env.ambient_light_energy = saved_energy
+		_check(_lighting() == observation, "actual NIGHT oracle mutations must restore exact resources")
+	if period == 3:
+		var original_digest := _digest(_output_contract(observation, period))
+		for field in ["profile", "environment"]:
+			var mutated := observation.duplicate(true)
+			var color_key := "ambient" if field == "profile" else "ambient_light_color"
+			mutated[field][color_key][0] += 0.01
+			_check(_digest(_output_contract(mutated, period)) != original_digest, label + " NIGHT ambient projection must preserve unexpected color deviation: " + field)
 	print("NIGHT_LIGHTING_OBSERVATION: ", label, " matrix=", key, " complete_state_equal=", _state() == before, " sun=", observation.sun, " ambient=", observation.environment.ambient_light_energy)
 	return observation
 

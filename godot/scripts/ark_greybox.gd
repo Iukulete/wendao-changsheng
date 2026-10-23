@@ -6677,6 +6677,11 @@ func _set_weather_visuals() -> void:
 			sun_weather_tint = Color("f1bb83")
 			ambient_energy_scale = 0.94
 			sun_energy_scale = 0.82
+	# Keep the storm sky/Sun/overlay intact; retain readable ambient fill at night.
+	var ambient_weather_blend := weather_blend
+	if day_period == DayPeriod.NIGHT and storm_active:
+		ambient_energy_scale = 0.88
+		ambient_weather_blend = 0.40
 	var base_ambient: Color = daylight["ambient"]
 	var base_sky_top: Color = daylight["sky_top"]
 	var base_sky_horizon: Color = daylight["sky_horizon"]
@@ -6684,7 +6689,7 @@ func _set_weather_visuals() -> void:
 	var base_sun_color: Color = daylight["sun_color"]
 	var base_sun_rotation: Vector3 = daylight["sun_rotation"]
 	if weather_environment:
-		weather_environment.ambient_light_color = base_ambient.lerp(ambient_weather_tint, weather_blend)
+		weather_environment.ambient_light_color = base_ambient.lerp(ambient_weather_tint, ambient_weather_blend)
 		weather_environment.ambient_light_energy = float(daylight["ambient_energy"]) * ambient_energy_scale
 	if sky_material:
 		sky_material.sky_top_color = base_sky_top.lerp(sky_weather_top, weather_blend)
@@ -6748,7 +6753,7 @@ func _daylight_profile() -> Dictionary:
 			}
 		DayPeriod.NIGHT:
 			return {
-				"ambient": Color("35445f"), "ambient_energy": 0.45,
+				"ambient": Color("8b9caf"), "ambient_energy": 0.85,
 				"sun_color": Color("8097b9"), "sun_energy": 0.20,
 				"sun_rotation": Vector3(-35.0, 36.0, 0.0),
 				"sky_top": Color("111b35"), "sky_horizon": Color("3e4a67"), "ground": Color("202d45"),
