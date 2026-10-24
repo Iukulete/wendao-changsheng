@@ -9,3 +9,4 @@
 /LICENSE -text
 /godot/art/fonts/** -text
 /godot/art/surface_sample/** -text
+/godot/art/coast/** -text

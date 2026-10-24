@@ -2,6 +2,7 @@
 """Positive and hostile source/PCK cases for the exact integrated CC0 maps."""
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import unittest
 
@@ -20,6 +21,33 @@ class CoastAssetTests(unittest.TestCase):
 
     def test_exact_reviewed_source_maps_provenance_and_imports_pass(self) -> None:
         coast.verify_coast_assets(self.root)
+
+    def test_reviewed_documents_survive_autocrlf_checkout(self) -> None:
+        checkout = self.root / "git-checkout"
+        checkout.mkdir()
+        shutil.copyfile(surface.ROOT / ".gitattributes", checkout / ".gitattributes")
+
+        def git(*arguments: str) -> None:
+            subprocess.run(["git", "-C", str(checkout), *arguments], check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        git("init", "--quiet")
+        git("config", "core.autocrlf", "true")
+        documents = {}
+        for name in coast.COAST_DOCUMENTS:
+            relative = "godot/art/coast/" + name
+            payload = ("Reviewed original: " + name + "\nPreserve these bytes.\n").encode("utf-8")
+            path = checkout / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(payload)
+            documents[relative] = payload
+        git("add", "--", ".gitattributes", *documents)
+        for relative in documents:
+            (checkout / relative).unlink()
+        git("checkout-index", "--force", "--", *documents)
+        for relative, payload in documents.items():
+            self.assertEqual((checkout / relative).read_bytes(), payload,
+                             "Reviewed coast bytes must survive Windows checkout: " + relative)
 
     def test_source_missing_extra_and_symlink_fail_closed(self) -> None:
         name = next(iter(coast.COAST_TEXTURES))
