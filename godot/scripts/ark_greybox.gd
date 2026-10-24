@@ -3479,10 +3479,14 @@ func _process_resident_gathering(delta: float) -> bool:
 			return false
 		# The shared planner's short pickup tolerance is not a delivery radius.
 		if returning and resident_gather_route[-1] != target_position:
-			resident_gather_route.append(target_position)
+			set_meta("route_trial_failure", "inexact_return_connector")
+			return false
 		resident_gather_route_index = 1 if resident_gather_route.size() > 1 else 0
 	var old_position := traveler_marker.global_position
-	var movement: Dictionary = gathering.advance_route(old_position, resident_gather_route, resident_gather_route_index, delta, RESIDENT_AUTO_GATHER_SPEED, 0.0 if returning else 0.22)
+	var movement: Dictionary = preload("res://scripts/modules/residents/ark_route_step_trial.gd").advance(old_position, resident_gather_route, resident_gather_route_index, delta, RESIDENT_AUTO_GATHER_SPEED, 0.0 if returning else 0.22)
+	if not movement.ok:
+		set_meta("route_trial_failure", "invalid_movement")
+		return false
 	traveler_marker.global_position = movement.position
 	resident_gather_route_index = int(movement.index)
 	var moving := not bool(movement.arrived)
@@ -3510,50 +3514,9 @@ func _process_resident_gathering(delta: float) -> bool:
 
 
 func _build_resident_walk_route(start: Vector3, destination: Vector3) -> PackedVector3Array:
-	var route := PackedVector3Array()
-	if not start.is_finite() or not destination.is_finite():
-		return route
-	for endpoint in [start, destination]:
-		if absf(endpoint.x) > PLAYER_WORLD_EDGE_LIMIT or absf(endpoint.z) > PLAYER_WORLD_EDGE_LIMIT:
-			return route
-	# Gathering is a near-shore trip, never a world-sized grid allocation.
-	# This also bounds work when interrupted or malformed task state is resumed.
-	if absf(destination.x - start.x) > RESIDENT_ROUTE_MAX_SPAN or absf(destination.z - start.z) > RESIDENT_ROUTE_MAX_SPAN:
-		return route
-	var minimum := Vector2(minf(start.x, destination.x), minf(start.z, destination.z)) - Vector2.ONE * RESIDENT_ROUTE_MARGIN
-	var maximum := Vector2(maxf(start.x, destination.x), maxf(start.z, destination.z)) + Vector2.ONE * RESIDENT_ROUTE_MARGIN
-	var grid_size := Vector2i(ceili((maximum.x - minimum.x) / RESIDENT_ROUTE_CELL_SIZE) + 1, ceili((maximum.y - minimum.y) / RESIDENT_ROUTE_CELL_SIZE) + 1)
-	var grid := AStarGrid2D.new()
-	grid.region = Rect2i(Vector2i.ZERO, grid_size)
-	grid.cell_size = Vector2.ONE * RESIDENT_ROUTE_CELL_SIZE
-	grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-	grid.default_compute_heuristic = AStarGrid2D.HEURISTIC_OCTILE
-	grid.default_estimate_heuristic = AStarGrid2D.HEURISTIC_OCTILE
-	grid.update()
-	for cell_z in range(grid_size.y):
-		for cell_x in range(grid_size.x):
-			var cell := Vector2i(cell_x, cell_z)
-			var world := minimum + Vector2(cell_x, cell_z) * RESIDENT_ROUTE_CELL_SIZE
-			if _resident_route_cell_blocked(world):
-				grid.set_point_solid(cell, true)
-	var start_cell := _resident_route_cell(start, minimum, grid_size)
-	var end_cell := _resident_route_cell(destination, minimum, grid_size)
-	if not grid.is_in_boundsv(start_cell) or not grid.is_in_boundsv(end_cell):
-		return route
-	grid.set_point_solid(start_cell, false)
-	grid.set_point_solid(end_cell, false)
-	var cell_path := grid.get_id_path(start_cell, end_cell)
-	if cell_path.is_empty():
-		return route
-	route.append(start)
-	for index in range(1, cell_path.size() - 1):
-		var cell: Vector2i = cell_path[index]
-		var waypoint_x := minimum.x + float(cell.x) * RESIDENT_ROUTE_CELL_SIZE
-		var waypoint_z := minimum.y + float(cell.y) * RESIDENT_ROUTE_CELL_SIZE
-		var waypoint_position := Vector2(waypoint_x, waypoint_z)
-		route.append(Vector3(waypoint_x, _resident_route_surface_y(waypoint_position, start.y), waypoint_z))
-	if start.distance_to(destination) > 0.22:
-		route.append(destination)
+	var planner := preload("res://scripts/modules/residents/ark_shore_route_trial.gd").new()
+	var route: PackedVector3Array = planner.build(self, start, destination)
+	set_meta("route_trial_last_stats", planner.last_stats)
 	return route
 
 
@@ -3670,6 +3633,7 @@ func _finish_resident_gathering(delivery_mode: String) -> void:
 
 
 func _abort_resident_gathering(reason: String, update_schedule: bool = true) -> bool:
+	get_tree().set_meta("route_trial_abort_count", int(get_tree().get_meta("route_trial_abort_count",0))+1)
 	if not resident_gather_pending:
 		return false
 	if resident_gather_payload > 0:

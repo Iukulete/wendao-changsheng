@@ -142,7 +142,7 @@ static func advance_route(position: Vector3, route: PackedVector3Array, index: i
 		budget -= step
 	return {"position":next,"index":cursor,"arrived":cursor >= route.size()}
 
-func tick(id: String, delta: float, position: Vector3, target: Vector3, home: Vector3, path_builder: Callable, speed: float = 2.4) -> Dictionary:
+func tick(id: String, delta: float, position: Vector3, target: Vector3, home: Vector3, path_builder: Callable, speed: float = 2.4, single_edge_trial: bool = false) -> Dictionary:
 	if not _tasks.has(id) or delta < 0 or not is_finite(delta): return {"ok":false,"position":position}
 	var entry: Dictionary = _tasks[id]
 	if entry.phase in ["cancelled","delivered"]: return {"ok":true,"position":position,"phase":entry.phase}
@@ -164,7 +164,9 @@ func tick(id: String, delta: float, position: Vector3, target: Vector3, home: Ve
 			return {"ok":false,"position":position,"code":"no_path"}
 		_routes[id] = {"points":path,"index":0}
 	var route: Dictionary = _routes[id]
-	var moved := advance_route(position,route.points,int(route.index),delta,speed)
+	var moved: Dictionary = preload("res://scripts/modules/residents/ark_route_step_trial.gd").advance(position,route.points,int(route.index),delta,speed) if single_edge_trial else advance_route(position,route.points,int(route.index),delta,speed)
+	if single_edge_trial and not moved.ok:
+		return {"ok":false,"position":position,"code":"invalid_movement"}
 	route.index = moved.index
 	if moved.arrived:
 		_routes.erase(id)
