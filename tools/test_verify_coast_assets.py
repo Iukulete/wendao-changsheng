@@ -22,7 +22,7 @@ class CoastAssetTests(unittest.TestCase):
     def test_exact_reviewed_source_maps_provenance_and_imports_pass(self) -> None:
         coast.verify_coast_assets(self.root)
 
-    def test_reviewed_documents_survive_autocrlf_checkout(self) -> None:
+    def test_reviewed_assets_and_fixtures_survive_autocrlf_checkout(self) -> None:
         checkout = self.root / "git-checkout"
         checkout.mkdir()
         shutil.copyfile(surface.ROOT / ".gitattributes", checkout / ".gitattributes")
@@ -33,10 +33,15 @@ class CoastAssetTests(unittest.TestCase):
 
         git("init", "--quiet")
         git("config", "core.autocrlf", "true")
+        paths = [*("godot/art/coast/" + name for name in coast.COAST_DOCUMENTS),
+                 "godot/tests/support/coast_prechange_geometry.json",
+                 "godot/tests/support/coast_prechange_focus_ring.json",
+                 "godot/tests/support/ark_opening_coast_reference.gd",
+                 "godot/shaders/ark_coast_textured.gdshader",
+                 "godot/shaders/ark_ocean.gdshader"]
         documents = {}
-        for name in coast.COAST_DOCUMENTS:
-            relative = "godot/art/coast/" + name
-            payload = ("Reviewed original: " + name + "\nPreserve these bytes.\n").encode("utf-8")
+        for relative in paths:
+            payload = ("Reviewed original: " + relative + "\nPreserve these bytes.\n").encode("utf-8")
             path = checkout / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(payload)

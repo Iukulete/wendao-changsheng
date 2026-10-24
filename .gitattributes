@@ -10,3 +10,5 @@
 /godot/art/fonts/** -text
 /godot/art/surface_sample/** -text
 /godot/art/coast/** -text
+/godot/tests/support/** -text
+/godot/shaders/** -text
