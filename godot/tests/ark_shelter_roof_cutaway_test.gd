@@ -17,6 +17,8 @@ func _initialize() -> void:
 
 func _spawn() -> void:
 	game = load("res://scenes/ark_greybox.tscn").instantiate() as Node3D
+	# Raw opaque geometry oracle; production art occlusion has its own test.
+	game.set("start_with_home_art", false)
 	game.set("save_root_override", save_root)
 	root.add_child(game)
 	game.set_process(false)

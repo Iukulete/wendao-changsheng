@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "pack": "KayKit Furniture Bits 1.0, reviewed free subset",
+  "author": "Kay Lousberg",
+  "license": "CC0-1.0",
+  "source": "https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0",
+  "author_page": "https://kaylousberg.itch.io/furniture-bits",
+  "revision": "96d5930a8dbdb363409bbc2d3341718b00e17c9c",
+  "archive_sha256": "84be044ad8aa6d7b2e5e6e01ce6f2cc97133c07c04f9de7d98dc2677a0234242",
+  "models": ["bed_single_B", "cabinet_small", "book_set"],
+  "notes": "Unmodified author glTF, buffers, atlas and included license from the public free repository. No paid Extra/Source models or textures. Runtime applies a reversible muted tint/roughness and fits models to existing fixtures; atlas pixels/source geometry are unchanged. Decorative books do not grant knowledge or inventory. Original gameplay boxes, collision, routes and interaction markers remain authoritative. Not final character/environment art.",
+  "files": [
+    {"file":"bed_single_B.bin","bytes":25348,"sha256":"a1b26c1848d104381b311cae4dbd4b6d574a3d79e6c9fe88087405f3a99bb918"},
+    {"file":"bed_single_B.gltf","bytes":3009,"sha256":"f702283107f35fe400aa55775baa9515cbd9adaf9e2003b3441fd5cbedb9a07c"},
+    {"file":"book_set.bin","bytes":11576,"sha256":"3aa3fcc774b46c7ffe2b1a3109bf006749163bbb392cfca930b34bfba4b67853"},
+    {"file":"book_set.gltf","bytes":3051,"sha256":"437bfaba3f3413a0b825627a1cb905765a191f4708be51838c9b60c8132cbe61"},
+    {"file":"cabinet_small.bin","bytes":19468,"sha256":"b29dfd659c0b0f7b5a97377e42b52ebcd8245780bcbf024b383f45ec0e59641d"},
+    {"file":"cabinet_small.gltf","bytes":3001,"sha256":"06ce4ee6232ee68e791927e838bb8e77c11391b7de9ba3141374626a910772e5"},
+    {"file":"furniturebits_texture.png","bytes":15605,"sha256":"de62db37a80d1801c3d9eb674890ae04b04469e0c149481a51fa250562c628dc"},
+    {"file":"LICENSE.txt","bytes":827,"sha256":"cd675f2adc31eb5fedaedc1072d8ddc27b917f523682f0561837c03dc56393cb"}
+  ]
+}

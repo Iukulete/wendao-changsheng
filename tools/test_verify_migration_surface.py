@@ -65,6 +65,11 @@ def minimal_pack() -> dict[str, bytes]:
     for name, target in surface.NATURE_IMPORTED.items():
         files["art/coast_nature/" + name + ".import"] = ('[remap]\npath="res://' + target + '"\n\0').encode()
         files[target] = b"imported-nature-payload-fixture"
+    for name in ("asset_manifest.json", "LICENSE.txt"):
+        files["art/cabin_furniture/" + name] = (surface.ROOT / "godot/art/cabin_furniture" / name).read_bytes()
+    for name, target in surface.FURNITURE_IMPORTED.items():
+        files["art/cabin_furniture/" + name + ".import"] = ('[remap]\npath="res://' + target + '"\n\0').encode()
+        files[target] = b"imported-furniture-payload-fixture"
     return files
 
 

@@ -13,7 +13,11 @@ var _originals: Dictionary = {}
 var _decor: Array[WeakRef] = []
 var _materials: Dictionary = {}
 var _bevels: Dictionary = {}
+var _marker_originals: Dictionary = {}
 var _timber: Texture2D
+var furniture := preload("res://scripts/presentation/ark_cabin_furniture.gd").new()
+var room_view := preload("res://scripts/presentation/ark_room_view.gd").new()
+var vessel := preload("res://scripts/presentation/ark_vessel_skin.gd").new()
 
 func timber_texture() -> Texture2D:
 	if _timber == null: _timber = load(TIMBER_PATH) as Texture2D
@@ -29,6 +33,12 @@ func set_enabled(world: Node3D, value: bool) -> void:
 
 func apply(world: Node3D) -> void:
 	if not enabled or world == null: return
+	for id in _marker_originals.keys():
+		var marker: Node = _marker_originals[id].node.get_ref()
+		if not is_instance_valid(marker): _marker_originals.erase(id)
+		elif not marker.is_inside_tree():
+			marker.visible = _marker_originals[id].visible
+			_marker_originals.erase(id)
 	for id in _originals.keys():
 		var tracked: Node = _originals[id].node.get_ref()
 		if tracked == null or tracked.is_queued_for_deletion(): _originals.erase(id)
@@ -69,11 +79,22 @@ func apply(world: Node3D) -> void:
 		if cap: _paint(cap, _materials.coast)
 	if not ark.has_node("HomeArtCandidate"):
 		_deck_details(_new_decor(ark))
+	for path in ["homeMarker", "helmMarker"]:
+		var marker := ark.get_node_or_null(path)
+		if marker == null or marker.get_child_count() == 0: continue
+		var pole := marker.get_child(0) as MeshInstance3D
+		if pole == null or not pole.mesh is CylinderMesh: continue
+		var id := pole.get_instance_id()
+		if not _marker_originals.has(id): _marker_originals[id] = {"node":weakref(pole), "visible":pole.visible}
+		pole.visible = false
 	var shelter := ark.get_node_or_null("BuiltShelter") as Node3D
 	if shelter != null and not shelter.has_node("HomeArtCandidate"):
 		_cabin_details(_new_decor(shelter))
-		var roof := shelter.get_node_or_null("Roof") as Node3D
+		var roof := shelter.get_node_or_null("Roof/CenterFace") as Node3D
 		if roof != null: _roof_details(_new_decor(roof))
+	furniture.apply(world)
+	vessel.apply(world,ark.get_node_or_null("HomeArtCandidate"),{"timber":_material("timber"),"dark":_material("dark_timber"),"trim":_material("painted_timber"),"rope":_material("rope")})
+	update_visibility(world)
 
 func _under_candidate(node: Node) -> bool:
 	var parent := node.get_parent()
@@ -81,6 +102,9 @@ func _under_candidate(node: Node) -> bool:
 		if parent.name == "HomeArtCandidate": return true
 		parent = parent.get_parent()
 	return false
+
+func update_visibility(world: Node3D) -> void:
+	if enabled: room_view.update(world, _material("wall_panel"), _material("painted_timber"))
 
 func _role(path: String) -> String:
 	var text := path.to_lower()
@@ -106,6 +130,8 @@ func _role(path: String) -> String:
 		if text.contains(rope): return "rope"
 	if text.contains("roof/"): return "cloth"
 	if text.contains("herb"): return ""
+	if text.begins_with("builtshelter/back/") or text.begins_with("builtshelter/left/") or text.begins_with("builtshelter/right/"): return "wall_panel"
+	if text.contains("guestcabin/backwall/") or text.contains("guestcabin/portwall/") or text.contains("guestcabin/starboardwall/"): return "wall_panel"
 	if text.begins_with("rafttop/") or text.contains("builtraftextension/deck/") or text.begins_with("raftboardinggangplank/"): return "deck"
 	if text.begins_with("raftbase/") or text.contains("postfoot") or text.contains("plankendgrain") or text.contains("deckseam"): return "dark_timber"
 	for trim in ["raftbow/", "raftport/", "raftstarboard/", "raftsternport/", "raftsternstarboard/", "frontlintel", "rearlintel", "carvedlintel", "bedsidechest"]:
@@ -114,7 +140,7 @@ func _role(path: String) -> String:
 
 func _material(role: String) -> Material:
 	if _materials.has(role): return _materials[role]
-	if role in ["timber", "deck", "dark_timber", "painted_timber"]:
+	if role in ["timber", "deck", "dark_timber", "painted_timber", "wall_panel"]:
 		var timber := ShaderMaterial.new()
 		timber.shader = TIMBER_SHADER
 		timber.set_shader_parameter("timber_albedo", timber_texture())
@@ -125,6 +151,9 @@ func _material(role: String) -> Material:
 		if role == "painted_timber":
 			timber.set_shader_parameter("dark_tone", Vector3(.08,.155,.14))
 			timber.set_shader_parameter("light_tone", Vector3(.27,.39,.32))
+		if role == "wall_panel":
+			timber.set_shader_parameter("dark_tone", Vector3(.39,.40,.32))
+			timber.set_shader_parameter("light_tone", Vector3(.58,.58,.47))
 		_materials[role] = timber
 		return timber
 	if role in ["cloth", "linen"]:
@@ -277,6 +306,53 @@ func _deck_details(parent: Node3D) -> void:
 	ring.rings = 24
 	ring.ring_segments = 8
 	_batch(parent, "MooringRopeCoil", ring, "rope", [[Vector3(-2.52, .15, 1.72), Vector3.ONE], [Vector3(-2.52, .165, 1.72), Vector3(.78, 1, .78)]])
+	_helm_details(parent)
+
+func _helm_details(parent: Node3D) -> void:
+	var anchor := parent.get_parent().get_node_or_null("helmMarker") as Node3D
+	if anchor == null: return
+	var helm := Node3D.new()
+	helm.name = "HandcraftedHelm"
+	helm.transform = anchor.transform
+	parent.add_child(helm)
+	_batch(helm, "Pedestal", BoxMesh.new(), "painted_timber", [[Vector3(0,-.25,0),Vector3(.16,.60,.18)], [Vector3(0,-.50,0),Vector3(.44,.07,.34)]])
+	var rim := TorusMesh.new()
+	rim.inner_radius = .245
+	rim.outer_radius = .295
+	rim.rings = 32
+	rim.ring_segments = 8
+	var wheel := MeshInstance3D.new()
+	wheel.name = "WheelRim"
+	wheel.mesh = rim
+	wheel.material_override = _material("timber")
+	wheel.position = Vector3(0,.18,.06)
+	wheel.rotation.x = PI*.5
+	helm.add_child(wheel)
+	for index in 6:
+		var angle := index*TAU/6
+		var spoke := MeshInstance3D.new()
+		spoke.name = "Spoke%d" % index
+		var mesh := CapsuleMesh.new()
+		mesh.radius = .022
+		mesh.height = .37
+		mesh.radial_segments = 8
+		mesh.rings = 2
+		spoke.mesh = mesh
+		spoke.material_override = _material("timber")
+		spoke.position = Vector3(sin(angle)*.185,.18+cos(angle)*.185,.06)
+		spoke.rotation.z = -angle
+		helm.add_child(spoke)
+	var hub := MeshInstance3D.new()
+	var hub_mesh := CylinderMesh.new()
+	hub_mesh.top_radius = .08
+	hub_mesh.bottom_radius = .08
+	hub_mesh.height = .12
+	hub_mesh.radial_segments = 16
+	hub.mesh = hub_mesh
+	hub.material_override = _material("brass")
+	hub.rotation.x = PI*.5
+	hub.position = Vector3(0,.18,.06)
+	helm.add_child(hub)
 
 func _cabin_details(parent: Node3D) -> void:
 	var woodwork: Array = [[Vector3(0, 1.37, -1.005), Vector3(.94, .055, .20)], [Vector3(0, 2.11, -1.01), Vector3(2.7, .10, .09)]]
@@ -303,6 +379,13 @@ func _roof_details(parent: Node3D) -> void:
 	_batch(parent, "CanvasSeamBindings", BoxMesh.new(), "rope", seams)
 
 func restore() -> void:
+	room_view.restore()
+	furniture.restore()
+	vessel.restore()
+	for entry in _marker_originals.values():
+		var marker: Node = entry.node.get_ref()
+		if is_instance_valid(marker): marker.visible = entry.visible
+	_marker_originals.clear()
 	for entry in _originals.values():
 		var node = entry.node.get_ref()
 		if is_instance_valid(node):

@@ -75,6 +75,13 @@ python tools/verify_godot.py --godot /absolute/path/to/Godot_v4.7.1-stable_linux
 
 更完整的控制、家园岗位、储粮与现代设备说明见 [Windows玩法说明](docs/WINDOWS_RELEASE_README.md)。
 
+生活舱首轮家具样板复用[KayKit Furniture Bits的免费CC0子集](https://github.com/KayKit-Game-Assets/KayKit-Furniture-Bits-1.0)：
+只取床、柜、书三模型，统一颜色与粗糙度，原文件、图集和许可保留。家具必须随原设施建成，
+不会免费扩背包或增加居民床位；原休息和储粮逻辑不变。进入舱室时，实际挡住相机视线的
+墙面、布檐和门梁让开，墙脚保留矮轮廓；邻舱前景屋顶也可让出视线，碰撞与损伤状态不变。
+开局是捆扎原木浮体，真正建成龙骨扩甲后才换为成形船壳；舵位用实体舵轮替代占位标杆。
+F7可恢复原视觉。家具尺度、建筑轮廓、人物、其他岛区和界面仍需打磨，不是整套美术完成版。
+
 ## 存档与兼容
 
 3D 独立存档保持 `res://../.local/save/ark_greybox_v1.json` 的历史解析位置，

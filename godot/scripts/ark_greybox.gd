@@ -5604,6 +5604,7 @@ func _dismantle_raft_extension() -> bool:
 	_update_sailmaker_schedule()
 	_record_world_event("raft_extension_dismantled", {"wood_returned": wood_returned, "keel_beams_returned": RAFT_EXTENSION_KEEL_COST, "guest_cabin_frames_returned": cabin_frame_returned, "blueprint_retained": _has_blueprint("keel_deck_expansion"), "guest_cabin_blueprint_retained": _has_blueprint("tide_guest_cabin")})
 	message = "你先退回原筏面，再卸下龙骨甲板。四块船板与远礁龙骨都收回了；" + ("听潮客舱的木料和舱骨也一并收回。" if cabin_frame_returned > 0 else "") + "学会的图样仍记在心里，备齐材料便能重建。"
+	_refresh_nearfuture_hud()
 	_save_progress()
 	_update_hud()
 	return true
@@ -5681,10 +5682,12 @@ func _clear_shelter_for_rebuild() -> void:
 func _update_shelter_roof_cutaway() -> void:
 	var structure := _ark_node("BuiltShelter") as Node3D
 	if structure == null:
+		home_art_sample.update_visibility(self)
 		_update_shelter_cutaway_nameplates()
 		return
 	var roof := structure.get_node_or_null("Roof") as Node3D
 	if roof == null:
+		home_art_sample.update_visibility(self)
 		_update_shelter_cutaway_nameplates()
 		return
 	var cutaway := false
@@ -5718,6 +5721,7 @@ func _update_shelter_roof_cutaway() -> void:
 	var brace := structure.get_node_or_null("ReefShellStormBrace") as Node3D
 	if brace:
 		brace.visible = roof.visible and not cutaway
+	home_art_sample.update_visibility(self)
 	_update_shelter_cutaway_nameplates(structure, cutaway)
 
 
@@ -6179,6 +6183,7 @@ func _build_raft_extension_at(position: Vector3) -> void:
 	interactables.append({"id": "raft_extension", "node": marker, "amount": 0})
 	_update_traveler_schedule()
 	_update_sailmaker_schedule()
+	_refresh_nearfuture_hud()
 
 
 func _build_guest_cabin_at(extension: Node3D) -> void:

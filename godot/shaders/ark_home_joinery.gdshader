@@ -13,7 +13,8 @@ void fragment() {
  vec3 grain=texture(timber_albedo,local_p.zy*.48).rgb*weights.x;
  grain+=texture(timber_albedo,local_p.xz*.48).rgb*weights.y;
  grain+=texture(timber_albedo,local_p.xy*.48).rgb*weights.z;
- float value=dot(grain,vec3(.2126,.7152,.0722));
+ // Quiet grain supports the room silhouette instead of competing with actors.
+ float value=.36+(dot(grain,vec3(.2126,.7152,.0722))-.36)*.38;
  vec3 wood=mix(dark_tone,light_tone,smoothstep(.08,.70,value));
  // Meter-scale joinery on the deck slab, not extra collision geometry.
  // Fine seams converge with distance rather than flickering below a pixel.

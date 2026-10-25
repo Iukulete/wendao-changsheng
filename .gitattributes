@@ -20,3 +20,6 @@
 /native/ark_simulation/third_party/flecs/flecs.[ch] -whitespace
 /godot/art/coast_nature/License_Standard.txt -whitespace
 /godot/art/coast_nature/asset_manifest.json whitespace=cr-at-eol
+/godot/art/cabin_furniture/** -text
+/godot/art/cabin_furniture/LICENSE.txt -whitespace
+/godot/art/cabin_furniture/*.gltf whitespace=cr-at-eol

@@ -19,6 +19,7 @@ from verify_coast_assets import COAST_TEXTURES, COAST_DOCUMENTS, COAST_IMPORTED,
 from verify_ui_assets import UI_FILES, UI_IMPORTED, verify_ui_assets, verify_ui_pack
 from verify_nature_assets import RUNTIME as NATURE_RUNTIME, IMPORTED as NATURE_IMPORTED, verify_nature_assets, verify_nature_pack
 from verify_native_simulation import verify_sources as verify_native_sources
+from verify_furniture_assets import RUNTIME as FURNITURE_RUNTIME, IMPORTED as FURNITURE_IMPORTED, verify_furniture_assets, verify_furniture_pack
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SCRIPTS = frozenset({"main.gd", "ark_fixture_placement.gd", "ark_greybox.gd",
@@ -27,6 +28,9 @@ RUNTIME_SCRIPTS |= frozenset(['modules/economy/ark_economy.gd', 'modules/constru
 RUNTIME_SCRIPTS |= frozenset({"presentation/ark_surface_sample.gd", "presentation/ark_nearfuture_hud.gd"})
 RUNTIME_SCRIPTS |= frozenset({"terrain/ark_opening_coast.gd", "presentation/ark_coast_materials.gd"})
 RUNTIME_SCRIPTS |= frozenset({"presentation/ark_home_art_sample.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_cabin_furniture.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_room_view.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_vessel_skin.gd"})
 RUNTIME_SCRIPTS |= frozenset({"modules/residents/ark_household_work.gd"})
 RUNTIME_SCRIPTS |= frozenset({"adapters/ark_household_simulation.gd"})
 RUNTIME_SCRIPTS |= frozenset({"adapters/ark_orbit_camera.gd"})
@@ -84,6 +88,7 @@ EXPORT_INCLUDE_FILTERS |= frozenset({"art/home_sample/asset_manifest.json"})
 EXPORT_INCLUDE_FILTERS |= frozenset({"art/lantern_table/asset_manifest.json"})
 EXPORT_INCLUDE_FILTERS |= frozenset({"art/ui_icons/asset_manifest.json", "art/ui_icons/Lucide-LICENSE.txt"})
 EXPORT_INCLUDE_FILTERS |= frozenset({"art/coast_nature/asset_manifest.json", "art/coast_nature/License_Standard.txt"})
+EXPORT_INCLUDE_FILTERS |= frozenset({"art/cabin_furniture/asset_manifest.json", "art/cabin_furniture/LICENSE.txt"})
 EXPORT_EXCLUDE_FILTERS = frozenset({"tests/*", "archive/*", "data/*", "audio/*"})
 NON_HEADLESS_TESTS = frozenset({"ark_test_paths.gd", "ark_render_capture_test.gd", "ark_pixel_protagonist_render_test.gd", "ark_gerstner_render_test.gd"})
 REQUIRED_TESTS = frozenset({"ark_menu_integration_test.gd", "ark_test_paths_test.gd",
@@ -324,7 +329,7 @@ def verify(root: Path = ROOT) -> None:
         check_exact_files(project / directory, expected, sidecars)
     allowed_roots = {".godot", "art", "scripts", "scenes", "shaders", "tests", "project.godot", "export_presets.cfg", "README.md"}
     unexpected = {item.name for item in project.iterdir()} - allowed_roots
-    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma", "surface_sample", "coast", "coast_nature", "home_sample", "ui_icons", "lantern_table"}:
+    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma", "surface_sample", "coast", "coast_nature", "home_sample", "ui_icons", "lantern_table", "cabin_furniture"}:
         raise RuntimeError(f"Retired data/audio/art remains inside res://: {sorted(unexpected)}")
     check_exact_files(project / "art/player_pixel", PIXEL_FILES, (".import",))
     check_exact_files(project / "art/player_emma", EMMA_FILES, (".import",))
@@ -335,6 +340,7 @@ def verify(root: Path = ROOT) -> None:
     verify_ui_assets(root)
     verify_lantern_assets(root)
     verify_nature_assets(root)
+    verify_furniture_assets(root)
     resources = {f"art/player_emma/{name}" for name in EMMA_FILES} | {f"art/player_pixel/{name}" for name in PIXEL_FILES} | {f"scripts/{name}" for name in RUNTIME_SCRIPTS} | {f"scenes/{name}" for name in SCENES} | {f"shaders/{name}" for name in SHADERS} | {f"art/fonts/{name}" for name in FONT_FILES}
     resources |= {f"art/surface_sample/{name}" for name in SURFACE_TEXTURES} | {SURFACE_MANIFEST}
     resources |= {"art/coast/" + name for name in [*COAST_TEXTURES, *COAST_DOCUMENTS]}
@@ -342,6 +348,7 @@ def verify(root: Path = ROOT) -> None:
     resources |= {"art/ui_icons/" + name for name in UI_FILES}
     resources |= {"art/lantern_table/" + name for name in LANTERN_FILES}
     resources |= {"art/coast_nature/" + name for name in NATURE_RUNTIME}
+    resources |= {"art/cabin_furniture/" + name for name in FURNITURE_RUNTIME}
     for relative in sorted(resources):
         if not relative.endswith((".gd", ".tscn", ".gdshader", ".tres")):
             continue
@@ -481,6 +488,8 @@ def verify_pack(path: Path) -> int:
     allowed |= {"art/ui_icons/" + name + ".import" for name in UI_IMPORTED} | set(UI_IMPORTED.values())
     allowed |= {"art/coast_nature/" + name + suffix for name in NATURE_RUNTIME for suffix in ("", ".import", ".remap")}
     allowed |= set(NATURE_IMPORTED.values())
+    allowed |= {"art/cabin_furniture/" + name + suffix for name in FURNITURE_RUNTIME for suffix in ("", ".import", ".remap")}
+    allowed |= set(FURNITURE_IMPORTED.values())
     generated = re.compile(r"^\.godot/(?:imported/emma\.glb-[0-9a-f]+\.scn|imported/image\(20261021-(?:085642|085643|085645|085646)\)\.png-[0-9a-f]+\.ctex|imported/Noto(?:Sans|Serif)SC-Variable\.ttf-[0-9a-f]+\.fontdata|exported/[^/]+/export-[0-9a-f]+-(?:(?:main|ark_greybox)\.scn|(?:ark_ui_font|emma_locomotion)\.res))$")
     extra = sorted(name for name in files if name not in allowed and not generated.fullmatch(name))
     if extra:
@@ -495,6 +504,7 @@ def verify_pack(path: Path) -> int:
     verify_coast_pack(files)
     verify_ui_pack(files)
     verify_nature_pack(files)
+    verify_furniture_pack(files)
     home_relative = "art/home_sample/home_timber_albedo_v1.png"
     verify_home_manifest(files["art/home_sample/asset_manifest.json"])
     verify_lantern_manifest(files["art/lantern_table/asset_manifest.json"])

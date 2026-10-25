@@ -9,6 +9,9 @@ $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_cons
 # Canonical headless suite. verify_migration_surface.py compares this exact list
 # to all Ark tests on disk, excluding only the helper and display-only capture.
 $testScripts = @(
+    "res://tests/ark_cabin_furniture_test.gd",
+    "res://tests/ark_room_view_test.gd",
+    "res://tests/ark_vessel_skin_test.gd",
     "res://tests/ark_home_template_plan_test.gd",
     "res://tests/ark_home_template_upgrade_test.gd",
     "res://tests/ark_kitchen_work_test.gd",
