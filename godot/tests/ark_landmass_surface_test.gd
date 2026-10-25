@@ -5,6 +5,7 @@ extends SceneTree
 const Paths = preload("res://tests/ark_test_paths.gd")
 const Save = preload("res://scripts/ark_greybox_save.gd")
 const CoastHistory = preload("res://tests/support/coast_historical_projection.gd")
+const HOME_COAST_SHA := "099b0fa452f83a3fb9ccbf33220d955bd31d94b7bc3582507415fce616988977"
 # Captured from the pre-fix official 4.7.1 world (builder SHA256 b2d4f029df9724a55ed1cc1b57e2172016f2b6c4ded279f8d9600b324dccaac7).
 # Each SHA sorts vertices WITHIN each triangle, then sorts the triangles. A winding
 # reversal is permitted; changing contour, height, triangulation or multiplicity is not.
@@ -185,6 +186,11 @@ func _inspect_original_opening_builder() -> void:
 	legacy_opening_grass_arrays = var_to_bytes(fixture.get_node("Grassland").mesh.surface_get_arrays(0))
 	legacy_opening_grass_faces = var_to_bytes(fixture.get_node("GrasslandCollision").shape.get_faces())
 	fixture.free()
+	# Preserve the original Moonback golden too; never replace it with new hashes.
+	var moonback: StaticBody3D = builder.call("build_island","MoonbackIsland",Vector3(-28,0,23),Vector2(14,12),5.4,Color("4e615a"),Color("87928a"))
+	root.add_child(moonback)
+	_check(_inspect_legacy_world("isolated_original_moonback_builder",{"MoonbackIsland":moonback},800).size() == 2,"old Moonback builder still meets its original golden")
+	moonback.free()
 
 
 # No quantization, inverse projection, old golden substitution or resource IDs
@@ -307,7 +313,13 @@ func _inspect_live_opening(label: String) -> Dictionary:
 		var node := game.get_node(path)
 		var visual := node as MeshInstance3D if node is MeshInstance3D else node.get_child(0) as MeshInstance3D
 		var material_kind := "terrain" if path.begins_with("IslandLandmass/") else "grass" if path == "ShelteredGrassGroups" else "rock"
-		_check(_resource(visual.material_override) == _resource(reference.expected_materials[material_kind]) and visual.get_active_material(0) == visual.material_override and visual.material_overlay == null, "actual complete material equals frozen independent specification: " + path)
+		var expected: Material = reference.expected_materials[material_kind]
+		if material_kind == "terrain":
+			_check(game.get("home_art_sample").enabled,"live geometry/save regression must keep the production art default")
+			_check(FileAccess.get_sha256("res://shaders/ark_coast_home_sample.gdshader") == HOME_COAST_SHA,"reviewed home coast shader bytes remain independently pinned")
+			expected = expected.duplicate(true)
+			(expected as ShaderMaterial).shader = load("res://shaders/ark_coast_home_sample.gdshader")
+		_check(_resource(visual.material_override) == _resource(expected) and visual.get_active_material(0) == visual.material_override and visual.material_overlay == null, "actual complete material equals independent specification, with only the reviewed production shader substitution: " + path)
 	for index in range(9):
 		var visual := game.get_node("CoastClusterRock%02d" % index).get_child(0) as MeshInstance3D
 		_check(_resource(visual.material_override) == _resource(reference.expected_materials.rock) and visual.get_active_material(0) == visual.material_override and visual.material_overlay == null, "satellite actual complete material remains frozen")
@@ -318,11 +330,12 @@ func _inspect_live_opening(label: String) -> Dictionary:
 func _inspect_world(label: String) -> Dictionary:
 	var unchanged := {}
 	for id in OLD_WORLD:
-		if id != "IslandLandmass":
+		if id not in ["IslandLandmass","MoonbackIsland"]:
 			unchanged[id] = game.get_node_or_null(NodePath(id))
-	_check(unchanged.size() == 4, "all four other islands remain in the untouched historical oracle")
-	var result := _inspect_legacy_world(label, unchanged, 3200)
-	_check(result.size() == 8, "all eight untouched other-island surfaces retain old golden checks")
+	_check(unchanged.size() == 3, "three untouched islands remain in the original historical oracle")
+	var result := _inspect_legacy_world(label, unchanged, 2400)
+	_check(result.size() == 6, "all six untouched island surfaces retain original golden checks")
+	result["actual_moonback_raw"] = preload("res://tests/support/moonback_terrain_contract.gd").new().validate(game,self)
 	result["actual_opening_raw"] = _inspect_live_opening(label)
 	return result
 
@@ -426,7 +439,7 @@ func _run() -> void:
 	_exercise_existing_actions()
 	_check(bool(game.call("_save_progress")), "actual action state must save successfully")
 	var saved: Dictionary = saves.load_state().get("state", {})
-	_check(int(saved.schema_version) == 36 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "terrain orientation must not bump save or game version")
+	_check(int(saved.schema_version) == 43 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "terrain orientation remains compatible with kitchen schema43 and the unchanged game version")
 	for id in OLD_WORLD:
 		_check(not JSON.stringify(saved).contains(id), "static land geometry must not leak into saves")
 	var expected := _semantics(_json(saved))

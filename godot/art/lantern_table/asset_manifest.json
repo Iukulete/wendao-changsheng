@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "assets": [{
+    "file": "cloth_albedo_v1.png",
+    "bytes": 4167352,
+    "size": [1254, 1254],
+    "sha256": "2db6bad8208f53ad9affdeb31bccaa6634331a4fd86e7825a177f85377d45dff",
+    "source": "original built-in imagegen output, unmodified",
+    "usage": "lantern-table cloth albedo and UI backdrop, not a normal/roughness map or seamless tile",
+    "license": "AGPL-3.0, repository LICENSE",
+    "prompt": "Use case: stylized-concept\nAsset type: production game texture, flat albedo for a small tabletop cloth and the background of a cozy card-table interface in a 3D seafaring home-building game.\nPrimary request: an original, beautifully crafted dark sea-teal woven linen cloth with a thin restrained antique-gold stitched border and tiny embroidered wave-and-lantern motifs only near the corners. Warm, tactile, lived-in, elegant rather than casino-like. Fine visible weave, a few natural irregularities in the thread. The large central 80 percent is plain quiet teal so actual game cards and readable text can be rendered on top by code.\nComposition/framing: perfectly straight overhead orthographic view of the fabric surface, edge-to-edge square flat material swatch, no perspective, no folds that distort the plane. Border fully inside the image with comfortable padding.\nLighting: diffuse neutral flat illumination suitable for albedo; no cast shadows, no baked spotlight, no specular highlights.\nConstraints: fabric only; no cards, objects, hands, people, furniture, letters, numbers, text, logos, watermarks, or branded patterns. No fake screenshot or UI. Not a concept render of a room. Subtle sophisticated craft detail, no excessive ornaments."
+  }]
+}

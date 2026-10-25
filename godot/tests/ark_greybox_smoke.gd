@@ -40,7 +40,7 @@ func _run() -> void:
 	game.call("_update_hud")
 	game.set("stored_wood", 2)
 	game.call("_update_hud")
-	assert(opening_hud.text.contains("从储物箱取出全部 2 块木料"), "the opening objective should reflect that storage interaction retrieves all stored wood at once")
+	assert(opening_hud.text.contains("收集 2 块漂木") and not opening_hud.text.contains("从储物箱取出"), "an unbuilt chest cannot provide phantom stock; a built chest is covered by the real home-supply chain test")
 	game.set("stored_wood", 0)
 	game.call("_update_hud")
 	assert(game.get_node_or_null("ArkRoot/RaftBoardingGangplank") is StaticBody3D, "the starting raft should have a real collidable boarding gangplank")
@@ -628,6 +628,10 @@ func _run() -> void:
 	assert(template_game.get_node_or_null("ArkRoot/StarterHomeTemplatePreview/Storage") is MeshInstance3D, "the template preview should show the bundled storage location")
 	assert(not bool(template_game.call("_try_place_starter_home_template", Vector3(2.0, 0.12, 0.0))), "the complete home template must reject a footprint outside the raft")
 	assert(int(template_game.get("wood")) == 5, "a rejected template placement must not consume resources")
+	# This fixture manually chooses a deck position rather than moving the OS
+	# pointer. Present that exact proposal before confirming it, as real input does.
+	template_game.set("preview_position",Vector3(0,.12,0))
+	template_game.get("home_templates").refresh(template_game,Vector3(0,.12,0),false)
 	assert(bool(template_game.call("_try_place_starter_home_template", Vector3(0.0, 0.12, 0.0))), "the starter-home template should place its full checked layout")
 	assert(int(template_game.get("wood")) == 0 and bool(template_game.get("shelter_built")) and bool(template_game.get("storage_built")), "the template should charge the exact combined cost and create both structures")
 	assert(template_game.get_node_or_null("ArkRoot/BuiltShelter/Cot") != null and template_game.get_node_or_null("ArkRoot/BuiltStorage/Body") != null, "the completed template should create usable shelter and storage, not a cosmetic stamp")
@@ -721,12 +725,20 @@ func _run() -> void:
 	assert(_count_events(meal_game.get("world_events"), "resident_gather_delivered") == 1 and int(meal_game.get("wood")) + int(meal_game.get("stored_wood")) == meal_wood_before_delivery + 2, "the completed trip must deliver the two real planks exactly once")
 	assert(int(meal_game.get("raw_shellfish")) == meal_shellfish_before_delivery and bool(meal_game.get("economy").audit().ok), "gathering wood must preserve cooking ingredients and the resource ledger")
 	meal_game.set("weather_phase", 2)
+	meal_game.set_process(false)
 	meal_game.call("_update_traveler_schedule")
 	assert(str(meal_game.get("traveler_action")) == "准备潮滩晚饭", "at dusk the resident should choose the hearth when food is available; action=%s period=%d day=%d shared_day=%d raw=%d" % [str(meal_game.get("traveler_action")), int(meal_game.get("day_period")), int(meal_game.get("day_count")), int(meal_game.get("shared_meal_day")), int(meal_game.get("raw_shellfish"))])
 	meal_game.call("_process", 10.0)
-	assert((meal_game.get("traveler_marker") as Node3D).position.is_equal_approx(meal_game.get("traveler_target_position")), "the resident should physically reach the cooking place")
+	assert(int(meal_game.get("raw_shellfish")) == 1 and int(meal_game.get("stew_servings")) == 0, "one oversized frame cannot remotely finish resident cooking")
+	for _cooking_step in range(500):
+		meal_game.call("_process", 0.05)
+		await physics_frame
+		if int(meal_game.get("kitchen").completed) == 1:
+			break
+	assert(meal_game.get("resident_kitchen").arrived(meal_game), "the resident should physically reach the actual pot even after the next routine target changes")
+	assert(int(meal_game.get("raw_shellfish")) == 0 and int(meal_game.get("stew_servings")) == 1, "real work at the hearth completes cooking before a period skip")
 	meal_game.call("_rest_at_cot")
-	assert(int(meal_game.get("raw_shellfish")) == 0 and int(meal_game.get("stew_servings")) == 1, "advancing the evening after she reaches the hearth should complete her cooking task")
+	assert(int(meal_game.get("raw_shellfish")) == 0 and int(meal_game.get("stew_servings")) == 1, "advancing the evening must not duplicate completed cooking")
 	assert(_count_events(meal_game.get("world_events"), "resident_meal_prepared") == 1, "resident cooking should preserve its actual ingredient cost and source")
 	meal_game.queue_free()
 	await process_frame
@@ -760,6 +772,10 @@ func _run() -> void:
 	meal_restored.queue_free()
 	await process_frame
 	legacy_shared_meal_state["schema_version"] = 13
+	# This synthetic pre-module format predates kitchen orders/streams. Rebuild
+	# that historical representation; never merely relabel completed schema42.
+	legacy_shared_meal_state.erase("kitchen")
+	legacy_shared_meal_state.modules.economy.streams.erase("domestic:galley:stew")
 	legacy_shared_meal_state.erase("resident_keepsake_present")
 	legacy_shared_meal_state["world_events"] = []
 	legacy_shared_meal_state["event_sequence"] = 0

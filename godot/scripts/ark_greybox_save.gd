@@ -6,7 +6,12 @@ extends RefCounted
 const FORMAT := "wendao-ark-greybox"
 const VERSION := 1
 const FILE_NAME := "ark_greybox_v1.json"
-const MAX_SCHEMA_VERSION := 36
+const MAX_SCHEMA_VERSION := preload("res://scripts/modules/ark_save_schema.gd").CURRENT
+const Kitchen = preload("res://scripts/modules/residents/ark_kitchen_work.gd")
+const Economy = preload("res://scripts/modules/economy/ark_economy.gd")
+const ModernUtilities = preload("res://scripts/modules/modern/ark_modern_utilities.gd")
+const HouseholdWork = preload("res://scripts/modules/residents/ark_household_work.gd")
+const LanternTable = preload("res://scripts/modules/leisure/ark_lantern_table.gd")
 const SAILMAKER_AWNING_SEW_SECONDS := 3.0
 const SAILMAKER_AWNING_INSTALL_SECONDS := 2.0
 const MAX_FILE_BYTES := 16 * 1024 * 1024
@@ -181,9 +186,66 @@ func _validate_state(state: Dictionary) -> Dictionary:
 			return {"ok": false, "code": "invalid_state"}
 	if int(schema) >= 36 and not _valid_sailmaker_awning_work(state):
 		return {"ok": false, "code": "invalid_state"}
+	if int(schema) >= 37 and not valid_household_work(state):
+		return {"ok": false, "code": "invalid_state"}
+	if int(schema) >= 38 and not valid_lantern_table(state):
+		return {"ok": false, "code": "invalid_state"}
+	if int(schema) >= 39 and not valid_coast_exploration(state):
+		return {"ok": false, "code": "invalid_state"}
+	if int(schema) >= 40 and not ModernUtilities.matches_save(state):
+		return {"ok": false, "code": "invalid_state"}
+	if not Kitchen.matches_save(state):
+		return {"ok":false,"code":"invalid_state"}
+	# New domestic streams are accepted only with an actually restorable,
+	# conserved ledger, not merely matching kitchen counters. Legacy boundaries
+	# retain their established migration behavior.
+	if int(schema) >= 42 and not Economy.new().restore(state.modules.economy):
+		return {"ok":false,"code":"invalid_state"}
 	if not _json_safe(state):
 		return {"ok": false, "code": "invalid_state"}
 	return {"ok": true}
+
+static func valid_coast_exploration(state: Dictionary) -> bool:
+	if not state.get("ridge_camp_searched") is bool or not state.get("raft_fenders_installed") is bool: return false
+	if not state.get("learned_blueprint_ids") is Array: return false
+	var learned: bool = state.learned_blueprint_ids.has("storm_raft_fenders")
+	if learned != state.ridge_camp_searched or (state.raft_fenders_installed and not learned): return false
+	var modules: Variant = state.get("modules")
+	if not modules is Dictionary or not modules.get("economy") is Dictionary or not modules.economy.get("receipts") is Dictionary: return false
+	var payments := 0
+	for receipt in modules.economy.receipts:
+		if str(receipt).begins_with("home_supply:raft_fenders:"): payments += 1
+	return payments == (1 if state.raft_fenders_installed else 0)
+
+
+static func valid_lantern_table(state: Dictionary) -> bool:
+	if not state.get("lantern_table") is Dictionary or not LanternTable.valid(state.lantern_table): return false
+	var round_: Dictionary = state.lantern_table
+	if round_.phase == "idle": return true
+	var meals: Variant = state.get("shared_meal_count")
+	if not (meals is int or meals is float) or not is_finite(float(meals)) or float(meals) < 1 or float(meals) != floor(float(meals)): return false
+	return state.get("resident_met") == true if round_.opponent == "tidekeeper" else state.get("sailmaker_met") == true
+
+
+static func valid_household_work(state: Dictionary) -> bool:
+	if not state.get("household_work") is Dictionary:
+		return false
+	var candidate = HouseholdWork.new()
+	if not candidate.restore(state.household_work):
+		return false
+	if candidate.enabled or candidate.active():
+		for key in ["sailmaker_met", "sailmaker_boarded", "shelter_built", "storage_built", "workbench_built"]:
+			if state.get(key) != true:
+				return false
+	if candidate.active():
+		if not bool(state.get(candidate.part + "_damaged", false)):
+			return false
+		if state.get("resident_repair_pending", false) and state.get("resident_repair_part", "") == candidate.part:
+			return false
+	var modules: Variant = state.get("modules")
+	if not modules is Dictionary or not modules.get("economy") is Dictionary or not modules.economy.get("receipts") is Dictionary:
+		return false
+	return candidate.matches_economy(modules.economy.receipts)
 
 
 func _valid_sailmaker_awning_work(state: Dictionary) -> bool:

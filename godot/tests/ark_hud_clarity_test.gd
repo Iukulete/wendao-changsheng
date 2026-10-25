@@ -15,6 +15,16 @@ func _tap(code: Key) -> void:
 	_key(code, false)
 func _click(control: Control) -> void:
 	assert(control.is_visible_in_tree())
+	# Expanded room/work details can put actions below the drawer's clip. Scroll
+	# the real container first, as a user must, rather than clicking offscreen.
+	var ancestor := control.get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer:
+			ancestor.ensure_control_visible(control)
+			await _settle()
+			assert(ancestor.get_global_rect().has_point(control.get_global_rect().get_center()))
+			break
+		ancestor = ancestor.get_parent()
 	var center := control.get_global_rect().get_center()
 	var motion := InputEventMouseMotion.new()
 	motion.position = center
@@ -107,6 +117,41 @@ func _run() -> void:
 	assert(not drawer.visible and toggle.disabled and (game.get("note") as Label).text.contains("2 尊重"))
 	_tap(KEY_ESCAPE)
 	assert(not game.get("traveler_choice_pending"))
+	# Structured choices stay outside the scroll, even with very long narrative.
+	# Do not weaken the source text or parse its numeric prose to build buttons.
+	for fixture in [
+		["raft_extension_dismantle_pending", "dismantle", 2],
+		["household_work_choice_pending", "household", 3],
+		["jade_sail_guest_choice_pending", "guest", 2],
+		["jade_sail_industry_choice_pending", "industry", 2],
+		["pressure_galley_choice_pending", "galley", 2],
+		["resident_gather_policy_choice_pending", "gather", 4],
+		["traveler_choice_pending", "tidekeeper", 2],
+		["sailmaker_choice_pending", "sailmaker", 2],
+		["resident_repair_choice_pending", "resident_repair", 2],
+		["preparation_choice_pending", "preparation", 3],
+		["repair_choice_pending", "repair", 3],
+	]:
+		game.set(fixture[0], true)
+		game.set("message", "这是一段很长的居民对话，选项不应被挤到看不见的地方。".repeat(60))
+		game.call("_update_hud")
+		await _settle()
+		var view: Dictionary = game.call("_hud_choice_view")
+		assert(view.id == fixture[1] and view.options.size() == fixture[2])
+		var pinned := presentation.get("choice_panel") as Control
+		assert(pinned.is_visible_in_tree() and root.get_visible_rect().encloses(pinned.get_global_rect()))
+		assert(not pinned.get_global_rect().intersects(context.get_global_rect()))
+		var buttons: Array = presentation.get("choice_buttons")
+		for index in range(int(fixture[2])):
+			assert(buttons[index].is_visible_in_tree() and pinned.get_global_rect().encloses(buttons[index].get_global_rect()))
+		game.set(fixture[0], false)
+	game.set("resident_gather_policy_choice_pending", true)
+	game.call("_update_hud")
+	await _settle()
+	await _click((presentation.get("choice_buttons") as Array)[1])
+	assert(not game.get("resident_gather_policy_choice_pending") and game.get("resident_gather_policy") == "shellfish_first", "actual pinned mouse choice must reach the original controller")
+	game.call("_on_hud_choice_requested", KEY_1, "gather")
+	assert(not game.get("building_mode"), "retired choice clicks must not leak into a new world action")
 	root.size = Vector2i(1280, 720)
 	game.set("message", "居民正在讲述风雨中的准备。".repeat(100))
 	game.call("_update_hud")

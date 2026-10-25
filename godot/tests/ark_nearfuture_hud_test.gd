@@ -19,7 +19,8 @@ func _tap(code: Key) -> void:
 		event.keycode = code
 		event.physical_keycode = code
 		event.pressed = down
-		root.push_input(event)
+		Input.parse_input_event(event)
+		Input.flush_buffered_events()
 
 func _freeze() -> void:
 	game.set_process(false)
@@ -83,6 +84,13 @@ func _run() -> void:
 	for iteration in range(20):
 		hud.call("refresh")
 	assert(before == _state(), "HUD refresh and repeated initialization must not change live game/module state")
+	_tap(KEY_F8)
+	await _settle()
+	assert(hud.get("_metrics_enabled") and (hud.get("keys_label") as Label).text.contains("FPS"), "F8 input: enabled=%s text=%s allowed=%s" % [hud.get("_metrics_enabled"), (hud.get("keys_label") as Label).text, game.call("_camera_input_allowed")])
+	assert(before == _state(), "real performance diagnostics must remain presentation-only")
+	_tap(KEY_F8)
+	await _settle()
+	assert(not hud.get("_metrics_enabled") and (hud.get("keys_label") as Label).text.contains("Home"))
 	_single_hud()
 	var snapshot: Dictionary = hud.call("snapshot")
 	assert(snapshot.health == game.get("player_health") and snapshot.wood_carried == game.get("wood"))
@@ -138,6 +146,18 @@ func _run() -> void:
 	var alerts := (hud.get("alert_label") as Label).text
 	assert(alerts.contains("生命危急") and alerts.contains("彻骨 3/3 · 步速 28%"))
 	assert(alerts.contains("棚顶松脱 / 筏舷松动"))
+	for screen in [Vector2i(960, 540), Vector2i(1280, 720), Vector2i(3440, 1440)]:
+		root.size = screen
+		await _settle()
+		_bounds()
+		var warning := hud.get("alert_panel") as Control
+		var context := game.get("note_panel") as Control
+		assert(warning.size.y <= 190, "critical warnings must not inflate into an empty screen-sized card")
+		assert(not warning.get_global_rect().intersects(context.get_global_rect()), "event text must not overlap critical warnings")
+		assert(warning.get_global_rect().encloses((hud.get("alert_label") as Label).get_global_rect()))
+		assert((hud.get("alert_icon") as TextureRect).texture != null)
+	root.size = Vector2i(1280, 720)
+	await _settle()
 	before = _state()
 	hud.call("detach")
 	await _settle()
@@ -175,11 +195,16 @@ func _run() -> void:
 	hud.call("refresh")
 	assert(not records.has(off_tree_id) and _name_cache_counts() == cache_before)
 	var restored_names: Array = records.values()
+	for record in restored_names:
+		var sign: Label3D = record.node.get_ref()
+		var parent_name := str(sign.get_parent().name)
+		if parent_name in ["residentMarker", "sailmakerMarker"]:
+			assert(is_equal_approx(sign.pixel_size, float(record.pixel_size) * .45), "resident name must not become a close-camera banner")
 	before = _state()
 	hud.call("detach")
 	for record in restored_names:
 		var sign: Object = record.node.get_ref()
-		assert(is_instance_valid(sign) and sign.get("visible") == record.visible, "detach restores every current rebuilt name")
+		assert(is_instance_valid(sign) and sign.get("visible") == record.visible and is_equal_approx(sign.get("pixel_size"), record.pixel_size), "detach restores every current rebuilt name and its original size")
 	await _settle()
 	assert(before == _state())
 	assert(bool(game.call("_ensure_nearfuture_hud")))

@@ -8,6 +8,9 @@ var _reservations: Dictionary = {}
 var _cargo: Dictionary = {}
 var _receipts: Dictionary = {}
 var _totals: Dictionary = {}
+var _streams: Dictionary = {}
+var _flows: Dictionary = {}
+const MAX_STREAMS := 64
 
 func _bucket(resource: String) -> Dictionary:
 	if not _totals.has(resource):
@@ -138,15 +141,43 @@ func _add(owner: String, amounts: Dictionary) -> void:
 	for resource in amounts: _inventories[owner][resource] = inventory(owner, resource) + int(amounts[resource])
 
 func consume(owner: String, costs: Dictionary, operation_id: String) -> Dictionary:
+	return consume_shared(owner, costs, operation_id, {})
+
+## Only explicitly allowed resource/owner pairs participate. Plan all deductions
+## before writing any inventory: a missing rare component must not spend wood.
+## As with consume/transfer, intent belongs to the command-owning service: reuse
+## a receipt only for the same command (Construction compares its full intent).
+func consume_shared(owner: String, costs: Dictionary, operation_id: String, shared: Dictionary) -> Dictionary:
 	if _receipts.has(operation_id): return {"ok":true,"duplicate":true}
-	if operation_id.is_empty() or not _amounts(costs): return {"ok":false,"code":"invalid"}
+	if operation_id.is_empty() or owner.is_empty() or not _amounts(costs) or not valid_shared_sources(owner, shared): return {"ok":false,"code":"invalid"}
+	var deductions: Dictionary = {}
 	for resource in costs:
-		if inventory(owner, resource) < int(costs[resource]): return {"ok":false,"code":"materials"}
-	for resource in costs:
-		_inventories[owner][resource] = inventory(owner, resource) - int(costs[resource])
-		_bucket(resource).consumed += int(costs[resource])
+		var remaining := int(costs[resource])
+		var owners: Array = [owner]
+		owners.append_array(shared.get(resource, []))
+		for source_owner in owners:
+			var taken := mini(remaining, inventory(source_owner, resource))
+			if taken > 0:
+				if not deductions.has(source_owner): deductions[source_owner] = {}
+				deductions[source_owner][resource] = taken
+				remaining -= taken
+		if remaining > 0: return {"ok":false,"code":"materials"}
+	for source_owner in deductions:
+		for resource in deductions[source_owner]:
+			var taken := int(deductions[source_owner][resource])
+			_inventories[source_owner][resource] = inventory(source_owner, resource) - taken
+			_bucket(resource).consumed += taken
 	_receipts[operation_id] = true
-	return {"ok":true}
+	return {"ok":true,"deductions":deductions}
+
+static func valid_shared_sources(owner: String, shared: Dictionary) -> bool:
+	for resource in shared:
+		if not resource is String or resource.is_empty() or not shared[resource] is Array: return false
+		var seen: Array = [owner]
+		for source_owner in shared[resource]:
+			if not source_owner is String or source_owner.is_empty() or seen.has(source_owner): return false
+			seen.append(source_owner)
+	return true
 
 func input(owner: String, resource: String, amount: int, operation_id: String) -> Dictionary:
 	return input_many(owner, {resource:amount}, operation_id)
@@ -169,8 +200,138 @@ func transfer(from_owner: String, to_owner: String, amounts: Dictionary, operati
 	_receipts[operation_id] = true
 	return {"ok":true}
 
+## Bounded machine ledger: one latest intent per stable producer/consumer, not
+## one receipt per frame. Costs and outputs settle atomically for one owner.
+func process_stream(owner: String, stream_id: String, sequence: int, costs: Dictionary, outputs: Dictionary) -> Dictionary:
+	return process_shared_stream(owner,stream_id,sequence,costs,outputs,{})
+
+## Bounded same-command ledger with explicit shared cost sources. Outputs still
+## belong to one owner; all source deductions and output capacity are preflighted.
+## Empty shared sources retain the original four-field stream representation.
+func process_shared_stream(owner: String, stream_id: String, sequence: int, costs: Dictionary, outputs: Dictionary, shared: Dictionary) -> Dictionary:
+	if owner.is_empty() or owner.length() > 64 or stream_id.is_empty() or stream_id.length() > 64 or sequence < 1 or sequence > 1000000000:
+		return {"ok":false,"code":"invalid_stream"}
+	if costs.size() > 8 or outputs.size() > 8 or not _amounts(costs) or not _amounts(outputs) or (costs.is_empty() and outputs.is_empty()):
+		return {"ok":false,"code":"invalid_stream"}
+	if not _valid_stream_sources(owner,costs,shared): return {"ok":false,"code":"invalid_stream"}
+	for amount in costs.values()+outputs.values():
+		if amount <= 0: return {"ok":false,"code":"invalid_stream"}
+	var intent := {"owner":owner,"sequence":sequence,"costs":costs.duplicate(true),"outputs":outputs.duplicate(true)}
+	if not shared.is_empty(): intent["shared"] = shared.duplicate(true)
+	var previous: Dictionary = _streams.get(stream_id, {})
+	if sequence == int(previous.get("sequence", 0)):
+		return {"ok":true,"duplicate":true} if Memory.facts_equal(previous,intent) else {"ok":false,"code":"conflicting_replay"}
+	if sequence != int(previous.get("sequence", 0)) + 1: return {"ok":false,"code":"stale_or_skipped_sequence"}
+	if not _streams.has(stream_id) and _streams.size()+_flows.size() >= MAX_STREAMS: return {"ok":false,"code":"stream_limit"}
+	var total := 0
+	for value in _inventories.get(owner, {}).values(): total += int(value)
+	var deductions: Dictionary = {}
+	for resource in costs:
+		var remaining := int(costs[resource])
+		var owners: Array = [owner]
+		owners.append_array(shared.get(resource,[]))
+		for source_owner in owners:
+			var taken := mini(remaining,inventory(source_owner,resource))
+			if taken > 0:
+				if not deductions.has(source_owner): deductions[source_owner] = {}
+				deductions[source_owner][resource] = taken
+				remaining -= taken
+				if source_owner == owner: total -= taken
+		if remaining > 0: return {"ok":false,"code":"materials"}
+	for value in outputs.values(): total += int(value)
+	if total > int(_capacities.get(owner, 1000000000)): return {"ok":false,"code":"capacity"}
+	for resource in outputs:
+		if inventory(owner,resource)-int(deductions.get(owner,{}).get(resource,0))+int(outputs[resource]) > 1000000000: return {"ok":false,"code":"quantity_limit"}
+	for source_owner in deductions:
+		for resource in deductions[source_owner]:
+			var taken := int(deductions[source_owner][resource])
+			_inventories[source_owner][resource] = inventory(source_owner,resource)-taken
+			_bucket(resource).consumed += taken
+	_add(owner, outputs)
+	for resource in outputs: _bucket(resource).input += int(outputs[resource])
+	_streams[stream_id] = intent
+	return {"ok":true,"duplicate":false}
+
+static func _valid_stream_sources(owner: String, costs: Dictionary, shared: Dictionary) -> bool:
+	if shared.size() > 8 or not valid_shared_sources(owner,shared): return false
+	for resource in shared:
+		if not costs.has(resource) or shared[resource].size() > 8: return false
+		for source_owner in shared[resource]:
+			if source_owner.length() > 64: return false
+	return true
+
+## Multi-container production/hauling transaction. Transfers move stock without
+## pretending to consume/recreate it; only recipe costs/outputs affect totals.
+## All deductions, credits and capacities are planned before the first write.
+func process_flow(id: String, sequence: int, moves: Array, costs: Dictionary = {}, outputs: Dictionary = {}) -> Dictionary:
+	var intent := {"sequence":sequence,"moves":moves.duplicate(true),"costs":costs.duplicate(true),"outputs":outputs.duplicate(true)}
+	if not _flow_valid(id,intent): return {"ok":false,"code":"invalid_flow"}
+	var previous: Dictionary = _flows.get(id,{})
+	if sequence == int(previous.get("sequence",0)):
+		return {"ok":true,"duplicate":true} if Memory.facts_equal(previous,intent) else {"ok":false,"code":"conflicting_replay"}
+	if sequence != int(previous.get("sequence",0))+1: return {"ok":false,"code":"stale_or_skipped_sequence"}
+	if not _flows.has(id) and _flows.size()+_streams.size() >= MAX_STREAMS: return {"ok":false,"code":"stream_limit"}
+	var debits := costs.duplicate(true)
+	var credits := outputs.duplicate(true)
+	for move in moves:
+		_flow_add(debits,move["from"],move.resource,int(move.amount))
+		_flow_add(credits,move.to,move.resource,int(move.amount))
+	for owner in debits:
+		for resource in debits[owner]:
+			if inventory(owner,resource) < int(debits[owner][resource]): return {"ok":false,"code":"materials"}
+	var owners: Dictionary = {}
+	for owner in debits.keys()+credits.keys(): owners[owner] = true
+	for owner in owners:
+		var projected: Dictionary = _inventories[owner].duplicate(true)
+		for resource in debits.get(owner,{}): projected[resource] = int(projected.get(resource,0))-int(debits[owner][resource])
+		for resource in credits.get(owner,{}): projected[resource] = int(projected.get(resource,0))+int(credits[owner][resource])
+		var total := 0
+		for value in projected.values():
+			if not _quantity(value): return {"ok":false,"code":"quantity_limit"}
+			total += int(value)
+		if total > int(_capacities.get(owner,1000000000)): return {"ok":false,"code":"capacity"}
+	for owner in debits:
+		for resource in debits[owner]: _inventories[owner][resource] = inventory(owner,resource)-int(debits[owner][resource])
+	for owner in credits: _add(owner,credits[owner])
+	for owner in costs:
+		for resource in costs[owner]: _bucket(resource).consumed += int(costs[owner][resource])
+	for owner in outputs:
+		for resource in outputs[owner]: _bucket(resource).input += int(outputs[owner][resource])
+	_flows[id] = intent
+	return {"ok":true,"duplicate":false}
+
+func flow(id: String) -> Dictionary: return _flows.get(id,{}).duplicate(true)
+
+func _flow_add(plan: Dictionary, owner: String, resource: String, amount: int) -> void:
+	if not plan.has(owner): plan[owner] = {}
+	plan[owner][resource] = int(plan[owner].get(resource,0))+amount
+
+func _flow_valid(id: Variant, intent: Variant) -> bool:
+	if not id is String or id.is_empty() or id.length() > 64 or not intent is Dictionary or intent.size() != 4: return false
+	if not _quantity(intent.get("sequence")) or intent.sequence < 1 or not intent.get("moves") is Array or intent.moves.size() > 8: return false
+	var work := 0
+	for key in ["costs","outputs"]:
+		if not intent.get(key) is Dictionary or intent[key].size() > 8: return false
+		for owner in intent[key]:
+			if not _flow_owner(owner) or not _amounts(intent[key][owner]) or intent[key][owner].is_empty() or intent[key][owner].size() > 8: return false
+			for amount in intent[key][owner].values():
+				if amount <= 0: return false
+			work += 1
+	var seen := {}
+	for move in intent.moves:
+		if not move is Dictionary or move.size() != 4 or not _flow_owner(move.get("from")) or not _flow_owner(move.get("to")) or move["from"] == move.to: return false
+		if not move.get("resource") is String or move.resource.is_empty() or move.resource.length() > 64 or not _quantity(move.get("amount")) or move.amount <= 0: return false
+		var key := str([move["from"],move.to,move.resource])
+		if seen.has(key): return false
+		seen[key] = true
+		work += 1
+	return work > 0
+
+func _flow_owner(owner: Variant) -> bool:
+	return owner is String and not owner.is_empty() and owner.length() <= 64 and _inventories.has(owner)
+
 func snapshot() -> Dictionary:
-	return {"sources":_sources.duplicate(true),"inventories":_inventories.duplicate(true),"capacities":_capacities.duplicate(true),"reservations":_reservations.duplicate(true),"cargo":_cargo.duplicate(true),"receipts":_receipts.duplicate(true),"totals":_totals.duplicate(true)}
+	return {"sources":_sources.duplicate(true),"inventories":_inventories.duplicate(true),"capacities":_capacities.duplicate(true),"reservations":_reservations.duplicate(true),"cargo":_cargo.duplicate(true),"receipts":_receipts.duplicate(true),"totals":_totals.duplicate(true),"streams":_streams.duplicate(true),"flows":_flows.duplicate(true)}
 
 func _assign(saved: Dictionary) -> void:
 	_sources = saved.sources.duplicate(true)
@@ -180,11 +341,14 @@ func _assign(saved: Dictionary) -> void:
 	_cargo = saved.cargo.duplicate(true)
 	_receipts = saved.receipts.duplicate(true)
 	_totals = saved.totals.duplicate(true)
+	_streams = saved.get("streams", {}).duplicate(true)
+	_flows = saved.get("flows", {}).duplicate(true)
 
 func restore(saved: Dictionary) -> bool:
 	if not Memory._plain(saved): return false
 	for key in ["sources","inventories","capacities","reservations","cargo","receipts","totals"]:
 		if not saved.get(key) is Dictionary: return false
+	if not saved.get("streams", {}) is Dictionary or not saved.get("flows",{}) is Dictionary: return false
 	var old := snapshot()
 	_assign(saved)
 	if not audit().ok:
@@ -194,6 +358,18 @@ func restore(saved: Dictionary) -> bool:
 
 func audit() -> Dictionary:
 	var observed: Dictionary = {}
+	if _streams.size()+_flows.size() > MAX_STREAMS: return {"ok":false,"code":"streams"}
+	for id in _flows:
+		if not _flow_valid(id,_flows[id]): return {"ok":false,"code":"flows"}
+	for id in _streams:
+		var stream: Variant = _streams[id]
+		if not id is String or id.is_empty() or id.length() > 64 or not stream is Dictionary or stream.size() not in [4,5]: return {"ok":false,"code":"streams"}
+		if not stream.get("owner") is String or stream.owner.is_empty() or stream.owner.length() > 64 or not _inventories.has(stream.owner): return {"ok":false,"code":"streams"}
+		if not _quantity(stream.get("sequence")) or stream.sequence < 1: return {"ok":false,"code":"streams"}
+		if not _amounts(stream.get("costs")) or not _amounts(stream.get("outputs")) or stream.costs.size() > 8 or stream.outputs.size() > 8 or (stream.costs.is_empty() and stream.outputs.is_empty()): return {"ok":false,"code":"streams"}
+		if stream.size() == 5 and (not stream.get("shared") is Dictionary or stream.shared.is_empty() or not _valid_stream_sources(stream.owner,stream.costs,stream.shared)): return {"ok":false,"code":"streams"}
+		for amount in stream.costs.values()+stream.outputs.values():
+			if amount <= 0: return {"ok":false,"code":"streams"}
 	for owner in _inventories:
 		if not owner is String or not _amounts(_inventories[owner]): return {"ok":false,"code":"inventory"}
 		for resource in _inventories[owner]: observed[resource] = int(observed.get(resource,0)) + int(_inventories[owner][resource])

@@ -70,7 +70,9 @@ func _run() -> void:
 	player.global_position = Vector3(39.0, 1.1, -29.0)
 	game.call("_interact")
 	assert(int(game.get("cold_exposure_level")) == 2, "the far-reef wreck should deepen an existing expedition chill")
-	player.global_position = Vector3(-28.0, 1.1, 23.0)
+	# Exposure semantics fixture follows the actual moved station; the separate
+	# mooring test proves the real voyage and no-jump highland walking route.
+	player.global_position = (game.get_node("MoonbackTideStation") as Node3D).global_position + Vector3.UP*.15
 	game.call("_interact")
 	assert(int(game.get("cold_exposure_level")) == 3, "the moonback station should be survivable but make a long expedition feel costly")
 	assert(((game.get("hud") as Label).text).contains("彻骨 3/3"), "the HUD should name the severity and show its bounded level")

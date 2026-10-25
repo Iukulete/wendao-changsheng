@@ -637,7 +637,7 @@ func _test_save_rejection() -> void:
 		assert(not bool(saver.save_state(bad).get("ok", true)), "malformed progress must be rejected atomically: " + str(bad.get(PHASE)))
 		assert(FileAccess.get_file_as_string(path) == primary, "rejected progress cannot replace good primary")
 		assert((FileAccess.get_file_as_string(path + ".backup") if FileAccess.file_exists(path + ".backup") else "") == backup, "rejected progress cannot rotate good backup")
-	assert(int(valid.schema_version) == 36 and Save.MAX_SCHEMA_VERSION == 36 and Save.VERSION == 1)
+	assert(int(valid.schema_version) == 43 and Save.MAX_SCHEMA_VERSION == 43 and Save.VERSION == 1)
 
 
 func _test_real_meal_interrupt() -> void:

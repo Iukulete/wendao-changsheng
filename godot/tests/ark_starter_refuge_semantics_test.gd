@@ -236,7 +236,7 @@ func _run() -> void:
 		var loaded: Dictionary = game.call("_build_save_state")
 		assert(_json(loaded.world_events) == _json(old.world_events) and loaded.event_sequence == old.event_sequence, "reloading new rest roles must not invent consent, past accommodation, or historical events")
 		_assert_unchanged_owners(old.modules, loaded.modules)
-		assert(int(loaded.schema_version) == 36, "legacy refuge presentation survives migration to current schema 36")
+		assert(int(loaded.schema_version) == 43, "legacy refuge presentation survives migration to current schema 43")
 		# Start at the preserved old Cot coordinate and use ordinary movement away.
 		for step in range(100):
 			game.call("_process", 0.1)

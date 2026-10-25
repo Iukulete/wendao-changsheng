@@ -1,0 +1,147 @@
+extends "res://tests/ark_workshop_home_template_test.gd"
+## Real finite opening ingredients; actor travel is an explicit test fixture.
+func _capture(_stage: String) -> void: pass
+func _confirm(game: Node) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	game.call("_unhandled_input",click)
+func _run() -> void:
+	save_root = ProjectSettings.globalize_path("res://../.local/test_home_template_upgrade_%d" % OS.get_process_id())
+	var saves := Save.new(save_root)
+	saves.clear_for_test()
+	scene = load("res://scenes/ark_greybox.tscn")
+	var game := await _spawn()
+	var origin := Vector3(0,.12,0)
+	_helm_position(game)
+	var initial := _owned(game)
+	game.call("_start_workshop_home_template")
+	game.set("preview_position",origin)
+	game.get("home_templates").refresh(game,origin,true)
+	assert(bool(game.get("building_mode")) and not bool(game.get("preview_valid")),"even a poor player may inspect an unpaid template")
+	assert(str(game.get("note").text).contains("木料不足") and _owned(game) == initial)
+	_key(game,KEY_ESCAPE)
+	for i in 3:
+		_interact(game,"wood")
+		await process_frame
+	assert(game.get("wood") == 8,"finite 1+2+2+3 opening stock funds the whole upgrade path")
+	_helm_position(game)
+	assert(game.call("_try_place_shelter",origin))
+	await physics_frame
+	var shelter: Node3D = game.get_node("ArkRoot/BuiltShelter")
+	var cot: Node3D = shelter.get_node("Cot")
+	var shelter_id := shelter.get_instance_id()
+	var cot_id := cot.get_instance_id()
+	game.call("_update_hud")
+	assert(str((game.find_child("ArkStarterHomeTemplateButton",true,false) as Button).text).contains("2 木"))
+	game.call("_start_starter_home_template")
+	var preview: Node3D = game.get("build_preview")
+	assert(preview.has_node("Storage") and not preview.has_node("Floor") and not preview.has_node("Workbench"),"upgrade ghosts show only missing structures")
+	assert(bool(game.get("preview_valid")) and game.get("preview_position") == game.get("shelter_position"),"existing shelter anchors a valid upgrade")
+	var before := _owned(game)
+	await _capture("01_storage_upgrade")
+	_key(game,KEY_ESCAPE)
+	assert(_owned(game) == before and game.get("wood") == 5,"canceling a two-wood upgrade does not spend or rebuild")
+	game.call("_start_starter_home_template")
+	_confirm(game)
+	assert(bool(game.get("storage_built")) and not bool(game.get("workbench_built")) and game.get("wood") == 3)
+	assert(shelter.get_instance_id() == shelter_id and cot.get_instance_id() == cot_id,"first upgrade preserves actual shelter and bed identity")
+	var storage: Node3D = game.get_node("ArkRoot/BuiltStorage")
+	var storage_id := storage.get_instance_id()
+	var storage_transform := storage.transform
+	_interact(game,"storage")
+	assert(game.get("wood") == 0 and game.get("stored_wood") == 3,"real stored inventory funds the missing workbench")
+	_helm_position(game)
+	game.call("_start_workshop_home_template")
+	preview = game.get("build_preview")
+	var proposal: Dictionary = preview.get_meta("home_template_proposal")
+	assert(proposal.variant == 0 and proposal.wood_cost == 2 and proposal.missing == ["workbench"],"new starter layout reserves the later workbench bay without moving the crate")
+	assert(preview.has_node("Workbench") and not preview.has_node("Storage") and not preview.has_node("Floor"))
+	assert(game.get("preview_valid"))
+	await _capture("02_workshop_upgrade")
+	# Real solid obstacle must reject placement before any payment.
+	var blocker := StaticBody3D.new()
+	var collision := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(.2,.8,.2)
+	collision.shape = box
+	blocker.add_child(collision)
+	(game.get("ark_root") as Node3D).add_child(blocker)
+	blocker.position = proposal.parts.workbench.position+Vector3(0,.4,0)
+	await physics_frame
+	await physics_frame
+	var obstructed := _owned(game)
+	_confirm(game)
+	assert(not bool(game.get("workbench_built")) and _owned(game) == obstructed and str(game.get("message")).contains("实体障碍"))
+	blocker.free()
+	await physics_frame
+	await physics_frame
+	game.set("fixture_preview_checked_msec",0)
+	game.call("_update_build_preview")
+	var cached: Dictionary = (game.get("build_preview") as Node3D).get_meta("home_template_proposal").duplicate(true)
+	cached.wood_cost = 999 # Explicit stale client-preview fixture, not a game balance.
+	(game.get("build_preview") as Node3D).set_meta("home_template_proposal",cached)
+	var before_stale := _owned(game)
+	_confirm(game)
+	assert(not game.get("workbench_built") and _owned(game) == before_stale and str(game.get("message")).contains("再次确认"),"stale preview refresh requires a fresh confirmation without charging")
+	_confirm(game)
+	assert(game.get("workbench_built") and game.get("wood") == 0 and game.get("stored_wood") == 1,"only two stored planks are charged, never the whole seven-wood price")
+	assert(storage.get_instance_id() == storage_id and storage.transform == storage_transform and shelter.get_instance_id() == shelter_id and cot.get_instance_id() == cot_id,"workshop upgrade preserves all pre-existing models and layout")
+	assert((game.get("workbench_position") as Vector3).is_equal_approx(Vector3(2,.12,-.5)))
+	var built := _owned(game)
+	assert(not game.call("_try_place_workshop_home_template",origin) and _owned(game) == built,"repeat confirmation creates no free duplicate or resource write")
+	assert((game.get("economy") as RefCounted).audit().ok)
+	_interact(game,"resident")
+	_interact(game,"resident")
+	_key(game,KEY_1)
+	game.call("_abort_resident_gathering","upgrade_route_test")
+	await physics_frame
+	for id in ["hearth","cot","storage","workbench"]: _route_to_function(game,id)
+	await _capture("03_completed_home")
+	assert(game.call("_save_progress"))
+	var saved := _owned(game)
+	game.queue_free()
+	await process_frame
+	game = await _spawn()
+	assert(not game.get_meta("save_load_blocked",false))
+	var restored := _owned(game)
+	assert(restored.economy == saved.economy and restored.construction == saved.construction and restored.construction_sequence == saved.construction_sequence)
+	assert(game.get("stored_wood") == 1 and game.get("wood") == 0 and game.get("workbench_position") == Vector3(2,.12,-.5))
+	for name in ["BuiltShelter","BuiltStorage","BuiltWorkbench"]: assert(game.find_children(name,"",true,false).size() == 1,"one real facility after reload: "+name)
+	var events: Array = game.get("world_events")
+	assert(events.filter(func(e: Dictionary) -> bool: return e.id == "home_template_completed").size() == 2,"two actual partial template completions, not replayed on load")
+	game.queue_free()
+	await process_frame
+	saves.clear_for_test()
+	# Older starter layouts are not silently rewritten on upgrade/load. Explicit
+	# furniture editing can clear the bay, after which only the missing bench costs.
+	game = await _spawn()
+	game.set("wood",20) # Separate legacy-layout fixture, not the finite opening run.
+	_helm_position(game)
+	assert(game.call("_try_place_shelter",origin))
+	assert(game.call("_try_place_storage",Vector3(2,.12,-1.5)))
+	await physics_frame
+	var legacy_crate: Node3D = game.get_node("ArkRoot/BuiltStorage")
+	var legacy_id := legacy_crate.get_instance_id()
+	var legacy_transform := legacy_crate.transform
+	game.call("_start_workshop_home_template")
+	assert(not game.get("preview_valid") and str(game.get("note").text).contains("F搬移"),"old cramped layout explains the explicit furniture-edit remedy")
+	var legacy_owned := _owned(game)
+	_confirm(game)
+	assert(_owned(game) == legacy_owned and legacy_crate.transform == legacy_transform,"failed upgrade does not move an older owner's crate")
+	_key(game,KEY_ESCAPE)
+	(game.get("player") as Node3D).global_position = legacy_crate.global_position+Vector3(-.8,.2,0)
+	assert(game.call("_start_fixture_edit","storage"))
+	_helm_position(game)
+	assert(game.call("_try_move_fixture",Vector3(2,.12,1.5),0),"explicit legacy crate move: "+str(game.get("message")))
+	await physics_frame
+	var legacy_wood: int = game.get("wood")
+	game.call("_start_workshop_home_template")
+	assert(game.get("preview_valid"))
+	_confirm(game)
+	assert(game.get("workbench_built") and game.get("wood") == legacy_wood-2 and legacy_crate.get_instance_id() == legacy_id,"explicit move preserves model identity and unlocks a two-wood upgrade")
+	game.queue_free()
+	await process_frame
+	saves.clear_for_test()
+	print("ARK_HOME_TEMPLATE_UPGRADE_TEST_OK: finite opening wood, unpaid preview/cancel, two incremental payments, anchored existing room/crate preserved, upgrade-ready layout, actual obstacle rejection, real resident routes and exact reload")
+	quit()

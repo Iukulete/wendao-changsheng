@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "status": "runtime-default stylized home prototype; not final production art",
+  "files": [{
+    "path": "home_timber_albedo_v1.png",
+    "size": [1254, 1254],
+    "bytes": 2186298,
+    "sha256": "b94606b9db574de31cc09bc0ebed51256c3050619ed9b823c686c686fd4c8f61",
+    "source": "Original AI-generated raster, built-in imagegen, 2026-10-24",
+    "external_reference_images": false,
+    "modifications": "none; original output bytes retained",
+    "use": "Albedo only, reversible home timber/joinery presentation; no normal/roughness map claimed",
+    "rights_note": "Project-generated asset, distributed under repository license; AI generation does not establish exclusive copyright.",
+    "prompt": "Use case: stylized-concept. Asset type: one seamless tileable game albedo texture, intended for actual 3D deck planks, cabin wood panels, beams and handmade furniture in a cozy seafaring home survival game. Primary request: refined hand-painted warm honey/chestnut timber surface, gentle flowing long grain running vertically, few subtle knots, light salt-weathering and hand-worn patina. Cohesive understated premium stylized 3D game look, readable broad grain with restrained small details, NOT photorealistic noise, not cartoon outlines. Orthographic straight-on flat material swatch filling the entire square image. Uniform neutral diffuse illumination, no baked directional shading, no cast shadows, no perspective, no objects or props. No plank seams (the 3D models already have separate planks), no nails, no borders, no labels, no text, no watermark. Low contrast, warm midtone, edge-to-edge seamless tiling in both axes. Produce a single square texture image."
+  }],
+  "other_assets": "Nine existing Poly Haven coast maps retain their own provenance. Reversible box chamfers, joinery, rope coils, shelf jars and cloth details are original repo-native geometry. Canvas weave and deck seams are code-native shaders, not new bitmap assets. Existing coast foliage and Moonback pier shader are retained. No extra collision or resource nodes."
+}

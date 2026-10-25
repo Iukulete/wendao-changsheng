@@ -20,6 +20,7 @@ import tempfile
 import shutil
 
 from verify_migration_surface import canonical_tests, verify_pack
+from verify_native_simulation import verify_bundle as verify_native_bundle
 
 ROOT = Path(__file__).resolve().parents[1]
 ANSI_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
@@ -67,6 +68,10 @@ def regression_scripts() -> list[str]:
 def run(command: list[str], name: str, log_dir: Path, env: dict[str, str],
         timeout: int, marker: str | None = None, cwd: Path = ROOT) -> str:
     print(f"Running {name}...", flush=True)
+    # Engine file logs must not fall back to Windows AppData on C:. Keep the
+    # independent engine log beside captured stdout; do not mutate callers.
+    if Path(command[0]).name.lower().startswith("godot") and "--version" not in command and "--log-file" not in command:
+        command = [*command, "--log-file", str((log_dir / f"{name}-engine.log").resolve())]
     try:
         result = subprocess.run(command, cwd=cwd, env=env, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True, encoding="utf-8",
@@ -104,7 +109,8 @@ def verify_captures(directory: Path) -> None:
         hashes[digest] = name
 
 
-def packed_scene_smoke(engine: Path, pack: Path, logs: Path, env: dict[str, str], temp: Path) -> None:
+def packed_scene_smoke(engine: Path, pack: Path, logs: Path, env: dict[str, str], temp: Path,
+                       native_source: Path | None = None) -> None:
     # This probe lives outside the resource pack: tests are never shipped. It
     # loads the configured menu and enters the real 3D scene using only packed
     # dependencies, with a unique repository-local throwaway save root.
@@ -127,6 +133,14 @@ func _run() -> void:
         await process_frame
     var game := current_scene
     assert(game is Node3D, "packed menu must enter the actual 3D Ark")
+    assert(game.get("household_work").backend_status().backend == "native-flecs", "PCK must load the copied external native bundle")
+    var coast = game.get("opening_coast")
+    coast.refresh_moving_actors()
+    var support_queries: int = coast.actor_support_sample_count
+    coast.refresh_moving_actors()
+    assert(coast.actor_support_sample_count == support_queries, "packed static residents must reuse terrain support")
+    for actor in coast.actor_contacts:
+        assert(actor.feet.size() > 0 and actor.feet.size() < 2688, "packed neutral probes must be deduplicated")
     assert(str(game.get("save_root_override")) == save_root)
     var service = game.get("save_service")
     assert(str(service.call("get_save_path")).begins_with(save_root + "/"))
@@ -136,6 +150,14 @@ func _run() -> void:
     game.set("wood", 20)
     assert(game.call("_try_place_shelter", Vector3.ZERO))
     var paid: int = game.get("wood")
+    assert(game.get("home_art_sample").enabled)
+    assert(game.get("home_art_sample").timber_texture().get_size() == Vector2(1254, 1254))
+    assert(game.get_node_or_null("ArkRoot/BuiltShelter/HomeArtCandidate") != null)
+    assert(game.get("wood") == paid and game.get("economy").audit().ok)
+    game.call("_toggle_home_art_sample")
+    assert(not game.get("home_art_sample").enabled)
+    game.call("_toggle_home_art_sample")
+    assert(game.get("home_art_sample").enabled)
     assert(game.call("_save_progress"))
     game.call("_return_to_main_menu")
     for frame in range(4):
@@ -147,18 +169,85 @@ func _run() -> void:
         await process_frame
     game = current_scene
     assert(game is Node3D and not game.get_meta("save_load_blocked", false))
+    assert(game.get("home_art_sample").enabled and game.get("home_art_button").button_pressed, "packed cold reload uses the real production art default")
     assert(game.get("shelter_built") and game.get("wood") == paid)
     assert(game.get_node_or_null("ArkRoot/BuiltShelter") != null)
     assert(game.get("economy").audit().ok)
+    var orbit = game.get("orbit_camera")
+    var press := InputEventMouseButton.new()
+    press.button_index = MOUSE_BUTTON_RIGHT
+    press.pressed = true
+    game.call("_unhandled_input", press)
+    var drag := InputEventMouseMotion.new()
+    drag.relative = Vector2(80, 10)
+    drag.button_mask = MOUSE_BUTTON_MASK_RIGHT
+    game.call("_unhandled_input", drag)
+    await physics_frame
+    assert(orbit.adjusted and orbit.yaw < -0.4 and game.get("camera").fov == 54.0)
+    orbit.reset()
+    game.call("_update_follow_camera")
+    var metrics := InputEventKey.new()
+    metrics.keycode = KEY_F8
+    metrics.pressed = true
+    game.call("_input", metrics)
+    assert(game.get("nearfuture_hud").get("_metrics_enabled"))
+    game.call("_input", metrics)
+    assert(not game.get("nearfuture_hud").get("_metrics_enabled"))
     game.call("_load_progress")
     assert(game.get("wood") == paid and game.get("economy").audit().ok)
-    print("ARK_PACK_SCENE_SMOKE_OK: menu/build/save/return/recreate/repeat-load, normal window, isolated save, no packaged tests")
+    # Explicit synthetic compatibility fixture, NOT evidence of earned rooms,
+    # admission or repairs. Release must execute restore outside debug asserts.
+    game.set_process(false)
+    game.set_physics_process(false)
+    game.set("sailmaker_met", true)
+    game.set("sailmaker_boarded", true)
+    game.set("storage_built", true)
+    game.set("workbench_built", true)
+    game.set("raft_edge_damaged", true)
+    game.get("household_work").enabled = true
+    var began_work: bool = game.get("household_work").begin("raft_edge")
+    assert(began_work)
+    var expected_work: Dictionary = game.get("household_work").snapshot()
+    assert(game.call("_save_progress"))
+    game.call("_load_progress")
+    assert(game.get("household_work").snapshot() == expected_work)
+    assert(game.get("household_work").enabled and game.get("household_work").active())
+    assert(game.get("household_work").backend_status().backend == "native-flecs")
+    # Packed-only resource/rule/view check; the separate earned-home regression
+    # tests the genuine harvest/meal/controller flow rather than this fixture.
+    var table = load("res://scripts/modules/leisure/ark_lantern_table.gd").new()
+    var began_round: bool = table.begin("tidekeeper", 1)
+    assert(began_round and table.view().phase == "playing")
+    var table_ui = load("res://scripts/presentation/ark_lantern_table_ui.gd").new()
+    var layer := CanvasLayer.new()
+    game.add_child(layer)
+    var ui_theme := Theme.new()
+    ui_theme.default_font = load("res://art/fonts/ark_ui_font.tres")
+    table_ui.theme = ui_theme
+    layer.add_child(table_ui)
+    table_ui.present(table.view(), "归舟灯下，不押物资。")
+    assert(table_ui.visible)
+    assert(load("res://art/lantern_table/cloth_albedo_v1.png").get_size() == Vector2(1254, 1254))
+    assert(table_ui.get("player_cards").get_child_count() == 2)
+    var held_round: Dictionary = table.snapshot()
+    var next_card: int = held_round.deck[int(held_round.cursor)]
+    var took_card: bool = table.hit()
+    assert(took_card and table.snapshot().player.back() == next_card)
+    var restored_round: bool = table.restore(held_round)
+    assert(restored_round and table.snapshot() == held_round)
+    layer.queue_free()
+    await process_frame
+    print("ARK_PACK_SCENE_SMOKE_OK: menu/build/candidate-assets/save/return/recreate/repeat-load/orbit/metrics/native active-work restore/packed lantern rules and cloth UI, normal window, isolated synthetic fixtures, no packaged tests")
     quit()
 """, encoding="utf-8")
     local = ROOT / ".local"
     local.mkdir(exist_ok=True)
+    native_copy = temp / "packed-native"
+    shutil.copytree(native_source or ROOT / ".local/native/ark_simulation", native_copy, dirs_exist_ok=True)
+    verify_native_bundle(native_copy)
     with tempfile.TemporaryDirectory(prefix="test_ark_pack_", dir=local) as save_root:
-        probe_env = {**env, "ARK_VALIDATION_SAVE_ROOT": Path(save_root).as_posix()}
+        probe_env = {**env, "ARK_VALIDATION_SAVE_ROOT": Path(save_root).as_posix(),
+                     "ARK_SIMULATION_EXTENSION": (native_copy / "ark_simulation.gdextension").as_posix()}
         run([str(engine), "--headless", "--audio-driver", "Dummy", "--main-pack", str(pack),
              "--quit-after", "600", "--script", str(probe)], "packed_scene_smoke", logs,
             probe_env, 180, "ARK_PACK_SCENE_SMOKE_OK:", cwd=temp)
@@ -187,6 +276,11 @@ def main() -> int:
     version = run([str(engine), "--version"], "version", logs, env, 30).strip()
     if not VERSION_PATTERN.fullmatch(version):
         raise RuntimeError(f"Godot version drift detected: {version}")
+    native_dir = ROOT / ".local/native/ark_simulation"
+    run([sys.executable, "-X", "utf8", str(ROOT / "native/ark_simulation/build.py"),
+         "--godot", str(engine), "--out", str(native_dir)], "native_simulation_build", logs, env, 600, "ARK_SIMULATION_EXTENSION=")
+    verify_native_bundle(native_dir)
+    env["ARK_SIMULATION_EXTENSION"] = (native_dir / "ark_simulation.gdextension").as_posix()
     common = [str(engine), "--audio-driver", "Dummy", "--path", str(ROOT / "godot")]
     if args.render_only:
         captures = ROOT / ".tmp/ark-render-captures"

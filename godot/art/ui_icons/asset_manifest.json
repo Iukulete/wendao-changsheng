@@ -1,0 +1,14 @@
+{
+  "provider": "Lucide Icons and Contributors",
+  "repository": "https://github.com/lucide-icons/lucide",
+  "revision": "7faf87628a1ad6175975bc595344337ce14a7db4",
+  "license": "ISC; complete upstream license including Feather MIT notice retained",
+  "license_file": "Lucide-LICENSE.txt",
+  "adaptation": "Only currentColor replaced by #ffffff for Godot texture tinting; paths/viewBox/strokes otherwise unchanged.",
+  "files": [
+    {"name": "hammer.svg", "bytes": 478, "sha256": "27360834be385f0081ca357b95f9a78c28f344a4e3f99dd8e0fdb6f39bd2b243", "source_sha256": "db75caf31bd080726be0c2dab09372498b999cbdcf10c756f44636831f9529f5", "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/7faf87628a1ad6175975bc595344337ce14a7db4/icons/hammer.svg"},
+    {"name": "house.svg", "bytes": 378, "sha256": "acde7e4d79864b7e347e592054a802b1c4f89e33e4987f4dfdb53da340b682da", "source_sha256": "28216c479005731ef5e382e7d8627eda2b129b019eb1f3d9de9f5915576d448e", "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/7faf87628a1ad6175975bc595344337ce14a7db4/icons/house.svg"},
+    {"name": "palette.svg", "bytes": 546, "sha256": "cc1d74035ec655083ba184cdcbbd065f6ff4c58081c9c7094713bd2669371796", "source_sha256": "8e7d3fde990cffd10469ba351f27c50202b057a9bb9af5626322e53fd3abc78c", "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/7faf87628a1ad6175975bc595344337ce14a7db4/icons/palette.svg"},
+    {"name": "triangle-alert.svg", "bytes": 340, "sha256": "aae55b7164593268d234bc04336c1572f80e0852bc6443d0912ee8a0359b8384", "source_sha256": "4866f38b8560d410f21e3226413e0b77997b6dfbb6931fadfe0a0d5aef9ffeb4", "source_url": "https://raw.githubusercontent.com/lucide-icons/lucide/7faf87628a1ad6175975bc595344337ce14a7db4/icons/triangle-alert.svg"}
+  ]
+}

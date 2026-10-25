@@ -44,6 +44,12 @@ def minimal_pack() -> dict[str, bytes]:
     files.update({"art/surface_sample/" + name: (surface.ROOT / "godot/art/surface_sample" / name).read_bytes()
                   for name in surface.SURFACE_TEXTURES})
     files[surface.SURFACE_MANIFEST] = (surface.ROOT / "godot" / surface.SURFACE_MANIFEST).read_bytes()
+    files.update({"art/home_sample/" + name: (surface.ROOT / "godot/art/home_sample" / name).read_bytes()
+                  for name in surface.HOME_SAMPLE_FILES})
+    files.update({"art/ui_icons/" + name: (surface.ROOT / "godot/art/ui_icons" / name).read_bytes()
+                  for name in surface.UI_FILES})
+    files.update({"art/lantern_table/" + name: (surface.ROOT / "godot/art/lantern_table" / name).read_bytes()
+                  for name in surface.LANTERN_FILES})
     # A positive synthetic PCK must carry every newly required reviewed coast
     # document and packed import. The payload stubs test the boundary parser;
     # the separate actual Godot export gate validates native resource loading.
@@ -54,6 +60,11 @@ def minimal_pack() -> dict[str, bytes]:
             '[remap]\n\nimporter="texture"\ntype="CompressedTexture2D"\n'
             'path="res://' + target + '"\n\0').encode()
         files[target] = b"imported-coast-texture-fixture"
+    for name in ("asset_manifest.json", "License_Standard.txt"):
+        files["art/coast_nature/" + name] = (surface.ROOT / "godot/art/coast_nature" / name).read_bytes()
+    for name, target in surface.NATURE_IMPORTED.items():
+        files["art/coast_nature/" + name + ".import"] = ('[remap]\npath="res://' + target + '"\n\0').encode()
+        files[target] = b"imported-nature-payload-fixture"
     return files
 
 
@@ -77,6 +88,44 @@ class SurfaceAssetTests(unittest.TestCase):
         shutil.copytree(surface.ROOT / "godot/art/surface_sample", self.directory)
         (self.root / "tools").mkdir()
         shutil.copyfile(surface.ROOT / surface.SURFACE_GENERATOR, self.root / surface.SURFACE_GENERATOR)
+
+    def test_home_candidate_reviewed_asset_and_import_pass(self) -> None:
+        surface.verify_home_assets(surface.ROOT)
+
+    def test_lantern_reviewed_texture_import_and_provenance_pass(self) -> None:
+        surface.verify_lantern_assets(surface.ROOT)
+
+    def test_lantern_manifest_cannot_change_identity_or_mislabel_pbr(self) -> None:
+        original = json.loads((surface.ROOT / "godot/art/lantern_table/asset_manifest.json").read_bytes())
+        for key, value in (("file", "../outside.png"), ("sha256", "0" * 64),
+                           ("source", "unknown"), ("usage", "seamless PBR normal map"),
+                           ("prompt", ""), ("license", "unknown")):
+            with self.subTest(key=key):
+                changed = json.loads(json.dumps(original))
+                changed["assets"][0][key] = value
+                with self.assertRaises(RuntimeError):
+                    surface.verify_lantern_manifest(json.dumps(changed).encode())
+
+    def test_release_state_restoration_does_not_depend_on_debug_assertions(self) -> None:
+        for path in (surface.ROOT / "godot/scripts").rglob("*.gd"):
+            with self.subTest(path=path):
+                self.assertNotRegex(path.read_text(encoding="utf-8"),
+                                    r"assert\([^\n]*\.(?:restore|begin|commit|consume|transfer|advance)\(",
+                                    "release builds may elide assert expressions; mutate explicitly before checking")
+
+    def test_home_candidate_manifest_cannot_authorize_new_asset_or_source(self) -> None:
+        path = surface.ROOT / "godot/art/home_sample/asset_manifest.json"
+        original = json.loads(path.read_bytes())
+        for key, value in (("sha256", "0" * 64), ("path", "../outside.png"),
+                           ("external_reference_images", True), ("source", "unknown"), ("prompt", "")):
+            with self.subTest(key=key):
+                manifest = json.loads(json.dumps(original))
+                manifest["files"][0][key] = value
+                with self.assertRaisesRegex(RuntimeError, "provenance/identity"):
+                    surface.verify_home_manifest(json.dumps(manifest).encode())
+        for entries in ([], [original["files"][0], original["files"][0]], [None]):
+            with self.assertRaisesRegex(RuntimeError, "exactly one"):
+                surface.verify_home_manifest(json.dumps({**original, "files": entries}).encode())
 
     def write_manifest(self, manifest: dict) -> None:
         (self.directory / "asset_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
@@ -368,6 +417,27 @@ class MigrationSurfaceTests(unittest.TestCase):
                     write_pack(path, files)
                     with self.assertRaisesRegex(RuntimeError, "omits required"):
                         surface.verify_pack(path)
+
+    def test_pack_requires_home_candidate_and_its_exact_import_target(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "home.pck"
+            relative = "art/home_sample/home_timber_albedo_v1.png"
+            for missing in (relative, "art/home_sample/asset_manifest.json"):
+                files = minimal_pack()
+                del files[missing]
+                write_pack(path, files)
+                with self.assertRaises(RuntimeError):
+                    surface.verify_pack(path)
+            files = minimal_pack()
+            del files[relative]
+            files[relative + ".import"] = ('[remap]\npath="res://' + surface.HOME_SAMPLE_IMPORTED + '"\n').encode()
+            files[surface.HOME_SAMPLE_IMPORTED] = b"imported-home-fixture"
+            write_pack(path, files)
+            self.assertEqual(surface.verify_pack(path), len(files))
+            files[relative + ".import"] = b'[remap]\npath="res://art/fonts/font_manifest.json"\n'
+            write_pack(path, files)
+            with self.assertRaisesRegex(RuntimeError, "escapes reviewed target"):
+                surface.verify_pack(path)
 
     def test_pack_checks_imported_surface_payload_presence_and_exact_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

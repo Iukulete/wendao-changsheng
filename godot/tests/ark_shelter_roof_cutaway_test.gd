@@ -112,8 +112,13 @@ func _assert_roof_geometry() -> void:
 	for id in names:
 		var part := roof.get_node(id) as MeshInstance3D
 		assert(part.mesh is BoxMesh and part.basis.is_equal_approx(Basis.IDENTITY), "roof coverage must use complete opaque boxes, not misleading AABBs")
-		var material := part.material_override as StandardMaterial3D
-		assert(material != null and material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and is_equal_approx(material.albedo_color.a, 1.0), "cutaway must not substitute transparency for opaque exterior geometry")
+		var material := part.material_override
+		if material is ShaderMaterial:
+			var canvas_path := "res://shaders/ark_home_canvas.gdshader"
+			assert(game.get("home_art_sample").enabled and material.shader != null and material.shader.resource_path == canvas_path)
+			assert(FileAccess.get_sha256(canvas_path) == "de8cb55192965aa9679d37a15b62410a1f50ac290edda9b23f21bb14d337d099" and material.shader.code == FileAccess.get_file_as_string(canvas_path),"the exact reviewed opaque canvas has no ALPHA/discard/transparency substitution, including cached shader code")
+		else:
+			assert(material is StandardMaterial3D and material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED and is_equal_approx(material.albedo_color.a, 1.0), "cutaway must not substitute transparency for opaque exterior geometry")
 		var box := _bounds(part, roof)
 		assert(is_equal_approx(box.position.y, -0.09) and is_equal_approx(box.size.y, 0.18), "all pieces preserve old roof thickness and height")
 		var rect := Rect2(Vector2(box.position.x, box.position.z), Vector2(box.size.x, box.size.z))
@@ -666,7 +671,7 @@ func _run() -> void:
 	_stand(Vector3(0, 0.2, 0))
 	assert(bool(game.call("_save_progress")))
 	var saved: Dictionary = saves.load_state().get("state", {})
-	assert(int(saved.get("schema_version", 0)) == 36 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "visual cutaway must not change save or game version")
+	assert(int(saved.get("schema_version", 0)) == 43 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "visual cutaway remains compatible with kitchen schema43 and the unchanged game version")
 	assert(not JSON.stringify(saved).contains("cutaway"), "presentation hysteresis must not leak into saved gameplay state")
 	var ownership := _ownership()
 	await _drop()

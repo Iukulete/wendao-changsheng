@@ -1,5 +1,6 @@
 extends Node
-## QA-only, reversible presentation adapter for the existing Ark scene.
+signal choice_requested(code: int, choice_id: String)
+## Reversible presentation adapter for the active Ark scene.
 ## This owns no input, gameplay timers, save service or resource ledger.
 ## Attach AFTER the real scene's _ready; see README.md for observer integration.
 
@@ -10,15 +11,20 @@ const AMBER := Color("edc487")
 const RED := Color("f0ada2")
 const FILL := Color(0.075, 0.102, 0.112, 0.94)
 const EDGE := Color(0.34, 0.43, 0.44, 0.72)
+const HOUSE_ICON = preload("res://art/ui_icons/house.svg")
+const HAMMER_ICON = preload("res://art/ui_icons/hammer.svg")
+const PALETTE_ICON = preload("res://art/ui_icons/palette.svg")
+const ALERT_ICON = preload("res://art/ui_icons/triangle-alert.svg")
 const SAFE_NAME_IDS := ["home", "helm", "storage", "workbench", "cot", "hearth", "resident", "sailmaker", "tidekeeper_box", "sailmaker_awning", "resident_keepsake", "wood", "shellfish"]
-const REQUIRED_METHODS := ["_opening_objective_hint", "_day_period_label", "_storm_forecast_due", "_effective_cold_exposure_level", "_hud_choice_open"]
+const REQUIRED_METHODS := ["_opening_objective_hint", "_day_period_label", "_storm_forecast_due", "_effective_cold_exposure_level", "_hud_choice_open", "_hud_choice_view"]
 const REQUIRED_PROPERTIES := ["hud_panel", "hud_drawer", "hud_toggle", "hud_details", "note_panel", "note_scroll", "note", "interaction_hint", "save_status_notice", "world_chart", "player", "interactables", "day_count", "player_health", "wood", "stored_wood", "raw_shellfish", "stew_servings", "weather_phase", "is_swimming", "shelter_roof_damaged", "raft_edge_damaged", "building_mode", "editing_fixture_id", "preview_valid", "sailing_mode"]
 
 var game: Node
 var overlay: Control
 var status_panel: PanelContainer
 var objective_panel: PanelContainer
-var alert_panel: PanelContainer
+var alert_panel: Panel
+var alert_icon: TextureRect
 var build_panel: PanelContainer
 var build_label: Label
 var clock_label: Label
@@ -39,6 +45,13 @@ var _attached := false
 var _font: Font
 var _health_max := 0
 var _options: Dictionary = {}
+var _metrics_enabled := false
+var _metrics_next_msec := 0
+var _metrics_text := ""
+var choice_panel: PanelContainer
+var choice_buttons: Array[Button] = []
+var _choice_id := ""
+var _choice_keys: Array[int] = []
 
 ## Returns false WITHOUT hiding the original HUD if this scene is incompatible.
 ## `compact_world_names=false` leaves every world label fully canonical.
@@ -109,6 +122,7 @@ func snapshot() -> Dictionary:
 		"roof_damaged": bool(game.get("shelter_roof_damaged")), "edge_damaged": bool(game.get("raft_edge_damaged")),
 		"objective": str(game.call("_opening_objective_hint")),
 		"choice_open": bool(game.call("_hud_choice_open")),
+		"choice": game.call("_hud_choice_view"),
 		"building": bool(game.get("building_mode")), "editing": str(game.get("editing_fixture_id")),
 		"preview_valid": bool(game.get("preview_valid")), "sailing": bool(game.get("sailing_mode")),
 		"chart_open": chart != null and chart.visible, "drawer_open": drawer != null and drawer.visible,
@@ -128,6 +142,21 @@ func refresh() -> void:
 	_layout(state)
 	if bool(_options.get("compact_world_names", true)):
 		_update_world_names(state)
+	if _metrics_enabled:
+		var now := Time.get_ticks_msec()
+		if now >= _metrics_next_msec:
+			_metrics_next_msec = now + 500
+			var fps := Engine.get_frames_per_second()
+			var process_ms := maxf(0.0, Performance.get_monitor(Performance.TIME_PROCESS)) * 1000.0
+			var calls := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+			_metrics_text = "FPS %d · 帧均值约 %.1f ms · Process %.2f ms · 绘制 %d" % [fps, 1000.0 / fps, process_ms, calls] if fps > 0 else "FPS -- · 采样中"
+		keys_label.text = _metrics_text
+
+func toggle_metrics() -> void:
+	_metrics_enabled = not _metrics_enabled
+	_metrics_next_msec = 0
+	_last_snapshot.clear()
+	refresh()
 
 func _build_overlay(layer: Node) -> void:
 	overlay = Control.new()
@@ -177,15 +206,66 @@ func _build_overlay(layer: Node) -> void:
 	build_panel = _panel("BuildValidity", overlay, AMBER)
 	build_label = _label(build_panel, "BuildValidityText", 15, AMBER)
 	build_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	alert_panel = _panel("CriticalConditions", overlay, AMBER)
+	# A manually measured alert card avoids a Container/auto-wrapped Label
+	# minimum-size feedback loop producing a huge empty warning rectangle.
+	alert_panel = Panel.new()
+	alert_panel.name = "CriticalConditions"
+	alert_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var alert_style := _box(Color(0.13, 0.12, 0.10, 0.95), Color("8a7454"), 0)
+	alert_style.border_width_left = 3
+	alert_panel.add_theme_stylebox_override("panel", alert_style)
+	overlay.add_child(alert_panel)
+	alert_icon = TextureRect.new()
+	alert_icon.name = "ConditionIcon"
+	alert_icon.texture = ALERT_ICON
+	alert_icon.modulate = AMBER
+	alert_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	alert_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	alert_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	alert_panel.add_child(alert_icon)
 	alert_label = _label(alert_panel, "Conditions", 15, AMBER)
 	alert_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	keys_label = _label(overlay, "KeyHints", 13, MUTED)
 	keys_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	keys_label.add_theme_color_override("font_shadow_color", Color("142126"))
 	keys_label.add_theme_constant_override("shadow_offset_y", 1)
+	choice_panel = _panel("PinnedDialogueChoices", overlay, CYAN)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	choice_panel.add_child(grid)
+	for index in range(4):
+		var button := Button.new()
+		button.name = "DialogueChoice%d" % index
+		button.custom_minimum_size.y = 38
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.focus_mode = Control.FOCUS_NONE
+		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_stylebox_override("normal", _box(Color("263f41"), EDGE, 8))
+		button.add_theme_stylebox_override("hover", _box(Color("355b5a"), CYAN, 8))
+		button.add_theme_stylebox_override("pressed", _box(Color("1b3031"), CYAN, 8))
+		button.add_theme_color_override("font_color", TEXT)
+		button.pressed.connect(_choice_clicked.bind(index))
+		grid.add_child(button)
+		choice_buttons.append(button)
+	choice_panel.hide()
+
+func _choice_clicked(index: int) -> void:
+	if choice_panel.visible and index < _choice_keys.size():
+		choice_requested.emit(_choice_keys[index], _choice_id)
 
 func _update_content(state: Dictionary) -> void:
+	var choice: Dictionary = state.choice
+	_choice_id = str(choice.get("id", ""))
+	_choice_keys.clear()
+	var options: Array = choice.get("options", [])
+	for index in range(choice_buttons.size()):
+		choice_buttons[index].visible = index < options.size()
+		if index < options.size():
+			choice_buttons[index].text = str(options[index].label)
+			_choice_keys.append(int(options[index].key))
+	choice_panel.visible = not options.is_empty()
 	clock_label.text = "第 %d 天  /  %s" % [state.day, state.period]
 	health_label.text = "生命 %d/%d" % [state.health, state.health_max]
 	health_label.add_theme_color_override("font_color", RED if int(state.health) <= 1 else TEXT)
@@ -216,7 +296,7 @@ func _update_content(state: Dictionary) -> void:
 	alert_label.text = "\n".join(alerts)
 	alert_panel.visible = not alerts.is_empty()
 	# Existing controls remain unchanged, and complete help stays in native H.
-	keys_label.text = "M  海图    F5  保存" if not state.building else "左键  确认    右键 / Esc  取消"
+	keys_label.text = "右键拖转 · 滚轮缩放 · Home 复位    M 海图 · F5 保存 · F8 帧率" if not state.building else "左键  确认    右键 / Esc  取消 · F8 帧率"
 	keys_label.visible = not state.choice_open and not state.drawer_open
 	objective_panel.visible = not state.drawer_open and not state.choice_open
 	build_panel.visible = bool(state.building) and not state.drawer_open and not state.choice_open
@@ -254,6 +334,16 @@ func _style_native_nodes() -> void:
 	for button in drawer.find_children("*", "Button", true, false):
 		_style_button(button as Button)
 	_style_button(game.get("hud_toggle"))
+	for binding in [["ArkHomeArtCandidateButton", PALETTE_ICON], ["ArkHouseholdWorkButton", HAMMER_ICON]]:
+		var button := drawer.find_child(binding[0], true, false) as Button
+		if button:
+			_set_property(button, "icon", binding[1])
+			_set_property(button, "expand_icon", true)
+			_set_property(button, "icon_max_width", 20)
+			_set_property(button, "alignment", HORIZONTAL_ALIGNMENT_LEFT)
+	_set_property(game.get("hud_toggle"), "icon", HOUSE_ICON)
+	_set_property(game.get("hud_toggle"), "icon_max_width", 18)
+	_set_property(game.get("hud_toggle"), "expand_icon", true)
 	_override(game.get("hud_details"), "color", "font_color", TEXT)
 	var controls := drawer.find_child("ArkControlsHelp", true, false) as Control
 	if controls:
@@ -268,6 +358,8 @@ func _style_button(button: Button) -> void:
 	_override(button, "color", "font_color", TEXT)
 	_override(button, "color", "font_hover_color", Color.WHITE)
 	_override(button, "color", "font_disabled_color", Color("8e999a"))
+	_override(button, "color", "icon_normal_color", CYAN)
+	_override(button, "color", "icon_hover_color", Color.WHITE)
 
 func _layout(state: Dictionary) -> void:
 	var screen := get_viewport().get_visible_rect().size
@@ -276,7 +368,13 @@ func _layout(state: Dictionary) -> void:
 	status_panel.position = Vector2(margin, margin)
 	status_panel.size = Vector2(left_width, 0)
 	alert_panel.position = Vector2(margin, margin + status_panel.get_combined_minimum_size().y + 12)
-	alert_panel.size = Vector2(left_width, 0)
+	var alert_text_width := left_width - 64.0
+	var alert_height := ceilf(_font.get_multiline_string_size(alert_label.text, HORIZONTAL_ALIGNMENT_LEFT, alert_text_width, 15).y) + 28.0
+	alert_panel.size = Vector2(left_width, maxf(54.0, alert_height))
+	alert_icon.position = Vector2(15, 15)
+	alert_icon.size = Vector2(22, 22)
+	alert_label.position = Vector2(48, 13)
+	alert_label.size = Vector2(alert_text_width, alert_panel.size.y - 26)
 	var objective_width := minf(348.0, screen.x * 0.34)
 	objective_panel.position = Vector2(screen.x - margin - objective_width, 78)
 	objective_panel.size = Vector2(objective_width, 0)
@@ -295,8 +393,17 @@ func _layout(state: Dictionary) -> void:
 	var message_width := minf(620.0, screen.x - margin * 2)
 	if state.drawer_open:
 		message_width = minf(message_width, screen.x - 440 - margin * 3)
-	var message_height := 224.0 if state.choice_open or note.text.length() > 140 else (112.0 if state.building else 78.0)
-	_set_property(note_panel, "position", Vector2(margin, screen.y - 150 - message_height))
+	var note_bottom := screen.y - (150.0 if (game.get("save_status_notice") as Control).visible else 84.0)
+	if choice_panel.visible:
+		var choice_height := 106.0 if _choice_keys.size() > 2 else 60.0
+		choice_panel.position = Vector2(margin, note_bottom - choice_height)
+		choice_panel.size = Vector2(message_width, choice_height)
+		note_bottom -= choice_height + 8.0
+	var occupied_bottom := alert_panel.position.y + alert_panel.size.y if alert_panel.visible else status_panel.position.y + status_panel.get_combined_minimum_size().y
+	var maximum_height := maxf(68.0, minf(272.0 if state.choice_open else 200.0, note_bottom - occupied_bottom - 12.0))
+	var measured_height := ceilf(_font.get_multiline_string_size(note.text, HORIZONTAL_ALIGNMENT_LEFT, message_width - 32.0, 16).y) + 28.0
+	var message_height := clampf(measured_height, 54.0, maximum_height)
+	_set_property(note_panel, "position", Vector2(margin, note_bottom - message_height))
 	_set_property(note_panel, "size", Vector2(message_width, message_height))
 	var hint := game.get("interaction_hint") as Control
 	var hint_width := minf(590.0, screen.x - margin * 2)
@@ -309,8 +416,9 @@ func _layout(state: Dictionary) -> void:
 	var save := game.get("save_status_notice") as Control
 	_set_property(save, "position", Vector2(margin, screen.y - (76 if state.chart_open else 138)))
 	_set_property(save, "size", Vector2(screen.x - margin * 2, 62))
-	keys_label.position = Vector2(screen.x - margin - 310, screen.y - 24)
-	keys_label.size = Vector2(310, 22)
+	var keys_width := minf(620, screen.x - margin * 2)
+	keys_label.position = Vector2(screen.x - margin - keys_width, screen.y - 24)
+	keys_label.size = Vector2(keys_width, 22)
 
 ## Only a narrow whitelist of ordinary Name labels is reduced. Danger signs,
 ## reef/vent markers, unknown labels, meshes and the real focus ring are untouched.
@@ -347,11 +455,16 @@ func _update_world_names(state: Dictionary) -> void:
 			continue
 		var key := sign.get_instance_id()
 		if not _world_signs.has(key):
-			_world_signs[key] = {"node": weakref(sign), "visible": sign.visible}
+			_world_signs[key] = {"node": weakref(sign), "visible": sign.visible, "pixel_size": sign.pixel_size}
 		var originally_visible := bool(_world_signs[key].visible)
 		var distance := actor.global_position.distance_to(target.global_position)
 		var nearby_identity := (id in ["resident", "sailmaker"] and distance <= 7.0) or (id in ["wood", "shellfish"] and distance <= 4.0)
 		sign.visible = originally_visible and (target == focus or nearby_identity) and not state.chart_open
+		# Resident action lines should identify someone, not cover their face or
+		# become a banner in a close camera. Focus actions remain in the 2D hint;
+		# household affordances, danger/unknown signs and fonts stay canonical.
+		if id in ["resident", "sailmaker"]:
+			sign.pixel_size = float(_world_signs[key].pixel_size) * .45
 
 ## Reversible disposal: re-enable original UI/layout, do NOT reset world state.
 func detach() -> void:
@@ -363,6 +476,7 @@ func detach() -> void:
 		var sign: Object = record.node.get_ref()
 		if is_instance_valid(sign):
 			sign.set("visible", record.visible)
+			sign.set("pixel_size", record.pixel_size)
 	for record in _theme_restore:
 		var control: Object = record.node.get_ref()
 		if not is_instance_valid(control):
@@ -390,6 +504,10 @@ func detach() -> void:
 	_theme_keys.clear()
 	_last_snapshot.clear()
 	health_cells.clear()
+	choice_buttons.clear()
+	_choice_keys.clear()
+	_choice_id = ""
+	choice_panel = null
 	game = null
 
 func _exit_tree() -> void:

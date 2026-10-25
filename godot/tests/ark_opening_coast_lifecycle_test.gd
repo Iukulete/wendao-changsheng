@@ -673,6 +673,7 @@ func _moving_residents() -> void:
 	var neutral := _neutral_feet(marker, body)
 	_check(not neutral.is_empty(), "independent neutral foot witness has actual figure vertices")
 	var shellfish_before: int = game.get("raw_shellfish")
+	var stored_food_before: int = game.get("economy").inventory("storage_food","shellfish")
 	if not _check(bool(game.call("_begin_resident_daily_gather")), "normal dispatcher starts existing nearshore shift"):
 		return
 	_check(str(game.get("resident_gather_target_id")) == "TidalShellsNear", "real nearest remaining source is authored-coast shellfish")
@@ -728,7 +729,7 @@ func _moving_residents() -> void:
 			if phase == "returning":
 				return_samples += 1
 	_check(not game.get("resident_gather_pending") and marker.get_parent() == game.get("ark_root"), "actual gather walks back and transfers aboard")
-	_check(game.get("collected_ids").has("TidalShellsNear") and int(game.get("raw_shellfish")) == shellfish_before + 1, "native task delivers exactly its real finite shellfish")
+	_check(game.get("collected_ids").has("TidalShellsNear") and int(game.get("raw_shellfish")) == shellfish_before and game.get("economy").inventory("storage_food","shellfish") == stored_food_before+1, "native task delivers exactly its real finite shellfish to the physical home pantry, not the player")
 	_check(outbound_samples > 0 and return_samples > 0 and bob_samples > 0 and samples > 3, "both native gather legs sample exposed authored terrain while bob remains active")
 	_check(submerged_outbound > 0 and submerged_return > 0, "both native gather legs independently verify submerged support uses baseline zero")
 	_check(not transitions.is_empty(), "native route actually crosses exposed-support boundary; actual adjacent-step size is reported, not inferred from formula")

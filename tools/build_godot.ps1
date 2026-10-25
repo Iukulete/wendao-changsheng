@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$NoPrepare, [switch]$SkipVerify)
+param([switch]$NoPrepare, [switch]$SkipVerify, [string]$GodotPath = "")
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -11,6 +11,7 @@ $OutputPck = Join-Path $OutputDir "wendao-changsheng.pck"
 $OutputLicenseDir = Join-Path $OutputDir "licenses"
 $ChecksumPath = Join-Path $OutputDir "checksums.sha256"
 $ConsolePath = Join-Path $Root "tools\godot\4.7.1\Godot_v4.7.1-stable_win64_console.exe"
+if ($GodotPath) { $ConsolePath = [System.IO.Path]::GetFullPath($GodotPath) }
 $TempDir = Join-Path $Root ".tmp\godot-build"
 
 $releaseRoot = [System.IO.Path]::GetFullPath((Join-Path $Root "release"))
@@ -31,6 +32,9 @@ function Invoke-CheckedGodot {
           [int]$TimeoutSeconds = 600, [string]$Marker = "")
     $stdout = Join-Path $TempDir "$Name.stdout.log"
     $stderr = Join-Path $TempDir "$Name.stderr.log"
+    if ($Arguments -notcontains "--log-file") {
+        $Arguments += @("--log-file", ('"' + (Join-Path $TempDir "$Name.engine.log") + '"'))
+    }
     $process = Start-Process -FilePath $Executable -ArgumentList $Arguments `
         -WorkingDirectory $Root -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr
@@ -66,9 +70,20 @@ if (-not $SkipVerify) {
     if ($LASTEXITCODE -ne 0) { throw "Ark validation failed: $LASTEXITCODE" }
 }
 if (Test-Path -LiteralPath $resolvedOutputDir) {
+    # The portable launcher stores real player saves here. A distributable is
+    # built clean, but rebuilding must never silently delete a played copy.
+    $portableData = Join-Path $resolvedOutputDir ".local"
+    if (Test-Path -LiteralPath $portableData) {
+        throw "Portable player data exists at $portableData. Preserve it outside the release directory before rebuilding, then restore it afterward. Nothing was deleted."
+    }
     Remove-Item -LiteralPath $resolvedOutputDir -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path $resolvedOutputDir | Out-Null
+$NativeOutput = Join-Path $resolvedOutputDir "native"
+& python -X utf8 (Join-Path $Root "native\ark_simulation\build.py") --godot $ConsolePath --out $NativeOutput
+if ($LASTEXITCODE -ne 0) { throw "Native resident simulation build failed: $LASTEXITCODE" }
+& python -X utf8 (Join-Path $PSScriptRoot "verify_native_simulation.py") --bundle $NativeOutput
+if ($LASTEXITCODE -ne 0) { throw "Native resident simulation bundle failed: $LASTEXITCODE" }
 Write-Host "Exporting the active 3D Ark Windows x86_64 build..."
 Invoke-CheckedGodot -Executable $ConsolePath -Name "windows-export" -Arguments @(
     "--headless", "--audio-driver", "Dummy", "--path", "`"$ProjectDir`"",
@@ -91,20 +106,30 @@ foreach ($licenseName in @("NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt", "font_ma
 }
 Copy-Item -LiteralPath (Join-Path $Root "docs\WINDOWS_RELEASE_README.md") `
     -Destination (Join-Path $OutputDir "README.md") -Force
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "launch_release.bat") `
+    -Destination (Join-Path $OutputDir "运行归舟.bat") -Force
 
 # Test the actual Windows EXE, not the editor. No audio hardware or third-party
 # driver is needed by the Ark. Its menu must initialize without writing a save.
 $SmokeDataDir = Join-Path $TempDir "export-smoke-userdata"
 New-Item -ItemType Directory -Force -Path $SmokeDataDir | Out-Null
 $previousAppData, $previousLocalAppData = $env:APPDATA, $env:LOCALAPPDATA
+$previousSimulationExtension = $env:ARK_SIMULATION_EXTENSION
 try {
     $env:APPDATA = $SmokeDataDir
     $env:LOCALAPPDATA = $SmokeDataDir
+    # Prove the release's relative default path, not a source-worktree override.
+    Remove-Item Env:ARK_SIMULATION_EXTENSION -ErrorAction SilentlyContinue
     Invoke-CheckedGodot -Executable $OutputExe -Name "windows-export-smoke" -TimeoutSeconds 120 `
         -Marker "ARK_MENU_READY_OK:" -Arguments @("--headless", "--audio-driver", "Dummy", "--quit-after", "5")
 } finally {
     $env:APPDATA, $env:LOCALAPPDATA = $previousAppData, $previousLocalAppData
+    $env:ARK_SIMULATION_EXTENSION = $previousSimulationExtension
 }
+# Prove actual template EXE native initialization; template exports do not run
+# editor-only --script probes. PCK gameplay is verified by the canonical gate.
+& python -X utf8 (Join-Path $PSScriptRoot "verify_native_release.py") --executable $OutputExe
+if ($LASTEXITCODE -ne 0) { throw "Actual EXE native simulation smoke failed: $LASTEXITCODE" }
 # The launcher will not open a stale retired 2D EXE lacking this product marker.
 [System.IO.File]::WriteAllText((Join-Path $OutputDir "wendao-ark.txt"), "WENDAO_ARK_3D_PRODUCT_V1`r`n", [System.Text.Encoding]::ASCII)
 $checksumLines = @(Get-ChildItem -LiteralPath $OutputDir -Recurse -File |

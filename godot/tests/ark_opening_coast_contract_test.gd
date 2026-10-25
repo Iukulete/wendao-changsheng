@@ -114,6 +114,9 @@ func _top_contract() -> void:
 func _other_islands() -> void:
 	var builder := load("res://scripts/ark_landmass_builder.gd").new() as RefCounted
 	for row in [["FarReefLandmass",Vector3(39,0,-29),Vector2(7.5,6),3.7,Color("626451"),Color("b4a274")], ["MoonbackIsland",Vector3(-28,0,23),Vector2(14,12),5.4,Color("4e615a"),Color("87928a")], ["JadeSailShoal",Vector3(-53,0,-45),Vector2(10,8),9.1,Color("596856"),Color("a09270")], ["SteamWreckIslet",Vector3(92,0,86),Vector2(14,11),14.7,Color("555d54"),Color("98795e")]]:
+		if row[0] == "MoonbackIsland":
+			preload("res://tests/support/moonback_terrain_contract.gd").new().validate(game,self)
+			continue
 		var expected: StaticBody3D = builder.callv("build_island",row)
 		var actual := game.get_node(row[0]) as StaticBody3D
 		_check(actual.transform == expected.transform and actual.get_child_count() == 4, "other island root unchanged:"+row[0])
@@ -168,6 +171,7 @@ func _run() -> void:
 	saves.clear_for_test()
 	game = load("res://scenes/ark_greybox.tscn").instantiate()
 	game.set("save_root_override",save_root)
+	game.set("start_with_home_art",false) # Retain the independent historical material contract.
 	root.add_child(game)
 	game.set_process(false)
 	game.set_physics_process(false)

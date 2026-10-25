@@ -1,0 +1,14 @@
+{
+  "project": "Flecs",
+  "version": "4.1.6",
+  "commit": "fb55f3c25660425cfe1bc4cf5e6bff8b3f18a9b8",
+  "repository": "https://github.com/SanderMertens/flecs",
+  "source_root": "https://raw.githubusercontent.com/SanderMertens/flecs/fb55f3c25660425cfe1bc4cf5e6bff8b3f18a9b8/",
+  "license": "MIT",
+  "modifications": "None. Build enables only SYSTEM and OS_API_IMPL; no HTTP, REST, script, reflection, or C++ wrapper addons.",
+  "sha256": {
+    "flecs.c": "6005392eb13c0f3c7abdecb2f85271e50934f63919afebf0bbe85f6dfc7320d6",
+    "flecs.h": "526036a5a41678e2a43a3cb835e9eaa70fd1993868b1978950c0d275752f69b1",
+    "LICENSE": "5f89f3edd5d1e458cd48509818e23b57d85869f7d57d0ebe31bcfd3a73e5dd60"
+  }
+}

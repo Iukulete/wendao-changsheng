@@ -85,7 +85,7 @@ func run() -> void:
 	for i in range(300): game._record_world_event("weather_observed", {"index": i})
 	assert(game._latest_shared_meal_included_sailmaker(), "durable recorded meal survives short-log clipping")
 	var saved: Dictionary = game._build_save_state()
-	assert(saved.schema_version == 36 and game.MemoryScript._plain(saved))
+	assert(saved.schema_version == 43 and game.MemoryScript._plain(saved))
 	assert(game.economy.audit().ok)
 	assert(game._save_progress())
 	await dispose(game)

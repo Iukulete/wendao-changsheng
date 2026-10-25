@@ -16,6 +16,9 @@ import subprocess
 import zlib
 
 from verify_coast_assets import COAST_TEXTURES, COAST_DOCUMENTS, COAST_IMPORTED, verify_coast_assets, verify_coast_pack
+from verify_ui_assets import UI_FILES, UI_IMPORTED, verify_ui_assets, verify_ui_pack
+from verify_nature_assets import RUNTIME as NATURE_RUNTIME, IMPORTED as NATURE_IMPORTED, verify_nature_assets, verify_nature_pack
+from verify_native_simulation import verify_sources as verify_native_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_SCRIPTS = frozenset({"main.gd", "ark_fixture_placement.gd", "ark_greybox.gd",
@@ -23,10 +26,37 @@ RUNTIME_SCRIPTS = frozenset({"main.gd", "ark_fixture_placement.gd", "ark_greybox
 RUNTIME_SCRIPTS |= frozenset(['modules/economy/ark_economy.gd', 'modules/construction/ark_construction.gd', 'modules/memory/ark_memory.gd', 'modules/residents/ark_gathering.gd', 'adapters/ark_analytic_water.gd', 'adapters/ark_vessel_navigation.gd', 'presentation/ark_pixel_protagonist.gd', 'presentation/ark_emma_protagonist.gd'])
 RUNTIME_SCRIPTS |= frozenset({"presentation/ark_surface_sample.gd", "presentation/ark_nearfuture_hud.gd"})
 RUNTIME_SCRIPTS |= frozenset({"terrain/ark_opening_coast.gd", "presentation/ark_coast_materials.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_home_art_sample.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/residents/ark_household_work.gd"})
+RUNTIME_SCRIPTS |= frozenset({"adapters/ark_household_simulation.gd"})
+RUNTIME_SCRIPTS |= frozenset({"adapters/ark_orbit_camera.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/leisure/ark_lantern_table.gd", "presentation/ark_lantern_table_ui.gd", "presentation/ark_lantern_table_props.gd"})
+RUNTIME_SCRIPTS |= frozenset({"terrain/ark_coast_profile_v2.gd"})
+RUNTIME_SCRIPTS |= frozenset({"terrain/ark_moonback_terrain.gd", "terrain/ark_ground_sampler.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_moonback_landing.gd", "adapters/ark_regional_walk_route.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/rooms/ark_room_roles.gd", "modules/residents/ark_kitchen_work.gd", "adapters/ark_resident_kitchen.gd", "presentation/ark_resident_cook_pose.gd", "presentation/ark_work_limb_math.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/rooms/ark_food_storage.gd", "adapters/ark_food_storage.gd", "presentation/ark_food_tote.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/residents/ark_home_demand.gd", "adapters/ark_home_demand.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/ark_save_schema.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/construction/ark_home_templates.gd", "adapters/ark_home_templates.gd"})
+RUNTIME_SCRIPTS |= frozenset({"presentation/ark_coast_nature.gd", "presentation/ark_ridge_camp.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/modern/ark_power.gd", "modules/modern/ark_modern_utilities.gd", "presentation/ark_modern_utility_props.gd"})
+RUNTIME_SCRIPTS |= frozenset({"modules/residents/ark_wash_routine.gd", "adapters/ark_resident_washing.gd", "presentation/ark_resident_wash_pose.gd"})
+LANTERN_FILES = frozenset({"cloth_albedo_v1.png", "asset_manifest.json"})
+LANTERN_SHA256 = "2db6bad8208f53ad9affdeb31bccaa6634331a4fd86e7825a177f85377d45dff"
+LANTERN_IMPORTED = ".godot/imported/cloth_albedo_v1.png-" + hashlib.md5(b"res://art/lantern_table/cloth_albedo_v1.png", usedforsecurity=False).hexdigest() + ".ctex"
+HOME_SAMPLE_FILES = frozenset({"home_timber_albedo_v1.png", "asset_manifest.json"})
+HOME_SAMPLE_SHA256 = "b94606b9db574de31cc09bc0ebed51256c3050619ed9b823c686c686fd4c8f61"
+HOME_SAMPLE_IMPORTED = ".godot/imported/home_timber_albedo_v1.png-" + hashlib.md5(b"res://art/home_sample/home_timber_albedo_v1.png", usedforsecurity=False).hexdigest() + ".ctex"
 EMMA_FILES = frozenset({"emma.glb", "emma_locomotion.tres", "Quaternius-CC0.txt"})
 PIXEL_FILES = frozenset(['image(20261021-085642).png', 'image(20261021-085643).png', 'image(20261021-085645).png', 'image(20261021-085646).png'])
 SCENES = frozenset({"main.tscn", "ark_greybox.tscn"})
 SHADERS = frozenset({"ark_ocean.gdshader", "ark_coast_textured.gdshader"})
+SHADERS |= frozenset({"ark_coast_home_sample.gdshader"})
+SHADERS |= frozenset({"ark_home_timber.gdshader"})
+SHADERS |= frozenset({"ark_home_canvas.gdshader"})
+SHADERS |= frozenset({"ark_home_joinery.gdshader"})
+SHADERS |= frozenset({"ark_moonback_terrain.gdshader"})
 FONT_FILES = frozenset({"NotoSansSC-Variable.ttf", "NotoSerifSC-Variable.ttf",
                        "NotoSansSC-OFL.txt", "NotoSerifSC-OFL.txt", "font_manifest.json", "ark_ui_font.tres"})
 # Independent reviewed identities, not hashes trusted from an asset's own manifest.
@@ -50,6 +80,10 @@ SURFACE_IMPORTED = {
 EXPORT_INCLUDE_FILTERS = frozenset({"art/player_emma/*.txt", "art/fonts/*.ttf", "art/fonts/*.txt",
                                     "art/fonts/font_manifest.json", SURFACE_MANIFEST})
 EXPORT_INCLUDE_FILTERS |= frozenset("art/coast/" + name for name in COAST_DOCUMENTS)
+EXPORT_INCLUDE_FILTERS |= frozenset({"art/home_sample/asset_manifest.json"})
+EXPORT_INCLUDE_FILTERS |= frozenset({"art/lantern_table/asset_manifest.json"})
+EXPORT_INCLUDE_FILTERS |= frozenset({"art/ui_icons/asset_manifest.json", "art/ui_icons/Lucide-LICENSE.txt"})
+EXPORT_INCLUDE_FILTERS |= frozenset({"art/coast_nature/asset_manifest.json", "art/coast_nature/License_Standard.txt"})
 EXPORT_EXCLUDE_FILTERS = frozenset({"tests/*", "archive/*", "data/*", "audio/*"})
 NON_HEADLESS_TESTS = frozenset({"ark_test_paths.gd", "ark_render_capture_test.gd", "ark_pixel_protagonist_render_test.gd", "ark_gerstner_render_test.gd"})
 REQUIRED_TESTS = frozenset({"ark_menu_integration_test.gd", "ark_test_paths_test.gd",
@@ -217,6 +251,68 @@ def verify_export_preset(preset: str, resources: set[str]) -> None:
             raise RuntimeError(f"Export {key} must preserve exact runtime provenance and archive/test exclusions")
 
 
+def verify_home_manifest(data: bytes) -> None:
+    manifest = json.loads(data)
+    if not isinstance(manifest, dict):
+        raise RuntimeError("Home candidate provenance requires exactly one asset")
+    entries = manifest.get("files")
+    if (manifest.get("schema") != 1 or not isinstance(entries, list) or len(entries) != 1 or
+            not isinstance(entries[0], dict)):
+        raise RuntimeError("Home candidate provenance requires exactly one asset")
+    entry = entries[0]
+    if (entry.get("path") != "home_timber_albedo_v1.png" or entry.get("sha256") != HOME_SAMPLE_SHA256 or
+            entry.get("size") != [1254, 1254] or entry.get("bytes") != 2186298 or
+            entry.get("external_reference_images") is not False or
+            not str(entry.get("source", "")).startswith("Original AI-generated raster, built-in imagegen") or
+            not isinstance(entry.get("prompt"), str) or not entry["prompt"].strip()):
+        raise RuntimeError("Home candidate provenance/identity mismatch")
+
+
+def verify_lantern_manifest(data: bytes) -> None:
+    manifest = json.loads(data)
+    entries = manifest.get("assets")
+    if manifest.get("version") != 1 or not isinstance(entries, list) or len(entries) != 1:
+        raise RuntimeError("Lantern table provenance must contain exactly one asset")
+    expected = {"file": "cloth_albedo_v1.png", "bytes": 4167352, "size": [1254, 1254],
+                "sha256": LANTERN_SHA256, "source": "original built-in imagegen output, unmodified",
+                "usage": "lantern-table cloth albedo and UI backdrop, not a normal/roughness map or seamless tile",
+                "license": "AGPL-3.0, repository LICENSE"}
+    if not isinstance(entries[0], dict) or any(entries[0].get(key) != value for key, value in expected.items()):
+        raise RuntimeError("Lantern cloth reviewed identity/provenance differs")
+    if not isinstance(entries[0].get("prompt"), str) or len(entries[0]["prompt"]) < 100:
+        raise RuntimeError("Lantern cloth generation prompt missing")
+
+def verify_lantern_assets(root: Path) -> None:
+    directory = root / "godot/art/lantern_table"
+    if directory.is_symlink() or any(p.is_symlink() for p in directory.rglob("*")):
+        raise RuntimeError("Lantern assets must not be symlinked")
+    check_exact_files(directory, LANTERN_FILES | {"cloth_albedo_v1.png.import"})
+    data = (directory / "cloth_albedo_v1.png").read_bytes()
+    if len(data) != 4167352 or hashlib.sha256(data).hexdigest() != LANTERN_SHA256 or struct.unpack_from(">II", data, 16) != (1254, 1254):
+        raise RuntimeError("Lantern cloth source bytes/dimensions changed")
+    verify_lantern_manifest((directory / "asset_manifest.json").read_bytes())
+    imports = read(directory / "cloth_albedo_v1.png.import")
+    for key, value in {"mipmaps/generate": "true", "compress/mode": "0", "detect_3d/compress_to": "0",
+                       "path": '"res://' + LANTERN_IMPORTED + '"',
+                       "source_file": '"res://art/lantern_table/cloth_albedo_v1.png"'}.items():
+        if re.findall(r"(?m)^" + re.escape(key) + r"=(.*)$", imports) != [value]:
+            raise RuntimeError("Lantern cloth import policy differs: " + key)
+
+def verify_home_assets(root: Path) -> None:
+    directory = root / "godot/art/home_sample"
+    check_exact_files(directory, HOME_SAMPLE_FILES | {"home_timber_albedo_v1.png.import"})
+    data = (directory / "home_timber_albedo_v1.png").read_bytes()
+    if hashlib.sha256(data).hexdigest() != HOME_SAMPLE_SHA256:
+        raise RuntimeError("Home candidate timber identity changed without review")
+    verify_home_manifest((directory / "asset_manifest.json").read_bytes())
+    imports = read(directory / "home_timber_albedo_v1.png.import")
+    for key, value in {"mipmaps/generate": "true", "compress/mode": "0", "detect_3d/compress_to": "0",
+                       "path": '"res://' + HOME_SAMPLE_IMPORTED + '"',
+                       "source_file": '"res://art/home_sample/home_timber_albedo_v1.png"'}.items():
+        if re.findall(r"(?m)^" + re.escape(key) + r"=(.*)$", imports) != [value]:
+            raise RuntimeError("Home candidate texture import policy mismatch: " + key)
+
+
 def verify(root: Path = ROOT) -> None:
     project = root / "godot"
     project_text = read(project / "project.godot")
@@ -228,16 +324,24 @@ def verify(root: Path = ROOT) -> None:
         check_exact_files(project / directory, expected, sidecars)
     allowed_roots = {".godot", "art", "scripts", "scenes", "shaders", "tests", "project.godot", "export_presets.cfg", "README.md"}
     unexpected = {item.name for item in project.iterdir()} - allowed_roots
-    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma", "surface_sample", "coast"}:
+    if unexpected or {item.name for item in (project / "art").iterdir()} != {"fonts", "player_pixel", "player_emma", "surface_sample", "coast", "coast_nature", "home_sample", "ui_icons", "lantern_table"}:
         raise RuntimeError(f"Retired data/audio/art remains inside res://: {sorted(unexpected)}")
     check_exact_files(project / "art/player_pixel", PIXEL_FILES, (".import",))
     check_exact_files(project / "art/player_emma", EMMA_FILES, (".import",))
     verify_fonts(root)
     verify_surface_assets(root)
     verify_coast_assets(root)
+    verify_home_assets(root)
+    verify_ui_assets(root)
+    verify_lantern_assets(root)
+    verify_nature_assets(root)
     resources = {f"art/player_emma/{name}" for name in EMMA_FILES} | {f"art/player_pixel/{name}" for name in PIXEL_FILES} | {f"scripts/{name}" for name in RUNTIME_SCRIPTS} | {f"scenes/{name}" for name in SCENES} | {f"shaders/{name}" for name in SHADERS} | {f"art/fonts/{name}" for name in FONT_FILES}
     resources |= {f"art/surface_sample/{name}" for name in SURFACE_TEXTURES} | {SURFACE_MANIFEST}
     resources |= {"art/coast/" + name for name in [*COAST_TEXTURES, *COAST_DOCUMENTS]}
+    resources |= {"art/home_sample/" + name for name in HOME_SAMPLE_FILES}
+    resources |= {"art/ui_icons/" + name for name in UI_FILES}
+    resources |= {"art/lantern_table/" + name for name in LANTERN_FILES}
+    resources |= {"art/coast_nature/" + name for name in NATURE_RUNTIME}
     for relative in sorted(resources):
         if not relative.endswith((".gd", ".tscn", ".gdshader", ".tres")):
             continue
@@ -247,6 +351,8 @@ def verify(root: Path = ROOT) -> None:
                 continue
             if relative == "scripts/presentation/ark_coast_materials.gd" and target == "art/coast":
                 continue  # Exact reviewed nine-map directory, dynamically joined by the material module.
+            if relative == "scripts/presentation/ark_coast_nature.gd" and target == "art/coast_nature/":
+                continue  # Four separately pinned models; strict dependency closure above.
             if target not in resources:
                 raise RuntimeError(f"Runtime dependency escapes Ark/fonts: {relative} -> res://{target}")
     main_text = read(project / "scripts/main.gd")
@@ -285,9 +391,12 @@ def verify(root: Path = ROOT) -> None:
             raise RuntimeError("Launcher/build/release must reject unmarked retired executables")
     # Preserve the original source-only boundary, including unstaged new files;
     # ignore deleted worktree entries until the migration is committed.
+    verify_native_sources(root)
     listed = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"], cwd=root,
                             check=True, capture_output=True, text=True, encoding="utf-8").stdout.splitlines()
-    forbidden = [path for path in listed if (root / path).is_file() and path != "native/ark_water/ark_water.cpp" and
+    native_sources = {"native/ark_water/ark_water.cpp", "native/ark_simulation/ark_simulation.cpp",
+                      "native/ark_simulation/third_party/flecs/flecs.c", "native/ark_simulation/third_party/flecs/flecs.h"}
+    forbidden = [path for path in listed if (root / path).is_file() and path not in native_sources and
                  (re.search(r"(?i)(^|/)(CMakeLists\.txt|Makefile|.*\.(c|cc|cpp|cxx|h|hh|hpp|hxx|rc))$", path) or
                   re.search(r"(?i)^\.github/workflows/(story-art-validation|windows-build(-v06)?)\.yml$", path))]
     if forbidden:
@@ -364,17 +473,50 @@ def verify_pack(path: Path) -> int:
     allowed |= {SURFACE_MANIFEST, *SURFACE_IMPORTED.values()}
     allowed |= {"art/coast/"+name+suffix for name in COAST_TEXTURES for suffix in ("", ".import")}
     allowed |= {"art/coast/"+name for name in COAST_DOCUMENTS} | set(COAST_IMPORTED.values())
+    allowed |= {"art/home_sample/" + name for name in HOME_SAMPLE_FILES}
+    allowed |= {"art/home_sample/home_timber_albedo_v1.png.import", HOME_SAMPLE_IMPORTED}
+    allowed |= {"art/lantern_table/" + name for name in LANTERN_FILES}
+    allowed |= {"art/lantern_table/cloth_albedo_v1.png.import", LANTERN_IMPORTED}
+    allowed |= {"art/ui_icons/" + name for name in UI_FILES}
+    allowed |= {"art/ui_icons/" + name + ".import" for name in UI_IMPORTED} | set(UI_IMPORTED.values())
+    allowed |= {"art/coast_nature/" + name + suffix for name in NATURE_RUNTIME for suffix in ("", ".import", ".remap")}
+    allowed |= set(NATURE_IMPORTED.values())
     generated = re.compile(r"^\.godot/(?:imported/emma\.glb-[0-9a-f]+\.scn|imported/image\(20261021-(?:085642|085643|085645|085646)\)\.png-[0-9a-f]+\.ctex|imported/Noto(?:Sans|Serif)SC-Variable\.ttf-[0-9a-f]+\.fontdata|exported/[^/]+/export-[0-9a-f]+-(?:(?:main|ark_greybox)\.scn|(?:ark_ui_font|emma_locomotion)\.res))$")
     extra = sorted(name for name in files if name not in allowed and not generated.fullmatch(name))
     if extra:
         raise RuntimeError("PCK contains non-Ark or unapproved resources: " + ", ".join(extra))
-    required = {"project.binary", "art/fonts/font_manifest.json", SURFACE_MANIFEST}
+    required = {"project.binary", "art/fonts/font_manifest.json", SURFACE_MANIFEST, "art/home_sample/asset_manifest.json"}
+    required |= {"art/lantern_table/asset_manifest.json"}
     required |= {"shaders/" + name for name in SHADERS}
     required |= {f"art/fonts/{name}" for name in FONT_FILES if name.endswith(".txt")}
     if not required <= files.keys():
         raise RuntimeError("PCK omits required runtime/font-license resources: " + ", ".join(sorted(required-files.keys())))
     verify_surface_manifest(files[SURFACE_MANIFEST])
     verify_coast_pack(files)
+    verify_ui_pack(files)
+    verify_nature_pack(files)
+    home_relative = "art/home_sample/home_timber_albedo_v1.png"
+    verify_home_manifest(files["art/home_sample/asset_manifest.json"])
+    verify_lantern_manifest(files["art/lantern_table/asset_manifest.json"])
+    lantern_relative = "art/lantern_table/cloth_albedo_v1.png"
+    if lantern_relative in files:
+        if hashlib.sha256(files[lantern_relative]).hexdigest() != LANTERN_SHA256:
+            raise RuntimeError("PCK lantern cloth identity mismatch")
+    elif lantern_relative + ".import" not in files or not files.get(LANTERN_IMPORTED):
+        raise RuntimeError("PCK lantern cloth imported texture missing")
+    if lantern_relative + ".import" in files:
+        imports = files[lantern_relative + ".import"].decode("utf-8").replace("\r\n", "\n").rstrip("\0")
+        if re.findall(r'(?m)^path="([^"\n]+)"$', imports) != ["res://" + LANTERN_IMPORTED]:
+            raise RuntimeError("PCK lantern cloth import escapes reviewed target")
+    if home_relative in files:
+        if hashlib.sha256(files[home_relative]).hexdigest() != HOME_SAMPLE_SHA256:
+            raise RuntimeError("PCK home candidate texture identity mismatch")
+    elif home_relative + ".import" not in files or not files.get(HOME_SAMPLE_IMPORTED):
+        raise RuntimeError("PCK omits required home candidate texture")
+    if home_relative + ".import" in files:
+        imports = files[home_relative + ".import"].decode("utf-8").replace("\r\n", "\n").rstrip("\0")
+        if re.findall(r'(?m)^path="([^"\n]+)"$', imports) != ["res://" + HOME_SAMPLE_IMPORTED]:
+            raise RuntimeError("PCK home candidate texture import escapes reviewed target")
     for name in SURFACE_TEXTURES:
         relative = "art/surface_sample/" + name
         if relative in files:
@@ -397,10 +539,10 @@ def main() -> int:
     args = parser.parse_args()
     if args.pack:
         count = verify_pack(args.pack)
-        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime, retained fonts, supplied Emma model/pixel images and three retained procedural surface textures and nine provenance-pinned CC0 coast maps only")
+        print(f"ARK_PACK_BOUNDARY_OK: {count} verified resource entries; approved Ark runtime/fonts/characters, retained surfaces/coast maps and bounded original home-art candidate")
     else:
         verify()
-        print(f"MIGRATION_SURFACE_OK: approved Ark scripts, two scenes, licensed fonts, supplied Emma model/pixel images and three retained procedural surface textures and nine provenance-pinned CC0 coast maps, {len(canonical_tests())} headless regressions; retired product excluded")
+        print(f"MIGRATION_SURFACE_OK: approved Ark runtime/fonts/characters, retained surfaces/coast maps and bounded original home-art candidate, {len(canonical_tests())} headless regressions; retired product excluded")
     return 0
 
 

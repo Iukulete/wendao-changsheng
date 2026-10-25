@@ -254,7 +254,7 @@ func _reload_unchanged() -> void:
 	assert(_json(before.modules.memories) == _json(after.modules.memories), "reloading must preserve durable history as well as the visible event log")
 	for field in ["day_count", "day_period", "shared_meal_day", "shared_meal_count", "stew_servings", "raw_shellfish", "player_health", "traveler_position", "sailmaker_position"]:
 		assert(_json(before[field]) == _json(after[field]), "reload must preserve saved facts, not teleport or replay: " + field)
-	assert(int(after.schema_version) == 36, "layout and legacy meal state survive current schema 36")
+	assert(int(after.schema_version) == 43, "layout and legacy meal state survive current schema 43")
 	_assert_geometry()
 
 

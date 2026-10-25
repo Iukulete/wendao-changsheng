@@ -314,7 +314,7 @@ func _geometry_cases() -> void:
 	extra_satellite_child.name = "UnexpectedCoastChild"
 	_exercise("extra_child_inside_projected_satellite", "geometry",
 		func() -> void: known_satellite.add_child(extra_satellite_child),
-		func() -> void: extra_satellite_child.free(), "exactly29 approved new coast node rows")
+		func() -> void: extra_satellite_child.free(), "satellite transform/cardinality 0")
 	var pivot := game.get_node("residentMarker/CoastVisualGroundOffset") as Node3D
 	var pivot_position := pivot.position
 	_exercise("ground_pivot_xz", "geometry",
@@ -452,6 +452,7 @@ func _run() -> void:
 	saves.clear_for_test()
 	game = Scene.instantiate() as Node3D
 	game.set("save_root_override", save_root)
+	game.set("start_with_home_art", false) # Mutate the unchanged historical baseline, not its new presentation layer.
 	root.add_child(game)
 	game.set_process(false)
 	game.set_physics_process(false)

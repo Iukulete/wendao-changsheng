@@ -198,6 +198,13 @@ func _run() -> void:
 	marker = game.get("traveler_marker") as Node3D
 	assert(int(game.get("wood")) == 3 and int(game.get("stored_wood")) == 0 and not bool(game.get("resident_gather_pending")), "loading a completed trip must preserve its usable delivery without duplicating resources")
 
+	# This section tests a wood-source race, not the new demand-aware balanced
+	# policy. Request wood via the actual persistent player choice.
+	game.set("resident_gather_policy_choice_pending",true)
+	var wood_choice := InputEventKey.new()
+	wood_choice.pressed = true
+	wood_choice.keycode = KEY_1
+	game.call("_unhandled_key_input",wood_choice)
 	for _period in range(4):
 		game.call("_advance_world_period", "resident_gather_race_test")
 	assert(bool(game.get("resident_gather_pending")) and str(game.get("resident_gather_target_id")) == "DriftwoodNear", "the worker should autonomously select the nearest newly replenished physical pile on a later day")

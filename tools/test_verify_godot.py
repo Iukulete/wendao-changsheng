@@ -72,6 +72,7 @@ class VerifyGodotTests(unittest.TestCase):
                 mock.patch.object(verify_godot, "Path", WindowsFixturePath), \
                 mock.patch.object(verify_godot.shutil, "copytree"), \
                 mock.patch.object(verify_godot, "verify_captures"), \
+                mock.patch.object(verify_godot, "verify_native_bundle"), \
                 mock.patch.object(verify_godot, "verify_emma_captures") as emma_check, \
                 mock.patch.object(verify_godot, "run", side_effect=record), \
                 mock.patch.object(sys, "argv", ["verify_godot.py", "--godot", "D:/godot.exe",

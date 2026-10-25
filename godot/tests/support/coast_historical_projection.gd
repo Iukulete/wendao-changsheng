@@ -11,11 +11,19 @@ const BASELINE_DUPLICATE_PATHS := {
 	"CanvasLayer#0/ArkContextPanel/ScrollContainer#0/TextureRect#0": 2,
 	"CanvasLayer#0/ArkHelpBuildDrawer/VBoxContainer#0/ArkHelpScroll/TextureRect#0": 2,
 }
-const REFERENCE := "res://tests/support/ark_opening_coast_reference.gd"
-const REFERENCE_SHA := "58d1615de1aba4c4eea3d3da369214f23d74b1a4e81850b4a84402bac8a0e543"
+const LEGACY_REFERENCE := "res://tests/support/ark_opening_coast_reference.gd"
+const LEGACY_REFERENCE_SHA := "58d1615de1aba4c4eea3d3da369214f23d74b1a4e81850b4a84402bac8a0e543"
+const REFERENCE := "res://tests/support/ark_coast_v2_reference.gd"
+const REFERENCE_SHA := "a30ed6a56c2da8f42c1d68b266d677099e5608998c0571c66f0e4d551abf1556"
 const OLD_WATER_SHA := "d299ba4c27686391afd65aec79687873c4edc1c54036f7fcfce5caedf4837841"
 const WATER_SHA := "89daf71344da795262bd94dc726ac7ef710fb17b7257d03ced764be3ea12e994"
-const COAST_SHADER_SHA := "7a68aa8fb3a871e25ab3ede6847b596d0d2183b5be30506077aab3c0e27d25e8"
+const COAST_SHADER_SHA := "8bdd654a5834a239dc0abe0902a10a5637efe419f82731dfa289d3399daa624d"
+const V2Additions = preload("res://tests/support/coast_v2_additions_contract.gd")
+const MoonbackContract = preload("res://tests/support/moonback_terrain_contract.gd")
+const LandingContract = preload("res://tests/support/moonback_landing_contract.gd")
+var landing_contract = LandingContract.new()
+var moonback_contract = MoonbackContract.new()
+var additions = V2Additions.new()
 const SUN_SCALE := .36453125
 const PIVOT := "CoastVisualGroundOffset"
 const PIVOT_ROOTS := ["residentMarker", "sailmakerMarker", "TidekeeperFloatboxInteractable",
@@ -41,6 +49,7 @@ func configure(world: Node3D, test: Object) -> void:
 	observer = test
 	_check(FileAccess.get_sha256(OLD_FIXTURE) == OLD_FIXTURE_SHA, "old observed fixture bytes must remain pinned")
 	_check(FileAccess.get_sha256(REFERENCE) == REFERENCE_SHA, "approved geometry reference must remain byte-exact")
+	_check(FileAccess.get_sha256(LEGACY_REFERENCE) == LEGACY_REFERENCE_SHA, "V2 must preserve the original V1 reference bytes")
 	var document: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(OLD_FIXTURE))
 	for row in document.rows:
 		old_rows[row.path] = row
@@ -121,6 +130,8 @@ func _check_mesh(actual: MeshInstance3D, expected: ArrayMesh, label: String) -> 
 	_check(_bytes(actual.mesh.surface_get_arrays(0)) == _bytes(expected.surface_get_arrays(0)), label + " raw vertex/normal/UV/tangent/index arrays differ from frozen approved geometry in this runtime")
 
 func validate_geometry() -> void:
+	moonback_contract.validate(game,observer)
+	landing_contract.validate(game,observer)
 	var reference: RefCounted = load(REFERENCE).new()
 	var data: Dictionary = reference.call("_refined_topology")
 	_check(data.ok and data.faces.size() == 7127, "frozen reference topology must remain7127")
@@ -129,7 +140,7 @@ func validate_geometry() -> void:
 	for face in data.faces:
 		reference.call("_triangle", surface, reference.call("_from_parameter", data.vertices[face[0]]), reference.call("_from_parameter", data.vertices[face[1]]), reference.call("_from_parameter", data.vertices[face[2]]))
 	expected_top = reference.call("_smooth", surface.commit(), true)
-	var constants: Dictionary = reference.get_script().get_script_constant_map()
+	var constants: Dictionary = load(LEGACY_REFERENCE).get_script_constant_map()
 	expected_rock_a = reference.call("_rock_mesh", constants.ROCK_A_POINTS, constants.ROCK_A_FACES)
 	expected_rock_b = reference.call("_rock_mesh", constants.ROCK_B_POINTS, constants.ROCK_B_FACES)
 	var top := game.get_node("IslandLandmass/Shoreline") as MeshInstance3D
@@ -175,6 +186,7 @@ func validate_geometry() -> void:
 		_check_mesh(_only_mesh(actual), expected_rock_a, "satellite " + str(index))
 		var collision := _only_shape(actual).shape as ConvexPolygonShape3D
 		_check(collision != null and _bytes(collision.points) == _bytes(expected_rock_a.get_faces()), "satellite collider " + str(index))
+	additions.validate(game, reference, observer)
 	_check_mesh(game.get_node("ShelteredGrassGroups"), _grass_mesh(reference), "sheltered grass")
 	var cap := SurfaceTool.new()
 	cap.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -197,13 +209,21 @@ func _validate_ground_labels() -> void:
 
 func geometry(rows: Array) -> Array:
 	validate_geometry()
+	var old_moonback: Dictionary = moonback_contract.legacy_geometry(observer)
 	var result: Array = []
 	var new_count := 0
+	var landing_count := 0
 	var pivots := 0
 	var paths := {}
 	var path_counts := {}
 	for source in rows:
 		var path := str(source.path)
+		if landing_contract.allowed.has(path):
+			landing_count += 1
+			continue
+		if additions.allowed.has(path):
+			new_count += 1
+			continue
 		if not _new_root(path).is_empty():
 			new_count += 1
 			continue
@@ -220,6 +240,15 @@ func geometry(rows: Array) -> Array:
 			row.surfaces = old_rows[row.path].surfaces.duplicate(true)
 		elif row.path == "IslandLandmass/ShorelineCollision":
 			row.shape.data = old_rows[row.path].shape.data
+		elif row.path == "MoonbackIsland/Grassland":
+			row.surfaces = [old_moonback.surface.duplicate(true)]
+		elif row.path == "MoonbackIsland/GrasslandCollision":
+			row.shape.data = old_moonback.data
+		elif row.path == "MoonbackTideStation":
+			row.transform = [[[100000,0,0],[0,100000,0],[0,0,100000]],[-2800000,20000,2300000]]
+		elif row.path in ["MoonbackDriftwood","MoonbackTidalShells"]:
+			var old_position := [-2000000,22000,1800000] if row.path == "MoonbackDriftwood" else [-3100000,12000,2700000]
+			row.transform = [[[100000,0,0],[0,100000,0],[0,0,100000]],old_position]
 		elif row.path == "IslandLandmass/Grassland":
 			_check(not row.visible, "legacy grass is intentionally hidden")
 			row.visible = true
@@ -245,7 +274,8 @@ func geometry(rows: Array) -> Array:
 		result.append(row)
 	for path in BASELINE_DUPLICATE_PATHS:
 		_check(int(path_counts.get(path, 0)) == BASELINE_DUPLICATE_PATHS[path], "existing internal TextureRect stable-path multiplicity must remain exactly two: " + path)
-	_check(new_count == 29, "exactly29 approved new coast node rows, never broad subtree filtering")
+	_check(new_count == 65, "exactly29 original and36 independently validated V2 coast nodes; never broad subtree filtering")
+	_check(landing_count == LandingContract.EXPECTED_NODES,"exactly48 separately fingerprinted Moonback landing/nature nodes")
 	_check(pivots == 8, "this historical earned-actions fixture has exactly8 surviving pivots including queued shell")
 	result.sort_custom(func(a: Dictionary,b: Dictionary) -> bool: return a.path < b.path)
 	return result
@@ -285,11 +315,19 @@ func _old_material(color: Color, roughness: float) -> Dictionary:
 	return _resource(material)
 
 func materials(rows: Array, named_rows: bool = false) -> Array:
+	if additions.meshes.is_empty(): validate_geometry()
 	var result: Array = []
 	var removed := 0
+	var landing_removed := 0
 	for source in rows:
 		var path := str(source.get("_history_path", source.get("path", "")))
 		var root := _new_root(path)
+		if landing_contract.meshes.has(path):
+			landing_removed += 1
+			continue
+		if additions.meshes.has(path):
+			removed += 1
+			continue
 		if not root.is_empty():
 			var key := "grass" if root == "ShelteredGrassGroups" else "terrain" if root == "IslandLandmass/SubmergedVisualCap" else "rock"
 			_check(source.override == _resource(expected_materials[key]) and source.surfaces == [_resource(expected_materials[key])], "new coast material must exactly match independent specification: " + path)
@@ -309,12 +347,20 @@ func materials(rows: Array, named_rows: bool = false) -> Array:
 			row.override = _sea_material(row.override)
 			for index in range(row.surfaces.size()):
 				row.surfaces[index] = _sea_material(row.surfaces[index])
+		elif path in ["MoonbackIsland/Grassland","MoonbackIsland/Shoreline"]:
+			var actual_material := game.get_node(path).material_override as ShaderMaterial
+			_check(actual_material != null and actual_material.shader != null and actual_material.shader.code.sha256_text() == MoonbackContract.SHADER_SHA,"approved Moonback runtime shader bytes before historical projection")
+			var expected := _resource(moonback_contract.material_spec())
+			_check(row.override == expected and row.surfaces == [expected],"complete independently specified Moonback material before narrow old projection: "+path)
+			row.override = _old_material(Color("4e615a") if path.ends_with("Grassland") else Color("87928a"),1.0)
+			row.surfaces = [row.override.duplicate(true)]
 		if named_rows:
 			row.erase("_history_path")
 		else:
 			row.path = historical_path(path)
 		result.append(row)
-	_check(removed == 11, "exactly11 added mesh materials projected, not broad material exclusions")
+	_check(removed == 24, "exactly11 original plus13 independently checked camp materials, not broad material exclusions")
+	_check(landing_removed == LandingContract.EXPECTED_MATERIAL_ROWS,"exactly21 separately fingerprinted Moonback MeshInstance material rows; five MultiMeshes are checked by the root contract")
 	if not named_rows:
 		result.sort_custom(func(a: Dictionary,b: Dictionary) -> bool: return a.path < b.path)
 	return result

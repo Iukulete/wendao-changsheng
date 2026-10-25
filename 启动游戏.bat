@@ -12,12 +12,17 @@ if not exist "%ENGINE%" set "ENGINE=%ROOT%Godot_v4.7.1-stable_win64.exe"
 set "PROJECT=%ROOT%godot"
 set "TEMP=%ROOT%.tmp\godot"
 set "TMP=%ROOT%.tmp\godot"
+set "APPDATA=%ROOT%.local\runtime\appdata"
+set "LOCALAPPDATA=%ROOT%.local\runtime\localappdata"
+if not exist "%TEMP%" mkdir "%TEMP%"
+if not exist "%APPDATA%" mkdir "%APPDATA%"
+if not exist "%LOCALAPPDATA%" mkdir "%LOCALAPPDATA%"
 
 rem Never launch an old card/six-era executable left in the release directory.
 if exist "%GAME%" if exist "%ARK_MARKER%" (
     findstr /x /c:"WENDAO_ARK_3D_PRODUCT_V1" "%ARK_MARKER%" >nul
     if not errorlevel 1 (
-        start "Wendao Ark" /D "%GAME_DIR%" "%GAME%"
+        start "Wendao Ark" /D "%GAME_DIR%" "%GAME%" --log-file "%TEMP%\game.log"
         exit /b 0
     )
 )
@@ -37,5 +42,5 @@ if not exist "%PROJECT%\project.godot" (
 )
 
 if not exist "%TEMP%" mkdir "%TEMP%"
-start "Wendao Ark" /D "%PROJECT%" "%ENGINE%" --path "%PROJECT%"
+start "Wendao Ark" /D "%PROJECT%" "%ENGINE%" --path "%PROJECT%" --log-file "%TEMP%\game.log"
 exit /b 0

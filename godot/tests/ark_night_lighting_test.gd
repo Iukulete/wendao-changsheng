@@ -71,6 +71,7 @@ func _check(condition: bool, message: String) -> void:
 func _spawn() -> void:
 	game = load("res://scenes/ark_greybox.tscn").instantiate() as Node3D
 	game.set("save_root_override", save_root)
+	game.set("start_with_home_art", false) # Historical raw-material/lighting fixture, not production policy.
 	root.add_child(game)
 	game.set_process(false)
 	game.set_physics_process(false)
@@ -439,7 +440,7 @@ func _run() -> void:
 	_inspect("nondefault_night_storm", false)
 	_check(bool(game.call("_save_progress")), "current fixture must use the normal checksum save service")
 	var saved: Dictionary = saves.load_state().get("state", {})
-	_check(int(saved.get("schema_version", 0)) == 36 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "readability must not bump game version or persistence schema")
+	_check(int(saved.get("schema_version", 0)) == 43 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "readability remains compatible with kitchen schema43 and the unchanged game version")
 	var expected := _semantics(saved)
 	await _drop()
 	await _spawn()

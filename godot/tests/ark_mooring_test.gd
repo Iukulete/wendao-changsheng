@@ -2,7 +2,8 @@ extends SceneTree
 
 const ArkTestPaths = preload("res://tests/ark_test_paths.gd")
 
-const MOONBACK_STATION := Vector3(-28.0, 0.2, 23.0)
+const MOONBACK_STATION := Vector3(-32.0, 3.03, 25.0)
+const Moonback = preload("res://scripts/terrain/ark_moonback_terrain.gd")
 const TEST_DELTA := 1.0 / 30.0
 
 
@@ -52,6 +53,21 @@ func _sail_to(game: Node, target: Vector3, max_steps: int = 2400) -> int:
 	return steps
 
 
+func _walk_to(player: CharacterBody3D, target: Vector3) -> bool:
+	for frame in 900:
+		var offset := Vector2(target.x-player.global_position.x,target.z-player.global_position.z)
+		if offset.length() < .17:
+			for code in [KEY_A,KEY_D,KEY_W,KEY_S]: _set_key(code,false)
+			return true
+		_set_key(KEY_A,offset.x < -.06)
+		_set_key(KEY_D,offset.x > .06)
+		_set_key(KEY_W,offset.y < -.06)
+		_set_key(KEY_S,offset.y > .06)
+		await physics_frame
+	for code in [KEY_A,KEY_D,KEY_W,KEY_S]: _set_key(code,false)
+	return false
+
+
 func _run() -> void:
 	var save_root := ProjectSettings.globalize_path("res://../.local/test_save_mooring").simplify_path()
 	assert(ArkTestPaths.is_safe_save_root(save_root), "test saves must be isolated in this repository; Windows saves must remain on D:")
@@ -80,7 +96,10 @@ func _run() -> void:
 	assert(bool(game.get("sailing_mode")), "the repaired ark should be sail-ready after the opening storm")
 	var first_leg := await _sail_to(game, Vector3(-28.0, 0.0, 6.0))
 	var heading_steps := 0
-	while heading_steps < 180 and absf(wrapf(-ark.rotation.y, -PI, PI)) > 0.08:
+	# The new return trail reaches a known shore point rather than preserving the
+	# departure's accidental lateral offset. Physically align the stern precisely
+	# so the separate underneath-plank jump calibration remains centered.
+	while heading_steps < 300 and absf(wrapf(-ark.rotation.y, -PI, PI)) > 0.001:
 		var yaw_error := wrapf(-ark.rotation.y, -PI, PI)
 		var turned: bool = game.call("_sail_step", TEST_DELTA, 0.0, clampf(yaw_error * 2.2, -1.0, 1.0))
 		assert(turned, "the ark should be able to align its stern at the open-water mooring")
@@ -89,7 +108,9 @@ func _run() -> void:
 	assert(Vector2(ark.global_position.x + 28.0, ark.global_position.z - 6.0).length() <= 2.1, "the ark should physically reach the north-side mooring approach")
 	assert(absf(ark.rotation.y) < 0.08, "the stern gangplank should face the island")
 	game.call("_toggle_sailing")
-	var shore_leg := await _hold_until(KEY_S, 900, func() -> bool: return player.global_position.distance_to(MOONBACK_STATION) < 2.6)
+	var shore_leg := await _hold_until(KEY_S, 900, func() -> bool: return player.global_position.z > 14.7)
+	for point in Moonback.TRAIL:
+		assert(await _walk_to(player,point), "the physically authored highland trail must be walkable without jumping")
 	print("MOONBACK_SHORE: frames=%d boat=%s player=%s floor=%s swim=%s" % [shore_leg, ark.global_position, player.global_position, player.is_on_floor(), game.get("is_swimming")])
 	assert(shore_leg < 900 and player.global_position.distance_to(MOONBACK_STATION) < 2.8, "the player should disembark and reach the tide station on foot")
 	game.call("_interact")
@@ -122,6 +143,11 @@ func _run() -> void:
 	game = restored_at_moonback
 	ark = game.get_node("ArkRoot") as Node3D
 	player = game.get("player") as CharacterBody3D
+	var descending: Array = Moonback.TRAIL.duplicate()
+	descending.reverse()
+	for point in descending.slice(1):
+		assert(await _walk_to(player,point), "the same trail must allow a real return to the mooring")
+	assert(await _walk_to(player,Vector3(ark.global_position.x,.04,15)),"align with the ACTUAL moored stern on dry shore before returning")
 
 	var return_to_helm := await _hold_until(KEY_W, 1000, func() -> bool: return Vector2(player.global_position.x - ark.global_position.x, player.global_position.z - (ark.global_position.z + 1.55)).length() < 2.0)
 	assert(return_to_helm < 1000, "the player should walk back onto the same ark after searching the station")
@@ -136,6 +162,7 @@ func _run() -> void:
 			await physics_frame
 			blocked_apex = maxf(blocked_apex, player.global_position.y)
 		_set_key(KEY_W, false)
+		print("MOONBACK_UNDERPLANK: local=",player.position," apex=",blocked_apex," floor=",player.is_on_floor())
 		assert(blocked_apex < ark.global_position.y - 0.2 and not player.is_on_floor(), "the gangplank underside must block an underneath jump")
 		var clear_overhang := await _hold_until(KEY_S, 120, func() -> bool: return player.position.z > 4.05)
 		assert(clear_overhang < 120, "back clear of the overhanging plank before jumping")

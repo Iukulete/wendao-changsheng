@@ -10,5 +10,13 @@
 /godot/art/fonts/** -text
 /godot/art/surface_sample/** -text
 /godot/art/coast/** -text
+/godot/art/coast_nature/** -text
+/godot/art/ui_icons/** -text
+/native/ark_simulation/third_party/flecs/** -text
 /godot/tests/support/** -text
 /godot/shaders/** -text
+
+# Preserve pinned upstream bytes/style; do not reformat vendored sources/licenses.
+/native/ark_simulation/third_party/flecs/flecs.[ch] -whitespace
+/godot/art/coast_nature/License_Standard.txt -whitespace
+/godot/art/coast_nature/asset_manifest.json whitespace=cr-at-eol

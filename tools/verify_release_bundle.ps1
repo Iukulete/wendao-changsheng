@@ -21,19 +21,31 @@ $required = @(
     "wendao-changsheng.exe",
     "wendao-changsheng.pck",
     "README.md",
+    "运行归舟.bat",
     "wendao-ark.txt",
     "game-version.json",
     "checksums.sha256",
     "licenses\AGPL-3.0.txt",
     "licenses\NotoSansSC-OFL.txt",
     "licenses\NotoSerifSC-OFL.txt",
-    "licenses\font_manifest.json"
+    "licenses\font_manifest.json",
+    "native\ark_simulation.dll",
+    "native\ark_simulation.gdextension",
+    "native\build-manifest.json",
+    "native\Flecs-LICENSE.txt",
+    "native\Flecs-manifest.json"
 )
 foreach ($relativePath in $required) {
     $path = Join-Path $OutputDir $relativePath
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
         throw "Release bundle is missing: $relativePath"
     }
+}
+& python -X utf8 (Join-Path $PSScriptRoot "verify_native_simulation.py") --bundle (Join-Path $OutputDir "native")
+if ($LASTEXITCODE -ne 0) { throw "External native simulation bundle validation failed: $LASTEXITCODE" }
+if ((Get-FileHash -LiteralPath (Join-Path $OutputDir "运行归舟.bat") -Algorithm SHA256).Hash -ne
+    (Get-FileHash -LiteralPath (Join-Path $PSScriptRoot "launch_release.bat") -Algorithm SHA256).Hash) {
+    throw "Portable D-drive launcher differs from source."
 }
 
 $productMarker = (Get-Content -Raw -LiteralPath (Join-Path $OutputDir "wendao-ark.txt")).Trim()

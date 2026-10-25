@@ -3,6 +3,7 @@ extends RefCounted
 ## No preview, Node, collision, or UI state is persisted here. The caller applies
 ## committed presentation only when ok AND NOT duplicate, then saves the session.
 const Memory = preload("res://scripts/modules/memory/ark_memory.gd")
+const Economy = preload("res://scripts/modules/economy/ark_economy.gd")
 var _economy: RefCounted
 var _receipts: Dictionary = {}
 var _busy := false
@@ -16,16 +17,21 @@ func configure(economy: RefCounted) -> void:
 func commit(operation_id: String, owner: String, costs: Dictionary, validate: Callable, facts: Dictionary = {}) -> Dictionary:
 	return _transaction("build", operation_id, owner, costs, validate, facts)
 
+func commit_shared(operation_id: String, owner: String, costs: Dictionary, shared: Dictionary, validate: Callable, facts: Dictionary = {}) -> Dictionary:
+	return _transaction("build", operation_id, owner, costs, validate, facts, shared)
+
 func refund(operation_id: String, owner: String, amounts: Dictionary, validate: Callable, facts: Dictionary = {}) -> Dictionary:
 	return _transaction("dismantle", operation_id, owner, amounts, validate, facts)
 
 func move(operation_id: String, validate: Callable, facts: Dictionary = {}) -> Dictionary:
 	return _transaction("move", operation_id, "", {}, validate, facts)
 
-func _transaction(kind: String, operation_id: String, owner: String, amounts: Dictionary, validate: Callable, facts: Dictionary) -> Dictionary:
-	if _busy or operation_id.is_empty() or not Memory._plain(facts) or not _valid_structure_facts(facts) or not _valid_amounts(amounts):
+func _transaction(kind: String, operation_id: String, owner: String, amounts: Dictionary, validate: Callable, facts: Dictionary, shared: Dictionary = {}) -> Dictionary:
+	if _busy or operation_id.is_empty() or not Memory._plain(facts) or not _valid_structure_facts(facts) or not _valid_amounts(amounts) or not Economy.valid_shared_sources(owner, shared):
 		return {"ok": false, "code": "invalid_command"}
 	var command := {"kind": kind, "owner": owner, "amounts": amounts.duplicate(true), "facts": facts.duplicate(true)}
+	if not shared.is_empty():
+		command["shared_sources"] = shared.duplicate(true)
 	if _receipts.has(operation_id):
 		var previous: Dictionary = _receipts[operation_id].duplicate(true)
 		previous.erase("sequence")
@@ -47,7 +53,7 @@ func _transaction(kind: String, operation_id: String, owner: String, amounts: Di
 		return {"ok": false, "code": "placement_rejected"}
 	var result: Dictionary = {"ok": true}
 	if kind == "build":
-		result = _economy.consume(owner, amounts, "construction:" + operation_id)
+		result = _economy.consume_shared(owner, amounts, "construction:" + operation_id, shared)
 	elif kind == "dismantle":
 		# Must happen before the caller removes support geometry or evacuates actors.
 		if not _economy.can_accept(owner, amounts):
@@ -96,6 +102,8 @@ func restore(saved: Dictionary) -> bool:
 		if entry.get("kind", "") not in ["build", "dismantle", "move"] or not entry.get("owner") is String or not entry.get("facts") is Dictionary or not entry.get("amounts") is Dictionary:
 			return false
 		if not _valid_structure_facts(entry.facts) or not _valid_amounts(entry.amounts) or (entry.kind != "move" and entry.owner.is_empty()):
+			return false
+		if entry.has("shared_sources") and (entry.kind != "build" or not entry.shared_sources is Dictionary or not Economy.valid_shared_sources(entry.owner, entry.shared_sources)):
 			return false
 		if not Memory._integer(entry.get("sequence")) or int(entry.sequence) < 1:
 			return false

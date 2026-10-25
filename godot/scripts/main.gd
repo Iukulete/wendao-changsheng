@@ -5,6 +5,7 @@ const ARK_SCENE_PATH := "res://scenes/ark_greybox.tscn"
 const SESSION_SAVE_ROOT_META := "ark_menu_save_root_override"
 const SaveScript = preload("res://scripts/ark_greybox_save.gd")
 const BODY_FONT = preload("res://art/fonts/ark_ui_font.tres")
+const SimulationPort = preload("res://scripts/adapters/ark_household_simulation.gd")
 
 @export var save_root_override := ""
 
@@ -32,6 +33,13 @@ func _ready() -> void:
 	_fit_menu()
 	enter_button.grab_focus()
 	print("ARK_MENU_READY_OK: 问道：归舟")
+	# Preflight without reading or mutating a resident/save. The release template
+	# can prove its external ABI path without supporting editor-only --script.
+	var simulation = SimulationPort.new()
+	if simulation.backend_status().backend == "native-flecs" and simulation.backend_status().healthy:
+		print("ARK_SIMULATION_PREFLIGHT_OK: native Flecs work world initialized via default/explicit descriptor")
+	else:
+		print("ARK_SIMULATION_REFERENCE: ", simulation.backend_status().reason)
 
 
 func _build_menu() -> void:
@@ -102,7 +110,7 @@ func _build_menu() -> void:
 	right_column.add_theme_constant_override("separation", 18)
 	menu_columns.add_child(right_column)
 	_label(right_column, "ArkMenuControlsTitle", "初次登舟", 24, Color("e4d7b6"))
-	_control_hint("行动", "W A S D  移动　 ·　 空格  跳跃\nE  与身旁物件、居民互动")
+	_control_hint("行动与视角", "WASD  移动 · 空格  跳跃 · E  互动\n右键拖转 · 滚轮缩放 · Home  回正")
 	_control_hint("安居", "B  开始建造　 ·　 左键  放置\nF  调整已建物件　 ·　 R  旋转调整预览\n右键 / Esc  取消建造或调整")
 	_control_hint("远行", "M  打开 / 关闭海图\nQ  近身应对礁兽　 ·　 T  等待时段")
 	_control_hint("保存与归返", "F5  手动保存\n左侧面板“保存并返回主菜单”可安全离开")

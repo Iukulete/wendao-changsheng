@@ -57,6 +57,14 @@ func mark_collecting(id: String) -> bool:
 	entry.version = int(entry.version) + 1
 	return true
 
+func restart_approach(id: String) -> bool:
+	if not _tasks.has(id) or _tasks[id].phase not in ["outbound","collecting"]: return false
+	_tasks[id].phase = "outbound"
+	_tasks[id].collect_elapsed = 0.0
+	_tasks[id].version = int(_tasks[id].version)+1
+	_routes.erase(id)
+	return true
+
 func collection_tick(id: String, delta: float) -> Dictionary:
 	if not _tasks.has(id) or _tasks[id].phase != "collecting" or not is_finite(delta) or delta < 0:
 		return {"ok":false,"remaining":0.65,"complete":false}

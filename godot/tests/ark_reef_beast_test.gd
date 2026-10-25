@@ -65,7 +65,7 @@ func _run() -> void:
 	assert(not beast.visible and _count_events(game, "reef_beast_defeated") == 1, "a defeated creature should not respawn or duplicate its reward")
 	game.call("_attack_reef_beast")
 	assert(int(game.get("reef_shell_plates")) == 1 and _count_events(game, "reef_beast_defeated") == 1, "repeated attack input must not duplicate the unique reward")
-	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 36, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
+	assert(int((game.call("_build_save_state") as Dictionary).get("schema_version", 0)) == 43, "combat health, the unique blueprint, resident work policies and resumable shared meals should use the current save schema")
 	assert(bool(game.call("_save_progress")), "the defeated-creature state should save")
 	game.queue_free()
 	await process_frame

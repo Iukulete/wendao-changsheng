@@ -291,11 +291,47 @@ func _pre_hud_geometry_contract(rows: Array) -> Array:
 	_check(overlay.get_parent() == (game.get("hud_panel") as Node).get_parent() and str(overlay.name) == "QANearfutureHud", "historical HUD exception owns only its native CanvasLayer overlay")
 	var presentation_nodes := overlay.find_children("*", "", true, false)
 	presentation_nodes.append(overlay)
-	_check(presentation_nodes.size() == 23, "historical HUD exception allows exactly the approved 23 Control nodes")
+	_check(presentation_nodes.size() == 30, "historical HUD exception allows the reviewed 24 Controls plus exactly six fixed-choice Controls")
+	var pinned := hud.get("choice_panel") as PanelContainer
+	_check(pinned != null and pinned.get_parent() == overlay and str(pinned.name) == "PinnedDialogueChoices", "fixed choices must stay inside the existing presentation overlay")
+	if pinned:
+		_check(pinned.get_child_count() == 1 and pinned.get_child(0) is GridContainer and pinned.find_children("*", "Button", true, false).size() == 4 and pinned.find_children("*", "", true, false).size() == 5, "fixed-choice projection owns only one grid and four leaf Buttons, not arbitrary new UI/world subtrees")
 	var excluded := {_stable_path(hud): true}
 	for node in presentation_nodes:
 		_check(node is Control, "HUD historical exception cannot hide a world/mesh/collision node")
 		excluded[_stable_path(node)] = true
+	# The new opt-in art control is the sole extra native UI node in this
+	# iteration. Preserve the original golden rather than recording a new graph;
+	# current-runtime identity/raw geometry checks below still include this node.
+	var art_button := game.get("home_art_button") as Button
+	var return_button := game.find_child("ArkReturnToMainButton", true, false) as Button
+	_check(art_button != null and return_button != null, "historical art-control exception must resolve both actual native buttons")
+	if art_button and return_button:
+		_check(str(art_button.name) == "ArkHomeArtCandidateButton" and art_button.get_parent() == return_button.get_parent() and art_button.get_parent() is VBoxContainer and art_button.get_child_count() == 0 and art_button.toggle_mode, "historical art-control exception owns exactly one leaf Button in the existing drawer")
+		excluded[_stable_path(art_button)] = true
+	var household_button := game.find_child("ArkHouseholdWorkButton", true, false) as Button
+	_check(household_button != null and return_button != null, "historical household-control exception must resolve the native drawer Button")
+	if household_button and return_button:
+		_check(household_button.get_parent() == return_button.get_parent() and household_button.get_child_count() == 0, "household historical exception cannot hide world geometry or another node tree")
+		excluded[_stable_path(household_button)] = true
+	var lantern_button := game.find_child("ArkLanternTableButton", true, false) as Button
+	_check(lantern_button != null and return_button != null, "historical leisure-control exception must resolve the native drawer Button")
+	if lantern_button and return_button:
+		_check(lantern_button.get_parent() == return_button.get_parent() and lantern_button.get_parent() is VBoxContainer and lantern_button.get_child_count() == 0, "leisure historical exception owns exactly one drawer leaf, not a world subtree")
+		excluded[_stable_path(lantern_button)] = true
+	var fenders_button := game.find_child("ArkRaftFendersBlueprintButton",true,false) as Button
+	_check(fenders_button != null and return_button != null and fenders_button.get_parent() == return_button.get_parent() and fenders_button.get_child_count() == 0,"V2 historical exception is exactly one native blueprint drawer leaf")
+	if fenders_button: excluded[_stable_path(fenders_button)] = true
+	# Three modern leaves and one kitchen policy leaf; do not rewrite the old golden or hide
+	# their children, world geometry, or the raw same-runtime identity checks.
+	for definition in [["ArkModernUtilityStatus","Label"],["ArkModernUtilityBuildButton","Button"],["ArkPurifierToggleButton","Button"],["ArkKitchenWorkButton","Button"]]:
+		var modern_leaf := game.find_child(definition[0],true,false)
+		_check(modern_leaf != null and return_button != null,"modern drawer leaf must exist: "+definition[0])
+		if modern_leaf and return_button:
+			_check(modern_leaf.get_class() == definition[1] and modern_leaf.get_parent() == return_button.get_parent() and modern_leaf.get_parent() is VBoxContainer and modern_leaf.get_child_count() == 0,"modern projection owns only its reviewed native leaf: "+definition[0])
+			if definition[1] == "Label": _check(modern_leaf == game.get("modern_status"),"status leaf must be the actual controller-bound label")
+			if definition[0] == "ArkKitchenWorkButton": _check(modern_leaf == game.get("kitchen_button"),"kitchen leaf must be the actual controller-bound policy button")
+			excluded[_stable_path(modern_leaf)] = true
 	# Exact historical fixture paths, including the collected shell marker whose
 	# node remains after its interactable entry retires. Baseline visibility=true.
 	var names := [
@@ -318,7 +354,7 @@ func _pre_hud_geometry_contract(rows: Array) -> Array:
 			_check(row.get("class") == "Label3D", "only whitelisted Name visibility may differ from the historical graph")
 			row.visible = true # All these original Name labels were visible in BEFORE_GEOMETRY.
 		projected.append(row)
-	_check(excluded_count == 24, "historical projection must exclude exactly one adapter and its 23 Control nodes")
+	_check(excluded_count == 39, "historical projection must exclude exactly one adapter,30 Controls, four prior drawer Buttons, three modern leaves and one kitchen policy leaf")
 	_check(name_count == 14, "historical projection must find exactly the 14 originally visible Name labels")
 	print("HUD_PRE47_PROJECTION: excluded=", excluded_count, " names=", names.size(), " hash=", _digest(projected))
 	return projected
@@ -357,7 +393,7 @@ func _run() -> void:
 	_inspect("nondefault_night_storm", false)
 	_check(bool(game.call("_save_progress")), "current state must use actual checksum save service")
 	var saved: Dictionary = saves.load_state().get("state", {})
-	_check(int(saved.get("schema_version", 0)) == 36 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "surface presentation must not bump save schema/game version")
+	_check(int(saved.get("schema_version", 0)) == 43 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "surface presentation remains compatible with kitchen schema43 and the unchanged game version")
 	var expected := _semantics(saved)
 	await _drop()
 	await _save_roundtrip(expected, "current36")
@@ -446,6 +482,10 @@ func _geometry_rows(restore_old_surface_uv: bool = false) -> Array:
 			row.layer = node.collision_layer
 			row.mask = node.collision_mask
 			row.ray_pickable = node.input_ray_pickable
+		if node is MultiMeshInstance3D:
+			row.instances = _byte_sha(node.multimesh.buffer)
+			row.cpu_instances = _byte_sha(node.get_meta("coast_instances"))
+			row.mesh_faces = _byte_sha(node.multimesh.mesh.get_faces())
 		if node is CollisionShape3D:
 			row.disabled = node.disabled
 			row.shape = _resource(node.shape) if node.shape else null
@@ -482,6 +522,7 @@ func _setup_actions() -> void:
 func _spawn() -> void:
 	game = load("res://scenes/ark_greybox.tscn").instantiate() as Node3D
 	game.set("save_root_override", save_root)
+	game.set("start_with_home_art", false) # This override owns the unchanged historical ship/material goldens.
 	root.add_child(game)
 	game.process_mode = Node.PROCESS_MODE_DISABLED
 	await physics_frame
@@ -516,6 +557,10 @@ func _raw_arrays(restore_old_surface_uv: bool = false) -> Array:
 	for node in game.find_children("*", "CollisionShape3D", true, false):
 		if node.shape is ConcavePolygonShape3D:
 			rows.append({"path": _stable_path(node), "collision_faces": _byte_sha(node.shape.get_faces()), "backface": node.shape.backface_collision})
+	for node in game.find_children("*","MultiMeshInstance3D",true,false):
+		var row := {"path":_stable_path(node),"instances":_byte_sha(node.multimesh.buffer),"cpu_instances":_byte_sha(node.get_meta("coast_instances")),"faces":_byte_sha(node.multimesh.mesh.get_faces()),"surfaces":[]}
+		for index in node.multimesh.mesh.get_surface_count(): row.surfaces.append(_byte_sha(node.multimesh.mesh.surface_get_arrays(index)))
+		rows.append(row)
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.path < b.path)
 	return rows
 
@@ -543,8 +588,17 @@ func _uv_scope_contract() -> void:
 			var visual := game.get_node(path) as MeshInstance3D
 			var mesh := visual.mesh as ArrayMesh
 			var arrays := mesh.surface_get_arrays(0)
+			if path == "MoonbackIsland/Grassland":
+				_check(mesh.get_surface_count() == 1 and _valid_local_xz(arrays),"separately approved Moonback highland has exact local-meter XZ UVs")
+				_check(var_to_bytes(arrays).hex_encode().sha256_text() == preload("res://tests/support/moonback_terrain_contract.gd").ARRAY_SHA,"Moonback UV exception requires the complete approved vertex/normal/tangent arrays")
+				var changed_moonback := arrays.duplicate(true)
+				var displaced: PackedVector2Array = changed_moonback[Mesh.ARRAY_TEX_UV]
+				displaced[0] += Vector2(.01,.02)
+				changed_moonback[Mesh.ARRAY_TEX_UV] = displaced
+				_check(not _valid_local_xz(changed_moonback),"Moonback UV oracle still rejects displaced coordinates")
+				continue
 			if path not in UV_TARGETS:
-				_check(arrays[Mesh.ARRAY_TEX_UV] == null, "all four other islands must retain the actual old absent UV field: " + path)
+				_check(arrays[Mesh.ARRAY_TEX_UV] == null, "every other non-approved surface retains its actual old absent UV field: " + path)
 				continue
 			count += 1
 			_check(mesh.get_surface_count() == 1 and _valid_local_xz(arrays), "every emitted UV must equal corresponding local vertex X,Z without topology/reordering: " + path)
@@ -559,7 +613,7 @@ func _uv_scope_contract() -> void:
 			wrong_uv[0] += Vector2(0.01, 0.02)
 			changed[Mesh.ARRAY_TEX_UV] = wrong_uv
 			_check(not _valid_local_xz(changed), "UV oracle must reject displaced/swapped/sign-changed mapping rather than blindly exclude UV")
-	_check(count == 2, "only two independently named terrain meshes may acquire UVs")
+	_check(count == 2, "only two independently named opening meshes acquire UVs, apart from the separately byte-verified Moonback highland")
 
 
 func _builder_record(island: StaticBody3D, restore_old_uv: bool = false) -> Dictionary:

@@ -295,7 +295,7 @@ func _run() -> void:
 	saver = Save.new(save_root)
 	saver.clear_for_test()
 	await _spawn()
-	assert(Save.MAX_SCHEMA_VERSION == 36 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "warning fairness must not change game version or save schema")
+	assert(Save.MAX_SCHEMA_VERSION == 43 and str(ProjectSettings.get_setting("application/config/version")) == "0.1.003", "warning fairness remains compatible with kitchen schema43 and the unchanged game version")
 	_pulse_geometry()
 	_damage_matrix()
 	await _cooldown_and_push()

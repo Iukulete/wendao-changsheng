@@ -1,6 +1,8 @@
 extends RefCounted
 ## Opening-coast geometry and presentation. Static construction is separate from
 ## repeatable load reconciliation; no economy, save, weather or water ownership.
+const RidgeProfile = preload("res://scripts/terrain/ark_coast_profile_v2.gd")
+const TERRAIN_VERSION := 2
 
 const SEGMENTS := 96
 const RINGS := 30
@@ -50,6 +52,13 @@ var island: StaticBody3D
 var top_mesh: ArrayMesh
 var top_faces_local := PackedVector3Array()
 var ground_grid: Dictionary = {}
+# Derived immutable geometry, indexed by the ORIGINAL first face-vertex index.
+# Float64 keeps GDScript's subtraction/cross results, not quantized inverses.
+var _height_ab := PackedVector2Array()
+var _height_ac := PackedVector2Array()
+var _height_det := PackedFloat64Array()
+var _height_dy_b := PackedFloat64Array()
+var _height_dy_c := PackedFloat64Array()
 var rock_bodies: Array[StaticBody3D] = []
 var offsets: Array = []
 var anchor_snapshot: Array = []
@@ -61,10 +70,14 @@ var topology_audit: Dictionary = {}
 
 var initialized := false
 var legacy_support: Array[Dictionary] = []
+var _v1_support_faces := PackedVector3Array()
 var height_texture: ImageTexture
 var initialization_result: Dictionary = {}
 var actor_contacts: Array[Dictionary] = []
 var label_bases: Dictionary = {}
+var _height_revision := 0
+# Diagnostic count of actual support queries; never persisted or used by gameplay.
+var actor_support_sample_count := 0
 
 func initialize(world: Node3D, materials: Dictionary) -> Dictionary:
 	if initialized:
@@ -201,10 +214,14 @@ func _cache_actor_contact(target: Node3D) -> void:
 			points.append(point)
 			low = minf(low, point.y)
 	var feet := PackedVector3Array()
+	var seen: Dictionary = {}
 	for point in points:
-		if point.y <= low + .035:
+		# Triangle faces repeat shared vertices. Exact keys preserve every distinct
+		# probe and its first-occurrence order, without spatial quantization.
+		if point.y <= low + .035 and not seen.has(point):
+			seen[point] = true
 			feet.append(point)
-	actor_contacts.append({"node": weakref(target), "name": str(target.name), "feet": feet})
+	actor_contacts.append({"node": weakref(target), "name": str(target.name), "feet": feet, "support_valid": false})
 
 
 func refresh_moving_actors() -> void:
@@ -216,21 +233,38 @@ func refresh_moving_actors() -> void:
 			continue
 		if target.get_parent() != scene:
 			reset_shore_offset(target)
+			actor.support_valid = false
 			continue
-		var gap := INF
-		var support_height := -INF
 		# Existing residents have no swimming simulation. Their unchanged XZ route
 		# can cross submerged raster cells: never pull the figure to the seabed.
 		# A position-derived35cm fade avoids a discontinuous step at mean water;
 		# above it the verified static shore offset is exact. No bob/time state,
 		# water, collision, navigation or resident root transform is modified.
 		var mean_water_height := float(scene.get("water").mean_height)
-		for local_point in actor.feet:
-			var point: Vector3 = target.to_global(local_point)
-			var height: Variant = sample_height(point)
-			if height != null:
-				gap = minf(gap, point.y - float(height))
-				support_height = maxf(support_height, float(height))
+		var root_transform := target.global_transform
+		var terrain_transform := island.global_transform if is_instance_valid(island) else Transform3D.IDENTITY
+		var unchanged: bool = is_instance_valid(island) and bool(actor.get("support_valid", false)) \
+			and actor.get("root_transform") == root_transform \
+			and actor.get("terrain_transform") == terrain_transform \
+			and actor.get("height_revision") == _height_revision \
+			and actor.get("mean_water_height") == mean_water_height
+		if not unchanged:
+			var gap := INF
+			var support_height := -INF
+			for local_point in actor.feet:
+				var point: Vector3 = target.to_global(local_point)
+				actor_support_sample_count += 1
+				var height: Variant = sample_height(point)
+				if height != null:
+					gap = minf(gap, point.y - float(height))
+					support_height = maxf(support_height, float(height))
+			actor.merge({"gap": gap, "support_height": support_height, "root_transform": root_transform,
+				"terrain_transform": terrain_transform, "height_revision": _height_revision,
+				"mean_water_height": mean_water_height, "support_valid": true}, true)
+		# Always reapply presentation, even after a visual reset/load. Only expensive
+		# terrain queries are cached; child animation is deliberately not a cache key.
+		var gap: float = actor.gap
+		var support_height: float = actor.support_height
 		var pivot := target.get_node_or_null(VISUAL_PIVOT) as Node3D
 		if pivot != null:
 			var weight := smoothstep(mean_water_height, mean_water_height + ACTOR_SHORE_BLEND_HEIGHT, support_height) if is_finite(support_height) else 0.0
@@ -350,6 +384,20 @@ func _capture_previous_player_support() -> Dictionary:
 			old_height = h
 	result.old_surface_height = old_height
 	result.capsule_foot_before = foot
+	if old_height != null and absf(foot - float(old_height)) > .10 and sample_height(body.global_position) != null:
+		# Schema <=38 players may rest on the first sculpted coast, rather than
+		# the pre-coast collider. Reconstruct that exact V1 support only on load.
+		if _v1_support_faces.is_empty():
+			var topology := _refined_topology()
+			for face in topology.faces:
+				for index in face:
+					var p: Vector3 = topology.vertices[index]
+					_v1_support_faces.append(Vector3(p.x, _legacy_height_profile(Vector2(p.x,p.z),p.y), p.z))
+		var v1: Variant = _height_on_faces(body.global_position, _v1_support_faces, island.global_transform)
+		if v1 != null and absf(foot - float(v1)) <= .10:
+			old_height = v1
+			result.old_surface_height = v1
+			result.previous_terrain_version = 1
 	if old_height == null or absf(foot - float(old_height)) > .10:
 		result.reason = "not resting on replaced island support"
 		return result
@@ -401,6 +449,9 @@ func outline(angle: float) -> Vector2:
 	return Vector2(12.0 * cos(angle), 10.0 * sin(angle)) * contour
 
 func height_profile(local: Vector2, radius_fraction: float) -> float:
+	return RidgeProfile.height(local, radius_fraction, _legacy_height_profile(local, radius_fraction))
+
+func _legacy_height_profile(local: Vector2, radius_fraction: float) -> float:
 	var q := (local - Vector2(5.2, -4.1)) / Vector2(4.1, 3.6)
 	var shoulder := 1.25 * exp(-q.length_squared())
 	var second := .24 * exp(-((local - Vector2(7.8, -2.0)) / Vector2(2.1, 3.0)).length_squared())
@@ -581,10 +632,22 @@ func _install_terrain(material: Material) -> void:
 	island.add_child(closed)
 
 func _build_height_index() -> void:
+	ground_grid.clear()
+	_height_ab.resize(top_faces_local.size())
+	_height_ac.resize(top_faces_local.size())
+	_height_det.resize(top_faces_local.size())
+	_height_dy_b.resize(top_faces_local.size())
+	_height_dy_c.resize(top_faces_local.size())
+	_height_revision += 1
 	for i in range(0, top_faces_local.size(), 3):
 		var a := top_faces_local[i]
 		var b := top_faces_local[i+1]
 		var c := top_faces_local[i+2]
+		_height_ab[i] = Vector2(b.x-a.x,b.z-a.z)
+		_height_ac[i] = Vector2(c.x-a.x,c.z-a.z)
+		_height_det[i] = _height_ab[i].cross(_height_ac[i])
+		_height_dy_b[i] = b.y-a.y
+		_height_dy_c[i] = c.y-a.y
 		for z in range(int(floor(minf(a.z,minf(b.z,c.z)))), int(floor(maxf(a.z,maxf(b.z,c.z))))+1):
 			for x in range(int(floor(minf(a.x,minf(b.x,c.x)))), int(floor(maxf(a.x,maxf(b.x,c.x))))+1):
 				var key := Vector2i(x,z)
@@ -598,18 +661,16 @@ func sample_height(world_position: Vector3) -> Variant:
 	var p := island.to_local(world_position)
 	for i in ground_grid.get(Vector2i(int(floor(p.x)),int(floor(p.z))), []):
 		var a: Vector3 = top_faces_local[i]
-		var b: Vector3 = top_faces_local[i+1]
-		var c: Vector3 = top_faces_local[i+2]
-		var ab := Vector2(b.x-a.x,b.z-a.z)
-		var ac := Vector2(c.x-a.x,c.z-a.z)
+		var ab := _height_ab[i]
+		var ac := _height_ac[i]
 		var ap := Vector2(p.x-a.x,p.z-a.z)
-		var determinant := ab.cross(ac)
+		var determinant := _height_det[i]
 		if absf(determinant) < .0000001:
 			continue
 		var u := ap.cross(ac) / determinant
 		var v := ab.cross(ap) / determinant
 		if u >= -.00001 and v >= -.00001 and u+v <= 1.00001:
-			return a.y + u*(b.y-a.y) + v*(c.y-a.y) + island.global_position.y
+			return a.y + u*_height_dy_b[i] + v*_height_dy_c[i] + island.global_position.y
 	return null
 
 func contact(target: Node3D) -> Dictionary:
