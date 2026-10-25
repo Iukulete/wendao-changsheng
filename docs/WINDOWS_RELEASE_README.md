@@ -71,5 +71,5 @@ H 功能板显示当前原生/参考后端。开发环境可用
 
 当前仍是局部统一美术/占位人物混合的区域原型，非最终画质或完整大世界。发布包只含实际活跃资源及字体、图标、AGPL/Flecs许可，
 不含旧剧情库、旧立绘/音源、测试、引擎下载或个人存档。
-本开发版对应源码与构建脚本见 https://github.com/Iukulete/wendao-changsheng/tree/codex/ark-home-life-sample 。
+本版主线源码与构建脚本见 https://github.com/Iukulete/wendao-changsheng/tree/main 。
 分享独立二进制时应同时保留对应源码版本与本包许可文件；本地发布包不是仓库源码备份。
