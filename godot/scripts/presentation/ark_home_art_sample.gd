@@ -18,6 +18,7 @@ var _timber: Texture2D
 var furniture := preload("res://scripts/presentation/ark_cabin_furniture.gd").new()
 var room_view := preload("res://scripts/presentation/ark_room_view.gd").new()
 var vessel := preload("res://scripts/presentation/ark_vessel_skin.gd").new()
+var weather := preload("res://scripts/presentation/ark_weather_art.gd").new()
 
 func timber_texture() -> Texture2D:
 	if _timber == null: _timber = load(TIMBER_PATH) as Texture2D
@@ -103,8 +104,10 @@ func _under_candidate(node: Node) -> bool:
 		parent = parent.get_parent()
 	return false
 
-func update_visibility(world: Node3D) -> void:
-	if enabled: room_view.update(world, _material("wall_panel"), _material("painted_timber"))
+func update_visibility(world: Node3D, delta: float = 0.0) -> void:
+	if enabled:
+		room_view.update(world, _material("wall_panel"), _material("painted_timber"))
+		weather.update(world, delta)
 
 func _role(path: String) -> String:
 	var text := path.to_lower()
@@ -382,6 +385,7 @@ func restore() -> void:
 	room_view.restore()
 	furniture.restore()
 	vessel.restore()
+	weather.clear()
 	for entry in _marker_originals.values():
 		var marker: Node = entry.node.get_ref()
 		if is_instance_valid(marker): marker.visible = entry.visible

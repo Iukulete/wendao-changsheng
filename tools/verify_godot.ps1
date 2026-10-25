@@ -12,6 +12,7 @@ $testScripts = @(
     "res://tests/ark_cabin_furniture_test.gd",
     "res://tests/ark_room_view_test.gd",
     "res://tests/ark_vessel_skin_test.gd",
+    "res://tests/ark_weather_art_test.gd",
     "res://tests/ark_home_template_plan_test.gd",
     "res://tests/ark_home_template_upgrade_test.gd",
     "res://tests/ark_kitchen_work_test.gd",

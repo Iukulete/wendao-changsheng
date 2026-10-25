@@ -1143,7 +1143,7 @@ func _process(delta: float) -> void:
 		resident_washing.clear()
 		resident_kitchen.clear()
 		opening_coast.refresh_moving_actors()
-		_update_shelter_roof_cutaway()
+		_update_shelter_roof_cutaway(delta)
 		return
 	_reconcile_household_work()
 	resident_kitchen.reconcile(self)
@@ -1191,7 +1191,7 @@ func _process(delta: float) -> void:
 	resident_washing.present(self)
 	resident_kitchen.present(self)
 	# Place cabin labels after the residents' final rendered poses, not one step behind.
-	_update_shelter_roof_cutaway()
+	_update_shelter_roof_cutaway(delta)
 	_update_interaction_hint()
 
 
@@ -5679,15 +5679,15 @@ func _clear_shelter_for_rebuild() -> void:
 			previous.queue_free()
 
 
-func _update_shelter_roof_cutaway() -> void:
+func _update_shelter_roof_cutaway(delta: float = 0.0) -> void:
 	var structure := _ark_node("BuiltShelter") as Node3D
 	if structure == null:
-		home_art_sample.update_visibility(self)
+		home_art_sample.update_visibility(self, delta)
 		_update_shelter_cutaway_nameplates()
 		return
 	var roof := structure.get_node_or_null("Roof") as Node3D
 	if roof == null:
-		home_art_sample.update_visibility(self)
+		home_art_sample.update_visibility(self, delta)
 		_update_shelter_cutaway_nameplates()
 		return
 	var cutaway := false
@@ -5721,7 +5721,7 @@ func _update_shelter_roof_cutaway() -> void:
 	var brace := structure.get_node_or_null("ReefShellStormBrace") as Node3D
 	if brace:
 		brace.visible = roof.visible and not cutaway
-	home_art_sample.update_visibility(self)
+	home_art_sample.update_visibility(self, delta)
 	_update_shelter_cutaway_nameplates(structure, cutaway)
 
 
