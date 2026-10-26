@@ -20,3 +20,7 @@
 /native/ark_simulation/third_party/flecs/flecs.[ch] -whitespace
 /godot/art/coast_nature/License_Standard.txt -whitespace
 /godot/art/coast_nature/asset_manifest.json whitespace=cr-at-eol
+
+# High-poly character handoff sources are not runtime assets.
+/art_source/characters/blue_qipao/f10/*.glb filter=lfs diff=lfs merge=lfs -text
+/art_source/characters/blue_qipao/f10/*.blend filter=lfs diff=lfs merge=lfs -text
