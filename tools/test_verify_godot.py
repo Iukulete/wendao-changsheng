@@ -40,6 +40,12 @@ class VerifyGodotTests(unittest.TestCase):
         for version in ("4.6.3.stable.official.hash", "4.7.1.beta.official.hash", "4.7.1.stable.custom", "4.7.1.stable.official.hash", "4.7.1.stable.official.a13da4feb.extra"):
             self.assertIsNone(verify_godot.VERSION_PATTERN.match(version))
 
+    def test_long_landing_has_full_round_trip_frame_budget(self) -> None:
+        self.assertEqual(verify_godot.regression_frame_budget("res://tests/ark_moonback_landing_test.gd"), 30000)
+        self.assertEqual(verify_godot.regression_frame_budget("ark_world_travel_test"), 30000)
+        self.assertEqual(verify_godot.regression_frame_budget("ark_mooring_test"), 10000)
+        self.assertEqual(verify_godot.regression_frame_budget("ark_resident_kitchen_test"), 6000)
+
     def test_render_environment_uses_godot_paths_on_windows(self) -> None:
         # Exercise the real render branch with Windows path semantics on any OS.
         # No engine, filesystem copy or display is used by this runner unit test.

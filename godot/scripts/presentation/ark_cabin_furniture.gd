@@ -24,7 +24,8 @@ func apply(world: Node3D) -> void:
 	if shelter != null:
 		var cabin := shelter.get_node_or_null("HomeArtCandidate") as Node3D
 		var cot := shelter.get_node_or_null("Cot") as Node3D
-		if _ensure(cabin,"PlayerCotFurniture",cot,BED,AABB(Vector3(-.46,-.17,-.26),Vector3(.92,.68,.52)),-PI*.5):
+		var bed_bounds := _player_bed_bounds(cot)
+		if bed_bounds.has_volume() and _ensure(cabin,"PlayerCotFurniture",cot,BED,bed_bounds,-PI*.5):
 			for id in ["Cot","Bedroll","QuiltFold"]: _hide_visual(shelter.get_node_or_null(id))
 		_ensure(cabin,"CabinReadingBooks",shelter,BOOKS,AABB(Vector3(.13,1.435,-1.035),Vector3(.26,.19,.105)))
 	var storage := ark.get_node_or_null("BuiltStorage") as Node3D
@@ -39,6 +40,16 @@ func apply(world: Node3D) -> void:
 		if _ensure(deck,"GuestCabinetFurniture",chest,CABINET,AABB(Vector3(-.21,-.26,-.22),Vector3(.42,.52,.44))):
 			_hide_visual(chest)
 	_cleanup()
+
+func _player_bed_bounds(cot: Node3D) -> AABB:
+	if cot == null or cot.get_child_count()==0: return AABB()
+	var visual := cot.get_child(0) as MeshInstance3D
+	if visual == null or not visual.mesh is BoxMesh: return AABB()
+	# One authoritative XZ footprint: the same real BoxMesh used by navigation
+	# and construction. Double its frame height to include mattress/headboard.
+	var box := visual.get_aabb()
+	box.size.y *= 2.0
+	return box
 
 func _source_visible(node: Node3D) -> bool:
 	if not is_instance_valid(node) or node.is_queued_for_deletion() or not node.is_inside_tree(): return false

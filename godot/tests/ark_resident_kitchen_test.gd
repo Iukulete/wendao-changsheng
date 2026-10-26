@@ -146,6 +146,12 @@ func _run() -> void:
 	_check(_events("resident_meal_prepared") == 1 and game.economy.audit().ok,"successful recipe has exactly one factual event and conserved ledger")
 	for i in 100: await _tick()
 	_check(game.raw_shellfish == 2 and game.stew_servings == 1,"same evening cannot repeatedly cook")
+	for idle_period in [game.DayPeriod.DAY,game.DayPeriod.EVENING]:
+		game.day_period = idle_period # Explicit calendar fixture; no elapsed work.
+		game._update_traveler_schedule()
+		_check(game.resident_washing.walk_step_clear(game,game.traveler_target_position,game.traveler_target_position),"day/evening idle target stays outside actual cot, hearth and walls")
+	game.day_period = game.DayPeriod.EVENING
+	game._update_traveler_schedule()
 	_check(game._save_progress(),"completed work saves")
 	game._load_progress()
 	_check(game.kitchen.completed == 1 and game.stew_servings == 1 and _events("resident_meal_prepared") == 1,"completed reload cannot duplicate dinner or history")
@@ -159,6 +165,13 @@ func _run() -> void:
 	_check(game.pressure_galley_choice_pending,"existing discovered upgrade offered")
 	game._build_pressure_galley()
 	_check(game.pressure_galley_built and game._ark_node("BuiltShelter/PressureGalley") != null,"actual pressure pot replaces old cookware")
+	# A genuine old idle coordinate is now inside the larger cot's footprint.
+	# Preserve it on disk/load; ordinary budgeted walking must recover it.
+	var legacy_idle := Vector3(.8,.12,-.35)
+	game.traveler_marker.position = legacy_idle
+	_check(game._save_progress(),"legacy full-size-cot overlap fixture saves")
+	game._load_progress()
+	_check(game.traveler_marker.position.is_equal_approx(legacy_idle),"load must not teleport a resident out of old furniture overlap")
 	game.day_count = 3
 	game.day_period = 2
 	game.stew_servings = 0 # Declared meal-consumption fixture.

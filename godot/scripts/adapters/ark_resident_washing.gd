@@ -62,7 +62,16 @@ func prepare_route(game: Node3D, actor: String, route: PackedVector3Array) -> vo
 	# Old boarding/saved positions can overlap a wall's capsule margin. Only a
 	# short first planned leg ending in clear space may walk out of that margin.
 	# This is movement-budgeted, not a snap, and ends permanently once clear.
-	if route.size() > 1 and route[0].distance_to(route[1]) <= .5 and not walk_step_clear(game,route[0],route[0]) and walk_step_clear(game,route[1],route[1]):
+	if route.size() <= 1:
+		return
+	var escape_limit := .5
+	# The full-size cot's nearest grid-aligned exit can be 0.9 m away. Extend
+	# only a visual-furniture overlap; a physical wall keeps its old 0.5 m cap.
+	# The route planner has already sampled this first leg against real solids.
+	var excluded: Array[RID] = []
+	if not game._ark_local_walk_cell_blocked(Vector2(route[0].x,route[0].z),excluded,.25):
+		escape_limit = 1.0
+	if route[0].distance_to(route[1]) <= escape_limit and not walk_step_clear(game,route[0],route[0]) and walk_step_clear(game,route[1],route[1]):
 		escape_legs[actor] = route[1]
 
 func route_step_clear(game: Node3D, actor: String, from: Vector3, to: Vector3, route_index: int, destination: Vector3 = Vector3.INF) -> bool:

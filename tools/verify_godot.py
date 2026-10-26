@@ -65,6 +65,15 @@ def regression_scripts() -> list[str]:
     return canonical_tests(ROOT)
 
 
+def regression_frame_budget(script: str) -> int:
+    name = Path(script).stem
+    # Landing includes eight real player walks plus blocked resident round trips.
+    # A 6000-frame cap can terminate a healthy run before its positive marker.
+    if name in {"ark_world_travel_test", "ark_multifloor_risk_test", "ark_moonback_landing_test"}:
+        return 30000
+    return 10000 if name == "ark_mooring_test" else 6000
+
+
 def run(command: list[str], name: str, log_dir: Path, env: dict[str, str],
         timeout: int, marker: str | None = None, cwd: Path = ROOT) -> str:
     print(f"Running {name}...", flush=True)
@@ -333,7 +342,7 @@ def main() -> int:
     scripts = regression_scripts()
     for script in scripts:
         name = Path(script).stem
-        frames = 30000 if name in {"ark_world_travel_test", "ark_multifloor_risk_test"} else 10000 if name == "ark_mooring_test" else 6000
+        frames = regression_frame_budget(script)
         run([*headless, "--quit-after", str(frames), "--script", script], name,
             logs, env, 900 if frames > 600 else 180, name.upper() + "_OK:")
     # Exported pack proof is portable and does not pretend Linux ran a Windows EXE.

@@ -77,11 +77,11 @@ func _run() -> void:
 	assert(game._try_place_workshop_home_template(Vector3.ZERO) and game.wood==1)
 	var sample = game.home_art_sample
 	var furniture = sample.furniture
-	_assert_model("PlayerCotFurniture",Vector3(.92,.68,.52),534)
+	_assert_model("PlayerCotFurniture",Vector3(1.8,.68,.8),534)
 	_assert_model("PantryCabinetFurniture",Vector3(.98,.86,.86),322)
 	_assert_model("CabinReadingBooks",Vector3(.26,.19,.105),196)
 	assert(furniture._instances.size()==3 and furniture._hidden.size()==6)
-	assert((_visual("BuiltShelter/Cot").mesh as BoxMesh).size==Vector3(.92,.34,.52) and not _visual("BuiltShelter/Cot").visible)
+	assert((_visual("BuiltShelter/Cot").mesh as BoxMesh).size==Vector3(1.8,.34,.8) and not _visual("BuiltShelter/Cot").visible)
 	await _capture("01_paid_starter_home")
 	var before: Dictionary = game._build_save_state()
 	var collisions := _collisions()

@@ -117,9 +117,11 @@ const GUEST_CABIN_WOOD_COST := 3
 const GUEST_CABIN_FRAME_COST := 1
 const PRESSURE_GALLEY_WOOD_COST := 3
 const GUEST_CABIN_SAILMAKER_POSITION := Vector3(-0.85, 0.12, -4.34)
+const PLAYER_COT_POSITION := Vector3(0.42, 0.38, -0.53)
+const PLAYER_COT_SIZE := Vector3(1.8, 0.34, 0.8)
 # These clear floor positions are temporary refuge, not extra beds. The Cot
 # remains the player's; dedicated resident accommodation comes from expansion.
-const TIDEKEEPER_REFUGE_REST_OFFSET := Vector3(0.5, 0.12, -0.5)
+const TIDEKEEPER_REFUGE_REST_OFFSET := Vector3(0.05, 0.12, 0.9)
 const SAILMAKER_REFUGE_REST_OFFSET := Vector3(-0.72, 0.12, 0.25)
 # Keep the full-size meal mat left of the player's Cot, with one resident
 # approaching each long edge rather than putting a body against the bed.
@@ -4102,10 +4104,10 @@ func _update_traveler_schedule() -> void:
 			traveler_target_position = shelter_position + TIDEKEEPER_REFUGE_REST_OFFSET
 	elif day_period == DayPeriod.EVENING:
 		traveler_action = "照看灯火"
-		traveler_target_position = Vector3(0.8, 0.12, -0.35)
+		traveler_target_position = Vector3(0.8, 0.12, 0.55)
 	elif day_period == DayPeriod.DAY:
 		traveler_action = "整理浮标箱"
-		traveler_target_position = Vector3(1.12, 0.12, -0.33)
+		traveler_target_position = Vector3(0.95, 0.12, 0.55)
 	else:
 		traveler_action = "查看潮势"
 		traveler_target_position = Vector3(0.5, 0.12, 1.35)
@@ -5016,7 +5018,7 @@ func _add_shelter_template_ghost(parent: Node3D) -> void:
 	_add_template_ghost_box(parent, "Left", Vector3(0.14, 2.2, 2.2), Vector3(-1.42, 1.25, 0))
 	_add_template_ghost_box(parent, "Right", Vector3(0.14, 2.2, 2.2), Vector3(1.42, 1.25, 0))
 	_add_template_ghost_box(parent, "Roof", Vector3(3.2, 0.18, 2.6), Vector3(0, 2.38, 0))
-	_add_template_ghost_box(parent, "Cot", Vector3(0.92, 0.34, 0.52), Vector3(0.72, 0.38, 0.2))
+	_add_template_ghost_box(parent, "Cot", PLAYER_COT_SIZE, PLAYER_COT_POSITION)
 	_add_template_ghost_box(parent, "WarmLamp", Vector3(0.28, 0.42, 0.28), Vector3(0, 0.43, -0.5))
 	_add_template_ghost_box(parent, "HearthStone", Vector3(0.62, 0.18, 0.52), Vector3(-1.05, 0.21, -0.75))
 	_add_template_ghost_box(parent, "CookingPot", Vector3(0.38, 0.3, 0.38), Vector3(-1.05, 0.43, -0.75))
@@ -5799,18 +5801,18 @@ func _build_shelter_at(position: Vector3) -> void:
 	_add_shelter_visual_details(structure, roof)
 	if reef_shell_brace_installed:
 		_add_reef_shell_brace_visual(structure)
-	_add_local_box(structure, "Cot", Vector3(0.72, 0.38, 0.2), Vector3(0.92, 0.34, 0.52), Color("8a684c"), false)
-	_add_local_box(structure, "Bedroll", Vector3(0.72, 0.58, 0.2), Vector3(0.76, 0.08, 0.48), Color("c0a589"), false)
+	_add_local_box(structure, "Cot", PLAYER_COT_POSITION, PLAYER_COT_SIZE, Color("8a684c"), false)
+	_add_local_box(structure, "Bedroll", PLAYER_COT_POSITION+Vector3.UP*.20, Vector3(1.62, 0.08, 0.72), Color("c0a589"), false)
 	_add_local_box(structure, "HearthStone", Vector3(-1.05, 0.21, -0.75), Vector3(0.62, 0.18, 0.52), Color("69645b"), false)
 	_add_local_box(structure, "HearthEmbers", Vector3(-1.05, 0.34, -0.75), Vector3(0.34, 0.06, 0.32), Color("e08a4e"), false)
 	if pressure_galley_built:
 		_add_pressure_galley_visual(structure)
 	else:
 		_build_shelter_pot(structure)
-	_add_local_visual_box(structure, "QuiltFold", Vector3(0.72, 0.65, 0.2), Vector3(0.54, 0.055, 0.5), Color("b88769"))
+	_add_local_visual_box(structure, "QuiltFold", PLAYER_COT_POSITION+Vector3(-.25,.27,0), Vector3(1.15, 0.055, 0.74), Color("b88769"))
 	var cot_marker := Node3D.new()
 	cot_marker.name = "CotInteractable"
-	cot_marker.position = position + Vector3(0.72, 0.5, 0.2)
+	cot_marker.position = position + PLAYER_COT_POSITION + Vector3.UP*.12
 	ark_root.add_child(cot_marker)
 	interactables.append({"id": "cot", "node": cot_marker, "amount": 0})
 	var hearth_marker := Node3D.new()
