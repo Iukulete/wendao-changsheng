@@ -96,6 +96,7 @@ func start(game: Node3D,workshop: bool) -> void:
 	game.fixture_preview_checked_msec = 0
 	game.fixture_preview_checked_position = Vector3(INF,INF,INF)
 	game.ark_root.add_child(game.build_preview)
+	_create_preview_parts(game)
 	game.message = "%s%s · 只需 %d 木（本舟可用 %d）\n%s只搭缺少的部分，已有设施、储物和升级不动。左键确认，右键或Esc取消。" % ["补齐：" if proposal.anchored else "模板：",proposal.title,proposal.wood_cost,game._available_build_wood(),"沿现有棚屋固定位置；" if proposal.anchored else "鼠标选择位置；"]
 	game._update_build_preview()
 	game._update_hud()
@@ -107,19 +108,7 @@ func refresh(game: Node3D,position: Vector3,workshop: bool) -> void:
 	var proposal := select(game,position,workshop)
 	var old: Dictionary = game.build_preview.get_meta("home_template_proposal",{})
 	if not Catalog.same_proposal(old,proposal):
-		for child in game.build_preview.get_children():
-			game.build_preview.remove_child(child)
-			child.queue_free()
-		if proposal.get("ok",false):
-			if "shelter" in proposal.missing:
-				game._add_shelter_template_ghost(game.build_preview)
-				_add_use_label(game,"ShelterUseLabel","起居 / 炊事 · 3 木",Vector3(0,2.8,0))
-			for id in ["storage","workbench"]:
-				if not id in proposal.missing: continue
-				var part: Dictionary = proposal.parts[id]
-				var half: Vector2 = Placement.half_size(id,part.turns)
-				game._add_template_ghost_box(game.build_preview,"Storage" if id == "storage" else "Workbench",Vector3(half.x*2,.84 if id == "storage" else .74,half.y*2),part.position-proposal.anchor+Vector3(0,.42 if id == "storage" else .37,0))
-				_add_use_label(game,id+"UseLabel",("储藏" if id == "storage" else "工坊")+" · %d 木" % Catalog.COSTS[id],part.position-proposal.anchor+Vector3(0,1.25,0))
+		_update_preview_parts(game, proposal)
 	game.build_preview.set_meta("home_template_proposal",proposal)
 	game.build_preview.position = proposal.get("anchor",position)
 	game.preview_valid = proposal.get("ok",false) and str(proposal.get("error","invalid")).is_empty() and game._available_build_wood() >= int(proposal.get("wood_cost",0))
@@ -194,4 +183,36 @@ func update_buttons(game: Node3D,buttons: Dictionary) -> void:
 		if not proposal.ok: continue
 		button.disabled = proposal.missing.is_empty()
 		button.text = "%s · 已齐备" % proposal.title if proposal.missing.is_empty() else "%s%s · %d 木" % ["补齐：" if not proposal.kept.is_empty() else "模板：",proposal.title,proposal.wood_cost]
-		button.tooltip_text = "%s。预览后确认，只为缺少的设施付料；已有布置不动。\n本舟可用木料 %d；玩家床铺与临时避难不等于居民专用床位。" % [proposal.uses,game._available_build_wood()]
+		button.tooltip_text = "%s。\n本舟可用木料 %d；预览后确认，只为缺少的设施付料，已有布置不动。\n玩家床铺与临时避难不等于居民专用床位。" % [proposal.uses,game._available_build_wood()]
+
+
+func _create_preview_parts(game: Node3D) -> void:
+	var shelter := Node3D.new()
+	shelter.name = "ShelterGhost"
+	game.build_preview.add_child(shelter)
+	game._add_shelter_template_ghost(shelter)
+	_add_use_label(game, "ShelterUseLabel", "起居 / 炊事 · 3 木", Vector3(0, 2.8, 0))
+	for id in ["storage", "workbench"]:
+		game._add_template_ghost_box(game.build_preview, "Storage" if id == "storage" else "Workbench", Vector3.ONE, Vector3.ZERO)
+		_add_use_label(game, id + "UseLabel", ("储藏" if id == "storage" else "工坊") + " · %d 木" % Catalog.COSTS[id], Vector3.ZERO)
+	game._cache_build_preview_material_targets()
+	_update_preview_parts(game, {})
+
+
+func _update_preview_parts(game: Node3D, proposal: Dictionary) -> void:
+	var ok: bool = bool(proposal.get("ok", false))
+	var missing: Array = proposal.get("missing", []) if ok else []
+	(game.build_preview.get_node("ShelterGhost") as Node3D).visible = ok and "shelter" in missing
+	(game.build_preview.get_node("ShelterUseLabel") as Label3D).visible = ok and "shelter" in missing
+	for id in ["storage", "workbench"]:
+		var visual := game.build_preview.get_node("Storage" if id == "storage" else "Workbench") as MeshInstance3D
+		var label := game.build_preview.get_node(id + "UseLabel") as Label3D
+		var shown: bool = ok and id in missing
+		visual.visible = shown
+		label.visible = shown
+		if not shown: continue
+		var part: Dictionary = proposal.parts[id]
+		var half: Vector2 = Placement.half_size(id, part.turns)
+		(visual.mesh as BoxMesh).size = Vector3(half.x * 2, .84 if id == "storage" else .74, half.y * 2)
+		visual.position = part.position - proposal.anchor + Vector3(0, .42 if id == "storage" else .37, 0)
+		label.position = part.position - proposal.anchor + Vector3(0, 1.25, 0)

@@ -1,4 +1,3 @@
 Only the nine coastal JPG texture maps in this directory are CC0-1.0.
-Source: Poly Haven; authors, source URLs and exact original checksums are retained in provenance/manifest.json.
+Source: Poly Haven. Authors and source URLs are listed in the root ASSET_NOTICES.md.
 https://creativecommons.org/publicdomain/zero/1.0/
-This notice does not apply to the user-supplied Emma model or other game assets.

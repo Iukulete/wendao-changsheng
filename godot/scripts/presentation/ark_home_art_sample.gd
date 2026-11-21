@@ -1,6 +1,7 @@
 extends RefCounted
 ## Reversible home material/set dressing. No physics, economy, actor or save
 ## ownership. Every mutation is reversible; rebuilt nodes are discovered anew.
+const ShelterVisualGeometry = preload("res://scripts/presentation/ark_shelter_visual_geometry.gd")
 const TIMBER_PATH := "res://art/home_sample/home_timber_albedo_v1.png"
 const COAST_SHADER = preload("res://shaders/ark_coast_home_sample.gdshader")
 const TIMBER_SHADER = preload("res://shaders/ark_home_joinery.gdshader")
@@ -358,28 +359,10 @@ func _helm_details(parent: Node3D) -> void:
 	helm.add_child(hub)
 
 func _cabin_details(parent: Node3D) -> void:
-	var woodwork: Array = [[Vector3(0, 1.37, -1.005), Vector3(.94, .055, .20)], [Vector3(0, 2.11, -1.01), Vector3(2.7, .10, .09)]]
-	for x in [-1.27, 1.27]:
-		woodwork.append([Vector3(x, 1.16, 1.05), Vector3(.11, 1.96, .12)])
-	for index in range(8):
-		woodwork.append([Vector3(-1.17 + index * .335, 1.18, -1.034), Vector3(.025, 1.70, .032)])
-	_batch(parent, "JoineryAndShelf", BoxMesh.new(), "timber", woodwork)
-	var fasteners: Array = []
-	for x in [-1.27, 1.27]:
-		for y in [.35, 1.90]: fasteners.append([Vector3(x, y, 1.119), Vector3(.14, .11, .018)])
-	_batch(parent, "BrassCornerPlates", BoxMesh.new(), "brass", fasteners)
-	var bottle := CylinderMesh.new()
-	bottle.top_radius = .047
-	bottle.bottom_radius = .061
-	bottle.height = .20
-	bottle.radial_segments = 12
-	_batch(parent, "ShelfJars", bottle, "ceramic", [[Vector3(-.25, 1.50, -.98), Vector3.ONE], [Vector3(-.08, 1.485, -.98), Vector3(.8, .85, .8)]])
-	_batch(parent, "FoldedTableLinen", BoxMesh.new(), "cloth", [[Vector3(.22, 1.415, -.98), Vector3(.25, .035, .15)]])
+	ShelterVisualGeometry.add_cabin_details(parent, Callable(self, "_material"))
 
 func _roof_details(parent: Node3D) -> void:
-	var seams: Array = []
-	for x in [-1.0, 0.0, 1.0]: seams.append([Vector3(x, .105, 0), Vector3(.025, .012, 2.14)])
-	_batch(parent, "CanvasSeamBindings", BoxMesh.new(), "rope", seams)
+	ShelterVisualGeometry.add_roof_details(parent, Callable(self, "_material"))
 
 func restore() -> void:
 	room_view.restore()

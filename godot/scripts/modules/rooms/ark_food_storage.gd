@@ -8,8 +8,10 @@ const CAPACITY := 8
 const MAX_OPERATIONS := 1000000
 const DEPOSIT := "home_food:deposit"
 const WITHDRAW_SHELL := "home_food:withdraw_shell"
+const WITHDRAW_FISH := "home_food:withdraw_fish"
+const WITHDRAW_LARGE_FISH := "home_food:withdraw_large_fish"
 const WITHDRAW_STEW := "home_food:withdraw_stew"
-const RESOURCES := ["shellfish","stew_servings"]
+const RESOURCES := ["shellfish","stew_servings","fish","large_fish"]
 
 static func initialize(economy: RefCounted) -> void:
 	economy.seed_inventory(OWNER,{})
@@ -17,8 +19,12 @@ static func initialize(economy: RefCounted) -> void:
 	economy.set_capacity(OWNER,CAPACITY)
 	economy.set_capacity(CARRY,1)
 
-static func stock(economy: RefCounted) -> int:
+static func meal_stock(economy: RefCounted) -> int:
+	# Uncooked fish occupies space, but is not yet a usable meal ingredient.
 	return economy.inventory(OWNER,"shellfish")+economy.inventory(OWNER,"stew_servings")
+
+static func stock(economy: RefCounted) -> int:
+	return economy.inventory(OWNER,"shellfish")+economy.inventory(OWNER,"stew_servings")+economy.inventory(OWNER,"fish")+economy.inventory(OWNER,"large_fish")
 
 static func next(economy: RefCounted,id: String) -> int:
 	return int(economy.flow(id).get("sequence",0))+1
@@ -27,7 +33,7 @@ static func deposit(economy: RefCounted) -> Dictionary:
 	var room := CAPACITY-stock(economy)
 	var moves: Array = []
 	var amounts := {}
-	for resource in ["stew_servings","shellfish"]:
+	for resource in ["stew_servings","shellfish","fish","large_fish"]:
 		var amount := mini(room,economy.inventory("player",resource))
 		if amount <= 0: continue
 		moves.append({"from":"player","to":OWNER,"resource":resource,"amount":amount})
@@ -40,7 +46,7 @@ static func deposit(economy: RefCounted) -> Dictionary:
 
 static func withdraw(economy: RefCounted,resource: String) -> Dictionary:
 	if resource not in RESOURCES: return {"ok":false,"code":"resource"}
-	var id := WITHDRAW_SHELL if resource == "shellfish" else WITHDRAW_STEW
+	var id := WITHDRAW_SHELL if resource == "shellfish" else WITHDRAW_FISH if resource == "fish" else WITHDRAW_LARGE_FISH if resource == "large_fish" else WITHDRAW_STEW
 	if next(economy,id)>MAX_OPERATIONS: return {"ok":false,"code":"operation_limit"}
 	return economy.process_flow(id,next(economy,id),[{"from":OWNER,"to":"player","resource":resource,"amount":1}])
 
@@ -59,7 +65,7 @@ static func matches_save(state: Dictionary) -> bool:
 		if not inventory is Dictionary: return false
 		var total := 0
 		for resource in inventory:
-			if resource not in RESOURCES or not Memory._integer(inventory[resource]) or inventory[resource]<0: return false
+			if resource not in (RESOURCES if owner==OWNER else ["shellfish","stew_servings"]) or not Memory._integer(inventory[resource]) or inventory[resource]<0: return false
 			total += int(inventory[resource])
 		if total>int(pair[1]) or (schema<43 and total>0): return false
 		if e.capacities.has(owner) and (not Memory._integer(e.capacities[owner]) or e.capacities[owner] != pair[1]): return false
@@ -73,12 +79,12 @@ static func matches_save(state: Dictionary) -> bool:
 
 static func stock_from(inventories: Dictionary) -> int:
 	var food: Dictionary = inventories.get(OWNER,{})
-	return int(food.get("shellfish",0))+int(food.get("stew_servings",0))
+	return int(food.get("shellfish",0))+int(food.get("stew_servings",0))+int(food.get("fish",0))+int(food.get("large_fish",0))
 
 static func _valid_household_flow(id: String,flow: Variant) -> bool:
-	if id not in [DEPOSIT,WITHDRAW_SHELL,WITHDRAW_STEW] or not flow is Dictionary or flow.size()!=4: return false
+	if id not in [DEPOSIT,WITHDRAW_SHELL,WITHDRAW_STEW,WITHDRAW_FISH,WITHDRAW_LARGE_FISH] or not flow is Dictionary or flow.size()!=4: return false
 	if not Memory._integer(flow.get("sequence")) or flow.sequence<1 or flow.sequence>MAX_OPERATIONS or flow.get("costs")!={} or flow.get("outputs")!={}: return false
-	if not flow.get("moves") is Array or flow.moves.is_empty() or flow.moves.size()>(2 if id==DEPOSIT else 1): return false
+	if not flow.get("moves") is Array or flow.moves.is_empty() or flow.moves.size()>(4 if id==DEPOSIT else 1): return false
 	var seen := []
 	for move in flow.moves:
 		if not move is Dictionary or move.size()!=4 or move.get("resource") not in RESOURCES or seen.has(move.resource): return false
@@ -87,5 +93,5 @@ static func _valid_household_flow(id: String,flow: Variant) -> bool:
 		if id==DEPOSIT:
 			if move.get("from")!="player" or move.get("to")!=OWNER: return false
 		else:
-			if move.get("from")!=OWNER or move.get("to")!="player" or move.amount!=1 or move.resource!=("shellfish" if id==WITHDRAW_SHELL else "stew_servings"): return false
+			if move.get("from")!=OWNER or move.get("to")!="player" or move.amount!=1 or move.resource!=("shellfish" if id==WITHDRAW_SHELL else "fish" if id==WITHDRAW_FISH else "large_fish" if id==WITHDRAW_LARGE_FISH else "stew_servings"): return false
 	return true

@@ -35,9 +35,10 @@ func configure(scene: Node3D) -> void:
 	world = scene
 	heights.clear()
 	supports.clear()
-	for path in ["ArkRoot/RaftBase","ArkRoot/RaftBoardingGangplank","ArkRoot/BuiltRaftExtension","MoonbackOldLanding/PierDeck","MoonbackOldLanding/ShoreApproach"]:
+	for path in ["ArkRoot/RaftBase","ArkRoot/RaftBoardingGangplank","ArkRoot/BuiltRaftExtension","MoonbackOldLanding/PierDeck","MoonbackOldLanding/ShoreApproach","MoonbackBoardingLink"]:
 		var body := world.get_node_or_null(path)
 		if body == null: continue
+		if path == "MoonbackBoardingLink" and (not world.moonback_boarding_link.active or world.moonback_boarding_link.body != body): continue
 		for child in body.get_children():
 			if child is CollisionShape3D and child.shape is BoxShape3D and not child.disabled: supports.append(child)
 

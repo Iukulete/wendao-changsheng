@@ -23,8 +23,41 @@ var _description: Label
 var _words: ScrollContainer
 var _rows: Array[ScrollContainer] = []
 var _last: Dictionary = {}
+# A double-click belongs to the action that received its first click, not the
+# replacement button shown after settlement/dealing. No timer or input delay.
+var _phase_changed_by_click := false
+var _consume_double_release := false
+
+func _input(event: InputEvent) -> void:
+	if not is_visible_in_tree():
+		_phase_changed_by_click = false
+		_consume_double_release = false
+		return
+	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if not event.pressed:
+		if _consume_double_release:
+			_consume_double_release = false
+			get_viewport().set_input_as_handled()
+		return
+	if not event.double_click:
+		_phase_changed_by_click = false
+		_consume_double_release = false
+		return
+	if _phase_changed_by_click:
+		for button in [hit_button, stand_button, again_button]:
+			if is_instance_valid(button) and button.is_visible_in_tree() and button.get_global_rect().has_point(event.position):
+				_consume_double_release = true
+				get_viewport().set_input_as_handled()
+				return
+
 
 func _ready() -> void:
+	visibility_changed.connect(func():
+		if not is_visible_in_tree():
+			_phase_changed_by_click = false
+			_consume_double_release = false
+	)
 	name = "ArkLanternTableUI"
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -134,7 +167,12 @@ func _button(text_: String, action: String) -> Button:
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", hover)
 	button.add_theme_color_override("font_color", CREAM)
-	button.pressed.connect(func(): action_requested.emit(action))
+	button.pressed.connect(func():
+		var phase_before := str(_last.get("phase", ""))
+		var round_before := int(_last.get("round", 0))
+		action_requested.emit(action)
+		_phase_changed_by_click = phase_before != str(_last.get("phase", "")) or round_before != int(_last.get("round", 0))
+	)
 	return button
 
 func _card_row(parent: Node) -> HBoxContainer:
@@ -176,7 +214,7 @@ func _layout() -> void:
 	panel.size = desired
 
 func present(view: Dictionary, line: String) -> void:
-	var resident_name := "守潮人" if view.opponent == "tidekeeper" else "缝帆人"
+	var resident_name := "守岸人" if view.opponent == "tidekeeper" else "缝帆人"
 	title.text = "灯下牌局 · 第 %d 局" % int(view.round)
 	var playing: bool = view.phase == "playing"
 	resident_label.text = "%s · 明牌 %d 点 / 另一张尚未亮开" % [resident_name, int(view.resident_score)] if playing else "%s · %d 点" % [resident_name, int(view.resident_score)]

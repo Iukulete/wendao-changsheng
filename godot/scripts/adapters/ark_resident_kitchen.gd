@@ -35,21 +35,41 @@ func station(game: Node3D) -> Dictionary:
 	cached = {"signature":signature,"result":result}
 	return result
 
-func environment_ready(game: Node3D) -> bool:
+func environment_ready(game: Node3D, ignore_view_clock: bool = false) -> bool:
 	if game.kitchen.returning() or game.kitchen.delivering():
-		return not game._life_clock_paused() and not game.sailing_mode and game.weather_phase!=game.WeatherPhase.STORM and game.traveler_boarded and is_instance_valid(game.traveler_marker) and game.traveler_marker.get_parent()==game.ark_root and not game.resident_gather_pending and not game.resident_repair_pending and not (game.shared_meal_gathering_pending and not game.shared_meal_paused) and not game.food_storage.station(game).is_empty()
-	if not game.kitchen.enabled or game._life_clock_paused() or game.sailing_mode or game.weather_phase == game.WeatherPhase.STORM or game.day_period != game.DayPeriod.EVENING: return false
+		return (ignore_view_clock or not game._life_clock_paused()) and not game.sailing_mode and game.weather_phase!=game.WeatherPhase.STORM and game.traveler_boarded and is_instance_valid(game.traveler_marker) and game.traveler_marker.get_parent()==game.ark_root and not game.resident_gather_pending and not game.resident_repair_pending and not (game.shared_meal_gathering_pending and not game.shared_meal_paused) and not game.food_storage.station(game).is_empty()
+	if not _cooking_environment_ready(game, ignore_view_clock): return false
+	if game.kitchen.active():
+		if game.kitchen.order.supply=="player": return game.raw_shellfish>0
+		if game.kitchen.order.phase=="fetch": return game.economy.inventory(Food.OWNER,"shellfish")>0 and not game.food_storage.station(game).is_empty()
+		return game.kitchen.carrying() and game.economy.inventory(Food.CARRY,"shellfish")==1
+	return game.raw_shellfish>0 or (game.economy.inventory(Food.OWNER,"shellfish")>0 and not game.food_storage.station(game).is_empty())
+
+func _cooking_environment_ready(game: Node3D, ignore_view_clock: bool = false) -> bool:
+	if not game.kitchen.enabled or (not ignore_view_clock and game._life_clock_paused()) or game.sailing_mode or game.weather_phase == game.WeatherPhase.STORM or game.day_period != game.DayPeriod.EVENING: return false
 	if not game.traveler_boarded or game.resident_gather_pending or game.resident_repair_pending or game.raft_edge_damaged or game.shelter_roof_damaged: return false
 	if game.shared_meal_day == game.day_count or (game.shared_meal_gathering_pending and not game.shared_meal_paused): return false
 	if not Roles.available("galley",game._room_role_facts()): return false
 	var marker: Variant = game.traveler_marker
 	if not is_instance_valid(marker) or marker.get_parent() != game.ark_root: return false
 	if game.stew_servings+game.economy.inventory(Food.OWNER,"stew_servings")>=2 or station(game).is_empty(): return false
-	if game.kitchen.active():
-		if game.kitchen.order.supply=="player": return game.raw_shellfish>0
-		if game.kitchen.order.phase=="fetch": return game.economy.inventory(Food.OWNER,"shellfish")>0 and not game.food_storage.station(game).is_empty()
-		return game.kitchen.carrying() and game.economy.inventory(Food.CARRY,"shellfish")==1
-	return game.raw_shellfish>0 or (game.economy.inventory(Food.OWNER,"shellfish")>0 and not game.food_storage.station(game).is_empty())
+	return true
+
+func _replan_unpaid_fetch(game: Node3D) -> bool:
+	if not game.kitchen.active() or game.kitchen.order.phase!="fetch" or game.kitchen.order.supply!="storage" or int(game.kitchen.order.elapsed_usec)!=0 or game.kitchen.carrying():
+		return false
+	# The first source has actually run out before pickup. Never interrupt a
+	# paid, carried, cooking, or delivered meal; retain the public pantry-first
+	# policy and old single-serving rule when there is another legitimate source.
+	if game.economy.inventory(Food.OWNER,"shellfish")!=0 or game.raw_shellfish<=0 or game._restoring_progress:
+		return false
+	if game.day_count<=game.kitchen.last_completed_day or game.day_count>game.KitchenScript.MAX_ORDERS or game.kitchen.attempts>=game.KitchenScript.MAX_ORDERS or not _cooking_environment_ready(game):
+		return false
+	var attempt:int = game.kitchen.order.attempt
+	game.kitchen.cancel()
+	clear()
+	game._record_world_event("resident_kitchen_order_cancelled",{"resident_id":"tidekeeper","attempt":attempt,"ingredients_spent":0,"return_pending":false,"reason":"pantry_ingredient_taken_before_arrival"})
+	return true
 
 func destination(game: Node3D) -> Dictionary:
 	if game.kitchen.active() and game.kitchen.order.phase in ["fetch","return","deliver"]: return game.food_storage.station(game)
@@ -84,12 +104,16 @@ func check_dependencies(game: Node3D) -> bool:
 
 func reconcile(game: Node3D) -> void:
 	if check_dependencies(game): game._save_progress()
+	var replanned := _replan_unpaid_fetch(game)
 	if not game.kitchen.active() and game.kitchen.can_begin(game.day_count) and environment_ready(game):
 		var supply := "storage" if game.economy.inventory(Food.OWNER,"shellfish")>0 and not game.food_storage.station(game).is_empty() else "player"
 		if game.kitchen.begin(game.day_count,supply):
 			route_retry = 0.0
 			game.traveler_routine_route_target_set = false
 			game._record_world_event("resident_kitchen_order_started",{"resident_id":"tidekeeper","room_id":"starter.galley","recipe_id":"tidal_shellfish_stew","attempt":game.kitchen.order.attempt,"supply":supply,"ingredients_spent":0,"day":game.day_count})
+			if replanned:
+				game.message = "储粮格已没有鲜贝，守岸人改用随身供料。煮好才用 1 份鲜贝；可在 H 的炊事岗位暂停。"
+				game._update_hud()
 			game._save_progress()
 	if not selected(game): pose.clear()
 	if game.kitchen.active(): game._update_traveler_schedule()
@@ -138,7 +162,7 @@ func step(game: Node3D,delta: float) -> bool:
 		if result.ok:
 			tote.clear()
 			game._record_world_event("resident_meal_prepared",{"resident_id":"tidekeeper","meal_id":result.recipe,"room_id":result.room,"attempt":result.attempt,"day":game.day_count,"supply":"storage","destination":Food.OWNER,"servings_added":1,"physical_walk":true,"worker_position":game._position_facts(game.traveler_marker.position)})
-			game.message = "守潮人把一份热汤送回储粮格：‘回来就有吃的。’靠近储箱按 G 可取用，再带到桌边一起喝。"
+			game.message = "守岸人把一份热汤送回储粮格：‘回来就有吃的。’靠近储箱按 E 打开，右键取 1 份热汤，再带到桌边一起喝。"
 			game._update_traveler_schedule()
 			game._save_progress()
 			game._update_hud()
@@ -156,10 +180,10 @@ func complete(game: Node3D) -> bool:
 	game._record_world_event("resident_meal_cooked" if result.delivery_pending else "resident_meal_prepared",{"resident_id":"tidekeeper","meal_id":result.recipe,"room_id":result.room,"attempt":result.attempt,"day":game.day_count,"supply":result.supply,"destination":result.destination,"raw_shellfish_spent":1,"servings_added":1,"tool_id":"pressure_galley" if game.pressure_galley_built else "hearth_pot","work_completed":true,"effective_work_usec":4000000,"worker_position":[position.x,position.y,position.z]})
 	if result.delivery_pending:
 		game.traveler_routine_route_target_set = false
-		game.message = "汤已盛好，守潮人提着食篮往储箱走；送到以后，家里才有可取用的晚饭。"
+		game.message = "汤已盛好，守岸人提着食篮往储箱走；送到以后，家里才有可取用的晚饭。"
 	else:
 		tote.clear()
-		game.message = "锅边传来一声轻响，守潮人把鲜贝汤盛好：‘留了一碗，回来趁热喝。’"
+		game.message = "锅边传来一声轻响，守岸人把鲜贝汤盛好：‘留了一碗，回来趁热喝。’"
 	game._update_traveler_schedule()
 	game._save_progress()
 	game._update_hud()
@@ -176,8 +200,20 @@ func status(game: Node3D) -> String:
 	if game.kitchen.delivering(): return "已做好 1 份热汤，正在送回储粮格（满箱时保留在食篮）"
 	if not game.kitchen.enabled: return "已暂停自动备餐（保留进度）"
 	if game.kitchen.active():
-		if game.kitchen.order.phase=="fetch": return "去家庭储粮格取 1 份鲜贝（尚未扣料）"
+		if game.kitchen.order.phase=="fetch":
+			if game.economy.inventory(Food.OWNER,"shellfish")==0:
+				return "储粮格已没有鲜贝，等待可用食材和备餐条件（尚未扣料）"
+			return "去家庭储粮格取 1 份鲜贝（尚未扣料）"
 		return "锅边备餐 %d%%" % (int(game.kitchen.order.elapsed_usec)*100/4000000) if selected(game) and arrived(game) else "等待到锅边或恢复工作条件"
 	if game.kitchen.last_completed_day == game.day_count: return "今日已备好一锅，等人回来"
 	if game.stew_servings >= 2: return "已有两份热汤，不继续囤做"
 	return "傍晚自动备一锅，完工才用 1 鲜贝"
+
+
+# H/map only suspend an otherwise valid assigned kitchen task. Other pause
+# reasons and real condition changes keep their established scheduling policy.
+func view_paused(game: Node3D) -> bool:
+	if not game.kitchen.active() or not game._modules_ready or game._restoring_progress or game.get_tree().paused or game.building_mode or not game.editing_fixture_id.is_empty() or game._hud_choice_open():
+		return false
+	var viewing: bool = (is_instance_valid(game.hud_drawer) and game.hud_drawer.visible) or (is_instance_valid(game.world_chart) and game.world_chart.visible)
+	return viewing and environment_ready(game, true)

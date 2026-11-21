@@ -1,48 +1,10 @@
-# Build outputs
+godot/.godot/
+.local/
+.tmp/
 release/
+*.pck
 *.exe
 *.dll
-*.o
-*.obj
-*.pck
-
-# Local AI model/runtime bundles
-ai_engine/models/
-ai_engine/runtime/
-ai_engine/model_path.txt
-ai_engine/lora_path.txt
-ai_engine/lora/*.gguf
-ai_engine/lora/*.safetensors
-ai_engine/lora/*_adapter/
-ai_engine/lora/*_llamacpp/
-
-# Runtime-generated AI files
-ai_prompt.txt
-ai_prompt_runtime.txt
-ai_event.txt
-ai_event_raw.txt
-ai_scene.json
-ai_backend.txt
-ai_model.log
-ai_llama.log
-ai_ollama.log
-
-# Saves and local state
-save.txt
-save_slot_*.txt
-save/
-
-# OS/editor noise
 __pycache__/
+.DS_Store
 Thumbs.db
-Desktop.ini
-.vscode/
-.idea/
-
-# Godot local engine/import cache (project source stays tracked)
-godot/.godot/
-tools/godot/
-tools/gh/
-/.tools/
-.tmp/
-.local/

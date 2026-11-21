@@ -5,6 +5,7 @@ const BED := "res://art/cabin_furniture/bed_single_B.gltf"
 const CABINET := "res://art/cabin_furniture/cabinet_small.gltf"
 const BOOKS := "res://art/cabin_furniture/book_set.gltf"
 const TINT := Color(.70,.76,.65,1)
+const Geometry = preload("res://scripts/presentation/ark_cabin_visual_geometry.gd")
 var _hidden := {}
 var _instances := {}
 var _loaded := {}
@@ -74,21 +75,11 @@ func _ensure(parent: Node3D,id: String,anchor: Node3D,asset: String,target: AABB
 		holder.name = id
 		holder.set_meta("ark_cabin_visual",true)
 		parent.add_child(holder)
-		var fit := Node3D.new()
-		fit.name = "FittedVisual"
-		holder.add_child(fit)
-		var turn := Node3D.new()
-		turn.name = "AuthoredOrientation"
-		turn.rotation.y = angle
-		fit.add_child(turn)
-		var model := packed.instantiate() as Node3D
-		turn.add_child(model)
-		var bounds := _bounds(fit)
-		if bounds.size.x<=0 or bounds.size.y<=0 or bounds.size.z<=0:
+		var geometry: Dictionary = Geometry.populate_fitted(holder,packed,target,angle)
+		if not geometry.ok:
 			holder.free()
 			return false
-		fit.scale = target.size/bounds.size
-		fit.position = target.position-bounds.position*fit.scale
+		var model: Node3D = geometry.model
 		for mesh in model.find_children("*","MeshInstance3D",true,false): _style(mesh)
 		if model is MeshInstance3D: _style(model)
 		_instances[id] = weakref(holder)

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="128" viewBox="0 0 256 128">
+<defs><linearGradient id="cloth" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#303a34"/><stop offset="1" stop-color="#202b27"/></linearGradient></defs>
+<path d="M4 2H252V4H254V124H252V126H4V124H2V4H4Z" fill="url(#cloth)"/>
+<path d="M4 2H252V4H4Z" fill="#b4a27b" fill-opacity=".45"/>
+<path d="M4 124H252V126H4Z" fill="#101b18"/>
+<path d="M2 4H4V124H2Z M252 4H254V124H252Z" fill="#101b18" fill-opacity=".8"/>
+<path d="M7 7H249 M7 121H249" stroke="#afa58a" stroke-opacity=".07" stroke-width="2"/>
+<path d="M12 4V8 M20 4V8 M236 4V8 M244 4V8 M12 120V124 M20 120V124 M236 120V124 M244 120V124" stroke="#a2977a" stroke-opacity=".18" stroke-width="2"/>
+</svg>

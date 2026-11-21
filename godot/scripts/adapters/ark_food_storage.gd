@@ -1,13 +1,16 @@
 extends RefCounted
-## Physical chest access plus a three-action modal; no duplicate stock owner.
+## Physical chest shortcuts with a read-only deposit preview; no new stock owner.
 const Rules = preload("res://scripts/modules/rooms/ark_food_storage.gd")
 const Placement = preload("res://scripts/ark_fixture_placement.gd")
-var pending := false
+var shown_deposit: Dictionary = {}
 var cached := {}
 
 func clear() -> void:
-	pending = false
+	shown_deposit.clear()
 	cached.clear()
+
+func forget_hint() -> void:
+	shown_deposit.clear()
 
 func fixture(game: Node3D) -> Node3D:
 	var box := game._ark_node("BuiltStorage") as Node3D
@@ -45,37 +48,67 @@ func _use_line_clear(game: Node3D,from: Vector3,box: Node3D) -> bool:
 	var query := PhysicsRayQueryParameters3D.create(from+Vector3.UP*.65,box.global_position+Vector3.UP*.65,1,excluded)
 	return game.get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
-func request(game: Node3D) -> void:
-	if game._hud_choice_open() or not accessible(game):
-		game.message = "停船站稳，走到本舟储物箱旁再按 G 管理家庭食材。"
-		game._update_hud()
-		return
-	pending = true
-	game.message = "家庭储粮 %d/%d：鲜贝 %d，热汤 %d。\n随身鲜贝 %d，热汤 %d。1 存入食物（热汤优先），2 取一份热汤，3 取一份鲜贝，Esc 关闭。守潮人会在傍晚从箱中取料，完成后把汤留给家里；木料仍按 E 存取。" % [Rules.stock(game.economy),Rules.CAPACITY,game.economy.inventory(Rules.OWNER,"shellfish"),game.economy.inventory(Rules.OWNER,"stew_servings"),game.raw_shellfish,game.stew_servings]
-	game._update_hud()
+# Dedicated G/Z/X address the one physical home chest in its ORIGINAL reach.
+# They do not replace the ordinary E target or steal its focus ring from an NPC.
+func shortcut_available(game: Node3D) -> bool:
+	if not game._maintenance_window_focused or game.get_tree().paused or game.get_viewport().gui_get_focus_owner()!=null or game._hud_choice_open(): return false
+	if (game.hud_drawer and game.hud_drawer.visible) or (game.world_chart and game.world_chart.visible) or not accessible(game): return false
+	# Explicit held maintenance has its own full cost/progress hint; do not hide
+	# an unrelated instantaneous food action beneath it.
+	return game._maintenance_target().is_empty()
 
-func choose(game: Node3D,key: int) -> void:
-	if not pending: return
-	pending = false
-	if key==KEY_ESCAPE:
-		game.message = "你合上了储粮格，食材保持原样。"
-		game._update_hud()
-		return
-	if not accessible(game):
-		game.message = "你已离开储物箱或正在施工，食材没有移动。"
+func deposit_preview(game: Node3D) -> Dictionary:
+	# Presentation-only projection of Rules.deposit's unchanged soup-first order.
+	var room := maxi(0,Rules.CAPACITY-Rules.stock(game.economy))
+	var soup := mini(room,game.economy.inventory("player","stew_servings"))
+	var shell := mini(room-soup,game.economy.inventory("player","shellfish"))
+	var amounts := {}
+	if soup>0: amounts["stew_servings"]=soup
+	if shell>0: amounts["shellfish"]=shell
+	return amounts
+
+func hint(game: Node3D,e_hint: String) -> String:
+	var box:=fixture(game)
+	if box==null:
+		forget_hint()
+		return ""
+	var amounts:=deposit_preview(game)
+	shown_deposit={"node_id":box.get_instance_id(),"transform":box.transform,"amounts":amounts.duplicate()}
+	var deposit := "G箱满" if Rules.stock(game.economy)>=Rules.CAPACITY else "G无食可存"
+	if not amounts.is_empty():
+		deposit="G存"+("%d汤" % amounts.stew_servings if amounts.has("stew_servings") else "")+("%d贝" % amounts.shellfish if amounts.has("shellfish") else "")
+	var soup := "Z取1汤" if game.economy.inventory(Rules.OWNER,"stew_servings")>0 else "Z无汤"
+	var shell := "X取1贝" if game.economy.inventory(Rules.OWNER,"shellfish")>0 else "X无贝"
+	return "%s箱 %s %s %s %d/%d" % [e_hint+"｜" if not e_hint.is_empty() else "",deposit,soup,shell,Rules.stock(game.economy),Rules.CAPACITY]
+
+func transfer(game: Node3D,key: int) -> void:
+	if key not in [KEY_G,KEY_Z,KEY_X]: return
+	if not shortcut_available(game):
+		forget_hint()
+		game.message = "先靠近本舟储物箱，看到箱边操作提示再按 G 存食、Z 取汤或 X 取贝；木料仍按 E 存取。"
 		game._update_hud()
 		return
 	var result: Dictionary
 	var resource := ""
-	if key==KEY_1: result = Rules.deposit(game.economy)
-	elif key in [KEY_2,KEY_3]:
-		resource = "stew_servings" if key==KEY_2 else "shellfish"
+	if key==KEY_G:
+		var box:=fixture(game)
+		var current := {"node_id":box.get_instance_id(),"transform":box.transform,"amounts":deposit_preview(game)}
+		if shown_deposit != current:
+			# Residents may legitimately fetch/deliver between the displayed hint
+			# and this key. Never silently transfer a newly different quantity.
+			game.message = "储粮或随身食物已有变化；箱边已更新本次存入数量。请看清提示后再按 G，当前没有转移物资。"
+			game._update_interaction_hint()
+			game._update_hud()
+			return
+		result = Rules.deposit(game.economy)
+	else:
+		resource = "stew_servings" if key==KEY_Z else "shellfish"
 		result = Rules.withdraw(game.economy,resource)
-	else: return
 	if result.ok and not result.get("duplicate",false):
 		var amounts: Dictionary = result.get("amounts",{resource:1})
-		game._record_world_event("household_food_stored" if key==KEY_1 else "household_food_withdrawn",{"container_id":Rules.OWNER,"amounts":amounts,"actual_position":game._position_facts(game.ark_root.to_local(game.player.global_position))})
-		game.message = "你把食物放进防潮箱的储粮格，空出随身行囊。" if key==KEY_1 else "你从储粮格取出一份热汤，可以带到桌边和大家一起喝。" if key==KEY_2 else "你从储粮格取出一份鲜贝。"
-	else: game.message = "随身没有可存的食物，或储粮格已经满了；没有转移物资。" if key==KEY_1 else "储粮格没有这份食物，或行囊暂时装不下；没有转移物资。"
+		game._record_world_event("household_food_stored" if key==KEY_G else "household_food_withdrawn",{"container_id":Rules.OWNER,"amounts":amounts,"actual_position":game._position_facts(game.ark_root.to_local(game.player.global_position))})
+		game.message = "你把食物放进防潮箱的储粮格，空出随身行囊。" if key==KEY_G else "你从储粮格取出一份热汤，可以带到桌边和大家一起喝。" if key==KEY_Z else "你从储粮格取出一份鲜贝。"
+	else: game.message = "随身没有可存的食物，或储粮格已经满了；没有转移物资。" if key==KEY_G else "储粮格没有这份食物，或行囊暂时装不下；没有转移物资。"
 	game._save_progress()
 	game._update_hud()
+	game._update_interaction_hint()

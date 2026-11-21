@@ -4,6 +4,11 @@ uniform sampler2D timber_albedo : source_color, filter_linear_mipmap_anisotropic
 uniform vec3 dark_tone = vec3(.25,.16,.09);
 uniform vec3 light_tone = vec3(.58,.41,.25);
 uniform float deck_seams : hint_range(0.0,1.0) = 0.0;
+// Opt-in on two cloned furniture materials only; all old surfaces default off.
+uniform bool hd2d_top_enabled = false;
+uniform sampler2D hd2d_top : source_color, filter_nearest_mipmap, repeat_disable;
+uniform vec3 hd2d_min = vec3(-.5);
+uniform vec3 hd2d_size = vec3(1.0);
 varying vec3 local_p;
 varying vec3 local_n;
 void vertex() { local_p=VERTEX; local_n=NORMAL; }
@@ -31,4 +36,9 @@ void fragment() {
  ALBEDO=wood*COLOR.rgb;
  ROUGHNESS=.84;
  SPECULAR=.24;
+ // Side faces, chamfers and underside keep their exact original shading.
+ if (hd2d_top_enabled && local_n.y > .999) {
+  vec2 top_uv=vec2((local_p.x-hd2d_min.x)/hd2d_size.x,(local_p.z-hd2d_min.z)/hd2d_size.z);
+  ALBEDO=texture(hd2d_top,clamp(top_uv,vec2(0.0),vec2(1.0))).rgb;
+ }
 }

@@ -79,6 +79,22 @@ func save_state(state: Dictionary) -> Dictionary:
 		DirAccess.remove_absolute(_temp_path)
 		return {"ok": false, "code": "save_write_failed"}
 
+	# Only the known incompatible boundaries have fixed rollback copies.
+	# Archive the actual source schema, never manufacture an intermediate save.
+	var destination_schema := int(state.get("schema_version", 0))
+	var primary_schema := int(primary.get("state", {}).get("schema_version", 0))
+	var backup_schema := int(backup.get("state", {}).get("schema_version", 0))
+	if primary.get("ok", false) and primary_schema in [43, 44, 45, 46] and destination_schema > primary_schema:
+		var migration := _preserve_schema_backup(primary_schema)
+		if not migration.get("ok", false):
+			DirAccess.remove_absolute(_temp_path)
+			return migration
+
+	# A failed repair may leave the usable legacy source only in .backup.
+	# Refuse upgrading rather than quarantine away its only recoverable copy.
+	if not primary.get("ok", false) and backup.get("ok", false) and backup_schema in [43, 44, 45, 46] and destination_schema > backup_schema:
+		DirAccess.remove_absolute(_temp_path)
+		return {"ok": false, "code": "schema%d_recovery_unrepaired" % backup_schema}
 	var moved_primary := false
 	if FileAccess.file_exists(_save_path) and not primary.get("ok", false):
 		if not _quarantine_primary():
@@ -103,13 +119,47 @@ func save_state(state: Dictionary) -> Dictionary:
 	return {"ok": true, "path": _save_path}
 
 
+func _preserve_schema_backup(source_schema: int) -> Dictionary:
+	if source_schema not in [43, 44, 45, 46]: return {"ok": false, "code": "unsupported_backup_schema"}
+	var prefix := "schema%d_backup" % source_schema
+	var target := _save_path + ".schema%d.backup" % source_schema
+	if FileAccess.file_exists(target):
+		var existing := _read_path(target)
+		if not existing.get("ok",false) or int(existing.get("state",{}).get("schema_version",0)) != source_schema: return {"ok":false,"code":prefix + "_invalid"}
+		if FileAccess.get_file_as_bytes(target) != FileAccess.get_file_as_bytes(_save_path): return {"ok":false,"code":prefix + "_conflict"}
+		return {"ok":true}
+	if DirAccess.dir_exists_absolute(target): return {"ok":false,"code":prefix + "_blocked"}
+	var original := FileAccess.get_file_as_bytes(_save_path)
+	if original.is_empty(): return {"ok":false,"code":prefix + "_read"}
+	var staging := target + ".tmp"
+	var file := FileAccess.open(staging,FileAccess.WRITE)
+	if file == null: return {"ok":false,"code":prefix + "_write"}
+	file.store_buffer(original);file.flush()
+	var error := file.get_error();file.close()
+	var validated := _read_path(staging)
+	if error != OK or FileAccess.get_file_as_bytes(staging) != original or not validated.get("ok",false) or int(validated.get("state",{}).get("schema_version",0)) != source_schema:
+		DirAccess.remove_absolute(staging)
+		return {"ok":false,"code":prefix + "_verify"}
+	if FileAccess.file_exists(target) or DirAccess.dir_exists_absolute(target):
+		DirAccess.remove_absolute(staging)
+		return {"ok":false,"code":prefix + "_changed"}
+	var renamed := DirAccess.rename_absolute(staging,target)
+	if renamed != OK:
+		DirAccess.remove_absolute(staging)
+		return {"ok":false,"code":prefix + "_rename"}
+	return {"ok":true}
+
+
 func load_state() -> Dictionary:
+	# A newer file in either active slot must never be interpreted as corrupt
+	# and replaced by an older fallback, even when the primary is readable.
 	var primary := _read_path(_save_path)
-	if bool(primary.get("ok", false)) or primary.get("code", "") == "unsupported_version":
-		return primary
 	var backup := _read_path(_backup_path)
-	if backup.get("code", "") == "unsupported_version":
-		return backup
+	for existing in [primary, backup]:
+		if existing.get("code", "") == "unsupported_version":
+			return existing
+	if bool(primary.get("ok", false)):
+		return primary
 	if bool(backup.get("ok", false)):
 		backup["recovered"] = true
 		backup["repaired"] = _restore_primary_from_backup()
@@ -176,6 +226,15 @@ func _validate_state(state: Dictionary) -> Dictionary:
 		return {"ok": false, "code": "invalid_schema"}
 	if float(schema) > MAX_SCHEMA_VERSION:
 		return {"ok": false, "code": "unsupported_version"}
+	var equipment_items: Dictionary = preload("res://scripts/modules/equipment/ark_equipment_items.gd").check_state(state)
+	var gear:Dictionary = preload("res://scripts/modules/leisure/ark_fishing_equipment.gd").check_state(state)
+	var bait: Dictionary = preload("res://scripts/modules/leisure/ark_bait_fishing.gd").check_state(state)
+	# Future data in any namespace must never be mistaken for recoverable corruption.
+	for compatibility in [equipment_items, gear, bait]:
+		if compatibility.get("code") == "unsupported_version": return compatibility
+	if not equipment_items.get("ok", false): return equipment_items
+	if not gear.get("ok",false): return gear
+	if not bait.get("ok", false): return bait
 	if int(schema) >= 35:
 		var elapsed: Variant = state.get("life_period_elapsed")
 		var renewed: Variant = state.get("last_shore_replenish_day")
@@ -194,6 +253,8 @@ func _validate_state(state: Dictionary) -> Dictionary:
 		return {"ok": false, "code": "invalid_state"}
 	if int(schema) >= 40 and not ModernUtilities.matches_save(state):
 		return {"ok": false, "code": "invalid_state"}
+	if not preload("res://scripts/modules/leisure/ark_fishing.gd").matches_save(state):
+		return {"ok":false,"code":"invalid_state"}
 	if not Kitchen.matches_save(state):
 		return {"ok":false,"code":"invalid_state"}
 	# New domestic streams are accepted only with an actually restorable,

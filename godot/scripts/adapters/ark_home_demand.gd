@@ -11,7 +11,7 @@ func fixture_ready(game: Node3D,path: String) -> bool:
 func review(game: Node3D) -> Dictionary:
 	var storage: bool = game.storage_built and game.food_storage.fixture(game)!=null
 	var modern: bool = game.modern_utilities.salvaged and not game.modern_utilities.installed and game._has_blueprint(game.ModernUtilitiesScript.BLUEPRINT) and game.economy.inventory("player","utility_core")>0 and game.raft_extension_built and fixture_ready(game,"BuiltRaftExtension")
-	return Rules.plan({"storage_built":game.storage_built,"storage_ready":storage,"workbench_built":game.workbench_built,"modern_ready":modern,"wood_available":game.wood+(game.stored_wood if storage else 0),"stored_wood":game.stored_wood if storage else 0,"food_available":game.raw_shellfish+game.stew_servings+(game.FoodStorageRules.stock(game.economy) if storage else 0),"damage_count":int(game.raft_edge_damaged)+int(game.shelter_roof_damaged)})
+	return Rules.plan({"storage_built":game.storage_built,"storage_ready":storage,"workbench_built":game.workbench_built,"modern_ready":modern,"wood_available":game.wood+(game.stored_wood if storage else 0),"stored_wood":game.stored_wood if storage else 0,"food_available":game.raw_shellfish+game.stew_servings+(game.FoodStorageRules.meal_stock(game.economy) if storage else 0),"damage_count":int(game.raft_edge_damaged)+int(game.shelter_roof_damaged)})
 
 func step(game: Node3D,delta: float) -> void:
 	if not is_finite(delta) or delta<0: return

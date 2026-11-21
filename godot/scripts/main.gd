@@ -111,9 +111,9 @@ func _build_menu() -> void:
 	menu_columns.add_child(right_column)
 	_label(right_column, "ArkMenuControlsTitle", "初次登舟", 24, Color("e4d7b6"))
 	_control_hint("行动与视角", "WASD  移动 · 空格  跳跃 · E  互动\n右键拖转 · 滚轮缩放 · Home  回正")
-	_control_hint("安居", "B  开始建造　 ·　 左键  放置\nF  调整已建物件　 ·　 R  旋转调整预览\n右键 / Esc  取消建造或调整")
+	_control_hint("物品与安居", "B 背包 · E 开箱取放 · V 建造\n左键放置 · F 调整 · R 旋转\n右键 / Esc 取消建造或调整")
 	_control_hint("远行", "M  打开 / 关闭海图\nQ  近身应对礁兽　 ·　 T  等待时段")
-	_control_hint("保存与归返", "F5  手动保存\n左侧面板“保存并返回主菜单”可安全离开")
+	_control_hint("保存与归返", "H  操作 / 建造帮助 · F5  手动保存\nH面板内“保存并返回主菜单”可安全离开")
 
 	var divider := HSeparator.new()
 	divider.add_theme_color_override("color", Color("425c50"))

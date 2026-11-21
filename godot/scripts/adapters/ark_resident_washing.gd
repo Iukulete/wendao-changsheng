@@ -142,7 +142,7 @@ func using_station(game: Node3D) -> bool:
 	return routine.phase == "washing" and selected(game,routine.owner) and arrived(game,routine.owner)
 
 func status(game: Node3D) -> String:
-	var names := {"player":"你","tidekeeper":"守潮人","sailmaker":"缝帆人"}
+	var names := {"player":"你","tidekeeper":"守岸人","sailmaker":"缝帆人"}
 	var completed: Array[String] = []
 	for actor in names:
 		if game.modern_utilities.washes.get(actor,{}).get("day",0) == game.day_count: completed.append(names[actor])
@@ -155,9 +155,9 @@ func reflection(game: Node3D, actor: String) -> String:
 	if record.is_empty(): return ""
 	var when_ := "今天" if int(record.day) == game.day_count else "上回"
 	if not game.modern_utilities.installed:
-		if actor == "tidekeeper": return "守潮人说起%s的那次洗漱：‘温水把手上的盐洗掉，人也像跟着缓了口气。那样安稳的日子，我记得。’" % when_
+		if actor == "tidekeeper": return "守岸人说起%s的那次洗漱：‘温水把手上的盐洗掉，人也像跟着缓了口气。那样安稳的日子，我记得。’" % when_
 		if actor == "sailmaker": return "缝帆人舒了舒手指，回想%s的洗漱：‘手洗干净的时候，连针线都好理一些。那点暖意，过了也留在心里。’" % when_
 		return ""
-	if actor == "tidekeeper": return "守潮人看了看水台：‘%s在这里净过手，手上的盐总算能用温水洗掉了。船上能安稳过这样的日子，出门也有个盼头。’" % when_
+	if actor == "tidekeeper": return "守岸人看了看水台：‘%s在这里净过手，手上的盐总算能用温水洗掉了。船上能安稳过这样的日子，出门也有个盼头。’" % when_
 	if actor == "sailmaker": return "缝帆人把手指舒展开：‘%s在水台洗干净了手，再拿针线，连帆布都像好理一些。不是多金贵的东西，可有了就舍不得将就。’" % when_
 	return ""
