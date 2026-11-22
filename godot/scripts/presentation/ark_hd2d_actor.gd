@@ -18,6 +18,10 @@ var frame := 0
 var masks: Dictionary = {}
 var enabled := true
 var cached_motion := Vector3.ZERO
+var authored_pose_source: Node3D
+var last_walk_direction := -1
+var hd2d_pixel_size := 0.0
+var hd2d_offset := Vector2.ZERO
 var blink_phase := 0.0
 
 func setup(body: Node3D, old_visual: Node3D, view: Camera3D, controller: Node3D, id: String) -> void:
@@ -27,6 +31,10 @@ func setup(body: Node3D, old_visual: Node3D, view: Camera3D, controller: Node3D,
 	camera = view
 	game = controller
 	identity = id
+	if identity == "player":
+		# The hidden, non-processing original fallback already owns the exact
+		# author atlases, authored feet anchors, and side mirroring.
+		authored_pose_source = actor.get_node_or_null("PixelProtagonistTrial") as Node3D
 	blink_phase = {"player":0.0,"tidekeeper":.9,"sailmaker":1.8,"keeper":2.7}.get(id,0.0)
 	var prefix := "protagonist_" if id == "player" else "resident_moss_" if Art.detailed() and id == "sailmaker" else "resident_"
 	if Art.identities() and id in ["tidekeeper", "sailmaker", "keeper"]: prefix = id + "_"
@@ -48,6 +56,8 @@ func setup(body: Node3D, old_visual: Node3D, view: Camera3D, controller: Node3D,
 	for atlas in textures.values(): assert(atlas.get_size() == sprite.texture.get_size())
 	sprite.pixel_size = 1.92 / cell.y
 	sprite.offset = Vector2(0, 1.84 / sprite.pixel_size - cell.y * .5)
+	hd2d_pixel_size = sprite.pixel_size
+	hd2d_offset = sprite.offset
 	sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
@@ -59,6 +69,7 @@ func setup(body: Node3D, old_visual: Node3D, view: Camera3D, controller: Node3D,
 	if id == "sailmaker" and not Art.detailed(): sprite.modulate = Color("c9d9b5")
 	elif id == "keeper" and not Art.identities(): sprite.modulate = Color("d9bfd0")
 	set_enabled(true)
+	if is_instance_valid(authored_pose_source): update_visual(legacy.global_basis.z, false, 0.0)
 
 func set_enabled(value: bool) -> void:
 	enabled = value
@@ -145,6 +156,31 @@ func update_visual(facing: Vector3, moving: bool, delta: float) -> void:
 	# The closed-eye cell is a brief blink, not a full second asleep.
 	if pose == "idle" and textures.has("idle"):
 		frame = 3 if fmod(clock + blink_phase,4.0) >= 3.88 else 0
+	if is_instance_valid(authored_pose_source) and pose in ["idle", "walk"]:
+		if pose == "walk" or last_walk_direction < 0:
+			last_walk_direction = direction
+		direction = last_walk_direction
+		var authored_direction: String = ["front", "side", "side", "back"][direction]
+		var authored_key := "idle_" + authored_direction if pose == "idle" else authored_direction
+		if pose == "idle": frame = 0
+		authored_pose_source.show_pose(authored_key, frame, direction == 1)
+		var authored_sprite: Sprite3D = authored_pose_source.sprite
+		# Only the selected frame/foot geometry changes. Keep this single
+		# HD-2D sprite's lighting/shadows; never reveal the fallback sprite.
+		sprite.hframes = 1
+		sprite.vframes = 1
+		sprite.texture = authored_sprite.texture
+		sprite.pixel_size = authored_sprite.pixel_size
+		sprite.offset = authored_sprite.offset
+		sprite.flip_h = authored_sprite.flip_h
+		sprite.position = to_local(actor.global_position)
+		return
+	if is_instance_valid(authored_pose_source):
+		sprite.hframes = 4
+		sprite.vframes = 4
+		sprite.pixel_size = hd2d_pixel_size
+		sprite.offset = hd2d_offset
+		sprite.flip_h = false
 	sprite.texture = textures.work if pose == "work" else textures.sit if pose == "sit" else textures.atlas
 	if identity == "player":
 		match pose:
